@@ -1,0 +1,156 @@
+#!/bin/bash
+################################################################################
+# SETTINGS.
+ROOTDIR=./
+OUTDIR=~/Desktop
+FIXDIR=fix
+ORGDIR=original
+################################################################################
+shellFileName=`basename $0`
+if [ ! "$1" = "" ]; then
+    ROOTDIR=$1
+fi
+if [ ! "$2" = "" ]; then
+    OUTDIR=$2
+fi
+OUTDIR="${OUTDIR}/`date +%Y%m%d%H%M%S`"
+
+log() {
+    dateStr=`date '+%Y%m%d:%H:%M:%S'`
+    outMsg="[$shellFileName] $dateStr $*"
+    echo "$outMsg"
+}
+
+createifnotexist() {
+    if [ ! -e $1 ]; then
+        log "create directory... $1"
+        mkdir -p $1
+    fi
+}
+
+copyParents() {
+    targetFile=$1
+    log "  cp => $OUTDIR/$targetFile"
+    cp -p --parents $targetFile $OUTDIR
+}
+
+svnRevert() {
+    targetFile=$1
+    log "  revert => $targetFile"
+    svn revert $targetFile
+}
+
+compareable() {
+    targetFile=$1
+
+    createifnotexist $OUTDIR/$FIXDIR
+    log "  cp => $OUTDIR/$FIXDIR/$targetFile"
+    cp -p --parents $targetFile $OUTDIR/$FIXDIR
+    log "  revert => $targetFile"
+    svn revert $targetFile
+    createifnotexist $OUTDIR/$ORGDIR
+    log "  cp => $OUTDIR/$ORGDIR/$targetFile"
+    cp -p --parents $targetFile $OUTDIR/$ORGDIR
+    basename=`basename $targetFile`
+    log "  cp too => $OUTDIR/$basename"
+    cp -pf $OUTDIR/$FIXDIR/$targetFile $OUTDIR/$basename
+}
+
+copyRevert() {
+    targetFile=$1
+    log "  cp => $OUTDIR/$targetFile"
+    cp -p --parents $targetFile $OUTDIR
+    log "  revert => $targetFile"
+    svn revert $targetFile
+}
+
+handInput() {
+    for targetfile in `echo "
+
+    path/to/hoge.java
+    path/to/fuga.java
+
+    "`
+    do
+        if [ $mPrcType -eq 1 ] ; then
+            copyParents $targetfile
+        elif [ $mPrcType -eq 2 ] ; then
+            svnRevert $targetfile
+        elif [ $mPrcType -eq 3 ] ; then
+            compareable $targetfile
+        elif [ $mPrcType -eq 4 ] ; then
+            copyRevert $targetfile
+        fi
+    done
+}
+
+log "--------------------------------------------------------------------"
+log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> MISSIOIN START"
+log "--------------------------------------------------------------------"
+log "TARGET DIR [$ROOTDIR]"
+log "OUTPUT DIR [$OUTDIR]"
+
+cd $ROOTDIR
+log "Now checking fixed files..."
+FIXED_FILES="`svn diff | awk '/^Index/ {print $NF}'`"
+
+log "your fixed files of $ROOTDIR is ..."
+echo ""
+exist=0
+for fff in $FIXED_FILES
+do
+    exist=1
+    echo $fff
+done
+echo ""
+
+if [ $exist -eq 0 ]; then
+    log "No Change Exist! Done!"
+    exit 0
+fi
+
+log "choose your mission type. 1:copy(default)/2:svn revert/3:compareable/4:copy and revert"
+read prcType
+log "Count Down!"
+log "2m"
+sleep 1
+log "1m"
+sleep 1
+
+
+createifnotexist $OUTDIR
+mPrcType=1
+if [ "$prcType" = "2" ] ; then
+    mPrcType=2
+elif [ "$prcType" = "3" ] ; then
+    mPrcType=3
+elif [ "$prcType" = "4" ] ; then
+    mPrcType=4
+fi
+
+for fff in $FIXED_FILES
+do
+    if [ $mPrcType -eq 1 ] ; then
+        copyParents $fff
+    elif [ $mPrcType -eq 2 ] ; then
+        svnRevert $fff
+    elif [ $mPrcType -eq 3 ] ; then
+        compareable $fff
+    elif [ $mPrcType -eq 4 ] ; then
+        copyRevert $fff
+    fi
+done
+
+log ""
+log "--------------------------------------------------------------------"
+log "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< MISSIOIN COMPLETE"
+log "--------------------------------------------------------------------"
+read Wait
+
+
+
+
+
+
+
+

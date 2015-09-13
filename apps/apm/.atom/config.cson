@@ -1,0 +1,38 @@
+"*":
+  editor:
+    invisibles:
+      eol: " "
+    fontFamily: "\"Ricty Discord for Powerline\""
+    showIndentGuide: true
+    zoomFontWhenCtrlScrolling: true
+    showInvisibles: true
+    scrollPastEnd: true
+    lineHeight: 1
+    fontSize: 20
+    preferredLineLength: 100
+  core:
+    disabledPackages: [
+      "highlight-column"
+      "vim-mode"
+      "japanese-wrap"
+      "linter-shellcheck"
+    ]
+  localization:
+    CurrentLanguage: "Japanese"
+  "exception-reporting":
+    userId: "349411db-9c91-f137-dab4-73b42b83a41f"
+  welcome:
+    showOnStartup: false
+  "atom-lint": {}
+  linter:
+    showErrorPanel: false
+  "vim-mode": {}
+  "atom-color-highlight": {}
+  minimap:
+    plugins:
+      pigments: true
+  "japanese-wrap":
+    characterWidth: {}
+  "one-dark-ui": {}
+  "linter-shellcheck": {}
+  "markdown-preview": {}

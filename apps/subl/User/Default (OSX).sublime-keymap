@@ -1,0 +1,8 @@
+[
+    { "keys": ["f2"], "command": "show_panel", "args": {"panel": "find", "reverse": false} },
+    { "keys": ["super+r"], "command": "show_panel", "args": {"panel": "replace", "reverse": false} },
+    { "keys": ["f3"], "command": "find_next" },
+    { "keys": ["shift+f3"], "command": "find_prev" },
+    { "keys": ["super+alt+up"], "command": "select_lines", "args": {"forward": false} },
+    { "keys": ["super+alt+down"], "command": "select_lines", "args": {"forward": true} },
+]

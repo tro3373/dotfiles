@@ -1,0 +1,12 @@
+.DS_Store
+.DS_Store*
+
+*~
+*.swp
+*.log
+
+bkup
+tmp
+
+*.work
+*.home

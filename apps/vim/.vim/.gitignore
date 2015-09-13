@@ -1,0 +1,9 @@
+.netrwhist
+conf.d/home.vim
+conf.d/work.vim
+
+undo/*
+bundle/*
+backup/*
+
+!.gitkeep

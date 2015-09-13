@@ -1,0 +1,30 @@
+{
+	"in_process_packages":
+	[
+	],
+	"installed_packages":
+	[
+		"BracketHighlighter",
+		"Codecs33",
+		"ConvertToUTF8",
+		"IMESupport",
+		"Japanize",
+		"Markdown Extended",
+		"Markdown Preview",
+		"Monokai Extended",
+		"OmniMarkupPreviewer",
+		"Package Control",
+		"Pretty JSON",
+		"SideBarEnhancements",
+		"SublimeMozcInput",
+		"Theme - Afterglow",
+		"Tomorrow Color Schemes"
+	],
+	"repositories":
+	[
+		"https://github.com/yasuyuky/SublimeMozcInput",
+		"https://github.com/seanliang/Codecs33/tree/linux-x64",
+		"https://github.com/seanliang/Codecs33/tree/osx",
+		"https://github.com/yasuyuky/SublimeMozcInput"
+	]
+}

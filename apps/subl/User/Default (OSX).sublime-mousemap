@@ -1,0 +1,5 @@
+[
+    { "button": "scroll_down", "modifiers": ["ctrl"], "command": "decrease_font_size" },
+    { "button": "scroll_up", "modifiers": ["ctrl"], "command": "increase_font_size" }
+]
+

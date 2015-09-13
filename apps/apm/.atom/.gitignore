@@ -1,0 +1,11 @@
+.apm/
+compile-cache/
+packages/
+storage/
+.node-gyp/
+projects.cson
+npm-debug.log
+dev
+nohup.out
+.DS_Store
+.npm

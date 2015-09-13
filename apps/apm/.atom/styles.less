@@ -1,0 +1,56 @@
+/*
+ * Your Stylesheet
+ *
+ * This stylesheet is loaded when Atom starts up and is reloaded automatically
+ * when it is changed.
+ *
+ * If you are unfamiliar with LESS, you can read more about it here:
+ * http://www.lesscss.org
+ */
+
+ @font-family: "Ricty Discord for Powerline", "Helvetica Neue", Helvetica, Arial,"takaoGothic", "游ゴシック", YuGothic, "ヒラギノ角ゴ ProN W3", "Hiragino Kaku Gothic ProN", "メイリオ", Meiryo, sans-serif;
+
+.tree-view {
+  font-family: @font-family;
+}
+
+// style the background and foreground colors on the atom-text-editor-element
+// itself
+atom-text-editor {
+}
+
+atom-text-editor::shadow {
+  font-family: @font-family;
+  font-size: 14px;
+}
+
+// To style other content in the text editor's shadow DOM, use the ::shadow
+// expression
+atom-text-editor::shadow .cursor {
+}
+
+.markdown-preview {
+  font-family: @font-family;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: @font-family;
+  }
+}
+.tab-bar .tab {
+  font-family: @font-family;
+  font-size: 10pt;
+  /* color: white; */
+  cursor: pointer;
+  max-width: 150px;
+}
+.tooltip {
+  font-family: @font-family;
+}
+// アクティブウィンドウを強調表示する.
+.vertical {
+    .pane {
+        opacity: 0.60;
+        &.active {
+            opacity: 1;
+        }
+    }
+}
