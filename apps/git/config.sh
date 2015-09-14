@@ -27,6 +27,9 @@ set_gitconfig() {
     if get_gitsettingcnt "core.editor"; then
         dvexec "git config --global core.editor \"vim -c 'set fenc=utf-8'\""
     fi
+    if get_gitsettingcnt "core.quotepath="; then
+        dvexec git config --global core.quotepath false
+    fi
     if get_gitsettingcnt "color.ui="; then
         dvexec git config --global color.ui auto
     fi
