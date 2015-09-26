@@ -30,5 +30,7 @@
   'shift-ctrl-right': 'multi-cursor:skipDown'
   'shift-ctrl-left': 'multi-cursor:skipUp'
   'shift-ctrl-up': 'multi-cursor:expandUp'
+'.platform-win32 .editor, .platform-linux .editor':
+  'ctrl-shift-L': 'editor:split-selections-into-lines'
 'atom-workspace, atom-workspace atom-text-editor':
   'shift-ctrl-alt-M': 'markdown-preview:toggle'
