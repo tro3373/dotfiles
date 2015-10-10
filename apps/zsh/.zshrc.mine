@@ -203,10 +203,10 @@ fi
 if [ -d ${HOME}/.anyenv ] ; then
      export PATH="$HOME/.anyenv/bin:$PATH"
      eval "$(anyenv init -)"
-     for D in `ls $HOME/.anyenv/envs`
-     do
-         export PATH="$HOME/.anyenv/envs/$D/shims:$PATH"
-     done
+#     for D in `ls $HOME/.anyenv/envs`
+#     do
+#         export PATH="$HOME/.anyenv/envs/$D/shims:$PATH"
+#     done
 fi
 
 ## --------------------------------------------------------
@@ -253,6 +253,11 @@ mvnhome=~/bin/apache-maven-3.3.3
 if [ -e $mvnhome ]; then
     export M2_HOME=$mvnhome
     export PATH=${M2_HOME}/bin:${PATH}
+fi
+
+# For docker-machine etc.
+if [ -e /opt/bin ]; then
+    export PATH=/opt/bin:$PATH
 fi
 
 # Added by the Heroku Toolbelt
