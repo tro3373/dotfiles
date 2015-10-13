@@ -259,6 +259,14 @@ fi
 if [ -e /opt/bin ]; then
     export PATH=/opt/bin:$PATH
 fi
+# For docker-machine settings.
+#if `which docker-machine > /dev/null 2>&1` &&
+#    [ -e $HOME/.docker/machine/machines/dev ]; then
+#    echo "# For start docker-machine name \"dev\" and docker env setting."
+#    echo "#  docker-mahine start dev"
+#    echo "#  docker-mahine env dev"
+#    echo "#  eval \"\$(docker-mahine env dev)\""
+#fi
 
 # Added by the Heroku Toolbelt
 if [ -e /usr/local/heroku/bin ]; then
