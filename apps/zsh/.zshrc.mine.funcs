@@ -63,6 +63,7 @@ alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
 alias pod='nocorrect pod'
 alias where="command -v"
+alias diff="diff -Nru"
 #alias j="jobs -l"
 
 
