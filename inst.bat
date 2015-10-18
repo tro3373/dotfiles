@@ -26,3 +26,8 @@ REM cinst packages.config
 REM =================================
 REM exit 0
 
+REM git bash Setting =============
+REM .bashrc
+REM   export PS1="$ "
+REM   alias ls='ls --show-control-chars'
+REM ===============================
