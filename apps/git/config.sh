@@ -36,6 +36,9 @@ set_gitconfig() {
     if get_gitsettingcnt "push.default="; then
         dvexec git config --global push.default simple
     fi
+    if get_gitsettingcnt "http.sslverify="; then
+        dvexec git config --global http.sslVerify false
+    fi
     if get_gitsettingcnt "alias.co="; then
         dvexec git config --global alias.co checkout
     fi
