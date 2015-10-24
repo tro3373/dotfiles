@@ -67,3 +67,20 @@ get_gitsettingcnt() {
     count=`git config --list |grep $target |wc -l`
     return $count
 }
+
+execGitConfigForce() {
+    git config --global user.name sample_username
+    git config --global user.email sample_email@domain.com
+    git config --global core.editor "vim -c 'set fenc=utf-8'"
+    git config --global core.quotepath false
+    git config --global color.ui auto
+    git config --global push.default simple
+    git config --global http.sslVerify false
+    git config --global alias.co checkout
+    git config --global alias.cm commit
+    git config --global alias.st status
+    git config --global alias.br branch
+    git config --global alias.lgo "log --oneline"
+    git config --global alias.lg "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+    git config --global alias.lga "log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+}
