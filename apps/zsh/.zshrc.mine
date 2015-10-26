@@ -274,8 +274,9 @@ if [ -e /usr/local/heroku/bin ]; then
 fi
 
 # Android Studioでresponsがなくなる？
+# Ubuntu の設定
 # http://tools.android.com/knownissues/ibus
-IBUS_ENABLE_SYNC_MODE=1 ibus-daemon -xrd
+#IBUS_ENABLE_SYNC_MODE=1 ibus-daemon -xrd
 
 # zsh powerline 設定
 #zshpowerline=${HOME}/.local/lib/python2.7/site-packages/powerline/bindings/zsh/powerline.zsh

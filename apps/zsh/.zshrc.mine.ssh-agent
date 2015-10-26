@@ -1,6 +1,9 @@
+GREP=`bash -c 'which grep'`
+LS=`bash -c 'which ls'`
+
 SSH_ENV="$HOME/.ssh/environment"
 PRIV_KEY_PATH=${HOME}/.ssh
-PRIV_KEY_LIST=(`/bin/ls ${PRIV_KEY_PATH} | /bin/grep .priv`)
+PRIV_KEY_LIST=(`$LS ${PRIV_KEY_PATH} | $GREP .priv`)
 
 # add private keys
 function add_keys {
