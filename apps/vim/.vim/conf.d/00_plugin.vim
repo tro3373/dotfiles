@@ -45,10 +45,10 @@ if has('vim_starting')
   NeoBundle 'chriskempson/vim-tomorrow-theme'     " tomorrow
 
   " powerline
-  " NeoBundle 'alpaca-tc/alpaca_powertabline'
-  "" NeoBundle 'https://github.com/Lokaltog/powerline.git'
-  " NeoBundle 'Lokaltog/powerline', { 'rtp' : 'powerline/bindings/vim'}
-  " NeoBundle 'Lokaltog/powerline-fontpatcher'
+  NeoBundle 'alpaca-tc/alpaca_powertabline'
+  " NeoBundle 'https://github.com/Lokaltog/powerline.git'
+  NeoBundle 'Lokaltog/powerline', { 'rtp' : 'powerline/bindings/vim'}
+  NeoBundle 'Lokaltog/powerline-fontpatcher'
 
   " ############################################################# ここまで
   call neobundle#end()
