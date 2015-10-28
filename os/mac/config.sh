@@ -6,6 +6,10 @@ setconfig() {
     log "#================================================================"
     dvexec defaults write com.apple.desktopservices DSDontWriteNetworkStores true
     log "#================================================================"
+    log "# Show All Files in Finder."
+    log "#================================================================"
+    dvexec defaults write com.apple.finder AppleShowAllFiles TRUE
+    log "#================================================================"
     log "# Delete Localized directory names, and to set eng name Setting."
     log "#================================================================"
 
