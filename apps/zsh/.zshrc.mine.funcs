@@ -140,11 +140,14 @@ function peco_findvim() {
     # 何階層下までリスティングするか
     local depth="5"
     # .で始まるディレクトリは除外
-    local file="$(find . -maxdepth ${depth} -type f ! -path "*/.*" 2>/dev/null | peco)"
-    [ ! "$file" = "" ] && vim "$file"
+#    local file="$(find . -maxdepth ${depth} -type f ! -path "*/.*" 2>/dev/null | peco)"
+#    [ ! "$file" = "" ] && vim "$file"
+    BUFFER=$(find . -maxdepth ${depth} -type f ! -path "*/.*" 2>/dev/null | peco --query "$LBUFFER")
+    CURSOR=$#BUFFER
+    zle redisplay
  }
 zle -N peco_findvim
-bindkey '^f' peco_findvim
+bindkey '^g' peco_findvim
 
 #
 # 'cd ..' する
