@@ -26,11 +26,18 @@ set hlsearch
 set ignorecase
 
 " ヤンクした際にクリップボードへ配置する
-" set clipboard=unnamed
-set clipboard=unnamed,autoselect
-set clipboard=unnamedplus
-vmap <C-c> :w !xsel -ib<CR><CR>
-vmap <C-y> :w !xsel -ib<CR><CR>
+let OSTYPE = system('uname')
+if OSTYPE == "Darwin\n"
+    " For Mac
+    set clipboard=unnamed,autoselect
+    " set clipboard+=unnamed,autoselect
+elseif OSTYPE == "Linux\n"
+    " For Linux
+    set clipboard=unnamed,autoselect
+    set clipboard=unnamedplus
+    vmap <C-c> :w !xsel -ib<CR><CR>
+    vmap <C-y> :w !xsel -ib<CR><CR>
+endif
 
 " <TAB>を空白スペース文字に置き換える
 set expandtab
