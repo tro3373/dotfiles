@@ -7,8 +7,13 @@ install() {
     fi
     dvexec "cd \"$workdir\""
     if [ "$OS" = "ubuntu" ]; then
-        myinstcmd="curl -fsSL https://gist.github.com/shime/5706655/raw/install.sh | sudo bash -e"
-        dvexec $myinstcmd
+        #myinstcmd="curl -fsSL https://gist.github.com/shime/5706655/raw/install.sh | sudo bash -e"
+        #dvexec $myinstcmd
+        dvexec "sudo apt-get update"
+        dvexec "sudo apt-get install -y python-software-properties software-properties-common"
+        dvexec "sudo add-apt-repository -y ppa:pi-rho/dev"
+        dvexec "sudo apt-get update"
+        dvexec "sudo apt-get install -y tmux"
     elif [ "$OS" = "redhat" ]; then
         dvexec "$instcmd gcc make ncurses ncurses-devel"
 
