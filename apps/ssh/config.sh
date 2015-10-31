@@ -19,14 +19,10 @@ setconfig() {
         log "    HostName [ipaddress]"
         log "    Port 22"
         log "    User [username]"
-        log "    ForwardX11 yes"
-        log "    ForwardX11Trusted yes"
         log "  Host [server2]"
         log "    HostName [ipaddress]"
         log "    Port 22"
         log "    User [username]"
-        log "    ForwardX11 yes"
-        log "    ForwardX11Trusted yes"
         log "  ---------------------"
     fi
 }
