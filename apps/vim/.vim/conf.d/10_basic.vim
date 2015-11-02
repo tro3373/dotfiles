@@ -66,4 +66,8 @@ set ttymouse=xterm2
 set undodir=$HOME/.vim/undo
 
 " オートインデント
-"set autoindent
+"set autoindentA
+
+" Backspace を有効にする
+set backspace=indent,eol,start
+
