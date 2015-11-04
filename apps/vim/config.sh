@@ -12,7 +12,7 @@ install() {
 setconfig() {
     make_link_dot2home $script_dir
     vimbundle="$script_dir/.vim/bundle"
-    if isexist "$vimbundle/neobundle.vim"; then
+    if [ ! -e "$vimbundle/neobundle.vim" ]; then
         dvexec "cd \"$vimbundle\""
         dvexec git clone git://github.com/Shougo/neobundle.vim
     fi

@@ -107,7 +107,7 @@ make_link_bkupable() {
     need_backup=0
     log " make_link_bkupable Start lnk=$lnk src=$src"
     #if [ -e "${lnk}" ]; then
-    if ! isexist "${lnk}"; then
+    if isexist "${lnk}"; then
         # log "   @@@@@@ exist!"
         # ファイルタイプ(ファイル、ディレクトリ、リンク)をチェック
         #if [ -n "`find "${lnk}" -maxdepth 0 -type l`" ]; then
@@ -173,7 +173,7 @@ delifexist() {
         log "invalid rm path $rmtarget"
         return
     fi
-    if ! isexist "$rmtarget"; then
+    if isexist "$rmtarget"; then
         dvexec "rm -rf \"$rmtarget\""
     fi
 }

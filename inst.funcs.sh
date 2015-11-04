@@ -40,8 +40,12 @@ testcmd() {
 isexist() {
     file="$*"
     count=`ls -a "$file" 2>/dev/null |wc -l|sed 's/ //g'`
-    #log "count=$count"
-    return $count
+    if [ "$count" == "0" ]; then
+        # 存在しない場合は bash 内で false の意味を表す 1 を応答する.
+        return 1
+    fi
+    # 存在する場合は bash 内で true の意味を表す 0 を応答する.
+    return 0
 }
 
 

@@ -186,23 +186,38 @@ esac
 
 ## PATHの設定
 #
+function is_exist_path() {
+    echo "$PATH:" |grep "$@:" > /dev/null 2>&1
+    return $?
+}
+function add_path() {
+    targetPath="$@"
+    # echo "targetPath="$targetPath
+    if [ ! -e ${targetPath} ]; then
+        # echo "$targetPath is not exist. return."
+        return
+    fi
+
+    if is_exist_path $targetPath; then
+        # echo "$targetPath is already pathed. return."
+        return
+    fi
+    # echo "$targetPath is will be pathed."
+    export PATH=$targetPath:$PATH
+}
 
 # ~/bin
-if [ -e ${HOME}/bin ]; then
-    export PATH=${HOME}/bin:$PATH
-fi
-
+add_path ${HOME}/bin
 # .local/bin
-if [ -e ${HOME}/.local/bin ]; then
-    export PATH=${HOME}/.local/bin:$PATH
-fi
+add_path ${HOME}/.local/bin
 
 # --------------------------------------------------------
 # anyenv
 # --------------------------------------------------------
 if [ -d ${HOME}/.anyenv ] ; then
-     export PATH="$HOME/.anyenv/bin:$PATH"
-     eval "$(anyenv init -)"
+    add_path ${HOME}/.anyenv/bin
+#    export PATH="$HOME/.anyenv/bin:$PATH"
+    eval "$(anyenv init -)"
 #     for D in `ls $HOME/.anyenv/envs`
 #     do
 #         export PATH="$HOME/.anyenv/envs/$D/shims:$PATH"
@@ -240,7 +255,7 @@ fi
 javahome=~/bin/java/jdk1.8.0_20
 if [ -e $javahome ]; then
     export JAVA_HOME=`echo "$javahome"`
-    export PATH="$JAVA_HOME/bin:$PATH"
+    add_path ${JAVA_HOME}/bin
 fi
 
 # --------------------------------------------------------
@@ -252,13 +267,11 @@ fi
 mvnhome=~/bin/apache-maven-3.3.3
 if [ -e $mvnhome ]; then
     export M2_HOME=$mvnhome
-    export PATH=${M2_HOME}/bin:${PATH}
+    add_path ${M2_HOME}/bin
 fi
 
 # For docker-machine etc.
-if [ -e /opt/bin ]; then
-    export PATH=/opt/bin:$PATH
-fi
+add_path /opt/bin
 # For docker-machine settings.
 #if `which docker-machine > /dev/null 2>&1` &&
 #    [ -e $HOME/.docker/machine/machines/dev ]; then
@@ -269,9 +282,7 @@ fi
 #fi
 
 # Added by the Heroku Toolbelt
-if [ -e /usr/local/heroku/bin ]; then
-    export PATH="/usr/local/heroku/bin:$PATH"
-fi
+add_path /usr/local/heroku/bin
 
 # Android Studioでresponsがなくなる？
 # Ubuntu の設定
