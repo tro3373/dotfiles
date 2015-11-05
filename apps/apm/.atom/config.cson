@@ -9,7 +9,7 @@
     lineHeight: 1
     fontSize: 21
     preferredLineLength: 100
-    fontFamily: "Osaka-Mono for Powerline"
+    fontFamily: "OsakaForPowerline-Mono"
   core:
     disabledPackages: [
       "highlight-column"

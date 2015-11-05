@@ -8,8 +8,10 @@
 " 使用するフォントと大きさ
 " set guifont=Ricty\ Discord\ for\ Powerline\ 10
 " set guifontwide=Ricty\ Discord\ for\ Powerline\ 10
-set guifont=Osaka-Mono\ for\ Powerline\ 10
-set guifontwide=Osaka-Mono\ for\ Powerline\ 10
+"set guifont=Osaka-Mono\ for\ Powerline\ 10
+"set guifontwide=Osaka-Mono\ for\ Powerline\ 10
+set guifont=OsakaForPowerline-Mono:10
+set guifontwide=OsakaForPowerline-Mono:10
 
 " 行番号を表示する
 set number
