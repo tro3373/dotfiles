@@ -246,7 +246,24 @@ function agvim () {
 #
 # history
 #
-function hisall { history -E 1 }
+function hisall () { history -E 1 }
+
+#
+# Git Diff Alias
+#
+function gdiff() {
+    local DIFF
+    if type -p git >/dev/null 2>&1; then
+        DIFF="git diff --no-index --binary"
+    else
+        DIFF="diff -u"
+    fi
+    if [[ $# -eq 1 ]]; then
+        $DIFF "$1~" "$1"
+    else
+        $DIFF "$@"
+    fi
+}
 
 #
 # tmux start settings
