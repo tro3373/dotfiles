@@ -8,17 +8,9 @@ sudo apt-get install google-chrome-stable
 # 日本語ディレクトリ名を英語化
 env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
 
-sudo apt-get install git
-
-cd ~
-git clone git@bitbucket.org:tro3373/dotfiles.git
-cd dotfiles && inst.sh exec
-
-# Monaco font download.
-git clone https://github.com/todylu/monaco.ttf.git
-
 # Unity Tweak Tool
 sudo apt-get install unity-tweak-tool
+
 # Numix Icon theme
 sudo apt-add-repository ppa:numix/ppa
 sudo apt-get update

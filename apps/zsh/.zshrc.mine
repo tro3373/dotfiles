@@ -289,6 +289,10 @@ add_path /usr/local/heroku/bin
 # http://tools.android.com/knownissues/ibus
 #IBUS_ENABLE_SYNC_MODE=1 ibus-daemon -xrd
 
+# Android platform-tools for Mac.
+add_path ~/Library/Android/sdk/platform-tools
+
+
 # zsh powerline 設定
 #zshpowerline=${HOME}/.local/lib/python2.7/site-packages/powerline/bindings/zsh/powerline.zsh
 #[ -f ${zshpowerline} ] && source ${zshpowerline}
