@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Chrome install
 wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
 sudo sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
@@ -19,11 +21,21 @@ sudo apt-get install numix-gtk-theme numix-icon-theme numix-wallpaper-saucy numi
 # visudo エディタをvimに設定
 sudo update-alternatives --config editor
 
-# atom,sublime install
-sudo add-apt-repository ppa:webupd8team/atom
+# y-ppa-manager for fix GPG keys errors.
+#sudo add-apt-repository ppa:webupd8team/y-ppa-manager
+#sudo apt-get update
+#sudo apt-get install y-ppa-manager
+
+# sublime install
 sudo add-apt-repository ppa:webupd8team/sublime-text-3
 sudo apt-get update
 sudo apt-get install atom sublime-text-installer
+
+# atom install
+sudo add-apt-repository ppa:webupd8team/atom
+sudo apt-get update
+sudo apt-get install atom
+
 npm stars --install
 
 # Meld, rapidsvn

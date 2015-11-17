@@ -21,10 +21,9 @@ install() {
         dvexec git checkout tig-2.1
 
         # ビルド, インストール
-        # dvexec "LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=\"$HOME\""
-        dvexec LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
-        # dvexec rehash
-        dvexec $HOME/bin/tig -v
+        dvexec sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
+        dvexec rehash
+        dvexec /usr/local/bin/tig -v
     elif [ "$OS" = "redhat" ]; then
         targetrpm="rpmforge-release-0.5.2-2.el6.rf.x86_64"
         result=`rpm -qa |grep $targetrpm`

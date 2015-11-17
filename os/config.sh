@@ -25,14 +25,14 @@ setconfig() {
         elif [ "$OS" = "ubuntu" ]; then
             dvexec sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev
         fi
+        cmd_pyenv=~/.anyenv/envs/pyenv/shims/pyenv
+        cmd_pip=~/.anyenv/envs/pyenv/shims/pip
+        dvexec pyenv install 2.7.10
+        dvexec pyenv global 2.7.10
+        dvexec $cmd_pip install --user git+git://github.com/powerline/powerline
+        dvexec mkdir -p ~/.config/powerline
+        dvexec cp -R ~/.local/lib/python2.7/site-packages/powerline/config_files/* ~/.config/powerline/
+        dvexec ln -sf $script_dir/default.json ~/.config/powerline/themes/tmux/default.json
+        dvexec ln -sf $script_dir/powerline.json ~/.config/powerline/themes/powerline.json
     fi
-    cmd_pyenv=~/.anyenv/envs/pyenv/shims/pyenv
-    cmd_pip=~/.anyenv/envs/pyenv/shims/pip
-    dvexec pyenv install 2.7.10
-    dvexec pyenv global 2.7.10
-    dvexec $cmd_pip install --user git+git://github.com/powerline/powerline
-    dvexec mkdir -p ~/.config/powerline
-    dvexec cp -R ~/.local/lib/python2.7/site-packages/powerline/config_files/* ~/.config/powerline/
-    dvexec ln -sf $script_dir/default.json ~/.config/powerline/themes/tmux/default.json
-    dvexec ln -sf $script_dir/powerline.json ~/.config/powerline/themes/powerline.json
 }

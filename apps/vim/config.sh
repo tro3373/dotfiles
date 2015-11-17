@@ -2,7 +2,7 @@
 
 install() {
     if [ "$OS" = "ubuntu" ]; then
-        dvexec "$instcmd vim vim-gtk vim-athena vim-gnome"
+        dvexec "$instcmd --force-yes vim vim-gtk vim-athena vim-gnome"
     else
         dvexec $def_instcmd
     fi
