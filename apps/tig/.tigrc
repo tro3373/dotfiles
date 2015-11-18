@@ -15,7 +15,7 @@ bind generic g move-first-line
 bind generic G move-last-line
 
 # hunk 検索のバック
-bind diff ` :?^@@
+bind generic ` :?^@@
 
 ## Visualization
 #set author-width = 14
