@@ -1,5 +1,21 @@
 #!/bin/bash
 
+script_dir=$(cd $(dirname $0); pwd)
+work_dir="$script_dir/tmp"
+if [ ! -e $work_dir ]; then
+    mkdir -p $work_dir
+fi
+cd $work_dir
+
+# font install
+fonts_install() {
+    git clone git@bitbucket.org:tro3373/fonts.git
+    cd fonts
+    ./setup.sh
+    cd -
+}
+fonts_install
+
 # Chrome install
 wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
 sudo sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
