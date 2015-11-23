@@ -388,6 +388,7 @@ setup() {
         log "==>  This is Dry-run mode."
         log "==>     Specify 'exec' option for execute."
         log "==>     Below commands will be execute."
+        logescape $DRYRUNCMD
         log "===================================================="
     else
         logescape $DRYRUNCMD
