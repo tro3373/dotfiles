@@ -2,12 +2,12 @@ REM !!WARNING!!
 REM   Symbolic link command is aborted when you start command prompt normal user. exec cmd as Administrator.
 
 REM Sakura Setting ===========
-cmd /c mklink %HOMEPATH%"\AppData\Roaming\sakura\sakura.ini" %HOMEPATH%"\dotfiles\os\win\sakura\sakura.ini"
+cmd /c mklink %HOMEPATH%"\AppData\Roaming\sakura\sakura.ini" %HOMEPATH%"\dotfiles\tools\win\sakura\sakura.ini"
 REM =================================
 
 REM Sublime Text3 Setting ===========
 rmdir -recurse %HOMEPATH%"\AppData\Roaming\Sublime Text 3\Packages\User"
-cmd /c mklink /D %HOMEPATH%"\AppData\Roaming\Sublime Text 3\Packages\User" %HOMEPATH%"\dotfiles\apps\subl\User"
+cmd /c mklink /D %HOMEPATH%"\AppData\Roaming\Sublime Text 3\Packages\User" %HOMEPATH%"\dotfiles\tools\sublime\User"
 REM ---------------------------------
 REM And Do Below.
 REM 1. Start Sublime Text3
@@ -17,7 +17,7 @@ REM    import urllib.request,os,hashlib; h = '2deb499853c4371624f5a07e27c334aa' 
 REM =================================
 
 REM Atom Setting ===========
-cmd /c mklink /D %HOMEPATH%"\.atom" %HOMEPATH%"\dotfiles\apps\apm\.atom"
+cmd /c mklink /D %HOMEPATH%"\.atom" %HOMEPATH%"\dotfiles\tools\atom\.atom"
 REM =================================
 
 REM chocolatey Setting ===========
