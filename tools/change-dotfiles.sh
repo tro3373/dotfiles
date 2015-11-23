@@ -1,7 +1,8 @@
 #!/bin/bash
 
+set -eu
 cd ~
-git clone git@bitbucket.org:tro3373/dotfiles.git dotfiles.new
+git clone https://tro3373@bitbucket.org/tro3373/dotfiles.git dotfiles.new
 mv dotfiles/ dotfiles.old
 mv dotfiles.new dotfiles
 
