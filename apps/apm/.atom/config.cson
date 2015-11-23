@@ -7,9 +7,9 @@
     showInvisibles: true
     scrollPastEnd: true
     lineHeight: 1
-    fontSize: 21
     preferredLineLength: 100
-    fontFamily: "OsakaForPowerline-Mono"
+    fontSize: 20
+    fontFamily: "Ricty Discord for Powerline"
   core:
     disabledPackages: [
       "highlight-column"
