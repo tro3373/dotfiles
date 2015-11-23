@@ -288,28 +288,6 @@ start() {
         fi
     done
 
-    # Font 設定
-    log "###########################################"
-    log "          Font Setting Start"
-    log "###########################################"
-    if [ "$INSTAPP" = "" ] || [ "$INSTAPP" = "font" ]; then
-        script_dir="$DIR_ROOT/font"
-        target="font"
-        # 変数初期化
-        instshell="$script_dir/$FIL_CONF"
-        # デフォルトのインストールコマンド
-        def_instcmd=""
-        # デフォルト関数ロード
-        initialize_funcs
-        # 設定ファイル読み込み
-        source $instshell
-        log "---------------------------------------------- path=$instshell"
-        log "    $target"
-        log "----------------------------------------------"
-        install
-        setconfig
-    fi
-
     # os ディレクトリ配下のディレクトリに対して、インストール処理を実行
     log "###########################################"
     log "          OS Common Setting Start"
