@@ -1,8 +1,9 @@
 #!/bin/bash
 
 cd ~
+git clone git@bitbucket.org:tro3373/dotfiles.git dotfiles.new
 mv dotfiles/ dotfiles.old
-git clone git@bitbucket.org:tro3373/dotfiles.git dotfiles
+mv dotfiles.new dotfiles
 
 mv ~/dotfiles.old/apps/zsh/tmp dotfiles/apps/zsh/
 if [ -e ~/dotfiles.old/apps/ssh/.ssh ]; then
