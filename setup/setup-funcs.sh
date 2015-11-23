@@ -1,49 +1,58 @@
 #!/bin/bash
 
-################################################### SETTING START
-# OS 個別設定を実行するかどうか
-EXE_OSCONF=1
-# インストールコマンド DEBUG 実行
-TEST_INSCMD=0
-################################################### SETTING END
+# echo するのみ
+log() {
+    echo "$*"
+}
+logescape() {
+    echo -e "$*"
+}
 
-################################################### INITIALIZE START
-# Rootディレクトリ
-cd `dirname $0`
-DIR_ROOT=${PWD}
-# 各アプリ個別設定用のファイル名
-FIL_CONF=config.sh
+# コマンド実行
+# log メソッドを呼びつつ実行する
+vexec() {
+    cmd="$*"
+    log " Exec: $cmd"
+    eval $cmd
+    log "    => ret=$?"
+}
 
-# インストールアプリディレクトリ
-DIR_APP=$DIR_ROOT/apps
-# バックアップ先ディレクトリ
-DIR_BACKUP="${DIR_ROOT}/bkup/`date +%Y%m%d%H%M%S`"
-# バックアップしたファイルを後でまとめて表示する
-BACKUP=""
+# コマンドダミー実行
+# echoするのみ
+dry_vexec() {
+    cmd="$*"
+    log " Dummy Exec(echo only): $cmd"
+}
 
-# インストール用関数 ロード
-source $DIR_ROOT/inst.funcs.sh
+# コマンドがインストールされているかチェックする
+testcmd() {
+    cmd=`which $1`
+    if [ -n "`echo "${cmd}" | grep 'not found'`" ]; then
+        return 1
+    elif [ "$cmd" = "" ]; then
+        return 1
+    else
+        return 0
+    fi
+}
 
-# 起動引数設定
-DRYRUN=1
-DRYRUNCMD=""
-INSTAPP=""
-# ${@:3}
-if [ $# -eq 2 ] && [ "$1" = "exec" ]; then
-    DRYRUN=0
-    INSTAPP=$2
-elif [ "$1" = "exec" ]; then
-    DRYRUN=0
-elif [ $# -eq 1 ]; then
-    # 引数1、ダミー実行
-    INSTAPP=$1
-fi
-################################################### INITIALIZE END
+# $* が存在するかどうか判定する
+isexist() {
+    file="$*"
+    count=`ls -a "$file" 2>/dev/null |wc -l|sed 's/ //g'`
+    if [ "$count" == "0" ]; then
+        # 存在しない場合は bash 内で false の意味を表す 1 を応答する.
+        return 1
+    fi
+    # 存在する場合は bash 内で true の意味を表す 0 を応答する.
+    return 0
+}
 
-# Function 初期化
-initialize_funcs() {
-    # デフォルト関数ロード
-    source $DIR_ROOT/inst.funcs.defconfig.sh
+# $1のファイルを$2へリンクを作成する
+make_link() {
+    from=$1
+    to=$2
+    dvexec "ln -s \"$from\" \"$to\""
 }
 
 # Dry run 実行用の関数定義
@@ -178,19 +187,91 @@ delifexist() {
     fi
 }
 
-# OS 種類取得
-OS=`get_os_distribution`
-# Install command
-instcmd="sudo apt-get install -y"
-if [ "$OS" = "mac" ]; then
-     instcmd="brew install"
-elif [ "$OS" = "redhat" ]; then
-     instcmd="sudo yum install -y"
-elif [ "$OSTYPE" = "cygwin" ]; then
-     instcmd="apt-cyg install"
-fi
+# OSのディストリビューションを表示する
+get_os_distribution() {
+    if   [ -e /etc/debian_version ] ||
+         [ -e /etc/debian_release ]; then
+        # Check Ubuntu or Debian
+        if [ -e /etc/lsb-release ]; then
+            # Ubuntu
+            distri_name="ubuntu"
+        else
+            # Debian
+            distri_name="debian"
+        fi
+    elif [ -e /etc/fedora-release ]; then
+        # Fedra
+        distri_name="fedora"
+    elif [ -e /etc/redhat-release ]; then
+        # CentOS
+        distri_name="redhat"
+    elif [ -e /etc/turbolinux-release ]; then
+        # Turbolinux
+        distri_name="turbol"
+    elif [ -e /etc/SuSE-release ]; then
+        # SuSE Linux
+        distri_name="suse"
+    elif [ -e /etc/mandriva-release ]; then
+        # Mandriva Linux
+        distri_name="mandriva"
+    elif [ -e /etc/vine-release ]; then
+        # Vine Linux
+        distri_name="vine"
+    elif [ -e /etc/gentoo-release ]; then
+        # Gentoo Linux
+        distri_name="gentoo"
+    elif [ `uname` = "Darwin" ]; then
+        # mac
+        distri_name="mac"
+    else
+        # Other
+        distri_name="Unkown distribution"
+    fi
 
-start() {
+    echo ${distri_name}
+}
+# instcmd 設定
+setup_instcmd() {
+    # OS 種類取得
+    OS=`get_os_distribution`
+    # Install command
+    instcmd="sudo apt-get install -y"
+    if [ "$OS" = "mac" ]; then
+         instcmd="brew install"
+    elif [ "$OS" = "redhat" ]; then
+         instcmd="sudo yum install -y"
+    elif [ "$OSTYPE" = "cygwin" ]; then
+         instcmd="apt-cyg install"
+    fi
+}
+
+initialize() {
+    if [ "$DIR_ROOT" = "" ]; then
+        DIR_ROOT=~/dotfiles
+    fi
+    # 各アプリ個別設定用のファイル名
+    FIL_CONF=config.sh
+    # インストールアプリディレクトリ
+    DIR_APP=$DIR_ROOT/apps
+    # バックアップ先ディレクトリ
+    DIR_BACKUP="${DIR_ROOT}/bkup/`date +%Y%m%d%H%M%S`"
+    # バックアップしたファイルを後でまとめて表示する
+    BACKUP=""
+    # instcmd 設定
+    setup_instcmd
+}
+initialize
+
+# Function 初期化
+initialize_funcs() {
+    # デフォルト関数ロード
+    source $DIR_ROOT/setup/default-config.sh
+}
+
+# セットアップ開始
+setup() {
+    initialize
+
     # -e: Exit when error occur.
     # -u: Exit when using undefined variable.
     set -eu
@@ -201,27 +282,25 @@ start() {
     # Mac 用 Brew インストールチェック
     if [ "$OS" = "mac" ]; then
         if ! testcmd brew; then
-            log ' HomeBrew is Not Installed!'
-            log '  => Execute this and Install it!'
-            log ''
-            log '  echo '\''export PATH=/usr/local/bin:$PATH'\'' >> ~/.bash_profile'
-            log '  sudo mkdir /usr/local/'
+            log "================================================"
+            log " HomeBrew is Not Installed!"
+            log "  => Execute this and Install it!"
+            log ""
+            log '  echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile'
+            log "  sudo mkdir /usr/local/"
             log '  ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"'
-            log '  source ~/.bash_profile'
-            log '  brew update'
-            log '  brew -v'
-            log ''
+            log "  source ~/.bash_profile"
+            log "  brew update"
+            log "  brew -v"
+            log ""
             exit 1
         fi
     fi
 
-    log "###########################################"
-    log "            App Setting Start"
-    log "###########################################"
     # app ディレクトリ配下のディレクトリに対して、インストール処理を実行
     # mac/linux にかかわらず、実行される
-    apps=`ls -1 $DIR_APP |grep -v '^_' |grep -v git`
-    apps="git $apps"
+    # apps=`ls -1 $DIR_APP |grep -v '^_' |grep -v git`
+    apps="git ctags curl tree zsh tmux vim tig ssh peco ag"
     for dir in $apps; do
 
         # _ から始まらないディレクトリに対して実行
@@ -244,9 +323,8 @@ start() {
         # 上書き定義される為、ここで初期化する
         initialize_funcs
 
-        log "---------------------------------------------- path=$DIR_APP/$dir"
-        log "    $app"
-        log "----------------------------------------------"
+        log "================================================"
+        log "===> $DIR_APP/$dir"
         whith_install=0
         if ! testcmd $app; then
             log "    => Not Installed..."
@@ -288,90 +366,35 @@ start() {
         fi
     done
 
-    # os ディレクトリ配下のディレクトリに対して、インストール処理を実行
-    log "###########################################"
-    log "          OS Common Setting Start"
-    log "###########################################"
-    osconfig=$DIR_ROOT/os/$FIL_CONF
-    if [ "$EXE_OSCONF" = "1" ] && [ -e "$osconfig" ]; then
-        if [ "$INSTAPP" = "" ] || [ "$INSTAPP" = "os" ]; then
-            source $osconfig
-            script_dir=$DIR_ROOT/os
-            # 読み込んだ OS共通 setconfig コマンドの実行
-            log "---------------------------------------------- path=$osconfig"
-            log "    os"
-            log "----------------------------------------------"
+    # powerlineインストール処理を実行
+    powerlineconfig=$DIR_ROOT/powerline/$FIL_CONF
+    if [ "$EXE_POWERLINE" = "1" ] && [ -e "$powerlineconfig" ]; then
+        if [ "$INSTAPP" = "" ] || [ "$INSTAPP" = "powerline" ]; then
+            source $powerlineconfig
+            script_dir=$DIR_ROOT/powerline
+            # 読み込んだ setconfig コマンドの実行
+            log "================================================"
+            log "===> $powerlineconfig"
             setconfig
         fi
     fi
 
-    log "###########################################"
-    log "      OS Characteristic Setting Start"
-    log "###########################################"
-    osdir=$DIR_ROOT/os/linux
-    if [ "$OS" = "mac" ]; then
-        osdir=$DIR_ROOT/os/mac
-    fi
-    for file in `find $osdir -name $FIL_CONF |sort`; do
-        # ディレクトリ名＝ターゲット名の前提
-        script_dir="$(dirname $file)"
-        target="$(basename $script_dir)"
-        if [ ! "$INSTAPP" = "" ] && [ ! "$INSTAPP" = "$target" ]; then
-            # アプリ指定の場合、指定アプリ以外は無視
-            continue
-        fi
-        # 変数初期化
-        instshell=$file
-        # デフォルトのインストールコマンド
-        def_instcmd="$instcmd $target"
-        # デフォルト関数ロード
-        initialize_funcs
-        whith_install=0
-        # 設定ファイル読み込み
-        source $file
-        if [ "$osdir/$FIL_CONF" = "$file" ]; then
-            # OS 設定 の場合
-            if [ ! "$EXE_OSCONF" = "1" ]; then
-                # EXE_OSCONF=1 以外は無視
-                continue
-            fi
-        else
-            # アプリ設定の場合
-            if ! testcmd $target; then
-                log "    => Not Installed..."
-                whith_install=1
-            fi
-        fi
-
-        # OS設定、App設定共に、 setconfig コマンドの実行
-        log "---------------------------------------------- path=$file"
-        log "    $target"
-        log "----------------------------------------------"
-        if [ "$whith_install" = "1" ] || [ "$TEST_INSCMD" = "1" ]; then
-            install
-        fi
-        setconfig
-    done
-
     if [ "$DRYRUN" = "1" ]; then
         log ""
         log ""
-        log "================================================"
-        log " Below commands will be execute."
-        logescape $DRYRUNCMD
-        log "================================================"
-        log "   ===> This is Dry-run mode."
-        log "   ===>   Specify 'exec' option for execute."
-        log "================================================"
         log ""
         log ""
+        log "===================================================="
+        log "==>  This is Dry-run mode."
+        log "==>     Specify 'exec' option for execute."
+        log "==>     Below commands will be execute."
+        log "===================================================="
     else
+        logescape $DRYRUNCMD
         if [ ! "$BACKUP" = "" ]; then
-            log "================================================"
+            log "======================================>"
             log " Below files is backuped."
             logescape $BACKUP
         fi
     fi
 }
-
-start

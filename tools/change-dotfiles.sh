@@ -11,4 +11,4 @@ if [ -e ~/dotfiles.old/apps/ssh/.ssh ]; then
     mv ~/dotfiles.old/apps/ssh/.ssh ~/dotfiles/apps/ssh/
 fi
 cd ~/dotfiles/
-./inst.sh exec vim
+./setup.sh exec vim
