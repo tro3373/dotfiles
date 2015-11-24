@@ -16,3 +16,5 @@ echo "Host [server2]" >> $target
 echo "  HostName [ipaddress]" >> $target
 echo "  Port 22" >> $target
 echo "  User [username]" >> $target
+chmod 640 $target
+
