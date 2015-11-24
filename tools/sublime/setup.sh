@@ -11,7 +11,5 @@ if [ "$OS" = "mac" ]; then
 else
     SUBLIMEUSERDIR=~/.config/sublime-text-3/Packages/User
 fi
-if [ -e $SUBLIMEUSERDIR ]; then
-    make_link_bkupable "$script_dir/User" "$SUBLIMEUSERDIR"
-fi
+make_link_bkupable "$script_dir/User" "$SUBLIMEUSERDIR"
 
