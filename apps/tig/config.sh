@@ -18,11 +18,10 @@ install() {
             dvexec git clone https://github.com/jonas/tig.git
         fi
         dvexec "cd tig"
-        dvexec git checkout tig-2.1
+        dvexec git checkout tig-2.1.1
 
         # ビルド, インストール
         dvexec sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
-        dvexec rehash
         dvexec /usr/local/bin/tig -v
     elif [ "$OS" = "redhat" ]; then
         targetrpm="rpmforge-release-0.5.2-2.el6.rf.x86_64"
