@@ -190,19 +190,27 @@ function is_exist_path() {
     echo "$PATH:" |grep "$@:" > /dev/null 2>&1
     return $?
 }
+# パス追加(追加パスは前から重複を無くして追加)
+#
 function add_path() {
     targetPath="$@"
-    # echo "targetPath="$targetPath
-    if [ ! -e ${targetPath} ]; then
-        # echo "$targetPath is not exist. return."
+    #echo "==============> Add start!!!!!"
+    #echo "targetPath="$targetPath
+    if [ ! -f ${targetPath} ] &&
+        [ ! -d ${targetPath} ] &&
+        [ ! -L ${targetPath} ]; then
+        # 存在しないパスの場合無視する.
+        #echo "$targetPath is not exist. return."
         return
     fi
-
+    # 既にパスに追加されている場合は削除する.
     if is_exist_path $targetPath; then
-        # echo "$targetPath is already pathed. return."
-        return
+        #echo "$targetPath is already pathed. remove it."
+        # $targetPath を $PATH から削除.
+        #PATH=${PATH#"$targetPath:"}
+        PATH=`echo $PATH |sed -e "s|$targetPath||g" |sed -e 's/::/:/g'`
     fi
-    # echo "$targetPath is will be pathed."
+    #echo "$targetPath is will be pathed."
     export PATH=$targetPath:$PATH
 }
 
