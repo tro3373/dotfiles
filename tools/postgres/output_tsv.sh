@@ -10,7 +10,7 @@ if [ ! -f $pgpass ]; then
     echo "No .pgpass file exist."
     echo "Create youre .pgpass file to home directory. like this.."
     echo '  echo "localhost:5432:database:username:password" > ~/.pgpass'
-    echo '  echo "chmod 0600 ~/.pgpass"'
+    echo '  chmod 0600 ~/.pgpass'
     exit 1
 fi
 if [ ! "$args" = "" ]; then
