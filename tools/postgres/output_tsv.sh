@@ -1,4 +1,5 @@
 #!/bin/bash
+host=hogehoge
 database=hogehoge
 user=hogehoge
 outfile=output.tsv
@@ -26,9 +27,9 @@ echo "execute: $sql" >> $outfile
 echo "========================================" >> $outfile
 if [ -f "$sql" ]; then
     # ファイルの場合
-    psql -U $user $databaes -A -F"	" -f "$sql" >> $outfile
+    psql -h $host -U $user $databaes -A -F"	" -f "$sql" >> $outfile
 else
     # sql の場合
-    psql -U $user $databaes -A -F"	" -c "$sql" >> $outfile
+    psql -h $host -U $user $databaes -A -F"	" -c "$sql" >> $outfile
 fi
 
