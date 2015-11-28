@@ -4,14 +4,6 @@ user=hogehoge
 outfile=output.tsv
 args="$*"
 sql=./exe.sql
-if [ ! "$args" = "" ]; then
-    # ファイル指定がある場合はそれを実行
-    sql="$args"
-elif [ ! -e $sql ]; then
-    # execute.sql もない
-    echo "No execute.sql file exist. path=$sql"
-    exit 1
-fi
 pgpass=~/.pgpass
 if [ ! -f $pgpass ]; then
     # .pgpass ファイル無し
@@ -19,6 +11,14 @@ if [ ! -f $pgpass ]; then
     echo "Create youre .pgpass file to home directory. like this.."
     echo '  echo "localhost:5432:database:username:password" > ~/.pgpass'
     echo '  echo "chmod 0600 ~/.pgpass"'
+    exit 1
+fi
+if [ ! "$args" = "" ]; then
+    # ファイル指定がある場合はそれを実行
+    sql="$args"
+elif [ ! -e $sql ]; then
+    # execute.sql もない
+    echo "No execute.sql file exist. path=$sql"
     exit 1
 fi
 echo "========================================" >> $outfile
