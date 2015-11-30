@@ -71,3 +71,5 @@ set undodir=$HOME/.vim/undo
 " Backspace を有効にする
 set backspace=indent,eol,start
 
+" ビジュアルモード選択した部分を*で検索
+vnoremap * "zy:let @/ = @z<CR>n
