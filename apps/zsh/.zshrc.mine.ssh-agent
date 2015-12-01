@@ -8,7 +8,7 @@ PRIV_KEY_LIST=(`$LS ${PRIV_KEY_PATH} | $GREP .priv`)
 # add private keys
 function add_keys {
     /usr/bin/ssh-add
-    echo "Private priv Keys List is... $PRIV_KEY_LIST"
+    #echo "Private priv Keys List is... $PRIV_KEY_LIST"
     for key in ${PRIV_KEY_LIST}; do
         /usr/bin/ssh-add ${PRIV_KEY_PATH}/${key}
     done
@@ -16,7 +16,7 @@ function add_keys {
 
 # start the ssh-agent
 function start_agent {
-    echo "Initializing new SSH agent..."
+    #echo "Initializing new SSH agent..."
     # spawn ssh-agent
     ssh-agent | sed 's/^echo/#echo/' > "$SSH_ENV"
     echo succeeded
