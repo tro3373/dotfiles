@@ -295,7 +295,7 @@ available () {
         x=${candidates%%:*}
         candidates=${candidates#*:}
         if type "$x" >/dev/null 2>&1; then
-            echo "$x"
+            #echo "$x is enabled."
             return 0
         else
             continue
@@ -303,7 +303,7 @@ available () {
     done
     return 1
 }
-available $FILTER
+#available $FILTER
 
 #
 # tmux start settings
