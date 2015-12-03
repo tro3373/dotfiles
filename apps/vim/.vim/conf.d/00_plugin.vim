@@ -27,6 +27,7 @@ if has('vim_starting')
   NeoBundle 'taglist.vim'                         " ソースコードブラウザ
   NeoBundle 'rking/ag.vim'                        " SilverSearcher
   NeoBundle 'sudo.vim'                            " sudo
+  NeoBundle 'scrooloose/nerdtree'                 " NERDTree tree view
 
   NeoBundle 'nathanaelkane/vim-indent-guides'     " indent guide
 
