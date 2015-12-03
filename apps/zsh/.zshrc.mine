@@ -184,6 +184,19 @@ xterm|xterm-color|kterm|kterm-color)
 esac
 
 
+# --------------------------------------------------------
+# zsh powerline 設定
+# --------------------------------------------------------
+#zshpowerline=${HOME}/.local/lib/python2.7/site-packages/powerline/bindings/zsh/powerline.zsh
+#[ -f ${zshpowerline} ] && source ${zshpowerline}
+
+# --------------------------------------------------------
+# zshが終了するときに自動的にssh-agentを終了させる
+# --------------------------------------------------------
+#TRAPEXIT() {
+#    ssh-agent -k
+#}
+
 ## PATHの設定
 #
 function is_exist_path() {
@@ -214,11 +227,6 @@ function add_path() {
     export PATH=$targetPath:$PATH
 }
 
-# ~/bin
-add_path ${HOME}/bin
-# .local/bin
-add_path ${HOME}/.local/bin
-
 # --------------------------------------------------------
 # anyenv
 # --------------------------------------------------------
@@ -231,7 +239,6 @@ if [ -d ${HOME}/.anyenv ] ; then
 #         export PATH="$HOME/.anyenv/envs/$D/shims:$PATH"
 #     done
 fi
-
 ## --------------------------------------------------------
 ## rbenv
 ## --------------------------------------------------------
@@ -254,7 +261,6 @@ fi
 #    export PROJECT_HOME=$HOME/Devel
 #    source virtualenvwrapper.sh
 #fi
-
 # --------------------------------------------------------
 # Java
 # --------------------------------------------------------
@@ -265,7 +271,6 @@ if [ -e $javahome ]; then
     export JAVA_HOME=`echo "$javahome"`
     add_path ${JAVA_HOME}/bin
 fi
-
 # --------------------------------------------------------
 # Maven
 # --------------------------------------------------------
@@ -278,7 +283,9 @@ if [ -e $mvnhome ]; then
     add_path ${M2_HOME}/bin
 fi
 
+# --------------------------------------------------------
 # For docker-machine etc.
+# --------------------------------------------------------
 add_path /opt/bin
 # For docker-machine settings.
 #if `which docker-machine > /dev/null 2>&1` &&
@@ -289,24 +296,24 @@ add_path /opt/bin
 #    echo "#  eval \"\$(docker-mahine env dev)\""
 #fi
 
+# --------------------------------------------------------
 # Added by the Heroku Toolbelt
+# --------------------------------------------------------
 add_path /usr/local/heroku/bin
 
+# --------------------------------------------------------
+# Android
+# --------------------------------------------------------
 # Android Studioでresponsがなくなる？
 # Ubuntu の設定
 # http://tools.android.com/knownissues/ibus
 #IBUS_ENABLE_SYNC_MODE=1 ibus-daemon -xrd
-
 # Android platform-tools for Mac.
 add_path ~/Library/Android/sdk/platform-tools
 
+# .local/bin
+add_path ${HOME}/.local/bin
 
-# zsh powerline 設定
-#zshpowerline=${HOME}/.local/lib/python2.7/site-packages/powerline/bindings/zsh/powerline.zsh
-#[ -f ${zshpowerline} ] && source ${zshpowerline}
-
-# zshが終了するときに自動的にssh-agentを終了させる
-#TRAPEXIT() {
-#    ssh-agent -k
-#}
+# ~/bin
+add_path ${HOME}/bin
 

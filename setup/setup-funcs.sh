@@ -14,14 +14,18 @@ vexec() {
     cmd="$*"
     log " Exec: $cmd"
     eval $cmd
-    log "    => ret=$?"
+    if [ $? -eq 0 ]; then
+        log "    => Command Sucessfully."
+    else
+        log "    => Command Failed......"
+    fi
 }
 
 # コマンドダミー実行
 # echoするのみ
 dry_vexec() {
     cmd="$*"
-    log " Dummy Exec(echo only): $cmd"
+    log " Dummy Exec: $cmd"
 }
 
 # コマンドがインストールされているかチェックする
@@ -62,7 +66,7 @@ dvexec() {
         vexec $cmd
     else
         dry_vexec $cmd
-        DRYRUNCMD="$DRYRUNCMD\n Dummy Exec(echo only): $cmd"
+        DRYRUNCMD="$DRYRUNCMD\n Dummy Exec: $cmd"
     fi
 }
 
