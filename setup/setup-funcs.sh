@@ -259,6 +259,10 @@ initialize() {
     BACKUP=""
     # instcmd 設定
     setup_instcmd
+    # ~/bin 作成
+    if [ ! -e ~/bin ]; then
+        mkdir ~/bin
+    fi
 }
 initialize
 
@@ -300,7 +304,7 @@ setup() {
     # app ディレクトリ配下のディレクトリに対して、インストール処理を実行
     # mac/linux にかかわらず、実行される
     # apps=`ls -1 $DIR_APP |grep -v '^_' |grep -v git`
-    apps="git ctags curl tree zsh tmux vim tig ssh peco ag"
+    apps="git ctags curl tree zsh tmux vim tig ssh peco ag gomi"
     for dir in $apps; do
 
         # _ から始まらないディレクトリに対して実行
