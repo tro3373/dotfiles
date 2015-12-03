@@ -268,6 +268,44 @@ function gdiff() {
 }
 
 #
+# fshow - git commit browser
+#
+fshow() {
+  local out sha q
+  while out=$(
+      git log --graph --color=always \
+          --format="%C(auto)%h%d %s %C(black)%C(bold)%cr" "$@" |
+      fzf --ansi --multi --no-sort --reverse --query="$q" --print-query); do
+    q=$(head -1 <<< "$out")
+    while read sha; do
+      git show --color=always $sha | less -R
+    done < <(sed '1d;s/^[^a-z0-9]*//;/^$/d' <<< "$out" | awk '{print $1}')
+  done
+}
+
+#
+# available check
+#
+export FILTER="fzf:peco"
+available () {
+    local x candidates
+    candidates="$1:"
+    while [ -n "$candidates" ]
+    do
+        x=${candidates%%:*}
+        candidates=${candidates#*:}
+        if type "$x" >/dev/null 2>&1; then
+            echo "$x"
+            return 0
+        else
+            continue
+        fi
+    done
+    return 1
+}
+available $FILTER
+
+#
 # tmux start settings
 #
 function is_exists() { type "$1" >/dev/null 2>&1; return $?; }

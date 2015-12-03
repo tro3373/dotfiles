@@ -24,3 +24,5 @@
 #
 [ -f ${HOME}/.zshrc.mine.home ] && source ${HOME}/.zshrc.mine.home
 
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

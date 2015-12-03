@@ -308,7 +308,7 @@ setup() {
     # app ディレクトリ配下のディレクトリに対して、インストール処理を実行
     # mac/linux にかかわらず、実行される
     # apps=`ls -1 $DIR_APP |grep -v '^_' |grep -v git`
-    apps="git ctags curl tree zsh tmux vim tig ssh peco ag gomi"
+    apps="git ctags curl tree zsh tmux vim tig ssh peco fzf ag gomi"
     for dir in $apps; do
 
         # _ から始まらないディレクトリに対して実行

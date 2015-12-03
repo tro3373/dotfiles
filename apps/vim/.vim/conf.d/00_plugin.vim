@@ -58,3 +58,6 @@ endif
 " NeoBundleを使用するためのスニペット
 filetype plugin indent on
 
+" For fzf plugin.
+set rtp+=~/.fzf
+
