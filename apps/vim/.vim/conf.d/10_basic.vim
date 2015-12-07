@@ -19,6 +19,7 @@ set ttymouse=xterm2
 " C-vの矩形選択で行末より後ろもカーソルを置ける
 set virtualedit=block
 
+
 " ~/.vim/backupをバックアップ先ディレクトリに指定する
 set backup
 set backupdir=$HOME/.vim/backup
@@ -33,10 +34,8 @@ set incsearch
 set hlsearch
 " 大文字と小文字を区別しない
 set ignorecase
-" ビジュアルモード選択した部分を*で検索
-vnoremap * "zy:let @/ = @z<CR>n
 " 検索時に大文字を含んでいたら大/小を区別
-"set smartcase
+set smartcase
 
 
 " ヤンクした際にクリップボードへ配置する
@@ -54,10 +53,6 @@ elseif OSTYPE == "Linux\n"
     vmap <C-c> :w !xsel -ib<CR><CR>
     vmap <C-y> :w !xsel -ib<CR><CR>
 endif
-" カーソルの下の単語をヤンクした文字列で置換
-nnoremap <silent> ciy ciw<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
-nnoremap <silent> cy   ce<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
-vnoremap <silent> cy   c<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 " 挿入モードからノーマルモードに戻る時にペーストモードを自動で解除
 autocmd InsertLeave * set nopaste
 
@@ -79,23 +74,9 @@ set smartindent
 "フォーマット揃えをコメント以外有効にする
 set formatoptions-=c
 
+
 " コマンド補完機能
 " set wildmenu
 " zsh like な補完に
 " set wildmode=longest,list:longest
-
-
-" =============================================
-" Plugin 設定 NERDTree
-" 隠しファイルをデフォルトで表示させる
-let NERDTreeShowHidden = 1
-" デフォルトでツリーを表示させる
-autocmd VimEnter * execute 'NERDTree'
-"<C-e>でNERDTreeをオンオフ
-" map <silent> <C-e>   :NERDTreeToggle<CR>
-" lmap <silent> <C-e>  :NERDTreeToggle<CR>
-nmap <silent> <C-e>      :NERDTreeToggle<CR>
-vmap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
-omap <silent> <C-e>      :NERDTreeToggle<CR>
-imap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
 

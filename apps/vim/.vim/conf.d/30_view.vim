@@ -8,8 +8,6 @@
 " 使用するフォントと大きさ
 " set guifont=Ricty\ Discord\ for\ Powerline\ 10
 " set guifontwide=Ricty\ Discord\ for\ Powerline\ 10
-"set guifont=Osaka-Mono\ for\ Powerline\ 10
-"set guifontwide=Osaka-Mono\ for\ Powerline\ 10
 set guifont=OsakaForPowerline-Mono:10
 set guifontwide=OsakaForPowerline-Mono:10
 
@@ -28,6 +26,7 @@ set scrolloff=5
 set ttyfast
 " Unicodeで行末が変になる問題を解決
 set ambiwidth=double
+
 
 " 全角スペースを分かりやすく表示する
 highlight ZenkakuSpace cterm=underline ctermfg=lightmagenta guibg=lightmagenta
@@ -48,7 +47,7 @@ set showtabline=2
 set noshowmode
 
 
-" powerline
+" Powerline Settings
 let g:Powerline_symbols = 'fancy'
 "let g:Powerline_symbols = 'compatible'
 source ~/.local/lib/python2.7/site-packages/powerline/bindings/vim/plugin/powerline.vim
@@ -57,7 +56,7 @@ python powerline_setup()
 python del powerline_setup
 
 
-" Indent Guide setting
+" Indent Guide Settings
 set ts=4 sw=4 et
 let g:indent_guides_enable_on_vim_startup=1
 let g:indent_guides_start_level=2
