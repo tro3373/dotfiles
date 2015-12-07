@@ -60,6 +60,15 @@ set_gitconfig() {
     if get_gitsettingcnt "alias.lga="; then
         dvexec "git config --global alias.lga \"log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative\""
     fi
+    if get_gitsettingcnt "alias.tar="; then
+        dvexec "git config --global alias.tar \"archive --format=tar HEAD -o\""
+    fi
+    if get_gitsettingcnt "alias.tgz="; then
+        dvexec "git config --global alias.tgz \"archive --format=tgz HEAD -o\""
+    fi
+    if get_gitsettingcnt "alias.zip="; then
+        dvexec "git config --global alias.zip \"archive --format=zip HEAD -o\""
+    fi
 }
 
 get_gitsettingcnt() {
@@ -83,4 +92,7 @@ execGitConfigForce() {
     git config --global alias.lgo "log --oneline"
     git config --global alias.lg "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
     git config --global alias.lga "log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+    git config --global alias.tar "archive --format=tar HEAD -o"
+    git config --global alias.tgz "archive --format=tgz HEAD -o"
+    git config --global alias.zip "archive --format=zip HEAD -o"
 }
