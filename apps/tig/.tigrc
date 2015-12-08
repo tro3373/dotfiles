@@ -1,21 +1,44 @@
+# ====================================
+# View Settings
+# ====================================
 # main viewの左端にコミットIDを表示する
 set main-view = id date author commit-title:graph=yes,refs=yes
-
 # 画面を垂直方向に分割する
 set vertical-split = false
-
 # 水平分割したウィンドウの下画面サイズを % で指定（行数指定も可）
 set split-view-height = 80%
-
-# 差分の前後の表示行数（diff-context)を指定 
+# 差分の前後の表示行数（diff-context)を指定
 #set diff-context = 6
 
+# ====================================
+# Bind Settings
+# ====================================
+# Copy commit title to clipboard:
+#bind generic 9 !@sh -c "git show -s --format=%s %(commit) > /dev/clipboard" # Cygwin
+#bind generic 9 !@sh -c "git show -s --format=%s %(commit) | xclip -selection c" # Linux
+#bind generic 9 !@sh -c "git show -s --format=%s %(commit) | pbcopy" # Mac
 # デフォルトの !git gcを無効化して文頭、文末移動にする
 bind generic g move-first-line
 bind generic G move-last-line
-
 # hunk 検索のバック
 bind generic ` :?^@@
+# amend
+bind generic + !git commit --amend
+# rebase
+bind main B !git rebase -i %(commit)
+# stash
+bind stash A !?git stash apply %(stash)
+bind stash D !?git stash drop %(stash)
+
+#bind generic F none
+#bind generic F !git fetch
+#bind branch n !git checkout -b %(prompt) %(branch)
+#bind branch P !git push origin %(branch)
+#bind branch L !git pull origin %(branch)
+#bind generic M none
+#bind branch M none
+#bind branch M !git merge %(branch)
+
 
 ## Visualization
 #set author-width = 14
@@ -57,14 +80,4 @@ bind generic ` :?^@@
 #color diff-chunk magenta default
 #color "Reported-by:" green default
 #color graph-commit cyan default
-# 
-## Bind Settings
-#bind generic F none
-#bind generic F !git fetch
-#bind branch n !git checkout -b %(prompt) %(branch)
-#bind branch P !git push origin %(branch)
-#bind branch L !git pull origin %(branch)
-#bind generic M none
-#bind branch M none
-#bind branch M !git merge %(branch)
 
