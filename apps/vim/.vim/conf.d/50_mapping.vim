@@ -18,6 +18,103 @@ noremap <Space>h  ^
 noremap <Space>l  $
 
 
+" 改行抜きで一行クリップボードにコピー
+nnoremap <Space>y 0v$h"+y
+" ビジュアルモード選択した部分を*で検索
+vnoremap * "zy:let @/ = @z<CR>n
+" カーソルの下の単語をヤンクした文字列で置換
+nnoremap <silent> ciy ciw<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
+nnoremap <silent> cy   ce<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
+vnoremap <silent> cy   c<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
+
+
+" tabでインデント、Shift+tabでアンインデント
+inoremap <S-Tab> <C-O><LT><LT>
+nnoremap <Tab> >>
+nnoremap <S-Tab> <LT><LT>
+vnoremap <Tab> >
+vnoremap <S-Tab> <LT>
+" 現在行をコメント化 (/* */)
+map qq 0i/* <ESC>$a */<ESC>
+" 現在行をコメント化
+map s/ 0i// <ESC>
+map s# 0i# <ESC>
+map s- 0i-- <ESC>
+" 日付の入力補完
+inoremap <expr> sdf strftime('%Y-%m-%dT%H:%M:%S')
+inoremap <expr> sdd strftime('%Y-%m-%d')
+inoremap <expr> sdt strftime('%H:%M:%S')
+
+
+" ハードタブ非表示
+map sx :set lcs=tab:  ,trail:_,extends:\<Enter>
+" ハードタブ表示
+map sz :set lcs=tab:>.,trail:_,extends:\<Enter>
+" 開いているファイルのディレクトリをリスティング
+map sd :e %:h<Enter>
+map qd :e %:h<Enter>
+" 開いているファイルのパスをコピー
+map sc :CopyPath<Enter>
+" 開いているファイルのディレクトリをカレントにする
+map s\ :cd %:h<Enter><Enter>
+" バックアップディレクトリを開く
+map sba :tabe $HOME/.vim/backup<ENTER>
+
+
+
+
+" Tlistを表示
+map tl :Tlist<Enter>
+" 次の要素
+map <C-n> :cn<Enter>
+" １つ前の要素
+map <C-p> :cp<Enter>
+" エンコード指定の再読み込みメニューの表示
+map q9 <ALT-F>ere
+"" 新規タブを開く
+"map qt :tabnew<ENTER>
+"" 次のタブ
+"map <C-TAB> :tabn<Enter>
+
+
+" カーソル位置の単語を Gtags で検索
+map <C-]> :GtagsCursor<Enter>
+" 要素名を指定して Gtags で検索
+map <C-t> :Gtags -f %<Enter>
+" Gtagsのタグファイルを作成
+map <C-g> :Gtags
+" Gtagsで山椒検索
+map <C-@> :Gtags -r
+
+
+" make実行
+map qm :!make<Enter>
+" 開いているファイルで JavascriptLint を実行
+" map qj :! C:\Users\hogeuser\DOC\tools\jsl-0.3.0\jsl -process %<ENTER>
+
+
+" 開いているファイルのディレクトリをエクスプローラで開く
+if has("win32") || has("win64")
+    " Windows
+    "map qn :!nautilus %:h<ENTER> 
+
+elseif has("win32Unix")
+    " Cygwin
+    "map qn :!nautilus %:h<ENTER> 
+
+elseif has("macunix")
+    " Mac OS-X
+    "map qn :!nautilus %:h<ENTER> 
+
+elseif has("unix")
+    " BSD, Linux
+    map qn :!nautilus %:h<ENTER> 
+
+else
+    " その他
+endif
+
+
 " s prefix 設定
 " Vimの便利な画面分割＆タブページ
 "    http://qiita.com/tekkoc/items/98adcadfa4bdc8b5a6ca
@@ -59,7 +156,7 @@ nnoremap sQ :<C-u>bd<CR>
 " Unite 設定
 "=============================================
 "" 入力モードで開始する
-"let g:unite_enable_start_insert = 1
+let g:unite_enable_start_insert = 1
 " 画面分割(縦分割)
 nnoremap ss :<C-u>sp<CR>
 " 画面分割(横分割)
@@ -79,6 +176,13 @@ nnoremap sr :<C-u>Unite -buffer-name=register register<CR>
 nnoremap sm :<C-u>Unite file_mru<CR>
  " 全部乗せ
 nnoremap sa :<C-u>UniteWithBufferDir -buffer-name=files file_mru file buffer bookmark<CR>
+" ブックマーク一覧
+nnoremap <silent> <Space>c :<C-u>Unite bookmark<CR>
+" ブックマークに追加
+nnoremap <silent> <Space>a :<C-u>UniteBookmarkAdd<CR>
+" UniteBookMarkAdd で追加したディレクトリを Unite bookmark で開くときのアクションのデフォルトを Vimfiler に
+call unite#custom_default_action('source/bookmark/directory' , 'vimfiler')
+
 " unite.vim上でのキーマッピング
 autocmd FileType unite call s:unite_my_settings()
 function! s:unite_my_settings()
@@ -90,95 +194,40 @@ function! s:unite_my_settings()
     imap <silent><buffer> <ESC><ESC> <ESC>q
 endfunction
 
-
-" カーソルの下の単語をヤンクした文字列で置換
-nnoremap <silent> ciy ciw<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
-nnoremap <silent> cy   ce<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
-vnoremap <silent> cy   c<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
-" ビジュアルモード選択した部分を*で検索
-vnoremap * "zy:let @/ = @z<CR>n
-
-
-" 現在行をコメント化 (/* */)
-map qq 0i/* <ESC>$a */<ESC>
-" 現在行をコメント化
-map s/ 0i// <ESC>
-map s# 0i# <ESC>
-map s- 0i-- <ESC>
-
-
-" ハードタブ非表示
-map sx :set lcs=tab:  ,trail:_,extends:\<Enter>
-" ハードタブ表示
-map sz :set lcs=tab:>.,trail:_,extends:\<Enter>
-" 開いているファイルのディレクトリをリスティング
-map sd :e %:h<Enter>
-map qd :e %:h<Enter>
-" 開いているファイルのパスをコピー
-map sc :CopyPath<Enter>
-" 開いているファイルのディレクトリをカレントにする
-map s\ :cd %:h<Enter><Enter>
-" バックアップディレクトリを開く
-map sba :tabe $HOME/.vim/backup<ENTER>
-
-
-
-
-" Tlistを表示
-map tl :Tlist<Enter>
-" 次の要素
-map <C-n> :cn<Enter>
-" １つ前の要素
-map <C-p> :cp<Enter>
-" エンコード指定の再読み込みメニューの表示
-map q9 <ALT-F>ere
-"" 新規タブを開く
-"map qt :tabnew<ENTER>
-"" 次のタブ
-"map <C-TAB> :tabn<Enter>
-
-
-
-" カーソル位置の単語を Gtags で検索
-map <C-]> :GtagsCursor<Enter>
-" 要素名を指定して Gtags で検索
-map <C-t> :Gtags -f %<Enter>
-" Gtagsのタグファイルを作成
-map <C-g> :Gtags
-" Gtagsで山椒検索
-map <C-@> :Gtags -r
-
-
-" make実行
-map qm :!make<Enter>
-" 開いているファイルで JavascriptLint を実行
-" map qj :! C:\Users\hogeuser\DOC\tools\jsl-0.3.0\jsl -process %<ENTER>
-
-
-" 開いているファイルのディレクトリをエクスプローラで開く
-if has("win32") || has("win64")
-    " Windows
-    "map qn :!nautilus %:h<ENTER> 
-
-elseif has("win32Unix")
-    " Cygwin
-    "map qn :!nautilus %:h<ENTER> 
-
-elseif has("macunix")
-    " Mac OS-X
-    "map qn :!nautilus %:h<ENTER> 
-
-elseif has("unix")
-    " BSD, Linux
-    map qn :!nautilus %:h<ENTER> 
-
-else
-    " その他
-endif
+" FZF 起動
+nnoremap <silent> <Space>o :FZF .<CR>
 
 
 "=============================================
-" Plugin 設定 NERDTree
+" unite-grep 設定
+"=============================================
+" unite-grepのバックエンドをagに切り替える
+" http://qiita.com/items/c8962f9325a5433dc50d
+" 大文字小文字を区別しない
+let g:unite_enable_ignore_case = 1
+let g:unite_enable_smart_case = 1
+" unite-grepのキーマップ
+" grep検索
+" ディレクトリを指定してgrep検索
+nnoremap <silent> ,dg  :<C-u>Unite grep -buffer-name=search-buffer<CR>
+" カーソル位置の単語をgrep検索
+nnoremap <silent> ,g :<C-u>Unite grep:. -buffer-name=search-buffer<CR><C-R><C-W><CR>
+" ビジュアルモードでは、選択した文字列をunite-grep
+vnoremap ,g y:Unite grep:.:-iRn:<C-R>=escape(@", '\\.*$^[]')<CR><CR>
+" grep検索結果の再呼出
+nnoremap <silent> ,r  :<C-u>UniteResume search-buffer<CR>
+" unite grep に ag(The Silver Searcher) を使う
+if executable('ag')
+  let g:unite_source_grep_command = 'ag'
+  let g:unite_source_grep_default_opts = '--nogroup --nocolor --column'
+  let g:unite_source_grep_recursive_opt = ''
+  " let g:unite_source_grep_max_candidates = 200
+endif
+
+
+
+"=============================================
+" NERDTree 設定
 "=============================================
 " 隠しファイルをデフォルトで表示させる
 let NERDTreeShowHidden = 1

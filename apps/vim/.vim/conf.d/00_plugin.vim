@@ -28,13 +28,36 @@ if has('vim_starting')
   NeoBundle 'rking/ag.vim'                        " SilverSearcher
   NeoBundle 'sudo.vim'                            " sudo
   NeoBundle 'scrooloose/nerdtree'                 " NERDTree tree view
-
   NeoBundle 'nathanaelkane/vim-indent-guides'     " indent guide
+
+  " TODO 勉強中 =======
+  " http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
+  NeoBundle 'Shougo/neocomplcache'                " 補完候補を自動でポップアップ
+  " NeoBundle 'Shougo/vimshell'                     " uniteインターフェースでシェル使用できる
+  " NeoBundle 'gitv'                                " gitのログをキレイにツリー形式表示
+  " NeoBundle 'sjl/gundo.vim'                       " UNDO履歴を管理
+  " NeoBundle 'fuenor/qfixhowm'                     " メモプラグイン
+  " NeoBundle 'h1mesuke/unite-outline'              " 関数一覧とかを表示
+  NeoBundle 'Lokaltog/vim-easymotion'             " カーソル移動プラグイン
+  " NeoBundle 'vim-scripts/Align'                   " CSV,TSV整形
+  " NeoBundle 'Shougo/unite-ssh'
+  " NeoBundle 'thinca/vim-quickrun'                 " 現在のファイルを実行して quickfix に表示
+  " NeoBundle 'Shougo/neosnippet'                   " Ctrl+k でスニペットを用意
+  " TODO 勉強中 =======
 
   " Unite関連
   NeoBundle 'Shougo/unite.vim'                    " ユーザインタフェース統合
   NeoBundle 'Shougo/neomru.vim'                   " 最近使用したファイルの一覧管理
   NeoBundle 'ujihisa/unite-colorscheme'           " カラースキーム変更
+  NeoBundle 'Shougo/vimproc.vim', {
+              \ 'build' : {
+              \     'windows' : 'tools\\update-dll-mingw',
+              \     'cygwin' : 'make -f make_cygwin.mak',
+              \     'mac' : 'make',
+              \     'linux' : 'make',
+              \     'unix' : 'gmake',
+              \    },
+              \ }
 
   " vim-submode
   NeoBundle 'kana/vim-submode'                    " keymap
