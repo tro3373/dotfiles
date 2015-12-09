@@ -39,26 +39,24 @@ map qq 0i/* <ESC>$a */<ESC>
 " 現在行をコメント化
 map s/ 0i// <ESC>
 map s# 0i# <ESC>
-map s- 0i-- <ESC>
 " 日付の入力補完
-inoremap <expr> sdf strftime('%Y-%m-%dT%H:%M:%S')
-inoremap <expr> sdd strftime('%Y-%m-%d')
-inoremap <expr> sdt strftime('%H:%M:%S')
-
+"inoremap <expr> sdf strftime('%Y-%m-%dT%H:%M:%S')
+"inoremap <expr> sdd strftime('%Y-%m-%d')
+"inoremap <expr> sdt strftime('%H:%M:%S')
 
 " ハードタブ非表示
-map sx :set lcs=tab:  ,trail:_,extends:\<Enter>
+map sx :set lcs=tab:>\ ,trail:_,extends:\<Enter>
 " ハードタブ表示
 map sz :set lcs=tab:>.,trail:_,extends:\<Enter>
 " 開いているファイルのディレクトリをリスティング
 map sd :e %:h<Enter>
 map qd :e %:h<Enter>
 " 開いているファイルのパスをコピー
-map sc :CopyPath<Enter>
+map sc :CopyFileName<Enter>
 " 開いているファイルのディレクトリをカレントにする
 map s\ :cd %:h<Enter><Enter>
 " バックアップディレクトリを開く
-map sba :tabe $HOME/.vim/backup<ENTER>
+map s0 :tabe $HOME/.vim/backup<ENTER>
 
 
 
@@ -96,19 +94,19 @@ map qm :!make<Enter>
 " 開いているファイルのディレクトリをエクスプローラで開く
 if has("win32") || has("win64")
     " Windows
-    "map qn :!nautilus %:h<ENTER> 
+    "map qn :!nautilus %:h<ENTER>
 
 elseif has("win32Unix")
     " Cygwin
-    "map qn :!nautilus %:h<ENTER> 
+    "map qn :!nautilus %:h<ENTER>
 
 elseif has("macunix")
     " Mac OS-X
-    "map qn :!nautilus %:h<ENTER> 
+    "map qn :!nautilus %:h<ENTER>
 
 elseif has("unix")
     " BSD, Linux
-    map qn :!nautilus %:h<ENTER> 
+    map qn :!nautilus %:h<ENTER>
 
 else
     " その他
@@ -156,28 +154,28 @@ nnoremap sQ :<C-u>bd<CR>
 " Unite 設定
 "=============================================
 "" 入力モードで開始する
-let g:unite_enable_start_insert = 1
+"let g:unite_enable_start_insert = 1
 " 画面分割(縦分割)
 nnoremap ss :<C-u>sp<CR>
 " 画面分割(横分割)
 nnoremap sv :<C-u>vs<CR>
 nnoremap sN :<C-u>bn<CR>
 nnoremap sP :<C-u>bp<CR>
-nnoremap st :<C-u>tabnew<CR>:<C-u>UniteWithBufferDir -buffer-name=files file_mru file buffer bookmark<CR>
+nnoremap st :<C-u>tabnew<CR>:<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-name=files file_mru file buffer bookmark<CR>
 " タブ一覧
-nnoremap sT :<C-u>Unite tab<CR>
-nnoremap sb :<C-u>Unite buffer_tab -buffer-name=file<CR>
-nnoremap sB :<C-u>Unite buffer -buffer-name=file<CR>
+nnoremap sT :<C-u>Unite tab -direction=botright -auto-resize<CR>
+nnoremap sb :<C-u>Unite buffer_tab -direction=botright -auto-resize -buffer-name=file<CR>
+nnoremap sB :<C-u>Unite buffer -direction=botright -auto-resize -buffer-name=file<CR>
 " ファイル一覧
-nnoremap sf :<C-u>UniteWithBufferDir -buffer-name=files file<CR>
+nnoremap sf :<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-name=files file<CR>
 " レジスタ一覧
-nnoremap sr :<C-u>Unite -buffer-name=register register<CR>
+nnoremap sr :<C-u>Unite -direction=botright -auto-resize -buffer-name=register register<CR>
 " 最近使用したファイル一覧
-nnoremap sm :<C-u>Unite file_mru<CR>
+nnoremap sm :<C-u>Unite file_mru -direction=botright -auto-resize<CR>
  " 全部乗せ
-nnoremap sa :<C-u>UniteWithBufferDir -buffer-name=files file_mru file buffer bookmark<CR>
+nnoremap sa :<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-name=files file_mru file buffer bookmark<CR>
 " ブックマーク一覧
-nnoremap <silent> <Space>c :<C-u>Unite bookmark<CR>
+nnoremap <silent> <Space>c :<C-u>Unite -direction=botright -auto-resize bookmark<CR>
 " ブックマークに追加
 nnoremap <silent> <Space>a :<C-u>UniteBookmarkAdd<CR>
 " UniteBookMarkAdd で追加したディレクトリを Unite bookmark で開くときのアクションのデフォルトを Vimfiler に
@@ -194,36 +192,36 @@ function! s:unite_my_settings()
     imap <silent><buffer> <ESC><ESC> <ESC>q
 endfunction
 
-" FZF 起動
-nnoremap <silent> <Space>o :FZF .<CR>
-
 
 "=============================================
 " unite-grep 設定
 "=============================================
-" unite-grepのバックエンドをagに切り替える
-" http://qiita.com/items/c8962f9325a5433dc50d
+" unite-grepのキーマップ
+" grep検索
+" ディレクトリを指定して ag 検索
+nnoremap <silent> <Space>dg :<C-u>Unite grep -direction=botright -auto-resize -buffer-name=search-buffer<CR>
+" カーソル位置の単語を ag 検索
+nnoremap <silent> <Space>g :<C-u>Unite grep:. -direction=botright -auto-resize -buffer-name=search-buffer<CR><C-R><C-W><CR>
+" ビジュアルモードでは、選択した文字列をunite-grep
+vnoremap <silent> <Space>g y:Unite grep:.:-iRn:<C-R>=escape(@", '\\.*$^[]')<CR><CR>
+" grep検索結果の再呼出
+nnoremap <silent> <Space>r :<C-u>UniteResume search-buffer -direction=botright -auto-resize<CR>
 " 大文字小文字を区別しない
 let g:unite_enable_ignore_case = 1
 let g:unite_enable_smart_case = 1
-" unite-grepのキーマップ
-" grep検索
-" ディレクトリを指定してgrep検索
-nnoremap <silent> ,dg  :<C-u>Unite grep -buffer-name=search-buffer<CR>
-" カーソル位置の単語をgrep検索
-nnoremap <silent> ,g :<C-u>Unite grep:. -buffer-name=search-buffer<CR><C-R><C-W><CR>
-" ビジュアルモードでは、選択した文字列をunite-grep
-vnoremap ,g y:Unite grep:.:-iRn:<C-R>=escape(@", '\\.*$^[]')<CR><CR>
-" grep検索結果の再呼出
-nnoremap <silent> ,r  :<C-u>UniteResume search-buffer<CR>
 " unite grep に ag(The Silver Searcher) を使う
+" http://qiita.com/items/c8962f9325a5433dc50d
 if executable('ag')
   let g:unite_source_grep_command = 'ag'
+  " let g:unite_source_grep_default_opts = '--nogroup --nocolor --column --hidden'
   let g:unite_source_grep_default_opts = '--nogroup --nocolor --column'
   let g:unite_source_grep_recursive_opt = ''
   " let g:unite_source_grep_max_candidates = 200
 endif
 
+
+" FZF 起動
+nnoremap <silent> <Space>o :FZF .<CR>
 
 
 "=============================================

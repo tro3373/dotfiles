@@ -12,9 +12,17 @@ if &term == 'screen-256color'
 endif
 
 " シンタックスハイライトを有効にする
-syntax on
+syntax enable
 
-" 起動時に適用するカラースキーム
+" Molokai
 " colorscheme molokai
+
+" Solarized
+" let g:solarized_termcolors=256
+" let g:solarized_termtrans=1
+" set background=dark
+" colorscheme solarized
+
+" TomorrowNight
 colorscheme Tomorrow-Night
 

@@ -68,6 +68,25 @@ alias diff="diff -Nru"
 if type gomi > /dev/null 2>&1; then
     alias gm="gomi"
 fi
+# --------------------------------------------------------
+# ag 設定
+# --------------------------------------------------------
+if type ag > /dev/null 2>&1; then
+    # Smart Case による検索を有効に設定する
+    alias ag='ag -S'
+    alias agh='ag --hidden'
+    # --------------------------------------------------------
+    # fzf 設定
+    # --------------------------------------------------------
+    if type fzf > /dev/null 2>&1; then
+        # Setting ag as the default source for fzf
+        # 隠しファイルが検索できない....
+        export FZF_DEFAULT_COMMAND='ag -g ""'
+        # To apply the command to CTRL-T as well
+        export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+    fi
+fi
+
 
 ##############################################
 # functions
