@@ -29,6 +29,8 @@ if has('vim_starting')
   NeoBundle 'sudo.vim'                            " sudo
   NeoBundle 'scrooloose/nerdtree'                 " NERDTree tree view
   NeoBundle 'nathanaelkane/vim-indent-guides'     " indent guide
+  NeoBundle 'kana/vim-submode'                    " vim-submode(キーマップ plugin)
+
 
   " TODO 勉強中 =======
   " http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
@@ -43,6 +45,8 @@ if has('vim_starting')
   " NeoBundle 'Shougo/unite-ssh'
   " NeoBundle 'thinca/vim-quickrun'                 " 現在のファイルを実行して quickfix に表示
   " NeoBundle 'Shougo/neosnippet'                   " Ctrl+k でスニペットを用意
+  NeoBundle 'airblade/vim-gitgutter'              " Shows a git diff in the gutter!!!!!
+  NeoBundle 'tpope/vim-fugitive'                  " Git wrapper so awesome
   " TODO 勉強中 =======
 
   " Unite関連
@@ -59,20 +63,22 @@ if has('vim_starting')
               \    },
               \ }
 
-  " vim-submode
-  NeoBundle 'kana/vim-submode'                    " keymap
-
   " カラースキーム
   NeoBundle 'altercation/vim-colors-solarized'    " Solarized
-  NeoBundle 'tomasr/molokai'                      " molokai
-  NeoBundle 'w0ng/vim-hybrid'                     " hybrid
+  " NeoBundle 'tomasr/molokai'                      " molokai
+  " NeoBundle 'w0ng/vim-hybrid'                     " hybrid
   NeoBundle 'chriskempson/vim-tomorrow-theme'     " tomorrow
 
-  "" powerline
-  "NeoBundle 'alpaca-tc/alpaca_powertabline'
-  "" NeoBundle 'https://github.com/Lokaltog/powerline.git'
-  "NeoBundle 'Lokaltog/powerline', { 'rtp' : 'powerline/bindings/vim'}
-  "NeoBundle 'Lokaltog/powerline-fontpatcher'
+  "" Powerline
+  " ==> Older Powerline source.
+  " NeoBundle 'alpaca-tc/alpaca_powertabline'
+  " NeoBundle 'Lokaltog/powerline', { 'rtp' : 'powerline/bindings/vim'}
+  " NeoBundle 'Lokaltog/powerline-fontpatcher'
+  " ==> The Newer powerline source.
+  " NeoBundle 'powerline/powerline', {'rtp': 'powerline/bindings/vim/'}
+
+  "" airline
+  NeoBundle 'bling/vim-airline'
 
   " ############################################################# ここまで
   call neobundle#end()

@@ -22,6 +22,10 @@ setconfig() {
         dvexec "cd \"$workdir\""
         dvexec git clone https://github.com/seebi/dircolors-solarized.git
     fi
+    if [ "$OS" = "mac" ] && [ ! -e "$workdir/solarized.git" ]; then
+        dvexec "cd \"$workdir\""
+        dvexec git clone https://github.com/tomislav/osx-terminal.app-colors-solarized solarized.git
+    fi
     # setcolortheme=dircolors.256dark
     setcolortheme=dircolors.ansi-dark
     # setcolortheme=dircolors.ansi-light

@@ -13,4 +13,6 @@ set langmenu=ja_jp.utf-8
 source $VIMRUNTIME/menu.vim
 
 " colorscheme molokai
-colorscheme Tomorrow-Night
+" colorscheme Tomorrow-Night
+colorscheme solarized
+

@@ -13,6 +13,8 @@ nnoremap j gj
 nnoremap k gk
 nnoremap gj j
 nnoremap gk k
+nnoremap n nzz
+nnoremap N Nzz
 " <Space>h で先頭、<Space>l で行末へ
 noremap <Space>h  ^
 noremap <Space>l  $
@@ -21,7 +23,7 @@ noremap <Space>l  $
 " 改行抜きで一行クリップボードにコピー
 nnoremap <Space>y 0v$h"+y
 " ビジュアルモード選択した部分を*で検索
-vnoremap * "zy:let @/ = @z<CR>n
+vnoremap * "zy:let @/ = @z<CR>nzz
 " カーソルの下の単語をヤンクした文字列で置換
 nnoremap <silent> ciy ciw<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 nnoremap <silent> cy   ce<C-r>0<ESC>:let@/=@1<CR>:noh<CR>

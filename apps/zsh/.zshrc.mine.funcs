@@ -5,7 +5,8 @@ alias vi=vim
 case "${OSTYPE}" in
     # for MAC-OS
     darwin*)
-        alias ls="ls -G -w"
+        #alias ls="ls -G -w"
+        alias ls='gls --color=auto'
         alias xcode='open -a Xcode'         # コマンドラインからXcode起動
         alias gvim='open -a MacVim'         # コマンドラインからMacVim起動
 
