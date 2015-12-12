@@ -215,14 +215,18 @@ let g:unite_enable_smart_case = 1
 " http://qiita.com/items/c8962f9325a5433dc50d
 if executable('ag')
   let g:unite_source_grep_command = 'ag'
-  " let g:unite_source_grep_default_opts = '--nogroup --nocolor --column --hidden'
-  let g:unite_source_grep_default_opts = '--nogroup --nocolor --column'
+  let g:unite_source_grep_default_opts = '--nogroup --nocolor --column --hidden'
+  " let g:unite_source_grep_default_opts = '--nogroup --nocolor --column'
   let g:unite_source_grep_recursive_opt = ''
   " let g:unite_source_grep_max_candidates = 200
 endif
 
 
 " FZF 起動
+" option に関しては、以下が詳しい
+"   https://github.com/junegunn/fzf/wiki
+"   http://koturn.hatenablog.com/entry/2015/11/26/000000
+" 隠しファイルが検索できていない。。。
 nnoremap <silent> <Space>o :FZF .<CR>
 
 

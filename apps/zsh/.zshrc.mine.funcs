@@ -81,8 +81,7 @@ if type ag > /dev/null 2>&1; then
     # --------------------------------------------------------
     if type fzf > /dev/null 2>&1; then
         # Setting ag as the default source for fzf
-        # 隠しファイルが検索できない....
-        export FZF_DEFAULT_COMMAND='ag -g ""'
+        export FZF_DEFAULT_COMMAND='ag --hidden -g ""'
         # To apply the command to CTRL-T as well
         export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
     fi
