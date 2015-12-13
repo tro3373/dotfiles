@@ -24,6 +24,9 @@ setconfig() {
         dvexec sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev
     elif [ "$OS" = "redhat" ]; then
         dvexec sudo yum install -y gcc gcc-c++ make git openssl-devel bzip2-devel zlib-devel readline-devel sqlite-devel
+    elif [ "$OSTYPE" = "cygwin" ]; then
+        dvexec apt-cyg install patch
+    fi
     fi
 
     # anyenv install
