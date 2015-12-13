@@ -15,9 +15,16 @@ nnoremap gj j
 nnoremap gk k
 nnoremap n nzz
 nnoremap N Nzz
+nnoremap S *zz
+nnoremap * *zz
+nnoremap g* g*zz
+nnoremap g# g#zz
 " <Space>h で先頭、<Space>l で行末へ
 noremap <Space>h  ^
 noremap <Space>l  $
+" Goto file under cursor
+noremap gf gF
+noremap gF gf
 
 
 " 改行抜きで一行クリップボードにコピー
