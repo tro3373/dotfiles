@@ -8,13 +8,14 @@
 - Vim bookmark hack.
 - Vim plugin hack.
     - Vim unite.ssh?
-    - vim.plug?
+    - !Done! vim.plug?
 - Remain Tmux ssh session name in below powerline.
 - !Done! Color Scheme Solorized for vim.
     - Shougo color? is cool.
 - Color Scheme Solorized for tmux.
 - Color Scheme Solorized for zsh.
-- Color Scheme Solorized for powerline.
+- !Done! Color Scheme Solorized for powerline.
+    - airline is installed.
     - Simple Powerline settings.
 - setup test in docker(ubuntu,centos,mac?)
 - babarot hack

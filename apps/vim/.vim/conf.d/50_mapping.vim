@@ -38,11 +38,12 @@ vnoremap <silent> cy   c<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 
 
 " tabでインデント、Shift+tabでアンインデント
-inoremap <S-Tab> <C-O><LT><LT>
-nnoremap <Tab> >>
-nnoremap <S-Tab> <LT><LT>
-vnoremap <Tab> >
-vnoremap <S-Tab> <LT>
+" <Tab> mapping で Ctrl + I が聞かなくなる為無効化
+" inoremap <S-Tab> <C-O><LT><LT>
+" nnoremap <Tab> >>
+" nnoremap <S-Tab> <LT><LT>
+" vnoremap <Tab> >
+" vnoremap <S-Tab> <LT>
 " 現在行をコメント化 (/* */)
 map qq 0i/* <ESC>$a */<ESC>
 " 現在行をコメント化
