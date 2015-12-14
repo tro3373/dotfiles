@@ -49,6 +49,10 @@ map qq 0i/* <ESC>$a */<ESC>
 " 現在行をコメント化
 map s/ 0i// <ESC>
 map s# 0i# <ESC>
+vmap # <c-V>0I#<esc>
+vmap C :s/^#//<cr>
+vmap // <C-V>0I//<Esc>
+vmap c :s/^\/\///<CR>:noh<cr>K
 " 日付の入力補完
 "inoremap <expr> sdf strftime('%Y-%m-%dT%H:%M:%S')
 "inoremap <expr> sdd strftime('%Y-%m-%d')
@@ -171,6 +175,9 @@ nnoremap ss :<C-u>sp<CR>
 nnoremap sv :<C-u>vs<CR>
 nnoremap sN :<C-u>bn<CR>
 nnoremap sP :<C-u>bp<CR>
+" タブで現在のファイルを開いて Unite 全部検索
+" nnoremap st :<C-u>tabnew %:p<CR>:<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-name=files file_mru file buffer bookmark<CR>
+" タブで Unite 全検索
 nnoremap st :<C-u>tabnew<CR>:<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-name=files file_mru file buffer bookmark<CR>
 " タブ一覧
 nnoremap sT :<C-u>Unite tab -direction=botright -auto-resize<CR>
