@@ -27,7 +27,6 @@ setconfig() {
     elif [ "$OSTYPE" = "cygwin" ]; then
         dvexec apt-cyg install patch
     fi
-    fi
 
     # anyenv install
     if [ ! -d "${HOME}/.anyenv" ]; then
