@@ -92,7 +92,7 @@ readlink_path() {
 # $* ディレクトリ配下の dot file をHOMEへリンクを作成する
 make_link_dot2home() {
     dir="$*"
-    for file in `cd "$dir" && ls -a | grep -v ^.git$ | grep -v ^.gitignore$ | grep -v ^.gitkeep$ | egrep '^\.[^.]+'`; do
+    for file in `cd "$dir" && /bin/ls -a | grep -v ^.git$ | grep -v ^.gitignore$ | grep -v ^.gitkeep$ | egrep '^\.[^.]+'`; do
         make_link_bkupable "$dir/$file" "${HOME}/$file"
     done
 }

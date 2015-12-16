@@ -7,7 +7,7 @@ import socket
 PORT_DEFAULT = 9
 IPADDR_DEFAULT = '192.168.0.255'
 _USAGE = """Usage:
-  python wol.py [options] <MAC address>...
+  python wol [options] <MAC address>...
 
 Options:
   -p, --port <port>

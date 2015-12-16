@@ -34,15 +34,16 @@ call plug#begin('~/.vim/plugged')
   Plug 'Shougo/unite.vim'                    " ユーザインタフェース統合
   Plug 'Shougo/neomru.vim'                   " 最近使用したファイルの一覧管理
   Plug 'ujihisa/unite-colorscheme'           " カラースキーム変更
-  Plug 'Shougo/vimproc.vim', {
-              \ 'build' : {
-              \     'windows' : 'tools\\update-dll-mingw',
-              \     'cygwin' : 'make -f make_cygwin.mak',
-              \     'mac' : 'make',
-              \     'linux' : 'make',
-              \     'unix' : 'gmake',
-              \    },
-              \ }
+  Plug 'Shougo/vimproc.vim', { 'do': 'make' }
+  " Plug 'Shougo/vimproc.vim', {
+  "             \ 'build' : {
+  "             \     'windows' : 'tools\\update-dll-mingw',
+  "             \     'cygwin' : 'make -f make_cygwin.mak',
+  "             \     'mac' : 'make',
+  "             \     'linux' : 'make',
+  "             \     'unix' : 'gmake',
+  "             \    },
+  "             \ }
 
   " カラースキーム
   Plug 'altercation/vim-colors-solarized'    " Solarized

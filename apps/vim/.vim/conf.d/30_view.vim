@@ -69,11 +69,11 @@ set noshowmode
 " カラーテーマ設定
 " ==> Solarized
 set background=dark
-"" let g:solarized_termcolors=256
-" let g:solarized_termtrans=1
-" colorscheme solarized
+" let g:solarized_termcolors=256
+let g:solarized_termtrans=1
+colorscheme solarized
 " ==> TomorrowNight
-colorscheme Tomorrow-Night
+" colorscheme Tomorrow-Night
 " ==> Molokai
 " colorscheme molokai
 

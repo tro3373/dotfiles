@@ -241,7 +241,6 @@ endif
 " option に関しては、以下が詳しい
 "   https://github.com/junegunn/fzf/wiki
 "   http://koturn.hatenablog.com/entry/2015/11/26/000000
-" 隠しファイルが検索できていない。。。
 nnoremap <silent> <Space>o :FZF .<CR>
 
 

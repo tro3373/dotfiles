@@ -301,6 +301,40 @@ fshow() {
     done < <(sed '1d;s/^[^a-z0-9]*//;/^$/d' <<< "$out" | awk '{print $1}')
   done
 }
+#
+# enhancd
+#
+#setup_enhancd() {
+#    local enhancd_path="~/dotfiles/apps/zsh/tmp/enhancd"
+#    if [ ! -e ${enhancd_path} ]; then
+#        return
+#    fi
+#    export ENHANCD_FILTER=fzf:peco:gof
+#    source ${enhancd_path}/enhancd.sh
+#}
+#setup_enhancd
+
+#
+# zplug
+# http://qiita.com/b4b4r07/items/cd326cd31e01955b788b
+#
+if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
+    source ~/.zplug/zplug
+    # fzf-tmux が動かなくなるので無効化
+#    zplug "b4b4r07/enhancd", of:enhancd.sh
+    # check コマンドで未インストール項目があるかどうか verbose にチェックし
+    # false のとき（つまり未インストール項目がある）y/N プロンプトで
+    # インストールする
+    if ! zplug check --verbose; then
+        printf "Install? [y/N]: "
+        if read -q; then
+            echo; zplug install
+        fi
+    fi
+    # プラグインを読み込み、コマンドにパスを通す
+    zplug load --verbose
+fi
+
 
 #
 # available check
@@ -323,41 +357,6 @@ available () {
     return 1
 }
 #available $FILTER
-
-#
-# enhancd
-#
-#setup_enhancd() {
-#    local enhancd_path="~/dotfiles/apps/zsh/tmp/enhancd"
-#    if [ ! -e ${enhancd_path} ]; then
-#        return
-#    fi
-#    export ENHANCD_FILTER=fzf:peco:gof
-#    source ${enhancd_path}/enhancd.sh
-#}
-#setup_enhancd
-
-#
-# zplug
-# http://qiita.com/b4b4r07/items/cd326cd31e01955b788b
-#
-if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
-    source ~/.zplug/zplug
-    # at: はブランチとタグをサポートしている
-    # zplug "b4b4r07/enhancd", at:v1
-    zplug "b4b4r07/enhancd", of:enhancd.sh
-    # check コマンドで未インストール項目があるかどうか verbose にチェックし
-    # false のとき（つまり未インストール項目がある）y/N プロンプトで
-    # インストールする
-    if ! zplug check --verbose; then
-        printf "Install? [y/N]: "
-        if read -q; then
-            echo; zplug install
-        fi
-    fi
-    # プラグインを読み込み、コマンドにパスを通す
-    zplug load --verbose
-fi
 
 #
 # tmux start settings

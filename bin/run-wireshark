@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if ! type wireshark >/dev/null 2>&1; then
+    echo "wireshark is not installed." 1>&2
+    exit 1
+fi
+export LIBOVERLAY_SCROLLBAR=0
+wireshark
+

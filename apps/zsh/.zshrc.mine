@@ -313,6 +313,9 @@ add_path ~/Library/Android/sdk/platform-tools
 # .local/bin
 add_path ${HOME}/.local/bin
 
+# ~/dotfiles/bin
+add_path ${HOME}/dotfiles/bin
+
 # ~/bin
 add_path ${HOME}/bin
 
