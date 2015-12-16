@@ -6,7 +6,7 @@ setconfig() {
     if [ -e $cmd_pyenv ]; then
         if $cmd_pyenv version |grep "2.7.10" > /dev/null 2>&1; then
             if [ -e ~/.local/lib/python2.7/site-packages/powerline ]; then
-                return
+                return 0
             fi
         fi
     fi
