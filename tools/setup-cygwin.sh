@@ -21,3 +21,9 @@ if [ ! -e /etc/passwd ]; then
     # edit login shell to /usr/bin/zsh
     echo "install zsh and edit /etc/passwd for change login shell."
 fi
+
+if [ ! -e ~/dotfiles/apps/zsh/tmp ]; then
+    mkdir -p ~/dotfiles/apps/zsh/tmp
+fi
+git clone https://github.com/mavnn/mintty-colors-solarized.git ~/dotfiles/apps/zsh/tmp/mintty-colors-solarized
+cat ~/dotfiles/apps/zsh/tmp/mintty-colors-solarized/.minttyrc.dark >> ~/.minttyrc
