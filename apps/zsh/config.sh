@@ -18,11 +18,6 @@ setconfig() {
     if [ ! -e $workdir ]; then
         dvexec "mkdir -p \"$workdir\""
     fi
-    # https://github.com/b4b4r07/enhancd
-    #if [ ! -e "$workdir/enhancd" ]; then
-    #    dvexec "cd \"$workdir\""
-    #    dvexec git clone https://github.com/b4b4r07/enhancd
-    #fi
     if [ ! -e "$workdir/dircolors-solarized" ]; then
         dvexec "cd \"$workdir\""
         dvexec git clone https://github.com/seebi/dircolors-solarized.git
@@ -31,6 +26,12 @@ setconfig() {
         dvexec "cd \"$workdir\""
         dvexec git clone https://github.com/tomislav/osx-terminal.app-colors-solarized solarized.git
     fi
+    if [ ! -d ~/.zplug ] && [ ! -L ~/.zplug ]; then
+        dvexec git clone https://github.com/b4b4r07/zplug ~/.zplug
+        dvexec source ~/.zplug/zplug
+        dvexec zplug update --self
+    fi
+    local setcolortheme
     # setcolortheme=dircolors.256dark
     setcolortheme=dircolors.ansi-dark
     # setcolortheme=dircolors.ansi-light
