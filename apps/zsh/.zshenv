@@ -1,9 +1,9 @@
 if [ -z "$DOTPATH" ]; then
     _get_dotpath() {
-        local d
-        d="${0:A:h}"
-        if [[ $d =~ dotfiles$ ]]; then
-            echo "$d"
+        if [[ -d ~/dotfiles ]]; then
+            echo "$(cd ~/dotfiles && pwd)"
+        elif [[ -d ~/.dotfiles ]]; then
+            echo "$(cd ~/.dotfiles && pwd)"
         else
             return 1
         fi
@@ -13,13 +13,13 @@ fi
 #[ -f $DOTPATH/etc/install ] && . $DOTPATH/etc/install
 
 # LANGUAGE must be set by en_US
-# export LANGUAGE="ja_JP.UTF-8"
-# case ${UID} in
-# 0)
-#     LANGUAGE=C
-#     ;;
-# esac
-export LANGUAGE="en_US.UTF-8"
+# export LANGUAGE="en_US.UTF-8"
+export LANGUAGE="ja_JP.UTF-8"
+case ${UID} in
+0)
+    LANGUAGE=C
+    ;;
+esac
 export LANG="${LANGUAGE}"
 export LC_ALL="${LANGUAGE}"
 export LC_CTYPE="${LANGUAGE}"
@@ -63,11 +63,6 @@ export CORRECT_IGNORE_FILE='.*'
 export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 export WORDCHARS='*?.[]~&;!#$%^(){}<>'
 
-# History file and its size
-export HISTFILE=~/.zsh_history
-export HISTSIZE=1000000
-export SAVEHIST=1000000
-
 # fzf - command-line fuzzy finder (https://github.com/junegunn/fzf)
 export FZF_DEFAULT_OPTS="--extended --ansi --multi"
 
@@ -76,9 +71,9 @@ export FZF_DEFAULT_OPTS="--extended --ansi --multi"
 
 # History
 # History file
-export HISTFILE=~/.zsh_history
+export HISTFILE=${HOME}/.zsh_history
 # History size in memory
-export HISTSIZE=10000
+export HISTSIZE=50000
 # The number of histsize
 export SAVEHIST=1000000
 # The size of asking history

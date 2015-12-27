@@ -28,8 +28,8 @@ setconfig() {
     fi
     if [ ! -d ~/.zplug ] && [ ! -L ~/.zplug ]; then
         dvexec git clone https://github.com/b4b4r07/zplug ~/.zplug
-        dvexec source ~/.zplug/zplug
-        dvexec zplug update --self
+#        dvexec source ~/.zplug/zplug
+#        dvexec zplug update --self
     fi
     local setcolortheme
     # setcolortheme=dircolors.256dark

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+svn diff | awk '/^Index/ {print $NF}'
+

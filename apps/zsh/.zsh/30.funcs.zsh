@@ -28,23 +28,23 @@ function peco-pkill() {
 }
 alias pk="peco-pkill"
 
-#
-# historyからの絞り込み実行
-# By http://k0kubun.hatenablog.com/entry/2014/07/06/033336
-#
-function peco-select-history() {
-    typeset tac
-    if which tac > /dev/null; then
-        tac=tac
-    else
-        tac='tail -r'
-    fi
-    BUFFER=$(fc -l -n 1 | eval $tac | peco --query "$LBUFFER")
-    CURSOR=$#BUFFER
-    zle redisplay
-}
-zle -N peco-select-history
-bindkey '^r' peco-select-history
+##
+## historyからの絞り込み実行
+## By http://k0kubun.hatenablog.com/entry/2014/07/06/033336
+##
+#function peco-select-history() {
+#    typeset tac
+#    if which tac > /dev/null; then
+#        tac=tac
+#    else
+#        tac='tail -r'
+#    fi
+#    BUFFER=$(fc -l -n 1 | eval $tac | peco --query "$LBUFFER")
+#    CURSOR=$#BUFFER
+#    zle redisplay
+#}
+#zle -N peco-select-history
+#bindkey '^r' peco-select-history
 
 #
 # git add fzf select
@@ -70,39 +70,39 @@ zle -N fzf-select-gitadd
 #bindkey '^g^a' fzf-select-gitadd
 
 
-#
-# 検索してCD
-#
-function peco-findcd() {
-    # 何階層下までリスティングするか
-    local depth="5"
-    # .で始まるディレクトリは除外
-    local selected_dir="$(find . -maxdepth ${depth} -type d ! -path "*/.*" 2>/dev/null | peco)"
-    if [ -d "$selected_dir" ]; then
-        BUFFER="cd \"${selected_dir}\""
-        CURSOR=$#BUFFER
-        zle accept-line
-    fi
-    zle clear-screen
- }
-zle -N peco-findcd
-bindkey '^k' peco-findcd
+##
+## 検索してCD
+##
+#function peco-findcd() {
+#    # 何階層下までリスティングするか
+#    local depth="5"
+#    # .で始まるディレクトリは除外
+#    local selected_dir="$(find . -maxdepth ${depth} -type d ! -path "*/.*" 2>/dev/null | peco)"
+#    if [ -d "$selected_dir" ]; then
+#        BUFFER="cd \"${selected_dir}\""
+#        CURSOR=$#BUFFER
+#        zle accept-line
+#    fi
+#    zle clear-screen
+# }
+#zle -N peco-findcd
+#bindkey '^k' peco-findcd
 
-#
-# Find した結果見つかったファイルをVimで開く
-#
-function peco_findvim() {
-    # 何階層下までリスティングするか
-    local depth="5"
-    # .で始まるディレクトリは除外
-#    local file="$(find . -maxdepth ${depth} -type f ! -path "*/.*" 2>/dev/null | peco)"
-#    [ ! "$file" = "" ] && vim "$file"
-    BUFFER=$(find . -maxdepth ${depth} -type f ! -path "*/.*" 2>/dev/null | peco --query "$LBUFFER")
-    CURSOR=$#BUFFER
-    zle redisplay
- }
-zle -N peco_findvim
-#bindkey '^g' peco_findvim
+##
+## Find した結果見つかったファイルをVimで開く
+##
+#function peco_findvim() {
+#    # 何階層下までリスティングするか
+#    local depth="5"
+#    # .で始まるディレクトリは除外
+##    local file="$(find . -maxdepth ${depth} -type f ! -path "*/.*" 2>/dev/null | peco)"
+##    [ ! "$file" = "" ] && vim "$file"
+#    BUFFER=$(find . -maxdepth ${depth} -type f ! -path "*/.*" 2>/dev/null | peco --query "$LBUFFER")
+#    CURSOR=$#BUFFER
+#    zle redisplay
+# }
+#zle -N peco_findvim
+##bindkey '^g' peco_findvim
 
 #
 # 'cd ..' する
@@ -160,27 +160,18 @@ _bd () {
 }
 compctl -V directories -K _bd bd
 
-#
-# Markdown 検索
-#
-function find_vim_markdown() {
-    local markdown_dir="$HOME/md"
-    if [ ! -e "$markdown_dir" ]; then
-        return
-    fi
-    local file="$(find ~/md -name "*.md" 2>/dev/null | peco)"
-    [ ! "$file" = "" ] && vim "$file"
-}
-alias fvm="find_vim_markdown"
-
-
-#
-# SVN 変更一覧表示
-#
-function svndifflist() {
-    svn diff | awk '/^Index/ {print $NF}'
-}
-alias svndl="svndifflist"
+##
+## Markdown 検索
+##
+#function find_vim_markdown() {
+#    local markdown_dir="$HOME/md"
+#    if [ ! -e "$markdown_dir" ]; then
+#        return
+#    fi
+#    local file="$(find ~/md -name "*.md" 2>/dev/null | peco)"
+#    [ ! "$file" = "" ] && vim "$file"
+#}
+#alias fvm="find_vim_markdown"
 
 #
 # ssh 時のWindow名を元に戻す
@@ -235,19 +226,6 @@ fshow() {
     done < <(sed '1d;s/^[^a-z0-9]*//;/^$/d' <<< "$out" | awk '{print $1}')
   done
 }
-#
-# enhancd
-#
-#setup_enhancd() {
-#    local enhancd_path="~/dotfiles/apps/zsh/tmp/enhancd"
-#    if [ ! -e ${enhancd_path} ]; then
-#        return
-#    fi
-#    export ENHANCD_FILTER=fzf:peco:gof
-#    source ${enhancd_path}/enhancd.sh
-#}
-#setup_enhancd
-
 
 #
 # available check

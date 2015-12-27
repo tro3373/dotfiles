@@ -66,9 +66,6 @@ alias pod='nocorrect pod'
 alias where="command -v"
 alias diff="diff -Nru"
 #alias j="jobs -l"
-if type gomi > /dev/null 2>&1; then
-    alias gm="gomi"
-fi
 # --------------------------------------------------------
 # ag 設定
 # --------------------------------------------------------

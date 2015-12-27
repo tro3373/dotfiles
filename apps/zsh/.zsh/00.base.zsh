@@ -31,7 +31,8 @@ case ${UID} in
     PROMPT2=$'%{\e[38;5;033m%}%_> %{\e[m%} '
     SPROMPT="%{${fg[red]}%}%r is correct? [n,y,a,e]:%{${reset_color}%} "
     [ -n "${REMOTEHOST}${SSH_CONNECTION}" ] &&
-        PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*} | tr '[a-z]' '[A-Z]') ${PROMPT}"
+        #PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*} | tr '[a-z]' '[A-Z]') ${PROMPT}"
+        PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*}) ${PROMPT}"
     ;;
 esac
 
@@ -83,10 +84,6 @@ bindkey "\e[Z" reverse-menu-complete
 
 
 ## コマンド履歴の設定
-#
-HISTFILE=${HOME}/.zsh_history
-HISTSIZE=50000
-SAVEHIST=50000
 setopt hist_ignore_dups     # 重複したコマンドは履歴保存しない
 setopt share_history        # コマンド履歴ファイルを複数のzshプロセス間で共有
 
@@ -178,134 +175,4 @@ esac
 # --------------------------------------------------------
 #zshpowerline=${HOME}/.local/lib/python2.7/site-packages/powerline/bindings/zsh/powerline.zsh
 #[ -f ${zshpowerline} ] && source ${zshpowerline}
-
-# --------------------------------------------------------
-# zshが終了するときに自動的にssh-agentを終了させる
-# --------------------------------------------------------
-#TRAPEXIT() {
-#    ssh-agent -k
-#}
-
-## PATHの設定
-#
-function is_exist_path() {
-    echo "$PATH:" |grep "$@:" > /dev/null 2>&1
-    return $?
-}
-# パス追加(追加パスは前から重複を無くして追加)
-#
-function add_path() {
-    targetPath="$@"
-    #echo "==============> Add start!!!!!"
-    #echo "targetPath="$targetPath
-    if [ ! -f ${targetPath} ] &&
-        [ ! -d ${targetPath} ] &&
-        [ ! -L ${targetPath} ]; then
-        # 存在しないパスの場合無視する.
-        #echo "$targetPath is not exist. return."
-        return
-    fi
-    # 既にパスに追加されている場合は削除する.
-    if is_exist_path $targetPath; then
-        #echo "$targetPath is already pathed. remove it."
-        # $targetPath を $PATH から削除.
-        #PATH=${PATH#"$targetPath:"}
-        PATH=`echo $PATH |sed -e "s|$targetPath||g" |sed -e 's/::/:/g'`
-    fi
-    #echo "$targetPath is will be pathed."
-    export PATH=$targetPath:$PATH
-}
-
-# --------------------------------------------------------
-# anyenv
-# --------------------------------------------------------
-if [ -d ${HOME}/.anyenv ] ; then
-    add_path ${HOME}/.anyenv/bin
-#    export PATH="$HOME/.anyenv/bin:$PATH"
-    eval "$(anyenv init -)"
-#     for D in `ls $HOME/.anyenv/envs`
-#     do
-#         export PATH="$HOME/.anyenv/envs/$D/shims:$PATH"
-#     done
-fi
-## --------------------------------------------------------
-## rbenv
-## --------------------------------------------------------
-#if [ -e ~/.rbenv ]; then
-#    export PATH="$HOME/.rbenv/bin:$PATH"
-#    eval "$(rbenv init -)"
-#fi
-## --------------------------------------------------------
-## nvm
-## --------------------------------------------------------
-#if [ -e ~/.nvm ]; then
-#    . ~/.nvm/nvm.sh
-#    nvm use v0.10.38
-#fi
-## --------------------------------------------------------
-## Python
-## --------------------------------------------------------
-#if [ "`which virtualenvwrapper.sh >/dev/null 2>&1; echo $?`" = "0" ]; then
-#    export WORKON_HOME=$HOME/.virtualenvs
-#    export PROJECT_HOME=$HOME/Devel
-#    source virtualenvwrapper.sh
-#fi
-# --------------------------------------------------------
-# Java
-# --------------------------------------------------------
-#javahome=~/bin/java/jdk1.6.0_45
-#javahome=~/bin/java/jdk1.8.0_05
-javahome=~/bin/java/jdk1.8.0_20
-if [ -e $javahome ]; then
-    export JAVA_HOME=`echo "$javahome"`
-    add_path ${JAVA_HOME}/bin
-fi
-# --------------------------------------------------------
-# Maven
-# --------------------------------------------------------
-# see http://blog.beaglesoft.net/?p=762
-# wget http://ftp.riken.jp/net/apache/maven/maven-3/3.3.3/binaries/apache-maven-3.3.3-bin.tar.gz
-# tar xvfpz apache-maven-3.3.3-bin.tar.gz
-mvnhome=~/bin/apache-maven-3.3.3
-if [ -e $mvnhome ]; then
-    export M2_HOME=$mvnhome
-    add_path ${M2_HOME}/bin
-fi
-
-# --------------------------------------------------------
-# For docker-machine etc.
-# --------------------------------------------------------
-add_path /opt/bin
-# For docker-machine settings.
-#if `which docker-machine > /dev/null 2>&1` &&
-#    [ -e $HOME/.docker/machine/machines/dev ]; then
-#    echo "# For start docker-machine name \"dev\" and docker env setting."
-#    echo "#  docker-mahine start dev"
-#    echo "#  docker-mahine env dev"
-#    echo "#  eval \"\$(docker-mahine env dev)\""
-#fi
-
-# --------------------------------------------------------
-# Added by the Heroku Toolbelt
-# --------------------------------------------------------
-add_path /usr/local/heroku/bin
-
-# --------------------------------------------------------
-# Android
-# --------------------------------------------------------
-# Android Studioでresponsがなくなる？
-# Ubuntu の設定
-# http://tools.android.com/knownissues/ibus
-#IBUS_ENABLE_SYNC_MODE=1 ibus-daemon -xrd
-# Android platform-tools for Mac.
-add_path ~/Library/Android/sdk/platform-tools
-
-# .local/bin
-add_path ${HOME}/.local/bin
-
-# ~/dotfiles/bin
-add_path ${HOME}/dotfiles/bin
-
-# ~/bin
-add_path ${HOME}/bin
 
