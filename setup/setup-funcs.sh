@@ -62,11 +62,11 @@ make_link() {
 # Dry run 実行用の関数定義
 dvexec() {
     cmd="$*"
-    if [ "$DRYRUN" = "0" ]; then
+    if [ "$dry_run" = "0" ]; then
         vexec $cmd
     else
         dry_vexec $cmd
-        DRYRUNCMD="$DRYRUNCMD\n Dummy Exec: $cmd"
+        dry_run_commoands="$dry_run_commoands\n Dummy Exec: $cmd"
     fi
 }
 
@@ -91,7 +91,7 @@ readlink_path() {
 
 # $* ディレクトリ配下の dot file をHOMEへリンクを作成する
 make_link_dot2home() {
-    dir="$*"
+    local dir="$*"
     for file in `cd "$dir" && /bin/ls -a | grep -v ^.git$ | grep -v ^.gitignore$ | grep -v ^.gitkeep$ | egrep '^\.[^.]+'`; do
         make_link_bkupable "$dir/$file" "${HOME}/$file"
     done
@@ -115,9 +115,9 @@ issamelink() {
 
 # $1のファイルを$2へリンクを作成する
 make_link_bkupable() {
-    src=$1
-    lnk=$2
-    need_backup=0
+    local src=$1
+    local lnk=$2
+    local need_backup=0
     log " make_link_bkupable Start lnk=$lnk src=$src"
     #if [ -e "${lnk}" ]; then
     if isexist "${lnk}"; then
@@ -127,8 +127,8 @@ make_link_bkupable() {
         if [ -L "${lnk}" ]; then
             # リンク
             # log "   @@@@@@ Link!"
-            fullpath_lnk="`readlink_path "${lnk}"`"
-            fullpath_src="`readlink_path "${src}"`"
+            local fullpath_lnk="`readlink_path "${lnk}"`"
+            local fullpath_src="`readlink_path "${src}"`"
             # log "    lnk:$lnk => fullpath_lnk=$fullpath_lnk"
             # log "    src:$src => fullpath_src=$fullpath_src"
             if ! issamelink "$fullpath_lnk" "$fullpath_src"; then
@@ -167,7 +167,7 @@ make_link_bkupable() {
 
 # $* のファイルを${DIR_BACKUP}に移動する
 bkup_orig_file() {
-    bkuptarget="$*"
+    local bkuptarget="$*"
     # バックアップ先のディレクトリがない場合は作成する
     if [ ! -e "${DIR_BACKUP}" ]; then
         dvexec "mkdir -p \"${DIR_BACKUP}\""
@@ -181,7 +181,7 @@ bkup_orig_file() {
 
 # 存在する場合のみ削除
 delifexist() {
-    rmtarget="$*"
+    local rmtarget="$*"
     if [ "$rmtarget" = "/" ]; then
         log "invalid rm path $rmtarget"
         return
@@ -264,23 +264,12 @@ setup() {
 
     # app ディレクトリ配下のディレクトリに対して、インストール処理を実行
     # mac/linux にかかわらず、実行される
-    # apps=`ls -1 $DIR_APP |grep -v '^_' |grep -v git`
-    # apps="git ctags curl tree global zsh tmux vim tig ssh peco fzf ag gomi zplug"
-    apps="git ctags curl tree global zsh tmux vim tig ssh ag"
-    for dir in $apps; do
-
-        # _ から始まらないディレクトリに対して実行
-
-        if [ ! -d $DIR_APP/$dir ]; then
-            # ディレクトリ以外は無視
-            continue
-        fi
-
+    for ((i = 0; i < ${#target_apps[@]}; i++)) {
         # ディレクトリ名＝アプリ名の前提
-        app=$dir
+        app=${target_apps[i]}
 
-        if [ ! "$INSTAPP" = "" ] && [ ! "$INSTAPP" = "$dir" ]; then
-            # アプリ指定の場合、指定アプリ以外は無視
+        if [ ! -d $DIR_APP/$app ]; then
+            # ディレクトリ以外は無視
             continue
         fi
 
@@ -290,7 +279,7 @@ setup() {
         initialize_funcs
 
         log "================================================"
-        log "===> $DIR_APP/$dir"
+        log "===> $DIR_APP/$app"
         whith_install=0
         if ! testcmd $app; then
             log "    => Not Installed..."
@@ -299,7 +288,7 @@ setup() {
 
         # デフォルトのインストールコマンド
         def_instcmd="$instcmd $app"
-        instshell=$DIR_APP/$dir/$FIL_CONF
+        instshell=$DIR_APP/$app/$FIL_CONF
         if [ -e "$instshell" ]; then
             # 個別インストール設定ファイルが存在する場合は、それを実行
             # shell を読み込み、install, setconfigメソッドをロード
@@ -309,9 +298,9 @@ setup() {
             # ここで定義しておけば良いことに気づいたので設定しておく
             # # source されるスクリプトを考慮した ファイルの存在するディレクトリ
             # script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE}}")"; pwd)"
-            script_dir=$DIR_APP/$dir
+            script_dir=$DIR_APP/$app
 
-            if [ "$whith_install" = "1" ] || [ "$TEST_INSCMD" = "1" ]; then
+            if [ "$whith_install" = "1" ] || [ "$force_install" = "1" ]; then
                 # インストールされていない場合は実行
                 # 読み込んだ install コマンドの実行
                 install
@@ -330,23 +319,20 @@ setup() {
                 dvexec $def_instcmd
             fi
         fi
-    done
+    }
 
-    # powerlineインストール処理を実行
-    powerlineconfig=$DIR_ROOT/powerline/$FIL_CONF
-    if [ "$EXE_POWERLINE" = "1" ] && [ -e "$powerlineconfig" ]; then
-        if [ "$INSTAPP" = "" ] || [ "$INSTAPP" = "powerline" ]; then
-            source $powerlineconfig
-            script_dir=$DIR_ROOT/powerline
-            # 読み込んだ setconfig コマンドの実行
-            log "================================================"
-            log "===> $powerlineconfig"
-            setconfig
-        fi
-    fi
+#    # powerlineインストール処理を実行
+#    powerlineconfig=$DIR_ROOT/powerline/$FIL_CONF
+#    if [ "$EXE_POWERLINE" = "1" ] && [ -e "$powerlineconfig" ]; then
+#        source $powerlineconfig
+#        script_dir=$DIR_ROOT/powerline
+#        # 読み込んだ setconfig コマンドの実行
+#        log "================================================"
+#        log "===> $powerlineconfig"
+#        setconfig
+#    fi
 
-    if [ "$DRYRUN" = "1" ]; then
-        log ""
+    if [ "$dry_run" = "1" ]; then
         log ""
         log ""
         log ""
@@ -354,10 +340,10 @@ setup() {
         log "==>  This is Dry-run mode."
         log "==>     Specify 'exec' option for execute."
         log "==>     Below commands will be execute."
-        logescape $DRYRUNCMD
+        logescape $dry_run_commoands
         log "===================================================="
     else
-        logescape $DRYRUNCMD
+        logescape $dry_run_commoands
         if [ ! "$BACKUP" = "" ]; then
             log "======================================>"
             log " Below files is backuped."
