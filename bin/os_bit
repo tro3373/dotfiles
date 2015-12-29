@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Get OS bit
+# 32bit : i686
+# 64bit : x86_64
+os_bit() {
+    echo $(uname -m);
+}
+os_bit

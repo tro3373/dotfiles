@@ -7,6 +7,8 @@ command! Editvimrc edit $MYVIMRC
 " .vimrcを再読み込みする
 command! Reloadvimrc source $MYVIMRC
 
+let mapleader = "\<Space>"
+
 " 表示上の行移動(エディタで表示されている行)であるgj,gkと、
 " 実際の行移動(エディタの表示行ではなく改行コードを意識した実際の行)であるj,kを入れ替え
 nnoremap j gj
@@ -74,8 +76,6 @@ map sz :set lcs=tab:>.,trail:_,extends:\<Enter>
 " 開いているファイルのディレクトリをリスティング
 map sd :e %:h<Enter>
 map qd :e %:h<Enter>
-" 開いているファイルのパスをコピー
-map sc :CopyFileName<Enter>
 " 開いているファイルのディレクトリをカレントにする
 map s\ :cd %:h<Enter><Enter>
 " バックアップディレクトリを開く
@@ -188,6 +188,8 @@ nnoremap sP :<C-u>bp<CR>
 " nnoremap st :<C-u>tabnew %:p<CR>:<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-name=files file_mru file buffer bookmark<CR>
 " タブで Unite 全検索
 nnoremap st :<C-u>tabnew<CR>:<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-name=files file_mru file buffer bookmark<CR>
+" タブで複製
+nnoremap sc :<C-u>tabnew %<CR>
 " タブ一覧
 nnoremap sT :<C-u>Unite tab -direction=botright -auto-resize<CR>
 nnoremap sb :<C-u>Unite buffer_tab -direction=botright -auto-resize -buffer-name=file<CR>

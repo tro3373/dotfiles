@@ -1,0 +1,11 @@
+#!/bin/bash
+
+keyfile=~/.exchange.key
+if [[ ! -e $keyfile ]]; then
+    echo "No $keyfile exist." 1>&2
+    exit 1
+fi
+
+key=$(cat ~/.exchange.key)
+clipboard_text_listener.pl -encoding utf8 -key $key -verbose 2
+

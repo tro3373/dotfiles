@@ -269,6 +269,7 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     zplug "zsh-users/zsh-history-substring-search"
     zplug "zsh-users/zsh-syntax-highlighting", nice:19
     zplug "mollifier/cd-gitroot"
+    zplug "yoshikaw/ClipboardTextListener", as:command, of:clipboard_text_listener.pl
     local target
     case "$OSTYPE" in
         *'linux'*)  target='*linux*amd64*'  ;;

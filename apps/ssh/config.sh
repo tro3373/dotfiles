@@ -17,4 +17,5 @@ setconfig() {
         # dotfiles 内部へリンクを貼る
         dvexec ln -s $ssh_inner $ssh_outer
     fi
+    make_link_bkupable $script_dir/.exchange.key ~/.exchange.key
 }
