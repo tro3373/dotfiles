@@ -8,6 +8,8 @@
 " set autochdir
 " UTF-8をデフォルト文字コードセットに設定
 set enc=utf-8
+set fileencodings=iso-2022-jp,euc-jp,sjis,utf-8
+set helplang=ja,en
 " ビープ音を鳴らさない
 set vb t_vb=
 " Backspace を有効にする
@@ -88,4 +90,8 @@ set formatoptions-=c
 " set wildmenu
 " zsh like な補完に
 " set wildmode=longest,list:longest
+
+" cana/vim-smartinput, cohama/vim-smartinput-endwise
+" http://cohama.hateblo.jp/entry/2013/11/08/013136
+call smartinput_endwise#define_default_rules()
 

@@ -16,17 +16,45 @@ if has('vim_starting')
 endif
 
 call plug#begin('~/.vim/plugged')
-  Plug 'banyan/recognize_charcode.vim'       " 文字コード判定
-  Plug 'vim-scripts/gtags.vim'               " GNU Global
-  Plug 'Align'                               " テキスト整形
-  Plug 'taglist.vim'                         " ソースコードブラウザ
-  Plug 'sudo.vim'                            " sudo
-  Plug 'scrooloose/nerdtree', { 'on':  ['NERDTreeToggle'] } " NERDTree tree view コマンド実行時に読み込む
-  Plug 'nathanaelkane/vim-indent-guides'     " indent guide
-  Plug 'kana/vim-submode'                    " vim-submode(キーマップ plugin)
-  Plug 'airblade/vim-gitgutter'              " Shows a git diff in the gutter!!!!!
-  Plug 'Shougo/neocomplete.vim'              " Next generation completion framework after neocomplcache
+  " カラースキーム
+  Plug 'altercation/vim-colors-solarized'    " Solarized
+  Plug 'chriskempson/vim-tomorrow-theme'     " tomorrow
+  " Plug 'tomasr/molokai'                      " molokai
+  " Plug 'w0ng/vim-hybrid'                     " hybrid
 
+  "" airline
+  Plug 'bling/vim-airline'
+  "" Powerline
+  " ==> Older Powerline source.
+  " Plug 'alpaca-tc/alpaca_powertabline'
+  " Plug 'Lokaltog/powerline', { 'rtp' : 'powerline/bindings/vim'}
+  " Plug 'Lokaltog/powerline-fontpatcher'
+  " ==> The Newer powerline source.
+  " Plug 'powerline/powerline', {'rtp': 'powerline/bindings/vim/'}
+
+  Plug 'sudo.vim'                            " sudo
+  Plug 'banyan/recognize_charcode.vim'       " 文字コード判定
+  Plug 'kana/vim-submode'                    " vim-submode(キーマップ plugin)
+  Plug 'nathanaelkane/vim-indent-guides'     " indent guide
+
+  Plug 'kana/vim-smartinput'                 " () 等の入力補完
+  Plug 'cohama/vim-smartinput-endwise'       " vim-endwise (ruby 用 end 補完)
+  " Plug 'Shougo/neocomplcache.vim'            " 補完候補を自動でポップアップ(old)
+  Plug 'Shougo/neocomplete.vim'              " Next generation completion framework after neocomplcache
+  Plug 'Lokaltog/vim-easymotion'             " カーソル移動プラグイン
+
+  Plug 'airblade/vim-gitgutter'              " Shows a git diff in the gutter!!!!!
+  Plug 'cohama/agit.vim'                     " gitk-like repository viewer ex) type :Agit
+
+  Plug 'Shougo/vimshell'                     " uniteインターフェースでシェル使用できる
+  Plug 'Shougo/unite-ssh'
+  Plug 'Shougo/neosnippet'                   " Ctrl+k でスニペットを用意
+  Plug 'vim-scripts/Align'                   " CSV,TSV整形
+  Plug 'taglist.vim'                         " ソースコードブラウザ
+
+  Plug 'scrooloose/nerdtree', { 'on':  ['NERDTreeToggle'] } " NERDTree tree view コマンド実行時に読み込む
+
+  Plug 'vim-scripts/gtags.vim'               " GNU Global
   Plug 'rking/ag.vim'                        " SilverSearcher
   " Plugin outside ~/.vim/plugged with post-update hook
   Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
@@ -46,36 +74,14 @@ call plug#begin('~/.vim/plugged')
   "             \    },
   "             \ }
 
-  " カラースキーム
-  Plug 'altercation/vim-colors-solarized'    " Solarized
-  " Plug 'tomasr/molokai'                      " molokai
-  " Plug 'w0ng/vim-hybrid'                     " hybrid
-  Plug 'chriskempson/vim-tomorrow-theme'     " tomorrow
 
-  "" Powerline
-  " ==> Older Powerline source.
-  " Plug 'alpaca-tc/alpaca_powertabline'
-  " Plug 'Lokaltog/powerline', { 'rtp' : 'powerline/bindings/vim'}
-  " Plug 'Lokaltog/powerline-fontpatcher'
-  " ==> The Newer powerline source.
-  " Plug 'powerline/powerline', {'rtp': 'powerline/bindings/vim/'}
-
-  "" airline
-  Plug 'bling/vim-airline'
 
   " TODO 勉強中 =======
   " http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
-  Plug 'Shougo/neocomplcache'                " 補完候補を自動でポップアップ
-  " Plug 'Shougo/vimshell'                     " uniteインターフェースでシェル使用できる
-  " Plug 'gitv'                                " gitのログをキレイにツリー形式表示
   " Plug 'sjl/gundo.vim'                       " UNDO履歴を管理
   " Plug 'fuenor/qfixhowm'                     " メモプラグイン
   " Plug 'h1mesuke/unite-outline'              " 関数一覧とかを表示
-  Plug 'Lokaltog/vim-easymotion'             " カーソル移動プラグイン
-  " Plug 'vim-scripts/Align'                   " CSV,TSV整形
-  " Plug 'Shougo/unite-ssh'
   " Plug 'thinca/vim-quickrun'                 " 現在のファイルを実行して quickfix に表示
-  " Plug 'Shougo/neosnippet'                   " Ctrl+k でスニペットを用意
   Plug 'tpope/vim-fugitive'                  " Git wrapper so awesome
   " Plug 'junegunn/seoul256.vim'
   " 指定したファイルタイプを開いたときに読み込む
