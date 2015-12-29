@@ -118,7 +118,7 @@ make_link_bkupable() {
     local src=$1
     local lnk=$2
     local need_backup=0
-    log " make_link_bkupable Start lnk=$lnk src=$src"
+    [[ $debug -eq 1 ]] && log " make_link_bkupable Start lnk=$lnk src=$src"
     #if [ -e "${lnk}" ]; then
     if isexist "${lnk}"; then
         # log "   @@@@@@ exist!"
@@ -133,8 +133,8 @@ make_link_bkupable() {
             # log "    src:$src => fullpath_src=$fullpath_src"
             if ! issamelink "$fullpath_lnk" "$fullpath_src"; then
                 # 既に自分へのリンクの場合はなにもしない
-                log "  => Already linked. Skip it. path=${lnk}"
-                return
+                [[ $debug -eq 1 ]] && log "  => Already linked. Skip it. path=${lnk}"
+                return 0
             else
                 # 他ファイルへのリンクなのでバックアップする
                 log "  => Not match link. backup it. old link is ${fullpath_lnk} => new link is ${fullpath_src}"
@@ -154,7 +154,7 @@ make_link_bkupable() {
             # log "   @@@@@@ little bit!"
             # ないと思う
             log "  => Little bit strange exist. path=${lnk} ... Do nothing"
-            return
+            return 0
         fi
     fi
     # バックアップが必要ならバックアップする
@@ -278,11 +278,11 @@ setup() {
         # 上書き定義される為、ここで初期化する
         initialize_funcs
 
-        log "================================================"
+        [[ $debug -eq 1 ]] && log "================================================"
         log "===> $DIR_APP/$app"
         whith_install=0
         if ! testcmd $app; then
-            log "    => Not Installed..."
+            [[ $debug -eq 1 ]] && log "    => Not Installed..."
             whith_install=1
         fi
 
@@ -315,7 +315,7 @@ setup() {
             # デフォルトのインストールコマンド実行
             if [ "$whith_install" = "1" ]; then
                 # インストールされていない場合は実行
-                log " Execute Default install command"
+                [[ $debug -eq 1 ]] && log " Execute Default install command"
                 dvexec $def_instcmd
             fi
         fi
@@ -335,10 +335,9 @@ setup() {
     if [ "$dry_run" = "1" ]; then
         log ""
         log ""
-        log ""
         log "===================================================="
         log "==>  This is Dry-run mode."
-        log "==>     Specify 'exec' option for execute."
+        log "==>     Specify 'exec/--exec/-e' option for execute."
         log "==>     Below commands will be execute."
         logescape $dry_run_commoands
         log "===================================================="

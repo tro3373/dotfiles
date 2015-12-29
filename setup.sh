@@ -1,7 +1,6 @@
 #!/bin/bash
 
 ################################################### SETTING START
-debug=1
 #all_apps="git ctags curl tree global zsh tmux vim tig ssh ag _peco _fzf _gomi _zplug"
 all_apps="git ctags curl tree global zsh tmux vim tig ssh ag"
 ################################################### SETTING END
@@ -19,6 +18,7 @@ DIR_ROOT=$(cd $(dirname $0); pwd)
 source $DIR_ROOT/setup/setup-funcs.sh
 
 # 起動引数設定
+debug=0
 dry_run=1
 dry_run_commoands=""
 ## powerline設定を実行するかどうか
@@ -36,6 +36,9 @@ do
             ;;
         force|--force|-f)
             force_install=1
+            ;;
+        debug|--debug|-d)
+            debug=1
             ;;
         *)
             if ! `is_exist_app $arg`; then
