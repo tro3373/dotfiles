@@ -9,11 +9,22 @@ install() {
     if [ "$OS" = "ubuntu" ]; then
         #myinstcmd="curl -fsSL https://gist.github.com/shime/5706655/raw/install.sh | sudo bash -e"
         #dvexec $myinstcmd
-        dvexec "sudo apt-get update"
-        dvexec "sudo apt-get install -y python-software-properties software-properties-common"
-        dvexec "sudo add-apt-repository -y ppa:pi-rho/dev"
-        dvexec "sudo apt-get update"
-        dvexec "sudo apt-get install -y tmux"
+
+#        dvexec "sudo apt-get update"
+#        dvexec "sudo apt-get install -y python-software-properties software-properties-common"
+#        dvexec "sudo add-apt-repository -y ppa:pi-rho/dev"
+#        dvexec "sudo apt-get update"
+#        dvexec "sudo apt-get install -y tmux"
+
+        # for tmux 2.1
+        dvexec cd /usr/local/src
+        dvexec sudo git clone https://github.com/tmux/tmux.git
+        dvexec sudo apt-get install autoconf libtool pkg-config libevent-dev
+        dvexec cd tmux
+        dvexec sudo ./autogen.sh
+        dvexec sudo ./configure --prefix=/usr/local
+        dvexec sudo make
+        dvexec sudo make install
     elif [ "$OS" = "redhat" ]; then
         dvexec "$instcmd gcc make ncurses ncurses-devel"
 
@@ -32,7 +43,7 @@ install() {
         dvexec "./configure"
         dvexec "make"
         dvexec "sudo make install"
-   else
+    else
         dvexec "$instcmd tmux"
     fi
 }
