@@ -11,6 +11,8 @@ command! Reloadvimrc source $MYVIMRC
 " 実際の行移動(エディタの表示行ではなく改行コードを意識した実際の行)であるj,kを入れ替え
 nnoremap j gj
 nnoremap k gk
+noremap <Down> gj
+noremap <Up> gk
 nnoremap gj j
 nnoremap gk k
 nnoremap n nzz
@@ -25,10 +27,17 @@ noremap <Space>l  $
 " Goto file under cursor
 noremap gf gF
 noremap gF gf
+" インサートモードでのESCエイリアスをjjに割り当て
+inoremap <silent> jj <ESC>
+" 数字のインクリメント、デクリメントへのマッピング
+nnoremap + <C-a>
+nnoremap - <C-x>
 
-
+" Y で行末までコピー
+nnoremap Y y$
 " 改行抜きで一行クリップボードにコピー
 nnoremap <Space>y 0v$h"+y
+
 " ビジュアルモード選択した部分を*で検索
 vnoremap * "zy:let @/ = @z<CR>nzz
 " カーソルの下の単語をヤンクした文字列で置換
@@ -216,13 +225,13 @@ endfunction
 " unite-grepのキーマップ
 " grep検索
 " ディレクトリを指定して ag 検索
-nnoremap <silent> <Space>dg :<C-u>Unite grep -direction=botright -auto-resize -buffer-name=search-buffer<CR>
+nnoremap <silent> ,dg :<C-u>Unite grep -direction=botright -auto-resize -buffer-name=search-buffer<CR>
 " カーソル位置の単語を ag 検索
-nnoremap <silent> <Space>g :<C-u>Unite grep:. -direction=botright -auto-resize -buffer-name=search-buffer<CR><C-R><C-W><CR>
+nnoremap <silent> ,g :<C-u>Unite grep:. -direction=botright -auto-resize -buffer-name=search-buffer<CR><C-R><C-W><CR>
 " ビジュアルモードでは、選択した文字列をunite-grep
-vnoremap <silent> <Space>g y:Unite grep:.:-iRn:<C-R>=escape(@", '\\.*$^[]')<CR><CR>
+vnoremap <silent> ,g y:Unite grep:.:-iRn:<C-R>=escape(@", '\\.*$^[]')<CR><CR>
 " grep検索結果の再呼出
-nnoremap <silent> <Space>r :<C-u>UniteResume search-buffer -direction=botright -auto-resize<CR>
+nnoremap <silent> ,r :<C-u>UniteResume search-buffer -direction=botright -auto-resize<CR>
 " 大文字小文字を区別しない
 let g:unite_enable_ignore_case = 1
 let g:unite_enable_smart_case = 1
@@ -241,8 +250,12 @@ endif
 " option に関しては、以下が詳しい
 "   https://github.com/junegunn/fzf/wiki
 "   http://koturn.hatenablog.com/entry/2015/11/26/000000
-nnoremap <silent> <Space>o :FZF .<CR>
-
+nnoremap <Space>o :FZF .<CR>
+nnoremap <Space>f :FZF -q <C-R><C-W>
+vnoremap <Space>f y:FZF -q <C-R>"
+" Ag 起動
+nnoremap <Space>g :Ag <C-R><C-W>
+vnoremap <Space>g y:Ag <C-R>"
 
 "=============================================
 " NERDTree 設定

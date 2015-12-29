@@ -20,13 +20,18 @@ set ruler
 set cursorline
 " 閉じ括弧が入力されたとき、対応する括弧を表示する
 set showmatch
+" カーソルが飛ぶ時間を0.1秒で設定
+set matchtime=1
 " スクロールした際に余白が５行分残るようにする
 set scrolloff=5
 " ターミナル接続を高速にする
 set ttyfast
 " Unicodeで行末が変になる問題を解決
 set ambiwidth=double
-
+" 長い行も表示
+set display=lastline
+" 補完メニューの高さ
+set pumheight=10
 
 " 全角スペースを分かりやすく表示する
 highlight ZenkakuSpace cterm=underline ctermfg=lightmagenta guibg=lightmagenta

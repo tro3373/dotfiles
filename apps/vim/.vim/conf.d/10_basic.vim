@@ -28,7 +28,14 @@ set backupdir=$HOME/.vim/backup
 let &directory = &backupdir
 " Undoファイルの出力先を設定
 set undodir=$HOME/.vim/undo
-
+" スワップがあるときは常にRead-Onlyで開く設定
+" スワップのメッセージを見たいという時は、:noa e [filename] のように
+" :noa(utocmd)コマンド
+" http://itchyny.hatenablog.com/entry/2014/12/25/090000
+augroup swapchoice-readonly
+  autocmd!
+  autocmd SwapExists * let v:swapchoice = 'o'
+augroup END
 
 " インクリメンタルサーチを有効にする
 set incsearch

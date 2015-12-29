@@ -25,6 +25,7 @@ call plug#begin('~/.vim/plugged')
   Plug 'nathanaelkane/vim-indent-guides'     " indent guide
   Plug 'kana/vim-submode'                    " vim-submode(キーマップ plugin)
   Plug 'airblade/vim-gitgutter'              " Shows a git diff in the gutter!!!!!
+  Plug 'Shougo/neocomplete.vim'              " Next generation completion framework after neocomplcache
 
   Plug 'rking/ag.vim'                        " SilverSearcher
   " Plugin outside ~/.vim/plugged with post-update hook
