@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# idmap.ldb 情報を編集する
+
+if [[ ! -e /usr/local/samba ]]; then
+    echo "No samba directory (/usr/local/samba)"
+    exit 1
+fi
+if [[ ! -e /usr/local/samba/bin/ldbedit ]]; then
+    echo "No samba ldbedit exist"
+    exit 1
+fi
+if [[ ! -e /usr/local/samba/private/idmap.ldb ]]; then
+    echo "No samba idmap.ldb exist"
+    exit 1
+fi
+sudo /usr/local/samba/bin/ldbedit -e vim -H /usr/local/samba/private/idmap.ldb
+

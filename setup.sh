@@ -31,6 +31,24 @@ target_apps=()
 for arg in "$@"
 do
     case "$arg" in
+        help|--help|-h)
+            cat <<EOF
+
+setup.sh [Option] [App App...]
+
+  exec|--exec|-e
+    execute install/setup process.
+  force|--force|-f
+    install process will be executed forcibly if already installed, and also setup process will be executed.
+  debug|--debug|-d
+    whith debug option
+
+available Apps..
+    $all_apps
+
+EOF
+            exit 0
+            ;;
         exec|--exec|-e)
             dry_run=0
             ;;

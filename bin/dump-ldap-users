@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# 指定クエリで取得できるLDAPユーザ情報を表示する
+
+sudo ldapsearch -x -LLL -D "cn=Administratorname,cn=Users,dc=domainname,dc=domainname2" -W -b "cn=username,cn=Users,dc=domainname,dc=domainname2"
+

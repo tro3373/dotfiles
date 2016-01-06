@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# 指定ユーザ情報を表示する
+if [[ ! -e /usr/local/samba ]]; then
+    echo "No samba directory (/usr/local/samba)"
+    exit 1
+fi
+if [[ ! -e /usr/local/samba/bin/wbinfo ]]; then
+    echo "No samba wbinfo"
+    exit 1
+fi
+
+echo "type uid for dump..."
+read hogehoge
+if [[ "$hogehoge" = "" ]]; then
+    echo "Invalid args."
+    exit 1
+fi
+sudo /usr/local/samba/bin/wbinfo -n $hogehoge
+
