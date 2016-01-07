@@ -41,7 +41,7 @@ call plug#begin('~/.vim/plugged')
   Plug 'cohama/vim-smartinput-endwise'       " vim-endwise (ruby 用 end 補完)
   " Plug 'Shougo/neocomplcache.vim'            " 補完候補を自動でポップアップ(old)
   Plug 'Shougo/neocomplete.vim'              " Next generation completion framework after neocomplcache
-  Plug 'Lokaltog/vim-easymotion'             " カーソル移動プラグイン
+  " Plug 'Lokaltog/vim-easymotion'             " カーソル移動プラグイン(fコマンドが効かなくなるので無効)
 
   Plug 'airblade/vim-gitgutter'              " Shows a git diff in the gutter!!!!!
   Plug 'cohama/agit.vim'                     " gitk-like repository viewer ex) type :Agit
