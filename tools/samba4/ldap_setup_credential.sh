@@ -8,6 +8,8 @@ ADMIN_CN=
 DC_1=
 DC_2=
 
+echo "==> Setting up ldap credential file..."
+
 while [[ "$HOST" = "" ]]; do
     echo "Input ldap host name..."
     read HOST
@@ -37,5 +39,9 @@ echo "DC_2=$DC_2" >> $credential_file
 
 chmod 600 $credential_file
 
-echo "Credentialed done. $credential_file"
+echo
+echo "Credentialed file created. $credential_file"
+echo "Press Enter to Continue..."
+echo
+read waiting_enter
 

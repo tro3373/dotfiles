@@ -11,14 +11,14 @@ check_samba_tool() {
 }
 
 check_ldapsearch() {
-    if [[ ! type ldapsearch > /dev/null 2>&1 ]]; then
+    if ! type ldapsearch > /dev/null 2>&1; then
         echo "No samba ldapsearch" 1>&2
         exit 1
     fi
 }
 
 check_ldappasswd() {
-    if [[ ! type ldappasswd > /dev/null 2>&1 ]]; then
+    if ! type ldappasswd > /dev/null 2>&1; then
         echo "No samba ldapsearch" 1>&2
         exit 1
     fi
@@ -63,7 +63,7 @@ load_credential() {
 intaractive_set_user_name() {
     check_samba_tool
     while [[ "$user_name" = "" ]]; do
-        echo "Input user_name for dump..."
+        echo "==> Input user_name for dump..."
         echo
         sudo $samba_tool user list
         echo
