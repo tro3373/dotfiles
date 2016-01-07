@@ -9,3 +9,5 @@ dev
 nohup.out
 .DS_Store
 .npm
+blob-store/
+
