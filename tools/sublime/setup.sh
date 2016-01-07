@@ -2,7 +2,8 @@
 
 script_dir=$(cd $(dirname $0); pwd)
 # インストール用関数 ロード
-DRYRUN=0
+dry_run=0
+
 source ~/dotfiles/setup/setup-funcs.sh
 
 if [ "$OS" = "mac" ]; then
