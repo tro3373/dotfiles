@@ -272,9 +272,18 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     zplug "yoshikaw/ClipboardTextListener", as:command, of:clipboard_text_listener.pl
     local target
     case "$OSTYPE" in
-        *'linux'*)  target='*linux*amd64*'  ;;
-        *'darwin'*) target='*darwin*amd64*' ;;
-        *)          target='os'             ;;
+        *'linux'*)
+            target='*linux*amd64*'
+            target_massren=$target
+            ;;
+        *'darwin'*)
+            target='*darwin*amd64*'
+            target_massren='mac'
+            ;;
+        *)
+            target='os'
+            target_massren='win'
+            ;;
     esac
     # zplug "junegunn/fzf-bin", as:command, from:gh-r, file:fzf
     zplug "junegunn/fzf-bin", as:command, from:gh-r, of:"$target", file:fzf
@@ -283,6 +292,8 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
 
     zplug "peco/peco", as:command, from:gh-r, of:"$target"
     zplug "b4b4r07/dotfiles", as:command, of:bin/peco-tmux
+
+#    zplug "laurent22/massren", as:command, from:gh-r, of:"$target_massren", at:v1.3.0, do:"massren --config editor vim"
 
     # Local loading
     zplug "~/.zsh",     from:local, ignore:"*vcs-info.zsh", nice:2
