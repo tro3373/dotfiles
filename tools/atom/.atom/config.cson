@@ -2,6 +2,7 @@
   editor:
     invisibles:
       eol: " "
+      space: "-"
     showIndentGuide: true
     zoomFontWhenCtrlScrolling: true
     showInvisibles: true
@@ -9,7 +10,7 @@
     lineHeight: 1
     preferredLineLength: 100
     fontSize: 20
-    fontFamily: "Ricty Discord for Powerline"
+    fontFamily: "OsakaForPowerline-Mono"
   core:
     disabledPackages: [
       "highlight-column"
