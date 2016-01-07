@@ -49,6 +49,7 @@ call plug#begin('~/.vim/plugged')
   Plug 'Shougo/vimshell'                     " uniteインターフェースでシェル使用できる
   Plug 'Shougo/unite-ssh'
   Plug 'Shougo/neosnippet'                   " Ctrl+k でスニペットを用意
+  Plug 'Shougo/neosnippet-snippets'          " 基本スニペット for neosnippet
   Plug 'vim-scripts/Align'                   " CSV,TSV整形
   Plug 'taglist.vim'                         " ソースコードブラウザ
 
