@@ -34,9 +34,10 @@ if [[ -e /home/${user_name} ]]; then
         fi
     done
     if [[ $del_home -eq 1 ]]; then
-        sudo userdel -r $user_name
         sudo rm -rf /home/$user_name
     fi
 fi
+
+sudo userdel -r $user_name
 sudo $samba_tool user delete $user_name
 
