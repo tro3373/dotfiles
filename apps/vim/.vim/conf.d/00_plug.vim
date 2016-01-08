@@ -1,7 +1,7 @@
 "######################################################################
 "   plug.vim
 "           プラグイン設定ファイル
-"           を使用してプラグインを管理する
+"           vim-plug を使用してプラグインを管理する
 "           @see https://github.com/junegunn/vim-plug
 "######################################################################
 
@@ -44,6 +44,9 @@ call plug#begin('~/.vim/plugged')
   Plug 'Shougo/unite-ssh'                           "
   Plug 'Shougo/neosnippet'                          " Ctrl+k でスニペットを用意
   Plug 'Shougo/neosnippet-snippets'                 " 基本スニペット for neosnippet
+  Plug 'honza/vim-snippets'                         " snipMate UltiSnip Snippets
+  " X | Y の時, X をインストールした後に Y をインストール
+  " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
   Plug 'vim-scripts/Align'                          " CSV,TSV整形
   Plug 'taglist.vim'                                " ソースコードブラウザ
 
@@ -83,8 +86,6 @@ call plug#begin('~/.vim/plugged')
   " Plug 'junegunn/seoul256.vim'
   " 指定したファイルタイプを開いたときに読み込む
   " Plug 'tpope/vim-fireplace', { 'for': ['clojure'] }
-  " X | Y の時, X をインストールした後に Y をインストール
-  " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
   " TODO 勉強中 =======
 
 call plug#end()

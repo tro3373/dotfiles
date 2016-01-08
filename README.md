@@ -19,8 +19,7 @@
 
 ## Issues
 
-    - Remain Tmux ssh session name in below powerline.
-    - Disapear vim tag file name issue.
+    - Disapear vim tag file name issue in too many file open.
 
 ## Test
 

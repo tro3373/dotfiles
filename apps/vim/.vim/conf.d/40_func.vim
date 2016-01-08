@@ -9,22 +9,18 @@
 " 通常 * レジスタはクリップボードとなっている(macなど)
 " が、ubuntu では + レジスタがクリップボードとなってる(ミソ)
 " じゃあ両方にコピーすべし
-"
 function! CopyComm()
   let @+=@*
   echo "Copy!=> ".@*
 endfunction
-
 function! CopyPath()
   let @*=expand('%:P')
   call CopyComm()
 endfunction
-
 function! CopyFullPath()
   let @*=expand('%:p')
   call CopyComm()
 endfunction
-
 function! CopyFileName()
   let @*=expand('%:t:r')
   call CopyComm()
