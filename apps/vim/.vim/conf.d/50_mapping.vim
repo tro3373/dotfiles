@@ -64,10 +64,6 @@ vmap # <c-V>0I#<esc>
 vmap C :s/^#//<cr>
 vmap // <C-V>0I//<Esc>
 vmap c :s/^\/\///<CR>:noh<cr>K
-" 日付の入力補完
-"inoremap <expr> sdf strftime('%Y-%m-%dT%H:%M:%S')
-"inoremap <expr> sdd strftime('%Y-%m-%d')
-"inoremap <expr> sdt strftime('%H:%M:%S')
 
 " ハードタブ非表示
 map sx :set lcs=tab:>\ ,trail:_,extends:\<Enter>
@@ -274,16 +270,16 @@ vmap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
 omap <silent> <C-e>      :NERDTreeToggle<CR>
 imap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
 
-"=============================================
-" Lokaltog/vim-easymotion
-"=============================================
-" http://blog.remora.cx/2012/08/vim-easymotion.html
-" ホームポジションに近いキーを使う
-let g:EasyMotion_keys='hjklasdfgyuiopqwertnmzxcvbHJKLASDFGYUIOPQWERTNMZXCVB'
-" 「;」 + 何かにマッピング
-let g:EasyMotion_leader_key=";"
-" 1 ストローク選択を優先する
-let g:EasyMotion_grouping=1
-" カラー設定変更
-hi EasyMotionTarget ctermbg=none ctermfg=red
-hi EasyMotionShade  ctermbg=none ctermfg=blue
+""=============================================
+"" Lokaltog/vim-easymotion
+""=============================================
+"" http://blog.remora.cx/2012/08/vim-easymotion.html
+"" ホームポジションに近いキーを使う
+"let g:EasyMotion_keys='hjklasdfgyuiopqwertnmzxcvbHJKLASDFGYUIOPQWERTNMZXCVB'
+"" 「;」 + 何かにマッピング
+"let g:EasyMotion_leader_key=";"
+"" 1 ストローク選択を優先する
+"let g:EasyMotion_grouping=1
+"" カラー設定変更
+"hi EasyMotionTarget ctermbg=none ctermfg=red
+"hi EasyMotionShade  ctermbg=none ctermfg=blue
