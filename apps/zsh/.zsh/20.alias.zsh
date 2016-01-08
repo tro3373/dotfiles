@@ -84,3 +84,10 @@ if type ag > /dev/null 2>&1; then
     fi
 fi
 
+# http://qiita.com/yuku_t/items/4ffaa516914e7426419a
+function ssh() {
+    local window_name=$(tmux display -p '#{window_name}')
+    command ssh $@
+    tmux rename-window $window_name
+}
+
