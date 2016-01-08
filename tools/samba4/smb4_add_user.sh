@@ -73,6 +73,16 @@ get_next_uid() {
     echo $((`get_recentry_uid` + 1))
 }
 
+check_uid_exist() {
+    local uid=$1
+    if [[ -e /home/$uid ]]; then
+        echo "/home/$uid is exist."
+        return 1
+    fi
+    getent passwd |egrep "^$uid:.+$" > /dev/null 2>&1
+    return $?
+}
+
 main() {
     local ops_name gid_number base_group uid_number
     case $ops in
@@ -97,6 +107,11 @@ main() {
             ;;
     esac
 
+    if check_uid_exist ${user_name}; then
+        echo "${user_name} is already exist" &1>2
+        exit 1
+    fi
+
     # uid 採番
     uid_number=`get_next_uid`
 
@@ -114,7 +129,7 @@ main() {
 
     # 所属グループ登録
     sudo ${samba_tool} group addmembers ${ops_name} ${user_name}
-    if $ops -ne 3; then
+    if [[ $ops -ne 3 ]]; then
         sudo ${samba_tool} group addmembers ${base_group} ${user_name}
     fi
 }
