@@ -286,14 +286,17 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
             ;;
     esac
     # zplug "junegunn/fzf-bin", as:command, from:gh-r, file:fzf
-    zplug "junegunn/fzf-bin", as:command, from:gh-r, of:"$target", file:fzf
+    zplug "junegunn/fzf-bin", as:command, from:gh-r, of:"$target", file:fzf \
+        | zplug "b4b4r07/easy-oneliner"
+
     zplug "junegunn/fzf", as:command, of:bin/fzf-tmux
     zplug "junegunn/fzf", of:"shell/*.zsh"
 
     zplug "peco/peco", as:command, from:gh-r, of:"$target"
     zplug "b4b4r07/dotfiles", as:command, of:bin/peco-tmux
 
-#    zplug "laurent22/massren", as:command, from:gh-r, of:"$target_massren", at:v1.3.0, do:"massren --config editor vim"
+    # file name 一括置換
+    zplug "laurent22/massren", as:command, from:gh-r, at:v1.3.0, of:"$target_massren", do:"./massren --config editor vim"
 
     # Local loading
     zplug "~/.zsh",     from:local, ignore:"*vcs-info.zsh", nice:2
