@@ -34,7 +34,9 @@ Retrieving last Search Command for copy & pasting into text
 <c-r>/
 <C-X><C-F> :insert name of a file in current directory
 
+## Surround vim
 
+- [surround.vim](http://vimblog.hatenablog.com/entry/vim_plugin_surround_vim)
 
 ## 移動
 - ノーマルモードでz<enter>(またはzt)とタイプすると、現在カーソルのある行が画面の一番上になるように画面がスクロールします。

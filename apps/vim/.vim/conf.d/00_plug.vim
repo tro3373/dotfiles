@@ -31,8 +31,10 @@ call plug#begin('~/.vim/plugged')
   Plug 'kana/vim-submode'                           " vim-submode(キーマップ plugin)
   Plug 'nathanaelkane/vim-indent-guides'            " indent guide
 
+  Plug 'kana/vim-smartchr'                          " = 等の便利入力
   Plug 'kana/vim-smartinput'                        " () 等の入力補完
   Plug 'cohama/vim-smartinput-endwise'              " vim-endwise (ruby 用 end 補完)
+  Plug 'tyru/caw.vim'                               " コメントアウトプラグイン <Leader>+c
   " Plug 'Shougo/neocomplcache.vim'                   " 補完候補を自動でポップアップ(old)
   Plug 'Shougo/neocomplete.vim'                     " Next generation completion framework after neocomplcache
   " Plug 'Lokaltog/vim-easymotion'                    " カーソル移動プラグイン(fコマンドが効かなくなるので無効)
@@ -40,12 +42,9 @@ call plug#begin('~/.vim/plugged')
   Plug 'airblade/vim-gitgutter'                     " Shows a git diff in the gutter!!!!!
   Plug 'cohama/agit.vim'                            " gitk-like repository viewer ex) type :Agit
 
-  Plug 'Shougo/vimshell'                            " uniteインターフェースでシェル使用できる
-  Plug 'Shougo/unite-ssh'                           "
   Plug 'Shougo/neosnippet'                          " Ctrl+k でスニペットを用意
   Plug 'Shougo/neosnippet-snippets'                 " 基本スニペット for neosnippet
   Plug 'honza/vim-snippets'                         " snipMate UltiSnip Snippets
-  " X | Y の時, X をインストールした後に Y をインストール
   " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
   Plug 'vim-scripts/Align'                          " CSV,TSV整形
   Plug 'taglist.vim'                                " ソースコードブラウザ
@@ -77,6 +76,9 @@ call plug#begin('~/.vim/plugged')
 
 
   " TODO 勉強中 =======
+  Plug 'tpope/vim-surround'                         " 囲文字入力アシスト
+  Plug 'Shougo/unite-ssh'                           "
+  " Plug 'Shougo/vimshell'                            " uniteインターフェースでシェル使用できる
   " http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
   " Plug 'sjl/gundo.vim'                              " UNDO履歴を管理
   " Plug 'fuenor/qfixhowm'                            " メモプラグイン

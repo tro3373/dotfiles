@@ -55,15 +55,16 @@ vnoremap <silent> cy   c<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 " nnoremap <S-Tab> <LT><LT>
 " vnoremap <Tab> >
 " vnoremap <S-Tab> <LT>
-" 現在行をコメント化 (/* */)
-map qq 0i/* <ESC>$a */<ESC>
-" 現在行をコメント化
-map s/ 0i// <ESC>
-map s# 0i# <ESC>
-vmap # <c-V>0I#<esc>
-vmap C :s/^#//<cr>
-vmap // <C-V>0I//<Esc>
-vmap c :s/^\/\///<CR>:noh<cr>K
+
+"" 現在行をコメント化 (/* */)
+"map qq 0i/* <ESC>$a */<ESC>
+"" 現在行をコメント化
+"map s/ 0i// <ESC>
+"map s# 0i# <ESC>
+"vmap # <c-V>0I#<esc>
+"vmap C :s/^#//<cr>
+"vmap // <C-V>0I//<Esc>
+"vmap c :s/^\/\///<CR>:noh<cr>K
 
 " ハードタブ非表示
 map sx :set lcs=tab:>\ ,trail:_,extends:\<Enter>
@@ -198,10 +199,10 @@ nnoremap sr :<C-u>Unite -direction=botright -auto-resize -buffer-name=register r
 nnoremap sm :<C-u>Unite file_mru -direction=botright -auto-resize<CR>
  " 全部乗せ
 nnoremap sa :<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-name=files file_mru file buffer bookmark<CR>
-" ブックマーク一覧
-nnoremap <silent> <Space>c :<C-u>Unite -direction=botright -auto-resize bookmark<CR>
-" ブックマークに追加
-nnoremap <silent> <Space>a :<C-u>UniteBookmarkAdd<CR>
+"" ブックマーク一覧
+"nnoremap <silent> <Space>c :<C-u>Unite -direction=botright -auto-resize bookmark<CR>
+"" ブックマークに追加
+"nnoremap <silent> <Space>a :<C-u>UniteBookmarkAdd<CR>
 " UniteBookMarkAdd で追加したディレクトリを Unite bookmark で開くときのアクションのデフォルトを Vimfiler に
 call unite#custom_default_action('source/bookmark/directory' , 'vimfiler')
 
@@ -315,3 +316,50 @@ smap <expr><TAB> neosnippet#expandable() <Bar><bar> neosnippet#jumpable() ? "\<P
 if has('conceal')
   set conceallevel=2 concealcursor=i
 endif
+
+
+"=============================================
+" smartchr 設定
+" http://d.hatena.ne.jp/ampmmn/20080925/1222338972
+"=============================================
+" 演算子の間に空白を入れる
+inoremap <buffer><expr> < search('^#include\%#', 'bcn')? ' <': smartchr#one_of(' < ', ' << ', '<')
+inoremap <buffer><expr> > search('^#include <.*\%#', 'bcn')? '>': smartchr#one_of(' > ', ' >> ', '>')
+inoremap <buffer><expr> + smartchr#one_of(' + ', '++', '+')
+inoremap <buffer><expr> - smartchr#one_of(' - ', '--', '-')
+inoremap <buffer><expr> / smartchr#one_of(' / ', '// ', '/')
+" *はポインタで使うので、空白はいれない
+inoremap <buffer><expr> & smartchr#one_of(' & ', ' && ', '&')
+inoremap <buffer><expr> % smartchr#one_of(' % ', '%')
+inoremap <buffer><expr> <Bar> smartchr#one_of(' <Bar> ', ' <Bar><Bar> ', '<Bar>')
+inoremap <buffer><expr> , smartchr#one_of(', ', ',')
+" 3項演算子の場合は、後ろのみ空白を入れる
+inoremap <buffer><expr> ? smartchr#one_of('? ', '?')
+inoremap <buffer><expr> : smartchr#one_of(': ', '::', ':')
+
+" =の場合、単純な代入や比較演算子として入力する場合は前後にスペースをいれる。
+" 複合演算代入としての入力の場合は、直前のスペースを削除して=を入力
+inoremap <buffer><expr> = search('\(&\<bar><bar>\<bar>+\<bar>-\<bar>/\<bar>>\<bar><\) \%#', 'bcn')? '<bs>= '
+    \ : search('\(*\<bar>!\)\%#', 'bcn') ? '= '
+    \ : smartchr#one_of(' = ', ' == ', '=')
+
+" 下記の文字は連続して現れることがまれなので、二回続けて入力したら改行する
+inoremap <buffer><expr> } smartchr#one_of('}', '}<cr>')
+inoremap <buffer><expr> ; smartchr#one_of(';', ';<cr>')
+" 「->」は入力しづらいので、..で置換え
+inoremap <buffer><expr> . smartchr#loop('.', '->', '...')
+" 行先頭での@入力で、プリプロセス命令文を入力
+inoremap <buffer><expr> @ search('^\(#.\+\)\?\%#','bcn')? smartchr#one_of('#define', '#include', '#ifdef', '#endif', '@'): '@'
+
+inoremap <buffer><expr> " search('^#include\%#', 'bcn')? ' "': '"'
+" if文直後の(は自動で間に空白を入れる
+inoremap <buffer><expr> ( search('\<\if\%#', 'bcn')? ' (': '('
+
+
+"=============================================
+" caw 設定(コメントアウト トグル)
+" http://d.hatena.ne.jp/ampmmn/20080925/1222338972
+"=============================================
+nmap <Leader>c <Plug>(caw:i:toggle)
+vmap <Leader>c <Plug>(caw:i:toggle)
+
