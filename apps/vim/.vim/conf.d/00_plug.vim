@@ -16,6 +16,9 @@ if has('vim_starting')
 endif
 
 call plug#begin('~/.vim/plugged')
+  " vim-plug
+  Plug 'junegunn/vim-plug',
+        \ {'dir': '~/.vim/plugged/vim-plug/autoload'}
   " カラースキーム
   Plug 'altercation/vim-colors-solarized'           " Solarized
   Plug 'chriskempson/vim-tomorrow-theme'            " tomorrow
