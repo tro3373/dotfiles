@@ -278,11 +278,11 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
             ;;
         *'darwin'*)
             target='*darwin*amd64*'
-            target_massren='mac'
+            target_massren='*osx*'
             ;;
         *)
             target='os'
-            target_massren='win'
+            target_massren='*win*'
             ;;
     esac
     # zplug "junegunn/fzf-bin", as:command, from:gh-r, file:fzf
