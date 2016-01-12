@@ -259,7 +259,6 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
 
     # Remote loading
     zplug "b4b4r07/zplug"
-    zplug "b4b4r07/zsh-gomi",   as:command, of:bin/gomi
     zplug "b4b4r07/http_code",  as:command, of:bin
     zplug "b4b4r07/enhancd",    of:enhancd.sh
     zplug "stedolan/jq", from:gh-r, as:command \
@@ -285,9 +284,11 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
             target_massren='*win*'
             ;;
     esac
+    # zplug "b4b4r07/zsh-gomi",   as:command, of:bin/gomi
     # zplug "junegunn/fzf-bin", as:command, from:gh-r, file:fzf
     zplug "junegunn/fzf-bin", as:command, from:gh-r, of:"$target", file:fzf \
-        | zplug "b4b4r07/easy-oneliner"
+        | zplug "b4b4r07/easy-oneliner" \
+        | zplug "b4b4r07/gomi", as:command, from:gh-r, of:"$target", file:gomi
 
     zplug "junegunn/fzf", as:command, of:bin/fzf-tmux
     zplug "junegunn/fzf", of:"shell/*.zsh"
