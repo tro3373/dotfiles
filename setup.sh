@@ -21,10 +21,8 @@ source $DIR_ROOT/setup/setup-funcs.sh
 debug=0
 dry_run=1
 dry_run_commoands=""
-## powerline設定を実行するかどうか
-#EXE_POWERLINE=1
 # インストールコマンド 強制実行
-force_install=0
+force=0
 # インストール対象アプリ
 target_apps=()
 
@@ -53,7 +51,7 @@ EOF
             dry_run=0
             ;;
         force|--force|-f)
-            force_install=1
+            force=1
             ;;
         debug|--debug|-d)
             debug=1
@@ -79,7 +77,7 @@ if [[ $debug -eq 1 ]]; then
     for ((i = 0; i < ${#target_apps[@]}; i++)) {
         echo "target_apps[$i] = ${target_apps[i]}"
     }
-    echo force=$force_install
+    echo force=$force
     echo dry=$dry_run
 fi
 ################################################### INITIALIZE END

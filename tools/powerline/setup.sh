@@ -1,6 +1,12 @@
 #!/bin/bash
 
-setconfig() {
+script_dir=$(cd $(dirname $0); pwd)
+dry_run=0
+
+# インストール用関数 ロード
+source ~/dotfiles/setup/setup-funcs.sh
+
+install() {
     cmd_pyenv=~/.anyenv/envs/pyenv/bin/pyenv
     cmd_pip=~/.anyenv/envs/pyenv/shims/pip
     if [ -e $cmd_pyenv ]; then
@@ -16,7 +22,7 @@ setconfig() {
     # see powerline setting...
     #   http://qiita.com/qurage/items/4edda8559cc4c98758ee
     if [ "$OS" = "mac" ]; then
-        if ! testcmd xcode-select; then
+        if ! test_cmd xcode-select; then
             dvexec "xcode-select --install"
         fi
         dvexec "brew install readline; brew link readline;"
@@ -63,3 +69,5 @@ setconfig() {
         make_link_bkupable $script_dir/powerline.json ~/.config/powerline/themes/powerline.json
     fi
 }
+install
+

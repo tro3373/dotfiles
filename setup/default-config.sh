@@ -2,13 +2,15 @@
 
 # デフォルトのインストールメソッド定義
 install() {
-    log " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    log "   Default install called. execute default install command."
-    log " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    dlog " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    dlog "   Default install called. execute default install command."
+    dlog " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     dvexec $def_instcmd
 }
 
 # デフォルトの設定メソッド定義
 setconfig() {
-    log "  Default setconfig called. do nothing."
+    dlog " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    dlog "   Default setconfig called. do nothing."
+    dlog " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 }

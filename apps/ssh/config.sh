@@ -5,7 +5,7 @@ setconfig() {
     ssh_outer=${HOME}/.ssh
     if [ -L "${ssh_outer}" ]; then
         # lnk の場合はなにもしない.
-        log "  ==> already .ssh linked."
+        dlog "  ==> already .ssh linked."
     elif [ -d "${ssh_outer}" ]; then
         # ~/.ssh が既に存在した場合
         if [ -e "${ssh_inner}" ]; then

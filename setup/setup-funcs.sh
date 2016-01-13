@@ -4,6 +4,10 @@
 log() {
     echo "$*"
 }
+dlog() {
+    [[ $debug -eq 1 ]] && log "$*"
+    :
+}
 logescape() {
     echo -e "$*"
 }
@@ -12,12 +16,12 @@ logescape() {
 # log メソッドを呼びつつ実行する
 vexec() {
     cmd="$*"
-    log " Exec: $cmd"
+    dlog "===> Executing: $cmd"
     eval $cmd
     if [ $? -eq 0 ]; then
-        log "    => Command Sucessfully."
+        dlog "    => Command Sucessfully."
     else
-        log "    => Command Failed......"
+        dlog "    => Command Failed......"
     fi
 }
 
@@ -25,25 +29,19 @@ vexec() {
 # echoするのみ
 dry_vexec() {
     cmd="$*"
-    log " Dummy Exec: $cmd"
+    dlog " Dummy Exec: $cmd"
 }
 
 # コマンドがインストールされているかチェックする
-testcmd() {
-    cmd=`which $1`
-    if [ -n "`echo "${cmd}" | grep 'not found'`" ]; then
-        return 1
-    elif [ "$cmd" = "" ]; then
-        return 1
-    else
-        return 0
-    fi
+test_cmd() {
+    which "$1" >/dev/null 2>&1
+    return $?
 }
 
 # $* が存在するかどうか判定する
 isexist() {
-    file="$*"
-    count=`ls -a "$file" 2>/dev/null |wc -l|sed 's/ //g'`
+    local file="$*"
+    local count=`ls -a "$file" 2>/dev/null |wc -l|sed 's/ //g'`
     if [ "$count" == "0" ]; then
         # 存在しない場合は bash 内で false の意味を表す 1 を応答する.
         return 1
@@ -54,14 +52,14 @@ isexist() {
 
 # $1のファイルを$2へリンクを作成する
 make_link() {
-    from=$1
-    to=$2
+    local from=$1
+    local to=$2
     dvexec "ln -s \"$from\" \"$to\""
 }
 
 # Dry run 実行用の関数定義
 dvexec() {
-    cmd="$*"
+    local cmd="$*"
     if [ "$dry_run" = "0" ]; then
         vexec $cmd
     else
@@ -73,7 +71,7 @@ dvexec() {
 # $* のリンクを 絶対パスで表示する（readlink -f の代用（For Mac））
 # echo 結果がパスとして使用される為、log 実行時は正しく動作しない
 readlink_path() {
-    target="$*"
+    local target="$*"
     if [ "$target" = "" ]; then
         echo "Error!!! readlink_path Error!!!!!!!! argument is blank!!"
         return
@@ -99,8 +97,8 @@ make_link_dot2home() {
 
 # 同じリンクかどうか
 issamelink() {
-    src1=$1
-    src2=$2
+    local src1=$1
+    local src2=$2
     if [ "$src1" = "$src2" ]; then
         return 1
     fi
@@ -118,7 +116,7 @@ make_link_bkupable() {
     local src=$1
     local lnk=$2
     local need_backup=0
-    [[ $debug -eq 1 ]] && log " make_link_bkupable Start lnk=$lnk src=$src"
+    dlog " make_link_bkupable Start lnk=$lnk src=$src"
     #if [ -e "${lnk}" ]; then
     if isexist "${lnk}"; then
         # log "   @@@@@@ exist!"
@@ -133,7 +131,7 @@ make_link_bkupable() {
             # log "    src:$src => fullpath_src=$fullpath_src"
             if ! issamelink "$fullpath_lnk" "$fullpath_src"; then
                 # 既に自分へのリンクの場合はなにもしない
-                [[ $debug -eq 1 ]] && log "  => Already linked. Skip it. path=${lnk}"
+                dlog "  => Already linked. Skip it. path=${lnk}"
                 return 0
             else
                 # 他ファイルへのリンクなのでバックアップする
@@ -225,13 +223,6 @@ initialize() {
         mkdir ~/bin
     fi
 }
-initialize
-
-# Function 初期化
-initialize_funcs() {
-    # デフォルト関数ロード
-    source $DIR_ROOT/setup/default-config.sh
-}
 
 # セットアップ開始
 setup() {
@@ -246,18 +237,18 @@ setup() {
 
     # Mac 用 Brew インストールチェック
     if [ "$OS" = "mac" ]; then
-        if ! testcmd brew; then
-            log "================================================"
-            log " HomeBrew is Not Installed!"
-            log "  => Execute this and Install it!"
-            log ""
+        if ! test_cmd brew; then
+            log '================================================'
+            log ' HomeBrew is Not Installed!'
+            log '  => Execute this and Install it!'
+            log ''
             log '  echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile'
-            log "  sudo mkdir /usr/local/"
+            log '  sudo mkdir /usr/local/'
             log '  ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"'
-            log "  source ~/.bash_profile"
-            log "  brew update"
-            log "  brew -v"
-            log ""
+            log '  source ~/.bash_profile'
+            log '  brew update'
+            log '  brew -v'
+            log ''
             exit 1
         fi
     fi
@@ -266,84 +257,55 @@ setup() {
     # mac/linux にかかわらず、実行される
     for ((i = 0; i < ${#target_apps[@]}; i++)) {
         # ディレクトリ名＝アプリ名の前提
-        app=${target_apps[i]}
+        local app=${target_apps[i]}
 
-        if [ ! -d $DIR_APP/$app ]; then
-            # ディレクトリ以外は無視
-            continue
-        fi
+        dlog "================================================"
+        log "===> $app"
 
-        # デフォルト関数ロード
-        # 下記 vexec source $instshell にて、install, setconfig メソッドが
-        # 上書き定義される為、ここで初期化する
-        initialize_funcs
+        # 各スクリプト内で以下コマンドでパスを取得できていたが、、、
+        # ここで定義しておけば良いことに気づいたので設定しておく
+        # # source されるスクリプトを考慮した ファイルの存在するディレクトリ
+        # script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE}}")"; pwd)"
+        script_dir="$DIR_APP/$app"
 
-        [[ $debug -eq 1 ]] && log "================================================"
-        log "===> $DIR_APP/$app"
-        whith_install=0
-        if ! testcmd $app; then
-            [[ $debug -eq 1 ]] && log "    => Not Installed..."
-            whith_install=1
-        fi
-
-        # デフォルトのインストールコマンド
+        # デフォルトのインストールコマンド設定
         def_instcmd="$instcmd $app"
-        instshell=$DIR_APP/$app/$FIL_CONF
-        if [ -e "$instshell" ]; then
-            # 個別インストール設定ファイルが存在する場合は、それを実行
-            # shell を読み込み、install, setconfigメソッドをロード
-            source $instshell
+        # デフォルト関数ロード
+        # 下記 vexec source $script_path にて、install, setconfig メソッドが
+        # 上書き定義される為、ここで初期化する
+        source $DIR_ROOT/setup/default-config.sh
 
-            # 各スクリプト内で以下コマンドでパスを取得できていたが、、、
-            # ここで定義しておけば良いことに気づいたので設定しておく
-            # # source されるスクリプトを考慮した ファイルの存在するディレクトリ
-            # script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE}}")"; pwd)"
-            script_dir=$DIR_APP/$app
+        # 個別インストール設定ファイルが存在する場合は、それを実行する為
+        # config.sh ファイルを読み込み、install, setconfigメソッドをロード
+        local script_path=$DIR_APP/$app/$FIL_CONF
+        [[ -e "$script_path" ]] && source "$script_path"
 
-            if [ "$whith_install" = "1" ] || [ "$force_install" = "1" ]; then
-                # インストールされていない場合は実行
-                # 読み込んだ install コマンドの実行
-                install
-            fi
-            if testcmd $app; then
-                # install されている場合
-                # 読み込んだ setconfig コマンドの実行
-                setconfig
-            fi
-        else
-            # 個別インストール設定ファイルが存在しない場合は
-            # デフォルトのインストールコマンド実行
-            if [ "$whith_install" = "1" ]; then
-                # インストールされていない場合は実行
-                [[ $debug -eq 1 ]] && log " Execute Default install command"
-                dvexec $def_instcmd
-            fi
+        if [[ $force -eq 1 ]] || ! test_cmd $app; then
+            # 強制インストールまたは、インストールされていない場合は実行
+            # 読み込んだ install コマンドの実行
+            install
+        fi
+        if test_cmd $app; then
+            # install された、されている場合
+            # 読み込んだ setconfig コマンドの実行
+            setconfig
         fi
     }
 
-#    # powerlineインストール処理を実行
-#    powerlineconfig=$DIR_ROOT/powerline/$FIL_CONF
-#    if [ "$EXE_POWERLINE" = "1" ] && [ -e "$powerlineconfig" ]; then
-#        source $powerlineconfig
-#        script_dir=$DIR_ROOT/powerline
-#        # 読み込んだ setconfig コマンドの実行
-#        log "================================================"
-#        log "===> $powerlineconfig"
-#        setconfig
-#    fi
-
-    if [ "$dry_run" = "1" ]; then
+    if [[ $dry_run -eq 1 ]]; then
         log ""
         log ""
         log "===================================================="
         log "==>  This is Dry-run mode."
         log "==>     Specify 'exec/--exec/-e' option for execute."
-        log "==>     Below commands will be execute."
-        logescape $dry_run_commoands
+        if [[ ! -z $dry_run_commoands ]]; then
+            log "==>     Below commands will be execute."
+            logescape $dry_run_commoands
+        fi
         log "===================================================="
     else
         logescape $dry_run_commoands
-        if [ ! "$BACKUP" = "" ]; then
+        if [[ ! "$BACKUP" == "" ]]; then
             log "======================================>"
             log " Below files is backuped."
             logescape $BACKUP
