@@ -60,8 +60,8 @@ vnoremap <silent> cy   c<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 "map qq 0i/* <ESC>$a */<ESC>
 "" 現在行をコメント化
 "map s/ 0i// <ESC>
-"map s# 0i# <ESC>
-"vmap # <c-V>0I#<esc>
+map s# 0i# <ESC>
+vmap # <c-V>0I#<esc>
 "vmap C :s/^#//<cr>
 "vmap // <C-V>0I//<Esc>
 "vmap c :s/^\/\///<CR>:noh<cr>K
