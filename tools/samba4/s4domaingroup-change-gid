@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# http://web.chaperone.jp/w/index.php?samba4%2Fuser%2Fscript
+samba=/usr/local/samba
+dc1=hoge
+dc2=local
+
+PATH=$samba/bin:$PATH
+if [ $# -ne 2 ]; then
+  echo "usage: $0 <group_name> <gid>"
+  exit 1
+fi
+#
+IFS=$'\n'
+for s4g in `wbinfo -g`                                   # samba4 全グループ名
+do
+s4gstr=$(wbinfo --group-info=$s4g)
+s4gid_m=$(echo $s4gstr|cut -d":" -f 3|grep -wxci $2)     # samba4 既存gid
+if [ $s4gid_m -ne 0 ]; then
+  echo "already registered group id(samba4): $2"
+  exit 1
+fi
+done
+#
+for hostg in `cat /etc/group`                           # /etc/group
+do
+hostgname_m=$(echo $hostg|cut -d":" -f1|grep -wxci $1)  # /etc/groupのgroup name
+hostgid_m=$(echo $hostg|cut -d":" -f3|grep -wxci $2)    # /etc/groupのgid
+if [ $hostgname_m -ne 0 ]; then
+  echo "<group_name> exist in /etc/group"
+  exit 1
+fi
+if [ $hostgid_m -ne 0 ]; then
+  echo "<gid> exist in /etc/group"
+  exit 1
+fi
+done
+#
+echo "Modifying s4 posix group "$1
+sid=$(wbinfo --name-to-sid="$1")                        # 指定したgroupのsidを取得
+if [ $? -ne 0 ]; then
+  echo "not found $1 group in samba4AD"
+  exit 1
+fi
+ 
+gsid=$(echo "$sid" | cut -d " " -f1)
+echo "found $1 sid= $gsid"                              # sidのxidNumberを指定したgidに変更(idmap)
+echo "dn: cn=$gsid
+changetype: modify
+replace: xidNumber
+xidNumber: $2" > /tmp/xid.ldif
+echo "sleeping. . ."
+echo ""
+sleep 2
+ldbmodify --url=$samba/private/idmap.ldb /tmp/xid.ldif
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+#                                                       # groupのgidNumberを変更(sam)
+echo "dn: CN=$1,CN=Users,DC=$dc1,DC$dc2
+changetype: modify
+replace: gidNumber
+gidNumber: $2" > /tmp/gid.ldif
+echo "sleeping. . ."
+sleep 2
+ldbmodify --url=$samba/private/sam.ldb /tmp/gid.ldif
+echo "$1 changed from gid $gsid to $2"
+

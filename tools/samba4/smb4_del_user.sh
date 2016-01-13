@@ -1,5 +1,6 @@
 #!/bin/bash
 
+SERVER_SHARE_ROOT=/data/share/Users
 samba_tool=/usr/local/samba/bin/samba-tool
 if [[ ! -e $samba_tool ]]; then
     echo "No samba-tool exist" 1>&2
@@ -21,7 +22,6 @@ if ! `id ${user_name} > /dev/null 2>&1`; then
 fi
 
 del_home=$2
-#if [[ -e /home/${user_name} || `cat /etc/passwd |grep ${user_name}: >/dev/null 2>&1` ]]; then
 if [[ -e /home/${user_name} ]]; then
     # /home にユーザが存在する場合のみ削除コマンドを発行する.
     while [[ ! "$del_home" =~ ^[0-1]$  ]]; do
@@ -35,6 +35,24 @@ if [[ -e /home/${user_name} ]]; then
     done
     if [[ $del_home -eq 1 ]]; then
         sudo rm -rf /home/$user_name
+    fi
+fi
+
+del_share=$3
+share_path=$SERVER_SHARE_ROOT/${user_name:-HOGEHOGEHOGE}
+if [[ -e ${share_path} ]]; then
+    # /data/share/Users にユーザ用ディレクトリが存在する場合のみ削除コマンドを発行する.
+    while [[ ! "$del_share" =~ ^[0-1]$  ]]; do
+        echo "Delete server share directory? $share_path (y/N)"
+        read read_del_share
+        if [[ "$read_del_share" =~ ^[yY]$ ]]; then
+            del_share=1
+        elif [[ "$read_del_share" = "" || "$read_del_share" =~ ^[nN]$ ]]; then
+            del_share=0
+        fi
+    done
+    if [[ $del_share -eq 1 ]]; then
+        sudo rm -rf $share_path
     fi
 fi
 

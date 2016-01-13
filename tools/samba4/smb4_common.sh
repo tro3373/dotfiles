@@ -52,6 +52,13 @@ check_idmap() {
     fi
 }
 
+check_sam() {
+    if [[ ! -e /usr/local/samba/private/sam.ldb ]]; then
+        echo "No samba sam.ldb exist" 1>&2
+        exit 1
+    fi
+}
+
 load_credential() {
     if [[ ! -e $credential_file ]]; then
         local script_path=$(cd $(dirname $0); pwd)
