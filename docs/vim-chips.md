@@ -13,7 +13,7 @@
 `:r! ls` でコマンド実行結果を貼り付けする！！！！！
 gf      : open file name under cursor (SUPER)
 J/gJで行を連結
-
+```
 <C-R>"  : インサートモードから貼り付け！
 ga      : display hex, ascii value of character under cursor
 g8      : display hex value of utf-8 character under cursor
@@ -33,13 +33,19 @@ Retrieving last command line command for copy & pasting into text
 Retrieving last Search Command for copy & pasting into text
 <c-r>/
 <C-X><C-F> :insert name of a file in current directory
+```
 
 ## Surround vim
 
 - [surround.vim](http://vimblog.hatenablog.com/entry/vim_plugin_surround_vim)
 
+- Surround selected word: `S'`
+- Delete surround: `ds'`
+- Change surround: `cs'"`
+
 ## 移動
-- ノーマルモードでz<enter>(またはzt)とタイプすると、現在カーソルのある行が画面の一番上になるように画面がスクロールします。
+- ノーマルモードでz<enter>(またはzt)とタイプすると、
+  現在カーソルのある行が画面の一番上になるように画面がスクロールします。
   同様に、z.で中央、z-で一番下にスクロールします。
 - H/M/Lでカーソルをウインドウ内の上/中/下に移動させる
 
