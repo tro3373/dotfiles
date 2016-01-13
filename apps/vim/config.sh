@@ -3,8 +3,8 @@
 install() {
     if [ "$OS" = "ubuntu" ]; then
 #        dvexec "$instcmd --force-yes vim vim-gtk vim-athena vim-gnome"
-        dvexec sudo apt-get remove --purge vim vim-runtime vim-gnome vim-tiny vim-common vim-gui-common
-        dvexec sudo apt-get install liblua5.1-dev luajit \
+        dvexec sudo apt-get remove -y --purge vim vim-runtime vim-gnome vim-tiny vim-common vim-gui-common
+        dvexec sudo apt-get install -y liblua5.1-dev luajit \
             libluajit-5.1 python-dev ruby ruby-dev libperl-dev \
             mercurial libncurses5-dev libgnome2-dev libgnomeui-dev \
             libgtk2.0-dev libatk1.0-dev libbonoboui2-dev libcairo2-dev \

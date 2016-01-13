@@ -10,7 +10,7 @@ install() {
         # for tmux from git
         dvexec cd /usr/local/src
         dvexec sudo git clone https://github.com/tmux/tmux.git
-        dvexec sudo apt-get install autoconf libtool pkg-config libevent-dev
+        dvexec sudo apt-get install -y autoconf libtool pkg-config libevent-dev
         dvexec cd tmux
         dvexec sudo ./autogen.sh
         dvexec sudo ./configure --prefix=/usr/local
