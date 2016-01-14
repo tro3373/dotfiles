@@ -7,8 +7,24 @@
 " カレントディレクトリを自動的に変更
 " set autochdir
 " UTF-8をデフォルト文字コードセットに設定
-set enc=utf-8
-set fileencodings=iso-2022-jp,euc-jp,sjis,utf-8
+" encoding(enc)
+"   vimの内部で使用されるエンコーディングを指定する。
+"   編集するファイル内の全ての文字を表せるエンコーディングを指定するべき。
+set encoding=utf-8
+" fileencoding(fenc)
+"   そのバッファのファイルのエンコーディングを指定する。
+"   バッファにローカルなオプション。これに encoding と異なる値が設定されていた場合、
+"   ファイルの読み書き時に文字コードの変換が行なわれる。
+"   fencが空の場合、encodingと同じ値が指定されているものとみなされる。(つまり、変換は行なわれない。)
+set fileencoding=utf-8
+" fileencodings(fencs)
+"   既存のファイルを編集する際に想定すべき文字コードのリストをカンマ区切りで列挙したものを指定する。
+"   編集するファイルを読み込む際には、「指定された文字コード」→「encodingの文字コード」の変換が試行され、
+"   最初にエラー無く変換できたものがそのバッファの fenc に設定される。
+"   fencsに列挙された全ての文字コードでエラーが出た場合、fencは空に設定され、その結果、
+"   文字コードの変換は行われないことになる。fencsにencodingと同じ文字コードを途中に含めると、
+"   その文字コードを試行した時点で、「 encoding と同じ」→「文字コード変換の必要無し」→「常に変換成功」→「fencに採用」となる。
+set fileencodings=ucs-bom,iso-2022-jp-3,iso-2022-jp,eucjp-ms,euc-jisx0213,euc-jp,sjis,cp932,utf-8
 set helplang=ja,en
 " ビープ音を鳴らさない
 set vb t_vb=
