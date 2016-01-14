@@ -25,8 +25,10 @@ set matchtime=1
 set scrolloff=5
 " ターミナル接続を高速にする
 set ttyfast
-" Unicodeで行末が変になる問題を解決
-set ambiwidth=double
+" ■Unicodeで行末が変になる問題を解決
+if &encoding == 'utf-8'
+  set ambiwidth=double
+endif
 " 長い行も表示
 set display=lastline
 " 補完メニューの高さ

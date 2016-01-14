@@ -1,0 +1,18 @@
+[Desktop Entry]
+Name=CJK Terminal
+Comment=CJK Terminal
+TryExec=gnome-terminal
+Exec=env VTE_CJK_WIDTH=1 gnome-terminal --disable-factory
+Icon=utilities-terminal
+Type=Application
+Categories=GNOME;GTK;Utility;TerminalEmulator;
+StartupNotify=true
+OnlyShowIn=GNOME;Unity;
+Keywords=Run;
+Actions=New
+X-Ubuntu-Gettext-Domain=gnome-terminal
+
+[Desktop Action New]
+Name=New Terminal
+Exec=env VTE_CJK_WIDTH=1 gnome-terminal --disable-factory
+OnlyShowIn=Unity
