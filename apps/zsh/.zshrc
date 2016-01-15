@@ -313,5 +313,6 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     zplug load --verbose
 fi
 
+[ -f ~/.work.zsh ] && source ~/.work.zsh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
