@@ -1,0 +1,15 @@
+#!/bin/bash
+
+f=${1:-sample.sh}
+path=$(pwd)/$f
+
+cat << EOF >> $path
+#!/bin/bash
+
+main() {
+}
+main
+EOF
+
+chmod 755 $path
+
