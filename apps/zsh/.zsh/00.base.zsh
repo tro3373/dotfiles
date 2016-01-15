@@ -84,8 +84,14 @@ bindkey "\e[Z" reverse-menu-complete
 
 
 ## コマンド履歴の設定
-setopt hist_ignore_dups     # 重複したコマンドは履歴保存しない
-setopt share_history        # コマンド履歴ファイルを複数のzshプロセス間で共有
+setopt share_history            # コマンド履歴ファイルを複数のzshプロセス間で共有
+setopt hist_ignore_dups         # 直前のコマンドの重複を削除する。
+setopt hist_ignore_all_dups     # 重複するコマンドが記録される時、古い方を削除する。
+setopt hist_save_no_dups        # 重複するコマンドが保存される時、古い方を削除する。
+setopt hist_expire_dups_first   # 古い履歴を削除する必要がある場合、まず重複しているものから削除する。
+setopt hist_find_no_dups        # 履歴検索で重複しているものを表示しない。
+setopt append_history           # 履歴を上書きしないで追加する。
+setopt hist_no_store            # historyコマンドは除去する。
 
 
 ## 補完機能の設定
