@@ -1,0 +1,5 @@
+snippet     pluginstalled
+alias       plug
+options     head
+    if g:plug.is_installed("${1:#:plug_name}")
+    endif

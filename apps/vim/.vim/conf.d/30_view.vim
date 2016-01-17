@@ -44,13 +44,15 @@ highlight SpecialKey cterm=NONE ctermfg=cyan guifg=cyan
 
 
 " Indent Guide Settings
-set ts=4 sw=4 et
-let g:indent_guides_enable_on_vim_startup=1
-let g:indent_guides_start_level=2
-let g:indent_guides_guide_size=1
-let g:indent_guides_auto_colors=0
-autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd   ctermbg=black
-autocmd VimEnter,Colorscheme * :hi IndentGuidesEven  ctermbg=darkgrey
+if g:plug.is_installed("vim-indent-guides")
+    set ts=4 sw=4 et
+    let g:indent_guides_enable_on_vim_startup=1
+    let g:indent_guides_start_level=2
+    let g:indent_guides_guide_size=1
+    let g:indent_guides_auto_colors=0
+    autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd   ctermbg=black
+    autocmd VimEnter,Colorscheme * :hi IndentGuidesEven  ctermbg=darkgrey
+endif
 
 
 " ターミナル環境用に256色を使えるようにする
@@ -86,33 +88,37 @@ colorscheme solarized
 
 "" Airline Settings
 " Powerline font を使用する
-let g:airline_powerline_fonts = 1
-" tabline 設定
-let g:airline#extensions#tabline#enabled = 1
-" タブに何かしらの番号を表示する設定
-let g:airline#extensions#tabline#show_tab_nr = 1
-" タブ番号を表示する設定
-let g:airline#extensions#tabline#tab_nr_type = 1
-" タブ区切り設定
-let g:airline#extensions#tabline#left_sep = ''
-let g:airline#extensions#tabline#left_alt_sep = '|'
-" branch 表示
-let g:airline#extensions#branch#enabled = 1
-" hunk 表示
-let g:airline#extensions#hunks#enabled = 1
+if g:plug.is_installed("vim-airline")
+    let g:airline_powerline_fonts = 1
+    " tabline 設定
+    let g:airline#extensions#tabline#enabled = 1
+    " タブに何かしらの番号を表示する設定
+    let g:airline#extensions#tabline#show_tab_nr = 1
+    " タブ番号を表示する設定
+    let g:airline#extensions#tabline#tab_nr_type = 1
+    " タブ区切り設定
+    let g:airline#extensions#tabline#left_sep = ''
+    let g:airline#extensions#tabline#left_alt_sep = '|'
+    " branch 表示
+    let g:airline#extensions#branch#enabled = 1
+    " hunk 表示
+    let g:airline#extensions#hunks#enabled = 1
+endif
 
+if g:plug.is_installed("powerline")
+    " Powerline Settings
+    let g:Powerline_symbols = 'fancy'
+    " let g:Powerline_symbols = 'compatible'
+    let g:Powerline_theme       ='solarized256'
+    let g:Powerline_colorscheme ='solarized256'
+    let g:Powerline_theme='short'
+    let g:Powerline_colorscheme='solarized256_dark'
+    " Python base powerline.
+    source ~/.local/lib/python2.7/site-packages/powerline/bindings/vim/plugin/powerline.vim
+    python from powerline.vim import setup as powerline_setup
+    python powerline_setup()
+    python del powerline_setup
+endif
 
-"" Powerline Settings
-" let g:Powerline_symbols = 'fancy'
-"" let g:Powerline_symbols = 'compatible'
-" let g:Powerline_theme       ='solarized256'
-" let g:Powerline_colorscheme ='solarized256'
-" let g:Powerline_theme='short'
-" let g:Powerline_colorscheme='solarized256_dark'
-"" Python base powerline.
-" source ~/.local/lib/python2.7/site-packages/powerline/bindings/vim/plugin/powerline.vim
-" python from powerline.vim import setup as powerline_setup
-" python powerline_setup()
-" python del powerline_setup
 
 

@@ -259,31 +259,35 @@ vnoremap <Space>g y:Ag <C-R>"
 "=============================================
 " NERDTree 設定
 "=============================================
-" 隠しファイルをデフォルトで表示させる
-let NERDTreeShowHidden = 1
-" デフォルトでツリーを表示させる
-" autocmd VimEnter * execute 'NERDTree'
-"<C-e>でNERDTreeをオンオフ
-" map <silent> <C-e>   :NERDTreeToggle<CR>
-" lmap <silent> <C-e>  :NERDTreeToggle<CR>
-nmap <silent> <C-e>      :NERDTreeToggle<CR>
-vmap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
-omap <silent> <C-e>      :NERDTreeToggle<CR>
-imap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
+if g:plug.is_installed("nerdtree")
+    " 隠しファイルをデフォルトで表示させる
+    let NERDTreeShowHidden = 1
+    " デフォルトでツリーを表示させる
+    " autocmd VimEnter * execute 'NERDTree'
+    "<C-e>でNERDTreeをオンオフ
+    " map <silent> <C-e>   :NERDTreeToggle<CR>
+    " lmap <silent> <C-e>  :NERDTreeToggle<CR>
+    nmap <silent> <C-e>      :NERDTreeToggle<CR>
+    vmap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
+    omap <silent> <C-e>      :NERDTreeToggle<CR>
+    imap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
+endif
 
 ""=============================================
 "" Lokaltog/vim-easymotion
 ""=============================================
-"" http://blog.remora.cx/2012/08/vim-easymotion.html
-"" ホームポジションに近いキーを使う
-"let g:EasyMotion_keys='hjklasdfgyuiopqwertnmzxcvbHJKLASDFGYUIOPQWERTNMZXCVB'
-"" 「;」 + 何かにマッピング
-"let g:EasyMotion_leader_key=";"
-"" 1 ストローク選択を優先する
-"let g:EasyMotion_grouping=1
-"" カラー設定変更
-"hi EasyMotionTarget ctermbg=none ctermfg=red
-"hi EasyMotionShade  ctermbg=none ctermfg=blue
+"if g:plug.is_installed("vim-easymotion")
+"    " http://blog.remora.cx/2012/08/vim-easymotion.html
+"    " ホームポジションに近いキーを使う
+"    let g:EasyMotion_keys='hjklasdfgyuiopqwertnmzxcvbHJKLASDFGYUIOPQWERTNMZXCVB'
+"    " 「;」 + 何かにマッピング
+"    let g:EasyMotion_leader_key=";"
+"    " 1 ストローク選択を優先する
+"    let g:EasyMotion_grouping=1
+"    " カラー設定変更
+"    hi EasyMotionTarget ctermbg=none ctermfg=red
+"    hi EasyMotionShade  ctermbg=none ctermfg=blue
+"endif
 
 
 "=============================================
@@ -291,75 +295,78 @@ imap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
 " http://rcmdnk.github.io/blog/2015/01/12/computer-vim/
 " http://kazuph.hateblo.jp/entry/2012/11/28/105633
 "=============================================
-imap <C-k> <Plug>(neosnippet_expand_or_jump)
-smap <C-k> <Plug>(neosnippet_expand_or_jump)
-xmap <C-k> <Plug>(neosnippet_expand_target)
-" honza/vim-snippets 等、元々snipmate用等に作られた物との互換性を上げるための設定
-let g:neosnippet#enable_snipmate_compatibility = 1
-" my-snippets
-"   => .vim/snippets
-" Shougo/neosnippet-snippets
-" honza/vim-snippets
-"  => target langs
-"       actionscript apache autoit c chef clojure cmake coffee cpp cs css
-"       dart diff django erlang eruby falcon go haml haskell html htmldjango
-"       htmltornado java javascript-jquery javascript jsp ledger lua make
-"       mako markdown objc perl php plsql po processing progress puppet
-"       python r rst ruby sh snippets sql tcl tex textile vim xslt yii-chtml yii zsh
-let g:neosnippet#snippets_directory = '~/.vim/snippets,~/.vim/plugged/vim-snippets/snippets,~/.vim/plugged/neosnippet-snippets/neosnippets'
+if g:plug.is_installed("neosnippet")
+    imap <C-k> <Plug>(neosnippet_expand_or_jump)
+    smap <C-k> <Plug>(neosnippet_expand_or_jump)
+    xmap <C-k> <Plug>(neosnippet_expand_target)
+    " honza/vim-snippets 等、元々snipmate用等に作られた物との互換性を上げるための設定
+    let g:neosnippet#enable_snipmate_compatibility = 1
+    " my-snippets
+    "   => .vim/snippets
+    " Shougo/neosnippet-snippets
+    " honza/vim-snippets
+    "  => target langs
+    "       actionscript apache autoit c chef clojure cmake coffee cpp cs css
+    "       dart diff django erlang eruby falcon go haml haskell html htmldjango
+    "       htmltornado java javascript-jquery javascript jsp ledger lua make
+    "       mako markdown objc perl php plsql po processing progress puppet
+    "       python r rst ruby sh snippets sql tcl tex textile vim xslt yii-chtml yii zsh
+    let g:neosnippet#snippets_directory = '~/.vim/snippets,~/.vim/plugged/vim-snippets/snippets,~/.vim/plugged/neosnippet-snippets/neosnippets'
 
-" SuperTab like snippets behavior.
-imap <expr><TAB> neosnippet#expandable() <Bar><bar> neosnippet#jumpable() ? "\<Plug>(neosnippet_expand_or_jump)" : pumvisible() ? "\<C-n>" : "\<TAB>"
-smap <expr><TAB> neosnippet#expandable() <Bar><bar> neosnippet#jumpable() ? "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+    " SuperTab like snippets behavior.
+    imap <expr><TAB> neosnippet#expandable() <Bar><bar> neosnippet#jumpable() ? "\<Plug>(neosnippet_expand_or_jump)" : pumvisible() ? "\<C-n>" : "\<TAB>"
+    smap <expr><TAB> neosnippet#expandable() <Bar><bar> neosnippet#jumpable() ? "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
 
-" For snippet_complete marker.
-if has('conceal')
-  set conceallevel=2 concealcursor=i
+    " For snippet_complete marker.
+    if has('conceal')
+      set conceallevel=2 concealcursor=i
+    endif
 endif
-
 
 "=============================================
 " smartchr 設定
 " http://d.hatena.ne.jp/ampmmn/20080925/1222338972
 "=============================================
-" 演算子の間に空白を入れる
-" inoremap <buffer><expr> < search('^#include\%#', 'bcn')? ' <': smartchr#one_of(' < ', ' << ', '<')
-" inoremap <buffer><expr> > search('^#include <.*\%#', 'bcn')? '>': smartchr#one_of(' > ', ' >> ', '>')
-" inoremap <buffer><expr> + smartchr#one_of(' + ', '++', '+')
-" inoremap <buffer><expr> - smartchr#one_of(' - ', '--', '-')
-" inoremap <buffer><expr> / smartchr#one_of(' / ', '// ', '/')
-" *はポインタで使うので、空白はいれない
-" inoremap <buffer><expr> & smartchr#one_of(' & ', ' && ', '&')
-inoremap <buffer><expr> % smartchr#one_of(' % ', '%')
-inoremap <buffer><expr> <Bar> smartchr#one_of(' <Bar> ', ' <Bar><Bar> ', '<Bar>')
-inoremap <buffer><expr> , smartchr#one_of(', ', ',')
-" 3項演算子の場合は、後ろのみ空白を入れる
-inoremap <buffer><expr> ? smartchr#one_of('? ', '?')
-" inoremap <buffer><expr> : smartchr#one_of(': ', '::', ':')
+if g:plug.is_installed("vim-smartchr")
+    " 演算子の間に空白を入れる
+    " inoremap <buffer><expr> < search('^#include\%#', 'bcn')? ' <': smartchr#one_of(' < ', ' << ', '<')
+    " inoremap <buffer><expr> > search('^#include <.*\%#', 'bcn')? '>': smartchr#one_of(' > ', ' >> ', '>')
+    " inoremap <buffer><expr> + smartchr#one_of(' + ', '++', '+')
+    " inoremap <buffer><expr> - smartchr#one_of(' - ', '--', '-')
+    " inoremap <buffer><expr> / smartchr#one_of(' / ', '// ', '/')
+    " *はポインタで使うので、空白はいれない
+    " inoremap <buffer><expr> & smartchr#one_of(' & ', ' && ', '&')
+    inoremap <buffer><expr> % smartchr#one_of(' % ', '%')
+    inoremap <buffer><expr> <Bar> smartchr#one_of(' <Bar> ', ' <Bar><Bar> ', '<Bar>')
+    inoremap <buffer><expr> , smartchr#one_of(', ', ',')
+    " 3項演算子の場合は、後ろのみ空白を入れる
+    inoremap <buffer><expr> ? smartchr#one_of('? ', '?')
+    " inoremap <buffer><expr> : smartchr#one_of(': ', '::', ':')
 
-" " =の場合、単純な代入や比較演算子として入力する場合は前後にスペースをいれる。
-" " 複合演算代入としての入力の場合は、直前のスペースを削除して=を入力
-" inoremap <buffer><expr> = search('\(&\<bar><bar>\<bar>+\<bar>-\<bar>/\<bar>>\<bar><\) \%#', 'bcn')? '<bs>= '
-"     \ : search('\(*\<bar>!\)\%#', 'bcn') ? '= '
-"     \ : smartchr#one_of(' = ', ' == ', '=')
+    " " =の場合、単純な代入や比較演算子として入力する場合は前後にスペースをいれる。
+    " " 複合演算代入としての入力の場合は、直前のスペースを削除して=を入力
+    " inoremap <buffer><expr> = search('\(&\<bar><bar>\<bar>+\<bar>-\<bar>/\<bar>>\<bar><\) \%#', 'bcn')? '<bs>= '
+    "     \ : search('\(*\<bar>!\)\%#', 'bcn') ? '= '
+    "     \ : smartchr#one_of(' = ', ' == ', '=')
 
-" " 下記の文字は連続して現れることがまれなので、二回続けて入力したら改行する
-" inoremap <buffer><expr> } smartchr#one_of('}', '}<cr>')
-" inoremap <buffer><expr> ; smartchr#one_of(';', ';<cr>')
-" 「->」は入力しづらいので、..で置換え
-" inoremap <buffer><expr> . smartchr#loop('.', '->', '...')
-" 行先頭での@入力で、プリプロセス命令文を入力
-inoremap <buffer><expr> @ search('^\(#.\+\)\?\%#','bcn')? smartchr#one_of('#define', '#include', '#ifdef', '#endif', '@'): '@'
+    " " 下記の文字は連続して現れることがまれなので、二回続けて入力したら改行する
+    " inoremap <buffer><expr> } smartchr#one_of('}', '}<cr>')
+    " inoremap <buffer><expr> ; smartchr#one_of(';', ';<cr>')
+    " 「->」は入力しづらいので、..で置換え
+    " inoremap <buffer><expr> . smartchr#loop('.', '->', '...')
+    " 行先頭での@入力で、プリプロセス命令文を入力
+    inoremap <buffer><expr> @ search('^\(#.\+\)\?\%#','bcn')? smartchr#one_of('#define', '#include', '#ifdef', '#endif', '@'): '@'
 
-inoremap <buffer><expr> " search('^#include\%#', 'bcn')? ' "': '"'
-" if文直後の(は自動で間に空白を入れる
-inoremap <buffer><expr> ( search('\<\if\%#', 'bcn')? ' (': '('
-
+    inoremap <buffer><expr> " search('^#include\%#', 'bcn')? ' "': '"'
+    " if文直後の(は自動で間に空白を入れる
+    inoremap <buffer><expr> ( search('\<\if\%#', 'bcn')? ' (': '('
+endif
 
 "=============================================
 " caw 設定(コメントアウト トグル)
 " http://d.hatena.ne.jp/ampmmn/20080925/1222338972
 "=============================================
-nmap <Leader>c <Plug>(caw:i:toggle)
-vmap <Leader>c <Plug>(caw:i:toggle)
-
+if g:plug.is_installed("caw.vim")
+    nmap <Leader>c <Plug>(caw:i:toggle)
+    vmap <Leader>c <Plug>(caw:i:toggle)
+endif

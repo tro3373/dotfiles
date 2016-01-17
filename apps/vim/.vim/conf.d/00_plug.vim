@@ -95,6 +95,11 @@ call plug#begin('~/.vim/plugged')
 
 call plug#end()
 
-" For fzf plugin.
-" set rtp+=~/.fzf
+" VimPlug plugin install 判定関数
+let g:plug = {
+    \ "plugs": get(g:, 'plugs', {})
+    \ }
+function! g:plug.is_installed(name)
+    return has_key(self.plugs, a:name) ? isdirectory(self.plugs[a:name].dir) : 0
+endfunction
 
