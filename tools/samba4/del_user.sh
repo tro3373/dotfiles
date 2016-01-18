@@ -56,6 +56,6 @@ if [[ -e ${share_path} ]]; then
     fi
 fi
 
-sudo userdel -r $user_name
+#sudo userdel -r $user_name
 sudo $samba_tool user delete $user_name
 

@@ -62,7 +62,7 @@ check_sam() {
 load_credential() {
     if [[ ! -e $credential_file ]]; then
         local script_path=$(cd $(dirname $0); pwd)
-        $script_path/ldap_setup_credential.sh
+        $script_path/setup_ldap_credential.sh
     fi
     source $credential_file
 }

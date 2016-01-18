@@ -5,6 +5,7 @@ samba_tool=$samba/bin/samba-tool
 ldbmodify=$samba/bin/ldbmodify
 wbinfo=$samba/bin/wbinfo
 MAIL_DOMAIN=@hoge.jp
+DEF_SHELL=/sbin/nologin
 DC1=hoge
 DC2=local
 NIS_DOMAIN=$DC1
@@ -21,6 +22,8 @@ SERVER_SHARE_ROOT=/path/to/server/share
 
 user_name="$1"
 ops=$2
+display_name="$3"
+description="$4"
 
 if [[ ! -e $samba_tool ]]; then
     echo "No samba-tool exist" 1>&2
@@ -42,8 +45,10 @@ EOF
 done
 
 echo "===> add user info."
-echo "  Add User Name: $user_name"
+echo "  Add User Name: $display_name"
+echo "  UID          : $user_name"
 echo "  Ops Number   : $ops"
+echo "  Description  : $description"
 
 set -eu
 get_uid_minimam() {
@@ -126,6 +131,8 @@ main() {
     uid_number=`get_next_uid`
 
     # user 作成
+        # --given-name=Illyasviel --surname=Einzbern \
+        # --gecos="${display_name:- }" \
     sudo $samba_tool user create ${user_name} ${user_name} \
         --must-change-at-next-login \
         --use-username-as-cn \
@@ -135,7 +142,7 @@ main() {
         --uid-number=${uid_number} \
         --gid-number=${gid_number} \
         --unix-home=/home/${user_name} \
-        --login-shell=/bin/bash
+        --login-shell=$DEF_SHELL
 
     echo "After create user... $(id $user_name)"
     #get the gid
@@ -151,6 +158,20 @@ changetype: modify
 replace: primarygroupid
 primarygroupid: $primarygid
 EOT
+    if [[ ! -z ${display_name} ]]; then
+        cat << EOT >> /tmp/${user_name}
+-
+add: displayname
+displayname: ${display_name:- }
+EOT
+    fi
+    if [[ ! -z ${description} ]]; then
+        cat << EOT >> /tmp/${user_name}
+-
+add: description
+description: ${description:- }
+EOT
+    fi
 
     # 所属グループ登録
     sudo $samba_tool group addmembers ${ops_name} ${user_name}

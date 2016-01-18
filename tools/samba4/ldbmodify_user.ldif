@@ -1,0 +1,17 @@
+dn: cn=hogehoge,cn=Users,dc=hoge,dc=local
+changetype: modify
+replace: gidnumber
+gidnumber: 10000
+-
+replace:uidnumber
+uidnumber: 10000
+-
+replace:unixhomedirectory
+unixhomedirectory: /home/hogehoge
+-
+replace: loginshell
+loginshell: /bin/bash
+-
+replace: primarygroupid
+primarygroupid: 1000
+
