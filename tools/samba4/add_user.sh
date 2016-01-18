@@ -3,6 +3,7 @@
 samba=/usr/local/samba
 samba_tool=$samba/bin/samba-tool
 ldbmodify=$samba/bin/ldbmodify
+lib_add_user_to_group=./add_user_to_group.sh
 wbinfo=$samba/bin/wbinfo
 MAIL_DOMAIN=@hoge.jp
 DEF_SHELL=/sbin/nologin
@@ -21,9 +22,15 @@ SERVER_SHARE_ROOT=/path/to/server/share
 #===================================================
 
 user_name="$1"
-ops=$2
+group_name=$2
 display_name="$3"
 description="$4"
+uid_number=$5
+
+is_exist_group() {
+    $wbinfo --group-info="$1" > /dev/null 2>&1
+    return $?
+}
 
 if [[ ! -e $samba_tool ]]; then
     echo "No samba-tool exist" 1>&2
@@ -34,20 +41,16 @@ while [[ "$user_name" = "" ]]; do
     echo "Input user_name for create..."
     read user_name
 done
-while [[ ! "$ops" =~ ^[1-3]$ ]]; do
-    cat <<EOF
-Input number:
-    1: 1st
-    2: 2nd
-    3: 3rd
-EOF
-    read ops
+
+while [[ "$group_name" == "" ]] || ! is_exist_group "$group_name"; do
+    echo "Input primary group_name for user..."
+    read group_name
 done
 
 echo "===> add user info."
 echo "  Add User Name: $display_name"
 echo "  UID          : $user_name"
-echo "  Ops Number   : $ops"
+echo "  group_name   : $group_name"
 echo "  Description  : $description"
 
 set -eu
@@ -99,28 +102,8 @@ check_uid_exist() {
 }
 
 main() {
-    local ops_name gid_number base_group uid_number
-    case $ops in
-        1)
-            ops_name=$OPS1_NAME
-            gid_number=$OPS1_GID
-            base_group=$BASE_GROUP
-            ;;
-        2)
-            ops_name=$OPS2_NAME
-            gid_number=$OPS2_GID
-            base_group=$BASE_GROUP
-            ;;
-        3)
-            ops_name=$OPS_3NAME
-            gid_number=$OPS3_GID
-            base_group=$BASE_GROUP
-            ;;
-        *)
-            echo "Invalid ops specified. $opt" &1>2
-            exit 1
-            ;;
-    esac
+    local gid_number base_group
+    gid_number=`$wbinfo --group-info="$group_name" | awk -F":" '{print $3}'`
 
     if check_uid_exist ${user_name}; then
         echo "${user_name} is already exist" &1>2
@@ -128,13 +111,15 @@ main() {
     fi
 
     # uid 採番
-    uid_number=`get_next_uid`
+    if [[ -z $uid_number ]]; then
+        uid_number=`get_next_uid`
+    fi
 
     # user 作成
         # --given-name=Illyasviel --surname=Einzbern \
         # --gecos="${display_name:- }" \
+        # --must-change-at-next-login \
     sudo $samba_tool user create ${user_name} ${user_name} \
-        --must-change-at-next-login \
         --use-username-as-cn \
         --mail-address=${user_name}${MAIL_DOMAIN} \
         --uid=${user_name} \
@@ -144,13 +129,9 @@ main() {
         --unix-home=/home/${user_name} \
         --login-shell=$DEF_SHELL
 
-    echo "After create user... $(id $user_name)"
-    #get the gid
-    strgid=$($wbinfo --group-info=$ops_name)
-    gid=$(echo $strgid | cut -d ":" -f 3)
-    #get the group from the sid
-    strsid=$($wbinfo --gid-to-sid=$gid)
-    primarygid=$(echo $strsid | cut -d "-" -f 8)
+    echo "created user info... $(id $user_name)"
+    # get the primarygroupid
+    primarygid=$($wbinfo --gid-to-sid=$gid_number | cut -d "-" -f 8)
     # primarygroupid
     cat << EOT > /tmp/${user_name}
 dn: cn=${user_name},cn=Users,dc=$DC1,dc=$DC2
@@ -174,13 +155,11 @@ EOT
     fi
 
     # 所属グループ登録
-    sudo $samba_tool group addmembers ${ops_name} ${user_name}
-    if [[ $ops -ne 3 ]]; then
-        sudo $samba_tool group addmembers ${base_group} ${user_name}
-    fi
+    $lib_add_user_to_group "${user_name}" "${group_name}"
 
-    echo "Sleeping. . ."
+    echo "Sleeping 5..."
     sleep 5
+    # 所属プライマリグループ登録
     sudo $ldbmodify --url=$samba/private/sam.ldb -b dc=$DC1,dc=$DC2 /tmp/${user_name}
     if [ $? -ne 0 ]; then
         echo "Failed to modify primary groupid for $user_name" 1>2&
