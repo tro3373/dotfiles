@@ -12,16 +12,16 @@
 #
 # NOTE: set fpath before compinit
 fpath=(~/.zsh/Completion(N-/) $fpath)
-#fpath=(~/.zsh/functions/*(N-/) $fpath)
-#fpath=(~/.zsh/plugins/zsh-completions(N-/) $fpath)
+fpath=(~/.zsh/functions/*(N-/) $fpath)
+fpath=(~/.zsh/plugins/zsh-completions(N-/) $fpath)
 #fpath=(/usr/local/share/zsh/site-functions(N-/) $fpath)
 #
 ## autoload
-#autoload -U  run-help
+autoload -U  run-help
 #autoload -Uz add-zsh-hook
-#autoload -Uz cdr
+autoload -Uz cdr
 #autoload -Uz colors; colors
-#autoload -Uz compinit; compinit -u
+autoload -Uz compinit; compinit -u
 #autoload -Uz is-at-least
 #autoload -Uz history-search-end
 #autoload -Uz modify-current-argument
@@ -30,9 +30,9 @@ fpath=(~/.zsh/Completion(N-/) $fpath)
 #autoload -Uz vcs_info
 #autoload -Uz zcalc
 #autoload -Uz zmv
-#autoload     run-help-git
-#autoload     run-help-svk
-#autoload     run-help-svn
+autoload     run-help-git
+autoload     run-help-svk
+autoload     run-help-svn
 #
 ## It is necessary for the setting of DOTPATH
 #if [[ -f ~/.path ]]; then

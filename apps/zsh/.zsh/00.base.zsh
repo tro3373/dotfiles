@@ -96,9 +96,9 @@ setopt hist_no_store            # historyコマンドは除去する。
 
 ## 補完機能の設定
 #
-fpath=(${HOME}/.zsh/functions/Completion ${fpath})
-autoload -U compinit        # 補完機能を有効にする
-compinit
+# fpath=(${HOME}/.zsh/functions/Completion ${fpath})
+# autoload -U compinit        # 補完機能を有効にする
+# compinit
 
 
 ## zsh editorを有効にする
