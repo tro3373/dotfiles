@@ -11,6 +11,7 @@
     preferredLineLength: 100
     fontSize: 20
     fontFamily: "OsakaForPowerline-Mono"
+    tabLength: 4
   core:
     disabledPackages: [
       "highlight-column"
