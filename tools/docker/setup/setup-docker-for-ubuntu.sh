@@ -4,8 +4,8 @@ install_via_curl() {
     url="$1"
     command_name="$2"
     echo "===> Installing... $command_name"
-    sudo bash -c "curl -L $url >/usr/local/bin/$command_name" && \
-        sudo chmod +x /usr/local/bin/$command_name
+    sudo bash -c "curl -L $url >/usr/local/bin/$command_name"
+    sudo chmod +x /usr/local/bin/$command_name
     $command_name --version
 }
 
