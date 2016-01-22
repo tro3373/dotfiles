@@ -1,0 +1,18 @@
+#!/bin/bash
+
+main() {
+    if [[ $(ls -1 /var/crash/ | wc -l) -eq 0 ]]; then
+        echo "No crash file detect."
+        exit 0
+    else
+        echo "Delete crash logs? (y/N)"
+        read crashdelete
+        if [[ "$crashdelete" == "y" ]]; then
+            echo "Dellete crash files!!"
+            sudo rm -rf /var/crash/*
+        else
+            echo "No delete..."
+        fi
+    fi
+}
+main
