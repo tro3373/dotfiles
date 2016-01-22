@@ -64,6 +64,9 @@ endif
 
 " シンタックスハイライトを有効にする
 syntax enable
+" default syntax for No syntax
+au BufNewFile,BufRead * if &syntax == '' | set syntax=sh | endif
+
 " ステータスラインの表示変更
 "set statusline=%F%m%r%h%w\ [FORMAT=%{&ff}:%{&fenc!=''?&fenc:&enc}]\ [TYPE=%Y]\ [ASCII=\%03.3b]\ [HEX=\%02.2B]\ [POS=%04l,%04v][%p%%]\ [LEN=%L]
 " Always display the statusline in all windows
