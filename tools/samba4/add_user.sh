@@ -37,7 +37,7 @@ if [[ ! -e $samba_tool ]]; then
     exit 1
 fi
 
-while [[ "$user_name" = "" ]]; do
+while [[ "$user_name" == "" ]]; do
     echo "Input user_name for create..."
     read user_name
 done

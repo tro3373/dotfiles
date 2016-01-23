@@ -5,7 +5,7 @@ ldbdel=/usr/local/samba/bin/ldbdel
 idmap=/usr/local/samba/private/idmap.ldb
 
 user_id=$1
-while [[ "$user_id" = "" ]]; do
+while [[ "$user_id" == "" ]]; do
     echo "Input user_id..."
     read user_id
 done

@@ -47,7 +47,7 @@ add_samba_group() {
 }
 
 main() {
-    while [[ "$group_name" = "" ]]; do
+    while [[ "$group_name" == "" ]]; do
         echo "Input group_name for create..."
         read group_name
     done

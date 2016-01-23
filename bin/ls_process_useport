@@ -1,0 +1,11 @@
+#!/bin/bash
+
+port=$1
+main() {
+    while [[ "$port" == "" ]]; do
+        echo "Input port for grep process..."
+        read port
+    done
+    lsof -i:$port
+}
+main

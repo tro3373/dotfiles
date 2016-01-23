@@ -7,7 +7,7 @@ if [[ ! -e $samba_tool ]]; then
 fi
 
 group_name="$1"
-while [[ "$group_name" = "" ]]; do
+while [[ "$group_name" == "" ]]; do
     echo "Input group_name for Delete..."
     echo
     read group_name

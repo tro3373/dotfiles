@@ -69,7 +69,7 @@ load_credential() {
 
 intaractive_set_user_name() {
     check_samba_tool
-    while [[ "$user_name" = "" ]]; do
+    while [[ "$user_name" == "" ]]; do
         echo "==> Input user_name for dump..."
         echo
         sudo $samba_tool user list

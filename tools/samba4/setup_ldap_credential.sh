@@ -10,22 +10,22 @@ DC_2=
 
 echo "==> Setting up ldap credential file..."
 
-while [[ "$HOST" = "" ]]; do
+while [[ "$HOST" == "" ]]; do
     echo "Input ldap host name..."
     read HOST
 done
 
-while [[ "$ADMIN_CN" = "" ]]; do
+while [[ "$ADMIN_CN" == "" ]]; do
     echo "Input ldap accessable administrator name..."
     read ADMIN_CN
 done
 
-while [[ "$DC_1" = "" ]]; do
+while [[ "$DC_1" == "" ]]; do
     echo "Input ldap domain name 1..."
     read DC_1
 done
 
-while [[ "$DC_2" = "" ]]; do
+while [[ "$DC_2" == "" ]]; do
     echo "Input ldap domain name 2..."
     read DC_2
 done

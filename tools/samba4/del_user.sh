@@ -8,7 +8,7 @@ if [[ ! -e $samba_tool ]]; then
 fi
 
 user_name="$1"
-while [[ "$user_name" = "" ]]; do
+while [[ "$user_name" == "" ]]; do
     echo "Input user_name for Delete..."
     echo
     sudo $samba_tool user list
@@ -29,7 +29,7 @@ if [[ -e /home/${user_name} ]]; then
         read read_del_home
         if [[ "$read_del_home" =~ ^[yY]$ ]]; then
             del_home=1
-        elif [[ "$read_del_home" = "" || "$read_del_home" =~ ^[nN]$ ]]; then
+        elif [[ "$read_del_home" == "" || "$read_del_home" =~ ^[nN]$ ]]; then
             del_home=0
         fi
     done
@@ -47,7 +47,7 @@ if [[ -e ${share_path} ]]; then
         read read_del_share
         if [[ "$read_del_share" =~ ^[yY]$ ]]; then
             del_share=1
-        elif [[ "$read_del_share" = "" || "$read_del_share" =~ ^[nN]$ ]]; then
+        elif [[ "$read_del_share" == "" || "$read_del_share" =~ ^[nN]$ ]]; then
             del_share=0
         fi
     done
