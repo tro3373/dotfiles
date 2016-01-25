@@ -23,6 +23,8 @@ call plug#begin('~/.vim/plugged')
   Plug 'altercation/vim-colors-solarized'           " Solarized
   Plug 'chriskempson/vim-tomorrow-theme'            " tomorrow
 
+  " Plug 'vim-scripts/nginx.vim'                      " Nginx Syntax
+  "
   "" airline
   Plug 'bling/vim-airline'
   "" Powerline
