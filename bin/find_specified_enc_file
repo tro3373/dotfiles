@@ -28,6 +28,7 @@ for file in `find $target_dir -name ".git" -prune -o \
         -name "*.properties" -o \
         -name "*.component" -o \
         -name "*.xml" -o \
+        -name "*.conf" -o \
         -name "*.jrxml" -o \
         -name "*.html" -o \
         -name "*.js" -o \
