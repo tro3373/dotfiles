@@ -10,6 +10,11 @@
 :v/abc/d
 ```
 
+### vim 確認しながら置換
+```
+:%s//hogehoge/c
+```
+
 `:r! ls` でコマンド実行結果を貼り付けする！！！！！
 gf      : open file name under cursor (SUPER)
 J/gJで行を連結
