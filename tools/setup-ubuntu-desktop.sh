@@ -26,7 +26,7 @@ fonts_install() {
         mkdir -p $work_dir
     fi
     cd $work_dir
-    git clone git@bitbucket.org:tro3373/fonts.git
+    git clone https://tro3373@bitbucket.org/tro3373/fonts.git
     cd fonts
     ./setup.sh
     cd -
@@ -34,7 +34,7 @@ fonts_install() {
 fonts_install
 
 # xsel, meld, rapidsvn
-sudo apt-get install xsel meld rapidsvn
+sudo apt-get install -y xsel meld rapidsvn
 
 if [ ! -e ~/Desktop ]; then
     # 日本語ディレクトリ名を英語化
@@ -44,32 +44,32 @@ fi
 sudo update-alternatives --config editor
 
 # Unity Tweak Tool
-sudo apt-get install unity-tweak-tool
+sudo apt-get install -y unity-tweak-tool
 # Numix Icon theme
 sudo apt-add-repository ppa:numix/ppa
 sudo apt-get update
-sudo apt-get install numix-gtk-theme numix-icon-theme numix-wallpaper-saucy numix-icon-theme-circle
+sudo apt-get install -y numix-gtk-theme numix-icon-theme numix-wallpaper-saucy numix-icon-theme-circle
 
 # y-ppa-manager for fix GPG keys errors.
 #sudo add-apt-repository ppa:webupd8team/y-ppa-manager
 #sudo apt-get update
-#sudo apt-get install y-ppa-manager
+#sudo apt-get install -y y-ppa-manager
 
 # Chrome install
 wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
 sudo sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
 sudo apt-get update
-sudo apt-get install google-chrome-stable
+sudo apt-get install -y google-chrome-stable
 
 # sublime install
 sudo add-apt-repository ppa:webupd8team/sublime-text-3
 sudo apt-get update
-sudo apt-get install sublime-text-installer ibus-mozc emacs-mozc
+sudo apt-get install -y sublime-text-installer ibus-mozc emacs-mozc
 
 # atom install
 sudo add-apt-repository ppa:webupd8team/atom
 sudo apt-get update
-sudo apt-get install atom
+sudo apt-get install -y atom
 
 npm stars --install
 

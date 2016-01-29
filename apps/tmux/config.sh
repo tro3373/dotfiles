@@ -8,27 +8,27 @@ install() {
 #    dvexec "cd \"$workdir\""
     if [ "$OS" = "ubuntu" ]; then
         # for tmux from git
-        dvexec cd /usr/local/src
-        dvexec sudo git clone https://github.com/tmux/tmux.git
-        dvexec sudo apt-get install -y autoconf libtool pkg-config libevent-dev
-        dvexec cd tmux
-        dvexec sudo ./autogen.sh
-        dvexec sudo ./configure --prefix=/usr/local
-        dvexec sudo make
-        dvexec sudo make install
+        dvexec sudo apt-get install -y autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev 
+        install_common
     elif [ "$OS" = "redhat" ]; then
         # for tmux from git
         dvexec sudo yum install -y libevent libeventdevel automake ncursesdevel
-        dvexec cd /usr/local/src
-        dvexec sudo git clone https://github.com/tmux/tmux.git
-        dvexec cd tmux
-        dvexec sudo ./autogen.sh
-        dvexec sudo ./configure --prefix=/usr/local
-        dvexec sudo make
-        dvexec sudo make install
+        install_common
     else
         dvexec "$instcmd tmux"
     fi
+}
+
+install_common() {
+    dvexec cd /usr/local/src
+    if [[ ! -e tmux/ ]]; then
+        dvexec sudo git clone https://github.com/tmux/tmux.git
+    fi
+    dvexec cd tmux
+    dvexec sudo ./autogen.sh
+    dvexec sudo ./configure --prefix=/usr/local
+    dvexec sudo make
+    dvexec sudo make install
 }
 
 setconfig() {
