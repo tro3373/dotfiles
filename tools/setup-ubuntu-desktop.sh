@@ -71,7 +71,7 @@ sudo add-apt-repository ppa:webupd8team/atom
 sudo apt-get update
 sudo apt-get install -y atom
 
-npm stars --install
+#npm stars --install
 
 # geany install
 geany_install() {
