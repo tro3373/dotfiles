@@ -1,0 +1,15 @@
+#!/bin/bash
+
+to=$1
+
+input_to() {
+    while [[ "$to" == "" ]]; do
+        echo "Input to mail address..."
+        read to
+    done
+}
+main() {
+    echo "test" | sendmail $to
+}
+main
+

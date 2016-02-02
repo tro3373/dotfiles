@@ -1,0 +1,38 @@
+#!/bin/bash
+
+from=$1
+to=$2
+
+is_exist() {
+    type $1 > /dev/null 2>&1
+    return $?
+}
+input_from() {
+    while [[ "$from" == "" ]]; do
+        echo "Input from mail address..."
+        read from
+    done
+}
+input_to() {
+    while [[ "$to" == "" ]]; do
+        echo "Input to mail address..."
+        read to
+    done
+}
+main() {
+    if ! is_exist sendmail; then
+        echo "No sendmail exist." 1>&2
+        exit 1
+    fi
+    input_from
+    input_to
+
+    /usr/sbin/sendmail -t << EOF From: $from
+Subject: Test mail
+To: $to
+
+This is sendmail test.
+EOF
+}
+main
+
