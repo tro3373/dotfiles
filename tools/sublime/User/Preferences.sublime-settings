@@ -14,11 +14,12 @@
 	"fallback_encoding": "UTF-8",
 	"find_selected_text": true,
 	"font_face": "OsakaForPowerline-Mono",
-	"font_size": 14,
+	"font_size": 13,
 	"highlight_line": true,
 	"highlight_modified_tabs": false,
 	"ignored_packages":
 	[
+		"IMESupport",
 		"Vintage"
 	],
 	"overlay_scroll_bars": "disabled",
