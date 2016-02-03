@@ -1,6 +1,0 @@
-#!/bin/bash
-
-main() {
-    sudo rm /var/crash/*
-}
-main
