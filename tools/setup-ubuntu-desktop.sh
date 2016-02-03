@@ -50,6 +50,9 @@ sudo apt-add-repository ppa:numix/ppa
 sudo apt-get update
 sudo apt-get install -y numix-gtk-theme numix-icon-theme numix-wallpaper-saucy numix-icon-theme-circle
 
+# Guake install
+sudo apt-get install -y guake
+
 # y-ppa-manager for fix GPG keys errors.
 #sudo add-apt-repository ppa:webupd8team/y-ppa-manager
 #sudo apt-get update
