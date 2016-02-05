@@ -1,7 +1,7 @@
 #!/bin/bash
 
 to=$1
-
+from='-F"Sample Test" -f sample@example.com'
 input_to() {
     while [[ "$to" == "" ]]; do
         echo "Input to mail address..."
@@ -9,7 +9,7 @@ input_to() {
     done
 }
 main() {
-    echo "test" | sendmail $to
+    echo "test" | sendmail -v $to $from
 }
 main
 
