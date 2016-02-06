@@ -1,0 +1,23 @@
+#!/bin/bash
+
+name="$1"
+mail="$2"
+while [[ "$name" == "" ]]; do
+    echo "Input name for convert to..."
+    read name
+done
+while [[ "$mail" == "" ]]; do
+    echo "Input mail for convert to..."
+    read mail
+done
+main() {
+    echo "Change All commiter author to below name mail"
+    echo "name: $name"
+    echo "mail: $mail"
+    echo "Are you ready? type any key..."
+    read waituserkey
+    git filter-branch -f --env-filter \
+        "GIT_AUTHOR_NAME='$name'; GIT_AUTHOR_EMAIL='$mail'; GIT_COMMITTER_NAME='$name'; GIT_COMMITTER_EMAIL='$mail';" \
+        HEAD
+}
+main
