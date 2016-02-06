@@ -1,0 +1,13 @@
+#!/bin/bash
+
+dry_run="--dry-run"
+if [[ "$1" == "-e" ]]; then
+    dry_run=""
+fi
+main() {
+    docker run --rm \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /var/lib/docker:/var/lib/docker \
+        martin/docker-cleanup-volumes $dry_run
+}
+main
