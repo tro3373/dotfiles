@@ -14,7 +14,8 @@ if [ "$args" = "exec" ]; then
 fi
 
 if ! type nkf >/dev/null 2>&1; then
-    echo "No nkf found error...."
+    echo "No nkf comman found error...." 2>&1
+    echo "Install nkf." 2>&1
     exit 1
 fi
 
