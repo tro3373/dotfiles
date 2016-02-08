@@ -1,0 +1,6 @@
+#!/bin/bash
+
+main() {
+    java -jar ./lib/ls_printers.jar
+}
+main
