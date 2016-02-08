@@ -1,6 +1,8 @@
 #!/bin/bash
 
+script_dir=$(cd $(dirname $0); pwd)
+
 main() {
-    java -jar ./lib/ls_printers.jar
+    java -jar $script_dir/lib/ls_printers.jar
 }
 main
