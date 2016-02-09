@@ -26,7 +26,8 @@ call plug#begin('~/.vim/plugged')
   " Plug 'vim-scripts/nginx.vim'                      " Nginx Syntax
   "
   "" airline
-  Plug 'bling/vim-airline'
+  " Plug 'bling/vim-airline'
+  Plug 'itchyny/lightline.vim'
   "" Powerline
   " Plug 'powerline/powerline', {
   "   \ 'rtp': 'powerline/bindings/vim/'}
@@ -39,6 +40,7 @@ call plug#begin('~/.vim/plugged')
   Plug 'kana/vim-smartchr'                          " = 等の便利入力
   Plug 'kana/vim-smartinput'                        " () 等の入力補完
   Plug 'cohama/vim-smartinput-endwise'              " vim-endwise (ruby 用 end 補完)
+  Plug 'tpope/vim-surround'                         " 囲文字入力アシスト
   Plug 'tyru/caw.vim'                               " コメントアウトプラグイン <Leader>+c
   " Plug 'Shougo/neocomplcache.vim'                   " 補完候補を自動でポップアップ(old)
   Plug 'Shougo/neocomplete.vim'                     " Next generation completion framework after neocomplcache
@@ -78,10 +80,14 @@ call plug#begin('~/.vim/plugged')
   "   \    },
   "   \ }
 
+  " Markdown Preview
+  Plug 'plasticboy/vim-markdown'
+  " Plug 'rcmdnk/vim-markdown'
+  Plug 'kannokanno/previm'
+  Plug 'tyru/open-browser.vim'
 
 
   " TODO 勉強中 =======
-  Plug 'tpope/vim-surround'                         " 囲文字入力アシスト
   Plug 'Shougo/unite-ssh'                           "
   " Plug 'Shougo/vimshell'                            " uniteインターフェースでシェル使用できる
   " http://qiita.com/kinef/items/ddbccdacaf9507d9dd24

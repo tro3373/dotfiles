@@ -107,6 +107,20 @@ if g:plug.is_installed("vim-airline")
     " hunk 表示
     let g:airline#extensions#hunks#enabled = 1
 endif
+"" lightline Settings
+" solarized
+" seoul256
+" jellybeans
+if g:plug.is_installed("lightline.vim")
+    let g:lightline = {
+          \ 'colorscheme': 'seoul256',
+          \ 'component': {
+          \   'readonly': '%{&readonly?"x":""}',
+          \ },
+          \ 'separator': { 'left': '', 'right': '' },
+          \ 'subseparator': { 'left': '|', 'right': '|' }
+          \ }
+endif
 
 if g:plug.is_installed("powerline")
     " Powerline Settings

@@ -370,3 +370,18 @@ if g:plug.is_installed("caw.vim")
     nmap <Leader>c <Plug>(caw:i:toggle)
     vmap <Leader>c <Plug>(caw:i:toggle)
 endif
+
+"=============================================
+" Markdown Preview
+" vim-markdown, preview, open-browser
+"=============================================
+if g:plug.is_installed("vim-markdown")
+    " 折りたたみなし設定
+    let g:vim_markdown_folding_disabled=1
+endif
+if g:plug.is_installed("previm")
+    if g:plug.is_installed("open-browser.vim")
+        au BufRead,BufNewFile *.md set filetype=markdown
+        let g:previm_open_cmd = 'google-chome'
+    endif
+endif
