@@ -1,8 +1,9 @@
 REM !!WARNING!!
 REM   Symbolic link command is aborted when you start command prompt normal user. exec cmd as Administrator.
 
-REM Sakura Setting ===========
-rem cmd /c mklink %HOMEPATH%"\AppData\Roaming\sakura\sakura.ini" %HOMEPATH%"\dotfiles\tools\win\sakura\sakura.ini"
+REM chocolatey Setting ===========
+rem @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%systemdrive%\chocolatey\bin
+REM cinst packages.config
 REM =================================
 
 REM Sublime Text3 Setting ===========
@@ -20,14 +21,34 @@ REM Atom Setting ===========
 cmd /c mklink /D %HOMEPATH%"\.atom" %HOMEPATH%"\dotfiles\tools\atom\.atom"
 REM =================================
 
-REM chocolatey Setting ===========
-rem @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%systemdrive%\chocolatey\bin
-REM cinst packages.config
-REM =================================
-REM exit 0
 
-REM git bash Setting =============
-REM .bashrc
-REM   export PS1="$ "
-REM   alias ls='ls --show-control-chars'
-REM ===============================
+REM Sakura Setting ===========
+rem cmd /c mklink %HOMEPATH%"\AppData\Roaming\sakura\sakura.ini" %HOMEPATH%"\dotfiles\tools\win\sakura\sakura.ini"
+REM =================================
+
+REM Git Setting ===========
+rem git config --global user.name sample_username
+rem git config --global user.email sample_email@domain.com
+git config --global core.editor "vim -c 'set fenc=utf-8'"
+git config --global core.quotepath false
+git config --global color.ui auto
+git config --global push.default simple
+git config --global http.sslVerify false
+git config --global alias.co checkout
+git config --global alias.cm commit
+git config --global alias.st status
+git config --global alias.br branch
+git config --global alias.lgo "log --oneline"
+git config --global alias.lg "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+git config --global alias.lga "log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+git config --global alias.tar "archive --format=tar HEAD -o"
+git config --global alias.tgz "archive --format=tgz HEAD -o"
+git config --global alias.zip "archive --format=zip HEAD -o"
+REM =================================
+
+REM Bash Setting ===========
+echo "export PS1='[\u@\h \w]\\$ '" >> ~/.bashrc
+echo "alias ls='ls --show-control-chars --color=auto'" >> ~/.bashrc
+echo "alias l='ls -l'" >> ~/.bashrc
+echo "alias ll='ls -la'" >> ~/.bashrc
+REM =================================
