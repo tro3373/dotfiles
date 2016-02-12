@@ -1,17 +1,7 @@
 "*":
-  editor:
-    invisibles:
-      eol: " "
-      space: "-"
-    showIndentGuide: true
-    zoomFontWhenCtrlScrolling: true
-    showInvisibles: true
-    scrollPastEnd: true
-    lineHeight: 1
-    preferredLineLength: 100
-    fontFamily: "Osaka－等幅"
-    tabLength: 4
-    fontSize: 20
+  "atom-color-highlight": {}
+  "atom-lint": {}
+  "auto-encoding": {}
   core:
     disabledPackages: [
       "highlight-column"
@@ -19,23 +9,33 @@
       "japanese-wrap"
       "linter-shellcheck"
     ]
-  localization:
-    CurrentLanguage: "Japanese"
+  editor:
+    fontFamily: "Osaka-Mono"
+    fontSize: 20
+    invisibles:
+      eol: " "
+      space: "-"
+    lineHeight: 1
+    preferredLineLength: 100
+    scrollPastEnd: true
+    showIndentGuide: true
+    showInvisibles: true
+    tabLength: 4
+    zoomFontWhenCtrlScrolling: true
   "exception-reporting":
     userId: "349411db-9c91-f137-dab4-73b42b83a41f"
-  welcome:
-    showOnStartup: false
-  "atom-lint": {}
+  "japanese-wrap":
+    characterWidth: {}
   linter:
     showErrorPanel: false
-  "vim-mode": {}
-  "atom-color-highlight": {}
+  "linter-shellcheck": {}
+  localization:
+    CurrentLanguage: "Japanese"
+  "markdown-preview": {}
   minimap:
     plugins:
       pigments: true
-  "japanese-wrap":
-    characterWidth: {}
   "one-dark-ui": {}
-  "linter-shellcheck": {}
-  "markdown-preview": {}
-  "auto-encoding": {}
+  "vim-mode": {}
+  welcome:
+    showOnStartup: false

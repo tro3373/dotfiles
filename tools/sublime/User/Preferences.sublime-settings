@@ -13,12 +13,13 @@
 	"draw_white_space": "all",
 	"fallback_encoding": "UTF-8",
 	"find_selected_text": true,
-	"font_face": "Osaka－等幅",
+	"font_face": "Osaka-Mono",
 	"font_size": 16,
 	"highlight_line": true,
 	"highlight_modified_tabs": false,
 	"ignored_packages":
 	[
+		"IMESupport",
 		"Vintage"
 	],
 	"overlay_scroll_bars": "disabled",
