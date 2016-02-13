@@ -33,8 +33,9 @@ fonts_install() {
 }
 fonts_install
 
-# xsel, meld, rapidsvn
-sudo apt-get install -y xsel meld rapidsvn
+# xsel, meld, rapidsvn, smartmontools
+sudo apt-get install -y xsel meld rapidsvn smartmontools
+# smartctl -s on /dev/sda
 
 if [ ! -e ~/Desktop ]; then
     # 日本語ディレクトリ名を英語化
