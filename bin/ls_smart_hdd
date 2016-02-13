@@ -1,0 +1,13 @@
+#!/bin/bash
+
+check(){
+    if ! which smartctl > /dev/null 2>&1; then
+        echo "No smartctl command. install it. sudo apt-get install smartmontools." 1>2&
+        exit 1
+    fi
+}
+main() {
+    check
+    sudo smartctl -a /dev/sda
+}
+main
