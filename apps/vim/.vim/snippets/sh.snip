@@ -1,9 +1,26 @@
-snippet >/d
-	>/dev/null 2>&1
+snippet     filename
+alias       fname
+    `expand("%")`
 
-snippet 1>
-	1>&2
+snippet     fullfilename
+alias       ffname
+    `substitute(expand("%:p"), '\', '/', "g")`
+
+snippet devnull
+alias tonull
+    >/dev/null 2>&1
+
+snippet error
+alias toerror
+    1>&2
 
 snippet script_dir
     script_dir=$(cd $(dirname \$0); pwd)
+
+snippet readwhil
+alias rea
+    while [[ "$${1:value}" == "" ]]; do
+        echo "Input Your $1 for this key."
+        read $$1
+    done
 

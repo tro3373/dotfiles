@@ -5,5 +5,7 @@ main() {
     echo "  dd if=/dev/zero of=zero.dat bs=512M count=1 conv=noerror,sync"
     echo "# hdd copy."
     echo "  dd if=/dev/sda of=/dev/sdb bs=512M conv=noerror,sync"
+    echo "# create usb image(ex. chromium os usb)"
+    echo "  dd if=hoge.img of=/dev/sdx bs=4M iflag=fullblock oflag=sync"
 }
 main
