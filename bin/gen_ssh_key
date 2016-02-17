@@ -1,14 +1,15 @@
 #!/bin/bash
 
-while [[ "$email" == "" ]]; do
-    echo "Input Your email for this key."
-    read email
-done
+# while [[ "$email" == "" ]]; do
+#     echo "Input Your email for this key."
+#     read email
+# done
 
+email="$1"
+cmd="ssh-keygen -t rsa -b 4096"
 if [ ! "$email" = "" ]; then
-    ssh-keygen -t rsa -b 4096 -C "$email"
-else
-    echo "abort..." 1>&2
-    exit 1
+    cmd="$cmd -C \"$email\""
 fi
+echo $cmd
+$cmd
 
