@@ -1,0 +1,28 @@
+#!/bin/bash
+
+is_file_exists() {
+    [ -f "$1" ]
+}
+
+confirm() {
+    message=${1:-"Are you ready?"}
+    message="${message} (y/N)"
+    echo -e "$message"
+    read yesno
+    if [[ ! "$yesno" =~ (y|Y) ]]; then
+        echo "==> proc canceled. terminate this proc."
+        exit 1
+    fi
+}
+
+main() {
+    target_file=~/.ssh/authorized_keys
+    if is_file_exists $target_file; then
+        confirm "$target_file file already exist. \nDelete it and create new one?"
+        rm $target_file
+    fi
+   touch $target_file
+   chmod 644 $target_file
+   echo "==> Successfly created $target_file"
+}
+main

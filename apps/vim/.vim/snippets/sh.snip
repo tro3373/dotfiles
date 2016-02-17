@@ -24,3 +24,35 @@ alias rea
         read $$1
     done
 
+snippet isexists
+alias is_exists
+    is_exists() {
+        which \${1} >/dev/null 2>&1
+        return $?
+    }
+    has() {
+        is_exists "$@"
+    }
+
+snippet isfileexists
+    is_file_exists() {
+        [ -f "$${0:1}" ]
+    }
+    if is_file_exists ${1:#:search_file}; then
+        echo "already exist"
+    else
+        echo "no exist"
+    fi
+
+snippet confirm
+    confirm() {
+        message=\${1:-"Are you ready?"}
+        message="${message} (y/N)"
+        echo -e "$message"
+        read yesno
+        if [[ ! "$yesno" =~ (y|Y) ]]; then
+            echo "==> proc canceled. terminate this proc."
+            exit 1
+        fi
+    }
+
