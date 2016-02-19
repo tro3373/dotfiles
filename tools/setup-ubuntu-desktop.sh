@@ -34,7 +34,7 @@ fonts_install() {
 fonts_install
 
 # xsel, meld, rapidsvn, smartmontools
-sudo apt-get install -y xsel meld rapidsvn smartmontools
+sudo apt-get install -y xsel meld rapidsvn smartmontools hardinfo
 # smartctl -s on /dev/sda
 
 if [ ! -e ~/Desktop ]; then
