@@ -6,8 +6,9 @@ check(){
         exit 1
     fi
 }
+hdd=${1:-/dev/sda}
 main() {
     check
-    sudo smartctl -a /dev/sda
+    sudo smartctl -a $hdd
 }
 main
