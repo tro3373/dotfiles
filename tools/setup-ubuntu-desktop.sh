@@ -15,6 +15,8 @@ script_dir=$(cd $(dirname $0); pwd)
 
 # Cpas Lock => Ctrl setting
 if [ type dconf > /dev/null 2>&1 ]; then
+    dconf reset /org/gnome/settings-daemon/plugins/keyboard/active
+    dconf write /org/gnome/settings-daemon/plugins/keyboard/active true
     dconf write /org/gnome/desktop/input-sources/xkb-options "['ctrl:nocaps']"
     #dconf reset /org/gnome/desktop/input-sources/xkb-options
 fi
@@ -47,15 +49,15 @@ sudo update-alternatives --config editor
 # Unity Tweak Tool
 sudo apt-get install -y unity-tweak-tool
 # Numix Icon theme
-sudo apt-add-repository ppa:numix/ppa
+sudo apt-add-repository -y ppa:numix/ppa
 sudo apt-get update
 sudo apt-get install -y numix-gtk-theme numix-icon-theme numix-wallpaper-saucy numix-icon-theme-circle
 
 # Guake install
-sudo apt-get install -y guake
+#sudo apt-get install -y guake
 
 # y-ppa-manager for fix GPG keys errors.
-#sudo add-apt-repository ppa:webupd8team/y-ppa-manager
+#sudo add-apt-repository -y ppa:webupd8team/y-ppa-manager
 #sudo apt-get update
 #sudo apt-get install -y y-ppa-manager
 
@@ -66,12 +68,12 @@ sudo apt-get update
 sudo apt-get install -y google-chrome-stable
 
 # sublime install
-sudo add-apt-repository ppa:webupd8team/sublime-text-3
+sudo add-apt-repository -y ppa:webupd8team/sublime-text-3
 sudo apt-get update
 sudo apt-get install -y sublime-text-installer ibus-mozc emacs-mozc
 
 # atom install
-sudo add-apt-repository ppa:webupd8team/atom
+sudo add-apt-repository -y ppa:webupd8team/atom
 sudo apt-get update
 sudo apt-get install -y atom
 
@@ -79,7 +81,7 @@ sudo apt-get install -y atom
 
 # geany install
 geany_install() {
-    sudo add-apt-repository ppa:geany-dev/ppa
+    sudo add-apt-repository -y ppa:geany-dev/ppa
     sudo apt-get update
     sudo apt-get upgrade
     sudo apt-get install -y geany
