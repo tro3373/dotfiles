@@ -111,6 +111,9 @@ add_path /usr/local/heroku/bin
 #IBUS_ENABLE_SYNC_MODE=1 ibus-daemon -xrd
 # Android platform-tools for Mac.
 add_path ~/Library/Android/sdk/platform-tools
+# Android platform-tools for Linux.
+add_path ~/Android/Sdk/platform-tools
+add_path ~/android-studio/bin
 
 # .local/bin
 add_path ${HOME}/.local/bin
