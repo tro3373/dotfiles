@@ -21,6 +21,9 @@ if [ type dconf > /dev/null 2>&1 ]; then
     #dconf reset /org/gnome/desktop/input-sources/xkb-options
 fi
 
+# Disable automount external media
+gsettings set org.gnome.desktop.media-handling automount false
+
 # font install
 fonts_install() {
     work_dir="$script_dir/tmp"
