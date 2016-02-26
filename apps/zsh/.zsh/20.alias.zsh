@@ -53,9 +53,9 @@ esac
 
 alias la="ls -a"
 alias lf="ls -F"
-alias l="ls -l"
-alias ll="ls -la"
-alias lla="ls -la"
+alias l="ls -lh"
+alias ll="ls -lah"
+alias lla="ls -lah"
 alias du="du -h"
 alias df="df -h"
 alias su="su -l"
