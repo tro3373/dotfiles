@@ -34,6 +34,8 @@ git config --global core.quotepath false
 git config --global color.ui auto
 git config --global push.default simple
 git config --global http.sslVerify false
+git config --global core.preloadindex true
+git config --global core.fscache true
 git config --global alias.co checkout
 git config --global alias.cm commit
 git config --global alias.st status

@@ -39,6 +39,12 @@ set_gitconfig() {
     if get_gitsettingcnt "http.sslverify="; then
         dvexec git config --global http.sslVerify false
     fi
+    if get_gitsettingcnt "core.preloadindex="; then
+        dvexec git config --global core.preloadindex true
+    fi
+    if get_gitsettingcnt "core.fscache="; then
+        dvexec git config --global core.fscache true
+    fi
     if get_gitsettingcnt "alias.co="; then
         dvexec git config --global alias.co checkout
     fi
@@ -85,6 +91,8 @@ execGitConfigForce() {
     git config --global color.ui auto
     git config --global push.default simple
     git config --global http.sslVerify false
+    git config --global core.preloadindex true
+    git config --global core.fscache true
     git config --global alias.co checkout
     git config --global alias.cm commit
     git config --global alias.st status
