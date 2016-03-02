@@ -2,5 +2,9 @@
     { "keys": ["f2"], "command": "show_panel", "args": {"panel": "find", "reverse": false} },
     { "keys": ["ctrl+r"], "command": "show_panel", "args": {"panel": "replace", "reverse": false} },
     { "keys": ["ctrl+space"], "command": "toggle_mozc" },
-    { "keys": ["alt+m"], "command": "markdown_preview", "args": {"target": "browser", "parser":"markdown"} }
+    { "keys": ["alt+m"], "command": "markdown_preview", "args": {"target": "browser", "parser":"markdown"} },
+    { "keys": ["ctrl+shift+up"], "command": "select_lines","args":{"forward":false} },
+    { "keys": ["ctrl+shift+down"], "command": "select_lines","args":{"forward":true} },
+    { "keys": ["ctrl+alt+up"], "command": "swap_line_up" },
+    { "keys": ["ctrl+alt+down"], "command": "swap_line_down" }
 ]
