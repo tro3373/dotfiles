@@ -1,0 +1,6 @@
+#!/bin/bash
+
+main() {
+    watch -n 1 -d date
+}
+main
