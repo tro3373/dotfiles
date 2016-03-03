@@ -1,7 +1,0 @@
-#!/bin/bash
-
-cat <<EOT
- Enable auto start service: systemctl enable <service-name>[.service]
-Disable auto start service: systemctl disable <service-name>[.service]
-EOT
-

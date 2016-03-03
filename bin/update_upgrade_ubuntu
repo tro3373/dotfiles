@@ -1,0 +1,15 @@
+#!/bin/bash
+
+log_dir=/var/log
+str_date="`date '+%Y%m%d.%H%M%S'`"
+log_file=${log_dir}/update-ubuntu.${str_date}.log
+main() {
+    if [[ "$UID" -ne 0 ]]; then
+        echo "Permission denied" 1>&2
+        exit 1
+    fi
+    nohup sh -c 'apt-get -y update && apt-get upgrade -y && apt-get dist-upgrade -y && echo && echo "Done!"' > $log_file 2>&1 &
+    echo "==>See logs"
+    echo "  tail -F $log_file"
+}
+main
