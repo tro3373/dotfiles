@@ -9,7 +9,7 @@ install_msmtp_ifnotexist() {
 }
 main() {
     install_msmtp_ifnotexist
-    cat << EOT >> ~/.msmtprc
+    cat << EOT > ~/.msmtprc
 defaults
 auth on
 tls on
