@@ -2,8 +2,13 @@
 
 gmail_account=${1:-hoge@gmail.com}
 gmail_passwd=${2:-hogehoge}
+install_msmtp_ifnotexist() {
+    if ! type msmtp >/dev/null 2>&1; then
+        sudo apt-get install msmtp
+    fi
+}
 main() {
-    sudo apt-get install msmtp
+    install_msmtp_ifnotexist
     cat << EOT >> ~/.msmtprc
 defaults
 auth on
