@@ -90,3 +90,15 @@ Retrieving last Search Command for copy & pasting into text
 - [:escape:]	<Esc> 文字
 - [:backspace:]	<BS> 文字
 
+## OS 分岐
+if has("mac")
+" mac用の設定
+elseif has("unix")
+" unix固有の設定
+elseif has("win64")
+" 64bit_windows固有の設定
+elseif has("win32unix")
+" Cygwin固有の設定
+elseif has("win32")
+" 32bit_windows固有の設定
+endif

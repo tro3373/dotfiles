@@ -16,3 +16,13 @@ source $VIMRUNTIME/menu.vim
 " colorscheme Tomorrow-Night
 colorscheme solarized
 
+" 使用するフォントと大きさ
+if (has("win64") && has("win32"))
+    set guifont=Osaka-Mono:h14
+    set guifontwide=Osaka-Mono:h14
+else
+    " set guifont=Ricty\ Discord\ for\ Powerline\ 10
+    " set guifontwide=Ricty\ Discord\ for\ Powerline\ 10
+    set guifont=Osaka-Mono\ 14
+    set guifontwide=Osaka-Mono\ 14
+endif

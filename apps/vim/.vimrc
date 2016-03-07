@@ -6,6 +6,6 @@
 "######################################################################
 
 " ~/.vim/conf.d/ 以下にある *.vim(分割された設定ファイル) を全て適用
-set runtimepath+=~/.vim/
+set runtimepath+=$HOME/.vim/
 runtime! conf.d/*.vim
 

@@ -10,7 +10,9 @@
 " encoding(enc)
 "   vimの内部で使用されるエンコーディングを指定する。
 "   編集するファイル内の全ての文字を表せるエンコーディングを指定するべき。
-set encoding=utf-8
+if !(has("win64") && has("win32"))
+    set encoding=utf-8
+endif
 " fileencoding(fenc)
 "   そのバッファのファイルのエンコーディングを指定する。
 "   バッファにローカルなオプション。これに encoding と異なる値が設定されていた場合、
@@ -66,19 +68,21 @@ set smartcase
 
 
 " ヤンクした際にクリップボードへ配置する
-let OSTYPE = system('uname')
-if OSTYPE == "Darwin\n"
-    " For Mac
-    " set clipboard+=unnamed,autoselect
-    " set clipboard=unnamed,autoselect
-    set clipboard=unnamed
-elseif OSTYPE == "Linux\n"
-    " For Linux
-    " set clipboard=unnamed,autoselect
-    set clipboard=unnamed
-    set clipboard=unnamedplus
-    vmap <C-c> :w !xsel -ib<CR><CR>
-    vmap <C-y> :w !xsel -ib<CR><CR>
+if !(has("win64") && has("win32"))
+    let OSTYPE = system('uname')
+    if OSTYPE == "Darwin\n"
+        " For Mac
+        " set clipboard+=unnamed,autoselect
+        " set clipboard=unnamed,autoselect
+        set clipboard=unnamed
+    elseif OSTYPE == "Linux\n"
+        " For Linux
+        " set clipboard=unnamed,autoselect
+        set clipboard=unnamed
+        set clipboard=unnamedplus
+        vmap <C-c> :w !xsel -ib<CR><CR>
+        vmap <C-y> :w !xsel -ib<CR><CR>
+    endif
 endif
 " 挿入モードからノーマルモードに戻る時にペーストモードを自動で解除
 autocmd InsertLeave * set nopaste

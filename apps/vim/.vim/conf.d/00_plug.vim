@@ -6,19 +6,18 @@
 "######################################################################
 
 if has('vim_starting')
-  set rtp+=~/.vim/plugged/vim-plug
-  if !isdirectory(expand('~/.vim/plugged/vim-plug'))
+  set rtp+=$HOME/.vim/plugged/vim-plug
+  if !isdirectory(expand('$HOME/.vim/plugged/vim-plug'))
     echo 'install vim-plug...'
-    call system('mkdir -p ~/.vim/plugged/vim-plug')
-    call system('git clone https://github.com/junegunn/vim-plug.git ~/.vim/plugged/vim-plug/autoload')
+    call system('mkdir -p $HOME/.vim/plugged/vim-plug')
+    call system('git clone https://github.com/junegunn/vim-plug.git $HOME/.vim/plugged/vim-plug/autoload')
   end
-
 endif
 
-call plug#begin('~/.vim/plugged')
+call plug#begin('$HOME/.vim/plugged')
   " vim-plug
   Plug 'junegunn/vim-plug',
-        \ {'dir': '~/.vim/plugged/vim-plug/autoload'}
+        \ {'dir': '$HOME/.vim/plugged/vim-plug/autoload'}
   " カラースキーム
   Plug 'altercation/vim-colors-solarized'           " Solarized
   Plug 'chriskempson/vim-tomorrow-theme'            " tomorrow
@@ -54,14 +53,16 @@ call plug#begin('~/.vim/plugged')
   Plug 'honza/vim-snippets'                         " snipMate UltiSnip Snippets
   " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
   Plug 'vim-scripts/Align'                          " CSV,TSV整形
-  Plug 'taglist.vim'                                " ソースコードブラウザ
+  if !(has("win64") && has("win32"))
+      Plug 'taglist.vim'                                " ソースコードブラウザ
+  endif
 
   Plug 'scrooloose/nerdtree', {
     \ 'on':  ['NERDTreeToggle'] }                   " NERDTree tree view コマンド実行時に読み込む
 
   Plug 'vim-scripts/gtags.vim'                      " GNU Global
   Plug 'rking/ag.vim'                               " SilverSearcher
-  Plug 'junegunn/fzf', { 'dir': '~/.fzf',
+  Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
     \ 'do': './install --all' }                     " FZF
   Plug 'junegunn/fzf.vim'
 
@@ -69,16 +70,18 @@ call plug#begin('~/.vim/plugged')
   Plug 'Shougo/unite.vim'                           " ユーザインタフェース統合
   Plug 'Shougo/neomru.vim'                          " 最近使用したファイルの一覧管理
   Plug 'ujihisa/unite-colorscheme'                  " カラースキーム変更
-  Plug 'Shougo/vimproc.vim', { 'do': 'make' }
-  " Plug 'Shougo/vimproc.vim', {
-  "   \ 'build' : {
-  "   \     'windows' : 'tools\\update-dll-mingw',
-  "   \     'cygwin' : 'make -f make_cygwin.mak',
-  "   \     'mac' : 'make',
-  "   \     'linux' : 'make',
-  "   \     'unix' : 'gmake',
-  "   \    },
-  "   \ }
+  if !(has("win64") && has("win32"))
+    Plug 'Shougo/vimproc.vim', { 'do': 'make' }
+    " Plug 'Shougo/vimproc.vim', {
+    "   \ 'build' : {
+    "   \     'windows' : 'tools\\update-dll-mingw',
+    "   \     'cygwin' : 'make -f make_cygwin.mak',
+    "   \     'mac' : 'make',
+    "   \     'linux' : 'make',
+    "   \     'unix' : 'gmake',
+    "   \    },
+    "   \ }
+  endif
 
   " Markdown Preview
   Plug 'plasticboy/vim-markdown'

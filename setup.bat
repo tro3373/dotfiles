@@ -49,8 +49,14 @@ git config --global alias.zip "archive --format=zip HEAD -o"
 REM =================================
 
 REM Bash Setting ===========
-echo "export PS1='[\u@\h \w]\\$ '" >> ~/.bashrc
-echo "alias ls='ls --show-control-chars --color=auto'" >> ~/.bashrc
-echo "alias l='ls -l'" >> ~/.bashrc
-echo "alias ll='ls -la'" >> ~/.bashrc
+cmd /c mklink %HOMEPATH%"\.bashrc" %HOMEPATH%"\dotfiles\tools\win\.bashrc"
+REM =================================
+
+REM Vim Setting ===========
+cmd /c mklink %HOMEPATH%"\_gvimrc" %HOMEPATH%"\dotfiles\apps\vim\.gvimrc"
+cmd /c mklink %HOMEPATH%"\_vimrc" %HOMEPATH%"\dotfiles\apps\vim\.vimrc"
+cmd /c mklink /D %HOMEPATH%"\.vim" %HOMEPATH%"\dotfiles\apps\vim\.vim"
+
+rem mkdir -p $HOME/vimfiles/plugged/vim-plug
+rem git clone https://github.com/junegunn/vim-plug.git ~/vimfiles/plugged/vim-plug/autoload
 REM =================================
