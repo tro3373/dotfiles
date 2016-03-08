@@ -68,21 +68,18 @@ set smartcase
 
 
 " ヤンクした際にクリップボードへ配置する
-if !(has("win64") && has("win32"))
-    let OSTYPE = system('uname')
-    if OSTYPE == "Darwin\n"
-        " For Mac
-        " set clipboard+=unnamed,autoselect
-        " set clipboard=unnamed,autoselect
-        set clipboard=unnamed
-    elseif OSTYPE == "Linux\n"
-        " For Linux
-        " set clipboard=unnamed,autoselect
-        set clipboard=unnamed
-        set clipboard=unnamedplus
-        vmap <C-c> :w !xsel -ib<CR><CR>
-        vmap <C-y> :w !xsel -ib<CR><CR>
-    endif
+if has("mac")
+    set clipboard=unnamed
+elseif has("unix")
+    " unix/linux
+    set clipboard=unnamed
+    set clipboard=unnamedplus
+    vmap <C-c> :w !xsel -ib<CR><CR>
+    vmap <C-y> :w !xsel -ib<CR><CR>
+elseif has("win32unix")
+    " Cygwin
+elseif has("win32") || has("win64")
+    " windows
 endif
 " 挿入モードからノーマルモードに戻る時にペーストモードを自動で解除
 autocmd InsertLeave * set nopaste

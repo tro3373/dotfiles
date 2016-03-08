@@ -12,12 +12,26 @@ source $VIMRUNTIME/delmenu.vim
 set langmenu=ja_jp.utf-8
 source $VIMRUNTIME/menu.vim
 
-" colorscheme molokai
-" colorscheme Tomorrow-Night
-colorscheme solarized
+" カラーテーマ設定
+if 1 && g:plug.is_installed("vim-colors-solarized")
+    " ==> Solarized
+    " let g:solarized_termcolors=256
+    let g:solarized_termtrans=1
+    set background=dark
+    colorscheme solarized
+elseif g:plug.is_installed("vim-tomorrow-theme")
+    " ==> TomorrowNight
+    colorscheme Tomorrow
+    colorscheme Tomorrow-Night-Bright
+    colorscheme Tomorrow-Night-Eighties
+    colorscheme Tomorrow-Night
+elseif g:plug.is_installed("molokai")
+    " ==> Molokai
+    colorscheme molokai
+endif
 
 " 使用するフォントと大きさ
-if (has("win64") && has("win32"))
+if (has("win64") || has("win32"))
     set guifont=Osaka-Mono:h14
     set guifontwide=Osaka-Mono:h14
 else

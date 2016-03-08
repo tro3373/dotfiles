@@ -71,16 +71,22 @@ set noshowmode
 
 
 " カラーテーマ設定
-" ==> Solarized
-set background=dark
-" let g:solarized_termcolors=256
-let g:solarized_termtrans=1
-colorscheme solarized
-" ==> TomorrowNight
-" colorscheme Tomorrow-Night
-" ==> Molokai
-" colorscheme molokai
-
+if 1 && g:plug.is_installed("vim-colors-solarized")
+    " ==> Solarized
+    " let g:solarized_termcolors=256
+    let g:solarized_termtrans=1
+    set background=dark
+    colorscheme solarized
+elseif g:plug.is_installed("vim-tomorrow-theme")
+    " ==> TomorrowNight
+    colorscheme Tomorrow
+    colorscheme Tomorrow-Night-Bright
+    colorscheme Tomorrow-Night-Eighties
+    colorscheme Tomorrow-Night
+elseif g:plug.is_installed("molokai")
+    " ==> Molokai
+    colorscheme molokai
+endif
 
 "" Airline Settings
 " Powerline font を使用する

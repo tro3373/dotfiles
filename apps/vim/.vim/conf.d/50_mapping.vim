@@ -115,19 +115,15 @@ map qm :!make<Enter>
 if has("win32") || has("win64")
     " Windows
     "map qn :!nautilus %:h<ENTER>
-
 elseif has("win32Unix")
     " Cygwin
     "map qn :!nautilus %:h<ENTER>
-
 elseif has("macunix")
     " Mac OS-X
     "map qn :!nautilus %:h<ENTER>
-
 elseif has("unix")
     " BSD, Linux
     map qn :!nautilus %:h<ENTER>
-
 else
     " その他
 endif
