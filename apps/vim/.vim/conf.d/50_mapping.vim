@@ -9,6 +9,8 @@ command! Reloadvimrc source $MYVIMRC
 
 let mapleader = "\<Space>"
 
+nnoremap ,8 :e ++enc=utf-8<CR>
+nnoremap ,9 :e ++enc=cp932<CR>
 " 表示上の行移動(エディタで表示されている行)であるgj,gkと、
 " 実際の行移動(エディタの表示行ではなく改行コードを意識した実際の行)であるj,kを入れ替え
 nnoremap j gj
@@ -17,6 +19,16 @@ noremap <Down> gj
 noremap <Up> gk
 nnoremap gj j
 nnoremap gk k
+" insertモードから抜ける
+inoremap <silent> jj <ESC>
+inoremap <silent> <C-j> j
+inoremap <silent> kk <ESC>
+inoremap <silent> <C-k> k
+" 挿入モードでのカーソル移動
+inoremap <C-j> <Down>
+inoremap <C-k> <Up>
+inoremap <C-h> <Left>
+inoremap <C-l> <Right>
 nnoremap n nzz
 nnoremap N Nzz
 nnoremap S *zz

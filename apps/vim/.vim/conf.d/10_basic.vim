@@ -80,6 +80,7 @@ elseif has("win32unix")
     " Cygwin
 elseif has("win32") || has("win64")
     " windows
+    set clipboard=unnamed
 endif
 " 挿入モードからノーマルモードに戻る時にペーストモードを自動で解除
 autocmd InsertLeave * set nopaste
