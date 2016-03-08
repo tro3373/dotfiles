@@ -92,29 +92,12 @@ map s0 :tabe $HOME/.vim/backup<ENTER>
 
 
 
-
-" Tlistを表示
-map tl :Tlist<Enter>
-" 次の要素
-map <C-n> :cn<Enter>
-" １つ前の要素
-map <C-p> :cp<Enter>
 " エンコード指定の再読み込みメニューの表示
 map q9 <ALT-F>ere
 "" 新規タブを開く
 "map qt :tabnew<ENTER>
 "" 次のタブ
 "map <C-TAB> :tabn<Enter>
-
-
-" カーソル位置の単語を Gtags で検索
-map <C-]> :GtagsCursor<Enter>
-" 要素名を指定して Gtags で検索
-map <C-t> :Gtags -f %<Enter>
-" Gtagsのタグファイルを作成
-map <C-g> :Gtags
-" Gtagsで山椒検索
-map <C-@> :Gtags -r
 
 
 " make実行
@@ -176,6 +159,39 @@ nnoremap sp gT
 " 終了コマンド
 nnoremap sq :<C-u>q<CR>
 nnoremap sQ :<C-u>bd<CR>
+
+
+"=============================================
+" unite-outline 設定
+"=============================================
+if g:plug.is_installed("unite-outline")
+    let g:unite_split_rule = 'botright'
+    noremap ,u <ESC>:Unite -vertical -winwidth=40 outline<Return>
+endif
+"=============================================
+" taglist 設定
+"=============================================
+if g:plug.is_installed("taglist.vim")
+    " Tlistを表示
+    map tl :Tlist<Enter>
+    " 次の要素
+    map <C-n> :cn<Enter>
+    " １つ前の要素
+    map <C-p> :cp<Enter>
+endif
+"=============================================
+" gtags 設定
+"=============================================
+if g:plug.is_installed("tags.vim")
+    " カーソル位置の単語を Gtags で検索
+    map <C-]> :GtagsCursor<Enter>
+    " 要素名を指定して Gtags で検索
+    map <C-t> :Gtags -f %<Enter>
+    " Gtagsのタグファイルを作成
+    map <C-g> :Gtags
+    " Gtagsで山椒検索
+    map <C-@> :Gtags -r
+endif
 
 
 "=============================================

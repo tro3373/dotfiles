@@ -18,6 +18,7 @@ call plug#begin('$HOME/.vim/plugged')
   " vim-plug
   Plug 'junegunn/vim-plug',
         \ {'dir': '$HOME/.vim/plugged/vim-plug/autoload'}
+
   " カラースキーム
   Plug 'altercation/vim-colors-solarized'           " Solarized
   Plug 'chriskempson/vim-tomorrow-theme'            " tomorrow
@@ -53,14 +54,10 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'honza/vim-snippets'                         " snipMate UltiSnip Snippets
   " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
   Plug 'vim-scripts/Align'                          " CSV,TSV整形
-  if !(has("win64") && has("win32"))
-      Plug 'taglist.vim'                                " ソースコードブラウザ
-  endif
 
   Plug 'scrooloose/nerdtree', {
     \ 'on':  ['NERDTreeToggle'] }                   " NERDTree tree view コマンド実行時に読み込む
 
-  Plug 'vim-scripts/gtags.vim'                      " GNU Global
   Plug 'rking/ag.vim'                               " SilverSearcher
   Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
     \ 'do': './install --all' }                     " FZF
@@ -83,26 +80,30 @@ call plug#begin('$HOME/.vim/plugged')
     "   \ }
   endif
 
-  " Markdown Preview
+  " ソース解析
+  Plug 'Shougo/unite-outline'                       " 関数一覧とかを表示
+  Plug 'vim-scripts/gtags.vim'                      " GNU Global
+  if !(has("win64") && has("win32"))
+      Plug 'taglist.vim'                            " ソースコードブラウザ
+  endif
+
+  " Markdown Preview 関連
   Plug 'plasticboy/vim-markdown'
   " Plug 'rcmdnk/vim-markdown'
   Plug 'kannokanno/previm'
   Plug 'tyru/open-browser.vim'
 
 
-  " TODO 勉強中 =======
-  Plug 'Shougo/unite-ssh'                           "
+  " Plug 'Shougo/unite-ssh'                           "
   " Plug 'Shougo/vimshell'                            " uniteインターフェースでシェル使用できる
   " http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
   " Plug 'sjl/gundo.vim'                              " UNDO履歴を管理
   " Plug 'fuenor/qfixhowm'                            " メモプラグイン
-  " Plug 'h1mesuke/unite-outline'                     " 関数一覧とかを表示
   " Plug 'thinca/vim-quickrun'                        " 現在のファイルを実行して quickfix に表示
   " Plug 'tpope/vim-fugitive'                         " Git wrapper so awesome
   " Plug 'junegunn/seoul256.vim'
   " 指定したファイルタイプを開いたときに読み込む
   " Plug 'tpope/vim-fireplace', { 'for': ['clojure'] }
-  " TODO 勉強中 =======
 
 call plug#end()
 
