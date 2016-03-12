@@ -1,15 +1,29 @@
 #!/bin/bash
 
+ls_crash_logs() {
+    echo "----------------------------------------------"
+    ls -ltraF /var/crash/
+    echo "----------------------------------------------"
+}
+delete_crash_log() {
+    sudo rm -rfv /var/crash/*
+    if [[ -f /var/crash/.lock ]]; then
+        sudo rm -rfv /var/crash/.lock
+    fi
+}
 main() {
     if [[ $(ls -1 /var/crash/ | wc -l) -eq 0 ]]; then
         echo "No crash file detect."
         exit 0
     else
+        echo "Bellow file exist."
+        ls_crash_logs
         echo "Delete crash logs? (y/N)"
         read crashdelete
         if [[ "$crashdelete" == "y" ]]; then
             echo "Dellete crash files!!"
-            sudo rm -rf /var/crash/*
+            delete_crash_log
+            ls_crash_logs
         else
             echo "No delete..."
         fi
