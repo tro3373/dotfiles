@@ -67,7 +67,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'Shougo/unite.vim'                           " ユーザインタフェース統合
   Plug 'Shougo/neomru.vim'                          " 最近使用したファイルの一覧管理
   Plug 'ujihisa/unite-colorscheme'                  " カラースキーム変更
-  if !(has("win64") && has("win32"))
+  if !(has("win64") || has("win32"))
     Plug 'Shougo/vimproc.vim', { 'do': 'make' }
     " Plug 'Shougo/vimproc.vim', {
     "   \ 'build' : {
@@ -83,7 +83,7 @@ call plug#begin('$HOME/.vim/plugged')
   " ソース解析
   Plug 'Shougo/unite-outline'                       " 関数一覧とかを表示
   Plug 'vim-scripts/gtags.vim'                      " GNU Global
-  if !(has("win64") && has("win32"))
+  if !(has("win64") || has("win32"))
       Plug 'taglist.vim'                            " ソースコードブラウザ
   endif
 
