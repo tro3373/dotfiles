@@ -193,14 +193,21 @@ delifexist() {
 setup_instcmd() {
     # OS 種類取得
     OS=`$DIR_ROOT/bin/dist_ditect`
+    # 32bit判定
+    is_32bit=0
+    if [[ `$DIR_ROOT/bin/os_bit` != "x86_64" ]]; then
+        is_32bit=1
+    fi
     # Install command
     instcmd="sudo apt-get install -y"
     if [ "$OS" = "mac" ]; then
-         instcmd="brew install"
+        instcmd="brew install"
     elif [ "$OS" = "redhat" ]; then
-         instcmd="sudo yum install -y"
+        instcmd="sudo yum install -y"
     elif [ "$OSTYPE" = "cygwin" ]; then
-         instcmd="apt-cyg install"
+        instcmd="apt-cyg install"
+    elif [ "$OS" = "mingw" ]; then
+        instcmd="pacman -S --noconfirm"
     fi
 }
 
