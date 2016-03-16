@@ -5,9 +5,12 @@
 	],
 	"installed_packages":
 	[
+		"BlockCursorEverywhere",
 		"BracketHighlighter",
 		"Codecs33",
 		"ConvertToUTF8",
+		"Dotfiles Syntax Highlighting",
+		"GitGutter",
 		"IMESupport",
 		"Japanize",
 		"Markdown Extended",
@@ -26,6 +29,7 @@
 		"https://github.com/yasuyuky/SublimeMozcInput",
 		"https://github.com/seanliang/Codecs33/tree/linux-x64",
 		"https://github.com/seanliang/Codecs33/tree/osx",
-		"https://github.com/yasuyuky/SublimeMozcInput"
+		"https://github.com/yasuyuky/SublimeMozcInput",
+		"https://github.com/jlangston/BlockCursorEverywhere.git"
 	]
 }

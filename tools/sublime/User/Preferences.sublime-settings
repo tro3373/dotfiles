@@ -19,7 +19,6 @@
 	"highlight_modified_tabs": false,
 	"ignored_packages":
 	[
-		"Vintage"
 	],
 	"overlay_scroll_bars": "disabled",
 	"remember_open_files": false,
@@ -37,6 +36,10 @@
 	"theme": "Afterglow-green.sublime-theme",
 	"translate_tabs_to_spaces": true,
 	"trim_trailing_white_space_on_save": false,
+	"vintage_ctrl_keys": true,
+	"vintage_start_in_command_mode": true,
+	"vintage_use_clipboard": true,
+	"vintageous_use_sys_clipboard": true,
 	"word_wrap": false,
 	"wrap_width": 120
 }
