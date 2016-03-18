@@ -66,20 +66,33 @@ set smartcase
 
 
 " ヤンクした際にクリップボードへ配置する
-if has("mac")
-    set clipboard=unnamed
-elseif has("unix")
-    " unix/linux
-    set clipboard=unnamed
-    set clipboard=unnamedplus
-    vmap <C-c> :w !xsel -ib<CR><CR>
-    vmap <C-y> :w !xsel -ib<CR><CR>
-elseif has("win32unix")
-    " Cygwin
-elseif has("win32") || has("win64")
-    " windows
-    set clipboard=unnamed
+" if has("mac")
+"     " mac
+"     echo "mac"
+" elseif has("unix")
+"     echo "unix"
+"     " unix/linux
+"     set clipboard=unnamedplus
+"     vmap <C-c> :w !xsel -ib<CR><CR>
+"     vmap <C-y> :w !xsel -ib<CR><CR>
+" elseif has("win32unix")
+"     " Cygwin
+"     echo "win32unix"
+" elseif has("win32") || has("win64")
+"     " windows
+"     echo "win32"
+" endif
+
+set clipboard=unnamed
+if has("unix")
+    let s:ostype = substitute(system("echo $OSTYPE"), '\n', '', '')
+    if "msys" != s:ostype
+        set clipboard=unnamedplus
+        vmap <C-c> :w !xsel -ib<CR><CR>
+        vmap <C-y> :w !xsel -ib<CR><CR>
+    endif
 endif
+
 " 挿入モードからノーマルモードに戻る時にペーストモードを自動で解除
 autocmd InsertLeave * set nopaste
 
