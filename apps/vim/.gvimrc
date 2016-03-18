@@ -40,3 +40,9 @@ else
     set guifont=Osaka-Mono\ 14
     set guifontwide=Osaka-Mono\ 14
 endif
+
+"if (has("win64") || has("win32"))
+"    "set encoding=utf-8
+"    set fileencoding=cp932
+"    set fileencodings=utf-8,cp932
+"endif

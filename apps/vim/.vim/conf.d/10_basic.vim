@@ -10,9 +10,7 @@
 " encoding(enc)
 "   vimの内部で使用されるエンコーディングを指定する。
 "   編集するファイル内の全ての文字を表せるエンコーディングを指定するべき。
-if !(has("win64") || has("win32"))
-    set encoding=utf-8
-endif
+set encoding=utf-8
 " fileencoding(fenc)
 "   そのバッファのファイルのエンコーディングを指定する。
 "   バッファにローカルなオプション。これに encoding と異なる値が設定されていた場合、

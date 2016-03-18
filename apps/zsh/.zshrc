@@ -270,6 +270,7 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     zplug "mollifier/cd-gitroot"
     zplug "yoshikaw/ClipboardTextListener", as:command, of:clipboard_text_listener.pl
     local target
+    local fzfpeco_enable=1
     case "$OSTYPE" in
         *'linux'*)
             target='*linux*amd64*'
@@ -282,20 +283,24 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
         *)
             target='os'
             target_massren='*win*'
+            fzfpeco_enable=0
             ;;
     esac
-    zplug "junegunn/fzf-bin", as:command, from:gh-r, of:"$target", file:fzf \
-        | zplug "b4b4r07/easy-oneliner"
-    zplug "b4b4r07/gomi", as:command, from:gh-r, of:"$target", file:gomi
 
-    zplug "junegunn/fzf", as:command, of:bin/fzf-tmux
-    zplug "junegunn/fzf", of:"shell/*.zsh"
+    if [[ $fzfpeco_enable -eq 1 ]]; then
+        zplug "junegunn/fzf-bin", as:command, from:gh-r, of:"$target", file:fzf \
+            | zplug "b4b4r07/easy-oneliner"
+        zplug "b4b4r07/gomi", as:command, from:gh-r, of:"$target", file:gomi
 
-    zplug "peco/peco", as:command, from:gh-r, of:"$target"
-    zplug "b4b4r07/dotfiles", as:command, of:bin/peco-tmux
+        zplug "junegunn/fzf", as:command, of:bin/fzf-tmux
+        zplug "junegunn/fzf", of:"shell/*.zsh"
 
-    # file name 一括置換
-    zplug "laurent22/massren", as:command, from:gh-r, at:v1.3.0, of:"$target_massren", do:"./massren --config editor vim"
+        zplug "peco/peco", as:command, from:gh-r, of:"$target"
+        zplug "b4b4r07/dotfiles", as:command, of:bin/peco-tmux
+
+        # file name 一括置換
+        zplug "laurent22/massren", as:command, from:gh-r, at:v1.3.0, of:"$target_massren", do:"./massren --config editor vim"
+    fi
 
     # Local loading
     zplug "~/.zsh",     from:local, ignore:"*vcs-info.zsh", nice:2
