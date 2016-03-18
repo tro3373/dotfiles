@@ -64,27 +64,10 @@ set ignorecase
 " 検索時に大文字を含んでいたら大/小を区別
 set smartcase
 
-
 " ヤンクした際にクリップボードへ配置する
-" if has("mac")
-"     " mac
-"     echo "mac"
-" elseif has("unix")
-"     echo "unix"
-"     " unix/linux
-"     set clipboard=unnamedplus
-"     vmap <C-c> :w !xsel -ib<CR><CR>
-"     vmap <C-y> :w !xsel -ib<CR><CR>
-" elseif has("win32unix")
-"     " Cygwin
-"     echo "win32unix"
-" elseif has("win32") || has("win64")
-"     " windows
-"     echo "win32"
-" endif
-
 set clipboard=unnamed
-if has("unix")
+
+if !has("mac") && has("unix")
     let s:ostype = substitute(system("echo $OSTYPE"), '\n', '', '')
     if "msys" != s:ostype
         set clipboard=unnamedplus
