@@ -260,17 +260,9 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     # Remote loading
     zplug "b4b4r07/zplug"
     zplug "b4b4r07/http_code",  as:command, of:bin
-    zplug "b4b4r07/enhancd",    of:enhancd.sh
-    zplug "stedolan/jq", from:gh-r, as:command \
-            | zplug "b4b4r07/emoji-cli", if:"which jq"
-    zplug "mrowa44/emojify",    as:command
     zplug "zsh-users/zsh-completions"
-    zplug "zsh-users/zsh-history-substring-search"
-    zplug "zsh-users/zsh-syntax-highlighting", nice:19
-    zplug "mollifier/cd-gitroot"
-    zplug "yoshikaw/ClipboardTextListener", as:command, of:clipboard_text_listener.pl
     local target
-    local fzfpeco_enable=1
+    local native_install=1
     case "$OSTYPE" in
         *'linux'*)
             target='*linux*amd64*'
@@ -283,11 +275,20 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
         *)
             target='os'
             target_massren='*win*'
-            fzfpeco_enable=0
+            native_install=0
             ;;
     esac
 
-    if [[ $fzfpeco_enable -eq 1 ]]; then
+    if [[ $native_install -eq 1 ]]; then
+        zplug "b4b4r07/enhancd",    of:enhancd.sh
+        zplug "stedolan/jq", from:gh-r, as:command \
+                | zplug "b4b4r07/emoji-cli", if:"which jq"
+        zplug "mrowa44/emojify",    as:command
+        zplug "mollifier/cd-gitroot"
+        zplug "zsh-users/zsh-history-substring-search"
+        zplug "zsh-users/zsh-syntax-highlighting", nice:19
+        zplug "yoshikaw/ClipboardTextListener", as:command, of:clipboard_text_listener.pl
+
         zplug "junegunn/fzf-bin", as:command, from:gh-r, of:"$target", file:fzf \
             | zplug "b4b4r07/easy-oneliner"
         zplug "b4b4r07/gomi", as:command, from:gh-r, of:"$target", file:gomi

@@ -71,7 +71,7 @@ set noshowmode
 
 
 " カラーテーマ設定
-if 1 && g:plug.is_installed("vim-colors-solarized")
+if 0 && g:plug.is_installed("vim-colors-solarized")
     " ==> Solarized
     " let g:solarized_termcolors=256
     let g:solarized_termtrans=1

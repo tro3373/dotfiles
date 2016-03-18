@@ -49,13 +49,21 @@ case "${OSTYPE}" in
         alias apt-get='apt-cyg'                         # apt-get emulate
         alias tmux='tmux -2'                            # 256Color有効化
         alias sudo='echo "No sudo...";'                 # sudo がないので、エイリアスで逃げる
+        ;;
+
+    #msys
+    msys*)
+        alias apt-get='pacman -S'                       # apt-get emulate
+        alias tmux='tmux -2'                            # 256Color有効化
+        alias sudo='echo "No sudo...";'                 # sudo がないので、エイリアスで逃げる
+        ;;
 esac
 
 alias la="ls -a"
 alias lf="ls -F"
-alias l="ls -lh"
-alias ll="ls -lah"
-alias lla="ls -lah"
+alias l="ls -lFh"
+alias ll="ls -laFh"
+alias lla="ls -laFh"
 alias du="du -h"
 alias df="df -h"
 alias su="su -l"
