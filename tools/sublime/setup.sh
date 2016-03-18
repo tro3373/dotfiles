@@ -6,7 +6,7 @@ dry_run=0
 # インストール用関数 ロード
 source ~/dotfiles/setup/setup-funcs.sh
 
-if [ "$OS" = "mac" ]; then
+if [ "$DETECT_OS" = "mac" ]; then
     SUBLIMEUSERDIR=~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User
     make_link_bkupable "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" "/usr/local/bin/subl"
 else

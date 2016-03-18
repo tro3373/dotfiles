@@ -6,11 +6,11 @@ install() {
 #        dvexec "mkdir -p \"$workdir\""
 #    fi
 #    dvexec "cd \"$workdir\""
-    if [ "$OS" = "ubuntu" ]; then
+    if [ "$DETECT_OS" = "ubuntu" ]; then
         # for tmux from git
         dvexec sudo apt-get install -y autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev 
         install_common
-    elif [ "$OS" = "redhat" ]; then
+    elif [ "$DETECT_OS" = "redhat" ]; then
         # for tmux from git
         dvexec sudo yum install -y libevent libeventdevel automake ncursesdevel
         install_common

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 install() {
-    if [ "$OS" = "ubuntu" ]; then
+    if [ "$DETECT_OS" = "ubuntu" ]; then
 #        dvexec "$instcmd --force-yes vim vim-gtk vim-athena vim-gnome"
         dvexec sudo apt-get remove -y --purge vim vim-runtime vim-gnome vim-tiny vim-common vim-gui-common
         dvexec sudo apt-get install -y liblua5.1-dev luajit \
@@ -42,10 +42,10 @@ install() {
             dvexec sudo mkdir /usr/share/vim/vim74
         fi
         dvexec sudo cp -fr runtime/* /usr/share/vim/vim74/
-    elif [ "$OS" = "mac" ]; then
+    elif [ "$DETECT_OS" = "mac" ]; then
         dvexec $instcmd lua
         dvexec $instcmd vim --with-lua
-    elif [ "$OS" = "redhat" ]; then
+    elif [ "$DETECT_OS" = "redhat" ]; then
         dvexec cd /usr/local/src/
         if [[ ! -e /usr/local/src/luajit ]]; then
             dvexec sudo git clone http://luajit.org/git/luajit-2.0.git luajit

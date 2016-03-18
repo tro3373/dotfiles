@@ -36,9 +36,12 @@ dist_ditect() {
     elif [[ `uname` == "Darwin" ]]; then
         # mac
         distri_name="mac"
-    elif [[ `uname` =~ MINGW* ]]; then
+    elif [[ "$OSTYPE" == "cygwin" ]]; then
         # mac
-        distri_name="mingw"
+        distri_name="cygwin"
+    elif [[ "$OSTYPE" == "msys" ]]; then
+        # mac
+        distri_name="msys"
     else
         # Other
         distri_name="Unkown distribution"

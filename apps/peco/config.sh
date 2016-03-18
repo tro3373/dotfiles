@@ -1,7 +1,7 @@
 #!/bin/bash
 
 install() {
-    if [ "$OS" = "mac" ]; then
+    if [ "$DETECT_OS" = "mac" ]; then
         dvexec sudo brew tap peco/peco
         dvexec sudo brew install peco
     else
@@ -21,7 +21,7 @@ install() {
             dvexec tar xvfpz peco_linux_amd64.tar.gz
             installto=/usr/local/bin
             sudo="sudo"
-            if [ "$OSTYPE" = "cygwin" ]; then
+            if [ "$DETECT_OS" = "cygwin" ]; then
                 sudo=""
             fi
             dvexec "$sudo cp peco_linux_amd64/peco $installto"

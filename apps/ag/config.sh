@@ -1,11 +1,11 @@
 #!/bin/bash
 
 install() {
-    if [ "$OS" = "mac" ]; then
+    if [ "$DETECT_OS" = "mac" ]; then
         dvexec "$instcmd ag"
-    elif [ "$OS" = "ubuntu" ]; then
+    elif [ "$DETECT_OS" = "ubuntu" ]; then
         dvexec "$instcmd silversearcher-ag"
-    elif [ "$OSTYPE" = "cygwin" ]; then
+    elif [ "$DETECT_OS" = "cygwin" ]; then
         # 必要パッケージインストール
         dvexec "$instcmd autoconf automake gcc-g++ gettext gettext-devel liblzma-devel make mingw-gcc-g++ mingw-zlib-devel pkg-config xz zlib-devel"
         clone_src_cd
@@ -13,7 +13,7 @@ install() {
         dvexec ./configure
         dvexec make
         dvexec make install
-    elif [ "$OS" = "mingw" ]; then
+    elif [ "$DETECT_OS" = "msys" ]; then
         # 必要パッケージインストール
         # dvexec "$instcmd base-devel mingw-w64-{i686,x86_64}-gcc mingw-w64-{i686,x86_64}-pcre mingw-w64-{i686,x86_64}-xz"
         # clone_src_cd

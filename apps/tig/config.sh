@@ -1,7 +1,7 @@
 #!/bin/bash
 
 install() {
-    if [ "$OS" = "ubuntu" ]; then
+    if [ "$DETECT_OS" = "ubuntu" ]; then
         # build tool のインストール
         dvexec "$instcmd build-essential"
         # https://gist.github.com/raimon49/9d45d480a607fb463ffe
@@ -23,7 +23,7 @@ install() {
         # ビルド, インストール
         dvexec sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
         dvexec /usr/local/bin/tig -v
-    elif [ "$OS" = "redhat" ]; then
+    elif [ "$DETECT_OS" = "redhat" ]; then
         #targetrpm="rpmforge-release-0.5.2-2.el6.rf.x86_64"
         #result=`rpm -qa |grep $targetrpm`
         #if [ "$result" = "" ]; then

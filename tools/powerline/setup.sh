@@ -21,16 +21,16 @@ install() {
     #   https://github.com/riywo/anyenv
     # see powerline setting...
     #   http://qiita.com/qurage/items/4edda8559cc4c98758ee
-    if [ "$OS" = "mac" ]; then
+    if [ "$DETECT_OS" = "mac" ]; then
         if ! test_cmd xcode-select; then
             dvexec "xcode-select --install"
         fi
         dvexec "brew install readline; brew link readline;"
-    elif [ "$OS" = "ubuntu" ]; then
+    elif [ "$DETECT_OS" = "ubuntu" ]; then
         dvexec sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev
-    elif [ "$OS" = "redhat" ]; then
+    elif [ "$DETECT_OS" = "redhat" ]; then
         dvexec sudo yum install -y gcc gcc-c++ make git openssl-devel bzip2-devel zlib-devel readline-devel sqlite-devel
-    elif [ "$OSTYPE" = "cygwin" ]; then
+    elif [ "$DETECT_OS" = "cygwin" ]; then
         dvexec apt-cyg install patch
     fi
 

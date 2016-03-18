@@ -3,7 +3,7 @@
 install() {
     # 通常のインストールを実行
     dvexec $def_instcmd
-    if [ "$OS" = "mac" ]; then
+    if [ "$DETECT_OS" = "mac" ]; then
         # GNU系コマンド集のインストール（gdircolors 用）
         dvexec "$instcmd coreutils"
     fi
@@ -22,7 +22,7 @@ setconfig() {
         dvexec "cd \"$workdir\""
         dvexec git clone https://github.com/seebi/dircolors-solarized.git
     fi
-    if [ "$OS" = "mac" ] && [ ! -e "$workdir/solarized.git" ]; then
+    if [ "$DETECT_OS" = "mac" ] && [ ! -e "$workdir/solarized.git" ]; then
         dvexec "cd \"$workdir\""
         dvexec git clone https://github.com/tomislav/osx-terminal.app-colors-solarized solarized.git
     fi

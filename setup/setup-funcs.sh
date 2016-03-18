@@ -192,7 +192,7 @@ delifexist() {
 # instcmd 設定
 setup_instcmd() {
     # OS 種類取得
-    OS=`$DIR_ROOT/bin/dist_ditect`
+    DETECT_OS=`$DIR_ROOT/bin/dist_ditect`
     # 32bit判定
     is_32bit=0
     if [[ `$DIR_ROOT/bin/os_bit` != "x86_64" ]]; then
@@ -200,13 +200,13 @@ setup_instcmd() {
     fi
     # Install command
     instcmd="sudo apt-get install -y"
-    if [ "$OS" = "mac" ]; then
+    if [ "$DETECT_OS" = "mac" ]; then
         instcmd="brew install"
-    elif [ "$OS" = "redhat" ]; then
+    elif [ "$DETECT_OS" = "redhat" ]; then
         instcmd="sudo yum install -y"
-    elif [ "$OSTYPE" = "cygwin" ]; then
+    elif [ "$DETECT_OS" = "cygwin" ]; then
         instcmd="apt-cyg install"
-    elif [ "$OS" = "mingw" ]; then
+    elif [ "$DETECT_OS" = "msys" ]; then
         instcmd="pacman -S --noconfirm"
     fi
 }
@@ -243,7 +243,7 @@ setup() {
     cd $DIR_ROOT
 
     # Mac 用 Brew インストールチェック
-    if [ "$OS" = "mac" ]; then
+    if [ "$DETECT_OS" = "mac" ]; then
         if ! test_cmd brew; then
             log '================================================'
             log ' HomeBrew is Not Installed!'
