@@ -7,3 +7,7 @@ bind-key -t vi-copy Enter copy-pipe "cat > /dev/clipboard"
 
 # クリップボードの内容を貼り付ける
 bind -r C-v run "cat /dev/clipboard | tmux load-buffer - && tmux paste-buffer"
+
+# new pane start path for windows(http://stackoverflow.com/questions/26435333/cygwin-tmux-on-windows-7-why-wont-tmux-use-the-current-path)
+set-environment -g CHERE_INVOKING 1
+

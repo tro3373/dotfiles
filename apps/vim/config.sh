@@ -76,6 +76,59 @@ install() {
             --prefix=/usr/local
         dvexec sudo make
         dvexec sudo make install
+    elif [ "$DETECT_OS" = "msys" ]; then
+        # for msys2.
+        # install lua.
+        dvexec $instcmd ncurses-devel libcrypt-devel gettext-devel gcc make python ruby
+        if [[ ! -e /usr/local/src/lua ]]; then
+            dvexec mkdir -p /usr/local/src/lua
+        fi
+        dvexec cd /usr/local/src/lua
+        local lua_version=5.3.2
+        if [[ ! -e "/usr/local/src/lua/lua-$lua_version.tar.gz" ]]; then
+            dvexec rm -rf /usr/local/src/lua/*
+            dvexec wget http://www.lua.org/ftp/lua-$lua_version.tar.gz
+            dvexec tar xvfpz ./lua-$lua_version.tar.gz
+        fi
+        dvexec cd ./lua-$lua_version
+        dvexec make mingw
+        dvexec make install
+
+        # install vim.
+        dvexec cd /usr/local/src/
+        if [[ ! -e /usr/local/src/vim ]]; then
+            dvexec git clone https://github.com/vim/vim.git
+        fi
+        dvexec cd vim/src
+        dvexec ./configure \
+            CPPFLAGS="-I/usr/include/ncursew" \
+            --enable-fail-if-missing \
+            --with-features=huge \
+            --with-tlib=ncursesw \
+            --enable-multibyte \
+            --enable-perlinterp=yes \
+            --enable-rubyinterp=yes \
+            --enable-pythoninterp=yes \
+            --enable-luainterp \
+            --with-lua-prefix=/usr/local \
+            --without-x \
+            --disable-cscope \
+            --disable-athena-check \
+            --disable-carbon-check \
+            --disable-motif-check \
+            --disable-gtk2-check \
+            --disable-nextaw-check \
+            --disable-selinux \
+            --disable-smack \
+            --disable-darwin \
+            --disable-mzschemeinterp \
+            --disable-tclinterp \
+            --disable-workshop \
+            --disable-gpm \
+            --disable-sysmouse \
+            --disable-gui
+        dvexec make
+        dvexec make install
     else
         dvexec $def_instcmd
     fi

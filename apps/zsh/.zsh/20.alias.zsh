@@ -6,7 +6,7 @@ case "${OSTYPE}" in
     # for MAC-OS
     darwin*)
         #alias ls="ls -G -w"
-        alias ls='gls --color=auto'
+        alias ls='gls -F --color=auto'
         alias xcode='open -a Xcode'         # コマンドラインからXcode起動
         alias gvim='open -a MacVim'         # コマンドラインからMacVim起動
 
@@ -27,7 +27,7 @@ case "${OSTYPE}" in
 
     # for Linux
     linux*)
-        alias ls="ls --color"
+        alias ls='ls -F --color=auto'
         alias nt=nautilus                               # 指定ディレクトリをnautilusで開く
         alias open=nautilus                             # 指定ディレクトリをnautilusで開く
         $ gv() {gvim -f $1 &!}                          # コマンドラインからgVim起動
@@ -45,6 +45,7 @@ case "${OSTYPE}" in
 
     #cygwin
     cygwin*)
+        alias ls='ls -F --color=auto'
         alias open='cygstart'                           # 指定ディレクトリをwindowエクスプローラで開く
         alias apt-get='apt-cyg'                         # apt-get emulate
         alias tmux='tmux -2'                            # 256Color有効化
@@ -53,6 +54,7 @@ case "${OSTYPE}" in
 
     #msys
     msys*)
+        alias ls='ls -F --color=auto'
         alias apt-get='pacman -S'                       # apt-get emulate
         alias tmux='tmux -2'                            # 256Color有効化
         alias sudo='echo "No sudo...";'                 # sudo がないので、エイリアスで逃げる
