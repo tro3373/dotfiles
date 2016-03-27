@@ -26,6 +26,10 @@ setconfig() {
         dvexec "cd \"$workdir\""
         dvexec git clone https://github.com/tomislav/osx-terminal.app-colors-solarized solarized.git
     fi
+    if [ "$DETECT_OS" = "msys" ] && [ ! -e "$workdir/mintty-colors-solarized.git" ]; then
+        dvexec "cd \"$workdir\""
+        dvexec git clone https://github.com/mavnn/mintty-colors-solarized.git
+    fi
     if [ ! -d ~/.zplug ] && [ ! -L ~/.zplug ]; then
         dvexec git clone https://github.com/b4b4r07/zplug ~/.zplug
 #        dvexec source ~/.zplug/zplug
@@ -38,6 +42,22 @@ setconfig() {
     # setcolortheme=dircolors.ansi-universal
     make_link_bkupable "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
 
-    # その他ドットファイルリンク作成
-    make_link_dot2home $script_dir
+    if [[ "$DETECT_OS" == "msys" ]]; then
+        # その他ドットファイルリンク作成
+        make_link_dot2home $script_dir/win
+        gen_zshrc_for_msys2 00.base.zsh 10.path.zsh 20.alias.zsh 30.funcs.zsh 50.ssh-agent.zsh 60.tmux.zsh
+    else
+        # その他ドットファイルリンク作成
+        make_link_dot2home $script_dir
+    fi
+}
+
+gen_zshrc_for_msys2() {
+    local outfile=~/.zshrc
+    if [[ -e $outfile ]]; then
+        bkup_orig_file $outfile
+    fi
+    for file in "$@"; do
+        dvexec "cat $script_dir/.zsh/$file >> $outfile"
+    done
 }

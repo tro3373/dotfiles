@@ -26,8 +26,4 @@ sed -ri -e 's/bash/zsh/g' /msys2_shell.bat
 # SHELL 変数へzshを正しく設定するようパッチ
 sed -ri -e 's/^.*(profile_d zsh)/  \1\n  SHELL=`which zsh`/g' /etc/profile
 
-# mintty
-git clone https://github.com/mavnn/mintty-colors-solarized.git
-
-# clone dotfiles
 
