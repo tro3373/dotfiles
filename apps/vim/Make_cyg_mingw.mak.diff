@@ -1,0 +1,43 @@
+diff --git a/src/Make_cyg_ming.mak b/src/Make_cyg_ming.mak
+index d10817a..ddffb55 100644
+--- a/src/Make_cyg_ming.mak
++++ b/src/Make_cyg_ming.mak
+@@ -155,6 +155,7 @@ ifeq (no,$(DYNAMIC_LUA))
+ LUA_LIB = -L$(LUA)/lib -llua
+ endif
+
++LUAINC = $(LUA)/include
+ endif
+
+ #      MzScheme interface:
+@@ -376,7 +377,7 @@ WINDRES_CC = $(CC)
+ #>>>>> end of choices
+ ###########################################################################
+
+-CFLAGS = -Iproto $(DEFINES) -pipe -w -march=$(ARCH) -Wall
++CFLAGS += -Iproto $(DEFINES) -pipe -w -march=$(ARCH) -Wall
+ WINDRES_FLAGS = --preprocessor="$(WINDRES_CC) -E -xc" -DRC_INVOKED
+ EXTRA_LIBS =
+
+@@ -405,7 +406,7 @@ endif
+ endif
+
+ ifdef LUA
+-CFLAGS += -I$(LUA)/include -I$(LUA) -DFEAT_LUA
++CFLAGS += -I$(LUAINC) -I$(LUA) -DFEAT_LUA
+ ifeq (yes, $(DYNAMIC_LUA))
+ CFLAGS += -DDYNAMIC_LUA -DDYNAMIC_LUA_DLL=\"lua$(LUA_VER).dll\"
+ endif
+@@ -772,10 +773,10 @@ INCL = vim.h feature.h os_win32.h os_dos.h ascii.h keymap.h term.h macros.h \
+        gui.h
+
+ $(OUTDIR)/if_python.o : if_python.c if_py_both.h $(INCL)
+-       $(CC) -c $(CFLAGS) $(PYTHONINC) -DDYNAMIC_PYTHON_DLL=\"python$(PYTHON_VER).dll\" $< -o $@
++       $(CC) -c $(CFLAGS) $(PYTHONINC) -DDYNAMIC_PYTHON_DLL=\"libpython$(PYTHON_VER).dll\" $< -o $@
+
+ $(OUTDIR)/if_python3.o : if_python3.c if_py_both.h $(INCL)
+-       $(CC) -c $(CFLAGS) $(PYTHON3INC) -DDYNAMIC_PYTHON3_DLL=\"PYTHON$(PYTHON3_VER).dll\" $< -o $@
++       $(CC) -c $(CFLAGS) $(PYTHON3INC) -DDYNAMIC_PYTHON3_DLL=\"libpython$(PYTHON3_VER)m.dll\" $< -o $@
+
+ $(OUTDIR)/%.o : %.c $(INCL)
+        $(CC) -c $(CFLAGS) $< -o $@
