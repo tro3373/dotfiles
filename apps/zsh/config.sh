@@ -26,7 +26,7 @@ setconfig() {
         dvexec "cd \"$workdir\""
         dvexec git clone https://github.com/tomislav/osx-terminal.app-colors-solarized solarized.git
     fi
-    if [ "$DETECT_OS" = "msys" ] && [ ! -e "$workdir/mintty-colors-solarized.git" ]; then
+    if [ "$DETECT_OS" = "msys" ] && [ ! -e "$workdir/mintty-colors-solarized" ]; then
         dvexec "cd \"$workdir\""
         dvexec git clone https://github.com/mavnn/mintty-colors-solarized.git
     fi
@@ -45,7 +45,14 @@ setconfig() {
     if [[ "$DETECT_OS" == "msys" ]]; then
         # その他ドットファイルリンク作成
         make_link_dot2home $script_dir/win
-        gen_zshrc_for_msys2 00.base.zsh 10.path.zsh 20.alias.zsh 30.funcs.zsh 50.ssh-agent.zsh 60.tmux.zsh
+        make_link_bkupable "${script_dir}/.zshenv" "${HOME}/.zshenv"
+        gen_zshrc_for_msys2 \
+            .zsh/00.base.zsh \
+            .zsh/10.path.zsh \
+            .zsh/20.alias.zsh \
+            .zsh/30.funcs.zsh \
+            .zsh/50.ssh-agent.zsh \
+            .zsh/60.tmux.zsh
     else
         # その他ドットファイルリンク作成
         make_link_dot2home $script_dir
@@ -58,6 +65,6 @@ gen_zshrc_for_msys2() {
         bkup_orig_file $outfile
     fi
     for file in "$@"; do
-        dvexec "cat $script_dir/.zsh/$file >> $outfile"
+        dvexec "cat $script_dir/$file >> $outfile"
     done
 }
