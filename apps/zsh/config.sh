@@ -22,6 +22,10 @@ setconfig() {
         dvexec "cd \"$workdir\""
         dvexec git clone https://github.com/seebi/dircolors-solarized.git
     fi
+    if [ ! -e "$workdir/tomorrow-theme" ]; then
+        dvexec "cd \"$workdir\""
+        dvexec git clone https://github.com/chriskempson/tomorrow-theme.git
+    fi
     if [ "$DETECT_OS" = "mac" ] && [ ! -e "$workdir/solarized.git" ]; then
         dvexec "cd \"$workdir\""
         dvexec git clone https://github.com/tomislav/osx-terminal.app-colors-solarized solarized.git
