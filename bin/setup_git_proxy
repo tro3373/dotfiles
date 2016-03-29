@@ -1,0 +1,36 @@
+#!/bin/bash
+
+interactive() {
+    local variable=$1
+    local msg=$2
+    local input_word=
+    local yesno=x
+    while [[ "$input_word" == "" ]]; do
+        echo "$msg"
+        read input_word
+    done
+    eval "$variable=$input_word"
+}
+main() {
+    interactive server "Input Proxy server url."
+    interactive port "Input Proxy server port."
+    interactive userid "Input userid."
+    interactive passwd "Input password."
+    echo
+    echo "==> Execute bellow."
+    echo
+    echo "  git config --global http.proxy http://$userid:'$passwd'@$server:$port"
+    echo "  git config --global https.proxy http://$userid:'$passwd'@$server:$port"
+    echo
+    echo "==> Write in bashrc/zshrc bellow."
+    echo
+    echo "  export http_proxy=http://$userid:'$passwd'@$server:$port"
+    echo "  export https_proxy=http://$userid:'$passwd'@$server:$port"
+    echo "  export ftp_proxy=http://$userid:'$passwd'@$server:$port"
+    echo "  export HTTP_PROXY=http://$userid:'$passwd'@$server:$port"
+    echo "  export HTTPS_PROXY=http://$userid:'$passwd'@$server:$port"
+    echo "  export FTP_PROXY=http://$userid:'$passwd'@$server:$port"
+    echo
+    echo "chips......if Username or password contain '@', convert '@' '%40'."
+}
+main
