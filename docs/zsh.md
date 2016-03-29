@@ -139,4 +139,39 @@ echo /opt/{app,db}/{data,conf}
 ==> /opt/app/data /opt/app/conf /opt/db/data /opt/db/conf
 ```
 
-
+## Interactive method
+```
+interactive1() {
+    local variable=$1
+    local msg=$2
+    local input_word=
+    local yesno=x
+    while [[ "$input_word" == "" ]]; do
+        echo "$msg"
+        read input_word
+    done
+    eval "$variable=$input_word"
+}
+interactive2() {
+    local variable=$1
+    local msg=$2
+    local input_word=
+    local yesno=x
+    while [[ "$input_word" == "" ]]; do
+        echo "$msg"
+        read input_word
+        echo
+        while [[ ! "$yesno" =~ [yYnN]  ]]; do
+            echo "Are you ok?(y/N) input: ${input_word}"
+            read yesno
+        done
+        if [[ $yesno =~ [nN] ]]; then
+            input_word=
+            yesno=
+        else
+            break
+        fi
+    done
+    eval "$variable=$input_word"
+}
+```
