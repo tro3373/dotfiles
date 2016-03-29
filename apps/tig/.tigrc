@@ -11,6 +11,12 @@ set split-view-height = 80%
 #set diff-context = 6
 
 # ====================================
+# Diff Settings
+# ====================================
+# Mergeコミットの場合、merge diffを見れるようにする
+set diff-options = -m --first-parent
+
+# ====================================
 # Bind Settings
 # ====================================
 # Copy commit title to clipboard:
