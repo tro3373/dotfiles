@@ -174,23 +174,23 @@ endif
 if g:plug.is_installed("taglist.vim")
     " Tlistを表示
     map tl :Tlist<Enter>
-    " 次の要素
-    map <C-n> :cn<Enter>
-    " １つ前の要素
-    map <C-p> :cp<Enter>
 endif
 "=============================================
 " gtags 設定
 "=============================================
-if g:plug.is_installed("tags.vim")
+if g:plug.is_installed("gtags.vim")
     " カーソル位置の単語を Gtags で検索
     map <C-]> :GtagsCursor<Enter>
     " 要素名を指定して Gtags で検索
-    map <C-t> :Gtags -f %<Enter>
+    map <C-[> :Gtags -f %<Enter>
     " Gtagsのタグファイルを作成
     map <C-g> :Gtags
     " Gtagsで山椒検索
     map <C-@> :Gtags -r
+    " 次の要素
+    map <C-n> :cn<Enter>
+    " １つ前の要素
+    map <C-p> :cp<Enter>
 endif
 
 

@@ -43,8 +43,10 @@ if g:plug.is_installed("vim-indent-guides")
     let g:indent_guides_start_level=2
     let g:indent_guides_guide_size=1
     let g:indent_guides_auto_colors=0
-    autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd   ctermbg=black
-    autocmd VimEnter,Colorscheme * :hi IndentGuidesEven  ctermbg=darkgrey
+    " autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd   ctermbg=black
+    " autocmd VimEnter,Colorscheme * :hi IndentGuidesEven  ctermbg=darkgrey
+    autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd   ctermbg=234
+    autocmd VimEnter,Colorscheme * :hi IndentGuidesEven  ctermbg=236
 endif
 
 
@@ -79,9 +81,9 @@ if 0 && g:plug.is_installed("vim-colors-solarized")
     colorscheme solarized
 elseif g:plug.is_installed("vim-tomorrow-theme")
     " ==> TomorrowNight
-    colorscheme Tomorrow
-    colorscheme Tomorrow-Night-Bright
-    colorscheme Tomorrow-Night-Eighties
+    " colorscheme Tomorrow
+    " colorscheme Tomorrow-Night-Bright
+    " colorscheme Tomorrow-Night-Eighties
     colorscheme Tomorrow-Night
 elseif g:plug.is_installed("molokai")
     " ==> Molokai

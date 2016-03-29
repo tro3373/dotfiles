@@ -5,4 +5,6 @@
 
 " カレントディレクトリを開発環境に向ける
 map s1 :cd $HOME/works/<Enter>:e .<ENTER>
+" tab mode 入力の場合はここを有効にする
+" set noexpandtab
 
