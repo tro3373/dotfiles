@@ -101,3 +101,14 @@ function ssh() {
     tmux rename-window $window_name
 }
 
+## --------------------------------------------------------
+## gtags (Pygments)
+## --------------------------------------------------------
+#if type pip > /dev/null 2>&1; then
+#    if pip list | grep Pygments > /dev/null 2>&1; then
+#        # System has Pygments.
+#        # Which plugin parser in use? => type 'gtags --debug'.
+#        export GTAGSLABEL=pygments
+#    fi
+#fi
+
