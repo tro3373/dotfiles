@@ -31,7 +31,7 @@ set pumheight=10
 highlight ZenkakuSpace cterm=underline ctermfg=lightmagenta guibg=lightmagenta
 match ZenkakuSpace /　/
 " TAB文字/行末の半角スペースを表示する
-set lcs=tab:>\ ,trail:_,extends:\
+set lcs=tab:^\ ,trail:_,extends:\
 set list
 highlight SpecialKey cterm=NONE ctermfg=cyan guifg=cyan
 
