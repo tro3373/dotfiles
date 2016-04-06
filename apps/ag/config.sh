@@ -15,11 +15,10 @@ install() {
         dvexec make install
     elif [ "$DETECT_OS" = "msys" ]; then
         # 必要パッケージインストール
-        # dvexec "$instcmd base-devel mingw-w64-{i686,x86_64}-gcc mingw-w64-{i686,x86_64}-pcre mingw-w64-{i686,x86_64}-xz"
-        # clone_src_cd
-        # dvexec ./build.sh PCRE_CFLAGS=-DPCRE_STATIC LDFLAGS=-static
-        # dvexec strip ag.exe
-        :
+        dvexec "$instcmd base-devel mingw-w64-${DETECT_BIT}-gcc mingw-w64-${DETECT_BIT}-pcre mingw-w64-${DETECT_BIT}-xz libpcre"
+        clone_src_cd
+        dvexec ./build.sh PCRE_CFLAGS=-DPCRE_STATIC LDFLAGS=-static
+        dvexec strip ag.exe
         # だめならこれを試すべし
         # http://proglab.blog.fc2.com/blog-entry-9.html
     else
