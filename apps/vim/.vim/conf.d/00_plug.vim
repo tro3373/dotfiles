@@ -22,6 +22,7 @@ call plug#begin('$HOME/.vim/plugged')
   " カラースキーム
   Plug 'altercation/vim-colors-solarized'           " Solarized
   Plug 'chriskempson/vim-tomorrow-theme'            " tomorrow
+  Plug 'w0ng/vim-hybrid'                            " hybrid
 
   " Plug 'vim-scripts/nginx.vim'                      " Nginx Syntax
   "

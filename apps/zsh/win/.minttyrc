@@ -51,3 +51,24 @@ Cyan=138,190,183
 BoldCyan=90,162,152
 White=197,200,198
 BoldWhite=255,255,255
+
+# hybrid
+BackgroundColour=29,29,29
+ForegroundColour=197,200,198
+BoldBlack=40,42,46
+Black=55,59,65
+BoldRed=165,66,66
+Red=204,102,102
+BoldGreen=140,148,64
+Green=181,189,104
+BoldYellow=222,147,95
+Yellow=240,198,116
+BoldBlue=95,129,157
+Blue=129,162,190
+BoldMagenta=133,103,143
+Magenta=178,148,187
+Cyan=138,190,183
+BoldCyan=94,141,135
+White=197,200,198
+BoldWhite=112,120,128
+

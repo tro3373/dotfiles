@@ -79,6 +79,10 @@ if 0 && g:plug.is_installed("vim-colors-solarized")
     let g:solarized_termtrans=1
     set background=dark
     colorscheme solarized
+elseif 1 && g:plug.is_installed("vim-hybrid")
+    " ==> hybrid
+    set background=dark
+    colorscheme hybrid
 elseif g:plug.is_installed("vim-tomorrow-theme")
     " ==> TomorrowNight
     " colorscheme Tomorrow

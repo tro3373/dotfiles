@@ -35,14 +35,9 @@ nnoremap S *zz
 nnoremap * *zz
 nnoremap g* g*zz
 nnoremap g# g#zz
-" <Space>h で先頭、<Space>l で行末へ
-noremap <Space>h  ^
-noremap <Space>l  $
 " Goto file under cursor
 noremap gf gF
 noremap gF gf
-" インサートモードでのESCエイリアスをjjに割り当て
-inoremap <silent> jj <ESC>
 " 数字のインクリメント、デクリメントへのマッピング
 nnoremap + <C-a>
 nnoremap - <C-x>
@@ -58,52 +53,6 @@ vnoremap * "zy:let @/ = @z<CR>nzz
 nnoremap <silent> ciy ciw<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 nnoremap <silent> cy   ce<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 vnoremap <silent> cy   c<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
-
-
-" tabでインデント、Shift+tabでアンインデント
-" <Tab> mapping で Ctrl + I が聞かなくなる為無効化
-" inoremap <S-Tab> <C-O><LT><LT>
-" nnoremap <Tab> >>
-" nnoremap <S-Tab> <LT><LT>
-" vnoremap <Tab> >
-" vnoremap <S-Tab> <LT>
-
-"" 現在行をコメント化 (/* */)
-"map qq 0i/* <ESC>$a */<ESC>
-"" 現在行をコメント化
-"map s/ 0i// <ESC>
-map s# 0i# <ESC>
-vmap # <c-V>0I#<esc>
-"vmap C :s/^#//<cr>
-"vmap // <C-V>0I//<Esc>
-"vmap c :s/^\/\///<CR>:noh<cr>K
-
-" ハードタブ非表示
-map sx :set lcs=tab:>\ ,trail:_,extends:\<Enter>
-" ハードタブ表示
-map sz :set lcs=tab:>.,trail:_,extends:\<Enter>
-" 開いているファイルのディレクトリをリスティング
-map sd :e %:h<Enter>
-map qd :e %:h<Enter>
-" 開いているファイルのディレクトリをカレントにする
-map s\ :cd %:h<Enter><Enter>
-" バックアップディレクトリを開く
-map s0 :tabe $HOME/.vim/backup<ENTER>
-
-
-
-" エンコード指定の再読み込みメニューの表示
-map q9 <ALT-F>ere
-"" 新規タブを開く
-"map qt :tabnew<ENTER>
-"" 次のタブ
-"map <C-TAB> :tabn<Enter>
-
-
-" make実行
-map qm :!make<Enter>
-" 開いているファイルで JavascriptLint を実行
-" map qj :! C:\Users\hogeuser\DOC\tools\jsl-0.3.0\jsl -process %<ENTER>
 
 
 " 開いているファイルのディレクトリをエクスプローラで開く
@@ -160,6 +109,26 @@ nnoremap sp gT
 nnoremap sq :<C-u>q<CR>
 nnoremap sQ :<C-u>bd<CR>
 
+"" 現在行をコメント化
+map s# 0i# <ESC>
+vmap # <c-V>0I#<esc>
+" ハードタブ非表示
+map sx :set lcs=tab:>\ ,trail:_,extends:\<Enter>
+" ハードタブ表示
+map sz :set lcs=tab:>.,trail:_,extends:\<Enter>
+" 開いているファイルのディレクトリをリスティング
+map sd :e %:h<Enter>
+" 開いているファイルのディレクトリをカレントにする
+map s\ :cd %:h<Enter><Enter>
+" バックアップディレクトリを開く
+map s0 :tabe $HOME/.vim/backup<ENTER>
+" " エンコード指定の再読み込みメニューの表示
+" map s9 <ALT-F>ere
+" " make実行
+" map sm :!make<Enter>
+" 開いているファイルで JavascriptLint を実行
+" map sj :! C:\Users\hogeuser\DOC\tools\jsl-0.3.0\jsl -process %<ENTER>
+
 
 "=============================================
 " unite-outline 設定
@@ -168,31 +137,6 @@ if g:plug.is_installed("unite-outline")
     let g:unite_split_rule = 'botright'
     noremap ,u <ESC>:Unite -vertical -winwidth=40 outline<Return>
 endif
-"=============================================
-" taglist 設定
-"=============================================
-if g:plug.is_installed("taglist.vim")
-    " Tlistを表示
-    map tl :Tlist<Enter>
-endif
-"=============================================
-" gtags 設定
-"=============================================
-if g:plug.is_installed("gtags.vim")
-    " カーソル位置の単語を Gtags で検索
-    map <C-]> :GtagsCursor<Enter>
-    " 要素名を指定して Gtags で検索
-    map <C-[> :Gtags -f %<Enter>
-    " Gtagsのタグファイルを作成
-    map <C-g> :Gtags
-    " Gtagsで山椒検索
-    map <C-@> :Gtags -r
-    " 次の要素
-    map <C-n> :cn<Enter>
-    " １つ前の要素
-    map <C-p> :cp<Enter>
-endif
-
 
 "=============================================
 " Unite 設定
@@ -248,11 +192,11 @@ endfunction
 " unite-grepのキーマップ
 " grep検索
 " ディレクトリを指定して ag 検索
-nnoremap <silent> ,dg :<C-u>Unite grep -direction=botright -auto-resize -buffer-name=search-buffer<CR>
+nnoremap <silent> ,g :<C-u>Unite grep -direction=botright -auto-resize -buffer-name=search-buffer<CR>
 " カーソル位置の単語を ag 検索
-nnoremap <silent> ,g :<C-u>Unite grep:. -direction=botright -auto-resize -buffer-name=search-buffer<CR><C-R><C-W><CR>
+nnoremap <silent> ,j :<C-u>Unite grep:. -direction=botright -auto-resize -buffer-name=search-buffer<CR><C-R><C-W><CR>
 " ビジュアルモードでは、選択した文字列をunite-grep
-vnoremap <silent> ,g y:Unite grep:.:-iRn:<C-R>=escape(@", '\\.*$^[]')<CR><CR>
+vnoremap <silent> ,j y:Unite grep:.:-iRn:<C-R>=escape(@", '\\.*$^[]')<CR><CR>
 " grep検索結果の再呼出
 nnoremap <silent> ,r :<C-u>UniteResume search-buffer -direction=botright -auto-resize<CR>
 " 大文字小文字を区別しない
@@ -268,17 +212,46 @@ if executable('ag')
   " let g:unite_source_grep_max_candidates = 200
 endif
 
-
-" FZF 起動
+"=============================================
+" FZF 設定
+"=============================================
 " option に関しては、以下が詳しい
 "   https://github.com/junegunn/fzf/wiki
 "   http://koturn.hatenablog.com/entry/2015/11/26/000000
-nnoremap <Space>o :FZF .<CR>
-nnoremap <Space>f :FZF -q <C-R><C-W>
-vnoremap <Space>f y:FZF -q <C-R>"
-" Ag 起動
+nnoremap <Space>l :FZF .<CR>
+nnoremap <Space>j :FZF -q <C-R><C-W>
+vnoremap <Space>j y:FZF -q <C-R>"
+"=============================================
+" Ag 設定
+"=============================================
 nnoremap <Space>g :Ag <C-R><C-W>
 vnoremap <Space>g y:Ag <C-R>"
+
+"=============================================
+" gtags 設定
+"=============================================
+if g:plug.is_installed("gtags.vim")
+    " カーソル位置の単語を Gtags で検索
+    nnoremap <C-j> :GtagsCursor<Enter>
+    " 関数一覧
+    nnoremap <C-l> :Gtags -f %<Enter>
+    " Grep
+    nnoremap <C-g> :Gtags -g
+    " 使用箇所検索
+    nnoremap <C-h> :Gtags -r
+    " 次の要素
+    nnoremap <C-n> :cn<Enter>
+    " １つ前の要素
+    nnoremap <C-p> :cp<Enter>
+endif
+
+"=============================================
+" taglist 設定
+"=============================================
+if g:plug.is_installed("taglist.vim")
+    " Tlistを表示
+    map tl :Tlist<Enter>
+endif
 
 "=============================================
 " NERDTree 設定
