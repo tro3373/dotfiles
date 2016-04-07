@@ -31,6 +31,18 @@ main() {
     echo "  export HTTPS_PROXY=http://$userid:'$passwd'@$server:$port"
     echo "  export FTP_PROXY=http://$userid:'$passwd'@$server:$port"
     echo
+    echo "==> Write in .wgetrc bellow."
+    echo
+    echo "  echo \"http_proxy=http://${server}:${port}/\" >> ~/.wgetrc"
+    echo "  echo \"proxy_user=${userid}\" >> ~/.wgetrc"
+    echo "  echo \"proxy_password='${passwd}'\" >> ~/.wgetrc"
+    echo
+    echo "==> Write in .curlrc bellow."
+    echo
+    echo "  echo \"proxy-user = \\\"${userid}:${passwd}\\\"\" >> ~/.curlrc"
+    echo "  echo \"proxy = \\\"http://${server}:${port}/\\\"\" >> ~/.curlrc"
+
+    echo
     echo "chips......if Username or password contain '@', convert '@' '%40'."
 }
 main
