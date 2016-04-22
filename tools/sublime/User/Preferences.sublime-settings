@@ -19,7 +19,6 @@
 	"highlight_modified_tabs": false,
 	"ignored_packages":
 	[
-		"IMESupport"
 	],
 	"overlay_scroll_bars": "disabled",
 	"remember_open_files": false,

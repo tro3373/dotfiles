@@ -47,6 +47,7 @@ if [ ! -e ~/Desktop ]; then
     env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
 fi
 # visudo エディタをvimに設定
+sudo apt-get install vim
 sudo update-alternatives --config editor
 
 # Unity Tweak Tool
@@ -54,7 +55,9 @@ sudo apt-get install -y unity-tweak-tool
 # Numix Icon theme
 sudo apt-add-repository -y ppa:numix/ppa
 sudo apt-get update
-sudo apt-get install -y numix-gtk-theme numix-icon-theme numix-wallpaper-saucy numix-icon-theme-circle
+# support For ubuntu 16.04
+#sudo apt-get install -y numix-gtk-theme numix-icon-theme numix-wallpaper-saucy numix-icon-theme-circle
+sudo apt-get install -y numix-gtk-theme numix-icon-theme numix-icon-theme-circle
 
 # Guake install
 #sudo apt-get install -y guake
@@ -65,28 +68,40 @@ sudo apt-get install -y numix-gtk-theme numix-icon-theme numix-wallpaper-saucy n
 #sudo apt-get install -y y-ppa-manager
 
 # Chrome install
-wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-sudo sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-sudo apt-get update
-sudo apt-get install -y google-chrome-stable
+if [[ ! type google-chrome-stable > /dev/null 2>&1 ]]; then
+    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+    sudo sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+    sudo apt-get update
+    sudo apt-get install -y google-chrome-stable
+fi
 
 # sublime install
-sudo add-apt-repository -y ppa:webupd8team/sublime-text-3
-sudo apt-get update
-sudo apt-get install -y sublime-text-installer ibus-mozc emacs-mozc
+if [[ ! type subl > /dev/null 2>&1 ]]; then
+    sudo add-apt-repository -y ppa:webupd8team/sublime-text-3
+    sudo apt-get update
+    sudo apt-get install -y sublime-text-installer ibus-mozc emacs-mozc
+    cd ./sublime
+    ./setup.sh
+    cd -
+fi
 
 # atom install
-sudo add-apt-repository -y ppa:webupd8team/atom
-sudo apt-get update
-sudo apt-get install -y atom
-
-#npm stars --install
+if [[ ! type apm > /dev/null 2>&1 ]]; then
+    sudo add-apt-repository -y ppa:webupd8team/atom
+    sudo apt-get update
+    sudo apt-get install -y atom
+    cd ./atom
+    ./setup.sh
+    ./atom/install_from_package_list.sh
+    cd -
+fi
 
 # geany install
 geany_install() {
-    sudo add-apt-repository -y ppa:geany-dev/ppa
-    sudo apt-get update
-    sudo apt-get upgrade
+    # support For ubuntu 16.04
+    # sudo add-apt-repository -y ppa:geany-dev/ppa
+    # sudo apt-get update
+    # sudo apt-get upgrade
     sudo apt-get install -y geany
     if [ "" = "false" ]; then
         geanyconfdir=$HOME/.config/geany
@@ -112,4 +127,7 @@ geany_install() {
         echo "selection=0x000;0x33B5E5;false;true"
     fi
 }
-geany_install
+if [[ ! type geany > /dev/null 2>&1 ]]; then
+    geany_install
+fi
+

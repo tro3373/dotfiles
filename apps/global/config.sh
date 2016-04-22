@@ -4,7 +4,7 @@ install() {
     if [ "$DETECT_OS" = "mac" ]; then
         dvexec brew install global --with-exuberant-ctags --with-pygments
     elif [ "$DETECT_OS" = "ubuntu" ]; then
-        dvexec "$instcmd python-pip exuberant-ctags"
+        dvexec "$instcmd python-pip exuberant-ctags ncurses-dev"
         dvexec sudo pip install Pygments
         download_global_src_and_build
         dvexec cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc

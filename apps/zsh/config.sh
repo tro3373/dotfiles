@@ -25,6 +25,7 @@ setconfig() {
     if [ ! -e "$workdir/tomorrow-theme" ]; then
         dvexec "cd \"$workdir\""
         dvexec git clone https://github.com/chriskempson/tomorrow-theme.git
+        dvexec ./tomorrow-theme/Gnome-Terminal/setup-theme.sh
     fi
     if [ "$DETECT_OS" = "mac" ] && [ ! -e "$workdir/solarized.git" ]; then
         dvexec "cd \"$workdir\""
