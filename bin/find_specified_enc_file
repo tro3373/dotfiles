@@ -34,6 +34,7 @@ for file in `find $target_dir -name ".git" -prune -o \
         -name "*.html" -o \
         -name "*.js" -o \
         -name "*.css" -o \
+        -name "*.cgi" -o \
         -name "*.jsp" -o \
         -name "*.java" \
     \) -print`; do
