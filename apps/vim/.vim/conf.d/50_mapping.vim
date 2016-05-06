@@ -379,6 +379,6 @@ endif
 if g:plug.is_installed("previm")
     if g:plug.is_installed("open-browser.vim")
         au BufRead,BufNewFile *.md set filetype=markdown
-        let g:previm_open_cmd = 'google-chome'
+        let g:previm_open_cmd = 'google-chrome'
     endif
 endif
