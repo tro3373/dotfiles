@@ -35,6 +35,7 @@
   minimap:
     plugins:
       pigments: true
+      pigmentsDecorationsZIndex: 0
   "one-dark-ui": {}
   "vim-mode": {}
   welcome:
