@@ -6,7 +6,7 @@
 ##                         
 ##
 #
-#umask 022
+umask 0002
 #limit coredumpsize 0
 #bindkey -d
 #
