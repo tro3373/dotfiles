@@ -175,3 +175,25 @@ interactive2() {
     eval "$variable=$input_word"
 }
 ```
+
+## "@", "*" 違い
+```sh
+#!/bin/bash
+
+main() {
+    echo "count=$#"
+    echo "1=$1"
+    echo "2=$2"
+}
+main "$@"
+main "$*"
+```
+```log
+# result
+count=2
+1=a
+2=b
+count=1
+1=a b
+2=
+```
