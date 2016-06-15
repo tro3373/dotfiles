@@ -1,6 +1,9 @@
 REM !!WARNING!!
 REM   Symbolic link command is aborted when you start command prompt normal user. exec cmd as Administrator.
 
+REM bin ===========
+cmd /c mklink /D %HOMEPATH%"\bin" %HOMEPATH%"\dotfiles\tools\win\bin"
+
 REM chocolatey Setting ===========
 rem @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%systemdrive%\chocolatey\bin
 REM cinst packages.config
