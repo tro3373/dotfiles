@@ -281,8 +281,12 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
 
     if [[ $native_install -eq 1 ]]; then
         zplug "b4b4r07/enhancd",    use:enhancd.sh
-        zplug "stedolan/jq", from:gh-r, as:command \
-                on zplug "b4b4r07/emoji-cli", if:"which jq"
+        zplug "stedolan/jq", \
+            from:gh-r, \
+            as:command, \
+            rename-to:jq
+        zplug "b4b4r07/emoji-cli", \
+            on:"stedolan/jq"
         zplug "mrowa44/emojify",    as:command
         zplug "mollifier/cd-gitroot"
         zplug "zsh-users/zsh-history-substring-search"
