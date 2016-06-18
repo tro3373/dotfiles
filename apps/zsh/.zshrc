@@ -153,16 +153,16 @@ autoload     run-help-svn
 #    zplug "b4b4r07/zplug"
 #
 #    # Local loading
-#    zplug "~/.modules", from:local, nice:1, of:"*.sh"
+#    zplug "~/.modules", from:local, nice:1, use:"*.sh"
 #    zplug "~/.zsh",     from:local, nice:2
 #
 #    # Remote loading
-#    zplug "b4b4r07/zsh-gomi",   as:command, of:bin/gomi
-#    zplug "b4b4r07/http_code",  as:command, of:bin
-#    zplug "b4b4r07/enhancd",    of:enhancd.sh
+#    zplug "b4b4r07/zsh-gomi",   as:command, use:bin/gomi
+#    zplug "b4b4r07/http_code",  as:command, use:bin
+#    zplug "b4b4r07/enhancd",    use:enhancd.sh
 #    zplug "b4b4r07/emoji-cli",  if:"which jq"
 #    zplug "mrowa44/emojify",    as:command
-#    zplug "junegunn/fzf-bin",   as:command, from:gh-r, file:fzf, frozen:1
+#    zplug "junegunn/fzf-bin",   as:command, from:gh-r, rename-to:fzf, frozen:1
 #    zplug "zsh-users/zsh-completions"
 #    zplug "zsh-users/zsh-history-substring-search"
 #    zplug "zsh-users/zsh-syntax-highlighting", nice:19
@@ -242,13 +242,13 @@ autoload     run-help-svn
 # http://blog.b4b4r07.com/entry/2015/12/13/174209
 #
 #  as: コマンドかプラグインかを指定する
-#  of: source するファイルへの相対パスかパスを通すコマンドへの相対パスを指定する（glob パターンでも可）
+#  use: source するファイルへの相対パスかパスを通すコマンドへの相対パスを指定する（glob パターンでも可）
 #  from: 外部からの取得を行う
 #  at: ブランチ/タグを指定したインストールをサポートする
-#  file: リネームしたい名前（コマンド時に有用）
+#  rename-to: リネームしたい名前（コマンド時に有用）
 #  dir: インストール先のディレクトリパス
 #  if: 真のときダウンロードしたコマンド/プラグインを有効化する
-#  do: インストール後に実行するコマンド
+#  hook-build: インストール後に実行するコマンド
 #  frozen: 直接指定しないかぎりアップデートを禁止する
 #  commit: コミットを指定してインストールする ($ZPLUG_SHALLOW が真かどうかに関わらず)
 #  on: 依存関係
@@ -259,7 +259,7 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
 
     # Remote loading
     zplug "b4b4r07/zplug"
-    zplug "b4b4r07/http_code",  as:command, of:bin
+    zplug "b4b4r07/http_code",  as:command, use:bin
     zplug "zsh-users/zsh-completions"
     local target
     local native_install=1
@@ -280,27 +280,27 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     esac
 
     if [[ $native_install -eq 1 ]]; then
-        zplug "b4b4r07/enhancd",    of:enhancd.sh
+        zplug "b4b4r07/enhancd",    use:enhancd.sh
         zplug "stedolan/jq", from:gh-r, as:command \
-                | zplug "b4b4r07/emoji-cli", if:"which jq"
+                on zplug "b4b4r07/emoji-cli", if:"which jq"
         zplug "mrowa44/emojify",    as:command
         zplug "mollifier/cd-gitroot"
         zplug "zsh-users/zsh-history-substring-search"
         zplug "zsh-users/zsh-syntax-highlighting", nice:19
-        zplug "yoshikaw/ClipboardTextListener", as:command, of:clipboard_text_listener.pl
+        zplug "yoshikaw/ClipboardTextListener", as:command, use:clipboard_text_listener.pl
 
-        zplug "junegunn/fzf-bin", as:command, from:gh-r, of:"$target", file:fzf \
-            | zplug "b4b4r07/easy-oneliner"
-        zplug "b4b4r07/gomi", as:command, from:gh-r, of:"$target", file:gomi
+        zplug "junegunn/fzf-bin", as:command, from:gh-r, use:"$target", rename-to:fzf \
+                on zplug "b4b4r07/easy-oneliner"
+        zplug "b4b4r07/gomi", as:command, from:gh-r, use:"$target", rename-to:gomi
 
-        zplug "junegunn/fzf", as:command, of:bin/fzf-tmux
-        zplug "junegunn/fzf", of:"shell/*.zsh"
+        zplug "junegunn/fzf", as:command, use:bin/fzf-tmux
+        zplug "junegunn/fzf", use:"shell/*.zsh"
 
-        zplug "peco/peco", as:command, from:gh-r, of:"$target"
-        zplug "b4b4r07/dotfiles", as:command, of:bin/peco-tmux
+        zplug "peco/peco", as:command, from:gh-r, use:"$target"
+        zplug "b4b4r07/dotfiles", as:command, use:bin/peco-tmux
 
         # file name 一括置換
-        zplug "laurent22/massren", as:command, from:gh-r, at:v1.3.0, of:"$target_massren", do:"./massren --config editor vim"
+        zplug "laurent22/massren", as:command, from:gh-r, at:v1.3.0, use:"$target_massren", hook-build:"./massren --config editor vim"
     fi
 
     # Local loading
