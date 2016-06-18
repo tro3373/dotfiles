@@ -84,3 +84,5 @@ fi
 
 # セットアップ開始
 setup
+echo "Done!"
+
