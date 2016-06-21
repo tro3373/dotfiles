@@ -1,0 +1,7 @@
+#!/bin/bash
+
+main() {
+    cd ~/.zplug
+    git co 975bb95
+}
+main
