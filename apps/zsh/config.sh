@@ -36,6 +36,9 @@ setconfig() {
         dvexec git clone https://github.com/mavnn/mintty-colors-solarized.git
     fi
     if [ ! -d ~/.zplug ] && [ ! -L ~/.zplug ]; then
+        if [ "$DETECT_OS" = "ubuntu" ]; then
+            dvexec "$instcmd gawk"
+        fi
         dvexec git clone https://github.com/b4b4r07/zplug ~/.zplug
 #        dvexec source ~/.zplug/zplug
 #        dvexec zplug update --self
