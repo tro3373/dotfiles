@@ -9,11 +9,10 @@ sendmail_to=hoge@gmail.com
 sendmail_from=fuga@gmail.com
 subject="[$host][ssh] User $USER just logged in from $ip"
 body="Are you all right?
-
-date ==> $dt
-host ==> $host
-user ==> $USER
 ip   ==> $ip
+date ==> $dt
+user ==> $USER
+host ==> $host
 "
 
 cat <<EOF | $sendmail_bin -a default -t
