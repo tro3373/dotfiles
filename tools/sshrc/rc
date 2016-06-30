@@ -1,0 +1,25 @@
+ip=`echo $SSH_CONNECTION | cut -d " " -f 1`
+
+logger -t ssh-wrapper $USER login from $ip
+
+host=$(hostname)
+dt=$(date)
+sendmail_bin=/usr/bin/msmtp
+sendmail_to=hoge@gmail.com
+sendmail_from=fuga@gmail.com
+subject="[$host][ssh] User $USER just logged in from $ip"
+body="Are you all right?
+
+date ==> $dt
+host ==> $host
+user ==> $USER
+ip   ==> $ip
+"
+
+cat <<EOF | $sendmail_bin -a default -t
+To: $sendmail_to
+Subject: $subject
+From: $sendmail_from
+
+$(echo "$body")
+EOF
