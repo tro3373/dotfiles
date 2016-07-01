@@ -68,7 +68,7 @@ sudo apt-get install -y numix-gtk-theme numix-icon-theme numix-icon-theme-circle
 #sudo apt-get install -y y-ppa-manager
 
 # Chrome install
-if [[ ! type google-chrome-stable > /dev/null 2>&1 ]]; then
+if ! type google-chrome-stable > /dev/null 2>&1; then
     wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
     sudo sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
     sudo apt-get update
@@ -76,7 +76,7 @@ if [[ ! type google-chrome-stable > /dev/null 2>&1 ]]; then
 fi
 
 # sublime install
-if [[ ! type subl > /dev/null 2>&1 ]]; then
+if ! type subl > /dev/null 2>&1; then
     sudo add-apt-repository -y ppa:webupd8team/sublime-text-3
     sudo apt-get update
     sudo apt-get install -y sublime-text-installer ibus-mozc emacs-mozc
@@ -86,7 +86,7 @@ if [[ ! type subl > /dev/null 2>&1 ]]; then
 fi
 
 # atom install
-if [[ ! type apm > /dev/null 2>&1 ]]; then
+if ! type apm > /dev/null 2>&1; then
     sudo add-apt-repository -y ppa:webupd8team/atom
     sudo apt-get update
     sudo apt-get install -y atom
@@ -127,7 +127,7 @@ geany_install() {
         echo "selection=0x000;0x33B5E5;false;true"
     fi
 }
-if [[ ! type geany > /dev/null 2>&1 ]]; then
+if ! type geany > /dev/null 2>&1; then
     geany_install
 fi
 
