@@ -80,7 +80,7 @@ if ! type subl > /dev/null 2>&1; then
     sudo add-apt-repository -y ppa:webupd8team/sublime-text-3
     sudo apt-get update
     sudo apt-get install -y sublime-text-installer ibus-mozc emacs-mozc
-    cd ./sublime
+    cd $script_dir/sublime
     ./setup.sh
     cd -
 fi
@@ -90,9 +90,9 @@ if ! type apm > /dev/null 2>&1; then
     sudo add-apt-repository -y ppa:webupd8team/atom
     sudo apt-get update
     sudo apt-get install -y atom
-    cd ./atom
+    cd $script_dir/atom
     ./setup.sh
-    ./atom/install_from_package_list.sh
+    ./install_from_package_list.sh
     cd -
 fi
 
