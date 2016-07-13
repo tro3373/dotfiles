@@ -9,7 +9,13 @@ main() {
         exit 1
     fi
     nohup sh -c 'apt-get -y update && apt-get upgrade -y && apt-get dist-upgrade -y && echo && echo "Done!"' > $log_file 2>&1 &
-    echo "==>See logs"
-    echo "  tail -F $log_file"
+    echo "tail logs?(N/y)"
+    read taillog
+    if [[ "y" == "$taillog" ]]; then
+        tail -F $log_file
+    else
+        echo "==>See logs"
+        echo "  tail -F $log_file"
+    fi
 }
 main
