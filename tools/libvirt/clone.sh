@@ -20,6 +20,6 @@ main() {
             fi
         done
     done
-    sudo virt-clone --original $domain_name --name new_domain --file $images_dir/new_domain.qcow2
+    sudo virt-clone --original $domain_name --name $new_domain --file $images_dir/$new_domain.qcow2
 }
 main
