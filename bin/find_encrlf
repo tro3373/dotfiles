@@ -1,0 +1,165 @@
+#!/bin/bash
+
+## Constant values
+# 対象ディレクトリ
+target_dir=${PWD}
+# UTF-8,LFでないファイルパスを出力するかどうか
+output_invalid_file=0
+
+## Option values
+# BOM付きUTF-8をUTF-8へ変換するかどうか
+bom_remove=0
+# LF変換,BOM削除を実際に変換するかどうか
+dry_run=1
+# 0:lf, 1:crlf
+lf_crlf=0
+# verbose
+verbose=0
+
+usage() {
+cat <<EOF
+
+[Usage]
+  $(basename $0) [Option]
+
+    exec|--exec|-e)
+      execute convert utf8 lf. if not specify this option, run as dry run mode.
+    bom_remove|--bom_remove|-b)
+      change utf8(bom) to utf8
+    crlf|--crlf|win|--win|-w)
+      convert lf to crlf
+    lf|--lf|linux|--linux|-u)
+      convert crlf to lf
+        ==> !!Warning!! this option change file to utf8...
+
+EOF
+}
+
+for arg in "$@"
+do
+    case "$arg" in
+        exec|--exec|-e)
+            dry_run=0
+            ;;
+        bom_remove|--bom_remove|-b)
+            bom_remove=1
+            ;;
+        crlf|--crlf|win|--win|-w)
+            lf_crlf=1
+            ;;
+        lf|--lf|linux|--linux|-u)
+            lf_crlf=0
+            ;;
+        verbose|-v)
+            verbose=1
+            ;;
+        *)
+            usage
+            exit 0
+            ;;
+    esac
+done
+
+check() {
+    if ! type nkf >/dev/null 2>&1; then
+        echo "No nkf comman found error...." 2>&1
+        echo "Install nkf." 2>&1
+        exit 1
+    fi
+}
+
+initialize() {
+    check
+}
+
+nkf_file() {
+    local file=$1
+    # ファイルの情報（エンコード、BOM、改行コード）取得
+    local nkf_result=`nkf --guess $file`
+    printf "==> %-18s   $file\n" "$nkf_result"
+
+    # nkf --guess 結果に空白が存在する為、一旦@@@に置き換える
+    local nkf_result_escape=`echo $nkf_result |sed -e 's/ /@@@/g'`
+    # 配列へ追加
+    alltype=("${alltype[@]}" ${nkf_result_escape})
+
+    if [ $output_invalid_file -eq 1 ]; then
+        if ! echo $nkf_result |grep "UTF-8" |grep "(LF)" >/dev/null 2>&1; then
+            echo "Invalid File... ${nkf_result} ===> "$file
+        fi
+    fi
+
+    local target="(LF)"
+    local opt="u"
+    if [ $lf_crlf -eq 1 ]; then
+        target="(CRLF)"
+        opt="w"
+    fi
+    if ! echo $nkf_result |grep "$target" >/dev/null 2>&1; then
+        [ $verbose -eq 1 ] && echo "  $target Converting...===> "$file
+        # 改行コードをLF/CRLFへ変換
+        opt="-L$opt"
+        if [ $dry_run -eq 1 ]; then
+            [ $verbose -eq 1 ] && echo "  nkf $opt --overwrite $file"
+        else
+            nkf $opt --overwrite $file
+        fi
+    fi
+    if [ $bom_remove -eq 1 ]; then
+        # UTF-8,BOM付きを削除
+        if echo $nkf_result |grep "UTF-8" |grep "BOM" >/dev/null 2>&1; then
+            [ $verbose -eq 1 ] && echo "  BOM Removing... "$nkf_result" ===> "$file
+            # ファイルエンコードをUTF8へ変換
+            if [ $dry_run -eq 1 ]; then
+                [ $verbose -eq 1 ] && echo "  nkf -w --overwrite $file"
+            else
+                nkf -w --overwrite $file
+            fi
+        fi
+    fi
+}
+
+main() {
+    initialize
+    if [ $dry_run -eq 1 ]; then
+        usage
+    fi
+    set -e
+    alltype=()
+    local count=0
+    for file in `find $target_dir -name ".git" -prune -o \
+        -type f \( \
+            -name "*.MF" \
+            -o -name "*.prefs" \
+            -o -name "*.properties" \
+            -o -name "*.component" \
+            -o -name "*.xml" \
+            -o -name "*.conf" \
+            -o -name "*.jrxml" \
+            -o -name "*.html" \
+            -o -name "*.js" \
+            -o -name "*.css" \
+            -o -name "*.cgi" \
+            -o -name "*.jsp" \
+            -o -name "*.java" \
+            -o -name "*.h" \
+            -o -name "*.cpp" \
+            -o -name "cp932" \
+            -o -name "utf8" \
+        \) -print`; do
+        count=$(( count + 1 ))
+        nkf_file "$file"
+    done
+    if [ $count -eq 0 ]; then
+        echo "No file exist." 1>&2
+        exit 1
+    fi
+
+    echo
+    echo "==> Below type file existed."
+    echo ${alltype[@]} |tr ' ' '\n' |sed -e 's/@@@/ /g' |sort |uniq -c |sort -n
+    echo
+}
+
+main $*
+
