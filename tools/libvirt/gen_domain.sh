@@ -1,5 +1,5 @@
 #!/bin/bash
 
 script_dir=$(cd $(dirname $0); pwd)
-$script_dir/comm_cmd.sh $0 1
+$script_dir/comm_load_create_setting.sh
 
