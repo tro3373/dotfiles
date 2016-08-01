@@ -93,7 +93,8 @@ clone_guest() {
         dst_domain=
         dst_ip=
     done
-#    sudo virt-clone --original $src_domain --name $dst_domain --file $images_dir/$dst_domain.qcow2
+    echo "===> Cloning $dst_domain from $src_domain ..."
+    sudo virt-clone --original $src_domain --name $dst_domain --file $images_dir/$dst_domain.qcow2
 }
 
 # common proc for virt-copy-in/virt-cat
@@ -104,30 +105,38 @@ mod_comm() {
     sedcmd="$3"
     file=$(basename $path)
     dir=$(dirname $path)
+    echo "  => Exporting $path from $domain ..."
     sudo virt-cat -d $domain $path > $work_dir/$file
-    sudo sed -ie "$sedcmd" $work_dir/$file
-#    sudo virt-copy-in -d $domain $work_dir/$file $dir
+    echo "  => Converting $file ..."
+    sudo sed -r -i -e "$sedcmd" $work_dir/$file
+    echo "  => Importing $file into $domain ..."
+    sudo virt-copy-in -d $domain $work_dir/$file $dir
 }
 
 mod_hosts() {
+    echo "===> Generating hosts ..."
     # !!!WARNING!!! We assume always same host name and domain name.
     mod_comm "$dst_domain" "/etc/hosts" "s/$src_domain/$dst_domain/g"
 }
 
 mod_hostname() {
+    echo "===> Generating hostname ..."
     # !!!WARNING!!! We assume always same host name and domain name.
-    sudo sh -c "echo $dst_domain > $work_dir/hostname"
-#    sudo virt-copy-in -d $dst_domain $work_dir/hostname /etc/
+    sh -c "echo $dst_domain > $work_dir/hostname"
+    echo "  => importing hostname into $dst_domain ..."
+    sudo virt-copy-in -d $dst_domain $work_dir/hostname /etc/
 }
 
 mod_70persistent() {
+    echo "===> Generating 70-persistent-net.rules ..."
     # !!!WARNING!!! We assume always same host name and domain name.
-    src_mac=$(sudo virsh domiflist $src_domain |grep virbr0 |awk '{print $5}')
-    dst_mac=$(sudo virsh domiflist $dst_domain |grep virbr0 |awk '{print $5}')
+    src_mac=$(sudo virsh domiflist $src_domain |grep br0 |awk '{print $5}')
+    dst_mac=$(sudo virsh domiflist $dst_domain |grep br0 |awk '{print $5}')
     mod_comm "$dst_domain" "/etc/udev/rules.d/70-persistent-net.rules" "s/$src_mac/$dst_mac/g"
 }
 
 mod_network() {
+    echo "===> Generating network/interfaces ..."
     # !!!WARNING!!! We assume Ubuntu and static ip address.
     mod_comm "$dst_domain" "/etc/network/interfaces" "s/address.*/address $dst_ip/g"
 }
@@ -143,6 +152,8 @@ main() {
     initialize
     clone_guest
     mod_guest
+    echo
+    echo "Done!!!"
 }
 main
 
