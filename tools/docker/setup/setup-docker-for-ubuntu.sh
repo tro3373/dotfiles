@@ -17,10 +17,10 @@ docker --version
 sudo usermod -aG docker $USER
 
 # Install Docker Machine
-machine_version="v0.7.0"
+machine_version="v0.8.0"
 install_via_curl "https://github.com/docker/machine/releases/download/$machine_version/docker-machine_linux-amd64" docker-machine
 
 # Install Docker Compose
-compose_version="1.7.0"
+compose_version="1.8.0"
 install_via_curl "https://github.com/docker/compose/releases/download/$compose_version/docker-compose-`uname -s`-`uname -m`" docker-compose
 
