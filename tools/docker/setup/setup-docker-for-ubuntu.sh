@@ -18,7 +18,7 @@ sudo usermod -aG docker $USER
 
 # Install Docker Machine
 machine_version="v0.8.0"
-install_via_curl "https://github.com/docker/machine/releases/download/$machine_version/docker-machine_linux-amd64" docker-machine
+install_via_curl "curl -L https://github.com/docker/machine/releases/download/$machine_version/docker-machine-`uname -s`-`uname -m` > /usr/local/bin/docker-machine" docker-machine
 
 # Install Docker Compose
 compose_version="1.8.0"
