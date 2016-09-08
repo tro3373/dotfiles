@@ -34,3 +34,16 @@
   'ctrl-shift-L': 'editor:split-selections-into-lines'
 'atom-workspace, atom-workspace atom-text-editor':
   'shift-ctrl-alt-M': 'markdown-preview:toggle'
+# emulate vim ex-mode
+# https://github.com/atom/vim-mode/issues/50
+'.editor.vim-mode-plus:not(.insert-mode)':
+  ': w enter': 'core:save'
+  ': q enter': 'core:close'
+  'space c': 'editor:toggle-line-comments' # emulate tomtom/tcooment_vim
+  # 's s enter': 'pane:split-down'
+  # 's v enter': 'pane:split-right'
+  # 's t': 'atom-vim-like-tab:new' # mean 'tab create'
+  # 's p': 'atom-vim-like-tab:previous'
+  # 's n': 'atom-vim-like-tab:next'
+  # 'space t': 'atom-vim-like-tab:list'
+  # ': t a b c': 'atom-vim-like-tab:close'

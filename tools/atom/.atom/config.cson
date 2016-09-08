@@ -5,14 +5,21 @@
   core:
     disabledPackages: [
       "highlight-column"
-      "vim-mode"
       "japanese-wrap"
       "linter-shellcheck"
+      "symbols-view"
+      "vim-mode"
+      "ex-mode"
+    ]
+    themes: [
+      "atom-dark-ui"
+      "base16-tomorrow-dark-theme"
     ]
   editor:
     fontFamily: "Osaka-Mono"
     fontSize: 20
     invisibles:
+      cr: " "
       eol: " "
       space: "-"
     lineHeight: 1
@@ -38,5 +45,18 @@
       pigmentsDecorationsZIndex: 0
   "one-dark-ui": {}
   "vim-mode": {}
+  "vim-mode-plus":
+    clearHighlightSearchOnResetNormalMode: true
+    highlightSearch: true
+    ignoreCaseForSearch: true
+    ignoreCaseForSearchCurrentWord: true
+    incrementalSearch: true
+    stayOnTransformString: true
+    stayOnYank: true
+    useClipboardAsDefaultRegister: true
+    useSmartcaseForSearch: true
+    useSmartcaseForSearchCurrentWord: true
   welcome:
     showOnStartup: false
+  whitespace:
+    removeTrailingWhitespace: false
