@@ -41,11 +41,30 @@ noremap gF gf
 " 数字のインクリメント、デクリメントへのマッピング
 nnoremap + <C-a>
 nnoremap - <C-x>
-
+" 貼り付けたテキストを選択
+noremap gV `[v`]
 " Y で行末までコピー
 nnoremap Y y$
 " 改行抜きで一行クリップボードにコピー
-nnoremap <Space>y 0v$h"+y
+nnoremap <Leader>y 0v$h"+y
+" alias save
+nnoremap <Leader>w :w<CR>
+" Visual line
+nmap <Leader><Leader> V
+
+" vp doesn't replace paste buffer
+function! RestoreRegister()
+  let @" = s:restore_reg
+  let @+ = s:restore_reg
+  let @* = s:restore_reg
+  return ''
+endfunction
+function! s:Repl()
+  let s:restore_reg = @"
+  return "p@=RestoreRegister()\<cr>"
+endfunction
+vmap <silent> <expr> p <sid>Repl()
+
 
 " ビジュアルモード選択した部分を*で検索
 vnoremap * "zy:let @/ = @z<CR>nzz
@@ -53,24 +72,6 @@ vnoremap * "zy:let @/ = @z<CR>nzz
 nnoremap <silent> ciy ciw<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 nnoremap <silent> cy   ce<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 vnoremap <silent> cy   c<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
-
-
-" 開いているファイルのディレクトリをエクスプローラで開く
-if has("win32") || has("win64")
-    " Windows
-    "map qn :!nautilus %:h<ENTER>
-elseif has("win32Unix")
-    " Cygwin
-    "map qn :!nautilus %:h<ENTER>
-elseif has("macunix")
-    " Mac OS-X
-    "map qn :!nautilus %:h<ENTER>
-elseif has("unix")
-    " BSD, Linux
-    map qn :!nautilus %:h<ENTER>
-else
-    " その他
-endif
 
 
 " s prefix 設定
@@ -120,8 +121,10 @@ map sz :set lcs=tab:>.,trail:_,extends:\<Enter>
 map sd :e %:h<Enter>
 " 開いているファイルのディレクトリをカレントにする
 map s\ :cd %:h<Enter><Enter>
+" 設定ファイルディレクトリを開く
+map s0 :tabe $HOME/.vim/conf.d/50_mapping.vim<ENTER>
 " バックアップディレクトリを開く
-map s0 :tabe $HOME/.vim/backup<ENTER>
+map s9 :tabe $HOME/.vim/backup<ENTER>
 " " エンコード指定の再読み込みメニューの表示
 " map s9 <ALT-F>ere
 " " make実行
@@ -168,11 +171,71 @@ nnoremap sm :<C-u>Unite file_mru -direction=botright -auto-resize<CR>
  " 全部乗せ
 nnoremap sa :<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-name=files file_mru file buffer bookmark<CR>
 "" ブックマーク一覧
-"nnoremap <silent> <Space>c :<C-u>Unite -direction=botright -auto-resize bookmark<CR>
+"nnoremap <silent> <Leader>c :<C-u>Unite -direction=botright -auto-resize bookmark<CR>
 "" ブックマークに追加
-"nnoremap <silent> <Space>a :<C-u>UniteBookmarkAdd<CR>
+"nnoremap <silent> <Leader>a :<C-u>UniteBookmarkAdd<CR>
 " UniteBookMarkAdd で追加したディレクトリを Unite bookmark で開くときのアクションのデフォルトを Vimfiler に
 call unite#custom_default_action('source/bookmark/directory' , 'vimfiler')
+
+
+"=============================================
+" CtrlP 設定
+"=============================================
+set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.exe
+if g:plug.is_installed("ctrlp.vim")
+    nnoremap <Leader>o :CtrlP<CR>
+    nnoremap <Leader>p :CtrlP<CR>
+    " Guess vcs root dir
+    let g:ctrlp_working_path_mode = 'ra'
+    let g:ctrlp_extensions = ['funky', 'tag', 'quickfix', 'dir', 'line', 'mixed']
+    let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:18'
+    let g:ctrlp_custom_ignore = {
+      \ 'dir':  '\v[\/]\.(git|hg|svn)$',
+      \ 'file': '\v\.(exe|so|dll)$',
+      \ 'link': 'some_bad_symbolic_links',
+      \ }
+
+    if executable('ag')
+        "let g:ctrlp_clear_cache_on_exit = 0
+        let g:ctrlp_use_caching = 0
+        set grepprg=ag\ --nogroup\ --nocolor
+        let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
+    elseif g:is_windows
+        let g:ctrlp_user_command = 'dir %s /-n /b /s /a-d'  " Windows
+    else
+      let g:ctrlp_user_command = ['.git', 'cd %s && git ls-files . -co --exclude-standard', 'find %s -type f']
+      let g:ctrlp_prompt_mappings = {
+        \ 'AcceptSelection("e")': ['<Space>', '<cr>', '<2-LeftMouse>'],
+        \ }
+    endif
+
+    let g:ctrlp_funky_matchtype = 'path'
+    let g:ctrlp_funky_syntax_highlight = 1
+    nnoremap <Leader>@ :CtrlPFunky<Cr>
+    " narrow the list down with a word under cursor
+    " nnoremap <Leader>@@ :execute 'CtrlPFunky ' . expand('<cword>')<Cr>
+    if !g:is_windows
+        if g:plug.is_installed("cpsm")
+            let g:ctrlp_match_func = {'match': 'cpsm#CtrlPMatch'}
+        endif
+    endif
+endif
+
+"=============================================
+" FZF 設定
+"=============================================
+if executable('fzf')
+    if g:plug.is_installed("fzf.vim")
+        " option に関しては、以下が詳しい
+        "   https://github.com/junegunn/fzf/wiki
+        "   http://koturn.hatenablog.com/entry/2015/11/26/000000
+        nnoremap <Leader>l :FZF .<CR>
+        vnoremap <Leader>l y:FZF -q <C-R>"<CR>
+        nnoremap <Leader>j :FZF -q <C-R><C-W>
+        vnoremap <Leader>j y:FZF -q <C-R>"
+    endif
+endif
+
 
 " unite.vim上でのキーマッピング
 autocmd FileType unite call s:unite_my_settings()
@@ -187,45 +250,32 @@ endfunction
 
 
 "=============================================
-" unite-grep 設定
+" Grep 設定
 "=============================================
-" unite-grepのキーマップ
-" grep検索
-" ディレクトリを指定して ag 検索
-nnoremap <silent> ,g :<C-u>Unite grep -direction=botright -auto-resize -buffer-name=search-buffer<CR>
-" カーソル位置の単語を ag 検索
-nnoremap <silent> ,j :<C-u>Unite grep:. -direction=botright -auto-resize -buffer-name=search-buffer<CR><C-R><C-W><CR>
-" ビジュアルモードでは、選択した文字列をunite-grep
-vnoremap <silent> ,j y:Unite grep:.:-iRn:<C-R>=escape(@", '\\.*$^[]')<CR><CR>
-" grep検索結果の再呼出
-nnoremap <silent> ,r :<C-u>UniteResume search-buffer -direction=botright -auto-resize<CR>
 " 大文字小文字を区別しない
 let g:unite_enable_ignore_case = 1
 let g:unite_enable_smart_case = 1
-" unite grep に ag(The Silver Searcher) を使う
-" http://qiita.com/items/c8962f9325a5433dc50d
 if executable('ag')
-  let g:unite_source_grep_command = 'ag'
-  let g:unite_source_grep_default_opts = '--nogroup --nocolor --column --hidden'
-  " let g:unite_source_grep_default_opts = '--nogroup --nocolor --column'
-  let g:unite_source_grep_recursive_opt = ''
-  " let g:unite_source_grep_max_candidates = 200
+    let g:unite_source_grep_command = 'ag'
+    let g:unite_source_grep_default_opts = '--nogroup --nocolor --column --hidden'
+    " let g:unite_source_grep_default_opts = '--nogroup --nocolor --column'
+    let g:unite_source_grep_recursive_opt = ''
+    " let g:unite_source_grep_max_candidates = 200
+    if g:plug.is_installed("ag.vim")
+        " カーソル位置の単語を ag 検索
+        nnoremap <Leader>g :Ag <C-R><C-W><CR>
+        vnoremap <Leader>g y:Ag <C-R>"<CR>
+    endif
+else
+    " カーソル位置の単語を ag 検索
+    nnoremap <silent> <Leader>g :<C-u>Unite grep:. -direction=botright -auto-resize -buffer-name=search-buffer<CR><C-R><C-W><CR>
+    " ビジュアルモードでは、選択した文字列をunite-grep
+    vnoremap <silent> <Leader>g y:Unite grep:.:-iRn:<C-R>=escape(@", '\\.*$^[]')<CR><CR>
+    " ディレクトリを指定して ag 検索
+    nnoremap <silent> ,g :<C-u>Unite grep -direction=botright -auto-resize -buffer-name=search-buffer<CR>
+    " grep検索結果の再呼出
+    nnoremap <silent> ,r :<C-u>UniteResume search-buffer -direction=botright -auto-resize<CR>
 endif
-
-"=============================================
-" FZF 設定
-"=============================================
-" option に関しては、以下が詳しい
-"   https://github.com/junegunn/fzf/wiki
-"   http://koturn.hatenablog.com/entry/2015/11/26/000000
-nnoremap <Space>l :FZF .<CR>
-nnoremap <Space>j :FZF -q <C-R><C-W>
-vnoremap <Space>j y:FZF -q <C-R>"
-"=============================================
-" Ag 設定
-"=============================================
-nnoremap <Space>g :Ag <C-R><C-W>
-vnoremap <Space>g y:Ag <C-R>"
 
 "=============================================
 " gtags 設定
@@ -251,6 +301,15 @@ endif
 if g:plug.is_installed("taglist.vim")
     " Tlistを表示
     map tl :Tlist<Enter>
+endif
+
+"=============================================
+" Expand Region
+" visually select increasingly larger regions of text
+"=============================================
+if g:plug.is_installed("vim-expand-region")
+    vmap v <Plug>(expand_region_expand)
+    vmap <C-v> <Plug>(expand_region_shrink)
 endif
 
 "=============================================
@@ -364,8 +423,8 @@ endif
 " http://d.hatena.ne.jp/ampmmn/20080925/1222338972
 "=============================================
 if g:plug.is_installed("caw.vim")
-    nmap <Leader>c <Plug>(caw:i:toggle)
-    vmap <Leader>c <Plug>(caw:i:toggle)
+    nmap <Leader>c <Plug>(caw:hatpos:toggle)
+    vmap <Leader>c <Plug>(caw:hatpos:toggle)
 endif
 
 "=============================================
@@ -382,3 +441,59 @@ if g:plug.is_installed("previm")
         let g:previm_open_cmd = 'google-chrome'
     endif
 endif
+
+"=============================================
+" Memolist
+"=============================================
+if g:plug.is_installed('memolist.vim')
+    let g:memolist_path = "$HOME/works/memos"
+    let g:memolist_memo_suffix = "md"
+    let g:memolist_memo_date = "%Y-%m-%d %H:%M"
+    let g:memolist_memo_date = "epoch"
+    let g:memolist_memo_date = "%D %T"
+    let g:memolist_prompt_tags = 1
+    let g:memolist_prompt_categories = 1
+    let g:memolist_qfixgrep = 0
+    let g:memolist_vimfiler = 0
+    "let g:memolist_template_dir_path = "path/to/dir"
+    nmap <Leader>ml :exe "CtrlP" g:memolist_path<cr><f5>
+    nmap <Leader>mc :MemoNew<cr>
+    nmap <Leader>mg :MemoGrep<cr>
+endif
+
+
+" 開いているファイルのディレクトリをエクスプローラで開く
+if g:is_windows
+    " Windows
+    "map qn :!nautilus %:h<ENTER>
+elseif g:is_cygwin
+    " Cygwin
+    "map qn :!nautilus %:h<ENTER>
+elseif g:is_mac
+    " Mac OS-X
+    "map qn :!nautilus %:h<ENTER>
+elseif g:is_linux
+    " BSD, Linux
+    map qn :!nautilus %:h<ENTER>
+else
+    " その他
+endif
+
+
+" yank to remote
+let g:y2r_config = {
+    \   'tmp_file': '/tmp/exchange_file',
+    \   'key_file': expand('$HOME') . '/.exchange.key',
+    \   'host': 'localhost',
+    \   'port': 52224,
+    \ }
+function! Yank2Remote()
+    call writefile(split(@", '\n'), g:y2r_config.tmp_file, 'b')
+    let s:params = ['cat %s %s | nc -w1 %s %s']
+    for s:item in ['key_file', 'tmp_file', 'host', 'port']
+        let s:params += [shellescape(g:y2r_config[s:item])]
+    endfor
+    let s:ret = system(call(function('printf'), s:params))
+endfunction
+nnoremap <silent> ,y :call Yank2Remote()<CR>
+

@@ -25,7 +25,6 @@ function! CopyFileName()
   let @*=expand('%:t:r')
   call CopyComm()
 endfunction
-
 function! CopyTimestamp()
   let @*=strftime('%Y-%m-%d %H:%M:%S')
   call CopyComm()
@@ -38,7 +37,6 @@ function! CopyTime()
   let @*=strftime('%H:%M:%S')
   call CopyComm()
 endfunction
-
 command! CopyPath      call CopyPath()
 command! CopyFullPath  call CopyFullPath()
 command! CopyFileName  call CopyFileName()
@@ -46,20 +44,19 @@ command! CopyTimestamp call CopyTimestamp()
 command! CopyDate      call CopyDate()
 command! CopyTime      call CopyTime()
 
-" yank to remote
-let g:y2r_config = {
-    \   'tmp_file': '/tmp/exchange_file',
-    \   'key_file': expand('$HOME') . '/.exchange.key',
-    \   'host': 'localhost',
-    \   'port': 52224,
-    \ }
-function! Yank2Remote()
-    call writefile(split(@", '\n'), g:y2r_config.tmp_file, 'b')
-    let s:params = ['cat %s %s | nc -w1 %s %s']
-    for s:item in ['key_file', 'tmp_file', 'host', 'port']
-        let s:params += [shellescape(g:y2r_config[s:item])]
-    endfor
-    let s:ret = system(call(function('printf'), s:params))
+function! Settings()
+    :tabe $HOME/.vim/conf.d/50_mapping.vim
 endfunction
-nnoremap <silent> ,y :call Yank2Remote()<CR>
+command! Settings call Settings()
+
+function! SetTabs(...)
+    let num = 4
+    if a:0 >= 1
+        let num = a:1
+    end
+    let &tabstop=num
+    let &softtabstop=num
+    let &shiftwidth=num
+endfunction
+command! -nargs=? SetTab call SetTabs(<f-args>)
 

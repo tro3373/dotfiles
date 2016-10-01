@@ -82,12 +82,12 @@ autocmd InsertLeave * set nopaste
 
 " Ｃ言語スタイルのインデントを使用する
 set cindent
-" ファイル中の<TAB>を見た目4文字に展開する(既に存在する<TAB>の見た目の設定)
+" ファイル中の<TAB>を見た目x文字に展開する(既に存在する<TAB>の見た目の設定)
 set tabstop=4
-" インデントやシフトオペレータで挿入/削除されるインデントの幅を4文字分にする
+" TABキーを押した際に挿入される空白の量を設定
+set softtabstop=4
+" インデントやシフトオペレータで挿入/削除されるインデントの幅を設定
 set shiftwidth=4
-" TABキーを押した際に挿入される空白の量を0文字分にする
-set softtabstop=0
 " <TAB>を空白スペース文字に置き換える
 set expandtab
 " オートインデント
@@ -96,7 +96,11 @@ set autoindent
 set smartindent
 "フォーマット揃えをコメント以外有効にする
 set formatoptions-=c
-
+augroup fileTypeIndent
+    autocmd!
+    autocmd BufNewFile,BufRead *.py setlocal tabstop=4 softtabstop=4 shiftwidth=4
+    autocmd BufNewFile,BufRead *.rb setlocal tabstop=2 softtabstop=2 shiftwidth=2
+augroup END
 
 " コマンド補完機能
 " set wildmenu
