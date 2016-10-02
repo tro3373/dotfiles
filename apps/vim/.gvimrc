@@ -11,24 +11,32 @@ set lines=65 columns=150
 source $VIMRUNTIME/delmenu.vim
 set langmenu=ja_jp.utf-8
 source $VIMRUNTIME/menu.vim
+" Removes the menubar.
+" :set guioptions -=m
+" Removes the toolbar.
+:set guioptions -=T
 
 " カラーテーマ設定
-" if 1 && g:plug.is_installed("vim-colors-solarized")
-"     " ==> Solarized
-"     " let g:solarized_termcolors=256
-"     let g:solarized_termtrans=1
-"     set background=dark
-"     colorscheme solarized
-" elseif g:plug.is_installed("vim-tomorrow-theme")
-"     " ==> TomorrowNight
-"     colorscheme Tomorrow
-"     colorscheme Tomorrow-Night-Bright
-"     colorscheme Tomorrow-Night-Eighties
-"     colorscheme Tomorrow-Night
-" elseif g:plug.is_installed("molokai")
-"     " ==> Molokai
-"     colorscheme molokai
-" endif
+if 0 && g:plug.is_installed("vim-colors-solarized")
+    " ==> Solarized
+    " let g:solarized_termcolors=256
+    let g:solarized_termtrans=1
+    set background=dark
+    colorscheme solarized
+elseif 1 && g:plug.is_installed("vim-hybrid")
+    " ==> hybrid
+    set background=dark
+    colorscheme hybrid
+elseif g:plug.is_installed("vim-tomorrow-theme")
+    " ==> TomorrowNight
+    " colorscheme Tomorrow
+    " colorscheme Tomorrow-Night-Bright
+    " colorscheme Tomorrow-Night-Eighties
+    colorscheme Tomorrow-Night
+elseif g:plug.is_installed("molokai")
+    " ==> Molokai
+    colorscheme molokai
+endif
 
 " 使用するフォントと大きさ
 if (has("win64") || has("win32"))
