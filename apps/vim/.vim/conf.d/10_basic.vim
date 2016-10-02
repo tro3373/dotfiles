@@ -113,4 +113,7 @@ if g:plug.is_installed("vim-smartinput")
     call smartinput_endwise#define_default_rules()
 endif
 
-
+" ctags 設定
+" set tags+=./tags;
+" set tags=./tags,./TAGS,tags,TAGS " original?
+set tags=.git/tags;./tags;

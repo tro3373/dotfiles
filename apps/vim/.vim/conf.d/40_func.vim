@@ -60,3 +60,39 @@ function! SetTabs(...)
 endfunction
 command! -nargs=? SetTab call SetTabs(<f-args>)
 
+
+function! GetGitRoot() abort
+    try
+        let l:isgitrepo = matchstr(system("cd " . expand('%:p:h') . "; git rev-parse --is-inside-work-tree"), "true")
+        if l:isgitrepo == "true"
+            let l:gitroot = system("cd " . expand('%:p:h') . "; git rev-parse --show-toplevel")
+            return substitute(l:gitroot, '\(\r\|\n\)\+', '', 'g')
+        else
+            return "."
+        endif
+    catch
+    endtry
+endfunction
+
+function! Ctags() abort
+    if !executable('git')
+        echo "No git"
+        return
+    endif
+    if !executable('ctags')
+        echo "No ctags"
+        return
+    endif
+    let l:gitroot = GetGitRoot()
+    if g:is_windows
+        let l:ctags = "ctags"
+    else
+        let l:ctags = substitute(system("which ctags"), '\(\r\|\n\)\+', '', 'g')
+    endif
+    let l:tags = l:gitroot . "/.git/tags"
+    let l:execmd = l:ctags . " -R -f " . l:gitroot . "/.git/tags " . l:gitroot
+    execute system(l:execmd)
+    echo "Tags file Created to " . l:gitroot . "/.git/tags ."
+endfunction
+command! Ctags call Ctags()
+

@@ -122,9 +122,9 @@ map sd :e %:h<Enter>
 " 開いているファイルのディレクトリをカレントにする
 map s\ :cd %:h<Enter><Enter>
 " 設定ファイルディレクトリを開く
-map s0 :tabe $HOME/.vim/conf.d/50_mapping.vim<ENTER>
+nmap <Leader>0 :tabe $HOME/.vim/conf.d/50_mapping.vim<ENTER>
 " バックアップディレクトリを開く
-map s9 :tabe $HOME/.vim/backup<ENTER>
+nmap <Leader>9 :tabe $HOME/.vim/backup<ENTER>
 " " エンコード指定の再読み込みメニューの表示
 " map s9 <ALT-F>ere
 " " make実行
@@ -183,8 +183,11 @@ call unite#custom_default_action('source/bookmark/directory' , 'vimfiler')
 "=============================================
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.exe
 if g:plug.is_installed("ctrlp.vim")
-    nnoremap <Leader>o :CtrlP<CR>
     nnoremap <Leader>p :CtrlP<CR>
+    map <Leader>o <C-P><C-\>w
+    map <F3> <C-P><C-\>w
+    nnoremap st <Nop>
+    nnoremap st :<C-u>tabnew<CR>:CtrlP<CR>
     " Guess vcs root dir
     let g:ctrlp_working_path_mode = 'ra'
     let g:ctrlp_extensions = ['funky', 'tag', 'quickfix', 'dir', 'line', 'mixed']
@@ -276,6 +279,12 @@ else
     " grep検索結果の再呼出
     nnoremap <silent> ,r :<C-u>UniteResume search-buffer -direction=botright -auto-resize<CR>
 endif
+
+"=============================================
+" ctags 設定
+"=============================================
+map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
+map <Leader><C-\> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>
 
 "=============================================
 " gtags 設定
@@ -456,7 +465,7 @@ if g:plug.is_installed('memolist.vim')
     let g:memolist_qfixgrep = 0
     let g:memolist_vimfiler = 0
     "let g:memolist_template_dir_path = "path/to/dir"
-    nmap <Leader>ml :exe "CtrlP" g:memolist_path<cr><f5>
+    nmap <Leader>mm :exe "CtrlP" g:memolist_path<cr><f5>
     nmap <Leader>mc :MemoNew<cr>
     nmap <Leader>mg :MemoGrep<cr>
 endif
