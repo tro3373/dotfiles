@@ -1,4 +1,4 @@
-rem @echo off
+@echo off
 set JOBPRM=%*
 rem !!WARNING!!
 rem   Symbolic link command is aborted when you start command prompt normal user. exec cmd as Administrator.
@@ -6,6 +6,22 @@ rem   Symbolic link command is aborted when you start command prompt normal user
 :main
     call :init
     call :logic
+    call :nomalend
+exit /b 0
+
+:logic
+    call :logs **************************************
+    call :logs * Start
+    call :logs **************************************
+    set SUBFNK_NM=Main[%0]
+    call :makedirs
+rem    call :chocolatey
+    call :sakura
+    call :sublime3
+    call :atom
+    call :git
+    call :bash
+    call :vim
 exit /b 0
 
 :init
@@ -21,7 +37,7 @@ exit /b 0
     set BKUPMAX=8
     set BKUPROOTDIR=%DIR_JOB%\bkup
     set BKUPDIR=%BKUPROOTDIR%\%DT%-%TM%
-    mkdir %BKUPDIR%
+    md %BKUPDIR%
     set DIR_LOG=%BKUPDIR%
     set BKUPFLNM=database_name.dmp
     set LOG=%DIR_LOG%\%JOBNM%.%DT%.%TM%.log
@@ -31,20 +47,14 @@ rem    set DIR_EXST=D:\EXST
     set index=0
 exit /b 0
 
-:logic
-    call :logs **************************************
-    call :logs * Start
-    call :logs **************************************
-    set SUBFNK_NM=Main[%0]
-    call :makebin
-rem    call :chocolatey
-    call :sakura
-rem    call :sublime3
-rem    call :atom
-rem    call :git
-rem    call :bash
-rem    call :vim
-    call :nomalend
+rem *******************************************************
+rem Output Logs
+rem *******************************************************
+:logs
+    SET DTLOG=%date:/=%
+    SET TMLOG=%time::=%
+    echo %DTLOG% %TMLOG% %JOBNM% %*
+    echo %DTLOG% %TMLOG% %JOBNM% %*>>%LOG%
 exit /b 0
 
 rem *******************************************************
@@ -54,8 +64,8 @@ rem *******************************************************
     set TMPCMD=%*
     call :logs execute_cmd=[%TMPCMD%]
     %TMPCMD%>>%LOG% 2>&1
-    if not "%errorlovel%" == "0" (
-        call :logs abort [%TMPCMD%] return code="%errorlovel%"
+    if not "%errorlevel%" == "0" (
+        call :logs abort [%TMPCMD%] return code="%errorlevel%"
         call :abnomalend 1
     )
 exit /b 0
@@ -70,24 +80,14 @@ rem *******************************************************
 exit /b 0
 
 rem *******************************************************
-rem Output Logs
-rem *******************************************************
-:logs
-    SET DTLOG=%date:/=%
-    SET TMLOG=%time::=%
-    echo %DTLOG% %TMLOG% %JOBNM% %*
-    echo %DTLOG% %TMLOG% %JOBNM% %*>>%LOG%
-exit /b 0
-
-rem *******************************************************
 rem Normal End
 rem *******************************************************
 :nomalend
     call :logs **************************************
     call :logs * Done
     call :logs **************************************
+    set /P read="Press Key..."
 exit 0
-
 
 rem *******************************************************
 rem Abnormal End
@@ -97,58 +97,64 @@ rem *******************************************************
     call :logs * Abort
     call :logs **************************************
     call :logs aborte_func=[%SUBFNK_NM%]
+    set /P read="Press Key..."
     set RC=%1
 exit %1
+
+rem 1:target_dir
+:mkdir_ifnotexist
+    call :logs "[mkdir_ifnotexist] %*"
+    if not exist %1 (
+        call :exccmd md %1
+    )
+exit /b 0
 
 rem 1:rinkto_parent
 rem 2:rinkto_file
 rem 3:rinkfrom_file
 rem 4:0:file,1:dir
 :backuppable_link
-    call :logs "%1 %2 %3 %4"
-    call :forceexccmd md "%1"
-    if exist "%1\%2" (
-        call :exccmd move "%1\%2" "%BKUPDIR%"
+    call :logs "[backuppable_link] %*"
+    call :mkdir_ifnotexist %1
+    if exist %1\%2 (
+        call :exccmd move %1\%2 %BKUPDIR%
     )
     if "%4" == "0" (
         rem file
-        call :exccmd mklink "%1\%2" "%3"
+        call :exccmd mklink %1\%2 %3
     ) else (
         rem dir
-        call :exccmd mklink /D "%1\%2" "%3"
+        call :exccmd mklink /D %1\%2 %3
     )
 exit /b 0
 
-:makebin
-    rem bin ===========
-    if not exist %HOMEPATH%"\bin" (
-        call :exccmd mkdir %HOMEPATH%"\bin"
-    )
+:makedirs
+    set SUBFNK_NM=makedirs
+    call :mkdir_ifnotexist "%HOMEPATH%\bin"
     if not exist %HOMEPATH%"\bin\ln.bat" (
         call :exccmd mklink %HOMEPATH%"\bin\ln.bat" %HOMEPATH%"\dotfiles\tools\win\bin\ln.bat"
     )
+    if not exist %HOMEPATH%"\bin\gvim.bat" (
+        call :exccmd mklink %HOMEPATH%"\bin\gvim.bat" %HOMEPATH%"\dotfiles\tools\win\bin\gvim.bat"
+    )
+    call :mkdir_ifnotexist "%HOMEPATH%\tools"
+    call :mkdir_ifnotexist "%HOMEPATH%\works"
 exit /b 0
 
 :chocolatey
+    set SUBFNK_NM=chocolatey
     call :exccmd @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%systemdrive%\chocolatey\bin
     call :exccmd cinst packages.config
 exit /b 0
 
 :sakura
-    call :logs "sakura"
+    set SUBFNK_NM=sakura
     call :backuppable_link "%HOMEPATH%\AppData\Roaming\sakura" "sakura.ini" "%HOMEPATH%\dotfiles\tools\win\sakura\sakura.ini" 0
-rem    cmd /c md %HOMEPATH%"\AppData\Roaming\sakura"
-rem    if exist %HOMEPATH%"\AppData\Roaming\sakura\sakura.ini" (
-rem        cmd /c del %HOMEPATH%"\AppData\Roaming\sakura\sakura.ini.bak"
-rem        cmd /c ren %HOMEPATH%"\AppData\Roaming\sakura\sakura.ini" sakura.ini.bak
-rem    )
-rem    cmd /c mklink %HOMEPATH%"\AppData\Roaming\sakura\sakura.ini" %HOMEPATH%"\dotfiles\tools\win\sakura\sakura.ini"
 exit /b 0
 
 :sublime3
+    set SUBFNK_NM=sublime3
     call :backuppable_link "%HOMEPATH%\AppData\Roaming\Sublime Text 3\Packages" "User" "%HOMEPATH%\dotfiles\tools\sublime\User" 1
-rem    rmdir -recurse %HOMEPATH%"\AppData\Roaming\Sublime Text 3\Packages\User"
-rem    cmd /c mklink /D %HOMEPATH%"\AppData\Roaming\Sublime Text 3\Packages\User" %HOMEPATH%"\dotfiles\tools\sublime\User"
     rem ---------------------------------
     rem And Do Below.
     rem 1. Start Sublime Text3
@@ -158,11 +164,12 @@ rem    cmd /c mklink /D %HOMEPATH%"\AppData\Roaming\Sublime Text 3\Packages\User
 exit /b 0
 
 :atom
-    call :backuppable_link "%HOMEPATH%" ".atom" "%HOMEPATH%\dotfiles\tools\arom\.arom" 1
-rem    cmd /c mklink /D %HOMEPATH%"\.atom" %HOMEPATH%"\dotfiles\tools\atom\.atom"
+    set SUBFNK_NM=atom
+    call :backuppable_link "%HOMEPATH%" ".atom" "%HOMEPATH%\dotfiles\tools\atom\.atom" 1
 exit /b 0
 
 :git
+    set SUBFNK_NM=git
     rem git config --global user.name sample_username
     rem git config --global user.email sample_email@domain.com
     git config --global core.editor "vim -c 'set fenc=utf-8'"
@@ -186,19 +193,18 @@ exit /b 0
 
 :bash
     call :backuppable_link "%HOMEPATH%" ".bashrc" "%HOMEPATH%\dotfiles\tools\win\.bashrc" 0
-rem    cmd /c mklink %HOMEPATH%"\.bashrc" %HOMEPATH%"\dotfiles\tools\win\.bashrc"
 exit /b 0
 
 :vim
     call :backuppable_link "%HOMEPATH%" "_gvimrc" "%HOMEPATH%\dotfiles\apps\vim\.gvimrc" 0
     call :backuppable_link "%HOMEPATH%" "_vimrc" "%HOMEPATH%\dotfiles\apps\vim\.vimrc" 0
     call :backuppable_link "%HOMEPATH%" ".vim" "%HOMEPATH%\dotfiles\apps\vim\.vim" 1
-    call :execute md "%HOMEPATH%/.vim/plugged/vim-plug"
-    call :execute git clone https://github.com/junegunn/vim-plug.git "%HOMEPATH%/.vim/plugged/vim-plug/autoload"
-rem    cmd /c mklink %HOMEPATH%"\_gvimrc" %HOMEPATH%"\dotfiles\apps\vim\.gvimrc"
-rem    cmd /c mklink %HOMEPATH%"\_vimrc" %HOMEPATH%"\dotfiles\apps\vim\.vimrc"
-rem    cmd /c mklink /D %HOMEPATH%"\.vim" %HOMEPATH%"\dotfiles\apps\vim\.vim"
-rem    mkdir -p $HOME/vimfiles/plugged/vim-plug
-rem    git clone https://github.com/junegunn/vim-plug.git ~/vimfiles/plugged/vim-plug/autoload
+
+    if not exist "%HOMEPATH%/.vim/plugged/vim-plug" (
+        call :exccmd md "%HOMEPATH%/.vim/plugged/vim-plug"
+    )
+    if not exist "%HOMEPATH%/.vim/plugged/vim-plug/autoload" (
+        call :exccmd git clone https://github.com/junegunn/vim-plug.git "%HOMEPATH%/.vim/plugged/vim-plug/autoload"
+    )
 exit /b 0
 

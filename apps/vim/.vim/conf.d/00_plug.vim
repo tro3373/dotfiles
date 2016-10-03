@@ -76,9 +76,11 @@ call plug#begin('$HOME/.vim/plugged')
     \ 'on':  ['NERDTreeToggle'] }                   " NERDTree tree view コマンド実行時に読み込む
 
   Plug 'rking/ag.vim'                               " SilverSearcher
-  Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
-    \ 'do': './install --all' }                     " FZF
-  Plug 'junegunn/fzf.vim'
+  if !g:is_windows
+      Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
+        \ 'do': './install --all' }                     " FZF
+      Plug 'junegunn/fzf.vim'
+  endif
 
   " Unite関連
   Plug 'Shougo/unite.vim'                           " ユーザインタフェース統合

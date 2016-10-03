@@ -198,13 +198,18 @@ if g:plug.is_installed("ctrlp.vim")
       \ 'link': 'some_bad_symbolic_links',
       \ }
 
-    if executable('ag')
+    if g:is_windows
+        if executable('ag')
+            "let g:ctrlp_user_command = 'ag %s -l -Q --nocolor -g ""'
+            let g:ctrlp_user_command = 'dir %s /-n /b /s /a-d'  " Windows
+        else
+            let g:ctrlp_user_command = 'dir %s /-n /b /s /a-d'  " Windows
+        endif
+    elseif executable('ag')
         "let g:ctrlp_clear_cache_on_exit = 0
         let g:ctrlp_use_caching = 0
         set grepprg=ag\ --nogroup\ --nocolor
         let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
-    elseif g:is_windows
-        let g:ctrlp_user_command = 'dir %s /-n /b /s /a-d'  " Windows
     else
       let g:ctrlp_user_command = ['.git', 'cd %s && git ls-files . -co --exclude-standard', 'find %s -type f']
       let g:ctrlp_prompt_mappings = {
@@ -269,6 +274,10 @@ if executable('ag')
         nnoremap <Leader>g :Ag <C-R><C-W><CR>
         vnoremap <Leader>g y:Ag <C-R>"<CR>
     endif
+elseif executable('pt')
+    let g:unite_source_grep_command = 'pt'
+    let g:unite_source_grep_default_opts = '--nogroup --nocolor'
+    let g:unite_source_grep_recursive_opt = ''
 else
     " カーソル位置の単語を ag 検索
     nnoremap <silent> <Leader>g :<C-u>Unite grep:. -direction=botright -auto-resize -buffer-name=search-buffer<CR><C-R><C-W><CR>

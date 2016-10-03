@@ -1,0 +1,1 @@
+- [pt](https://drone.io/github.com/monochromegane/the_platinum_searcher/files/artifacts/bin/windows_amd64/pt.exe)

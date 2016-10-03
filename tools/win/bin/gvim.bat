@@ -1,0 +1,1 @@
+start "" "%HOMEPATH%\tools\vim80-kaoriya-win64\gvim.exe" --remote-tab-silent %*
