@@ -1,6 +1,7 @@
 #!/bin/bash
 
 setconfig() {
+    make_link_dot2home $script_dir
     if get_gitsettingcnt "user.name"; then
         log "@@@@@ Input Your Git user.name"
         read gitusername
@@ -75,6 +76,12 @@ set_gitconfig() {
     if get_gitsettingcnt "alias.zip="; then
         dvexec "git config --global alias.zip \"archive --format=zip HEAD -o\""
     fi
+    if get_gitsettingcnt "alias.or="; then
+        dvexec git config --global alias.or orphan
+    fi
+    if get_gitsettingcnt "init.templatedir="; then
+        dvexec git config --global init.templatedir '.git_template'
+    fi
 }
 
 get_gitsettingcnt() {
@@ -103,4 +110,6 @@ execGitConfigForce() {
     git config --global alias.tar "archive --format=tar HEAD -o"
     git config --global alias.tgz "archive --format=tgz HEAD -o"
     git config --global alias.zip "archive --format=zip HEAD -o"
+    git config --global alias.or orphan
+    git config --global init.templatedir '.git_template'
 }

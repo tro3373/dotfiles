@@ -1,0 +1,9 @@
+#!/bin/sh
+
+rm .git/tags
+# -tag-relative 作成されるtagsファイル内のキーワードのパスが相対パスに
+# - --recurse ディレクトリを再起的に
+# - --sort=yes 作成されたキーワードをsortする
+# - --append=no 既存のタグファイルに追加しない
+ctags --tag-relative --recurse --sort=yes --append=no -f .git/tags
+

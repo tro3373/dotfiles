@@ -63,9 +63,11 @@ command! -nargs=? SetTab call SetTabs(<f-args>)
 
 function! GetGitRoot() abort
     try
-        let l:isgitrepo = matchstr(system("cd " . expand('%:p:h') . "; git rev-parse --is-inside-work-tree"), "true")
+        let l:result = system("cd " . expand('%:p:h') . " && git rev-parse --is-inside-work-tree")
+        let l:result = substitute(l:result, '\(\r\|\n\)\+', '', 'g')
+        let l:isgitrepo = matchstr(l:result, "true")
         if l:isgitrepo == "true"
-            let l:gitroot = system("cd " . expand('%:p:h') . "; git rev-parse --show-toplevel")
+            let l:gitroot = system("cd " . expand('%:p:h') . " && git rev-parse --show-toplevel")
             return substitute(l:gitroot, '\(\r\|\n\)\+', '', 'g')
         else
             return "."
@@ -75,6 +77,8 @@ function! GetGitRoot() abort
 endfunction
 
 function! Ctags() abort
+    " set encoding=cp932
+    " set encoding=utf-8
     if !executable('git')
         echo "No git"
         return
@@ -90,9 +94,9 @@ function! Ctags() abort
         let l:ctags = substitute(system("which ctags"), '\(\r\|\n\)\+', '', 'g')
     endif
     let l:tags = l:gitroot . "/.git/tags"
-    let l:execmd = l:ctags . " -R -f " . l:gitroot . "/.git/tags " . l:gitroot
+    let l:execmd = l:ctags . " --tag-relative --recurse --sort=yes --append=no -f " . l:gitroot . "/.git/tags " . l:gitroot
     execute system(l:execmd)
-    echo "Tags file Created to " . l:gitroot . "/.git/tags ."
+    echo "Tags file Created to " . l:gitroot . "/.git/tags"
 endfunction
 command! Ctags call Ctags()
 

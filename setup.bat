@@ -15,12 +15,12 @@ exit /b 0
     call :logs **************************************
     set SUBFNK_NM=Main[%0]
     call :makedirs
+    call :makelinks
 rem    call :chocolatey
     call :sakura
     call :sublime3
     call :atom
     call :git
-    call :bash
     call :vim
 exit /b 0
 
@@ -170,6 +170,7 @@ exit /b 0
 
 :git
     set SUBFNK_NM=git
+    call :backuppable_link "%HOMEPATH%" ".git_template" "%HOMEPATH%\dotfiles\apps\git\.git_template" 1
     rem git config --global user.name sample_username
     rem git config --global user.email sample_email@domain.com
     git config --global core.editor "vim -c 'set fenc=utf-8'"
@@ -189,10 +190,14 @@ exit /b 0
     git config --global alias.tar "archive --format=tar HEAD -o"
     git config --global alias.tgz "archive --format=tgz HEAD -o"
     git config --global alias.zip "archive --format=zip HEAD -o"
+    git config --global alias.or orphan
+    git config --global init.templatedir '.git_template'
 exit /b 0
 
-:bash
+:makelinks
     call :backuppable_link "%HOMEPATH%" ".bashrc" "%HOMEPATH%\dotfiles\tools\win\.bashrc" 0
+    call :backuppable_link "%HOMEPATH%" ".ctags" "%HOMEPATH%\dotfiles\apps\ctags\.ctags" 0
+    call :backuppable_link "%HOMEPATH%" ".agignore" "%HOMEPATH%\dotfiles\apps\ag\.agignore" 0
 exit /b 0
 
 :vim

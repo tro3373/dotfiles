@@ -116,4 +116,6 @@ endif
 " ctags 設定
 " set tags+=./tags;
 " set tags=./tags,./TAGS,tags,TAGS " original?
-set tags=.git/tags;./tags;
+" set tags=./tags;./.git/tags;
+set tags=**1/.git/tags;./.git/tags;./tags;
+
