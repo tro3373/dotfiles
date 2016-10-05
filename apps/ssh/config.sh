@@ -1,5 +1,13 @@
 #!/bin/bash
 
+install() {
+    if [ "$DETECT_OS" = "msys" ]; then
+        dvexec echo "Nothing todo for ssh on msys"
+    else
+        dvexec $def_instcmd
+    fi
+}
+
 setconfig() {
     ssh_inner=$script_dir/.ssh
     ssh_outer=${HOME}/.ssh
