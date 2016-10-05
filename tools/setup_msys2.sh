@@ -34,13 +34,13 @@ pacman -S --noconfirm \
     gcc
 
 # 起動SHELLをZSHへ
-sed -ri -e 's/bash/zsh/g' /mingw32_shell.bat
-sed -ri -e 's/bash/zsh/g' /mingw64_shell.bat
-sed -ri -e 's/bash/zsh/g' /msys2_shell.bat
+#sed -ri -e 's/bash/zsh/g' /mingw32_shell.bat
+#sed -ri -e 's/bash/zsh/g' /mingw64_shell.bat
+sed -ri -e 's/bash/zsh/g' /msys2_shell.cmd
 # symlink enable
-sed -ri -e 's/rem set MSYS=win/set MSYS=win/g' /mingw32_shell.bat
-sed -ri -e 's/rem set MSYS=win/set MSYS=win/g' /mingw64_shell.bat
-sed -ri -e 's/rem set MSYS=win/set MSYS=win/g' /msys2_shell.bat
+#sed -ri -e 's/rem set MSYS=win/set MSYS=win/g' /mingw32_shell.bat
+#sed -ri -e 's/rem set MSYS=win/set MSYS=win/g' /mingw64_shell.bat
+sed -ri -e 's/rem set MSYS=win/set MSYS=win/g' /msys2_shell.cmd
 # SHELL 変数へzshを正しく設定するようパッチ
 sed -ri -e 's/^.*(profile_d zsh)/  \1\n  SHELL=`which zsh`/g' /etc/profile
 
