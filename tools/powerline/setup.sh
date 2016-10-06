@@ -4,7 +4,7 @@ script_dir=$(cd $(dirname $0); pwd)
 dry_run=0
 
 # インストール用関数 ロード
-source ~/dotfiles/setup/setup-funcs.sh
+source ~/dotfiles/setup/setup_funcs.sh
 
 install() {
     cmd_pyenv=~/.anyenv/envs/pyenv/bin/pyenv

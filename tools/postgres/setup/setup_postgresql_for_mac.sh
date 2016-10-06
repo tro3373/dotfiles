@@ -11,7 +11,7 @@ chmod 755 fixBrewLionPostgresql.sh
 ./fixBrewLionPostgresql.sh
 
 ME=`whoami`
-sudo -u $ME psql postgres -f setup-init.sql
+sudo -u $ME psql postgres -f setup_init.sql
 
 
 

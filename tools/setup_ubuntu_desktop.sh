@@ -24,20 +24,6 @@ fi
 # Disable automount external media
 gsettings set org.gnome.desktop.media-handling automount false
 
-# font install
-fonts_install() {
-    work_dir="$script_dir/tmp"
-    if [ ! -e $work_dir ]; then
-        mkdir -p $work_dir
-    fi
-    cd $work_dir
-    git clone https://tro3373@bitbucket.org/tro3373/fonts.git
-    cd fonts
-    ./setup.sh
-    cd -
-}
-fonts_install
-
 # xsel, meld, rapidsvn, smartmontools
 sudo apt-get install -y xsel meld rapidsvn smartmontools hardinfo
 # smartctl -s on /dev/sda
