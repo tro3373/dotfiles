@@ -51,6 +51,7 @@ setconfig() {
     # setcolortheme=dircolors.ansi-universal
     make_link_bkupable "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
 
+    touch ~/.works.zsh && chmod 755 ~/.works.zsh
     if [[ "$DETECT_OS" == "msys" ]]; then
         # その他ドットファイルリンク作成
         make_link_dot2home $script_dir/win
@@ -76,4 +77,5 @@ gen_zshrc_for_msys2() {
     for file in "$@"; do
         dvexec "cat $script_dir/$file >> $outfile"
     done
+    dvexec "echo '[ -f ~/.works.zsh ] && source ~/.works.zsh' >> $outfile"
 }

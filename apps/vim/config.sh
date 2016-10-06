@@ -234,4 +234,7 @@ setconfig() {
 #        dvexec git clone git://github.com/Shougo/neobundle.vim
 #    fi
 #    log "  => Execute ':NeoBundleInstall' command in vim."
+    if [ "$DETECT_OS" = "msys" ]; then
+        make_link_bkupable "$script_dir/wingvim_from_msys" "${HOME}/bin/gvim"
+    fi
 }

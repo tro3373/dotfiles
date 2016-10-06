@@ -2,7 +2,7 @@
 
 ################################################### SETTING START
 #all_apps="git ctags curl tree global zsh tmux vim tig ssh ag _peco _fzf _gomi _zplug"
-all_apps="git ctags curl tree global zsh tmux vim tig ssh ag"
+all_apps="git ctags curl tree global zsh tmux vim tig ssh nkf ag"
 ################################################### SETTING END
 
 is_exist_app() {

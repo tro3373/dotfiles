@@ -14,6 +14,7 @@ exit /b 0
     call :logs * Start
     call :logs **************************************
     set SUBFNK_NM=Main[%0]
+rem    call :add_paths
     call :makedirs
     call :makelinks
 rem    call :chocolatey
@@ -87,7 +88,7 @@ rem *******************************************************
     call :logs * Done
     call :logs **************************************
     set /P read="Press Key..."
-exit 0
+exit /b 0
 
 rem *******************************************************
 rem Abnormal End
@@ -115,6 +116,10 @@ rem 3:rinkfrom_file
 rem 4:0:file,1:dir
 :backuppable_link
     call :logs "[backuppable_link] %*"
+    if exist "%1\%2" (
+        call :logs "%1\%2 is exists. do nothing."
+        exit /b 0
+    )
     call :mkdir_ifnotexist %1
     if exist %1\%2 (
         call :exccmd move %1\%2 %BKUPDIR%
@@ -128,17 +133,28 @@ rem 4:0:file,1:dir
     )
 exit /b 0
 
+:add_paths
+    set SUBFNK_NM=add_paths
+    setx /M path "%path%;c:%homepath%\bin"
+    setx /M pathext "%pathext%;lnk"
+exit /b 0
+
 :makedirs
     set SUBFNK_NM=makedirs
     call :mkdir_ifnotexist "%HOMEPATH%\bin"
-    if not exist %HOMEPATH%"\bin\ln.bat" (
-        call :exccmd mklink %HOMEPATH%"\bin\ln.bat" %HOMEPATH%"\dotfiles\tools\win\bin\ln.bat"
-    )
-    if not exist %HOMEPATH%"\bin\gvim.bat" (
-        call :exccmd mklink %HOMEPATH%"\bin\gvim.bat" %HOMEPATH%"\dotfiles\tools\win\bin\gvim.bat"
-    )
     call :mkdir_ifnotexist "%HOMEPATH%\tools"
     call :mkdir_ifnotexist "%HOMEPATH%\works"
+exit /b 0
+
+:makelinks
+    set LIBBIN="%HOMEPATH%\dotfiles\tools\win\bin"
+    for /f "delims=;" %%A in ('dir %LIBBIN% /b/o-n') do (
+        call :backuppable_link "%HOMEPATH%\bin" "%%A" "%LIBBIN%\%%A" 0
+    )
+
+    call :backuppable_link "%HOMEPATH%" ".bashrc" "%HOMEPATH%\dotfiles\apps\zsh\win\.bashrc" 0
+    call :backuppable_link "%HOMEPATH%" ".ctags" "%HOMEPATH%\dotfiles\apps\ctags\.ctags" 0
+    call :backuppable_link "%HOMEPATH%" ".agignore" "%HOMEPATH%\dotfiles\apps\ag\.agignore" 0
 exit /b 0
 
 :chocolatey
@@ -192,12 +208,6 @@ exit /b 0
     git config --global alias.zip "archive --format=zip HEAD -o"
     git config --global alias.or orphan
     git config --global init.templatedir '.git_template'
-exit /b 0
-
-:makelinks
-    call :backuppable_link "%HOMEPATH%" ".bashrc" "%HOMEPATH%\dotfiles\tools\win\.bashrc" 0
-    call :backuppable_link "%HOMEPATH%" ".ctags" "%HOMEPATH%\dotfiles\apps\ctags\.ctags" 0
-    call :backuppable_link "%HOMEPATH%" ".agignore" "%HOMEPATH%\dotfiles\apps\ag\.agignore" 0
 exit /b 0
 
 :vim
