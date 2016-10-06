@@ -12,8 +12,10 @@ install() {
         dvexec mkdir -p /usr/local/bin
         dvexec make install
     else
+        :
     fi
 }
 
 setconfig() {
+    :
 }
