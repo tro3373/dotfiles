@@ -14,13 +14,17 @@ install() {
         dvexec make
         dvexec make install
     elif [ "$DETECT_OS" = "msys" ]; then
-        # 必要パッケージインストール
-        dvexec "$instcmd base-devel mingw-w64-${DETECT_BIT}-gcc mingw-w64-${DETECT_BIT}-pcre mingw-w64-${DETECT_BIT}-xz libpcre"
-        clone_src_cd
-        dvexec ./build.sh PCRE_CFLAGS=-DPCRE_STATIC LDFLAGS=-static
-        dvexec strip ag.exe
-        # だめならこれを試すべし
-        # http://proglab.blog.fc2.com/blog-entry-9.html
+        workdir="$script_dir/tmp"
+        if [ ! -e $workdir ]; then
+            dvexec "mkdir -p \"$workdir\""
+        fi
+        if [ ! -e $workdir/ag.zip ]; then
+            dvexec "cd \"$workdir\""
+            dvexec wget https://kjkpub.s3.amazonaws.com/software/the_silver_searcher/rel/0.29.1-1641/ag.zip
+            dvexec unzip ag.zip
+            dvexec mv ag/ag.exe $HOME/bin
+            dvexec "cd -"
+        fi
     else
         :
         #cmd="sudo rpm -ivh http://swiftsignal.com/packages/centos/6/x86_64/the-silver-searcher-0.13.1-1.el6.x86_64.rpm"
