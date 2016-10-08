@@ -14,6 +14,7 @@ install() {
         dvexec make
         dvexec make install
     elif [ "$DETECT_OS" = "msys" ]; then
+        dvexec "$instcmd mingw-w64-x86_64-ag"
         workdir="$script_dir/tmp"
         if [ ! -e $workdir ]; then
             dvexec "mkdir -p \"$workdir\""
@@ -22,7 +23,7 @@ install() {
             dvexec "cd \"$workdir\""
             dvexec wget https://kjkpub.s3.amazonaws.com/software/the_silver_searcher/rel/0.29.1-1641/ag.zip
             dvexec unzip ag.zip
-            dvexec mv ag/ag.exe $HOME/bin
+            #dvexec mv ag/ag.exe $HOME/bin
             dvexec "cd -"
         fi
     else
