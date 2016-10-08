@@ -200,7 +200,7 @@ if g:plug.is_installed("ctrlp.vim")
 
     if g:is_windows
         if executable('ag')
-            let g:ctrlp_user_command = 'ag -l --nocolor -g "" %s'
+            let g:ctrlp_user_command = "ag -l --nocolor -g '' %s"
             "let g:ctrlp_user_command = 'c:\msys64\mingw64\bin\ag %s -l -Q --nocolor -g "" .'
             "let g:ctrlp_user_command = 'dir %s /-n /b /s /a-d'  " Windows
         else
