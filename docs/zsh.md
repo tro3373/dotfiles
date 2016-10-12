@@ -51,6 +51,7 @@ exec command                 ==> コマンドを実行
 -h filename     ==> シンボリックリンクであれば真
 -r filename     ==> 読むことが可能なファイルであれば真
 -w filename     ==> 書き込み可能なファイルであれば真
+-s filename     ==> file が 0 より大きければ真
 -n string       ==> 文字列の長さが 0 でなければ真
 -z string       ==> 文字列の長さが 0 であれば真
 string          ==> 文字列で空でなければ真
