@@ -256,6 +256,7 @@ autoload     run-help-svn
 #
 if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     source ~/.zplug/init.zsh
+    zstyle :zplug:tag depth 10
 
     # Remote loading
     zplug "b4b4r07/zplug"
@@ -341,14 +342,14 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     # check コマンドで未インストール項目があるかどうか verbose にチェックし
     # false のとき（つまり未インストール項目がある）y/N プロンプトで
     # インストールする
-    if ! zplug check --verbose; then
+    if ! zplug check; then
         printf "Install? [y/N]: "
         if read -q; then
             echo; zplug install
         fi
     fi
     # プラグインを読み込み、コマンドにパスを通す
-    zplug load --verbose
+    zplug load
 fi
 
 [ -f ~/.works.zsh ] && source ~/.works.zsh
