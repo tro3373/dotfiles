@@ -1,0 +1,30 @@
+#!/bin/bash
+
+u=tro3373
+rep=git@github.com:$u/dotfiles.git
+[[ -z "$1" ]] && rep=https://github.com/$u/dotfiles.git
+dot=$HOME/dotfiles
+old=${dot}.old
+
+mv_to() {
+    local rel_p="$1"
+    local _src="$old/$rel_p"
+    local _dst="$dot/$rel_p"
+    if [[ ! -e "$_src" ]]; then
+        echo "  ==> No exist mv target [$_src]"
+        return
+    fi
+    mv $_src $_dst
+}
+main() {
+    set -eu
+    if [[ ! -e $dot ]]; then
+        git clone $rep $dot
+        exit
+    fi
+    mv $dot $old
+    git clone $rep $dot
+    mv_to apps/zsh/tmp
+    mv_to apps/ssh/.ssh
+}
+main
