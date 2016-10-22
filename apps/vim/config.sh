@@ -17,8 +17,12 @@ install() {
         dvexec cd /usr/local/src/
         if [[ ! -e /usr/local/src/vim ]]; then
             dvexec sudo git clone https://github.com/vim/vim.git
+            dvexec cd vim/src
+        else
+            dvexec cd vim
+            dvexec sudo git pull --rebase
+            dvexec cd src
         fi
-        dvexec cd vim/src
         dvexec sudo ./configure --with-features=huge \
             --enable-rubyinterp \
             --enable-largefile \
@@ -56,8 +60,12 @@ install() {
         dvexec cd ../
         if [[ ! -e /usr/local/src/vim ]]; then
             dvexec sudo git clone https://github.com/vim/vim.git
+            dvexec cd vim/src
+        else
+            dvexec cd vim
+            dvexec sudo git pull --rebase
+            dvexec cd src
         fi
-        dvexec cd vim/src
         dvexec sudo yum install -y ruby ruby-devel lua lua-devel luajit luajit-devel \
             ctags mercurial python python-devel python3 python3-devel tcl-devel perl \
             perl-devel perl-ExtUtils-ParseXS perl-ExtUtils-XSpp perl-ExtUtils-CBuilder \
