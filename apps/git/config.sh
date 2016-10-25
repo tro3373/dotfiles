@@ -80,7 +80,10 @@ set_gitconfig() {
         dvexec git config --global alias.or orphan
     fi
     if get_gitsettingcnt "init.templatedir="; then
-        dvexec git config --global init.templatedir '.git_template'
+        dvexec git config --global init.templatedir '~/.git_template'
+    fi
+    if get_gitsettingcnt "alias.ignore="; then
+        dvexec git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'
     fi
 }
 
@@ -111,5 +114,6 @@ execGitConfigForce() {
     git config --global alias.tgz "archive --format=tgz HEAD -o"
     git config --global alias.zip "archive --format=zip HEAD -o"
     git config --global alias.or orphan
-    git config --global init.templatedir '.git_template'
+    git config --global init.templatedir '~/.git_template'
+    git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'
 }

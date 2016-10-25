@@ -207,7 +207,8 @@ exit /b 0
     git config --global alias.tgz "archive --format=tgz HEAD -o"
     git config --global alias.zip "archive --format=zip HEAD -o"
     git config --global alias.or orphan
-    git config --global init.templatedir '.git_template'
+    git config --global init.templatedir '~/.git_template'
+    git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'
 exit /b 0
 
 :vim
