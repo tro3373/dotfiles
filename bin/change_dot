@@ -2,7 +2,7 @@
 
 u=tro3373
 rep=git@github.com:$u/dotfiles.git
-[[ -z "$1" ]] && rep=https://github.com/$u/dotfiles.git
+[[ ! -z "$1" ]] && rep=https://github.com/$u/dotfiles.git
 dot=$HOME/dotfiles
 old=${dot}.old
 
