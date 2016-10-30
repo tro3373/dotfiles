@@ -1,0 +1,1 @@
+javascript:(function(f,urls,i,s){urls=["//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"/* ,"URL","URL",... */];for(i=0;i<urls.length;i++){s=document.createElement("script");s.src=urls[i];if(i==urls.length-1)s.onload=function(){f(jQuery.noConflict(true))};document.body.appendChild(s)}})(function($){/* 内部コード */})
