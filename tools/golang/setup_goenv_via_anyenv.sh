@@ -7,9 +7,11 @@ main() {
         echo "===> Reload shell"
     else
         local version=1.7
+        goenv install $version
         goenv global $version
         goenv rehash
         go version
+        echo "Done!"
     fi
 }
 main
