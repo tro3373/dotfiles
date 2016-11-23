@@ -183,14 +183,16 @@ call unite#custom_default_action('source/bookmark/directory' , 'vimfiler')
 "=============================================
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.exe
 if g:plug.is_installed("ctrlp.vim")
-    nnoremap <Leader>p :CtrlP<CR>
+    let g:ctrlp_map='<c-p>'
+    let g:ctrlp_cmd = 'CtrlPMRU'
+    nnoremap <Leader>p :CtrlPMRU<CR>
     map <Leader>o <C-P><C-\>w
     map <F3> <C-P><C-\>w
     nnoremap st <Nop>
-    nnoremap st :<C-u>tabnew<CR>:CtrlP<CR>
+    nnoremap st :<C-u>tabnew<CR>:CtrlPMRU<CR>
     " Guess vcs root dir
     let g:ctrlp_working_path_mode = 'ra'
-    let g:ctrlp_extensions = ['funky', 'tag', 'quickfix', 'dir', 'line', 'mixed']
+    let g:ctrlp_extensions = ['mru', 'dir', 'mixed', 'funky', 'tag', 'quickfix', 'line']
     let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:18'
     let g:ctrlp_custom_ignore = {
       \ 'dir':  '\v[\/]\.(git|hg|svn)$',
