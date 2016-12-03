@@ -43,15 +43,15 @@ fi
 ## --------------------------------------------------------
 ## rbenv
 ## --------------------------------------------------------
-#if [ -e ~/.rbenv ]; then
+#if [ -e ${HOME}/.rbenv ]; then
 #    export PATH="$HOME/.rbenv/bin:$PATH"
 #    eval "$(rbenv init -)"
 #fi
 ## --------------------------------------------------------
 ## nvm
 ## --------------------------------------------------------
-#if [ -e ~/.nvm ]; then
-#    . ~/.nvm/nvm.sh
+#if [ -e ${HOME}/.nvm ]; then
+#    . ${HOME}/.nvm/nvm.sh
 #    nvm use v0.10.38
 #fi
 ## --------------------------------------------------------
@@ -65,9 +65,9 @@ fi
 # --------------------------------------------------------
 # Java
 # --------------------------------------------------------
-#javahome=~/bin/java/jdk1.6.0_45
-#javahome=~/bin/java/jdk1.8.0_05
-local javahome=~/bin/java/jdk1.8.0_20
+#javahome=${HOME}/bin/java/jdk1.6.0_45
+#javahome=${HOME}/bin/java/jdk1.8.0_05
+local javahome=${HOME}/bin/java/jdk1.8.0_20
 if [ -e $javahome ]; then
     export JAVA_HOME=`echo "$javahome"`
     add_path ${JAVA_HOME}/bin
@@ -78,7 +78,7 @@ fi
 # see http://blog.beaglesoft.net/?p=762
 # wget http://ftp.riken.jp/net/apache/maven/maven-3/3.3.3/binaries/apache-maven-3.3.3-bin.tar.gz
 # tar xvfpz apache-maven-3.3.3-bin.tar.gz
-local mvnhome=~/bin/apache-maven-3.3.3
+local mvnhome=${HOME}/bin/apache-maven-3.3.3
 if [ -e $mvnhome ]; then
     export M2_HOME=$mvnhome
     add_path ${M2_HOME}/bin
@@ -120,17 +120,17 @@ add_path /usr/local/heroku/bin
 # http://tools.android.com/knownissues/ibus
 #IBUS_ENABLE_SYNC_MODE=1 ibus-daemon -xrd
 # Android platform-tools for Mac.
-add_path ~/Library/Android/sdk/platform-tools
+add_path ${HOME}/Library/Android/sdk/platform-tools
 # Android platform-tools for Linux.
-add_path ~/Android/Sdk/platform-tools
-add_path ~/android-studio/bin
+add_path ${HOME}/Android/Sdk/platform-tools
+add_path ${HOME}/android-studio/bin
 
 # .local/bin
 add_path ${HOME}/.local/bin
 
-# ~/dotfiles/bin
-add_path ${HOME}/dotfiles/bin
+# ${HOME}/dotfiles/bin
+add_path ${DOTPATH}/bin
 
-# ~/bin
+# ${HOME}/bin
 add_path ${HOME}/bin
 

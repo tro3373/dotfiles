@@ -158,11 +158,11 @@ esac
 
 # dircolors 設定
 #
-if [[ -L ~/.dircolors || -e ~/.dircolors ]]; then
+if [[ -L ${HOME}/.dircolors || -e ${HOME}/.dircolors ]]; then
     if type dircolors > /dev/null 2>&1; then
-        eval $(dircolors ~/.dircolors)
+        eval $(dircolors ${HOME}/.dircolors)
     elif type gdircolors > /dev/null 2>&1; then
-        eval $(gdircolors ~/.dircolors)
+        eval $(gdircolors ${HOME}/.dircolors)
     fi
 fi
 

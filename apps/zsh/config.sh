@@ -39,7 +39,7 @@ setconfig() {
         if [ "$DETECT_OS" = "ubuntu" ]; then
             dvexec "$instcmd gawk"
         fi
-        export ZPLUG_HOME=~/.zplug
+        ZPLUG_HOME=~/.zplug
         dvexec git clone https://github.com/b4b4r07/zplug $ZPLUG_HOME
 #        dvexec source ~/.zplug/zplug
 #        dvexec zplug update --self

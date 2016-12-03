@@ -1,9 +1,9 @@
 if [ -z "$DOTPATH" ]; then
     _get_dotpath() {
-        if [[ -d ~/dotfiles ]]; then
-            echo "$(cd ~/dotfiles && pwd)"
-        elif [[ -d ~/.dotfiles ]]; then
-            echo "$(cd ~/.dotfiles && pwd)"
+        if [[ -d ${HOME}/dotfiles ]]; then
+            echo "$(cd ${HOME}/dotfiles && pwd)"
+        elif [[ -d ${HOME}/.dotfiles ]]; then
+            echo "$(cd ${HOME}/.dotfiles && pwd)"
         else
             return 1
         fi
@@ -48,8 +48,8 @@ export LESS_TERMCAP_us=$'\E[01;32m'
 # ls command colors
 export LSCOLORS=exfxcxdxbxegedabagacad
 
-# Add ~/bin to PATH
-export PATH=~/bin:"$PATH"
+# Add ${HOME}/bin to PATH
+export PATH=${HOME}/bin:"$PATH"
 
 # Settings for golang
 export GOPATH="$HOME/.go"
@@ -59,6 +59,8 @@ export PATH="$GOBIN:$PATH"
 # declare the environment variables
 export CORRECT_IGNORE='_*'
 export CORRECT_IGNORE_FILE='.*'
+
+[ ${OSTYPE} = "msys" ] && export WINHOME=/c/Users/`whoami`
 
 export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 export WORDCHARS='*?.[]~&;!#$%^(){}<>'
@@ -90,4 +92,4 @@ export INTERACTIVE_FILTER="fzf:peco:percol:gof:pick"
 # keybind ^X^X
 export ONELINER_FILE="$DOTPATH/doc/misc/commands.txt"
 
-[ -f ~/.secret ] && . ~/.secret
+[ -f ${HOME}/.secret ] && . ${HOME}/.secret

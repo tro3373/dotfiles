@@ -11,9 +11,9 @@ umask 0002
 #bindkey -d
 #
 # NOTE: set fpath before compinit
-fpath=(~/.zsh/Completion(N-/) $fpath)
-fpath=(~/.zsh/functions/*(N-/) $fpath)
-fpath=(~/.zsh/plugins/zsh-completions(N-/) $fpath)
+fpath=(${HOME}/.zsh/Completion(N-/) $fpath)
+fpath=(${HOME}/.zsh/functions/*(N-/) $fpath)
+fpath=(${HOME}/.zsh/plugins/zsh-completions(N-/) $fpath)
 #fpath=(/usr/local/share/zsh/site-functions(N-/) $fpath)
 #
 ## autoload
@@ -35,8 +35,8 @@ autoload     run-help-svk
 autoload     run-help-svn
 #
 ## It is necessary for the setting of DOTPATH
-#if [[ -f ~/.path ]]; then
-#    source ~/.path
+#if [[ -f ${HOME}/.path ]]; then
+#    source ${HOME}/.path
 #else
 #    export DOTPATH="${0:A:t}"
 #fi
@@ -62,7 +62,7 @@ autoload     run-help-svn
 #    source "$VITAL_PATH"
 #fi
 #
-#antigen=~/.antigen
+#antigen=${HOME}/.antigen
 #antigen_plugins=(
 ##"b4b4r07/cli-finder"
 #"b4b4r07/emoji-cli"
@@ -86,8 +86,8 @@ autoload     run-help-svn
 #
 #        local -a modules_path
 #        modules_path=(
-#        ~/.zsh/[0-9]*.(sh|zsh)(N^*)
-#        ~/.modules/*.(sh|zsh)(N^*)
+#        ${HOME}/.zsh/[0-9]*.(sh|zsh)(N^*)
+#        ${HOME}/.modules/*.(sh|zsh)(N^*)
 #        )
 #
 #        local f
@@ -135,14 +135,14 @@ autoload     run-help-svn
 #}
 #
 #zsh_zplug() {
-#    [[ -d ~/.zplug ]] || {
-#        git clone https://github.com/b4b4r07/zplug ~/.zplug
-#        source ~/.zplug/zplug
+#    [[ -d ${HOME}/.zplug ]] || {
+#        git clone https://github.com/b4b4r07/zplug ${HOME}/.zplug
+#        source ${HOME}/.zplug/zplug
 #        zplug update --self
 #    }
 #
 #    # For development
-#    source ~/Dropbox/zplug/zplug
+#    source ${HOME}/Dropbox/zplug/zplug
 #
 #    has_plugin() {
 #        (( $+functions[zplug] )) || return 1
@@ -153,8 +153,8 @@ autoload     run-help-svn
 #    zplug "b4b4r07/zplug"
 #
 #    # Local loading
-#    zplug "~/.modules", from:local, nice:1, use:"*.sh"
-#    zplug "~/.zsh",     from:local, nice:2
+#    zplug "${HOME}/.modules", from:local, nice:1, use:"*.sh"
+#    zplug "${HOME}/.zsh",     from:local, nice:2
 #
 #    # Remote loading
 #    zplug "b4b4r07/zsh-gomi",   as:command, use:bin/gomi
@@ -254,8 +254,8 @@ autoload     run-help-svn
 #  on: 依存関係
 #  nice: 優先度（高 -20 〜 19 低）の設定をする。優先度の高いものから読み込む。10 以上を設定すると compinit のあとにロードされる
 #
-if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
-    source ~/.zplug/init.zsh
+if [ -d ${HOME}/.zplug ] || [ -L ${HOME}/.zplug ]; then
+    source ${HOME}/.zplug/init.zsh
     zstyle :zplug:tag depth 10
 
     # Remote loading
@@ -334,7 +334,7 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     fi
 
     # Local loading
-    zplug "~/.zsh", \
+    zplug "${HOME}/.zsh", \
         from:local, \
         ignore:"*vcs-info.zsh", \
         nice:2
@@ -352,6 +352,6 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     zplug load
 fi
 
-[ -f ~/.works.zsh ] && source ~/.works.zsh
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+[ -f ${HOME}/.works.zsh ] && source ${HOME}/.works.zsh
+[ -f ${HOME}/.fzf.zsh ] && source ${HOME}/.fzf.zsh
 
