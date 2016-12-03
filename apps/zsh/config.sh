@@ -39,7 +39,7 @@ setconfig() {
         if [ "$DETECT_OS" = "ubuntu" ]; then
             dvexec "$instcmd gawk"
         fi
-        dvexec export ZPLUG_HOME=~/.zplug
+        export ZPLUG_HOME=~/.zplug
         dvexec git clone https://github.com/b4b4r07/zplug $ZPLUG_HOME
 #        dvexec source ~/.zplug/zplug
 #        dvexec zplug update --self
@@ -51,7 +51,7 @@ setconfig() {
     # setcolortheme=dircolors.ansi-universal
     make_link_bkupable "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
 
-    touch ~/.works.zsh && chmod 755 ~/.works.zsh
+    dvexec touch ~/.works.zsh && chmod 755 ~/.works.zsh
     if [[ "$DETECT_OS" == "msys" ]]; then
         # その他ドットファイルリンク作成
         make_link_dot2home $script_dir/win
