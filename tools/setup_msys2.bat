@@ -1,0 +1,59 @@
+@echo off
+setlocal
+
+set user=%username%
+set msys64root=C:%HOMEPATH%\AppData\Local\msys64
+set bin=%msys64root%\usr\bin
+set msys2_shell=%msys64root%\msys2_shell.cmd
+set fstab=%msys64root%\etc\fstab
+set hosts=%msys64root%\etc\hosts
+
+if not exist "%msys64root%" (
+    echo No msys root dir. %msys64root%
+    exit 1
+)
+if not exist "%msys2_shell%" (
+    echo No msys2_shell.cmd. %msys2_shell%
+    exit 1
+)
+if not exist "%fstab%" (
+    echo No fstab. %fstab%
+    exit 1
+)
+if not exist C:\Users\%username%\works (
+    md C:\Users\%username%\works
+)
+
+if not exist "%hosts%" (
+    %msys2_shell%
+    echo _______
+    echo First setup Done. ReRun
+) else if not exist "C:%HOMEPATH%\works\.profile" (
+    rem Mount home to wins specified path
+    %bin%\bash.exe -c "/usr/bin/cp -rf /home/%username%/.??* /c/Users/%username%/works/"
+    %bin%\bash.exe -c "/usr/bin/echo C:/Users/%username%/works /home/%username% >> /etc/fstab"
+    echo _______
+    echo Second setup Done. home is changed. ReRun
+) else if not exist "%msys64root%\var\cache" (
+    rem Update pakages
+    %bin%\bash.exe -c "/usr/bin/pacman -Sy pacman --noconfirm && /usr/bin/pacman -Syu --noconfirm && /usr/bin/pacman -Su --noconfirm && /usr/bin/echo Done Update"
+    echo _______
+    echo Third setup Done. pakages updated. ReRun
+) else if not exist "%msys64root%\minggw64\bin\ag.exe" (
+    rem Install pakages
+    %bin%\bash.exe -c "/usr/bin/pacman -S --noconfirm zsh vim git winpty svn wget sed diffutils grep tar unzip patch mingw-w64-x86_64-gcc make gcc mingw-w64-x86_64-ag"
+    rem Change login shell to zsh
+    %bin%\bash.exe -c "/usr/bin/sed -ri -e 's/bash/zsh/g' /msys2_shell.cmd"
+    rem SHELL variable change to zsh
+    %bin%\bash.exe -c "/usr/bin/sed -ri -e 's/^.*(profile_d zsh)/  \1\n  SHELL=`which zsh`/g' /etc/profile"
+    rem symlink enable
+    %bin%\bash.exe -c "/usr/bin/sed -ri -e 's/rem set MSYS=win/set MSYS=win/g' /msys2_shell.cmd"
+    echo _______
+    echo Forth setup Done. ReRun
+) else (
+    echo _______
+    echo All process Done.
+)
+
+endlocal
+pause

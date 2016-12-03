@@ -32,11 +32,11 @@ exit /b 0
     set TM=%TM: =0%
     set JOBNM=setup.bat
     rem バッチ自身に、d:ドライブ付,p:パス付で表したもの
-    set DIR_JOB=%~dp0
+    set DOT_PATH=%~dp0
     rem パスの最後に￥が入る為、以下コマンドで、０番目〜（最後-１）までを抽出
-    set DIR_JOB=%DIR_JOB:~0,-1%
+    set DOT_PATH=%DOT_PATH:~0,-1%
     set BKUPMAX=8
-    set BKUPROOTDIR=%DIR_JOB%\bkup
+    set BKUPROOTDIR=%DOT_PATH%\bkup
     set BKUPDIR=%BKUPROOTDIR%\%DT%-%TM%
     md %BKUPDIR%
     set DIR_LOG=%BKUPDIR%
@@ -147,14 +147,14 @@ exit /b 0
 exit /b 0
 
 :makelinks
-    set LIBBIN="%HOMEPATH%\dotfiles\tools\win\bin"
+    set LIBBIN="%DOT_PATH%\tools\win\bin"
     for /f "delims=;" %%A in ('dir %LIBBIN% /b/o-n') do (
         call :backuppable_link "%HOMEPATH%\bin" "%%A" "%LIBBIN%\%%A" 0
     )
 
-    call :backuppable_link "%HOMEPATH%" ".bashrc" "%HOMEPATH%\dotfiles\apps\zsh\win\.bashrc" 0
-    call :backuppable_link "%HOMEPATH%" ".ctags" "%HOMEPATH%\dotfiles\apps\ctags\.ctags" 0
-    call :backuppable_link "%HOMEPATH%" ".agignore" "%HOMEPATH%\dotfiles\apps\ag\.agignore" 0
+    call :backuppable_link "%HOMEPATH%" ".bashrc" "%DOT_PATH%\apps\zsh\win\.bashrc" 0
+    call :backuppable_link "%HOMEPATH%" ".ctags" "%DOT_PATH%\apps\ctags\.ctags" 0
+    call :backuppable_link "%HOMEPATH%" ".agignore" "%DOT_PATH%\apps\ag\.agignore" 0
 exit /b 0
 
 :chocolatey
@@ -165,12 +165,12 @@ exit /b 0
 
 :sakura
     set SUBFNK_NM=sakura
-    call :backuppable_link "%HOMEPATH%\AppData\Roaming\sakura" "sakura.ini" "%HOMEPATH%\dotfiles\tools\win\sakura\sakura.ini" 0
+    call :backuppable_link "%HOMEPATH%\AppData\Roaming\sakura" "sakura.ini" "%DOT_PATH%\tools\win\sakura\sakura.ini" 0
 exit /b 0
 
 :sublime3
     set SUBFNK_NM=sublime3
-    call :backuppable_link "%HOMEPATH%\AppData\Roaming\Sublime Text 3\Packages" "User" "%HOMEPATH%\dotfiles\tools\sublime\User" 1
+    call :backuppable_link "%HOMEPATH%\AppData\Roaming\Sublime Text 3\Packages" "User" "%DOT_PATH%\tools\sublime\User" 1
     rem ---------------------------------
     rem And Do Below.
     rem 1. Start Sublime Text3
@@ -181,12 +181,12 @@ exit /b 0
 
 :atom
     set SUBFNK_NM=atom
-    call :backuppable_link "%HOMEPATH%" ".atom" "%HOMEPATH%\dotfiles\tools\atom\.atom" 1
+    call :backuppable_link "%HOMEPATH%" ".atom" "%DOT_PATH%\tools\atom\.atom" 1
 exit /b 0
 
 :git
     set SUBFNK_NM=git
-    call :backuppable_link "%HOMEPATH%" ".git_template" "%HOMEPATH%\dotfiles\apps\git\.git_template" 1
+    call :backuppable_link "%HOMEPATH%" ".git_template" "%DOT_PATH%\apps\git\.git_template" 1
     rem git config --global user.name sample_username
     rem git config --global user.email sample_email@domain.com
     git config --global core.editor "vim -c 'set fenc=utf-8'"
@@ -212,9 +212,9 @@ exit /b 0
 exit /b 0
 
 :vim
-    call :backuppable_link "%HOMEPATH%" "_gvimrc" "%HOMEPATH%\dotfiles\apps\vim\.gvimrc" 0
-    call :backuppable_link "%HOMEPATH%" "_vimrc" "%HOMEPATH%\dotfiles\apps\vim\.vimrc" 0
-    call :backuppable_link "%HOMEPATH%" ".vim" "%HOMEPATH%\dotfiles\apps\vim\.vim" 1
+    call :backuppable_link "%HOMEPATH%" "_gvimrc" "%DOT_PATH%\apps\vim\.gvimrc" 0
+    call :backuppable_link "%HOMEPATH%" "_vimrc" "%DOT_PATH%\apps\vim\.vimrc" 0
+    call :backuppable_link "%HOMEPATH%" ".vim" "%DOT_PATH%\apps\vim\.vim" 1
 
     if not exist "%HOMEPATH%/.vim/plugged/vim-plug" (
         call :exccmd md "%HOMEPATH%/.vim/plugged/vim-plug"

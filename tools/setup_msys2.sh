@@ -5,22 +5,16 @@
 ################################################################################
 # 1. First of all, install msys2 with installer .
 #    from [MSYS2 installer](http://msys2.github.io/).
-# 2. Update core Packages.
-#    type `update-core`, and execute.
-#    If update-core command is not exist, execute 
-#    `pacman --needed -Sy bash pacman pacman-mirrors msys2-runtime msys2-runtime-devel`
-# 3. Reboot terminal.
-# 4. execute bellow shell.
+# 2. execute bellow bat 3times
+#    setup.bat
+# 3. execute this shell.
 ################################################################################
-
-# update packages
-pacman -Su --noconfirm
-
 # Install needed packages
 pacman -S --noconfirm \
     zsh \
     vim \
     git \
+    winpty \
     svn \
     wget \
     sed \
@@ -31,7 +25,8 @@ pacman -S --noconfirm \
     patch \
     mingw-w64-x86_64-gcc \
     make \
-    gcc
+    gcc \
+    mingw-w64-x86_64-ag
 
 # 起動SHELLをZSHへ
 #sed -ri -e 's/bash/zsh/g' /mingw32_shell.bat
