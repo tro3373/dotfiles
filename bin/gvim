@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ ${OSTYPE} == "msys" ]; then
+    args="$*"
+    if [ $# -eq 0 ]; then
+        args="."
+    fi
+    $WINHOME/tools/vim80-kaoriya-win64/gvim.exe --remote-tab-silent $args &
+else
+    gvim $*
+fi

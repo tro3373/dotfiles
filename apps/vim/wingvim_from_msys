@@ -1,8 +1,0 @@
-#!/bin/bash
-export WINHOME=/c/Users/`whoami`
-args="$*"
-if [ $# -eq 0 ]; then
-    args="."
-fi
-HOME=$WINHOME $WINHOME/tools/vim80-kaoriya-win64/gvim.exe --remote-tab-silent $args &
-
