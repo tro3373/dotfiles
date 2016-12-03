@@ -236,7 +236,9 @@ install() {
 
 setconfig() {
     make_link_dot2home $script_dir
-#    if [ "$DETECT_OS" = "msys" ]; then
-#        make_link_bkupable "$script_dir/_vimrc" "${WINHOME}/_vimrc"
-#    fi
+    if [ "$DETECT_OS" = "msys" ]; then
+        make_link_bkupable "$script_dir/.vimrc" "${WINHOME}/_vimrc"
+        make_link_bkupable "$script_dir/.gvimrc" "${WINHOME}/_gvimrc"
+        make_link_bkupable "$script_dir/.vim" "${WINHOME}/.vim"
+    fi
 }

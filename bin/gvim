@@ -1,11 +1,13 @@
 #!/bin/bash
 
-if [ ${OSTYPE} == "msys" ]; then
+if [[ ${OSTYPE} == "msys" ]]; then
     args="$*"
     if [ $# -eq 0 ]; then
         args="."
     fi
-    $WINHOME/tools/vim80-kaoriya-win64/gvim.exe --remote-tab-silent $args &
+    # $LOCALAPPDATA is not working
+    args=$(cygpath -aw "$args")
+    HOME= SHELL= PATH=$ORIGINAL_PATH TMP=$LOCALAPPDATA\\Temp TEMP=$TMP $WINHOME/tools/vim80-kaoriya-win64/gvim.exe --remote-tab-silent "$args" &
 else
     gvim $*
 fi

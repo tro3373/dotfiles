@@ -6,17 +6,16 @@
 "######################################################################
 
 let g:is_windows = has('win16') || has('win32') || has('win64')
-let g:is_cygwin = has('win32unix')
-let g:is_mac = !g:is_windows && !g:is_cygwin
+let g:is_cygmsys2 = has('win32unix') " Msys2 is true
+let g:is_mac = !g:is_windows && !g:is_cygmsys2
       \ && (has('mac') || has('macunix') || has('gui_macvim') ||
       \   (!executable('xdg-open') &&
       \     system('uname') =~? '^darwin'))
-let g:is_linux = !g:is_windows && !g:is_cygwin && !g:is_mac && has('unix')
+let g:is_linux = !g:is_windows && !g:is_cygmsys2 && !g:is_mac && has('unix')
 if g:is_windows
   " Exchange path separator.
   set shellslash
 endif
-
 
 if has('vim_starting')
   set rtp+=$HOME/.vim/plugged/vim-plug
@@ -72,11 +71,11 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'vim-scripts/Align'                          " CSV,TSV整形
   Plug 'junegunn/vim-easy-align'                    " Align text
 
-  Plug 'scrooloose/nerdtree', {
-    \ 'on':  ['NERDTreeToggle'] }                   " NERDTree tree view コマンド実行時に読み込む
+  " Plug 'scrooloose/nerdtree', {
+  "   \ 'on':  ['NERDTreeToggle'] }                   " NERDTree tree view コマンド実行時に読み込む
 
   Plug 'rking/ag.vim'                               " SilverSearcher
-  if !g:is_windows
+  if !g:is_windows && !g:is_cygmsys2
       Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
         \ 'do': './install --all' }                     " FZF
       Plug 'junegunn/fzf.vim'
@@ -94,8 +93,9 @@ call plug#begin('$HOME/.vim/plugged')
     if a:info.status == 'installed' || a:info.force
         if g:is_windows
             !make -f make_mingw64.mak
-        elseif g:is_cygwin
-            !make -f make_cygwin.mak
+        elseif g:is_cygmsys2
+            !make -f make_mingw64.mak
+            " !make -f make_cygwin.mak
         elseif g:is_mac
             !make
         elseif g:is_linux

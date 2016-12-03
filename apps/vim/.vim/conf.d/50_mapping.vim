@@ -144,8 +144,29 @@ endif
 "=============================================
 " Unite 設定
 "=============================================
-"" 入力モードで開始する
-"let g:unite_enable_start_insert = 1
+" 入力モードで開始する
+let g:unite_enable_start_insert = 1
+"ヒストリー/ヤンク機能を有効化
+let g:unite_source_history_yank_enable =1
+" unite.vim上でのキーマッピング
+autocmd FileType unite call s:unite_my_settings()
+function! s:unite_my_settings()
+    " 単語単位からパス単位で削除するように変更
+    imap <buffer> <C-w> <Plug>(unite_delete_backward_path)
+
+    " ESCキーを2回押すと終了する
+    nmap <silent><buffer> <ESC><ESC> q
+    imap <silent><buffer> <ESC><ESC> <ESC>q
+
+    " Ctrl j, k mapping for sleect next/previous
+    imap <buffer> <C-j>   <Plug>(unite_select_next_line)
+    nmap <buffer> <C-j>   <Plug>(unite_select_next_line)
+    imap <buffer> <C-k>   <Plug>(unite_select_previous_line)
+    nmap <buffer> <C-k>   <Plug>(unite_select_previous_line)
+endfunction
+
+
+
 " 画面分割(縦分割)
 nnoremap ss :<C-u>sp<CR>
 " 画面分割(横分割)
@@ -185,11 +206,16 @@ set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.exe
 if g:plug.is_installed("ctrlp.vim")
     let g:ctrlp_map='<c-p>'
     let g:ctrlp_cmd = 'CtrlPMRU'
-    nnoremap <Leader>p :CtrlPMRU<CR>
-    map <Leader>o <C-P><C-\>w
-    map <F3> <C-P><C-\>w
-    nnoremap st <Nop>
-    nnoremap st :<C-u>tabnew<CR>:CtrlPMRU<CR>
+    " キャッシュディレクトリ
+    " let g:ctrlp_cache_dir = $HOME.'/.cache/ctrlp'
+    " キャッシュを終了時に削除しない
+    "let g:ctrlp_clear_cache_on_exit = 0
+    let g:ctrlp_funky_matchtype = 'path'
+    let g:ctrlp_funky_syntax_highlight = 1
+    " ルートパスと認識させるためのファイル
+    let g:ctrlp_root_markers = ['Gemfile', 'pom.xml', 'build.xml']
+    " CtrlPのウィンドウ最大高さ
+    let g:ctrlp_max_height = 40
     " Guess vcs root dir
     let g:ctrlp_working_path_mode = 'ra'
     let g:ctrlp_extensions = ['mru', 'dir', 'mixed', 'funky', 'tag', 'quickfix', 'line']
@@ -209,7 +235,6 @@ if g:plug.is_installed("ctrlp.vim")
             let g:ctrlp_user_command = 'dir %s /-n /b /s /a-d'  " Windows
         endif
     elseif executable('ag')
-        "let g:ctrlp_clear_cache_on_exit = 0
         let g:ctrlp_use_caching = 0
         set grepprg=ag\ --nogroup\ --nocolor
         let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
@@ -220,17 +245,22 @@ if g:plug.is_installed("ctrlp.vim")
         \ }
     endif
 
-    let g:ctrlp_funky_matchtype = 'path'
-    let g:ctrlp_funky_syntax_highlight = 1
-    nnoremap <Leader>@ :CtrlPFunky<Cr>
-    " narrow the list down with a word under cursor
-    " nnoremap <Leader>@@ :execute 'CtrlPFunky ' . expand('<cword>')<Cr>
     if !g:is_windows
         if g:plug.is_installed("cpsm")
             let g:ctrlp_match_func = {'match': 'cpsm#CtrlPMatch'}
         endif
     endif
+
+    nnoremap <Leader>p :CtrlPMRU<CR>
+    map <Leader>o <C-P><C-\>w
+    map <F3> <C-P><C-\>w
+    nnoremap st <Nop>
+    nnoremap st :<C-u>tabnew<CR>:CtrlPMRU<CR>
+    nnoremap <Leader>@ :CtrlPFunky<Cr>
+    " narrow the list down with a word under cursor
+    " nnoremap <Leader>@@ :execute 'CtrlPFunky ' . expand('<cword>')<Cr>
 endif
+
 
 "=============================================
 " FZF 設定
@@ -246,18 +276,6 @@ if executable('fzf')
         vnoremap <Leader>j y:FZF -q <C-R>"
     endif
 endif
-
-
-" unite.vim上でのキーマッピング
-autocmd FileType unite call s:unite_my_settings()
-function! s:unite_my_settings()
-    " 単語単位からパス単位で削除するように変更
-    imap <buffer> <C-w> <Plug>(unite_delete_backward_path)
-
-    " ESCキーを2回押すと終了する
-    nmap <silent><buffer> <ESC><ESC> q
-    imap <silent><buffer> <ESC><ESC> <ESC>q
-endfunction
 
 
 "=============================================
@@ -487,8 +505,8 @@ endif
 if g:is_windows
     " Windows
     "map qn :!nautilus %:h<ENTER>
-elseif g:is_cygwin
-    " Cygwin
+elseif g:is_cygmsys2
+    " Cygwin/Msys2
     "map qn :!nautilus %:h<ENTER>
 elseif g:is_mac
     " Mac OS-X

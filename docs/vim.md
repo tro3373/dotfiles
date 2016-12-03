@@ -102,3 +102,110 @@ elseif has("win32unix")
 elseif has("win32")
 " 32bit_windows固有の設定
 endif
+
+
+## GitGutter
+- [issue](https://github.com/airblade/vim-gitgutter/issues/150)
+```vim
+" Debug for gitgutter
+:GitGutterDebug
+" change shellslash via shell variable
+set shellslash
+if &shell =~ 'cmd.exe'
+    set noshellslash
+else
+    set shellslash
+endif
+```
+## Vim の基本
+### 変数の設定
+```vim
+" ^= で既存の設定の先頭、+= で最後に設定を追加
+:set runtimepath^=$HOME/.vim
+:set runtimepath+=$HOME/.vim/after
+```
+
+### .vimrc,_vimrc のロード順序
+- ユーザー vimrc は以下の順で検索される
+    - Windows
+        - $HOME/_vimrc
+        - $HOME/.vimrc
+        - $VIM/_vimrc
+        - $VIM/.vimrc
+    - Linux
+        - $HOME/.vimrc
+        - $HOME/_vimrc
+
+    - msys
+        - => Linuxあつかいだよ
+
+注意点は、ファイルが見つかった時点でそれ以降のファイルは読み込まれなくなるということです。
+例えば Windows で上記の4つのファイルがすべて存在していたとき、初めの $HOME/_vimrc だけが読み込まれます。
+他のファイルで上書きできるわけではありません。
+
+優先度
+高
+　　$VIM/vimrc(サイトローカルな設定読み込みを記述部分)
+　　$VIM/vimrc_local.vim
+　　$VIM/vimrc(残りの部分)
+　　$VIM/vimrc_local.vim : ユーザ優先設定
+　　$HOME/vimrc（ここに格納された場合$VIMのは読み込まれない）
+　　$VIM/vimrc
+低
+
+
+### $VIM,$HOMEのパスの確認方法
+:echo $HOME
+:echo $VIM
+
+### setting sample
+set gfn=Osaka－Mobile:h10:cSHIFTJIS
+set backspace=indent,eol,start
+set whichwrap=b,s,h,l,<,>,[,] "カーソルを行頭、行末で止まらないようにする
+scriptencoding utf-8 "これ入れないと下記が反映されない
+
+augroup highlightZenkakuSpace "全角スペースを赤色にする
+  autocmd!
+  autocmd VimEnter,ColorScheme * highlight ZenkakuSpace term=underline ctermbg=Red guibg=Red
+  autocmd VimEnter,WinEnter * match ZenkakuSpace /　/
+augroup END
+
+set hidden    "ファイル変更中でも他のファイルを開けるようにする
+set autoread    "ファイル内容が変更されると自動読み込みする
+
+"Encode
+"下記の指定は環境によって文字化けする可能性があるので適宜変更する
+set encoding=UTF-8 "文字コードをUTF-8にする
+set fileencoding=UTF-8 "文字コードをUTF-8にする
+set termencoding=UTF-8 "文字コードをUTF-8にする
+
+
+### viminfo
+```vim
+" viminfoファイルの出力先を変更する
+" viminfoファイルの出力先も変更できます。 
+" viminfoファイルの出力先は、「viminfo」オプションの「n」フラグで指定します。
+
+:set viminfo={他のフラグ...},n{ファイルパス}
+
+" 今のviminfoの設定に追加するとしたら、このように設定
+:set viminfo+=n{ファイルパス}
+"「viminfo」オプションの「n」フラグは、全フラグ中、最後に指定しなければなりません。 
+"そうしないと、「n」フラグ以降に指定したフラグがファイルパスの一部として解釈され、エラーが発生します。
+
+" この設定はvimエディタの設定ファイルに書きます。
+" Windowsの場合のviminfoファイルの指定の例。
+:set viminfo+=n~/vimfiles/tmp/viminfo.txt
+:set viminfo+=nC:/Temp/viminfo.txt
+
+" Mac OSXの場合のviminfoファイルの指定の例。
+:set viminfo+=n~/.vim/tmp/viminfo.txt
+:set viminfo+=n/tmp/viminfo.txt
+"viminfoファイルを作成しない
+"「viminfo」オプションに何のフラグも設定しなければ、 viminfoファイルの作成、および、読込は行わなくなります。 
+"vimエディタの設定ファイルで次のように指定してください。
+
+" viminfoファイルを作成しない
+:set viminfo=
+```
+

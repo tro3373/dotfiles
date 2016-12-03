@@ -39,7 +39,8 @@ set ttymouse=xterm2
 " C-vの矩形選択で行末より後ろもカーソルを置ける
 set virtualedit=block
 
-
+" ~/.vim/_viminfo を viminfo ファイルとして指定
+set viminfo+=n~/.vim/_viminfo
 " ~/.vim/backupをバックアップ先ディレクトリに指定する
 set backup
 set backupdir=$HOME/.vim/backup

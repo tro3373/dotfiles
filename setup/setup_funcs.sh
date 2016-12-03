@@ -174,7 +174,7 @@ bkup_orig_file() {
     # バックアップ先ディレクトリにmv
     dvexec "mv -fv \"$bkuptarget\" \"${DIR_BACKUP}\"/"
     delifexist $bkuptarget
-    BACKUP="${BACKUP}\nbackup to ${DIR_BACKUP}/`basename $1`"
+    BACKUP="${BACKUP}\nbackup to ${DIR_BACKUP}/`basename "$bkuptarget"`"
 }
 
 # 存在する場合のみ削除

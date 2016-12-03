@@ -213,6 +213,7 @@ exit /b 0
 exit /b 0
 
 :vim
+    set SUBFNK_NM=vim
     call :backuppable_link "%HOMEPATH%" "_gvimrc" "%DOTPATH%\apps\vim\.gvimrc" 0
     call :backuppable_link "%HOMEPATH%" "_vimrc" "%DOTPATH%\apps\vim\.vimrc" 0
     call :backuppable_link "%HOMEPATH%" ".vim" "%DOTPATH%\apps\vim\.vim" 1
