@@ -46,6 +46,9 @@ set_gitconfig() {
     if get_gitsettingcnt "core.fscache="; then
         dvexec git config --global core.fscache true
     fi
+    if get_gitsettingcnt "core.filemode="; then
+        dvexec git config --global core.filemode true
+    fi
     if get_gitsettingcnt "alias.co="; then
         dvexec git config --global alias.co checkout
     fi
@@ -103,6 +106,7 @@ execGitConfigForce() {
     git config --global http.sslVerify false
     git config --global core.preloadindex true
     git config --global core.fscache true
+    git config --global core.filemode true
     git config --global alias.co checkout
     git config --global alias.cm commit
     git config --global alias.st status

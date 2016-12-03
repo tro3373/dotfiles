@@ -196,6 +196,7 @@ exit /b 0
     git config --global http.sslVerify false
     git config --global core.preloadindex true
     git config --global core.fscache true
+    git config --global core.filemode true
     git config --global alias.co checkout
     git config --global alias.cm commit
     git config --global alias.st status
