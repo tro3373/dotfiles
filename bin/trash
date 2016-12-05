@@ -1,0 +1,14 @@
+#!/bin/bash
+
+backup_root="${DOTPATH=-~}/bkup"
+#dst="${backup_root}/`date +%Y%m%d%H%M%S`"
+dst="${backup_root}/`date +%Y%m%d`"
+set -eu
+main() {
+    if [ $# -ne 0 ]; then
+        [ ! -e $dst ] && mkdir -p $dst
+        mv -fv $* $dst
+    fi
+    ls -la $backup_root
+}
+main
