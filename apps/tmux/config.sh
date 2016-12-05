@@ -15,7 +15,7 @@ install() {
         dvexec sudo yum install -y libevent libeventdevel automake ncursesdevel
         install_common
     else
-        dvexec "$instcmd tmux"
+        dvexec $def_instcmd
     fi
 }
 

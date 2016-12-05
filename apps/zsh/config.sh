@@ -7,9 +7,6 @@ install() {
         # GNU系コマンド集のインストール（gdircolors 用）
         dvexec "$instcmd coreutils"
     fi
-}
-
-setconfig() {
     # LS_COLORS 設定
     # http://qiita.com/yuyuchu3333/items/84fa4e051c3325098be3
     # https://github.com/seebi/dircolors-solarized
@@ -44,16 +41,21 @@ setconfig() {
 #        dvexec source ~/.zplug/zplug
 #        dvexec zplug update --self
     fi
-    local setcolortheme
-    # setcolortheme=dircolors.256dark
-    setcolortheme=dircolors.ansi-dark
-    # setcolortheme=dircolors.ansi-light
-    # setcolortheme=dircolors.ansi-universal
-    make_link_bkupable "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
+}
 
-    dvexec touch ~/.works.zsh && chmod 755 ~/.works.zsh
+setconfig() {
+    workdir="$script_dir/tmp"
+    if [ -e "${workdir}/dircolors-solarized/${setcolortheme}" ]; then
+        local setcolortheme
+        # setcolortheme=dircolors.256dark
+        setcolortheme=dircolors.ansi-dark
+        # setcolortheme=dircolors.ansi-light
+        # setcolortheme=dircolors.ansi-universal
+        make_link_bkupable "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
+    fi
+    if [ ! -e ~/.works.zsh ] && dvexec touch ~/.works.zsh && chmod 755 ~/.works.zsh
     if [[ "$DETECT_OS" == "msys" ]]; then
-        # その他ドットファイルリンク作成
+        # その他ドットファイルリンク作成 TODO
         make_link_dot2home $script_dir/win
         make_link_bkupable "${script_dir}/.zshenv" "${HOME}/.zshenv"
         gen_zshrc_for_msys2 \

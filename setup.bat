@@ -196,7 +196,8 @@ exit /b 0
     git config --global http.sslVerify false
     git config --global core.preloadindex true
     git config --global core.fscache true
-    git config --global core.filemode true
+    rem Windows set filemode to false
+    git config --global core.filemode false
     git config --global alias.co checkout
     git config --global alias.cm commit
     git config --global alias.st status

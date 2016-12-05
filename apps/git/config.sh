@@ -47,7 +47,9 @@ set_gitconfig() {
         dvexec git config --global core.fscache true
     fi
     if get_gitsettingcnt "core.filemode="; then
-        dvexec git config --global core.filemode true
+        local filemode=true
+        [ "$DETECT_OS" = "msys" ] && filemode=false
+        dvexec git config --global core.filemode $filemode
     fi
     if get_gitsettingcnt "alias.co="; then
         dvexec git config --global alias.co checkout
