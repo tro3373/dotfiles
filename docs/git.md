@@ -2,14 +2,12 @@
 
 
 ## Add submodule
-
-```
+```sh
 git submodule add git@github.com:account/repos.git path/to/repos
 ```
 
 ## Delete submodule
-
-```
+```sh
 git submodule deinit path/to/submodule
 git rm path/to/submodule
 
@@ -18,3 +16,19 @@ git rm path/to/submodule
 #   git config -f .gitmodules --remove-section submodule.path/to/submodule
 ```
 
+## Add permission
+```sh
+# add executable
+git update-index --add --chmod=+x [filename]
+# del executable
+git update-index --add --chmod=-x [filename]
+```
+
+## Exclude file already managed by git
+```sh
+git update-index --assume-unchanged [filename]
+git update-index --no-assume-unchanged [filename]
+git update-index --skip-worktree [filename]
+git update-index --no-skip-worktree [filename]
+
+```
