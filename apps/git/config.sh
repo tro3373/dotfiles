@@ -2,7 +2,8 @@
 
 setconfig() {
     make_link_dot2home $script_dir
-    if get_gitsettingcnt "user.name"; then
+    local list="$(git config --list)"
+    if ! is_exists_setting "$list" "user.name"; then
         log "@@@@@ Input Your Git user.name"
         read gitusername
         if [ ! "$gitusername" = "" ]; then
@@ -11,7 +12,7 @@ setconfig() {
             log "  => Do Nothing for git user.name"
         fi
     fi
-    if get_gitsettingcnt "user.email"; then
+    if ! is_exists_setting "$list" "user.email"; then
         log "@@@@@ Input Your Git user.email"
         read gituseremail
         if [ ! "$gituseremail" = "" ]; then
@@ -25,71 +26,81 @@ setconfig() {
 }
 
 set_gitconfig() {
-    if get_gitsettingcnt "core.editor"; then
+    if ! test_cmd git; then
+        log "No git exist"
+        return
+    fi
+    local list="$(git config --list)"
+    if ! is_exists_setting "$list" "core.editor"; then
         dvexec "git config --global core.editor \"vim -c 'set fenc=utf-8'\""
     fi
-    if get_gitsettingcnt "core.quotepath="; then
+    if ! is_exists_setting "$list" "core.quotepath"; then
         dvexec git config --global core.quotepath false
     fi
-    if get_gitsettingcnt "color.ui="; then
+    if ! is_exists_setting "$list" "color.ui"; then
         dvexec git config --global color.ui auto
     fi
-    if get_gitsettingcnt "push.default="; then
+    if ! is_exists_setting "$list" "push.default"; then
         dvexec git config --global push.default simple
     fi
-    if get_gitsettingcnt "http.sslverify="; then
+    if ! is_exists_setting "$list" "http.sslverify"; then
         dvexec git config --global http.sslVerify false
     fi
-    if get_gitsettingcnt "core.preloadindex="; then
+    if ! is_exists_setting "$list" "core.preloadindex"; then
         dvexec git config --global core.preloadindex true
     fi
-    if get_gitsettingcnt "core.fscache="; then
+    if ! is_exists_setting "$list" "core.fscache"; then
         dvexec git config --global core.fscache true
     fi
-    if get_gitsettingcnt "core.filemode="; then
+    if ! is_exists_setting "$list" "core.filemode"; then
         local filemode=true
         [ "$DETECT_OS" = "msys" ] && filemode=false
         dvexec git config --global core.filemode $filemode
     fi
-    if get_gitsettingcnt "alias.co="; then
+    if ! is_exists_setting "$list" "alias.co"; then
         dvexec git config --global alias.co checkout
     fi
-    if get_gitsettingcnt "alias.cm="; then
+    if ! is_exists_setting "$list" "alias.cm"; then
         dvexec git config --global alias.cm commit
     fi
-    if get_gitsettingcnt "alias.st="; then
+    if ! is_exists_setting "$list" "alias.st"; then
         dvexec git config --global alias.st status
     fi
-    if get_gitsettingcnt "alias.br="; then
+    if ! is_exists_setting "$list" "alias.br"; then
         dvexec git config --global alias.br branch
     fi
-    if get_gitsettingcnt "alias.lgo="; then
+    if ! is_exists_setting "$list" "alias.lgo"; then
         dvexec "git config --global alias.lgo \"log --oneline\""
     fi
-    if get_gitsettingcnt "alias.lg="; then
+    if ! is_exists_setting "$list" "alias.lg"; then
         dvexec "git config --global alias.lg \"log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative\""
     fi
-    if get_gitsettingcnt "alias.lga="; then
+    if ! is_exists_setting "$list" "alias.lga"; then
         dvexec "git config --global alias.lga \"log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative\""
     fi
-    if get_gitsettingcnt "alias.tar="; then
+    if ! is_exists_setting "$list" "alias.tar"; then
         dvexec "git config --global alias.tar \"archive --format=tar HEAD -o\""
     fi
-    if get_gitsettingcnt "alias.tgz="; then
+    if ! is_exists_setting "$list" "alias.tgz"; then
         dvexec "git config --global alias.tgz \"archive --format=tgz HEAD -o\""
     fi
-    if get_gitsettingcnt "alias.zip="; then
+    if ! is_exists_setting "$list" "alias.zip"; then
         dvexec "git config --global alias.zip \"archive --format=zip HEAD -o\""
     fi
-    if get_gitsettingcnt "alias.or="; then
+    if ! is_exists_setting "$list" "alias.or"; then
         dvexec git config --global alias.or orphan
     fi
-    if get_gitsettingcnt "init.templatedir="; then
+    if ! is_exists_setting "$list" "init.templatedir"; then
         dvexec git config --global init.templatedir '~/.git_template'
     fi
-    if get_gitsettingcnt "alias.ignore="; then
+    if ! is_exists_setting "$list" "alias.ignore"; then
         dvexec "git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'"
     fi
+}
+
+is_exists_setting() {
+    echo -e "$1" |grep "$2=" >/dev/null 2>&1
+    return $?
 }
 
 get_gitsettingcnt() {

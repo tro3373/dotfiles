@@ -39,7 +39,7 @@ if not exist "%hosts%" (
     %bin%\bash.exe -c "/usr/bin/pacman -Sy pacman --noconfirm && /usr/bin/pacman -Syu --noconfirm && /usr/bin/pacman -Su --noconfirm && /usr/bin/echo Done Update"
     echo _______
     echo Third setup Done. pakages updated. ReRun
-) else if not exist "%msys64root%\minggw64\bin\ag.exe" (
+) else if not exist "%msys64root%\mingw64\bin\ag.exe" (
     rem Install pakages
     %bin%\bash.exe -c "/usr/bin/pacman -S --noconfirm zsh vim git winpty svn wget sed diffutils grep tar unzip patch mingw-w64-x86_64-gcc make gcc mingw-w64-x86_64-ag"
     rem Change login shell to zsh
@@ -57,3 +57,4 @@ if not exist "%hosts%" (
 
 endlocal
 pause
+

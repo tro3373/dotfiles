@@ -4,8 +4,10 @@ if [ -z "$DOTPATH" ]; then
             echo "$(cd ${HOME}/dotfiles && pwd)"
         elif [[ -d ${HOME}/.dotfiles ]]; then
             echo "$(cd ${HOME}/.dotfiles && pwd)"
+        elif [[ -d ${HOME}/.dot ]]; then
+            echo "$(cd ${HOME}/.dot && pwd)"
         else
-            return 1
+            echo "$(cd ${HOME} && pwd)/dotfiles"
         fi
     }
     export DOTPATH="$(_get_dotpath)"

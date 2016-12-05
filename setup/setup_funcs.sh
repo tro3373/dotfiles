@@ -213,7 +213,7 @@ setup_instcmd() {
 }
 
 initialize() {
-    if [ "$DIR_ROOT" = "" ]; then
+    if [ -z $DIR_ROOT ]; then
         DIR_ROOT=~/dotfiles
     fi
     # 各アプリ個別設定用のファイル名
@@ -232,34 +232,72 @@ initialize() {
     fi
 }
 
+initialize_mac() {
+    if ! test_cmd brew; then
+        log '================================================'
+        log ' HomeBrew is Not Installed!'
+        log '  => Execute this and Install it!'
+        log ''
+        log '  echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile'
+        log '  sudo mkdir /usr/local/'
+        log '  ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"'
+        log '  source ~/.bash_profile'
+        log '  brew update'
+        log '  brew -v'
+        log ''
+        exit 1
+    fi
+}
+
+initialize_msys2() {
+    if [ -z $WINHOME ]; then
+        WINHOME="$(cd /c/Users/`whoami` && pwd)"
+    fi
+    [ ! -e $WINHOME/bin ] && mkdir $WINHOME/bin
+    [ ! -e $WINHOME/tools ] && mkdir $WINHOME/tools
+    [ ! -e $WINHOME/works ] && mkdir $WINHOME/works
+    local msys64=$WINHOME/AppData/Local/msys64
+    local msys64ag=$msys64/mingw64/bin/ag.exe
+    [ -e $msys64ag ] && return
+    if [ ! -e $msys64 ]; then
+        local tmp=${DIR_ROOT}/tmp
+        if [ ! -e "${tmp}" ]; then
+            dvexec "mkdir -p \"${tmp}\""
+        fi
+        dvexec cd $tmp
+        local target=msys2-x86_64-latest.tar.xz
+        if [ ! -e $target ]; then
+            dvexec curl -fsSLO http://repo.msys2.org/distrib/$target
+        fi
+        if [ ! -e $tmp/msys64 ]; then
+            dvexec tar Jxfv msys2-x86_64-latest.tar.xz
+        fi
+        if [ ! -e $msys64 ]; then
+            dvexec mv msys64 $msys64
+        fi
+        dvexec cd -
+    fi
+    echo "Start setup_msys2.bat"
+    exit 0
+}
+
 # セットアップ開始
 setup() {
     initialize
-
-    # -e: Exit when error occur.
-    # -u: Exit when using undefined variable.
-    set -eu
 
     # スクリプトが置かれているパスに移動する
     cd $DIR_ROOT
 
     # Mac 用 Brew インストールチェック
     if [ "$DETECT_OS" = "mac" ]; then
-        if ! test_cmd brew; then
-            log '================================================'
-            log ' HomeBrew is Not Installed!'
-            log '  => Execute this and Install it!'
-            log ''
-            log '  echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile'
-            log '  sudo mkdir /usr/local/'
-            log '  ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"'
-            log '  source ~/.bash_profile'
-            log '  brew update'
-            log '  brew -v'
-            log ''
-            exit 1
-        fi
+        initialize_mac
+    elif [ "$DETECT_OS" = "msys" ]; then
+        initialize_msys2
     fi
+
+    # -e: Exit when error occur.
+    # -u: Exit when using undefined variable.
+    set -eu
 
     # app ディレクトリ配下のディレクトリに対して、インストール処理を実行
     # mac/linux にかかわらず、実行される

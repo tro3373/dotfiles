@@ -11,4 +11,4 @@ main() {
     fi
     ls -la $backup_root
 }
-main
+main $*
