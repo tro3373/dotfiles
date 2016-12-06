@@ -212,90 +212,7 @@ setup_instcmd() {
     fi
 }
 
-initialize() {
-    # 各アプリ個別設定用のファイル名
-    FIL_CONF=config.sh
-    # インストールアプリディレクトリ
-    DIR_APP=$DIR_ROOT/apps
-    # バックアップ先ディレクトリ
-    DIR_BACKUP="${DIR_ROOT}/bkup/`date +%Y%m%d%H%M%S`"
-    # バックアップしたファイルを後でまとめて表示する
-    BACKUP=""
-    # instcmd 設定
-    setup_instcmd
-    # ~/bin 作成
-    if [ ! -e ~/bin ]; then
-        mkdir ~/bin
-    fi
-}
-
-initialize_mac() {
-    if ! test_cmd brew; then
-        log '================================================'
-        log ' HomeBrew is Not Installed!'
-        log '  => Execute this and Install it!'
-        log ''
-        log '  echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile'
-        log '  sudo mkdir /usr/local/'
-        log '  ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"'
-        log '  source ~/.bash_profile'
-        log '  brew update'
-        log '  brew -v'
-        log ''
-        exit 1
-    fi
-}
-
-initialize_msys2() {
-    if [ -z $WINHOME ]; then
-        WINHOME="$(cd /c/Users/`whoami` && pwd)"
-    fi
-    [ ! -e $WINHOME/bin ] && mkdir $WINHOME/bin
-    [ ! -e $WINHOME/tools ] && mkdir $WINHOME/tools
-    [ ! -e $WINHOME/works ] && mkdir $WINHOME/works
-    local msys64=$WINHOME/AppData/Local/msys64
-    local msys64ag=$msys64/mingw64/bin/ag.exe
-    [ -e $msys64ag ] && return
-    if [ ! -e $msys64 ]; then
-        local tmp=${DIR_ROOT}/tmp
-        if [ ! -e "${tmp}" ]; then
-            dvexec "mkdir -p \"${tmp}\""
-        fi
-        dvexec cd $tmp
-        local target=msys2-x86_64-latest.tar.xz
-        if [ ! -e $target ]; then
-            dvexec curl -fsSLO http://repo.msys2.org/distrib/$target
-        fi
-        if [ ! -e $tmp/msys64 ]; then
-            dvexec tar Jxfv msys2-x86_64-latest.tar.xz
-        fi
-        if [ ! -e $msys64 ]; then
-            dvexec mv msys64 $msys64
-        fi
-        dvexec cd -
-    fi
-    echo "Start setup_msys2.bat"
-    exit 0
-}
-
-# セットアップ開始
-setup() {
-    initialize
-
-    # スクリプトが置かれているパスに移動する
-    cd $DIR_ROOT
-
-    # Mac 用 Brew インストールチェック
-    if [ "$DETECT_OS" = "mac" ]; then
-        initialize_mac
-    elif [ "$DETECT_OS" = "msys" ]; then
-        initialize_msys2
-    fi
-
-    # -e: Exit when error occur.
-    # -u: Exit when using undefined variable.
-    set -eu
-
+setup_apps() {
     # app ディレクトリ配下のディレクトリに対して、インストール処理を実行
     # mac/linux にかかわらず、実行される
     for ((i = 0; i < ${#target_apps[@]}; i++)) {
@@ -334,6 +251,104 @@ setup() {
             setconfig
         fi
     }
+}
+
+initialize() {
+    # 各アプリ個別設定用のファイル名
+    FIL_CONF=config.sh
+    # インストールアプリディレクトリ
+    DIR_APP=$DIR_ROOT/apps
+    # バックアップ先ディレクトリ
+    DIR_BACKUP="${DIR_ROOT}/bkup/`date +%Y%m%d%H%M%S`"
+    # バックアップしたファイルを後でまとめて表示する
+    BACKUP=""
+    # instcmd 設定
+    setup_instcmd
+    # ~/bin 作成
+    if [ ! -e ~/bin ]; then
+        mkdir ~/bin
+    fi
+}
+
+initialize_mac() {
+    if ! test_cmd brew; then
+        log '================================================'
+        log ' HomeBrew is Not Installed!'
+        log '  => Execute this and Install it!'
+        log ''
+        log '  echo "export PATH=/usr/local/bin:$PATH" >> ~/.bash_profile'
+        log '  sudo mkdir /usr/local/'
+        log '  ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"'
+        log '  source ~/.bash_profile'
+        log '  brew update'
+        log '  brew -v'
+        log ''
+        return 1
+    fi
+    return 0
+}
+
+# 7z,Git for Windows
+# setup.sh
+# setup_msys2.bat
+# start msys2_shell.cmd as adm
+# setup.sh
+initialize_msys2() {
+    if [ -z $WINHOME ]; then
+        WINHOME="$(cd /c/Users/`whoami` && pwd)"
+    fi
+    [ ! -e $WINHOME/bin ] && mkdir $WINHOME/bin
+    [ ! -e $WINHOME/tools ] && mkdir $WINHOME/tools
+    [ ! -e $WINHOME/works ] && mkdir $WINHOME/works
+
+    local msys64=$WINHOME/AppData/Local/Msys64
+    local msys64ag=$msys64/mingw64/bin/ag.exe
+
+    [ -e $msys64 ] && [ -e $msys64ag ] && return 0
+
+    local tmp=${DIR_ROOT}/tmp
+    if [ ! -e "${tmp}" ]; then
+        dvexec "mkdir -p \"${tmp}\""
+    fi
+    dvexec cd $tmp
+    local target=msys2-x86_64-latest.tar.xz
+    if [ ! -e $target ]; then
+        dvexec curl -fsSLO http://repo.msys2.org/distrib/$target
+    fi
+    echo "Untar the $target and start setup_msys2.bat..."
+    # if [ ! -e $tmp/msys64 ]; then
+    #     dvexec tar Jxfv msys2-x86_64-latest.tar.xz
+    # fi
+    # if [ ! -e $msys64 ]; then
+    #     dvexec mv msys64 $msys64
+    # fi
+    # dvexec cd -
+    # [ -e $msys64 ] && [ -e $msys64ag ] && log "===> Start setup_msys2.bat"
+    return 1
+}
+
+# セットアップ開始
+setup() {
+    initialize
+
+    # スクリプトが置かれているパスに移動する
+    cd $DIR_ROOT
+
+    local valid=1
+    if [ "$DETECT_OS" = "mac" ]; then
+        # Mac 用 Brew インストールチェック
+        ! initialize_mac && valid=0
+    elif [ "$DETECT_OS" = "msys" ]; then
+        # msys 用 インストールチェック
+        # Git for Windows の Bash も msys で起動される為
+        # ここを通る
+        ! initialize_msys2 && valid=0
+    fi
+
+    # -e: Exit when error occur.
+    # -u: Exit when using undefined variable.
+    set -eu
+    [ $valid -eq 1 ] && setup_apps
 
     if [[ $dry_run -eq 1 ]]; then
         log ""

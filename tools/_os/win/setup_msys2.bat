@@ -7,7 +7,7 @@ set bin=%msys64root%\usr\bin
 set msys2_shell=%msys64root%\msys2_shell.cmd
 set fstab=%msys64root%\etc\fstab
 set hosts=%msys64root%\etc\hosts
-set unxrel=.cache\unxh
+set unxrel=.cache/unxh
 
 if not exist "%msys64root%" (
     echo No msys root dir. %msys64root%
@@ -31,7 +31,7 @@ if not exist "%hosts%" (
     echo First setup Done. ReRun
 ) else if not exist "C:%HOMEPATH%\%unxrel%\.profile" (
     rem Mount home to wins specified path
-    %bin%\bash.exe -c "/usr/bin/mv /home/%username%/* /c/Users/%username%/%unxrel%/"
+    rem %bin%\bash.exe -c "/usr/bin/mv /home/%username%/* /c/Users/%username%/%unxrel%/"
     %bin%\bash.exe -c "/usr/bin/mv /home/%username%/.??* /c/Users/%username%/%unxrel%/"
     %bin%\bash.exe -c "/usr/bin/echo C:/Users/%username%/%unxrel% /home/%username% >> /etc/fstab"
     echo _______
