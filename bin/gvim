@@ -1,13 +1,33 @@
 #!/bin/bash
 
+set -eu
+
 if [[ ${OSTYPE} == "msys" ]]; then
+    gvim_dir=vim80-kaoriya-win64
     args="$*"
     if [ $# -eq 0 ]; then
         args="."
     fi
-    # $LOCALAPPDATA is not working
-    args=$(cygpath -aw "$args")
-    HOME= SHELL= PATH=$ORIGINAL_PATH TMP=$LOCALAPPDATA\\Temp TEMP=$TMP $WINHOME/tools/vim80-kaoriya-win64/gvim.exe --remote-tab-silent "$args" &
+    if false; then
+        # Msys path/shell ==> So Buggie...
+        # $WINHOME/AppData/Local/Temp
+        TMP=$ORIGINAL_TMP TEMP=$ORIGINAL_TEMP $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent "$args" &
+    else
+        # Windows path/shell
+        # $LOCALAPPDATA is not working
+        # HOME= SHELL= PATH=$ORIGINAL_PATH TMP=$LOCALAPPDATA\\Temp TEMP=$TMP $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent "$args" &
+        args=$(cygpath -aw "$args")
+        tmppath=$(cygpath -aw "$WINHOME/AppData/Local/Temp")
+        usrbinpath=$(cygpath -aw "/usr/bin")
+        gitpath=$(cygpath -aw "$PROGRAMFILES/Git/cmd")
+        if [ ! -e "/c/Program Files/Git/cmd" ]; then
+            gitpath=$usrbinpath\\git.exe
+        fi
+        mybinpath=$(cygpath -aw "$WINHOME/bin")
+        agpath=usrbinpath\\ag.exe
+        winpath="$mybinpath;$gitpath;$agpath;$ORIGINAL_PATH"
+        HOME= SHELL= PATH=$winpath TMP=$tmppath TEMP=$tmppath $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent "$args" &
+    fi
 else
     gvim $*
 fi
