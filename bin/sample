@@ -2,7 +2,7 @@
 
 current_dir=$(pwd)
 script_dir=$(cd $(dirname $0); pwd)
-template=$script_dir/lib/template_sample.sh
+template=$script_dir/lib/template.sh
 
 f=${1:-sample.sh}
 if [[ -e $f ]]; then
