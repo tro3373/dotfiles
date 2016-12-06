@@ -213,9 +213,6 @@ setup_instcmd() {
 }
 
 initialize() {
-    if [ -z $DIR_ROOT ]; then
-        DIR_ROOT=~/dotfiles
-    fi
     # 各アプリ個別設定用のファイル名
     FIL_CONF=config.sh
     # インストールアプリディレクトリ

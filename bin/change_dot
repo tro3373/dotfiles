@@ -1,9 +1,9 @@
 #!/bin/bash
 
-u=tro3373
+u=${1:}
 rep=git@github.com:$u/dotfiles.git
-[[ ! -z "$1" ]] && rep=https://github.com/$u/dotfiles.git
-dot=$HOME/dotfiles
+[[ -z "$1" ]] && echo "Specify github username." && exit 1
+dot=$HOME/.dot
 old=${dot}.old
 
 mv_to() {

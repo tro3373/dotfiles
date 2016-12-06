@@ -128,7 +128,7 @@ add_path ${HOME}/android-studio/bin
 # .local/bin
 add_path ${HOME}/.local/bin
 
-# ${HOME}/dotfiles/bin
+# $DOTPATH/bin
 add_path ${DOTPATH}/bin
 
 # ${HOME}/bin

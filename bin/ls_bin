@@ -1,6 +1,6 @@
 #!/bin/bash
 
 main() {
-    /bin/ls --color ~/dotfiles/bin
+    /bin/ls --color $DOTPATH/bin
 }
 main

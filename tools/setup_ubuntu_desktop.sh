@@ -8,7 +8,7 @@ script_dir=$(cd $(dirname $0); pwd)
 # @see https://wiki.ubuntulinux.jp/hito/WIP-ambiwidth
 # sudo bash -c 'echo "export VTE_CJK_WIDTH=1" > /etc/profile.d/vte_cjk_width.sh'
 # For Under ubuntu14.10
-# ln -s ~/dotfiles/tools/ubuntu/cjk-terminal.desktop ~/.local/share/applications/cjk-terminal.desktop
+# ln -s $DOTPATH/tools/ubuntu/cjk-terminal.desktop ~/.local/share/applications/cjk-terminal.desktop
 # For Upper ubuntu15.04, terminal-app settings can do that.
 # [Profile settings - compatibility - fazy width char] => set to double byte
 #   => but, tmux not fix it, buggy....

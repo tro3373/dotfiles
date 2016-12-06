@@ -12,7 +12,7 @@ is_exist_app() {
 
 ################################################### INITIALIZE START
 # Rootディレクトリ
-DIR_ROOT=$(cd $(dirname $0); pwd)
+export DIR_ROOT=$(cd $(dirname $0); pwd)
 
 # インストール用関数 ロード
 source $DIR_ROOT/setup/setup_funcs.sh

@@ -2,11 +2,12 @@
 setlocal
 
 set user=%username%
-set msys64root=C:%HOMEPATH%\AppData\Local\msys64
+set msys64root=C:%HOMEPATH%\AppData\Local\Msys64
 set bin=%msys64root%\usr\bin
 set msys2_shell=%msys64root%\msys2_shell.cmd
 set fstab=%msys64root%\etc\fstab
 set hosts=%msys64root%\etc\hosts
+set unxrel=.cache\unxh
 
 if not exist "%msys64root%" (
     echo No msys root dir. %msys64root%
@@ -20,18 +21,19 @@ if not exist "%fstab%" (
     echo No fstab. %fstab%
     exit 1
 )
-if not exist C:\Users\%username%\works (
-    md C:\Users\%username%\works
+if not exist C:\Users\%username%\%unxrel% (
+    md C:\Users\%username%\%unxrel%
 )
 
 if not exist "%hosts%" (
     %msys2_shell%
     echo _______
     echo First setup Done. ReRun
-) else if not exist "C:%HOMEPATH%\works\.profile" (
+) else if not exist "C:%HOMEPATH%\%unxrel%\.profile" (
     rem Mount home to wins specified path
-    %bin%\bash.exe -c "/usr/bin/cp -rf /home/%username%/.??* /c/Users/%username%/works/"
-    %bin%\bash.exe -c "/usr/bin/echo C:/Users/%username%/works /home/%username% >> /etc/fstab"
+    %bin%\bash.exe -c "/usr/bin/mv /home/%username%/* /c/Users/%username%/%unxrel%/"
+    %bin%\bash.exe -c "/usr/bin/mv /home/%username%/.??* /c/Users/%username%/%unxrel%/"
+    %bin%\bash.exe -c "/usr/bin/echo C:/Users/%username%/%unxrel% /home/%username% >> /etc/fstab"
     echo _______
     echo Second setup Done. home is changed. ReRun
 ) else if not exist "%msys64root%\var\cache" (
