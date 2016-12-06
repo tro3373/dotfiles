@@ -45,15 +45,15 @@ install() {
 
 setconfig() {
     workdir="$script_dir/tmp"
+    local setcolortheme
+    # setcolortheme=dircolors.256dark
+    setcolortheme=dircolors.ansi-dark
+    # setcolortheme=dircolors.ansi-light
+    # setcolortheme=dircolors.ansi-universal
     if [ -e "${workdir}/dircolors-solarized/${setcolortheme}" ]; then
-        local setcolortheme
-        # setcolortheme=dircolors.256dark
-        setcolortheme=dircolors.ansi-dark
-        # setcolortheme=dircolors.ansi-light
-        # setcolortheme=dircolors.ansi-universal
         make_link_bkupable "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
     fi
-    if [ ! -e ~/.works.zsh ] && dvexec touch ~/.works.zsh && chmod 755 ~/.works.zsh
+    [ ! -e ~/.works.zsh ] && dvexec touch ~/.works.zsh && chmod 755 ~/.works.zsh
     if [[ "$DETECT_OS" == "msys" ]]; then
         # その他ドットファイルリンク作成 TODO
         make_link_dot2home $script_dir/win

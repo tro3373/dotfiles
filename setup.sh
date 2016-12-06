@@ -15,7 +15,7 @@ is_exist_app() {
 export DIR_ROOT=$(cd $(dirname $0); pwd)
 
 # インストール用関数 ロード
-source $DIR_ROOT/setup/setup_funcs.sh
+source $DIR_ROOT/lib/setup_funcs.sh
 
 # 起動引数設定
 debug=0

@@ -316,7 +316,7 @@ setup() {
         # デフォルト関数ロード
         # 下記 vexec source $script_path にて、install, setconfig メソッドが
         # 上書き定義される為、ここで初期化する
-        source $DIR_ROOT/setup/default_config.sh
+        source $DIR_ROOT/lib/default_config.sh
 
         # 個別インストール設定ファイルが存在する場合は、それを実行する為
         # config.sh ファイルを読み込み、install, setconfigメソッドをロード

@@ -147,7 +147,7 @@ exit /b 0
 exit /b 0
 
 :makelinks
-    set LIBBIN="%DOTPATH%\tools\win\bin"
+    set LIBBIN="%DOTPATH%\tools\_os\win\bin"
     for /f "delims=;" %%A in ('dir %LIBBIN% /b/o-n') do (
         call :backuppable_link "%HOMEPATH%\bin" "%%A" "%LIBBIN%\%%A" 0
     )
@@ -165,7 +165,7 @@ exit /b 0
 
 :sakura
     set SUBFNK_NM=sakura
-    call :backuppable_link "%HOMEPATH%\AppData\Roaming\sakura" "sakura.ini" "%DOTPATH%\tools\win\sakura\sakura.ini" 0
+    call :backuppable_link "%HOMEPATH%\AppData\Roaming\sakura" "sakura.ini" "%DOTPATH%\tools\_os\win\sakura\sakura.ini" 0
 exit /b 0
 
 :sublime3
