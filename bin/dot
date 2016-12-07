@@ -1,0 +1,5 @@
+#!/bin/bash
+
+d="~";[ $OSTYPE = "msys" ] && d="/c/Users/`whoami`/.cache/unxh";d="$d/.dot";
+[ ! -e $d ] && git clone -q "$(curl -fsSLI git.io/tr3d |grep Location |grep "\.git" |awk '{print $2}')" "$d"
+
