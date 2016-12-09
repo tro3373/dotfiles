@@ -85,149 +85,47 @@ install() {
         dvexec sudo make
         dvexec sudo make install
     elif [ "$DETECT_OS" = "msys" ]; then
-        if [[ 0 -eq 0 ]]; then
+        # for msys2.
+        local type=package # build/package
+        if [ "$type" = "package" ]; then
             dvexec $def_instcmd
             return 0
         fi
-        # for msys2.
         # install lua.
-        dvexec $instcmd ncurses-devel libcrypt-devel gettext-devel gcc make python2 ruby
+        dlog "===> Lua Building .."
+        dvexec $instcmd ncurses-devel libcrypt-devel gettext-devel gcc make
         if [[ ! -e /usr/local/src/lua ]]; then
             dvexec mkdir -p /usr/local/src/lua
         fi
         dvexec cd /usr/local/src/lua
-        local lua_version=5.3.2
+        local lua_version=5.3.3
         if [[ ! -e "/usr/local/src/lua/lua-$lua_version.tar.gz" ]]; then
             dvexec rm -rf /usr/local/src/lua/*
             dvexec wget http://www.lua.org/ftp/lua-$lua_version.tar.gz
             dvexec tar xvfpz ./lua-$lua_version.tar.gz
         fi
         dvexec cd ./lua-$lua_version
-
         dvexec make mingw
         dvexec make install
 
         # install vim.
-        dvexec cd /usr/local/src/
-        if [[ ! -e /usr/local/src/vim ]]; then
-            dvexec git clone https://github.com/vim/vim.git
+        dlog "===> Vim Building .."
+        dvexec $instcmd python3 ruby
+
+        dlog "===> Msys2 packages Cloning .."
+        if [[ ! -e "/usr/local/src/Msys2-packages/.git" ]]; then
+            dvexec cd /usr/local/src
+            dvexec git clone https://github.com/Alexpux/MSYS2-packages.git
         fi
-        dvexec cd vim/src
-        dvexec ./configure \
-            CPPFLAGS="-I/usr/include/ncursew" \
-            --enable-fail-if-missing \
-            --with-features=huge \
-            --with-tlib=ncursesw \
-            --enable-multibyte \
-            --enable-perlinterp=yes \
-            --enable-rubyinterp=yes \
-            --enable-pythoninterp=yes \
-            --enable-luainterp \
-            --with-lua-prefix=/usr/local \
-            --without-x \
-            --disable-cscope \
-            --disable-athena-check \
-            --disable-carbon-check \
-            --disable-motif-check \
-            --disable-gtk2-check \
-            --disable-nextaw-check \
-            --disable-selinux \
-            --disable-smack \
-            --disable-darwin \
-            --disable-mzschemeinterp \
-            --disable-tclinterp \
-            --disable-workshop \
-            --disable-gpm \
-            --disable-sysmouse \
-            --disable-gui
-        dvexec make
-        dvexec make install
-#    elif [ "$DETECT_OS" = "msys" ]; then
-##        dvexec $def_instcmd
-#        # for msys2.
-#        # http://proglab.blog.fc2.com/blog-entry-38.html
-#        # install lua.
-#        #dvexec $instcmd ncurses-devel libcrypt-devel gettext-devel gcc make python ruby
-#        if [[ ! -e "/usr/local/src/lua" ]]; then
-#            dvexec mkdir -p /usr/local/src/lua
-#        fi
-#        if [[ ! -e "/usr/local/src/lua/luajit-2.0" ]]; then
-#            dvexec git clone http://luajit.org/git/luajit-2.0.git /usr/local/src/lua/luajit-2.0
-#        fi
-#        dvexec cd /usr/local/src/lua/luajit-2.0
-#        dvexec git checkout v2.0.4
-#        dvexec make
-#        dvexec make PREFIX=/opt/mingw64/luajit-2.0.4 install -Dm644 src/lua51.dll /opt/mingw64/luajit-2.0.4/bin/lua51.dll
-#        dvexec mv /opt/mingw64/luajit-2.0.4/{share/luajit-2.0.4/jit/,bin/lua/jit/}
-#        # install vim.
-#        dvexec $instcmd pacman -S \
-#            mingw-w64-x86_64-perl \
-#            mingw-w64-x86_64-python \
-#            mingw-w64-x86_64-pytho \
-#            n3 \
-#            mingw-w64-x86_64-ruby \
-#            mingw-w64-x86_64-tcl
-#        dvexec cd /usr/local/src/
-#        if [[ ! -e /usr/local/src/vim ]]; then
-#            dvexec git clone https://github.com/vim/vim.git /usr/local/src/vim
-#        fi
-#        dvexec cd /usr/local/src/vim
-#        dvexec git checkout refs/tags/v7.4.884
-#        dvexec patch -p1 -i $script_dir/Make_cyg_mingw.mak.diff
-#        dvexec cd src
-#        dvexec env CFLAGS="-mtune=native" \
-#            mingw32-make -f Make_cyg_ming.mak \
-#            DIRECTX=yes \
-#            FEATURES=HUGE \
-#            ARCH=x86-64 \
-#            OLE=yes \
-#            PERL=C:/msys64/mingw64 \
-#            PERLLIB=C:/msys64/mingw64/lib/perl5/core_perl \
-#            PERL_VER=522 \
-#            LUA=C:/msys64/opt/mingw64/luajit-2.0.4 \
-#            LUAINC=C:/msys64/opt/mingw64/luajit-2.0.4/include/luajit-2.0 \
-#            PYTHON=C:/msys64/mingw64 \
-#            PYTHONINC="-I C:/msys64/mingw64/include/python2.7" \
-#            PYTHON_VER=2.7 \
-#            PYTHON3=C:/msys64/mingw64 \
-#            PYTHON3INC="-I C:/msys64/mingw64/include/python3.5m" \
-#            PYTHON3_VER=3.5 \
-#            RUBY=C:/msys64/mingw64 \
-#            RUBYINC="-I C:/msys64/mingw64/include/ruby-2.2.0 -I C:/msys64/mingw64/include/ruby-2.2.0/x64-mingw32" \
-#            RUBY_VER=22 \
-#            RUBY_VER_LONG=220 \
-#            TCL=C:/msys64/mingw64 \
-#            TCL_VER=86
-#        # -mtune=native で構築した vim.exe はまともに動作しないため
-#        dvexec mingw32-make -f Make_cyg_ming.make ARCH=x86-64 clean
-#
-#        dvexec mingw32-make -f Make_cyg_ming.mak \
-#            DIRECTX=yes \
-#            FEATURES=HUGE \
-#            ARCH=x86-64 \
-#            GUI=no \
-#            PERL=C:/msys64/mingw64 \
-#            PERLLIB=C:/msys64/mingw64/lib/perl5/core_perl \
-#            PERL_VER=522 \
-#            LUA=C:/msys64/opt/mingw64/luajit-2.0.4 \
-#            LUAINC=C:/msys64/opt/mingw64/luajit-2.0.4/include/luajit-2.0 \
-#            PYTHON=C:/msys64/mingw64 \
-#            PYTHONINC="-I C:/msys64/mingw64/include/python2.7" \
-#            PYTHON_VER=2.7 \
-#            PYTHON3=C:/msys64/mingw64 \
-#            PYTHON3INC="-I C:/msys64/mingw64/include/python3.5m" \
-#            PYTHON3_VER=3.5 \
-#            RUBY=C:/msys64/mingw64 \
-#            RUBYINC="-I C:/msys64/mingw64/include/ruby-2.2.0 -I C:/msys64/mingw64/include/ruby-2.2.0/x64-mingw32" \
-#            RUBY_VER=22 \
-#            RUBY_VER_LONG=220 \
-#            TCL=C:/msys64/mingw64 \
-#            TCL_VER=86 \
-#            vim.exe
-#        dvexec mkdir -p /opt/mingw64/vim-7.4.884
-#        dvexec install -Dm755 {gvim.exe, vim.exe, vimrun.exe, xxd/xxd.exe} /opt/mingw64/vim-7.4.884
-#        dvexec cp -r ../runtime /opt/mingw64/vim-7.4.884
-#
+        dvexec cd /usr/local/src/MSYS2-packages
+        dvexec git checkout .
+        #local ver=92832fb441011827cfb93ec3208b86cecce05648
+        local ver=93806e8a1d812417491f3aa2e2f0649691a42c8f
+        dvexec git checkout $ver
+        dvexec patch -p1 < $script_dir/vim_pkgbuild.patch
+        dvexec cd vim
+        dvexec makepkg
+        dvexec pacman -U vim*.pkg.tar.gz
     else
         dvexec $def_instcmd
     fi

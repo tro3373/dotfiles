@@ -1,0 +1,21 @@
+diff --git a/vim/PKGBUILD b/vim/PKGBUILD
+index 2cfb660..c76a49c 100644
+--- a/vim/PKGBUILD
++++ b/vim/PKGBUILD
+@@ -75,13 +75,15 @@ build() {
+   # make distclean
+ 
+   ./configure \
++    --enable-fail-if-missing \
+     --prefix=/usr \
+     --build=${CHOST} \
+     --with-features=huge \
+     --with-tlib=ncursesw \
+     --enable-cscope \
+     --enable-multibyte \
+-    --enable-luainterp=dynamic \
++    --enable-luainterp \
++    --with-lua-prefix=/usr/local \
+     --enable-perlinterp=dynamic \
+     --enable-pythoninterp=dynamic \
+     --enable-python3interp=dynamic \
