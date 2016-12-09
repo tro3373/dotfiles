@@ -2,32 +2,70 @@
 
 set -eu
 
-if [[ ${OSTYPE} == "msys" ]]; then
-    gvim_dir=vim80-kaoriya-win64
-    args="$*"
-    if [ $# -eq 0 ]; then
-        args="."
+debug=0
+dlog() {
+    if [ $debug -eq 1 ]; then
+        echo "gvim debug: $*"
     fi
+}
+change() {
+    echo $(cygpath -aw "$*")
+}
+changes() {
+    local tmp=
+    for v in $*; do
+        tmp="$tmp $(change $v)"
+    done
+    echo $tmp
+}
+winpath=
+add_winpath() {
+    local str="$*"
+    local IFS=:
+    arr=($str)
+    unset IFS
+    for path in "${arr[@]}"; do
+        local tmp="$(change "$path")"
+        winpath="$tmp;$winpath"
+        dlog "$path ==> $tmp"
+    done
+}
+main() {
+    if [[ ${OSTYPE} != "msys" ]]; then
+        gvim $*
+        return 0
+    fi
+    local gvim_dir=vim80-kaoriya-win64
+    args=$*
+    if [ "$args" = "" ]; then
+        args="./"
+    fi
+
     if false; then
         # Msys path/shell ==> So Buggie...
         # $WINHOME/AppData/Local/Temp
         TMP=$ORIGINAL_TMP TEMP=$ORIGINAL_TEMP $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent "$args" &
-    else
-        # Windows path/shell
-        # $LOCALAPPDATA is not working
-        # HOME= SHELL= PATH=$ORIGINAL_PATH TMP=$LOCALAPPDATA\\Temp TEMP=$TMP $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent "$args" &
-        args=$(cygpath -aw "$args")
-        tmppath=$(cygpath -aw "$WINHOME/AppData/Local/Temp")
-        usrbinpath=$(cygpath -aw "/usr/bin")
-        gitpath=$(cygpath -aw "$PROGRAMFILES/Git/cmd")
-        if [ ! -e "/c/Program Files/Git/cmd" ]; then
-            gitpath=$usrbinpath\\git.exe
-        fi
-        mybinpath=$(cygpath -aw "$WINHOME/bin")
-        agpath=usrbinpath\\ag.exe
-        winpath="$mybinpath;$gitpath;$agpath;$ORIGINAL_PATH"
-        HOME= SHELL= PATH=$winpath TMP=$tmppath TEMP=$tmppath $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent "$args" &
+        return 0
     fi
-else
-    gvim $*
-fi
+
+    # Windows path/shell
+    # $PROGRAMFILES,$LOCALAPPDATA is not working
+
+    args="$(changes $args)"
+    tmppath="$(change "$WINHOME/AppData/Local/Temp")"
+    add_winpath "$ORIGINAL_PATH"
+    local wingit="/c/Program Files/Git/cmd"
+    if [ -e "$wingit" ]; then
+        add_winpath "$wingit"
+    else
+        # GitGutter Not work
+        add_winpath "/usr/bin/"
+        # File path Not work
+        # add_winpath "/usr/bin/git.exe"
+    fi
+    add_winpath "/mingw64/bin" # For silver searcher ag
+    dlog "AllPath: $winpath"
+    HOME= SHELL= PATH=$winpath TMP=$tmppath TEMP=$tmppath $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent "$args" &
+}
+main $*
+
