@@ -38,7 +38,8 @@ main() {
     local gvim_dir=vim80-kaoriya-win64
     args=$*
     if [ "$args" = "" ]; then
-        args="./"
+        #args=$(change "$(pwd)")
+        args=$(pwd)
     fi
 
     if false; then
@@ -64,8 +65,10 @@ main() {
         # add_winpath "/usr/bin/git.exe"
     fi
     add_winpath "/mingw64/bin" # For silver searcher ag
+    add_winpath "$WINHOME/bin"
     dlog "AllPath: $winpath"
-    HOME= SHELL= PATH=$winpath TMP=$tmppath TEMP=$tmppath $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent "$args" &
+    dlog "Args:    $args"
+    HOME= SHELL= PATH=$winpath TMP=$tmppath TEMP=$tmppath $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent $args &
 }
 main $*
 
