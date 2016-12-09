@@ -1,6 +1,6 @@
 #!/bin/bash
 
-backup_root="${DOTPATH=-~}/bkup"
+backup_root="${DOTPATH:-~}/bkup"
 #dst="${backup_root}/`date +%Y%m%d%H%M%S`"
 dst="${backup_root}/`date +%Y%m%d`"
 set -eu

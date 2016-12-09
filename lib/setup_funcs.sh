@@ -254,7 +254,7 @@ setup_apps() {
 }
 
 initialize() {
-    DIR_ROOT=${DOTPATH=-$HOME/.dot}
+    DIR_ROOT=${DOTPATH:-$HOME/.dot}
     # 各アプリ個別設定用のファイル名
     FIL_CONF=config.sh
     # インストールアプリディレクトリ
