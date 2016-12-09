@@ -1,0 +1,28 @@
+#!/bin/bash
+
+main() {
+    local fext=
+    local word=
+    case $# in
+        0)
+            cat <<EOF
+Find grep <search_word> under current directory tool.
+
+    ${0##*/} <file_ext> <search_word>
+
+EOF
+            exit 1
+            ;;
+        1)
+            fext=\*
+            word=$1
+            ;;
+        *)
+            fext=\*.$1
+            # 2番目以降の引数を全て設定
+            word=${@:2:($#-1)}
+            ;;
+    esac
+    find . -name "$fext" -type f |xargs grep --color=auto "$word"
+}
+main "$@"
