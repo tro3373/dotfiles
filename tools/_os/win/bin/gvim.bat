@@ -13,6 +13,6 @@ set path=C:\Program Files\Git\cmd;%path%
 set path=%HOMEPATH%\AppData\Local\Msys64\Mingw64\bin;%path%
 set path=%HOMEPATH%\bin;%path%
 rem echo %path%
-set home=%HOMEPATH%\.cache\unxh
+rem set home=%HOMEPATH%\.cache\unxh
 start "" C:%HOMEPATH%\tools\%gvim_dir%\gvim.exe --remote-tab-silent %args%
 

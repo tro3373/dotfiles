@@ -53,7 +53,8 @@ main() {
     # $PROGRAMFILES,$LOCALAPPDATA is not working
 
     args="$(changes $args)"
-    homepath="$(change "$HOME")"
+    # homepath="$(change "$HOME")"
+    homepath=""
     tmppath="$(change "$WINHOME/AppData/Local/Temp")"
     add_winpath "$ORIGINAL_PATH"
     local wingit="/c/Program Files/Git/cmd"
