@@ -86,7 +86,7 @@ install() {
         dvexec sudo make install
     elif [ "$DETECT_OS" = "msys" ]; then
         # for msys2.
-        local type=package # build/package
+        local type=build # build/package
         if [ "$type" = "package" ]; then
             dvexec $def_instcmd
             return 0
@@ -113,19 +113,20 @@ install() {
         dvexec $instcmd python3 ruby
 
         dlog "===> Msys2 packages Cloning .."
-        if [[ ! -e "/usr/local/src/Msys2-packages/.git" ]]; then
+        local msys2packages=/usr/local/src/Msys2-packages
+        if [[ ! -e "$msys2packages/.git" ]]; then
             dvexec cd /usr/local/src
             dvexec git clone https://github.com/Alexpux/MSYS2-packages.git
         fi
         dvexec cd /usr/local/src/MSYS2-packages
         dvexec git checkout .
-        #local ver=92832fb441011827cfb93ec3208b86cecce05648
-        local ver=93806e8a1d812417491f3aa2e2f0649691a42c8f
+        local ver=92832fb441011827cfb93ec3208b86cecce05648
         dvexec git checkout $ver
         dvexec patch -p1 < $script_dir/vim_pkgbuild.patch
         dvexec cd vim
         dvexec makepkg
-        dvexec pacman -U vim*.pkg.tar.gz
+        # upgrade error will occur
+        #dvexec pacman -U --noconfirm vim*.pkg.tar.xz
     else
         dvexec $def_instcmd
     fi
@@ -134,4 +135,10 @@ install() {
 
 setconfig() {
     make_link_dot2home $script_dir
+    if [ "$DETECT_OS" = "msys" ]; then
+        local buildvim=/usr/local/src/Msys2-packages/vim/pkg/vim/usr/bin/vim.exe
+        if [ -e $buildvim ]; then
+            make_link_bkupable "$buildvim" "${HOME}/bin/vim"
+        fi
+    fi
 }

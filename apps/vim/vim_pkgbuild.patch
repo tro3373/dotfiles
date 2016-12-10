@@ -1,5 +1,5 @@
 diff --git a/vim/PKGBUILD b/vim/PKGBUILD
-index 2cfb660..c76a49c 100644
+index 1d103c5..61a9f55 100644
 --- a/vim/PKGBUILD
 +++ b/vim/PKGBUILD
 @@ -75,13 +75,15 @@ build() {
@@ -19,3 +19,18 @@ index 2cfb660..c76a49c 100644
      --enable-perlinterp=dynamic \
      --enable-pythoninterp=dynamic \
      --enable-python3interp=dynamic \
+@@ -118,10 +120,10 @@ package() {
+   #  cp -f vi.exe ${pkgdir}/usr/bin/${x}
+   #done
+ 
+-  for y in vimdiff view rview rvim
+-  do
+-    cp -f ${pkgdir}/usr/bin/vim.exe ${pkgdir}/usr/bin/${y}
+-  done
++  # for y in vimdiff view rview rvim
++  # do
++  #   cp -f ${pkgdir}/usr/bin/vim.exe ${pkgdir}/usr/bin/${y}
++  # done
+ 
+   mkdir -p ${pkgdir}/usr/share/bash-completion/completions
+   cp -f ${srcdir}/vim-completion ${pkgdir}/usr/share/bash-completion/completions/vim
