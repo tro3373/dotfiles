@@ -37,9 +37,7 @@ install() {
             dvexec "$instcmd gawk"
         fi
         ZPLUG_HOME=~/.zplug
-        dvexec git clone https://github.com/b4b4r07/zplug $ZPLUG_HOME
-#        dvexec source ~/.zplug/zplug
-#        dvexec zplug update --self
+        dvexec git clone https://github.com/zplug/zplug $ZPLUG_HOME
     fi
 }
 
@@ -54,7 +52,7 @@ setconfig() {
         make_link_bkupable "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
     fi
     [ ! -e ~/.works.zsh ] && dvexec touch ~/.works.zsh && chmod 755 ~/.works.zsh
-    if [[ "$DETECT_OS" == "msys" ]]; then
+    if false && [[ "$DETECT_OS" == "msys" ]]; then
         # その他ドットファイルリンク作成 TODO
         make_link_dot2home $script_dir/win
         make_link_bkupable "${script_dir}/.zshenv" "${HOME}/.zshenv"
