@@ -1,13 +1,13 @@
 if [ -z "$DOTPATH" ]; then
     _get_dotpath() {
-        if [[ -d ${HOME}/dotfiles ]]; then
-            echo "$(cd ${HOME}/dotfiles && pwd)"
+        if [[ -d ${HOME}/.dot ]]; then
+            echo "$(cd ${HOME}/.dot && pwd)"
         elif [[ -d ${HOME}/.dotfiles ]]; then
             echo "$(cd ${HOME}/.dotfiles && pwd)"
-        elif [[ -d ${HOME}/.dot ]]; then
-            echo "$(cd ${HOME}/.dot && pwd)"
+        elif [[ -d ${HOME}/dotfiles ]]; then
+            echo "$(cd ${HOME}/dotfiles && pwd)"
         else
-            echo "$(cd ${HOME} && pwd)/dotfiles"
+            echo "$(cd ${HOME} && pwd)/.dot"
         fi
     }
     export DOTPATH="$(_get_dotpath)"

@@ -1,5 +1,12 @@
 #!/bin/bash
 
-d="~";[ $OSTYPE = "msys" ] && d="/c/Users/`whoami`/.cache/unxh";d="$d/.dot";
-[ ! -e $d ] && git clone -q "$(curl -fsSLI git.io/tr3d |grep Location |grep "\.git" |awk '{print $2}')" "$d"
+to="$1"
+if [ -z $to ]; then
+    if [ $OSTYPE = "msys" ]; then
+        to="/c/Users/`whoami`/.cache/unxh/.dot"
+    else
+        to=${to:$HOME/.dot}
+    fi
+fi
+[ ! -e $to ] && git clone -q "$(curl -fsSLI git.io/tr3d |grep Location |grep "\.git" |awk '{print $2}')" "$to"
 
