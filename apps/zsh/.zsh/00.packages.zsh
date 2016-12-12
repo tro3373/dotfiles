@@ -15,7 +15,7 @@
 #  frozen: 直接指定しないかぎりアップデートを禁止する
 #  commit: コミットを指定してインストールする ($ZPLUG_SHALLOW が真かどうかに関わらず)
 #  on: 依存関係
-#  nice: 優先度（高 -20 〜 19 低）の設定をする。優先度の高いものから読み込む。10 以上を設定すると compinit のあとにロードされる
+#  defer: Defers the loading of a package. If the value is 2 or above,  zplug will source the plugin after compinit (0..3)
 #
 if [ -d ${HOME}/.zplug ] || [ -L ${HOME}/.zplug ]; then
     source ${HOME}/.zplug/init.zsh
@@ -54,7 +54,7 @@ if [ -d ${HOME}/.zplug ] || [ -L ${HOME}/.zplug ]; then
             as:command
         zplug "mollifier/cd-gitroot"
         zplug "zsh-users/zsh-history-substring-search"
-        zplug "zsh-users/zsh-syntax-highlighting", nice:19
+        zplug "zsh-users/zsh-syntax-highlighting", defer:2
         zplug "yoshikaw/ClipboardTextListener", \
             as:command, \
             use:clipboard_text_listener.pl
