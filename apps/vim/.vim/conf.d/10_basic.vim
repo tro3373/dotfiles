@@ -104,9 +104,9 @@ augroup fileTypeIndent
 augroup END
 
 " コマンド補完機能
-" set wildmenu
+set wildmenu
 " zsh like な補完に
-" set wildmode=longest,list:longest
+set wildmode=longest,list:longest
 
 " cana/vim-smartinput, cohama/vim-smartinput-endwise
 " http://cohama.hateblo.jp/entry/2013/11/08/013136
