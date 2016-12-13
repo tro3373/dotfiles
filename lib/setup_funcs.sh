@@ -291,43 +291,14 @@ initialize_mac() {
     return 0
 }
 
-# 7z,Git for Windows
-# setup.sh
-# setup_msys2.bat
-# start msys2_shell.cmd as adm
-# setup.sh
 initialize_msys2() {
     if [ -z $WINHOME ]; then
         WINHOME="$(cd /c/Users/`whoami` && pwd)"
     fi
-    [ ! -e $WINHOME/bin ] && mkdir $WINHOME/bin
-    [ ! -e $WINHOME/tools ] && mkdir $WINHOME/tools
-    [ ! -e $WINHOME/works ] && mkdir $WINHOME/works
-
-    local msys64=$WINHOME/AppData/Local/Msys64
-    local msys64ag=$msys64/mingw64/bin/ag.exe
-
-    [ -e $msys64 ] && [ -e $msys64ag ] && return 0
-
-    local tmp=${DIR_ROOT}/tmp
-    if [ ! -e "${tmp}" ]; then
-        dvexec "mkdir -p \"${tmp}\""
-    fi
-    dvexec cd $tmp
-    local target=msys2-x86_64-latest.tar.xz
-    if [ ! -e $target ]; then
-        dvexec curl -fsSLO http://repo.msys2.org/distrib/$target
-    fi
-    echo "Untar the $target and start setup_msys2.bat..."
-    # if [ ! -e $tmp/msys64 ]; then
-    #     dvexec tar Jxfv msys2-x86_64-latest.tar.xz
-    # fi
-    # if [ ! -e $msys64 ]; then
-    #     dvexec mv msys64 $msys64
-    # fi
-    # dvexec cd -
-    # [ -e $msys64 ] && [ -e $msys64ag ] && log "===> Start setup_msys2.bat"
-    return 1
+    [ ! -e $WINHOME/bin ] && dvexec mkdir $WINHOME/bin
+    [ ! -e $WINHOME/tools ] && dvexec mkdir $WINHOME/tools
+    [ ! -e $WINHOME/works ] && dvexec mkdir $WINHOME/works
+    return 0
 }
 
 # セットアップ開始

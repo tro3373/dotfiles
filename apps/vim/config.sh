@@ -127,6 +127,12 @@ install() {
         dvexec makepkg
         # upgrade error will occur
         #dvexec pacman -U --noconfirm vim*.pkg.tar.xz
+        # GuiBuild?
+        # mingw32-make -f Make_ming.mak GUI=yes ARCH=x86-64 clean
+        # mingw32-make -f Make_ming.mak GUI=yes ARCH=x86-64 FEATURES=HUGE
+        # Build
+        # mingw32-make -f Make_ming.mak GUI=no ARCH=x86-64 clean
+        # mingw32-make -f Make_ming.mak GUI=no ARCH=x86-64 FEATURES=HUGE
     else
         dvexec $def_instcmd
     fi
