@@ -12,6 +12,10 @@ setup_hugo() {
     cd hugo && go get
 }
 
+setup_blog() {
+    git clone git@bitbucket.org:tro3373/blog.git --recursive
+}
+
 new_mysite() {
     hugo new site mysite
 }
