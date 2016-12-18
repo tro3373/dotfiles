@@ -5,7 +5,7 @@ if [ -z $to ]; then
     if [ $OSTYPE = "msys" ]; then
         to="/c/Users/`whoami`/.cache/unxh/.dot"
     else
-        to=${to:$HOME/.dot}
+        to=$HOME/.dot
     fi
 fi
 [ ! -e $to ] && git clone -q "$(curl -fsSLI git.io/tr3d |grep Location |grep "\.git" |awk '{print $2}')" "$to"
