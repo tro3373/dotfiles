@@ -9,26 +9,24 @@ install() {
 }
 
 setconfig() {
+    # exchange.key setting
+    make_link_bkupable $script_dir/.exchange.key ~/.exchange.key
+
+    # .ssh directory setting
+    # [ 0 -eq 0 ] && return
+
     ssh_inner=$script_dir/.ssh
     ssh_outer=${HOME}/.ssh
-    if [ -L "${ssh_outer}" ]; then
-        # lnk の場合はなにもしない.
-        dlog "  ==> already .ssh linked."
-    elif [ -d "${ssh_outer}" ]; then
-        # ~/.ssh が既に存在した場合
-        if [ -e "${ssh_inner}" ]; then
-            # script_dir にも .ssh が存在した場合、退避
-            dvexec mv ${ssh_inner} ${script_dir}/.ssh_bkup
-        fi
-        # ディレクトリ退避
-        dvexec mv $ssh_outer $ssh_inner
-        # dotfiles 内部へリンクを貼る
-        dvexec ln -s $ssh_inner $ssh_outer
-    else
-        if [ ! -e "${ssh_inner}" ]; then
-            dvexec mkdir $ssh_inner
-        fi
-        dvexec ln -s $ssh_inner $ssh_outer
+
+    if [ ! -e $ssh_inner ]; then
+        dvexec mkdir -p $ssh_inner
+        dvexec chmod 755 $ssh_inner
     fi
-    make_link_bkupable $script_dir/.exchange.key ~/.exchange.key
+
+    local inner_count=$(ls $ssh_inner/ |wc -l)
+    local outer_count=$(ls $ssh_outer/ |wc -l)
+    if [ $inner_count -eq 0 ] && [ $outer_count -ne 0 ]; then
+        dvexec mv $ssh_outer/* $ssh_inner/
+    fi
+    make_link_bkupable $ssh_inner $ssh_outer
 }
