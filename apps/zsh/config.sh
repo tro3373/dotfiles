@@ -52,20 +52,19 @@ setconfig() {
         make_link_bkupable "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
     fi
     [ ! -e ~/.works.zsh ] && dvexec touch ~/.works.zsh && chmod 755 ~/.works.zsh
-    if false && [[ "$DETECT_OS" == "msys" ]]; then
-        # その他ドットファイルリンク作成 TODO
-        make_link_dot2home $script_dir/win
-        make_link_bkupable "${script_dir}/.zshenv" "${HOME}/.zshenv"
-        gen_zshrc_for_msys2 \
-            .zsh/00.base.zsh \
-            .zsh/10.path.zsh \
-            .zsh/20.alias.zsh \
-            .zsh/30.funcs.zsh \
-            .zsh/50.ssh-agent.zsh \
-            .zsh/60.tmux.zsh
-    else
+    # その他ドットファイルリンク作成
+    make_link_dot2home $script_dir
+    if [[ "$DETECT_OS" == "msys" ]]; then
         # その他ドットファイルリンク作成
-        make_link_dot2home $script_dir
+        make_link_dot2home $script_dir/win
+        # make_link_bkupable "${script_dir}/.zshenv" "${HOME}/.zshenv"
+        # gen_zshrc_for_msys2 \
+        #     .zsh/00.base.zsh \
+        #     .zsh/10.path.zsh \
+        #     .zsh/20.alias.zsh \
+        #     .zsh/30.funcs.zsh \
+        #     .zsh/50.ssh-agent.zsh \
+        #     .zsh/60.tmux.zsh
     fi
 }
 
