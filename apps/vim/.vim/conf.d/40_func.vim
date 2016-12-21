@@ -37,12 +37,16 @@ function! CopyTime()
   let @*=strftime('%H:%M:%S')
   call CopyComm()
 endfunction
+function! ShowPath()
+  echo expand('%:p')
+endfunction
 command! CopyPath      call CopyPath()
 command! CopyFullPath  call CopyFullPath()
 command! CopyFileName  call CopyFileName()
 command! CopyTimestamp call CopyTimestamp()
 command! CopyDate      call CopyDate()
 command! CopyTime      call CopyTime()
+command! ShowPath      call ShowPath()
 
 function! Settings()
     :tabe $HOME/.vim/conf.d/50_mapping.vim
@@ -99,4 +103,20 @@ function! Ctags() abort
     echo "Tags file Created to " . l:gitroot . "/.git/tags"
 endfunction
 command! Ctags call Ctags()
+
+" c_CTRL-X
+"   Input current buffer's directory on command line.
+"   Kaoriya flavor
+cnoremap <C-X> <C-R>=<SID>GetBufferDirectory()<CR>
+function! s:GetBufferDirectory()
+  let path = expand('%:p:h')
+  let cwd = getcwd()
+  let dir = '.'
+  if match(path, escape(cwd, '\')) != 0
+    let dir = path
+  elseif strlen(path) > strlen(cwd)
+    let dir = strpart(path, strlen(cwd) + 1)
+  endif
+  return dir . (exists('+shellslash') && !&shellslash ? '\' : '/')
+endfunction
 
