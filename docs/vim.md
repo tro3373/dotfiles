@@ -1,6 +1,19 @@
 =================================================================
 # Vim Tips
 
+## Command Mode
+```vim
+" カレントファイルのファイル名に拡張子をつけて保存
+:w %.bk
+" カレントファイルの拡張子を取り除く(%<)
+:echo %<
+" カレントファイルのヘッダファイルを開く
+:e %<.h
+" カレントディレクトリをファイルのディレクトリに変更する
+:cd %:h
+" 今開いているファイルのディレクトリのパス(%:h)
+```
+
 ### abc を含む行を削除する
 ```
 :g/abc/d
@@ -39,14 +52,6 @@ Retrieving last Search Command for copy & pasting into text
 <c-r>/
 <C-X><C-F> :insert name of a file in current directory
 ```
-
-## Surround vim
-
-- [surround.vim](http://vimblog.hatenablog.com/entry/vim_plugin_surround_vim)
-
-- Surround selected word: `S'`
-- Delete surround: `ds'`
-- Change surround: `cs'"`
 
 ## 移動
 - ノーマルモードでz<enter>(またはzt)とタイプすると、
@@ -104,19 +109,6 @@ elseif has("win32")
 endif
 
 
-## GitGutter
-- [issue](https://github.com/airblade/vim-gitgutter/issues/150)
-```vim
-" Debug for gitgutter
-:GitGutterDebug
-" change shellslash via shell variable
-set shellslash
-if &shell =~ 'cmd.exe'
-    set noshellslash
-else
-    set shellslash
-endif
-```
 ## Vim の基本
 ### 変数の設定
 ```vim
@@ -209,3 +201,25 @@ set termencoding=UTF-8 "文字コードをUTF-8にする
 :set viminfo=
 ```
 
+# Plugin Tips
+
+## Surround vim
+- [surround.vim](http://vimblog.hatenablog.com/entry/vim_plugin_surround_vim)
+
+- Surround selected word: `S'`
+- Delete surround: `ds'`
+- Change surround: `cs'"`
+
+## GitGutter
+- [issue](https://github.com/airblade/vim-gitgutter/issues/150)
+```vim
+" Debug for gitgutter
+:GitGutterDebug
+" change shellslash via shell variable
+set shellslash
+if &shell =~ 'cmd.exe'
+    set noshellslash
+else
+    set shellslash
+endif
+```
