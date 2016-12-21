@@ -25,6 +25,8 @@ set fileencoding=utf-8
 "   文字コードの変換は行われないことになる。fencsにencodingと同じ文字コードを途中に含めると、
 "   その文字コードを試行した時点で、「 encoding と同じ」→「文字コード変換の必要無し」→「常に変換成功」→「fencに採用」となる。
 set fileencodings=ucs-bom,iso-2022-jp-3,iso-2022-jp,eucjp-ms,euc-jisx0213,euc-jp,cp932,sjis,utf-8
+" 新規、読込時の改行設定(複数で自動判定)
+set fileformats=unix,dos,mac
 set helplang=ja,en
 " ビープ音を鳴らさない
 set vb t_vb=
@@ -81,27 +83,46 @@ endif
 autocmd InsertLeave * set nopaste
 
 
+"-----------------------------------------------------
+" インデント設定
+"-----------------------------------------------------
 " Ｃ言語スタイルのインデントを使用する
 set cindent
-" ファイル中の<TAB>を見た目x文字に展開する(既に存在する<TAB>の見た目の設定)
-set tabstop=4
-" TABキーを押した際に挿入される空白の量を設定
-set softtabstop=4
-" インデントやシフトオペレータで挿入/削除されるインデントの幅を設定
-set shiftwidth=4
-" <TAB>を空白スペース文字に置き換える
-set expandtab
 " オートインデント
 set autoindent
 " 賢いインデント
 set smartindent
 "フォーマット揃えをコメント以外有効にする
 set formatoptions-=c
-augroup fileTypeIndent
-    autocmd!
-    autocmd BufNewFile,BufRead *.py setlocal tabstop=4 softtabstop=4 shiftwidth=4
-    autocmd BufNewFile,BufRead *.rb setlocal tabstop=2 softtabstop=2 shiftwidth=2
-augroup END
+" ts  = tabstop     ファイル中の<TAB>を見た目x文字に展開する(既に存在する<TAB>の見た目の設定)
+" sts = softtabstop TABキーを押した際に挿入される空白の量を設定
+" sw  = shiftwidth  インデントやシフトオペレータで挿入/削除されるインデントの幅を設定
+" tw  = textwidth
+" ft  = filetype
+" expandtab         <TAB>を空白スペース文字に置き換える
+set ts=4 sts=4 sw=4 expandtab
+if has("autocmd")
+    " ファイル種別による個別設定
+    autocmd FileType html,xhtml,css,javascript,yaml,ruby,coffee setlocal ts=2 sts=2 sw=2
+
+    " ファイルを開いた時、読み込んだ時にファイルタイプを設定する
+    autocmd BufNewFile,BufRead *.js setlocal ft=javascript
+    autocmd BufNewFile,BufRead *.ejs setlocal ft=html
+    autocmd BufNewFile,BufRead *.py setlocal ft=python
+    autocmd BufNewFile,BufRead *.rb setlocal ft=ruby
+    autocmd BufNewFile,BufRead Gemfile setlocal ft=ruby
+    autocmd BufNewFile,BufRead *.coffee setlocal ft=coffee
+    autocmd BufNewFile,BufRead *.ts setlocal ft=typescript
+    autocmd BufNewFile,BufRead *.md setlocal ft=markdown
+    autocmd BufNewFile,BufRead *.jade setlocal ft=markdown
+    autocmd BufNewFile,BufRead *.gyp setlocal ft=json
+    autocmd BufNewFile,BufRead *.cson setlocal ft=json
+    autocmd BufNewFile,BufRead *.yml setlocal ft=yaml
+    autocmd BufNewFile,BufRead *.yaml setlocal ft=yaml
+    " ctagsファイルの設定ファイル
+    " autocmd BufNewFile,BufRead *.rb set tags+=;$HOME/.ruby.ctags;
+    " autocmd BufNewFile,BufRead *.js set tags+=;$HOME/.javascript.ctags;
+endif
 
 " コマンド補完機能
 set wildmenu
