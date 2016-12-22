@@ -1,7 +1,6 @@
 ##############################################
 # Alias
 ##############################################
-alias vi=vim
 case "${OSTYPE}" in
     # for MAC-OS
     darwin*)
@@ -76,6 +75,13 @@ alias pod='nocorrect pod'
 alias where="command -v"
 alias diff="diff -Nru"
 #alias j="jobs -l"
+alias vi=vim
+alias gp="git pull --rebase"
+alias gb="git branch -vv"
+alias gt="git tag"
+alias gc="git commit"
+alias gr="git remote -v"
+alias gs="git status"
 # --------------------------------------------------------
 # ag 設定
 # --------------------------------------------------------
