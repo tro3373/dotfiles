@@ -2,15 +2,8 @@
 " mapping.vim
 "      Vim/gVim共通で使用するキーバインドを定義する
 "######################################################################
-" .vimrcを編集する
-command! Editvimrc edit $MYVIMRC
-" .vimrcを再読み込みする
-command! Reloadvimrc source $MYVIMRC
-
 let mapleader = "\<Space>"
 
-nnoremap ,8 :e ++enc=utf-8<CR>
-nnoremap ,9 :e ++enc=cp932<CR>
 " 表示上の行移動(エディタで表示されている行)であるgj,gkと、
 " 実際の行移動(エディタの表示行ではなく改行コードを意識した実際の行)であるj,kを入れ替え
 nnoremap j gj
@@ -51,6 +44,12 @@ nnoremap <Leader>y 0v$h"+y
 nnoremap <Leader>w :w<CR>
 " Visual line
 nmap <Leader><Leader> V
+
+" /検索時の / 入力補完
+cnoremap <expr> / (getcmdtype() == '/') ? '\/' : '/'
+" /? で検索時に現在の検索する語に単語境界を付与
+" /hoge と入力した後に <C-o> を押すと /\<hoge\> に変換
+cnoremap <C-o> <C-\>e(getcmdtype() == '' <Bar><Bar> getcmdtype() == '?') ? '\<' . getcmdline() . '\>' : getcmdline()<CR>
 
 " vp doesn't replace paste buffer
 function! RestoreRegister()
@@ -121,16 +120,26 @@ map sz :set lcs=tab:>.,trail:_,extends:\<Enter>
 map sd :e %:h<Enter>
 " 開いているファイルのディレクトリをカレントにする
 map s\ :cd %:h<Enter><Enter>
-" 設定ファイルディレクトリを開く
-nmap <Leader>0 :tabe $HOME/.vim/conf.d/50_mapping.vim<ENTER>
-" バックアップディレクトリを開く
-nmap <Leader>9 :tabe $HOME/.vim/backup<ENTER>
 " " エンコード指定の再読み込みメニューの表示
 " map s9 <ALT-F>ere
 " " make実行
 " map sm :!make<Enter>
 " 開いているファイルで JavascriptLint を実行
 " map sj :! C:\Users\hogeuser\DOC\tools\jsl-0.3.0\jsl -process %<ENTER>
+
+
+" 設定ファイルディレクトリを開く
+nmap <Leader>0 :tabe $HOME/.vim/conf.d/<ENTER>
+" command! Editvimrc edit $MYVIMRC
+command! Editvimrc edit $HOME/.vim/conf.d/
+" .vimrcを再読み込みする
+command! Reloadvimrc source $MYVIMRC
+" エンコーディングcp932を指定して開き直す
+nnoremap <Leader>7 :e ++enc=cp932<CR>
+" エンコーディングutf-8を指定して開き直す
+nnoremap <Leader>8 :e ++enc=utf-8<CR>
+" バックアップディレクトリを開く
+nmap <Leader>9 :tabe $HOME/.vim/backup<ENTER>
 
 
 "=============================================

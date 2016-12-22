@@ -127,7 +127,7 @@ endif
 " コマンド補完機能
 set wildmenu
 " zsh like な補完に
-set wildmode=longest,list:longest
+set wildmode=longest:full,full
 
 " cana/vim-smartinput, cohama/vim-smartinput-endwise
 " http://cohama.hateblo.jp/entry/2013/11/08/013136
