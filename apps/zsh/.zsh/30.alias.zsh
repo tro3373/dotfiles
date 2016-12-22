@@ -80,8 +80,17 @@ alias diff="diff -Nru"
 # ag 設定
 # --------------------------------------------------------
 if type ag > /dev/null 2>&1; then
-    # Smart Case による検索を有効に設定する
-    alias ag='ag -S'
+    if [ "${OSTYPE}" = "msys" ]; then
+        # . が最後につかないと固まるので暫定
+        org_ag=$(which ag)
+        function mymsys_ag() {
+            $org_ag -S $* .
+        }
+        alias ag="mymsys_ag"
+    else
+        # Smart Case による検索を有効に設定する
+        alias ag='ag -S'
+    fi
     alias agh='ag --hidden'
     # --------------------------------------------------------
     # fzf 設定
