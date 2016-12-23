@@ -57,6 +57,7 @@ case "${OSTYPE}" in
         alias apt-get='pacman -S'                       # apt-get emulate
         alias tmux='tmux -2'                            # 256Color有効化
         alias sudo='echo "No sudo...";'                 # sudo がないので、エイリアスで逃げる
+        alias vim=gvim
         ;;
 esac
 
