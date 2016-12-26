@@ -489,6 +489,15 @@ if g:plug.is_installed("caw.vim")
 endif
 
 "=============================================
+" Markdown Syntax etc
+" 'plasticboy/vim-markdown'
+"=============================================
+if g:plug.is_installed("vim-markdown")
+    " No hide markdown controll word
+    let g:vim_markdown_conceal = 0
+endif
+
+"=============================================
 " Markdown Preview
 " vim-markdown, preview, open-browser
 "=============================================
