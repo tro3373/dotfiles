@@ -3,6 +3,7 @@ LS=`bash -c 'which ls'`
 
 SSH_ENV="$HOME/.ssh/environment"
 PRIV_KEY_PATH=${HOME}/.ssh
+[ ! -e $PRIV_KEY_PATH/id_rsa ] && return 0
 PRIV_KEY_LIST=(`$LS ${PRIV_KEY_PATH} | $GREP .priv`)
 
 # add private keys
