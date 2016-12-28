@@ -21,28 +21,44 @@ if [ -d ${HOME}/.zplug ] || [ -L ${HOME}/.zplug ]; then
     source ${HOME}/.zplug/init.zsh
     zstyle :zplug:tag depth 10
 
-    zplug "zplug/zplug"
-    zplug "zsh-users/zsh-completions"
-    local target
-    local native_install=1
+    local target target_massren target_fzf target_jq
+    local is_msys=0
     case "$OSTYPE" in
         *'linux'*)
             target='*linux*amd64*'
             target_massren=$target
+            target_fzf=$target
+            target_jq=$target
             ;;
         *'darwin'*)
             target='*darwin*amd64*'
             target_massren='*osx*'
+            target_fzf=$target
+            target_jq=$target
+            ;;
+        *'msys'*)
+            is_msys=1
+            target='os'
+            target_massren='*win*'
+            target_fzf="*windows*amd64*"
+            target_jq="*win64*"
             ;;
         *)
             target='os'
-            target_massren='*win*'
-            native_install=0
+            target_massren=$target
+            target_fzf=$target
+            target_jq=$target
             ;;
     esac
 
-    if [[ $native_install -eq 1 ]]; then
+    # common install
+    zplug "zplug/zplug"
+    zplug "zsh-users/zsh-completions"
+
+    if [[ $is_msys -ne 1 ]]; then
         zplug "b4b4r07/enhancd", use:enhancd.sh
+        # windows Not work
+        # zplug "stedolan/jq", from:gh-r, at:1.5, as:command, use:"$target_jq", rename-to:jq
         zplug "stedolan/jq", from:gh-r, as:command, rename-to:jq
         zplug "b4b4r07/emoji-cli", on:"stedolan/jq"
         zplug "mrowa44/emojify", as:command
@@ -52,7 +68,7 @@ if [ -d ${HOME}/.zplug ] || [ -L ${HOME}/.zplug ]; then
         zplug "yoshikaw/ClipboardTextListener", \
             as:command, use:clipboard_text_listener.pl
         zplug "junegunn/fzf-bin", from:gh-r, at:0.15.9, as:command, \
-            use:"$target", rename-to:fzf
+            use:"$target_fzf", rename-to:fzf
         zplug "b4b4r07/gomi", as:command, from:gh-r, \
             use:"$target", rename-to:gomi
         # Not work! so i copy fzf-tmux in my dotfiles/bin
