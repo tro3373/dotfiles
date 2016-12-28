@@ -51,7 +51,7 @@ setconfig() {
     if [ -e "${workdir}/dircolors-solarized/${setcolortheme}" ]; then
         make_link_bkupable "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
     fi
-    [ ! -e ~/.works.zsh ] && dvexec touch ~/.works.zsh && chmod 755 ~/.works.zsh
+    [ ! -e ~/.works.zsh ] && dvexec touch ~/.works.zsh && dvexec chmod 755 ~/.works.zsh
     # その他ドットファイルリンク作成
     make_link_dot2home $script_dir
     if [[ "$DETECT_OS" == "msys" ]]; then
