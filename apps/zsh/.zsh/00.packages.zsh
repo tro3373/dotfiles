@@ -21,7 +21,7 @@ if [ -d ${HOME}/.zplug ] || [ -L ${HOME}/.zplug ]; then
     source ${HOME}/.zplug/init.zsh
     zstyle :zplug:tag depth 10
 
-    # Remote loading
+    zplug "zplug/zplug"
     zplug "zsh-users/zsh-completions"
     local target
     local native_install=1
@@ -42,65 +42,45 @@ if [ -d ${HOME}/.zplug ] || [ -L ${HOME}/.zplug ]; then
     esac
 
     if [[ $native_install -eq 1 ]]; then
-        zplug "b4b4r07/enhancd", \
-            use:enhancd.sh
-        zplug "stedolan/jq", \
-            from:gh-r, \
-            as:command, \
-            rename-to:jq
-        zplug "b4b4r07/emoji-cli", \
-            on:"stedolan/jq"
-        zplug "mrowa44/emojify", \
-            as:command
+        zplug "b4b4r07/enhancd", use:enhancd.sh
+        zplug "stedolan/jq", from:gh-r, as:command, rename-to:jq
+        zplug "b4b4r07/emoji-cli", on:"stedolan/jq"
+        zplug "mrowa44/emojify", as:command
         zplug "mollifier/cd-gitroot"
         zplug "zsh-users/zsh-history-substring-search"
         zplug "zsh-users/zsh-syntax-highlighting", defer:2
         zplug "yoshikaw/ClipboardTextListener", \
-            as:command, \
-            use:clipboard_text_listener.pl
-        zplug "junegunn/fzf-bin", \
-            from:gh-r, \
-            at:0.13.2, \
-            as:command, \
-            use:"$target", \
-            rename-to:fzf
-        # zplug "b4b4r07/easy-oneliner" \
-        #     on:"junegunn/fzf"
-        zplug "b4b4r07/gomi", \
-            as:command, \
-            from:gh-r, \
-            use:"$target", \
-            rename-to:gomi
-        zplug "junegunn/fzf", \
-            as:command, \
-            use:bin/fzf-tmux
-        zplug "junegunn/fzf", \
-            use:"shell/*.zsh"
-        zplug "peco/peco", \
-            as:command, \
-            from:gh-r, \
-            use:"$target"
-        zplug "b4b4r07/dotfiles", \
-            as:command, \
-            use:bin/peco-tmux
-        # file name 一括置換
-        zplug "laurent22/massren", \
-            as:command, \
-            from:gh-r, \
-            at:v1.3.0, \
-            use:"$target_massren", \
-            hook-build:"./massren --config editor vim"
+            as:command, use:clipboard_text_listener.pl
+        zplug "junegunn/fzf-bin", from:gh-r, at:0.15.9, as:command, \
+            use:"$target", rename-to:fzf
+        zplug "b4b4r07/gomi", as:command, from:gh-r, \
+            use:"$target", rename-to:gomi
+        # Not work! so i copy fzf-tmux in my dotfiles/bin
+        # zplug "junegunn/fzf", as:command, use:"bin/{fzf-tmux}", rename-to:fzf-tmux
+        zplug "junegunn/fzf", use:"shell/*.zsh"
+        zplug "peco/peco", as:command, from:gh-r, use:"$target"
+        # zplug "Jxck/dotfiles", as:command, use:"bin/{histuniq,color}"
+        # zplug "b4b4r07/easy-oneliner" on:"junegunn/fzf"
+        # zplug "b4b4r07/dotfiles", as:command, use:bin/peco-tmux
+
+        # # Run a command after a plugin is installed/updated
+        # # Provided, it requires to set the variable like the following:
+        # # ZPLUG_SUDO_PASSWORD="********"
+        # zplug "jhawthorn/fzy", as:command, rename-to:fzy, \
+        #     hook-build:"make && sudo make install"
+
+        # massren/file name replacer
+        zplug "laurent22/massren", as:command, from:gh-r, at:v1.3.0, \
+            use:"$target_massren", hook-build:"./massren --config editor vim"
     fi
 
     # Local loading
-    # zplug "${HOME}/.zsh", \
-    #     from:local, \
-    #     ignore:"*vcs-info.zsh", \
-    #     nice:2
+    # zplug "${HOME}/.zsh", from:local, ignore:"*vcs-info.zsh", nice:2
 
     # check コマンドで未インストール項目があるかどうか verbose にチェックし
     # false のとき（つまり未インストール項目がある）y/N プロンプトで
     # インストールする
+    # if ! zplug check --verbose; then
     if ! zplug check; then
         printf "Install? [y/N]: "
         if read -q; then
@@ -108,6 +88,7 @@ if [ -d ${HOME}/.zplug ] || [ -L ${HOME}/.zplug ]; then
         fi
     fi
     # プラグインを読み込み、コマンドにパスを通す
+    # zplug load --verbose
     zplug load
 fi
 
