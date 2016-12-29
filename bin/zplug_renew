@@ -1,0 +1,10 @@
+#!/bin/bash
+
+url=https://github.com/zplug/zplug
+z=~/.zplug
+main() {
+    set -eu
+    [ -e $z ] && echo "Removing $z .. " && rm -rf $z
+    git clone $url $z
+}
+main
