@@ -128,6 +128,8 @@ map s\ :cd %:h<Enter><Enter>
 " map sj :! C:\Users\hogeuser\DOC\tools\jsl-0.3.0\jsl -process %<ENTER>
 
 
+" .vimrcを再読み込みする
+command! Reloadvimrc source $MYVIMRC
 " 設定ファイルディレクトリを開く
 function! Settings()
     :tabe $HOME/.vim/conf.d/
@@ -135,23 +137,36 @@ endfunction
 command! Settings call Settings()
 command! Editvimrc call Settings()
 nmap <Leader>0 :Settings<CR>
+
 " doc ディレクトリを開く
-function! Docs()
-    if $DOTPATH == ""
-        :echo "No DOTPATH variable"
-        return
+function! Doc(...)
+    let target = $DOTPATH
+    if target == ""
+        let target = expand('~/.dot')
+        if !isdirectory(target)
+            echo "No DOTPATH variable and No ~/.dot directory exist."
+            return
+        endif
     endif
-    :tabe $DOTPATH/docs/
+    let target .= '/docs'
+    if a:0 != 0
+        let tmp = target.'/'.a:1.'.md'
+        if filewritable(tmp)
+            let target = tmp
+        endif
+    endif
+    exe "tabe" target
 endfunction
-command! Docs call Docs()
-" .vimrcを再読み込みする
-command! Reloadvimrc source $MYVIMRC
-" エンコーディングcp932を指定して開き直す
-nnoremap <Leader>7 :e ++enc=cp932<CR>
-" エンコーディングutf-8を指定して開き直す
-nnoremap <Leader>8 :e ++enc=utf-8<CR>
+command! -nargs=? Doc call Doc(<f-args>)
+nmap <Leader>9 :Doc<CR>
+
 " バックアップディレクトリを開く
-nmap <Leader>9 :tabe $HOME/.vim/backup<ENTER>
+nmap <Leader>8 :tabe $HOME/.vim/backup<ENTER>
+
+" エンコーディングutf-8を指定して開き直す
+nnoremap ,8 :e ++enc=utf-8<CR>
+" エンコーディングcp932を指定して開き直す
+nnoremap ,9 :e ++enc=cp932<CR>
 
 
 "=============================================
@@ -493,8 +508,8 @@ endif
 " 'plasticboy/vim-markdown'
 "=============================================
 if g:plug.is_installed("vim-markdown")
-    " No hide markdown controll word
-    let g:vim_markdown_conceal = 0
+    " hide/no hide markdown controll word
+    let g:vim_markdown_conceal = 1
 endif
 
 "=============================================
@@ -502,7 +517,7 @@ endif
 " vim-markdown, preview, open-browser
 "=============================================
 if g:plug.is_installed("vim-markdown")
-    " 折りたたみなし設定
+    " 折りたたみ設定
     let g:vim_markdown_folding_disabled=1
 endif
 if g:plug.is_installed("previm")
