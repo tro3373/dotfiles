@@ -1,7 +1,130 @@
+Vim Tips
 =================================================================
-# Vim Tips
+## .vimrc,_vimrc のロード順序
+- ユーザー vimrc は以下の順で検索される
+    - Windows
+        - $HOME/_vimrc
+        - $HOME/.vimrc
+        - $VIM/_vimrc
+        - $VIM/.vimrc
+    - Linux
+        - $HOME/.vimrc
+        - $HOME/_vimrc
 
-## Command Mode
+    - msys
+        - => Linuxあつかいだよ
+
+注意点は、ファイルが見つかった時点でそれ以降のファイルは読み込まれなくなるということです。
+例えば Windows で上記の4つのファイルがすべて存在していたとき、初めの $HOME/_vimrc だけが読み込まれます。
+他のファイルで上書きできるわけではありません。
+
+優先度
+高
+　　$VIM/vimrc(サイトローカルな設定読み込みを記述部分)
+　　$VIM/vimrc_local.vim
+　　$VIM/vimrc(残りの部分)
+　　$VIM/vimrc_local.vim : ユーザ優先設定
+　　$HOME/vimrc（ここに格納された場合$VIMのは読み込まれない）
+　　$VIM/vimrc
+低
+
+
+## $VIM,$HOMEのパスの確認方法
+:echo $HOME
+:echo $VIM
+
+## setting sample
+set gfn=Osaka－Mobile:h10:cSHIFTJIS
+set backspace=indent,eol,start
+set whichwrap=b,s,h,l,<,>,[,] "カーソルを行頭、行末で止まらないようにする
+scriptencoding utf-8 "これ入れないと下記が反映されない
+
+augroup highlightZenkakuSpace "全角スペースを赤色にする
+  autocmd!
+  autocmd VimEnter,ColorScheme * highlight ZenkakuSpace term=underline ctermbg=Red guibg=Red
+  autocmd VimEnter,WinEnter * match ZenkakuSpace /　/
+augroup END
+
+set hidden    "ファイル変更中でも他のファイルを開けるようにする
+set autoread    "ファイル内容が変更されると自動読み込みする
+
+"Encode
+"下記の指定は環境によって文字化けする可能性があるので適宜変更する
+set encoding=UTF-8 "文字コードをUTF-8にする
+set fileencoding=UTF-8 "文字コードをUTF-8にする
+set termencoding=UTF-8 "文字コードをUTF-8にする
+
+
+## viminfo
+```vim
+" viminfoファイルの出力先を変更する
+" viminfoファイルの出力先も変更できます。 
+" viminfoファイルの出力先は、「viminfo」オプションの「n」フラグで指定します。
+
+:set viminfo={他のフラグ...},n{ファイルパス}
+
+" 今のviminfoの設定に追加するとしたら、このように設定
+:set viminfo+=n{ファイルパス}
+"「viminfo」オプションの「n」フラグは、全フラグ中、最後に指定しなければなりません。 
+"そうしないと、「n」フラグ以降に指定したフラグがファイルパスの一部として解釈され、エラーが発生します。
+
+" この設定はvimエディタの設定ファイルに書きます。
+" Windowsの場合のviminfoファイルの指定の例。
+:set viminfo+=n~/vimfiles/tmp/viminfo.txt
+:set viminfo+=nC:/Temp/viminfo.txt
+
+" Mac OSXの場合のviminfoファイルの指定の例。
+:set viminfo+=n~/.vim/tmp/viminfo.txt
+:set viminfo+=n/tmp/viminfo.txt
+"viminfoファイルを作成しない
+"「viminfo」オプションに何のフラグも設定しなければ、 viminfoファイルの作成、および、読込は行わなくなります。 
+"vimエディタの設定ファイルで次のように指定してください。
+
+" viminfoファイルを作成しない
+:set viminfo=
+```
+
+## リロード
+```vim
+:e
+Ctrl+l
+```
+
+## 折りたたみ/展開
+```vim
+(領域選択して)zf  折りたたみ
+(折りたたみ行で)Space    折りたたみ展開
+zfa{    カーソル位置の{}をたたむ
+zo  折りたたみを展開
+`zf/<space>` で指定した範囲を折りたたむ/開く
+
+zi	折り畳みの有効無効の切り替え
+zf	折り畳みを作成する
+za	折り畳みの開け閉め
+zd	折り畳みを削除する
+時々使うコマンド
+
+zA	折り畳みの開け閉め（再帰）
+zD	折り畳みを削除する（再帰）
+zE	全ての折り畳みを削除
+zR	全ての折り畳みを開く
+zM	全ての折り畳みを閉じる
+折り畳みの種類の切り替えとか
+
+set fdc=0	折り畳みカラム幅の設定
+set fdm=manual	手動
+set fdm=marker	マーカー
+set fdm=indent	インデント
+```
+
+## 変数の設定
+```vim
+" ^= で既存の設定の先頭、+= で最後に設定を追加
+:set runtimepath^=$HOME/.vim
+:set runtimepath+=$HOME/.vim/after
+```
+
+## コマンドモード
 ```vim
 " カレントファイルのファイル名に拡張子をつけて保存
 :w %.bk
@@ -10,28 +133,24 @@
 " カレントファイルのヘッダファイルを開く
 :e %<.h
 " カレントディレクトリをファイルのディレクトリに変更する
-:cd %:h
 " 今開いているファイルのディレクトリのパス(%:h)
-```
+:cd %:h
 
-### abc を含む行を削除する
-```
+" 置換
+" abc を含む行を削除する
 :g/abc/d
-```
-### abc を含まない行を削除する
-```
+" abc を含まない行を削除する
 :v/abc/d
-```
-
-### vim 確認しながら置換
-```
+" vim 確認しながら置換
 :%s//hogehoge/c
+
+" コマンド実行結果を貼り付け
+:r! ls
 ```
 
-`:r! ls` でコマンド実行結果を貼り付けする！！！！！
+```vim
 gf      : open file name under cursor (SUPER)
 J/gJで行を連結
-```
 <C-R>"  : インサートモードから貼り付け！
 ga      : display hex, ascii value of character under cursor
 g8      : display hex value of utf-8 character under cursor
@@ -62,7 +181,7 @@ Retrieving last Search Command for copy & pasting into text
 
 ## grep置換
 
-```
+```vim
 :args **/*.rb
 :argdo %s/tel/phone/gc | update
 ```
@@ -72,9 +191,6 @@ Retrieving last Search Command for copy & pasting into text
 - "tel"を"phone"に置換する(/tel/phone/g)
 - 置換する際に一つずつ確認を入れる(/gcのc)
 - 置換が終わったらファイルを保存する(| update)
-
-## 折りたたみ
-`zf/<space>` で指定した範囲を折りたたむ/開く
 
 ## 検索
  VIM検索ワード
@@ -95,7 +211,43 @@ Retrieving last Search Command for copy & pasting into text
 - [:escape:]	<Esc> 文字
 - [:backspace:]	<BS> 文字
 
+
+VimScript
+=================================================================
+## ファイルの存在チェック
+```vim
+" ディレクトリが存在するかどうか
+isdirectory({dir})
+" ファイルが読み込み可能かどうか
+"ファイルの存在チェックもするので、fileread() で読めるかをチェックしたいならこちらの方が確実。
+filereadable({file})
+" ファイルが書き込み可能かどうか
+" filereadable() と同様。
+filewritable({file})
+" ファイルが実行可能かどうか
+" system() を使う場合はこれで事前にチェックしておくと吉。
+" 追記: 実際は実行可能なコマンドがあるかのチェックなので、$PATH とかも調べられます。ファイル自体を調べたい場合はフルパスで指定すること。
+executable({file})
+" ファイルもしくはディレクトリが存在するかどうか
+glob({file})
+```
+
+## script内で定義した変数を使って実行
+```vim
+" `tabe local_variable` では `local_variable` ファイルを開こうとする為、exe を使用する
+exe 'tabe' local_variable
+```
+## 正規表現を使う
+```vim
+" 最後が`/`で終わる場合 の判定
+if path !~ '[/\\]$'
+  " 文字列足しこみ
+  let path .= '/'
+endif
+```
+
 ## OS 分岐
+```vim
 if has("mac")
 " mac用の設定
 elseif has("unix")
@@ -107,101 +259,11 @@ elseif has("win32unix")
 elseif has("win32")
 " 32bit_windows固有の設定
 endif
-
-
-## Vim の基本
-### 変数の設定
-```vim
-" ^= で既存の設定の先頭、+= で最後に設定を追加
-:set runtimepath^=$HOME/.vim
-:set runtimepath+=$HOME/.vim/after
 ```
 
-### .vimrc,_vimrc のロード順序
-- ユーザー vimrc は以下の順で検索される
-    - Windows
-        - $HOME/_vimrc
-        - $HOME/.vimrc
-        - $VIM/_vimrc
-        - $VIM/.vimrc
-    - Linux
-        - $HOME/.vimrc
-        - $HOME/_vimrc
 
-    - msys
-        - => Linuxあつかいだよ
-
-注意点は、ファイルが見つかった時点でそれ以降のファイルは読み込まれなくなるということです。
-例えば Windows で上記の4つのファイルがすべて存在していたとき、初めの $HOME/_vimrc だけが読み込まれます。
-他のファイルで上書きできるわけではありません。
-
-優先度
-高
-　　$VIM/vimrc(サイトローカルな設定読み込みを記述部分)
-　　$VIM/vimrc_local.vim
-　　$VIM/vimrc(残りの部分)
-　　$VIM/vimrc_local.vim : ユーザ優先設定
-　　$HOME/vimrc（ここに格納された場合$VIMのは読み込まれない）
-　　$VIM/vimrc
-低
-
-
-### $VIM,$HOMEのパスの確認方法
-:echo $HOME
-:echo $VIM
-
-### setting sample
-set gfn=Osaka－Mobile:h10:cSHIFTJIS
-set backspace=indent,eol,start
-set whichwrap=b,s,h,l,<,>,[,] "カーソルを行頭、行末で止まらないようにする
-scriptencoding utf-8 "これ入れないと下記が反映されない
-
-augroup highlightZenkakuSpace "全角スペースを赤色にする
-  autocmd!
-  autocmd VimEnter,ColorScheme * highlight ZenkakuSpace term=underline ctermbg=Red guibg=Red
-  autocmd VimEnter,WinEnter * match ZenkakuSpace /　/
-augroup END
-
-set hidden    "ファイル変更中でも他のファイルを開けるようにする
-set autoread    "ファイル内容が変更されると自動読み込みする
-
-"Encode
-"下記の指定は環境によって文字化けする可能性があるので適宜変更する
-set encoding=UTF-8 "文字コードをUTF-8にする
-set fileencoding=UTF-8 "文字コードをUTF-8にする
-set termencoding=UTF-8 "文字コードをUTF-8にする
-
-
-### viminfo
-```vim
-" viminfoファイルの出力先を変更する
-" viminfoファイルの出力先も変更できます。 
-" viminfoファイルの出力先は、「viminfo」オプションの「n」フラグで指定します。
-
-:set viminfo={他のフラグ...},n{ファイルパス}
-
-" 今のviminfoの設定に追加するとしたら、このように設定
-:set viminfo+=n{ファイルパス}
-"「viminfo」オプションの「n」フラグは、全フラグ中、最後に指定しなければなりません。 
-"そうしないと、「n」フラグ以降に指定したフラグがファイルパスの一部として解釈され、エラーが発生します。
-
-" この設定はvimエディタの設定ファイルに書きます。
-" Windowsの場合のviminfoファイルの指定の例。
-:set viminfo+=n~/vimfiles/tmp/viminfo.txt
-:set viminfo+=nC:/Temp/viminfo.txt
-
-" Mac OSXの場合のviminfoファイルの指定の例。
-:set viminfo+=n~/.vim/tmp/viminfo.txt
-:set viminfo+=n/tmp/viminfo.txt
-"viminfoファイルを作成しない
-"「viminfo」オプションに何のフラグも設定しなければ、 viminfoファイルの作成、および、読込は行わなくなります。 
-"vimエディタの設定ファイルで次のように指定してください。
-
-" viminfoファイルを作成しない
-:set viminfo=
-```
-
-# Plugin Tips
+Plugin Tips
+=================================================================
 
 ## Surround vim
 - [surround.vim](http://vimblog.hatenablog.com/entry/vim_plugin_surround_vim)
@@ -223,3 +285,4 @@ else
     set shellslash
 endif
 ```
+
