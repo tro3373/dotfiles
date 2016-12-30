@@ -57,6 +57,7 @@ if [ -d ${HOME}/.zplug ] || [ -L ${HOME}/.zplug ]; then
 
     if [[ $is_msys -ne 1 ]]; then
         zplug "b4b4r07/enhancd", use:enhancd.sh
+        zplug "b4b4r07/httpstat", as:command, use:'*.sh', rename-to:'httpstat'
         # windows Not work
         # zplug "stedolan/jq", from:gh-r, at:1.5, as:command, use:"$target_jq", rename-to:jq
         zplug "stedolan/jq", from:gh-r, as:command, rename-to:jq
