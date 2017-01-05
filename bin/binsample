@@ -1,0 +1,21 @@
+#!/bin/bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+template=$script_dir/lib/template.sh
+
+main(){
+    f=$1
+    if [[ -z $f ]]; then
+        echo "Usage:  $(basename $0) <create_file_name>"
+        exit 1
+    fi
+    if [[ -e $f ]]; then
+        echo "Target name file is exist. name=$f"
+        exit 1
+    fi
+    cp $template $script_dir/$f
+    vim $script_dir/$f
+}
+main $*
+
