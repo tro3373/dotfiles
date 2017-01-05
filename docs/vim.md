@@ -245,6 +245,14 @@ if path !~ '[/\\]$'
   let path .= '/'
 endif
 ```
+# 日付文字列操作
+```vim
+:let now = localtime()
+:echo now
+"# => 1203574847
+:echo strftime("%Y/%m/%d %H:%M:%S", now)
+"# => 2008/02/21 15:20:47
+```
 
 ## OS 分岐
 ```vim
