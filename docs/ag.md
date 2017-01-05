@@ -41,7 +41,8 @@ pacman -S mingw-w64-x86_64-ag
 ```
 
 ## help
-```help
+
+```bash
 Usage: ag [FILE-TYPE] [OPTIONS] PATTERN [PATH]
 
   Recursively search for PATTERN in PATH.
@@ -130,7 +131,7 @@ For a list of supported file types run:
 ## list file type
 `ag --list-file-types`
 
-```help
+```bash
 The following file types are supported:
   --actionscript
       .as  .mxml

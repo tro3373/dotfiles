@@ -165,7 +165,8 @@ command! HugoHelperUndraft call HugoHelperUndraft()
 
 function! GetHugoNowDate()
     let now = localtime()
-    let strnow = strftime("%Y-%m-%dT%H:%M:%S%z", now)
+    let strnow = strftime("%Y-%m-%dT%H:%M:%S", now)
+    let strnow .= "+09:00"
     return strnow
 endfun
 
@@ -210,7 +211,7 @@ command! Hugo call Hugo()
 
 function! SaveMemo() abort
     let outdir = "."
-    let memodir = "~/works/00_memos"
+    let memodir = expand("~/works/00_memos")
     if isdirectory(memodir)
         let outdir = memodir
     endif

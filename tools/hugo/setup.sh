@@ -3,6 +3,8 @@
 script_dir=$(cd $(dirname $0); pwd)
 tmp_dir=$script_dir/tmp
 tmp_hugo=$tmp_dir/hugo
+tmp_b=$tmp_dir/b
+version=v0.18
 
 setup_hugo() {
     # http://qiita.com/syui/items/869538099551f24acbbf
@@ -12,13 +14,14 @@ setup_hugo() {
     echo "==> Installing hugo .."
     [ -e $tmp_hugo ] && rm -rf $tmp_hugo
     git clone https://github.com/spf13/hugo $tmp_hugo
-    cd $tmp_hugo && echo "==> Go getting .. " && go get && cd - >/dev/null 2>&1 && echo "==> hugo installed."
+    # cd $tmp_hugo && git checkout -b $version $version && echo "==> Go getting .. " && go get && cd - >/dev/null 1>&1 && echo "==> hugo installed."
+    cd $tmp_hugo && echo "==> Go getting .. " && go get && cd - >/dev/null 1>&1 && echo "==> hugo installed."
 }
 
 setup_memo() {
     if [ ! -e $tmp_b/.git ]; then
         [ -z $1 ] && echo "Specify url for clone" && exit 2
-        git clone $1
+        git clone $1 $tmp_b --recursive
     fi
 }
 
