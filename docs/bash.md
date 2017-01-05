@@ -113,10 +113,20 @@ command1 | command2  ==> コマンド１の標準出力をコマンド２の標�
 command1 && command2 ==> コマンド１が正常終了すればコマンド２を実行
 command1 || command2 ==> コマンド１が正常終了でなければコマンド２を実行
 
+```sh
+# ファイル名を取得
+basename '/a/b/c.d.e'
+# c.d.e
+# ファイル名を取得(拡張子なし)
+basename '/a/b/c.d.e' .e
+# c.d
 
 # スクリプトファイルのディレクトリを取得
+dirname '/a/b/c.d.e'
+# /a/b
+# スクリプトファイルのディレクトリを取得
 BASEDIR=$(cd $(/usr/bin/dirname $0); pwd)
-
+```
 
 ## 文字操作
 ${変数名#パターン} → 前方一致でのマッチ部分削除(最短マッチ)
