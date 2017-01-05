@@ -3,4 +3,4 @@
 main() {
     :
 }
-main
+main $*
