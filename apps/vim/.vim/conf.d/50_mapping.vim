@@ -138,30 +138,42 @@ command! Settings call Settings()
 command! Editvimrc call Settings()
 nmap <Leader>0 :Settings<CR>
 
+" dotpath を応答する
+function! GetDot()
+    let tmp = $DOTPATH
+    echo tmp
+    if tmp == ""
+        let tmp = expand('~/.dot')
+        if !isdirectory(l:tmp)
+            echo "No DOTPATH variable and No ~/.dot directory exist."
+            throw "error"
+        endif
+    endif
+    return tmp
+endfunction
 " doc ディレクトリを開く
 function! Doc(...)
-    let target = $DOTPATH
-    if target == ""
-        let target = expand('~/.dot')
-        if !isdirectory(target)
-            echo "No DOTPATH variable and No ~/.dot directory exist."
-            return
+    try
+        let target = GetDot()
+        let target .= '/docs'
+        if a:0 != 0
+            let tmp = target.'/'.a:1.'.md'
+            if filewritable(tmp)
+                let target = tmp
+            endif
         endif
-    endif
-    let target .= '/docs'
-    if a:0 != 0
-        let tmp = target.'/'.a:1.'.md'
-        if filewritable(tmp)
-            let target = tmp
-        endif
-    endif
-    exe "tabe" target
+        exe "tabe" target
+    catch
+    endtry
 endfunction
 command! -nargs=? Doc call Doc(<f-args>)
 nmap <Leader>9 :Doc<CR>
 
+" snippet ディレクトリを開く
+nmap <Leader>8 :tabe $HOME/.vim/snippets<ENTER>
+
 " バックアップディレクトリを開く
-nmap <Leader>8 :tabe $HOME/.vim/backup<ENTER>
+nmap <Leader>7 :tabe $HOME/.vim/backup<ENTER>
 
 " エンコーディングutf-8を指定して開き直す
 nnoremap ,8 :e ++enc=utf-8<CR>
