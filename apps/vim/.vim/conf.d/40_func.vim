@@ -132,6 +132,14 @@ function! HugoHelperFrontMatterReorder()
 endfun
 command! HugoHelperFrontMatterReorder call HugoHelperFrontMatterReorder()
 
+function! HugoHelperHighlight(language)
+    normal! I{{< highlight language_placeholder >}}
+    exe 's/language_placeholder/' . a:language . '/'
+    normal! o{{< /highlight }}
+endfun
+command! -nargs=? HugoHelperHighlight call HugoHelperHighlight(<f-args>)
+
+
 function! HugoHelperDraft()
     exe 'g/^draft/s/false/true'
 endfun
@@ -142,18 +150,49 @@ function! HugoHelperUndraft()
 endfun
 command! HugoHelperUndraft call HugoHelperUndraft()
 
+
+function! GetHugoNowDate()
+    let now = localtime()
+    let strnow = strftime("%Y-%m-%dT%H:%M:%S%z", now)
+    return strnow
+endfun
+
 function! HugoHelperDateIsNow()
-    exe 'g/^date/s/".*"/\=strftime("%FT%T%z")/'
-    normal! $a"
-    normal! Bi"
-    normal! f+2la:
+    " exe 'g/^date/s/".*"/\=strftime("%FT%T%z")/'
+    let strnow = GetHugoNowDate()
+    exe 'g/^date: /s/.*/date: '.strnow.'/'
 endfun
 command! HugoHelperDateIsNow call HugoHelperDateIsNow()
 
-function! HugoHelperHighlight(language)
-    normal! I{{< highlight language_placeholder >}}
-    exe 's/language_placeholder/' . a:language . '/'
-    normal! o{{< /highlight }}
+function! HugoHelperLastModIsNow()
+    let strnow = GetHugoNowDate()
+    exe 'g/^lastmod: /s/.*/lastmod: '.strnow.'/'
 endfun
-command! -nargs=? HugoHelperHighlight call HugoHelperHighlight(<f-args>)
+command! HugoHelperLastModIsNow call HugoHelperLastModIsNow()
+
+function! Hugo() abort
+    let strnow = GetHugoNowDate()
+    let list = [
+        \ '---',
+        \ 'date: '.strnow,
+        \ 'lastmod: '.strnow,
+        \ 'draft: true',
+        \ 'title: dotScale 2014 as a sketch',
+        \ 'slug: dotscale-2014-as-a-sketch',
+        \ 'tags:',
+        \ '  - ubuntu',
+        \ 'categories:',
+        \ '  - tech',
+        \ 'image: images/imagename.jpg',
+        \ 'comments: true',
+        \ 'share: true',
+        \ '---',
+    \ ]
+    let i = 0
+    for row in list
+        call append(i, row)
+        let i += 1
+    endfor
+endfun
+command! Hugo call Hugo()
 
