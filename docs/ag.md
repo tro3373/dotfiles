@@ -3,11 +3,22 @@
 ## よく使うオプション
 
 ```bash
-# ファイル名のみを出力
+# ディレクトリ階層の深さ指定
+     --depth NUM          Search up to NUM directories deep (Default: 25)
+# (マッチした)ファイル名のみを出力
   -l --files-with-matches Only print filenames that contain matches
                           (dont print the matching lines)
-
-# 隠しファイル、無視指定ファイル含め検索
+# マッチしなかったファイル名を表示
+  -L --files-without-matches
+                          Only print filenames that dont contain matches
+# ファイル名にマッチしたものを出力
+  -g PATTERN              Print filenames matching PATTERN
+# 行番号を非表示
+     --[no]numbers        Print line numbers. Default is to omit line numbers
+                          when searching streams
+# 隠しファイルも検索
+     --hidden             Search hidden files (obeys .*ignore files)
+# 全ファイルを検索(隠しファイル、無視指定ファイル含め検索)
 
   -u --unrestricted       Search all files (ignore .agignore, .gitignore, etc.;
                           searches binary and hidden files as well)
@@ -16,11 +27,18 @@
 # 大文字を含んでいれば、大文字小文字区別
   -S --smart-case         Match case insensitively unless PATTERN contains
                           uppercase characters (Enabled by default)
+# ファイル名を正規表現指定で制限検索(ex. ag -G '\.(c|h)' pattern)
+  -G --file-search-regex  PATTERN Limit search to filenames matching PATTERN
 ```
 
-## Instal For Windows
+## Install For Windows
+- [The Silver Searcher windows port](http://blog.kowalczyk.info/software/the-silver-searcher-for-windows.html)
 - [ag.zip](https://kjkpub.s3.amazonaws.com/software/the_silver_searcher/rel/0.29.1-1641/ag.zip)
 
+### Install For msys2
+```sh
+pacman -S mingw-w64-x86_64-ag
+```
 
 ## help
 ```help
