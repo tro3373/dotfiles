@@ -61,6 +61,7 @@ case "${OSTYPE}" in
         ;;
 esac
 
+alias cddot="cd $DOTPATH"
 alias la="ls -a"
 alias lf="ls -F"
 alias l="ls -lFh"
