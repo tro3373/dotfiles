@@ -141,10 +141,9 @@ nmap <Leader>0 :Settings<CR>
 " dotpath を応答する
 function! GetDot()
     let tmp = $DOTPATH
-    echo tmp
     if tmp == ""
         let tmp = expand('~/.dot')
-        if !isdirectory(l:tmp)
+        if !isdirectory(tmp)
             echo "No DOTPATH variable and No ~/.dot directory exist."
             throw "error"
         endif
@@ -153,18 +152,21 @@ function! GetDot()
 endfunction
 " doc ディレクトリを開く
 function! Doc(...)
+    let target = ""
     try
         let target = GetDot()
-        let target .= '/docs'
-        if a:0 != 0
-            let tmp = target.'/'.a:1.'.md'
-            if filewritable(tmp)
-                let target = tmp
-            endif
-        endif
-        exe "tabe" target
     catch
+        echo "Error Occur"
+        return
     endtry
+    let target .= '/docs'
+    if a:0 != 0
+        let tmp = target.'/'.a:1.'.md'
+        if filewritable(tmp)
+            let target = tmp
+        endif
+    endif
+    exe "tabe" target
 endfunction
 command! -nargs=? Doc call Doc(<f-args>)
 nmap <Leader>9 :Doc<CR>
