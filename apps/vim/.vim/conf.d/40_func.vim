@@ -116,6 +116,18 @@ function! s:GetBufferDirectory()
   return dir . (exists('+shellslash') && !&shellslash ? '\' : '/')
 endfunction
 
+" dotpath を応答する
+function! GetDotDir()
+    let tmp = $DOTPATH
+    if tmp == ""
+        let tmp = expand('~/.dot')
+        if !isdirectory(tmp)
+            echo "No DOTPATH variable and No ~/.dot directory exist."
+            throw "error"
+        endif
+    endif
+    return tmp
+endfunction
 
 function! HugoHelperFrontMatterReorder()
     exe 'g/^draft/m 1'
@@ -195,4 +207,18 @@ function! Hugo() abort
     endfor
 endfun
 command! Hugo call Hugo()
+
+function! SaveMemo() abort
+    let outdir = "."
+    let memodir = "~/works/00_memos"
+    if isdirectory(memodir)
+        let outdir = memodir
+    endif
+    let now = localtime()
+    let strnow = strftime("%Y-%m-%d-", now)
+    let title = input("FileName: ", "",  "file")
+    redraw
+    exe ":w ".outdir."/".strnow.title.".md"
+endfun
+command! SaveMemo call SaveMemo()
 
