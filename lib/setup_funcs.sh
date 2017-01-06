@@ -253,23 +253,21 @@ setup_apps() {
     }
 }
 
-initialize() {
-    if [ -z $DIR_ROOT ]; then
-        DIR_ROOT=${DOTPATH:-$HOME/.dot}
+make_dirs() {
+    local works_home=$HOME
+    if [ "$DETECT_OS" = "msys" ]; then
+        if [ -z $WINHOME ]; then
+            WINHOME="$(cd /c/Users/`whoami` && pwd)"
+        fi
+        works_home=$WINHOME
+        [ ! -e $WINHOME/bin ] && dvexec mkdir $WINHOME/bin
+        [ ! -e $WINHOME/tools ] && dvexec mkdir $WINHOME/tools
     fi
-    # 各アプリ個別設定用のファイル名
-    FIL_CONF=config.sh
-    # インストールアプリディレクトリ
-    DIR_APP=$DIR_ROOT/apps
-    # バックアップ先ディレクトリ
-    DIR_BACKUP="${DIR_ROOT}/bkup/`date +%Y%m%d%H%M%S`"
-    # バックアップしたファイルを後でまとめて表示する
-    BACKUP=""
-    # instcmd 設定
-    setup_instcmd
-    # ~/bin 作成
-    if [ ! -e ~/bin ]; then
-        mkdir ~/bin
+    [ ! -e $HOME/bin ] && dvexec mkdir $HOME/bin
+    [ ! -e $works_home/works/00_memos ] && dvexec mkdir -p $works_home/works/00_memos
+    if [ "$DETECT_OS" = "msys" ]; then
+        make_link_bkupable $WINHOME/works $HOME/works
+        make_link_bkupable $WINHOME $HOME/win
     fi
 }
 
@@ -286,19 +284,29 @@ initialize_mac() {
         log '  brew update'
         log '  brew -v'
         log ''
-        return 1
+        invalid=1
     fi
-    return 0
 }
 
-initialize_msys2() {
-    if [ -z $WINHOME ]; then
-        WINHOME="$(cd /c/Users/`whoami` && pwd)"
+initialize() {
+    invalid=0
+    if [ -z $DIR_ROOT ]; then
+        DIR_ROOT=${DOTPATH:-$HOME/.dot}
     fi
-    [ ! -e $WINHOME/bin ] && dvexec mkdir $WINHOME/bin
-    [ ! -e $WINHOME/tools ] && dvexec mkdir $WINHOME/tools
-    [ ! -e $WINHOME/works ] && dvexec mkdir $WINHOME/works
-    return 0
+    # 各アプリ個別設定用のファイル名
+    FIL_CONF=config.sh
+    # インストールアプリディレクトリ
+    DIR_APP=$DIR_ROOT/apps
+    # バックアップ先ディレクトリ
+    DIR_BACKUP="${DIR_ROOT}/bkup/`date +%Y%m%d%H%M%S`"
+    # バックアップしたファイルを後でまとめて表示する
+    BACKUP=""
+    # instcmd 設定
+    setup_instcmd
+    # directory 作成
+    make_dirs
+    # Mac 用 Brew インストールチェック
+    [ "$DETECT_OS" = "mac" ] && initialize_mac
 }
 
 # セットアップ開始
@@ -308,21 +316,10 @@ setup() {
     # スクリプトが置かれているパスに移動する
     cd $DIR_ROOT
 
-    local valid=1
-    if [ "$DETECT_OS" = "mac" ]; then
-        # Mac 用 Brew インストールチェック
-        ! initialize_mac && valid=0
-    elif [ "$DETECT_OS" = "msys" ]; then
-        # msys 用 インストールチェック
-        # Git for Windows の Bash も msys で起動される為
-        # ここを通る
-        ! initialize_msys2 && valid=0
-    fi
-
     # -e: Exit when error occur.
     # -u: Exit when using undefined variable.
     set -eu
-    [ $valid -eq 1 ] && setup_apps
+    [ "$invalid" = "0" ] && setup_apps
 
     if [[ $dry_run -eq 1 ]]; then
         log ""

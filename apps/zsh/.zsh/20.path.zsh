@@ -28,6 +28,8 @@ function add_path() {
     export PATH=$targetPath:$PATH
 }
 
+[ "${OSTYPE}" = "msys" ] && add_path "/mingw64/bin" # For silver searcher ag
+
 # --------------------------------------------------------
 # anyenv
 # --------------------------------------------------------
