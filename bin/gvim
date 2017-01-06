@@ -56,6 +56,7 @@ main() {
     # homepath="$(change "$HOME")"
     homepath=""
     tmppath="$(change "$WINHOME/AppData/Local/Temp")"
+    dotpath="$(change "$DOTPATH")"
     add_winpath "$ORIGINAL_PATH"
     local wingit="/c/Program Files/Git/cmd"
     if [ -e "$wingit" ]; then
@@ -70,7 +71,7 @@ main() {
     add_winpath "$WINHOME/bin"
     dlog "AllPath: $winpath"
     dlog "Args:    $args"
-    HOME=$homepath SHELL= PATH=$winpath TMP=$tmppath TEMP=$tmppath $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent $args &
+    DOTPATH=$dotpath HOME=$homepath SHELL= PATH=$winpath TMP=$tmppath TEMP=$tmppath $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent $args &
 }
 main $*
 

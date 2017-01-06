@@ -14,5 +14,6 @@ set path=%HOMEPATH%\AppData\Local\Msys64\Mingw64\bin;%path%
 set path=%HOMEPATH%\bin;%path%
 rem echo %path%
 rem set home=%HOMEPATH%\.cache\unxh
+set dotpath=%HOMEPATH%\.cache\unxh\.dot
 start "" C:%HOMEPATH%\tools\%gvim_dir%\gvim.exe --remote-tab-silent %args%
 
