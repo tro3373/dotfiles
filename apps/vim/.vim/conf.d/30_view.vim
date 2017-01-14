@@ -4,22 +4,72 @@
 "           Vimの外観や見た目の表示方法に関する設定を行う
 "######################################################################
 
+" ターミナル環境用に256色を使えるようにする
+set t_Co=256
+if &term == 'screen-256color'
+    " 背景の塗り潰しは行わない
+    set t_ut=
+endif
+
 " 行番号を表示する
 set number
 " ルーラを表示
 set ruler
-" カーソルラインを表示
-set cursorline
-" 列を強調表示
-set cursorcolumn
+" カーソル行・列表示設定
+if 1
+  " カーソル行・列を常に表示
+  set cursorline cursorcolumn
+else
+  " カーソル行・列を一定時間入力なし時、ウィンドウ移動直後に表示
+  augroup vimrc-auto-cursorline
+    autocmd!
+    autocmd CursorMoved,CursorMovedI * call s:auto_cursorline('CursorMoved')
+    autocmd CursorHold,CursorHoldI * call s:auto_cursorline('CursorHold')
+    autocmd WinEnter * call s:auto_cursorline('WinEnter')
+    autocmd WinLeave * call s:auto_cursorline('WinLeave')
+
+    let s:cursorline_lock = 0
+    function! s:auto_cursorline(event)
+      if a:event ==# 'WinEnter'
+        setlocal cursorline cursorcolumn
+        let s:cursorline_lock = 2
+      elseif a:event ==# 'WinLeave'
+        setlocal nocursorline nocursorcolumn
+      elseif a:event ==# 'CursorMoved'
+        if s:cursorline_lock
+          if 1 < s:cursorline_lock
+            let s:cursorline_lock = 1
+          else
+            setlocal nocursorline nocursorcolumn
+            let s:cursorline_lock = 0
+          endif
+        endif
+      elseif a:event ==# 'CursorHold'
+        setlocal cursorline cursorcolumn
+        let s:cursorline_lock = 1
+      endif
+    endfunction
+  augroup END
+endif
+
+" hi=highlight
+" " カーソル行・列表示色設定
+" autocmd VimEnter,ColorScheme * hi CursorLine    ctermbg=Blue ctermfg=Blue
+" autocmd VimEnter,ColorScheme * hi CursorColumn  ctermbg=Blue ctermfg=Green
+" autocmd VimEnter,ColorScheme * hi CursorLine    term=underline cterm=underline guibg=Grey90
+" autocmd VimEnter,ColorScheme * hi CursorColumn  term=reverse ctermbg=7 guibg=Grey90
+
 " 80 に縦 Line
 " set colorcolumn=80
 " 81 文字より後ろの色を変える
 " let &colorcolumn=join(range(81,999),",")
 " 80 に縦 Line 120 文字より後ろの色を変える
 let &colorcolumn="80,".join(range(120,999),",")
-" hi=highlight
-" hi ColorColumn ctermbg=lightblue guibg=lightblue
+" autocmd VimEnter,ColorScheme * hi ColorColumn ctermbg=lightblue guibg=lightblue
+" 検索結果ハイライト色設定
+" autocmd VimEnter,ColorScheme * hi Search  xxx ctermfg=234 ctermbg=221 guifg=#1d1f21 guibg=#f0c674
+autocmd VimEnter,ColorScheme * hi Search ctermfg=238 ctermbg=109
+
 " 閉じ括弧が入力されたとき、対応する括弧を表示する
 set showmatch
 " カーソルが飛ぶ時間を0.1秒で設定
@@ -57,15 +107,6 @@ if g:plug.is_installed("vim-indent-guides")
     " autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd   ctermbg=234    " Odd(奇数) 色
     autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd   ctermbg=233    " Odd(奇数) 色
     autocmd VimEnter,Colorscheme * :hi IndentGuidesEven  ctermbg=236    " Even(偶数) 色
-                    
-endif
-
-
-" ターミナル環境用に256色を使えるようにする
-set t_Co=256
-if &term == 'screen-256color'
-    " 背景の塗り潰しは行わない
-    set t_ut=
 endif
 
 " シンタックスハイライトを有効にする

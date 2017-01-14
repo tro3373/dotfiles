@@ -44,6 +44,8 @@ nnoremap <Leader>y 0v$h"+y
 nnoremap <Leader>w :w<CR>
 " Visual line
 nmap <Leader><Leader> V
+" Esc Esc でハイライトOFF nohlsearch
+nnoremap <Esc><Esc> :noh<CR>
 
 " /検索時の / 入力補完
 cnoremap <expr> / (getcmdtype() == '/') ? '\/' : '/'
