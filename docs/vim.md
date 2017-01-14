@@ -1,5 +1,18 @@
 Vim Tips
 =================================================================
+## highlight
+`highlight {group-name} {key}={arg}`
+グループについては、 `:help highlight-groups` で確認できる
+
+| gVim  |vim     |対象   |
+|:------|:-------|:------|
+| gui   |cterm   |字書体 |
+| guifg |ctermfg |字色   |
+| guibg |ctermbg |景色   |
+
+
+
+
 ## .vimrc,_vimrc のロード順序
 - ユーザー vimrc は以下の順で検索される
     - Windows
@@ -126,6 +139,11 @@ set fdm=indent	インデント
 
 ## コマンドモード
 ```vim
+" 現在の highlight 設定の表示
+:highlight
+" 最後にhighlight設定を行ったファイルの特定
+:verbose highlight Statement
+
 " カレントファイルのファイル名に拡張子をつけて保存
 :w %.bk
 " カレントファイルの拡張子を取り除く(%<)
