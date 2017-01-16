@@ -68,7 +68,7 @@ let &colorcolumn="80,".join(range(120,999),",")
 " autocmd VimEnter,ColorScheme * hi ColorColumn ctermbg=lightblue guibg=lightblue
 " 検索結果ハイライト色設定
 " autocmd VimEnter,ColorScheme * hi Search  xxx ctermfg=234 ctermbg=221 guifg=#1d1f21 guibg=#f0c674
-autocmd VimEnter,ColorScheme * hi Search ctermfg=238 ctermbg=109
+autocmd VimEnter,ColorScheme * hi Search ctermfg=238 ctermbg=109 guifg=#646D75 guibg=#87afaf
 
 " 閉じ括弧が入力されたとき、対応する括弧を表示する
 set showmatch
