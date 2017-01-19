@@ -13,8 +13,31 @@ setconfig() {
     make_link_bkupable $script_dir/.exchange.key ~/.exchange.key
 
     # .ssh directory setting
-    # [ 0 -eq 0 ] && return
+    # link .ssh not work
+    # link_to_dot
+    change_to_right_permission
+}
 
+change_to_right_permission() {
+    local ssh_dir=${HOME}/.ssh
+    if [ ! -e ${ssh_dir} ]; then
+        # dvexec mkdir -p ${ssh_dir}
+        echo "No .ssh directory exists."
+        return 0
+    fi
+    if ! stat -c "%a %n" ${ssh_dir} | grep 755 >/dev/null 2>&1; then
+        dvexec chmod 755 ${ssh_dir}
+    fi
+
+    local files=$(find ${ssh_dir}/ -type f)
+    for file in $files; do
+        if stat -c "%a %n" ${file} | grep -v 600 >/dev/null 2>&1; then
+            dvexec chmod 600 ${file}
+        fi
+    done
+}
+
+link_to_dot() {
     ssh_inner=$script_dir/.ssh
     ssh_outer=${HOME}/.ssh
 
