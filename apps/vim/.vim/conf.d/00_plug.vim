@@ -71,6 +71,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'vim-scripts/Align'                          " CSV,TSV整形
   Plug 'junegunn/vim-easy-align'                    " Align text
 
+  " Plug 'cocopon/vaffle.vim'                         " SimpleFiler 使いづらい
   " Plug 'scrooloose/nerdtree', {
   "   \ 'on':  ['NERDTreeToggle'] }                   " NERDTree tree view コマンド実行時に読み込む
 

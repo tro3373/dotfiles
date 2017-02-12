@@ -169,6 +169,8 @@ nnoremap ,8 :e ++enc=utf-8<CR>
 " エンコーディングcp932を指定して開き直す
 nnoremap ,9 :e ++enc=cp932<CR>
 
+cmap <F3> <C-R>=strftime("%Y-%m-%d")<CR>
+imap <F3> <C-R>=strftime("%Y-%m-%d")<CR>
 
 "=============================================
 " unite-outline 設定
