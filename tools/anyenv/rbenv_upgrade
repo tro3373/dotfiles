@@ -1,0 +1,7 @@
+#!/bin/bash
+
+main() {
+    cd ~/.anyenv/envs/rbenv/plugins/ruby-build
+    git pull --rebase origin master
+}
+main $*

@@ -1,0 +1,39 @@
+#!/bin/bash
+
+version=${1:-}
+has() {
+    which ${1} >/dev/null 2>&1
+    return $?
+}
+intaractive() {
+    while [[ "$input_word" == "" ]]; do
+        rbenv install -l
+        echo
+        echo "Input install version. Now version is .. "
+        ruby -v
+        read input_word
+    done
+    version=$input_word
+}
+main() {
+    if ! has anyenv; then
+        echo "Installing anyenv ..."
+        ./setup.sh
+    fi
+    if ! has rubyenv; then
+        echo "Installing rbenv ..."
+        anyenv install rbenv
+    fi
+    if has ruby; then
+        echo "Upgrading rbenv ..."
+        ./rbenv_upgrade
+    fi
+
+    if [[ -z $version ]]; then
+        intaractive
+    fi
+    rbenv install $version
+    rbenv global $version
+    ruby -v
+}
+main $*
