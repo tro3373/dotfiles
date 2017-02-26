@@ -19,19 +19,15 @@ snippet script_dir
 
 snippet readwhil
 alias rea
-    while [[ "$${1:value}" == "" ]]; do
-        echo "Input Your $1 for this key."
-        read $$1
+    while [[ "$$input_word" == "" ]]; do
+        echo "$$msg"
+        read input_word
     done
 
-snippet isexists
-alias is_exists
-    is_exists() {
+snippet has
+    has() {
         which \${1} >/dev/null 2>&1
         return $?
-    }
-    has() {
-        is_exists "$@"
     }
 
 snippet isfileexists
