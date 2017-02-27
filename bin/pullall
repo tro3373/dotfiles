@@ -1,0 +1,27 @@
+#!/bin/bash
+
+root_dir=~/works/50_src
+_pull() {
+    local target=$1
+    cd $target >/dev/null 2>&1
+    echo "Pulling for $target"
+    git status -s
+    local modify=$(git status -s | grep -v '??' | wc -l)
+    local stash=0
+    if [[ $modify -gt 0 ]]; then
+        stash=1
+        git stash
+    fi
+    git pull --rebase
+    if [[ $stash -eq 1 ]]; then
+        git stash pop
+    fi
+}
+main() {
+    for f in `find $root_dir -maxdepth 2 -name ".git" -type d`; do
+        dir=$(basename $(dirname $f))
+        dir=$(cd $root_dir/$dir && pwd)
+        _pull $dir
+    done
+}
+main $*
