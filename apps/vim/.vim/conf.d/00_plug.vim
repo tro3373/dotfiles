@@ -59,6 +59,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'Shougo/neocomplete.vim'                     " Next generation completion framework after neocomplcache
   " Plug 'Lokaltog/vim-easymotion'                    " カーソル移動プラグイン(fコマンドが効かなくなるので無効)
   Plug 'terryma/vim-expand-region'                  " visually select increasingly larger regions of text
+  " Plug 'terryma/vim-multiple-cursors'               " MultiCursor
 
   Plug 'airblade/vim-gitgutter'                     " Shows a git diff in the gutter!!!!!
   Plug 'cohama/agit.vim'                            " gitk-like repository viewer ex) type :Agit
