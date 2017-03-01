@@ -1,25 +1,45 @@
 #!/bin/bash
 
 root_dir=${1:-~/works/50_src}
+_exe() {
+    cmd=$*
+    rc=1
+    result=
+    result=$($cmd 2>&1) && rc=0
+    if [[ $rc -ne 0 ]]; then
+        echo "!!Abort!! while updating $target cmd: $cmd"
+        echo "      ==> $result"
+        exit 1
+    fi
+}
 _pull() {
-    local target=$1
-    cd $target >/dev/null 2>&1
-    echo "Updating repository($target) ... "
-    local modified_list=$(git status -s)
-    local modify=$(echo "$modified_list" | grep -v '??' | wc -l)
+    target=$1
+    cd $target
+    local modified=$(git status -s)
     local stash=0
-    if [[ $modify -gt 0 ]]; then
-        echo "==> Modified sources exist. stash saving ..."
-        echo "$modified_list"
-        stash=1
-        git stash >/dev/null
+    local stash_msg=""
+    if [[ "$modified" != "" ]]; then
+        local shuld_stash=$(echo "$modified" | grep -v '??' | wc -l)
+        if [[ $shuld_stash -gt 0 ]]; then
+            stash=1
+            stash_msg="(with_stash)"
+            _exe git stash -q
+        fi
     fi
-    echo "==> Pull rebasing ..."
-    git pull -q --rebase >/dev/null
+    _exe git pull --rebase
+    local nochanged=$(echo "$result" | grep "up to date" | wc -l)
+    local update_msg="up-to-date"
+    if [[ $nochanged -eq 0 ]]; then
+        update_msg="pulled"
+    fi
     if [[ $stash -eq 1 ]]; then
-        echo "==> stash poping ..."
-        git stash pop >/dev/null
+        _exe git stash pop -q
     fi
+    echo "==> Success to update ($update_msg) $stash_msg $target"
+    if [[ "$modified" != "" ]]; then
+        echo "$modified"
+    fi
+    cd - >/dev/null 2>&1
 }
 main() {
     for f in `find $root_dir -maxdepth 3 -name ".git" -type d`; do
@@ -27,5 +47,6 @@ main() {
         dir=$(cd $root_dir/$dir && pwd)
         _pull $dir
     done
+    echo "Done."
 }
 main $*
