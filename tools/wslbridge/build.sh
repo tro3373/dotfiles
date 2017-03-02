@@ -14,7 +14,8 @@ clone_if_needed() {
 }
 front() {
     cd ./wslbridge/frontend
-    # make
+    make
+
     mintty_winpath=$(cygpath -aw $(which mintty))
     winbin=$(cygpath -aw $WINHOME/bin)
     cp ../out/wslbridge.exe $winbin
@@ -29,9 +30,11 @@ back() {
 main() {
     clone_if_needed
     cd $work_dir
-    if [[ $# -eq 0 ]]; then
+    if [[ "$OSTYPE" == "msys" ]]; then
+        echo "Building frontend ..."
         front
     else
+        echo "Building backend ..."
         back
     fi
 }
