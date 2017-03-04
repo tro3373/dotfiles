@@ -6,7 +6,7 @@ main() {
         anyenv install goenv
         echo "===> Reload shell"
     else
-        local version=1.7
+        local version=1.8
         goenv install $version
         goenv global $version
         goenv rehash
