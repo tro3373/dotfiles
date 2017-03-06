@@ -15,7 +15,7 @@ check() {
     fi
     if ! `bundle --help>/dev/null 2>&1`; then
         echo "Installing bundler ..."
-        gem install bundler
+        sudo gem install bundler
     fi
 }
 rails_new() {
