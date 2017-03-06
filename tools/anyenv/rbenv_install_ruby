@@ -7,7 +7,7 @@ has() {
 }
 intaractive() {
     while [[ "$input_word" == "" ]]; do
-        rbenv install -l
+        rbenv install -l | grep -v rbx | grep -v topaz | grep -v mruby | grep -v maglev | grep -v jruby | grep -v ree
         echo
         echo "Input install version. Now version is .. "
         ruby -v
@@ -20,7 +20,7 @@ main() {
         echo "Installing anyenv ..."
         ./setup.sh
     fi
-    if ! has rubyenv; then
+    if ! has rbenv; then
         echo "Installing rbenv ..."
         anyenv install rbenv
     fi
