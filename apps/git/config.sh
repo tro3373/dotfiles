@@ -94,7 +94,7 @@ set_gitconfig() {
         dvexec git config --global init.templatedir '~/.git_template'
     fi
     if ! is_exists_setting "$list" "alias.ignore"; then
-        dvexec "git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'"
+        dvexec "git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/\$@ ;}; gi'"
     fi
 }
 
