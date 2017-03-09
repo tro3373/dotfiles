@@ -1,6 +1,7 @@
 #!/bin/bash
 
 main() {
+    DOTPATH=${DOTPATH:-~/.dot}
     /bin/ls --color $DOTPATH/bin
 }
 main
