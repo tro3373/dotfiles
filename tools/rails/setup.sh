@@ -30,7 +30,7 @@ rails_new() {
     # echo 'gem "rails"' >> Gemfile
     sed -i -e '/rails/s/# //g' Gemfile
     bundle install --path vendor/bundle --jobs=4
-    bundle exec rails new -f .
+    bundle exec rails new -d postgresql -f .
 }
 main() {
     check
