@@ -15,7 +15,7 @@ for file in $list
 do
     filename=`basename $file`
     ext=${filename##*.}
-    ext_list=("${ext_list[@]}" ${ext})
+    ext_list=("${ext_list[@]}" ${ext}) # bash array
 done
 
 echo ${ext_list[@]} | tr ' ' '\n' | sort | uniq -c | sort -n
