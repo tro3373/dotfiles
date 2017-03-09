@@ -1,0 +1,46 @@
+#!/bin/bash
+
+current_dir=$(pwd)
+dotbin=${DOTPATH:-~/.dot}/bin
+template=$dotbin/lib/template.sh
+
+usage() {
+    local command_name=$(basename $0)
+    echo "Create new executable shell file."
+    echo
+    echo "Usage:"
+    echo "    $command_name [option] <create_file_name>"
+    echo "  Options"
+    echo "    -b|--bin : Create new command file in $dotbin"
+}
+
+main(){
+    if [[ $# -eq 0 || $# -gt 2 ]]; then
+        usage
+        exit 1
+    fi
+    local args=$*
+    local tobin=0
+    local regx='^-b$|^--b$'
+    local f=
+    for arg in $args; do
+        if [[ $arg =~ $regx ]]; then
+            tobin=1
+            continue
+        fi
+        f=$arg
+    done
+    local out=$current_dir
+    if [[ $tobin -eq 1 ]]; then
+        out=$dotbin
+    fi
+    local target=$out/$f
+    if [[ -e $target ]]; then
+        echo "Target $target is exist."
+        exit 1
+    fi
+    cp $template $target
+    vim $target
+}
+main $*
+
