@@ -1,5 +1,6 @@
 #!/bin/bash
 
+dotbin=${DOTPATH:-~/.dot}/bin
 has() {
     which ${1} >/dev/null 2>&1
     return $?
@@ -25,12 +26,7 @@ rails_new() {
     fi
     mkdir -p tmp/project
     cd tmp/project
-    bundle init
-    # Gemfie から rails のコメントを外す.
-    # echo 'gem "rails"' >> Gemfile
-    sed -i -e '/rails/s/# //g' Gemfile
-    bundle install --path vendor/bundle --jobs=4
-    bundle exec rails new -d postgresql -f .
+    $dotbin/railsnew -p
 }
 main() {
     check
