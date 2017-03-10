@@ -1,0 +1,22 @@
+#!/bin/bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+
+has() {
+    which ${1} >/dev/null 2>&1
+    return $?
+}
+
+main() {
+    if ! has nkf; then
+        echo "No nkf exist."
+        exit 1
+    fi
+    local target=$*
+    if [[ -z $target ]]; then
+        target=./*
+    fi
+    nkf --guess $target
+}
+main $*
