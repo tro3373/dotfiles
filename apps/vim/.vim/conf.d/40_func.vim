@@ -250,3 +250,15 @@ function! ReplaceSelected() abort
 endfun
 command! ReplaceSelected call ReplaceSelected()
 
+" Encode/LineEnd
+function! Encode(type) abort
+    if a:type == 0
+        exe ':set ff=dos'
+        exe ':set fileencoding=cp932'
+    else
+        exe ':set ff=unix'
+        exe ':set fileencoding=utf-8'
+    endif
+endfun
+command! Doslize call Encode(0)
+command! Unixlize call Encode(1)
