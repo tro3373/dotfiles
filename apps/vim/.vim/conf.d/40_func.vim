@@ -223,3 +223,30 @@ function! SaveMemo() abort
 endfun
 command! SaveMemo call SaveMemo()
 
+" 全選択コピー
+function! CopyAll() abort
+    normal! ggVGy
+endfun
+command! CopyAll call CopyAll()
+command! SellAll call CopyAll()
+
+" 空白削除
+function! Trim() abort
+    " ! はマップを展開しない
+    exe ':%s/ \+$//g'
+endfun
+command! Trim call Trim()
+
+" 選択削除
+function! DeleteSelected() abort
+    exe ':%s///g'
+endfun
+command! DeleteSelected call DeleteSelected()
+
+" 選択置換
+function! ReplaceSelected() abort
+    let dst = input("Replace to: ")
+    exe ':%s//'.dst.'/g'
+endfun
+command! ReplaceSelected call ReplaceSelected()
+
