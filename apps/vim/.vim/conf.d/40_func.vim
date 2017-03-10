@@ -183,7 +183,7 @@ function! HugoHelperLastModIsNow()
 endfun
 command! HugoHelperLastModIsNow call HugoHelperLastModIsNow()
 
-function! Hugo() abort
+function! Hugolize() abort
     let strnow = GetHugoNowDate()
     let list = [
         \ '---',
@@ -207,7 +207,7 @@ function! Hugo() abort
         let i += 1
     endfor
 endfun
-command! Hugo call Hugo()
+command! Hugolize call Hugolize()
 
 function! SaveMemo() abort
     let outdir = "."
