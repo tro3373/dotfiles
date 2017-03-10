@@ -38,14 +38,14 @@ install() {
             --enable-cscope
         dvexec sudo make
         dvexec sudo make install
-        dvexec cd ..
-        if [[ ! -e /usr/share/vim ]]; then
-            dvexec sudo mkdir /usr/share/vim
-        fi
-        if [[ ! -e /usr/share/vim/vim74 ]]; then
-            dvexec sudo mkdir /usr/share/vim/vim74
-        fi
-        dvexec sudo cp -fr runtime/* /usr/share/vim/vim74/
+        # dvexec cd ..
+        # if [[ ! -e /usr/share/vim ]]; then
+        #     dvexec sudo mkdir /usr/share/vim
+        # fi
+        # if [[ ! -e /usr/share/vim/vim74 ]]; then
+        #     dvexec sudo mkdir /usr/share/vim/vim74
+        # fi
+        # dvexec sudo cp -fr runtime/* /usr/share/vim/vim74/
     elif [ "$DETECT_OS" = "mac" ]; then
         dvexec $instcmd lua
         dvexec $instcmd vim --with-lua
