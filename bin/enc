@@ -1,22 +1,83 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 current_dir=$(pwd)
 script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+
+usage() {
+    cat<<EOF
+Show or Convert file encoding and line ending, via nkf.
+  Usage:
+      $command_name [option] [file1 file2 ..]
+    Options
+      No option                 : Show file encoding and line ending for target files.
+      No files                  : Show for current directory files.
+      -h|--help                 : Show this usage
+      -w|--win|win|dos|--dos    : Convert to windows file format
+      -l|-u|--unix|unix         : Convert to unix file format
+EOF
+}
 
 has() {
     which ${1} >/dev/null 2>&1
     return $?
 }
 
-main() {
+add_args() {
+    args=("${args[@]}" "$@")
+}
+
+set_args() {
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -w|--win|win|dos|--dos)
+                dos=1
+                ;;
+            -l|-u|--unix|unix)
+                unix=1
+                ;;
+            *)
+                add_args $arg
+                ;;
+        esac
+    done
+}
+
+initialize() {
+    args=()
+    set_args "$@"
     if ! has nkf; then
         echo "No nkf exist."
         exit 1
     fi
-    local target=$*
-    if [[ -z $target ]]; then
-        target=./*
+    # if ! has iconv; then
+    #     echo "No iconv exist."
+    #     exit 1
+    # fi
+    for arg in "${args[@]}"; do
+        targets="$target $arg"
+    done
+    if [[ -z $targets ]]; then
+        targets=./*
     fi
-    nkf --guess $target
 }
-main $*
+
+main() {
+    initialize "$@"
+    if [[ $unix -eq 1 ]]; then
+        # convert to utf8,lf
+        nkf -Lu -w --overwrite $targets
+    elif [[ $dos -eq 1 ]]; then
+        # convert to shiftjis,crlf
+        nkf -Lw -s --overwrite $targets
+    else
+        # show file encoding/line ending
+        nkf --guess $targets
+    fi
+}
+main "$@"
+
