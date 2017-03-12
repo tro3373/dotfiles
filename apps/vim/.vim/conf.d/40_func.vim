@@ -2,6 +2,78 @@
 "   func.vim
 "           ユーザ定義関数やマクロの定義をする
 "######################################################################
+" private関数
+
+" Ubuntu 判定
+function! IsUbuntu() abort
+    if filereadable("/etc/debian_version")  || filereadable("/etc/debian_release")
+        if filereadable("/etc/lsb-release")
+            return 1
+        endif
+    endif
+    return 0
+endfun
+
+" dotpath を応答する
+function! GetDotDir()
+    let tmp = $DOTPATH
+    if tmp == ""
+        let tmp = expand('~/.dot')
+        if !isdirectory(tmp)
+            echo "No DOTPATH variable and No ~/.dot directory exist."
+            throw "error"
+        endif
+    endif
+    return tmp
+endfunction
+
+" GitRoot取得
+function! GetGitRoot() abort
+    try
+        let l:result = system("cd " . expand('%:p:h') . " && git rev-parse --is-inside-work-tree")
+        let l:result = substitute(l:result, '\(\r\|\n\)\+', '', 'g')
+        let l:isgitrepo = matchstr(l:result, "true")
+        if l:isgitrepo == "true"
+            let l:gitroot = system("cd " . expand('%:p:h') . " && git rev-parse --show-toplevel")
+            return substitute(l:gitroot, '\(\r\|\n\)\+', '', 'g')
+        else
+            return "."
+        endif
+    catch
+    endtry
+endfunction
+
+" Clipboadの値取得
+function! GetClipboad() abort
+    let l:result = ""
+    try
+        if IsUbuntu()
+            let l:result = @"
+        else
+            let l:result = @+
+        endif
+    catch
+    endtry
+    return l:result
+endfunction
+
+" c_CTRL-X
+"   Input current buffer's directory on command line.
+"   Kaoriya flavor
+cnoremap <C-X> <C-R>=<SID>GetBufferDirectory()<CR>
+function! s:GetBufferDirectory()
+  let path = expand('%:p:h')
+  let cwd = getcwd()
+  let dir = '.'
+  if match(path, escape(cwd, '\')) != 0
+    let dir = path
+  elseif strlen(path) > strlen(cwd)
+    let dir = strpart(path, strlen(cwd) + 1)
+  endif
+  return dir . (exists('+shellslash') && !&shellslash ? '\' : '/')
+endfunction
+
+" public 関数
 
 " クリップボードレジスタの違い
 " http://maijou2501.hateblo.jp/entry/20121016/1350403062
@@ -60,22 +132,6 @@ function! SetTabs(...)
 endfunction
 command! -nargs=? SetTab call SetTabs(<f-args>)
 
-
-function! GetGitRoot() abort
-    try
-        let l:result = system("cd " . expand('%:p:h') . " && git rev-parse --is-inside-work-tree")
-        let l:result = substitute(l:result, '\(\r\|\n\)\+', '', 'g')
-        let l:isgitrepo = matchstr(l:result, "true")
-        if l:isgitrepo == "true"
-            let l:gitroot = system("cd " . expand('%:p:h') . " && git rev-parse --show-toplevel")
-            return substitute(l:gitroot, '\(\r\|\n\)\+', '', 'g')
-        else
-            return "."
-        endif
-    catch
-    endtry
-endfunction
-
 function! Ctags() abort
     " set encoding=cp932
     " set encoding=utf-8
@@ -99,35 +155,6 @@ function! Ctags() abort
     echo "Tags file Created to " . l:gitroot . "/.git/tags"
 endfunction
 command! Ctags call Ctags()
-
-" c_CTRL-X
-"   Input current buffer's directory on command line.
-"   Kaoriya flavor
-cnoremap <C-X> <C-R>=<SID>GetBufferDirectory()<CR>
-function! s:GetBufferDirectory()
-  let path = expand('%:p:h')
-  let cwd = getcwd()
-  let dir = '.'
-  if match(path, escape(cwd, '\')) != 0
-    let dir = path
-  elseif strlen(path) > strlen(cwd)
-    let dir = strpart(path, strlen(cwd) + 1)
-  endif
-  return dir . (exists('+shellslash') && !&shellslash ? '\' : '/')
-endfunction
-
-" dotpath を応答する
-function! GetDotDir()
-    let tmp = $DOTPATH
-    if tmp == ""
-        let tmp = expand('~/.dot')
-        if !isdirectory(tmp)
-            echo "No DOTPATH variable and No ~/.dot directory exist."
-            throw "error"
-        endif
-    endif
-    return tmp
-endfunction
 
 function! HugoHelperFrontMatterReorder()
     exe 'g/^draft/m 1'
@@ -250,6 +277,13 @@ function! ReplaceSelected() abort
 endfun
 command! ReplaceSelected call ReplaceSelected()
 
+" 選択置換byClipboad
+function! ReplacePaste() abort
+    let dst = GetClipboad()
+    exe ':%s//'.dst.'/g'
+endfun
+command! ReplacePaste call ReplacePaste()
+
 " Encode/LineEnd
 function! Encode(type) abort
     if a:type == 0
@@ -262,3 +296,14 @@ function! Encode(type) abort
 endfun
 command! Doslize call Encode(0)
 command! Unixlize call Encode(1)
+
+
+" テスト用関数
+function! TestScript() abort
+    echo "uname:".system("uname")
+    echo "OSTYPE:".system("echo $OSTYPE")
+    echo "IsUbuntu: ".IsUbuntu()
+    echo "Clipboad: ".GetClipboad()
+endfun
+command! TestScript call TestScript()
+
