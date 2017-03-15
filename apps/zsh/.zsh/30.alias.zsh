@@ -54,6 +54,8 @@ case "${OSTYPE}" in
     #msys
     msys*)
         alias ls='ls -F --color=auto'
+        alias pbcopy='cat - >/dev/clipboard'
+        alias pbpaste='cat /dev/clipboard'
         alias tmux='tmux -2'                            # 256Color有効化
         alias sudo='echo "No sudo...";'                 # sudo がないので、エイリアスで逃げる
         alias vim=gvim
