@@ -264,6 +264,13 @@ function! Trim() abort
 endfun
 command! Trim call Trim()
 
+" 空行削除
+function! TrimEmpty() abort
+    exe ':%g/^$/d'
+endfun
+command! TrimEmpty call TrimEmpty()
+
+command! Trim call Trim()
 " 選択削除
 function! DeleteSelected() abort
     exe ':%s///g'
