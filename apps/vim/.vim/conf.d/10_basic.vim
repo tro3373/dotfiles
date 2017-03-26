@@ -83,6 +83,13 @@ endif
 " 挿入モードからノーマルモードに戻る時にペーストモードを自動で解除
 autocmd InsertLeave * set nopaste
 
+" html5.vim
+if g:plug.is_installed("html5.vim")
+    let g:html5_event_handler_attributes_complete = 1
+    let g:html5_rdfa_attributes_complete = 1
+    let g:html5_microdata_attributes_complete = 1
+    let g:html5_aria_attributes_complete = 1
+endif
 
 "-----------------------------------------------------
 " インデント設定
@@ -111,6 +118,7 @@ if has("autocmd")
     autocmd BufNewFile,BufRead *.ejs setlocal ft=html
     autocmd BufNewFile,BufRead *.py setlocal ft=python
     autocmd BufNewFile,BufRead *.rb setlocal ft=ruby
+    autocmd BufNewFile,BufRead *.erb setlocal ft=ruby
     autocmd BufNewFile,BufRead Gemfile setlocal ft=ruby
     autocmd BufNewFile,BufRead *.coffee setlocal ft=coffee
     autocmd BufNewFile,BufRead *.ts setlocal ft=typescript

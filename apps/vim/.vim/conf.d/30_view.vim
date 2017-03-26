@@ -332,5 +332,3 @@ if g:plug.is_installed("lightline.vim")
     " let g:gitgutter_sign_removed = '✘'
 endif
 
-
-

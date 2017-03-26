@@ -35,6 +35,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'altercation/vim-colors-solarized'           " Solarized
   Plug 'chriskempson/vim-tomorrow-theme'            " tomorrow
   Plug 'w0ng/vim-hybrid'                            " hybrid
+  " Plug 'othree/html5.vim'                           " For erb tab indent
 
   " Plug 'vim-scripts/nginx.vim'                      " Nginx Syntax
   "
