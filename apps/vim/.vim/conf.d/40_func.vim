@@ -305,6 +305,36 @@ command! Doslize call Encode(0)
 command! Unixlize call Encode(1)
 
 
+" コマンドを実行し、バッファに書き込み
+function! s:cmd_capture(q_args) "{{{
+    redir => output
+    silent execute a:q_args
+    redir END
+    let output = substitute(output, '^\n\+', '', '')
+
+    belowright new
+
+    silent file `=printf('[Capture: %s]', a:q_args)`
+    setlocal buftype=nofile bufhidden=unload noswapfile nobuflisted
+    call setline(1, split(output, '\n'))
+endfunction "}}}
+
+" Capture コマンド定義
+command!
+\   -nargs=+ -complete=command
+\   Capture
+\   call s:cmd_capture(<q-args>)
+
+"" 全てのマッピングを表示
+"    :AllMaps
+"" どのスクリプトで定義されたかの情報も含め表示
+"    :verbose AllMaps <buffer>
+command!
+\   -nargs=* -complete=mapping
+\   AllMaps
+\   call s:cmd_capture("map <args> | map! <args> | lmap <args>")
+
+
 " テスト用関数
 function! TestScript() abort
     echo "uname:".system("uname")
