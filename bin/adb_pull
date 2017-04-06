@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+
+package_name=
+pull_file=
+device_connected=0
+usage() {
+    cat <<EOF
+Pull file (databas file and so on) from connected android device for developing package.
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help                                     : Show this usage
+      -p=<package name>|--package=<package name>    : Specify package name
+        -p=example.com                                 ===> If -f option not specified and device is conneceted,
+                                                            list device packege files in log.
+      -f=<pull file path>|--file=<pull file path>   : Specify pull file path(relative)
+        -f=database/test.db
+EOF
+}
+
+has() {
+    which ${1} >/dev/null 2>&1
+    return $?
+}
+
+add_args() {
+    args=("${args[@]}" "$@")
+}
+
+set_args() {
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -p*|--package*)
+                package_name=${arg#*=} # Delete until '='
+                ;;
+            -f*|--file*)
+                pull_file=${arg#*=}
+                ;;
+            *)
+                add_args "$arg"
+                ;;
+        esac
+    done
+}
+
+initialize() {
+    args=()
+    set_args "$@"
+}
+
+check_connected() {
+    local count=$(adb devices | grep -v "List of devices attached" | grep device | wc -l)
+    if [[ $count -eq 0 ]]; then
+        echo "No device connected." 1>&2
+        exit 1
+    fi
+    if [[ $count -gt 1 ]]; then
+        echo "Too many device connected." 1>&2
+        exit 1
+    fi
+    device_connected=1
+}
+check_adb() {
+    if ! has adb; then
+        echo "No adb command exist." 1>&2
+        exit 1
+    fi
+}
+check_args() {
+    if [[ -z $package_name ]]; then
+        echo "No package name specified." 1>&2
+        usage
+        exit 1
+    fi
+    if [[ -z $pull_file ]]; then
+        echo "No pull file specified." 1>&2
+        usage
+        if [[ ! -z $package_name ]] && [[ $device_connected -eq 1 ]]; then
+            local tmp="adb shell run-as $package_name ls -la"
+            echo "==> $tmp"
+            $tmp
+        fi
+        exit 1
+    fi
+}
+check() {
+    check_adb
+    check_connected
+    check_args
+}
+
+main() {
+    initialize "$@"
+    check
+    adb exec-out run-as $package_name cat $pull_file > file
+}
+main "$@"
+
