@@ -30,6 +30,9 @@ set_args() {
                 usage
                 exit 0
                 ;;
+            # -f*|--file*)
+            #     file=${arg#*=}
+            #     ;;
             *)
                 add_args "$arg"
                 ;;
