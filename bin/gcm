@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+
+reg_ids=()
+api_key=
+config_file=
+message=
+usage() {
+    cat <<EOF
+Google Cloud Messaging test tool for Android.
+  Usage:
+      $command_name [option] <send_message or file name or file path>
+    Options
+      -h|--help : Show this usage
+      -r=<registration_id>|--rid=<registration_id>
+        multiple id allowed. ex> -r=aaaaa -r=bbbb ...
+      -k=<api_key>|--key=<api_key>
+      -c=<path to config file>|--config=<path to config file>
+EOF
+}
+
+has() {
+    which ${1} >/dev/null 2>&1
+    return $?
+}
+
+add_args() {
+    args=("${args[@]}" "$@")
+}
+
+set_args() {
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -r*|--rid*)
+                local rid=${arg#*=}
+                reg_ids=("${reg_ids[@]}" "$rid")
+                ;;
+            -k*|--key*)
+                api_key=${arg#*=}
+                ;;
+            -c*|--config*)
+                config_file="${arg#*=}"
+                ;;
+            *)
+                add_args "$arg"
+                ;;
+        esac
+    done
+}
+
+initialize() {
+    args=()
+    set_args "$@"
+}
+
+check() {
+    if ! has curl; then
+        echo "No curl command exists." 1>&2
+        exit 1
+    fi
+    if [[ -z $api_key ]]; then
+        echo "Specify api key." 1>&2
+        usage
+        exit 1
+    fi
+    if [[ ${#reg_ids[@]} -eq 0 ]]; then # ${#reg_ids[@]} ==> reg_ids array count.
+        echo "Specify registration id." 1>&2
+        usage
+        exit 1
+    fi
+}
+
+load_config_ifexists() {
+    local loadfile="$@"
+    [[ "$loadfile" == "" ]] && return 1
+    [[ ! -e "$loadfile" ]] && return 1
+    source "$loadfile"
+    if [[ ! -z $reg_id ]];
+        reg_ids=("${reg_ids[@]}" "$reg_id")
+    fi
+    return 0
+}
+
+load_config() {
+    if [[ -z $config_file ]]; then
+        config_file=~/.secret
+    fi
+    load_config_ifexists "$config_file" \
+        || load_config_ifexists "$script_dir/$config_file" \
+        || load_config_ifexists "~/$config_file"
+}
+
+load_message_ifexists() {
+    local loadfile="$@"
+    [[ "$loadfile" == "" ]] && return 1
+    [[ ! -e "$loadfile" ]] && return 1
+    message=$(cat "$loadfile")
+    return 0
+}
+
+load_message() {
+    message="${args[@]}"
+    if [[ -z $messag ]]; then
+        message="{\"message\":\"Hello\"}"
+        return
+    fi
+    load_message_ifexists "$message" \
+        || load_message_ifexists "$script_dir/$message" \
+        || load_message_ifexists "$script_dir/$message.json" \
+        || load_message_ifexists "$script_dir/json/$message.json"
+}
+
+send_gcm() {
+    local regids=
+    for reg_id in "${reg_ids[@]}"; do
+        if [[ ! -z $regids ]]; then
+            regids="$regids, "
+        fi
+        regids="$regids \"$reg_id\""
+    done
+    echo "==> gcm send api_key: $api_key"
+    echo "==> gcm send  regids: $regids"
+    echo "==> gcm send message: $message"
+    echo "==> gcm sending .."
+    curl --header "Authorization: key=$api_key" \
+        --header Content-Type:"application/json" \
+        https://android.googleapis.com/gcm/send \
+        -d "{\"registration_ids\":[$regids],\"data\": $message}"
+}
+main() {
+    initialize "$@"
+    load_config
+    load_message
+    check
+    send_gcm
+}
+main "$@"
+
