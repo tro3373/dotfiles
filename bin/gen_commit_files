@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+out_root_name=GeneratedSources
+
+commit_id=
+out_dir=
+usage() {
+    cat <<EOF
+Generate modified files in specify git commit id.
+  Usage:
+      $command_name [option] [commit_id]
+    Options
+      -h|--help : Show this usage
+      -o=<output_dir>|--out=<output_dir> : Output directory. Current directory use in empty.
+      if commit_id is empty, use HEAD commit id.
+
+    (warning) Not work in git directory.
+
+EOF
+}
+
+has() {
+    which ${1} >/dev/null 2>&1
+    return $?
+}
+
+get_git_root() {
+    git rev-parse --show-toplevel
+}
+
+get_git_head_commit_id() {
+    git rev-parse HEAD
+}
+
+is_git_directory() {
+    local result=$(git rev-parse --is-inside-work-tree 2>/dev/null)
+    if [[ "$result" == "true" ]]; then
+        return 0
+    fi
+    return 1
+}
+
+set_args() {
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -o*|--out*)
+                out_dir=${arg#*=}
+                ;;
+            *)
+                commit_id="$arg"
+                ;;
+        esac
+    done
+}
+
+check() {
+    if ! is_git_directory; then
+        echo "Not in git directory." 1>&2
+        exit 1
+    fi
+    if [[ -z $commit_id ]]; then
+        # echo "Specify commit id." 1>&2
+        # usage
+        # git log --oneline -5
+        echo "===> Using HEAD commit .."
+        commit_id=$(get_git_head_commit_id)
+    fi
+}
+
+make_remove_output_dir() {
+    if [[ -z $out_dir ]]; then
+        out_dir=.
+    fi
+    if [[ ! -e $out_dir ]]; then
+        mkdir -p $out_dir
+    fi
+    out_dir=$(cd $out_dir && pwd)
+    out_dir=$out_dir/$out_root_name
+    if [[ -e $out_dir ]]; then
+        echo "===> Deleting $out_dir"
+        rm -rf $out_dir
+    fi
+}
+
+initialize() {
+    set_args "$@"
+    check
+    make_remove_output_dir
+    git_root=$(get_git_root)
+}
+
+cp_file() {
+    if [[ ! -e $out_dir ]]; then
+        mkdir -p $out_dir
+    fi
+    if [[ ! -e $1 ]]; then
+        echo "==> [ NG ] $1"
+        return
+    fi
+    echo "==> [ OK ] $1"
+    cp --parent "$1" $out_dir
+}
+
+main() {
+    initialize "$@"
+    cd $git_root
+    # modified_files=$(git diff-tree --no-commit-id --name-only -r $commit_id)
+    modified_files=$(git show --pretty="" --name-only $commit_id)
+    for f in $modified_files; do
+        cp_file "$f"
+    done
+    echo "===> Modified files committed in $commit_id generated in $out_dir. done."
+}
+main "$@"
+
