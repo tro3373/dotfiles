@@ -74,14 +74,36 @@ check() {
     fi
 }
 
+get_realpath() {
+    local target="$1"
+    local backup=
+    while true; do
+        local cmd='cd '$target
+        if $(eval $cmd >/dev/null 2>&1); then
+            target=$(eval $cmd && pwd)
+            break
+        fi
+        if [[ -z $target ]]; then
+            echo "error"
+            exit 1
+        fi
+        local b=$(basename $target)
+        [[ ! -z $backup ]] && backup="/$backup"
+        backup="$b$backup"
+        target=$(dirname $target)
+    done
+    local res=$target/$backup
+    if [[ "$target" == "/" ]]; then
+        res=/$backup
+    fi
+    echo $res
+}
+
 make_remove_output_dir() {
     if [[ -z $out_dir ]]; then
         out_dir=.
     fi
-    if [[ ! -e $out_dir ]]; then
-        mkdir -p $out_dir
-    fi
-    out_dir=$(cd $out_dir && pwd)
+    out_dir="$(get_realpath $out_dir)"
     out_dir=$out_dir/$out_root_name
     if [[ -e $out_dir ]]; then
         echo "===> Deleting $out_dir"
