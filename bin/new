@@ -2,7 +2,6 @@
 
 current_dir=$(pwd)
 dotbin=${DOTPATH:-~/.dot}/bin
-template=$dotbin/lib/template.sh
 
 usage() {
     local command_name=$(basename $0)
@@ -12,6 +11,7 @@ usage() {
     echo "    $command_name [option] <create_file_name>"
     echo "  Options"
     echo "    -b|--bin : Create new command file in $dotbin"
+    echo "    -s|--simple : Use simple template"
 }
 
 main(){
@@ -21,11 +21,17 @@ main(){
     fi
     local args=$*
     local tobin=0
-    local regx='^-b$|^--b$'
+    local simple=0
+    local reg_b='^-b$|^--bin$'
+    local reg_s='^-s$|^--simple$'
     local f=
     for arg in $args; do
-        if [[ $arg =~ $regx ]]; then
+        if [[ $arg =~ $reg_b ]]; then
             tobin=1
+            continue
+        fi
+        if [[ $arg =~ $reg_s ]]; then
+            simple=1
             continue
         fi
         f=$arg
@@ -38,6 +44,10 @@ main(){
     if [[ -e $target ]]; then
         echo "Target $target is exist."
         exit 1
+    fi
+    template=$dotbin/lib/template.sh
+    if [[ $simple -eq 1 ]]; then
+        template=$dotbin/lib/template_s.sh
     fi
     cp $template $target
     vim $target
