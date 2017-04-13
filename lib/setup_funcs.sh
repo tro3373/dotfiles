@@ -192,9 +192,9 @@ delifexist() {
 # instcmd 設定
 setup_instcmd() {
     # OS 種類取得
-    DETECT_OS=`$DIR_ROOT/bin/dist_ditect`
+    DETECT_OS=`$DIR_ROOT/bin/os`
     # 32bit判定
-    DETECT_BIT=`$DIR_ROOT/bin/os_bit`
+    DETECT_BIT=`$DIR_ROOT/bin/bit`
     is_32bit=0
     if [[ "$DETECT_BIT" != "x86_64" ]]; then
         is_32bit=1

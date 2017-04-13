@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get Linux distribution name
-dist_ditect() {
+main() {
     if   [[ -e /etc/debian_version ]] ||
          [[ -e /etc/debian_release ]]; then
         # Check Ubuntu or Debian
@@ -49,4 +49,4 @@ dist_ditect() {
 
     echo ${distri_name}
 }
-dist_ditect
+main
