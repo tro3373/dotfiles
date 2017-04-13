@@ -17,6 +17,9 @@ alias toerror
 snippet script_dir
     script_dir=$(cd $(dirname \$0); pwd)
 
+snippet dotbin
+    dotbin=${DOTPATH:-~/.dot}/bin
+
 snippet readwhil
 alias rea
     while [[ "$$input_word" == "" ]]; do
