@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+
+number=16
+usage() {
+    cat <<EOF
+Generate Specify num Rondom string.
+  Usage:
+      $command_name [option] <number>
+    Options
+      -h|--help : Show this usage
+EOF
+}
+
+has() {
+    which ${1} >/dev/null 2>&1
+    return $?
+}
+
+set_args() {
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                number=$arg
+                ;;
+        esac
+    done
+}
+
+initialize() {
+    set_args "$@"
+}
+
+main() {
+    initialize "$@"
+    # tr -dc: delete character? exclude specify character.
+    # fold -w: width: word length
+    cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w $number | head -n 1
+}
+main "$@"
+
