@@ -1,48 +1,71 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 current_dir=$(pwd)
-dotbin=${DOTPATH:-~/.dot}/bin
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
 
+dotbin=${DOTPATH:-~/.dot}/bin
+target=
 usage() {
-    local command_name=$(basename $0)
-    echo "Create new executable shell file."
-    echo
-    echo "Usage:"
-    echo "    $command_name [option] <create_file_name>"
-    echo "  Options"
-    echo "    -b|--bin : Create new command file in $dotbin"
-    echo "    -s|--simple : Use simple template"
+    cat <<EOF
+Create new executable shell file.
+  Usage:
+      $command_name [option] <create_file_name>
+    Options
+      -h|--help : Show this usage
+      -b|--bin : Create new command file in $dotbin
+      -s|--simple : Use simple template
+EOF
 }
 
-main(){
-    if [[ $# -eq 0 || $# -gt 2 ]]; then
+has() {
+    which ${1} >/dev/null 2>&1
+    return $?
+}
+
+set_args() {
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -b|--bin)
+                # file=${arg#*=}
+                tobin=1
+                ;;
+            -s|--simple)
+                simple=1
+                ;;
+            *)
+                target="$arg"
+                ;;
+        esac
+    done
+}
+
+check() {
+    if [[ -z $target ]]; then
+        echo "Specify target command name." 1>&2
         usage
         exit 1
     fi
-    local args=$*
-    local tobin=0
-    local simple=0
-    local reg_b='^-b$|^--bin$'
-    local reg_s='^-s$|^--simple$'
-    local f=
-    for arg in $args; do
-        if [[ $arg =~ $reg_b ]]; then
-            tobin=1
-            continue
-        fi
-        if [[ $arg =~ $reg_s ]]; then
-            simple=1
-            continue
-        fi
-        f=$arg
-    done
+}
+
+initialize() {
+    set_args "$@"
+    check
+}
+
+main(){
+    initialize "$@"
     local out=$current_dir
     if [[ $tobin -eq 1 ]]; then
         out=$dotbin
     fi
-    local target=$out/$f
+    local target=$out/$target
     if [[ -e $target ]]; then
-        echo "Target $target is exist."
+        echo "Target $target is exist." 1>&2
         exit 1
     fi
     template=$dotbin/lib/template.sh
@@ -52,5 +75,5 @@ main(){
     cp $template $target
     vim $target
 }
-main $*
+main "$@"
 
