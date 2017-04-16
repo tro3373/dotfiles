@@ -1,52 +1,78 @@
 #!/bin/bash
 
-# Get Linux distribution name
-main() {
+check_os() {
+    local result=
     if   [[ -e /etc/debian_version ]] ||
          [[ -e /etc/debian_release ]]; then
         # Check Ubuntu or Debian
         if [[ -e /etc/lsb-release ]]; then
             # Ubuntu
-            distri_name="ubuntu"
+            result="ubuntu"
         else
             # Debian
-            distri_name="debian"
+            result="debian"
         fi
     elif [[ -e /etc/fedora-release ]]; then
         # Fedra
-        distri_name="fedora"
+        result="fedora"
     elif [[ -e /etc/redhat-release ]]; then
         # CentOS
-        distri_name="redhat"
+        result="redhat"
     elif [[ -e /etc/turbolinux-release ]]; then
         # Turbolinux
-        distri_name="turbol"
+        result="turbol"
     elif [[ -e /etc/SuSE-release ]]; then
         # SuSE Linux
-        distri_name="suse"
+        result="suse"
     elif [[ -e /etc/mandriva-release ]]; then
         # Mandriva Linux
-        distri_name="mandriva"
+        result="mandriva"
     elif [[ -e /etc/vine-release ]]; then
         # Vine Linux
-        distri_name="vine"
+        result="vine"
     elif [[ -e /etc/gentoo-release ]]; then
         # Gentoo Linux
-        distri_name="gentoo"
+        result="gentoo"
     elif [[ `uname` == "Darwin" ]]; then
         # mac
-        distri_name="mac"
+        result="mac"
     elif [[ "$OSTYPE" == "cygwin" ]]; then
         # mac
-        distri_name="cygwin"
+        result="cygwin"
     elif [[ "$OSTYPE" == "msys" ]]; then
         # mac
-        distri_name="msys"
+        result="msys"
     else
         # Other
-        distri_name="Unkown distribution"
+        result="Unkown distribution"
     fi
-
-    echo ${distri_name}
+    echo "$result"
 }
-main
+
+handle_args() {
+    local os=$1
+    local opt=$2
+    local result=false
+    if [[ "$opt" == "win" ]]; then
+        case "$os" in
+            cygwin|msys) result=true ;;
+        esac
+    elif [[ "$opt" == "linux" ]]; then
+        case "$os" in
+            cygwin|msys|mac) ;;
+            *) result=true ;;
+        esac
+    fi
+    echo ${result}
+}
+
+# Get Linux distribution name
+main() {
+    local os="$(check_os)"
+    local result="$os"
+    if [[ $# -ne 0 ]]; then
+        local result="$(handle_args "$os" "$@")"
+    fi
+    echo ${result}
+}
+main "$@"
