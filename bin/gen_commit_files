@@ -27,6 +27,14 @@ has() {
     return $?
 }
 
+is_win() {
+    local ostype="$OSTYPE"
+    if [[ "$ostype" == "cygwin" ]] || [[ "$ostype" == "msys" ]]; then
+        return 0
+    fi
+    return 1
+}
+
 get_git_root() {
     git rev-parse --show-toplevel
 }
@@ -35,7 +43,16 @@ get_git_head_commit_id() {
     git rev-parse HEAD
 }
 
+is_git_directory_for_win() {
+    local ret=0
+    if git status 2>&1 |grep "Not a git repository" >/dev/null 2>&1; then
+        ret=1
+    fi
+    return $ret
+}
+
 is_git_directory() {
+    is_win && return $(is_git_directory_for_win)
     local result=$(git rev-parse --is-inside-work-tree 2>/dev/null)
     if [[ "$result" == "true" ]]; then
         return 0
