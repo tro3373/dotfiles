@@ -1,5 +1,11 @@
 # git tips.
 
+## Show diff with ignore all white spaces.
+```sh
+git diff -w
+# git diff -b
+# git diff --ignore-space-change
+```
 
 ## Add submodule
 ```sh
