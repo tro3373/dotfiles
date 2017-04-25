@@ -257,37 +257,70 @@ endfun
 command! CopyAll call CopyAll()
 command! SellAll call CopyAll()
 
-" 空白削除
+" silent command
+function! SilentFExec(...) abort
+    try
+        silent exe a:1
+    catch
+    endtry
+endfun
+" 空白削除(末尾)
 function! Trim() abort
     " ! はマップを展開しない
-    exe ':%s/ \+$//g'
+    call SilentFExec(':%s/[ \t]\+$//g')
 endfun
 command! Trim call Trim()
-
+" 空白削除(先頭)
+function! TrimHead() abort
+    call SilentFExec(':%s/^[ \t]\+//g')
+endfun
+command! TrimHead call TrimHead()
 " 空行削除
 function! TrimEmpty() abort
-    exe ':%g/^$/d'
+    call SilentFExec(':%g/^$/d')
 endfun
 command! TrimEmpty call TrimEmpty()
+" 空白削除(両端)/カラム取得
+function! PickUp(column) abort
+    let i = 0
+    let num = a:column - 1
+    while i < num
+        call TrimHead()
+        call SilentFExec(':%s/^\S\+ \{-}//g')
+        call TrimHead()
+        let i += 1
+    endwhile
+    " Delete after target
+    call SilentFExec(':%s/ .\+$//g')
+    call Trim()
+endfun
+function! Strip(...) abort
+    if a:0 >= 1
+        call PickUp(a:1)
+    else
+        call TrimHead()
+        call Trim()
+    end
+endfunction
+command! -nargs=? Strip call Strip(<f-args>)
 
-command! Trim call Trim()
 " 選択削除
 function! DeleteSelected() abort
-    exe ':%s///g'
+    call SilentFExec(':%s///g')
 endfun
 command! DeleteSelected call DeleteSelected()
 
 " 選択置換
 function! ReplaceSelected() abort
     let dst = input("Replace to: ")
-    exe ':%s//'.dst.'/g'
+    call SilentFExec(':%s//'.dst.'/g')
 endfun
 command! ReplaceSelected call ReplaceSelected()
 
 " 選択置換byClipboad
 function! ReplacePaste() abort
     let dst = GetClipboad()
-    exe ':%s//'.dst.'/g'
+    call SilentFExec(':%s//'.dst.'/g')
 endfun
 command! ReplacePaste call ReplacePaste()
 
@@ -302,8 +335,22 @@ function! Encode(type) abort
     endif
 endfun
 command! Doslize call Encode(0)
+command! ToWin call Encode(0)
+command! ToDos call Encode(0)
 command! Unixlize call Encode(1)
+command! ToUnix call Encode(1)
 
+" toCamel
+function! ToCamel() abort
+    call SilentFExec(':%s/_\(.\)/\u\1/g')
+endfun
+command! ToCamel call ToCamel()
+
+" toSnake
+function! ToSnake() abort
+    call SilentFExec(':%s/\([A-Z]\)/_\l\1/g')
+endfun
+command! ToSnake call ToSnake()
 
 " コマンドを実行し、バッファに書き込み
 function! s:cmd_capture(q_args) "{{{
