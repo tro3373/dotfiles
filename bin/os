@@ -68,6 +68,10 @@ handle_args() {
 
 # Get Linux distribution name
 main() {
+    if [[ $# -eq 1 ]] && [[ "$1" == "-v" ]]; then
+        cat /etc/issue
+        return
+    fi
     local os="$(check_os)"
     local result="$os"
     if [[ $# -ne 0 ]]; then
