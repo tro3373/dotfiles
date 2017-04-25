@@ -59,6 +59,8 @@ case "${OSTYPE}" in
         alias tmux='tmux -2'                            # 256Color有効化
         alias sudo='echo "No sudo...";'                 # sudo がないので、エイリアスで逃げる
         alias vim=gvim
+        open() { local p=${1:-.}; explorer $p }
+        alias nvim=$(which vim)
         ;;
 esac
 
