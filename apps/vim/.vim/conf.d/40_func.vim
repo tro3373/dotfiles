@@ -276,10 +276,11 @@ function! TrimHead() abort
 endfun
 command! TrimHead call TrimHead()
 " 空行削除
-function! TrimEmpty() abort
+function! TrimLine() abort
     call SilentFExec(':%g/^$/d')
 endfun
-command! TrimEmpty call TrimEmpty()
+command! TrimLine call TrimLine()
+command! TrimEmpty call TrimLine()
 " 空白削除(両端)/カラム取得
 function! PickUp(column) abort
     let i = 0
@@ -297,12 +298,32 @@ endfun
 function! Strip(...) abort
     if a:0 >= 1
         call PickUp(a:1)
+        call TrimLine()
     else
         call TrimHead()
         call Trim()
+        call TrimLine()
     end
 endfunction
 command! -nargs=? Strip call Strip(<f-args>)
+" 改行削除
+function! OneLine() abort
+    let dst = input("Replace LF to: ")
+    call TrimHead()
+    call Trim()
+    call TrimLine()
+    call SilentFExec(':%s/\n/'.dst.'/g')
+    call Trim()
+endfun
+command! OneLine call OneLine()
+
+" 改行付与
+function! OneLineReverse() abort
+    let dst = input("Input char to replace LF: ")
+    call SilentFExec(':%s/'.dst.'//g')
+endfun
+command! OneLineReverse call OneLineReverse()
+command! MultiLine call OneLineReverse()
 
 " 選択削除
 function! DeleteSelected() abort
