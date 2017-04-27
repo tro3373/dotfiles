@@ -3,7 +3,10 @@
 url=$1
 main() {
     [ -z $url ] && echo "Usage.. $0 <url>" && exit 1
-    local rev=$(svn log --limit 1 $url|awk '{print $1}'| sed 's/r//g')
+    local rev=$(svn log --limit 1 $url \
+        | grep '|' \
+        | awk '{print $1}' \
+        | sed 's/r//g')
     git svn clone -s --prefix=svn/ -r$rev:HEAD $url
 }
 main
