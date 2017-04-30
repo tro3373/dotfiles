@@ -441,3 +441,48 @@ function! TestScript() abort
 endfun
 command! TestScript call TestScript()
 
+" JavaBean クラス定義項目リスト化
+function! LsJavaBeanFields() abort
+  call SilentFExec(':%v/private/d')
+  call SilentFExec(':%s/;//d')
+  call Strip(3)
+endfun
+command! LsJavaBeanFields call LsJavaBeanFields()
+command! JavaBeanToList call LsJavaBeanFields()
+
+" Generate Diffarable table
+function! DiffTable() abort
+  let divideLineNumber = line(".") + 1
+  let tab = "\t"
+  let aLines = getline(0, divideLineNumber)
+  let bLines = getline(divideLineNumber, line("$"))
+  call SilentFExec('sort u')
+  call Strip()
+
+  let lineNumber = 0
+  let allLines = getline(0, line("$"))
+  for line in allLines
+    let lineNumber += 1
+    let outputLine = ""
+    " echo lineNumber.":for => ".line
+    let outputLine = line . tab
+    for aLine in aLines
+      if line == aLine
+        " echo lineNumber.":a: much! ".aLine
+        let outputLine .= aLine
+        break
+      endif
+    endfor
+
+    let outputLine .= tab
+    for bLine in bLines
+      if line == bLine
+        let outputLine .= bLine
+        break
+      endif
+    endfor
+    call setline(lineNumber, outputLine)
+  endfor
+endfun
+command! DiffTable call DiffTable()
+
