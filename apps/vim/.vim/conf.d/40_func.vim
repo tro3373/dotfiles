@@ -325,6 +325,24 @@ endfun
 command! OneLineReverse call OneLineReverse()
 command! MultiLine call OneLineReverse()
 
+" タブ空白変換
+function! ToSpace() abort
+  let num = input("Input space number of tab: ")
+  call SilentFExec(':set expandtab')
+  call SetTabs(num)
+  call SilentFExec(':retab! '.num)
+endfun
+command! ToSpace call ToSpace()
+" 空白タブ変換
+function! ToTab() abort
+  let num = input("Input space number of tab: ")
+  call SilentFExec(':set noexpandtab')
+  call SetTabs(num)
+  call SilentFExec(':retab! '.num)
+endfun
+command! ToTab call ToTab()
+
+
 " 選択削除
 function! DeleteSelected() abort
     call SilentFExec(':%s///g')
