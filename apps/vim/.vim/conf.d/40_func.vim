@@ -349,6 +349,17 @@ function! DeleteSelected() abort
 endfun
 command! DeleteSelected call DeleteSelected()
 
+" 検索結果の存在する行を削除
+function! DeleteSelectedLine() abort
+  call SilentFExec(':%g//d')
+endfun
+command! DeleteSelectedLine call DeleteSelectedLine()
+" 検索結果の存在しない行を削除
+function! DeleteSelectedLineInvert() abort
+  call SilentFExec(':%v//d')
+endfun
+command! DeleteSelectedLineInvert call DeleteSelectedLineInvert()
+
 " 選択置換
 function! ReplaceSelected() abort
   let dst = input("Replace to: ")
