@@ -40,5 +40,4 @@ if [ -d ${HOME}/.zsh ]; then
     done
 fi
 [ -f ${HOME}/.works.zsh ] && source ${HOME}/.works.zsh
-[ -f ${HOME}/.fzf.zsh ] && source ${HOME}/.fzf.zsh
-
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
