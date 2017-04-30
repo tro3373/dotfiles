@@ -142,15 +142,15 @@ nmap <Leader>0 :Settings<CR>
 
 " doc ディレクトリを開く
 function! Doc(...)
-    let dotdir = GetDotDir()
-    let target = dotdir.'/docs'
-    if a:0 != 0
-        let tmp = target.'/'.a:1.'.md'
-        if filewritable(tmp)
-            let target = tmp
-        endif
+  let dotdir = GetDotDir()
+  let target = dotdir.'/docs'
+  if a:0 != 0
+    let tmp = target.'/'.a:1.'.md'
+    if filewritable(tmp)
+      let target = tmp
     endif
-    exe "tabe" target
+  endif
+  exe "tabe" target
 endfunction
 command! -nargs=? Doc call Doc(<f-args>)
 nmap <Leader>9 :Doc<CR>
@@ -176,8 +176,8 @@ imap <F3> <C-R>=strftime("%Y-%m-%d")<CR>
 " unite-outline 設定
 "=============================================
 if g:plug.is_installed("unite-outline")
-    let g:unite_split_rule = 'botright'
-    noremap ,u <ESC>:Unite -vertical -winwidth=40 outline<Return>
+  let g:unite_split_rule = 'botright'
+  noremap ,u <ESC>:Unite -vertical -winwidth=40 outline<Return>
 endif
 
 "=============================================
@@ -190,18 +190,18 @@ let g:unite_source_history_yank_enable =1
 " unite.vim上でのキーマッピング
 autocmd FileType unite call s:unite_my_settings()
 function! s:unite_my_settings()
-    " 単語単位からパス単位で削除するように変更
-    imap <buffer> <C-w> <Plug>(unite_delete_backward_path)
+  " 単語単位からパス単位で削除するように変更
+  imap <buffer> <C-w> <Plug>(unite_delete_backward_path)
 
-    " ESCキーを2回押すと終了する
-    nmap <silent><buffer> <ESC><ESC> q
-    imap <silent><buffer> <ESC><ESC> <ESC>q
+  " ESCキーを2回押すと終了する
+  nmap <silent><buffer> <ESC><ESC> q
+  imap <silent><buffer> <ESC><ESC> <ESC>q
 
-    " Ctrl j, k mapping for sleect next/previous
-    imap <buffer> <C-j>   <Plug>(unite_select_next_line)
-    nmap <buffer> <C-j>   <Plug>(unite_select_next_line)
-    imap <buffer> <C-k>   <Plug>(unite_select_previous_line)
-    nmap <buffer> <C-k>   <Plug>(unite_select_previous_line)
+  " Ctrl j, k mapping for sleect next/previous
+  imap <buffer> <C-j>   <Plug>(unite_select_next_line)
+  nmap <buffer> <C-j>   <Plug>(unite_select_next_line)
+  imap <buffer> <C-k>   <Plug>(unite_select_previous_line)
+  nmap <buffer> <C-k>   <Plug>(unite_select_previous_line)
 endfunction
 
 
@@ -243,62 +243,62 @@ call unite#custom_default_action('source/bookmark/directory' , 'vimfiler')
 "=============================================
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.exe
 if g:plug.is_installed("ctrlp.vim")
-    let g:ctrlp_map='<c-p>'
-    let g:ctrlp_cmd = 'CtrlPMRU'
-    let g:ctrlp_working_path_mode   = 'ra'          " Guess vcs root dir
-    let g:ctrlp_root_markers = ['Gemfile', 'pom.xml', 'build.xml'] " ルートパスと認識させるためのファイル
-    let g:ctrlp_extensions = ['mru', 'dir', 'mixed', 'funky', 'tag', 'quickfix', 'line']
-    let g:ctrlp_custom_ignore = {
-      \ 'dir':  '\v[\/]\.(git|hg|svn)$',
-      \ 'file': '\v\.(exe|so|dll)$',
-      \ 'link': 'some_bad_symbolic_links',
+  let g:ctrlp_map='<c-p>'
+  let g:ctrlp_cmd = 'CtrlPMRU'
+  let g:ctrlp_working_path_mode   = 'ra'          " Guess vcs root dir
+  let g:ctrlp_root_markers = ['Gemfile', 'pom.xml', 'build.xml'] " ルートパスと認識させるためのファイル
+  let g:ctrlp_extensions = ['mru', 'dir', 'mixed', 'funky', 'tag', 'quickfix', 'line']
+  let g:ctrlp_custom_ignore = {
+    \ 'dir':  '\v[\/]\.(git|hg|svn)$',
+    \ 'file': '\v\.(exe|so|dll)$',
+    \ 'link': 'some_bad_symbolic_links',
+    \ }
+  let g:ctrlp_max_height          = 90        " CtrlPのウィンドウ最大高さ
+  let g:ctrlp_match_window        = 'bottom,order:btt,min:1,max:18'
+  let g:ctrlp_max_files           = 100000    " 対象ファイル最大数(default:10000)
+  let g:ctrlp_max_depth           = 10        " 検索対象の最大階層数(default:40)
+  let g:ctrlp_by_filename         = 0         " フルパスではなくファイル名のみで絞込み
+  let g:ctrlp_jump_to_buffer      = 0         " 0:disable, 2:タブで開かれていた場合はそのタブに切り替える
+  let g:ctrlp_mruf_max            = 500       " MRUの最大記録数
+  let g:ctrlp_highlight_match     = [1, 'IncSearch'] " 絞り込みで一致した部分のハイライト
+  let g:ctrlp_open_new_file       = 1         " 新規ファイル作成時にタブで開く
+  let g:ctrlp_open_multi          = '10t'     " 複数ファイルを開く時にタブで最大10まで開く
+  " let g:ctrlp_cache_dir = $HOME.'/.cache/ctrlp' " キャッシュディレクトリ
+  if executable('ag')
+    " Agが有効の場合キャッシュを終了時に削除しない
+    let g:ctrlp_clear_cache_on_exit = 0
+    let g:ctrlp_use_caching = 0
+    set grepprg=ag\ --nogroup\ --nocolor
+    let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
+  elseif 0 && g:is_windows
+    let g:ctrlp_user_command = 'dir %s /-n /b /s /a-d'  " Windows
+  else
+    let g:ctrlp_user_command = ['.git', 'cd %s && git ls-files . -co --exclude-standard', 'find %s -type f']
+    let g:ctrlp_prompt_mappings = {
+      \ 'AcceptSelection("e")': ['<Space>', '<cr>', '<2-LeftMouse>'],
       \ }
-    let g:ctrlp_max_height          = 90        " CtrlPのウィンドウ最大高さ
-    let g:ctrlp_match_window        = 'bottom,order:btt,min:1,max:18'
-    let g:ctrlp_max_files           = 100000    " 対象ファイル最大数(default:10000)
-    let g:ctrlp_max_depth           = 10        " 検索対象の最大階層数(default:40)
-    let g:ctrlp_by_filename         = 0         " フルパスではなくファイル名のみで絞込み
-    let g:ctrlp_jump_to_buffer      = 0         " 0:disable, 2:タブで開かれていた場合はそのタブに切り替える
-    let g:ctrlp_mruf_max            = 500       " MRUの最大記録数
-    let g:ctrlp_highlight_match     = [1, 'IncSearch'] " 絞り込みで一致した部分のハイライト
-    let g:ctrlp_open_new_file       = 1         " 新規ファイル作成時にタブで開く
-    let g:ctrlp_open_multi          = '10t'     " 複数ファイルを開く時にタブで最大10まで開く
-    " let g:ctrlp_cache_dir = $HOME.'/.cache/ctrlp' " キャッシュディレクトリ
-    if executable('ag')
-        " Agが有効の場合キャッシュを終了時に削除しない
-        let g:ctrlp_clear_cache_on_exit = 0
-        let g:ctrlp_use_caching = 0
-        set grepprg=ag\ --nogroup\ --nocolor
-        let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
-    elseif 0 && g:is_windows
-        let g:ctrlp_user_command = 'dir %s /-n /b /s /a-d'  " Windows
-    else
-      let g:ctrlp_user_command = ['.git', 'cd %s && git ls-files . -co --exclude-standard', 'find %s -type f']
-      let g:ctrlp_prompt_mappings = {
-        \ 'AcceptSelection("e")': ['<Space>', '<cr>', '<2-LeftMouse>'],
-        \ }
-    endif
-    " Funky
-    let g:ctrlp_funky_matchtype = 'path'
-    let g:ctrlp_funky_syntax_highlight = 1
-    " http://mattn.kaoriya.net/software/vim/20111228013428.htm
-    " ~/.vim/dict/migemo-dict に辞書ファイルを置く必要がある
-    " let g:ctrlp_use_migemo          = 1       " 日本語ファイル名対応
+  endif
+  " Funky
+  let g:ctrlp_funky_matchtype = 'path'
+  let g:ctrlp_funky_syntax_highlight = 1
+  " http://mattn.kaoriya.net/software/vim/20111228013428.htm
+  " ~/.vim/dict/migemo-dict に辞書ファイルを置く必要がある
+  " let g:ctrlp_use_migemo          = 1       " 日本語ファイル名対応
 
-    if !g:is_windows
-        if g:plug.is_installed("cpsm")
-            let g:ctrlp_match_func = {'match': 'cpsm#CtrlPMatch'}
-        endif
+  if !g:is_windows
+    if g:plug.is_installed("cpsm")
+      let g:ctrlp_match_func = {'match': 'cpsm#CtrlPMatch'}
     endif
+  endif
 
-    nnoremap <Leader>p :CtrlPMRU<CR>
-    map <Leader>o <C-P><C-\>w
-    map <F3> <C-P><C-\>w
-    nnoremap st <Nop>
-    nnoremap st :<C-u>tabnew<CR>:CtrlPMRU<CR>
-    nnoremap <Leader>@ :CtrlPFunky<Cr>
-    " narrow the list down with a word under cursor
-    " nnoremap <Leader>@@ :execute 'CtrlPFunky ' . expand('<cword>')<Cr>
+  nnoremap <Leader>p :CtrlPMRU<CR>
+  map <Leader>o <C-P><C-\>w
+  map <F3> <C-P><C-\>w
+  nnoremap st <Nop>
+  nnoremap st :<C-u>tabnew<CR>:CtrlPMRU<CR>
+  nnoremap <Leader>@ :CtrlPFunky<Cr>
+  " narrow the list down with a word under cursor
+  " nnoremap <Leader>@@ :execute 'CtrlPFunky ' . expand('<cword>')<Cr>
 endif
 
 
@@ -306,15 +306,15 @@ endif
 " FZF 設定
 "=============================================
 if executable('fzf')
-    if g:plug.is_installed("fzf.vim")
-        " option に関しては、以下が詳しい
-        "   https://github.com/junegunn/fzf/wiki
-        "   http://koturn.hatenablog.com/entry/2015/11/26/000000
-        nnoremap <Leader>l :FZF .<CR>
-        vnoremap <Leader>l y:FZF -q <C-R>"<CR>
-        nnoremap <Leader>j :FZF -q <C-R><C-W>
-        vnoremap <Leader>j y:FZF -q <C-R>"
-    endif
+  if g:plug.is_installed("fzf.vim")
+    " option に関しては、以下が詳しい
+    "   https://github.com/junegunn/fzf/wiki
+    "   http://koturn.hatenablog.com/entry/2015/11/26/000000
+    nnoremap <Leader>l :FZF .<CR>
+    vnoremap <Leader>l y:FZF -q <C-R>"<CR>
+    nnoremap <Leader>j :FZF -q <C-R><C-W>
+    vnoremap <Leader>j y:FZF -q <C-R>"
+  endif
 endif
 
 
@@ -325,29 +325,29 @@ endif
 let g:unite_enable_ignore_case = 1
 let g:unite_enable_smart_case = 1
 if executable('ag')
-    let g:unite_source_grep_command = 'ag'
-    let g:unite_source_grep_default_opts = '--nogroup --nocolor --column --hidden'
-    " let g:unite_source_grep_default_opts = '--nogroup --nocolor --column'
-    let g:unite_source_grep_recursive_opt = ''
-    " let g:unite_source_grep_max_candidates = 200
-    if g:plug.is_installed("ag.vim")
-        " カーソル位置の単語を ag 検索
-        nnoremap <Leader>g :Ag <C-R><C-W><CR>
-        vnoremap <Leader>g y:Ag <C-R>"<CR>
-    endif
-elseif executable('pt')
-    let g:unite_source_grep_command = 'pt'
-    let g:unite_source_grep_default_opts = '--nogroup --nocolor'
-    let g:unite_source_grep_recursive_opt = ''
-else
+  let g:unite_source_grep_command = 'ag'
+  let g:unite_source_grep_default_opts = '--nogroup --nocolor --column --hidden'
+  " let g:unite_source_grep_default_opts = '--nogroup --nocolor --column'
+  let g:unite_source_grep_recursive_opt = ''
+  " let g:unite_source_grep_max_candidates = 200
+  if g:plug.is_installed("ag.vim")
     " カーソル位置の単語を ag 検索
-    nnoremap <silent> <Leader>g :<C-u>Unite grep:. -direction=botright -auto-resize -buffer-name=search-buffer<CR><C-R><C-W><CR>
-    " ビジュアルモードでは、選択した文字列をunite-grep
-    vnoremap <silent> <Leader>g y:Unite grep:.:-iRn:<C-R>=escape(@", '\\.*$^[]')<CR><CR>
-    " ディレクトリを指定して ag 検索
-    nnoremap <silent> ,g :<C-u>Unite grep -direction=botright -auto-resize -buffer-name=search-buffer<CR>
-    " grep検索結果の再呼出
-    nnoremap <silent> ,r :<C-u>UniteResume search-buffer -direction=botright -auto-resize<CR>
+    nnoremap <Leader>g :Ag <C-R><C-W><CR>
+    vnoremap <Leader>g y:Ag <C-R>"<CR>
+  endif
+elseif executable('pt')
+  let g:unite_source_grep_command = 'pt'
+  let g:unite_source_grep_default_opts = '--nogroup --nocolor'
+  let g:unite_source_grep_recursive_opt = ''
+else
+  " カーソル位置の単語を ag 検索
+  nnoremap <silent> <Leader>g :<C-u>Unite grep:. -direction=botright -auto-resize -buffer-name=search-buffer<CR><C-R><C-W><CR>
+  " ビジュアルモードでは、選択した文字列をunite-grep
+  vnoremap <silent> <Leader>g y:Unite grep:.:-iRn:<C-R>=escape(@", '\\.*$^[]')<CR><CR>
+  " ディレクトリを指定して ag 検索
+  nnoremap <silent> ,g :<C-u>Unite grep -direction=botright -auto-resize -buffer-name=search-buffer<CR>
+  " grep検索結果の再呼出
+  nnoremap <silent> ,r :<C-u>UniteResume search-buffer -direction=botright -auto-resize<CR>
 endif
 
 "=============================================
@@ -360,26 +360,26 @@ map <Leader><C-\> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>
 " gtags 設定
 "=============================================
 if g:plug.is_installed("gtags.vim")
-    " カーソル位置の単語を Gtags で検索
-    nnoremap <C-j> :GtagsCursor<Enter>
-    " 関数一覧
-    nnoremap <C-l> :Gtags -f %<Enter>
-    " Grep
-    nnoremap <C-g> :Gtags -g
-    " 使用箇所検索
-    nnoremap <C-h> :Gtags -r
-    " 次の要素
-    nnoremap <C-n> :cn<Enter>
-    " １つ前の要素
-    nnoremap <C-p> :cp<Enter>
+  " カーソル位置の単語を Gtags で検索
+  nnoremap <C-j> :GtagsCursor<Enter>
+  " 関数一覧
+  nnoremap <C-l> :Gtags -f %<Enter>
+  " Grep
+  nnoremap <C-g> :Gtags -g
+  " 使用箇所検索
+  nnoremap <C-h> :Gtags -r
+  " 次の要素
+  nnoremap <C-n> :cn<Enter>
+  " １つ前の要素
+  nnoremap <C-p> :cp<Enter>
 endif
 
 "=============================================
 " taglist 設定
 "=============================================
 if g:plug.is_installed("taglist.vim")
-    " Tlistを表示
-    map tl :Tlist<Enter>
+  " Tlistを表示
+  map tl :Tlist<Enter>
 endif
 
 "=============================================
@@ -387,41 +387,41 @@ endif
 " visually select increasingly larger regions of text
 "=============================================
 if g:plug.is_installed("vim-expand-region")
-    vmap v <Plug>(expand_region_expand)
-    vmap <C-v> <Plug>(expand_region_shrink)
+  vmap v <Plug>(expand_region_expand)
+  vmap <C-v> <Plug>(expand_region_shrink)
 endif
 
 "=============================================
 " NERDTree 設定
 "=============================================
 if g:plug.is_installed("nerdtree")
-    " 隠しファイルをデフォルトで表示させる
-    let NERDTreeShowHidden = 1
-    " デフォルトでツリーを表示させる
-    " autocmd VimEnter * execute 'NERDTree'
-    "<C-e>でNERDTreeをオンオフ
-    " map <silent> <C-e>   :NERDTreeToggle<CR>
-    " lmap <silent> <C-e>  :NERDTreeToggle<CR>
-    nmap <silent> <C-e>      :NERDTreeToggle<CR>
-    vmap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
-    omap <silent> <C-e>      :NERDTreeToggle<CR>
-    imap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
+  " 隠しファイルをデフォルトで表示させる
+  let NERDTreeShowHidden = 1
+  " デフォルトでツリーを表示させる
+  " autocmd VimEnter * execute 'NERDTree'
+  "<C-e>でNERDTreeをオンオフ
+  " map <silent> <C-e>   :NERDTreeToggle<CR>
+  " lmap <silent> <C-e>  :NERDTreeToggle<CR>
+  nmap <silent> <C-e>      :NERDTreeToggle<CR>
+  vmap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
+  omap <silent> <C-e>      :NERDTreeToggle<CR>
+  imap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
 endif
 
 ""=============================================
 "" Lokaltog/vim-easymotion
 ""=============================================
 "if g:plug.is_installed("vim-easymotion")
-"    " http://blog.remora.cx/2012/08/vim-easymotion.html
-"    " ホームポジションに近いキーを使う
-"    let g:EasyMotion_keys='hjklasdfgyuiopqwertnmzxcvbHJKLASDFGYUIOPQWERTNMZXCVB'
-"    " 「;」 + 何かにマッピング
-"    let g:EasyMotion_leader_key=";"
-"    " 1 ストローク選択を優先する
-"    let g:EasyMotion_grouping=1
-"    " カラー設定変更
-"    hi EasyMotionTarget ctermbg=none ctermfg=red
-"    hi EasyMotionShade  ctermbg=none ctermfg=blue
+"  " http://blog.remora.cx/2012/08/vim-easymotion.html
+"  " ホームポジションに近いキーを使う
+"  let g:EasyMotion_keys='hjklasdfgyuiopqwertnmzxcvbHJKLASDFGYUIOPQWERTNMZXCVB'
+"  " 「;」 + 何かにマッピング
+"  let g:EasyMotion_leader_key=";"
+"  " 1 ストローク選択を優先する
+"  let g:EasyMotion_grouping=1
+"  " カラー設定変更
+"  hi EasyMotionTarget ctermbg=none ctermfg=red
+"  hi EasyMotionShade  ctermbg=none ctermfg=blue
 "endif
 
 
@@ -431,31 +431,31 @@ endif
 " http://kazuph.hateblo.jp/entry/2012/11/28/105633
 "=============================================
 if g:plug.is_installed("neosnippet")
-    imap <C-k> <Plug>(neosnippet_expand_or_jump)
-    smap <C-k> <Plug>(neosnippet_expand_or_jump)
-    xmap <C-k> <Plug>(neosnippet_expand_target)
-    " honza/vim-snippets 等、元々snipmate用等に作られた物との互換性を上げるための設定
-    let g:neosnippet#enable_snipmate_compatibility = 1
-    " my-snippets
-    "   => .vim/snippets
-    " Shougo/neosnippet-snippets
-    " honza/vim-snippets
-    "  => target langs
-    "       actionscript apache autoit c chef clojure cmake coffee cpp cs css
-    "       dart diff django erlang eruby falcon go haml haskell html htmldjango
-    "       htmltornado java javascript-jquery javascript jsp ledger lua make
-    "       mako markdown objc perl php plsql po processing progress puppet
-    "       python r rst ruby sh snippets sql tcl tex textile vim xslt yii-chtml yii zsh
-    let g:neosnippet#snippets_directory = '~/.vim/snippets,~/.vim/plugged/vim-snippets/snippets,~/.vim/plugged/neosnippet-snippets/neosnippets'
+  imap <C-k> <Plug>(neosnippet_expand_or_jump)
+  smap <C-k> <Plug>(neosnippet_expand_or_jump)
+  xmap <C-k> <Plug>(neosnippet_expand_target)
+  " honza/vim-snippets 等、元々snipmate用等に作られた物との互換性を上げるための設定
+  let g:neosnippet#enable_snipmate_compatibility = 1
+  " my-snippets
+  "   => .vim/snippets
+  " Shougo/neosnippet-snippets
+  " honza/vim-snippets
+  "  => target langs
+  "       actionscript apache autoit c chef clojure cmake coffee cpp cs css
+  "       dart diff django erlang eruby falcon go haml haskell html htmldjango
+  "       htmltornado java javascript-jquery javascript jsp ledger lua make
+  "       mako markdown objc perl php plsql po processing progress puppet
+  "       python r rst ruby sh snippets sql tcl tex textile vim xslt yii-chtml yii zsh
+  let g:neosnippet#snippets_directory = '~/.vim/snippets,~/.vim/plugged/vim-snippets/snippets,~/.vim/plugged/neosnippet-snippets/neosnippets'
 
-    " SuperTab like snippets behavior.
-    imap <expr><TAB> neosnippet#expandable() <Bar><bar> neosnippet#jumpable() ? "\<Plug>(neosnippet_expand_or_jump)" : pumvisible() ? "\<C-n>" : "\<TAB>"
-    smap <expr><TAB> neosnippet#expandable() <Bar><bar> neosnippet#jumpable() ? "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+  " SuperTab like snippets behavior.
+  imap <expr><TAB> neosnippet#expandable() <Bar><bar> neosnippet#jumpable() ? "\<Plug>(neosnippet_expand_or_jump)" : pumvisible() ? "\<C-n>" : "\<TAB>"
+  smap <expr><TAB> neosnippet#expandable() <Bar><bar> neosnippet#jumpable() ? "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
 
-    " For snippet_complete marker.
-    if has('conceal')
-      set conceallevel=2 concealcursor=i
-    endif
+  " For snippet_complete marker.
+  if has('conceal')
+    set conceallevel=2 concealcursor=i
+  endif
 endif
 
 "=============================================
@@ -463,38 +463,38 @@ endif
 " http://d.hatena.ne.jp/ampmmn/20080925/1222338972
 "=============================================
 if g:plug.is_installed("vim-smartchr")
-    " 演算子の間に空白を入れる
-    " inoremap <buffer><expr> < search('^#include\%#', 'bcn')? ' <': smartchr#one_of(' < ', ' << ', '<')
-    " inoremap <buffer><expr> > search('^#include <.*\%#', 'bcn')? '>': smartchr#one_of(' > ', ' >> ', '>')
-    " inoremap <buffer><expr> + smartchr#one_of(' + ', '++', '+')
-    " inoremap <buffer><expr> - smartchr#one_of(' - ', '--', '-')
-    " inoremap <buffer><expr> / smartchr#one_of(' / ', '// ', '/')
-    " *はポインタで使うので、空白はいれない
-    " inoremap <buffer><expr> & smartchr#one_of(' & ', ' && ', '&')
-    inoremap <buffer><expr> % smartchr#one_of(' % ', '%')
-    inoremap <buffer><expr> <Bar> smartchr#one_of(' <Bar> ', ' <Bar><Bar> ', '<Bar>')
-    inoremap <buffer><expr> , smartchr#one_of(', ', ',')
-    " 3項演算子の場合は、後ろのみ空白を入れる
-    inoremap <buffer><expr> ? smartchr#one_of('? ', '?')
-    " inoremap <buffer><expr> : smartchr#one_of(': ', '::', ':')
+  " 演算子の間に空白を入れる
+  " inoremap <buffer><expr> < search('^#include\%#', 'bcn')? ' <': smartchr#one_of(' < ', ' << ', '<')
+  " inoremap <buffer><expr> > search('^#include <.*\%#', 'bcn')? '>': smartchr#one_of(' > ', ' >> ', '>')
+  " inoremap <buffer><expr> + smartchr#one_of(' + ', '++', '+')
+  " inoremap <buffer><expr> - smartchr#one_of(' - ', '--', '-')
+  " inoremap <buffer><expr> / smartchr#one_of(' / ', '// ', '/')
+  " *はポインタで使うので、空白はいれない
+  " inoremap <buffer><expr> & smartchr#one_of(' & ', ' && ', '&')
+  inoremap <buffer><expr> % smartchr#one_of(' % ', '%')
+  inoremap <buffer><expr> <Bar> smartchr#one_of(' <Bar> ', ' <Bar><Bar> ', '<Bar>')
+  inoremap <buffer><expr> , smartchr#one_of(', ', ',')
+  " 3項演算子の場合は、後ろのみ空白を入れる
+  inoremap <buffer><expr> ? smartchr#one_of('? ', '?')
+  " inoremap <buffer><expr> : smartchr#one_of(': ', '::', ':')
 
-    " " =の場合、単純な代入や比較演算子として入力する場合は前後にスペースをいれる。
-    " " 複合演算代入としての入力の場合は、直前のスペースを削除して=を入力
-    " inoremap <buffer><expr> = search('\(&\<bar><bar>\<bar>+\<bar>-\<bar>/\<bar>>\<bar><\) \%#', 'bcn')? '<bs>= '
-    "     \ : search('\(*\<bar>!\)\%#', 'bcn') ? '= '
-    "     \ : smartchr#one_of(' = ', ' == ', '=')
+  " " =の場合、単純な代入や比較演算子として入力する場合は前後にスペースをいれる。
+  " " 複合演算代入としての入力の場合は、直前のスペースを削除して=を入力
+  " inoremap <buffer><expr> = search('\(&\<bar><bar>\<bar>+\<bar>-\<bar>/\<bar>>\<bar><\) \%#', 'bcn')? '<bs>= '
+  "     \ : search('\(*\<bar>!\)\%#', 'bcn') ? '= '
+  "     \ : smartchr#one_of(' = ', ' == ', '=')
 
-    " " 下記の文字は連続して現れることがまれなので、二回続けて入力したら改行する
-    " inoremap <buffer><expr> } smartchr#one_of('}', '}<cr>')
-    " inoremap <buffer><expr> ; smartchr#one_of(';', ';<cr>')
-    " 「->」は入力しづらいので、..で置換え
-    " inoremap <buffer><expr> . smartchr#loop('.', '->', '...')
-    " 行先頭での@入力で、プリプロセス命令文を入力
-    inoremap <buffer><expr> @ search('^\(#.\+\)\?\%#','bcn')? smartchr#one_of('#define', '#include', '#ifdef', '#endif', '@'): '@'
+  " " 下記の文字は連続して現れることがまれなので、二回続けて入力したら改行する
+  " inoremap <buffer><expr> } smartchr#one_of('}', '}<cr>')
+  " inoremap <buffer><expr> ; smartchr#one_of(';', ';<cr>')
+  " 「->」は入力しづらいので、..で置換え
+  " inoremap <buffer><expr> . smartchr#loop('.', '->', '...')
+  " 行先頭での@入力で、プリプロセス命令文を入力
+  inoremap <buffer><expr> @ search('^\(#.\+\)\?\%#','bcn')? smartchr#one_of('#define', '#include', '#ifdef', '#endif', '@'): '@'
 
-    inoremap <buffer><expr> " search('^#include\%#', 'bcn')? ' "': '"'
-    " if文直後の(は自動で間に空白を入れる
-    inoremap <buffer><expr> ( search('\<\if\%#', 'bcn')? ' (': '('
+  inoremap <buffer><expr> " search('^#include\%#', 'bcn')? ' "': '"'
+  " if文直後の(は自動で間に空白を入れる
+  inoremap <buffer><expr> ( search('\<\if\%#', 'bcn')? ' (': '('
 endif
 
 "=============================================
@@ -502,8 +502,8 @@ endif
 " http://d.hatena.ne.jp/ampmmn/20080925/1222338972
 "=============================================
 if g:plug.is_installed("caw.vim")
-    nmap <Leader>c <Plug>(caw:hatpos:toggle)
-    vmap <Leader>c <Plug>(caw:hatpos:toggle)
+  nmap <Leader>c <Plug>(caw:hatpos:toggle)
+  vmap <Leader>c <Plug>(caw:hatpos:toggle)
 endif
 
 "=============================================
@@ -511,8 +511,8 @@ endif
 " 'plasticboy/vim-markdown'
 "=============================================
 if g:plug.is_installed("vim-markdown")
-    " hide/no hide markdown controll word
-    let g:vim_markdown_conceal = 1
+  " hide/no hide markdown controll word
+  let g:vim_markdown_conceal = 1
 endif
 
 "=============================================
@@ -520,79 +520,79 @@ endif
 " vim-markdown, preview, open-browser
 "=============================================
 if g:plug.is_installed("vim-markdown")
-    " 折りたたみ設定
-    let g:vim_markdown_folding_disabled=1
+  " 折りたたみ設定
+  let g:vim_markdown_folding_disabled=1
 endif
 if g:plug.is_installed("previm")
-    if g:plug.is_installed("open-browser.vim")
-        au BufRead,BufNewFile *.md set filetype=markdown
-        let g:previm_open_cmd = 'google-chrome'
-    endif
+  if g:plug.is_installed("open-browser.vim")
+    au BufRead,BufNewFile *.md set filetype=markdown
+    let g:previm_open_cmd = 'google-chrome'
+  endif
 endif
 
 "=============================================
 " Memolist
 "=============================================
 if g:plug.is_installed('memolist.vim')
-    let g:memolist_path = "$HOME/works/memos"
-    let g:memolist_memo_date = "%Y-%m-%d %H:%M"                 " date format (default %Y-%m-%d %H:%M) ex) epoch/%D %T
-    let g:memolist_template_dir_path = "/path/to/template/dir"
-    let g:memolist_memo_suffix = "md"                           " suffix type (default markdown)
-    let g:memolist_prompt_tags = 1                              " tags prompt (default 0)
-    let g:memolist_prompt_categories = 0                        " categories prompt (default 0)
-    let g:memolist_filename_prefix_none = 0                     " remove filename prefix (default 0)
-    let g:memolist_qfixgrep = 0                                 " use qfixgrep (default 0)
-    let g:memolist_vimfiler = 0                                 " use vimfler (default 0)
-    let g:memolist_unite = 0                                    " use unite (default 0)
-    let g:memolist_unite_source = "file_rec"                    " use arbitrary unite source (default is 'file')
-    let g:memolist_unite_option = "-auto-preview -start-insert" " use arbitrary unite option (default is empty)
-    let g:memolist_denite = 0                                   " use denite (default 0)
-    " let g:memolist_denite_source = "anything"                   " use arbitrary denite source (default is 'file_rec')
-    " let g:memolist_denite_option = "anything"                   " use arbitrary denite option (default is empty)
-    let g:memolist_ex_cmd = 'CtrlP'                             " use various Ex commands (default '')
-    let g:memolist_delimiter_yaml_array = ','                   " use delimiter of array in yaml front matter (default is ' ')
-    let g:memolist_delimiter_yaml_start = '---'                 " first line string pattern of yaml front matter (default '==========')
-    let g:memolist_delimiter_yaml_end = '---'                   " last line string pattern of yaml front matter (default '---')
+  let g:memolist_path = "$HOME/works/memos"
+  let g:memolist_memo_date = "%Y-%m-%d %H:%M"                 " date format (default %Y-%m-%d %H:%M) ex) epoch/%D %T
+  let g:memolist_template_dir_path = "/path/to/template/dir"
+  let g:memolist_memo_suffix = "md"                           " suffix type (default markdown)
+  let g:memolist_prompt_tags = 1                              " tags prompt (default 0)
+  let g:memolist_prompt_categories = 0                        " categories prompt (default 0)
+  let g:memolist_filename_prefix_none = 0                     " remove filename prefix (default 0)
+  let g:memolist_qfixgrep = 0                                 " use qfixgrep (default 0)
+  let g:memolist_vimfiler = 0                                 " use vimfler (default 0)
+  let g:memolist_unite = 0                                    " use unite (default 0)
+  let g:memolist_unite_source = "file_rec"                    " use arbitrary unite source (default is 'file')
+  let g:memolist_unite_option = "-auto-preview -start-insert" " use arbitrary unite option (default is empty)
+  let g:memolist_denite = 0                                   " use denite (default 0)
+  " let g:memolist_denite_source = "anything"                   " use arbitrary denite source (default is 'file_rec')
+  " let g:memolist_denite_option = "anything"                   " use arbitrary denite option (default is empty)
+  let g:memolist_ex_cmd = 'CtrlP'                             " use various Ex commands (default '')
+  let g:memolist_delimiter_yaml_array = ','                   " use delimiter of array in yaml front matter (default is ' ')
+  let g:memolist_delimiter_yaml_start = '---'                 " first line string pattern of yaml front matter (default '==========')
+  let g:memolist_delimiter_yaml_end = '---'                   " last line string pattern of yaml front matter (default '---')
 
 
-    nmap <Leader>mm :exe "CtrlP" g:memolist_path<cr><f5>
-    nmap <Leader>mc :MemoNew<cr>
-    nmap <Leader>mg :MemoGrep<cr>
+  nmap <Leader>mm :exe "CtrlP" g:memolist_path<cr><f5>
+  nmap <Leader>mc :MemoNew<cr>
+  nmap <Leader>mg :MemoGrep<cr>
 endif
 
 
 " 開いているファイルのディレクトリをエクスプローラで開く
 if g:is_windows
-    " Windows
-    "map qn :!nautilus %:h<ENTER>
+  " Windows
+  "map qn :!nautilus %:h<ENTER>
 elseif g:is_cygmsys2
-    " Cygwin/Msys2
-    "map qn :!nautilus %:h<ENTER>
+  " Cygwin/Msys2
+  "map qn :!nautilus %:h<ENTER>
 elseif g:is_mac
-    " Mac OS-X
-    "map qn :!nautilus %:h<ENTER>
+  " Mac OS-X
+  "map qn :!nautilus %:h<ENTER>
 elseif g:is_linux
-    " BSD, Linux
-    map qn :!nautilus %:h<ENTER>
+  " BSD, Linux
+  map qn :!nautilus %:h<ENTER>
 else
-    " その他
+  " その他
 endif
 
 
 " yank to remote
 let g:y2r_config = {
-    \   'tmp_file': '/tmp/exchange_file',
-    \   'key_file': expand('$HOME') . '/.exchange.key',
-    \   'host': 'localhost',
-    \   'port': 52224,
-    \ }
+  \   'tmp_file': '/tmp/exchange_file',
+  \   'key_file': expand('$HOME') . '/.exchange.key',
+  \   'host': 'localhost',
+  \   'port': 52224,
+  \ }
 function! Yank2Remote()
-    call writefile(split(@", '\n'), g:y2r_config.tmp_file, 'b')
-    let s:params = ['cat %s %s | nc -w1 %s %s']
-    for s:item in ['key_file', 'tmp_file', 'host', 'port']
-        let s:params += [shellescape(g:y2r_config[s:item])]
-    endfor
-    let s:ret = system(call(function('printf'), s:params))
+  call writefile(split(@", '\n'), g:y2r_config.tmp_file, 'b')
+  let s:params = ['cat %s %s | nc -w1 %s %s']
+  for s:item in ['key_file', 'tmp_file', 'host', 'port']
+      let s:params += [shellescape(g:y2r_config[s:item])]
+  endfor
+  let s:ret = system(call(function('printf'), s:params))
 endfunction
 nnoremap <silent> ,y :call Yank2Remote()<CR>
 

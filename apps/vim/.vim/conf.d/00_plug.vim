@@ -162,6 +162,6 @@ let g:plug = {
     \ "plugs": get(g:, 'plugs', {})
     \ }
 function! g:plug.is_installed(name)
-    return has_key(self.plugs, a:name) ? isdirectory(self.plugs[a:name].dir) : 0
+  return has_key(self.plugs, a:name) ? isdirectory(self.plugs[a:name].dir) : 0
 endfunction
 

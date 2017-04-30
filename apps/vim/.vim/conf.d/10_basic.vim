@@ -72,12 +72,12 @@ set smartcase
 set clipboard=unnamed
 
 if !has("mac") && has("unix")
-    let s:ostype = substitute(system("echo $OSTYPE"), '\n', '', '')
-    if "msys" != s:ostype
-        set clipboard=unnamedplus
-        vmap <C-c> :w !xsel -ib<CR><CR>
-        vmap <C-y> :w !xsel -ib<CR><CR>
-    endif
+  let s:ostype = substitute(system("echo $OSTYPE"), '\n', '', '')
+  if "msys" != s:ostype
+    set clipboard=unnamedplus
+    vmap <C-c> :w !xsel -ib<CR><CR>
+    vmap <C-y> :w !xsel -ib<CR><CR>
+  endif
 endif
 
 " 挿入モードからノーマルモードに戻る時にペーストモードを自動で解除
@@ -85,10 +85,10 @@ autocmd InsertLeave * set nopaste
 
 " html5.vim
 if g:plug.is_installed("html5.vim")
-    let g:html5_event_handler_attributes_complete = 1
-    let g:html5_rdfa_attributes_complete = 1
-    let g:html5_microdata_attributes_complete = 1
-    let g:html5_aria_attributes_complete = 1
+  let g:html5_event_handler_attributes_complete = 1
+  let g:html5_rdfa_attributes_complete = 1
+  let g:html5_microdata_attributes_complete = 1
+  let g:html5_aria_attributes_complete = 1
 endif
 
 "-----------------------------------------------------
@@ -110,27 +110,27 @@ set formatoptions-=c
 " expandtab         <TAB>を空白スペース文字に置き換える
 set ts=4 sts=4 sw=4 expandtab
 if has("autocmd")
-    " ファイル種別による個別設定
-    autocmd FileType vim,html,xhtml,css,javascript,yaml,ruby,coffee setlocal ts=2 sts=2 sw=2
+  " ファイル種別による個別設定
+  autocmd FileType vim,html,xhtml,css,javascript,yaml,ruby,coffee setlocal ts=2 sts=2 sw=2
 
-    " ファイルを開いた時、読み込んだ時にファイルタイプを設定する
-    autocmd BufNewFile,BufRead *.js setlocal ft=javascript
-    autocmd BufNewFile,BufRead *.ejs setlocal ft=html
-    autocmd BufNewFile,BufRead *.py setlocal ft=python
-    autocmd BufNewFile,BufRead *.rb setlocal ft=ruby
-    autocmd BufNewFile,BufRead *.erb setlocal ft=ruby
-    autocmd BufNewFile,BufRead Gemfile setlocal ft=ruby
-    autocmd BufNewFile,BufRead *.coffee setlocal ft=coffee
-    autocmd BufNewFile,BufRead *.ts setlocal ft=typescript
-    autocmd BufNewFile,BufRead *.md setlocal ft=markdown
-    autocmd BufNewFile,BufRead *.jade setlocal ft=markdown
-    autocmd BufNewFile,BufRead *.gyp setlocal ft=json
-    autocmd BufNewFile,BufRead *.cson setlocal ft=json
-    autocmd BufNewFile,BufRead *.yml setlocal ft=yaml
-    autocmd BufNewFile,BufRead *.yaml setlocal ft=yaml
-    " ctagsファイルの設定ファイル
-    " autocmd BufNewFile,BufRead *.rb set tags+=;$HOME/.ruby.ctags;
-    " autocmd BufNewFile,BufRead *.js set tags+=;$HOME/.javascript.ctags;
+  " ファイルを開いた時、読み込んだ時にファイルタイプを設定する
+  autocmd BufNewFile,BufRead *.js setlocal ft=javascript
+  autocmd BufNewFile,BufRead *.ejs setlocal ft=html
+  autocmd BufNewFile,BufRead *.py setlocal ft=python
+  autocmd BufNewFile,BufRead *.rb setlocal ft=ruby
+  autocmd BufNewFile,BufRead *.erb setlocal ft=ruby
+  autocmd BufNewFile,BufRead Gemfile setlocal ft=ruby
+  autocmd BufNewFile,BufRead *.coffee setlocal ft=coffee
+  autocmd BufNewFile,BufRead *.ts setlocal ft=typescript
+  autocmd BufNewFile,BufRead *.md setlocal ft=markdown
+  autocmd BufNewFile,BufRead *.jade setlocal ft=markdown
+  autocmd BufNewFile,BufRead *.gyp setlocal ft=json
+  autocmd BufNewFile,BufRead *.cson setlocal ft=json
+  autocmd BufNewFile,BufRead *.yml setlocal ft=yaml
+  autocmd BufNewFile,BufRead *.yaml setlocal ft=yaml
+  " ctagsファイルの設定ファイル
+  " autocmd BufNewFile,BufRead *.rb set tags+=;$HOME/.ruby.ctags;
+  " autocmd BufNewFile,BufRead *.js set tags+=;$HOME/.javascript.ctags;
 endif
 
 " コマンド補完機能
@@ -141,7 +141,7 @@ set wildmode=longest:full,full
 " cana/vim-smartinput, cohama/vim-smartinput-endwise
 " http://cohama.hateblo.jp/entry/2013/11/08/013136
 if g:plug.is_installed("vim-smartinput")
-    call smartinput_endwise#define_default_rules()
+  call smartinput_endwise#define_default_rules()
 endif
 
 " ctags 設定
