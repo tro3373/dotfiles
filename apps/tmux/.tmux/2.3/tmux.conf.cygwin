@@ -1,4 +1,4 @@
-bind C-o display-message "Cygwin conf loaded"
+bind C-o display-message "2.3 Cygwin conf loaded"
 
 # コピーした内容をクリップボードに送る
 unbind -t vi-copy Enter

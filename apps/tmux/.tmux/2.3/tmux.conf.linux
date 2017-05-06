@@ -1,4 +1,4 @@
-bind C-o display-message "Linux conf loaded"
+bind C-o display-message "2.3 Linux conf loaded"
 
 # コピーした内容をクリップボードに送る
 bind-key -t vi-copy y copy-pipe "cat | xsel -i --clipboard"

@@ -1,0 +1,9 @@
+bind C-o display-message "Linux conf loaded"
+
+# コピーした内容をクリップボードに送る
+# unbind   -T copy-mode-vi Enter
+# bind-key -T copy-mode-vi Enter send -X copy-pipe "xsel -bi > /dev/null"
+bind-key -T copy-mode-vi y     send -X copy-pipe "xsel -bi > /dev/null"
+
+# クリップボードの内容を貼り付ける
+bind -r C-v run-shell "tmux set-buffer -- \"$(xsel -o --clipboard)\"; tmux paste-buffer"

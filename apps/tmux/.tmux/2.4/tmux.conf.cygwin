@@ -1,0 +1,7 @@
+bind C-o display-message "Cygwin conf loaded"
+
+# コピーした内容をクリップボードに送る
+# unbind   -T copy-mode-vi Enter
+# bind-key -T copy-mode-vi Enter  send -X copy-pipe "iconv -s -t SJIS | putclip"
+bind-key -T copy-mode-vi y      send -X copy-pipe "iconv -s -t SJIS | putclip"
+

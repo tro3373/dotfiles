@@ -1,0 +1,13 @@
+bind C-o display-message "Msys2 conf loaded"
+
+# コピーした内容をクリップボードに送る
+# unbind   -T copy-mode-vi Enter
+# bind-key -T copy-mode-vi Enter  send -X copy-pipe "cat > /dev/clipboard"
+bind-key -T copy-mode-vi y      send -X copy-pipe "cat > /dev/clipboard"
+
+# クリップボードの内容を貼り付ける
+bind -r C-v run "cat /dev/clipboard | tmux load-buffer - && tmux paste-buffer"
+
+# new pane start path for windows(http://stackoverflow.com/questions/26435333/cygwin-tmux-on-windows-7-why-wont-tmux-use-the-current-path)
+set-environment -g CHERE_INVOKING 1
+

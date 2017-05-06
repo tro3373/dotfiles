@@ -1,4 +1,4 @@
-bind C-o display-message "Msys2 conf loaded"
+bind C-o display-message "2.3 Msys2 conf loaded"
 
 # コピーした内容をクリップボードに送る
 unbind -t vi-copy Enter

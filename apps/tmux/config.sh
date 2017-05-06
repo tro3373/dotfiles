@@ -20,11 +20,17 @@ install() {
 }
 
 install_common() {
-    dvexec cd /usr/local/src
-    if [[ ! -e tmux/ ]]; then
-        dvexec sudo git clone https://github.com/tmux/tmux.git
+    local target_dir=/usr/local/src/tmux
+    if [[ ! -e $target_dir ]]; then
+        dvexec sudo git clone https://github.com/tmux/tmux.git $target_dir
     fi
-    dvexec cd tmux
+    if [[ -e $target_dir ]]; then
+        cd $target_dir
+        local tag=$(git tag --list | tail -1)
+        if [[ ! -z $tag ]]; then
+            dvexec sudo git checkout $tag
+        fi
+    fi
     dvexec sudo ./autogen.sh
     dvexec sudo ./configure --prefix=/usr/local
     dvexec sudo make

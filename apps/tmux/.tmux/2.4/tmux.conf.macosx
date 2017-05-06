@@ -3,10 +3,9 @@ bind C-o display-message "Mac OS-X conf loaded"
 set -g default-command 'reattach-to-user-namespace -l zsh'
 
 # コピーした内容をクリップボードに送る
-# 'y' or 'Enter' でコピー
-bind-key -t vi-copy y copy-pipe "reattach-to-user-namespace pbcopy"
-unbind -t vi-copy Enter
-bind-key -t vi-copy Enter copy-pipe "reattach-to-user-namespace pbcopy"
+# unbind   -T copy-mode-vi Enter
+# bind-key -T copy-mode-vi Enter send -X copy-pipe "reattach-to-user-namespace pbcopy"
+bind-key -T copy-mode-vi y     send -X copy-pipe "reattach-to-user-namespace pbcopy"
 
 # クリップボードの内容を貼り付ける
 bind -r C-v run-shell "reattach-to-user-namespace pbpaste | tmux load-buffer - && tmux paste-buffer"
