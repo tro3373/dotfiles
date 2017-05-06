@@ -12,6 +12,19 @@ old_uninstall() {
     sudo apt-get remove docker docker-engine
 }
 
+is_supported_os() {
+    local version=$(get_dist_version)
+    local res=$(echo "$version > $repository_installable_max_version" | bc)
+    if [[ $res -eq 1 ]]; then
+        # using distribution is higher than repository_installable_max_version.
+        # should use package.
+        return 1
+    else
+        # you can install docker from repository.
+        return 0
+    fi
+}
+
 install_via_curl() {
     url="$1"
     command_name="$2"
@@ -38,6 +51,10 @@ uninstall() {
 }
 
 install_docker_via_repository() {
+    local use_version_name=$(lsb_release -cs)
+    if ! is_supported_os; then
+        use_version_name=zesty
+    fi
     # @see https://docs.docker.com/engine/installation/linux/ubuntu/#install-docker
     # Install packages to allow apt to use a repository over HTTPS:
     sudo apt-get install \
@@ -51,7 +68,7 @@ install_docker_via_repository() {
     sudo apt-key fingerprint 0EBFCD88
     sudo add-apt-repository \
        "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-       $(lsb_release -cs) \
+       ${use_version_name} \
        stable"
     sudo apt-get -y update
     sudo apt-get -y install docker-ce
@@ -82,27 +99,15 @@ get_dist_version() {
     echo $version
 }
 
-should_use_package() {
-    local version=$(get_dist_version)
-    local res=$(echo "$version > $repository_installable_max_version" | bc)
-    if [[ $res -eq 1 ]]; then
-        # using distro is higher than repository_installable_max_version.
-        # should use package.
-        return 0
-    else
-        # you can install docker from repository.
-        return 1
-    fi
-}
-
 main() {
-    # if should_use_package; then
+    # if is_supported_os; then
     #     install_docker_via_package
     # else
     #     install_docker_via_repository
     # fi
+    install_docker_via_repository
     install_machine
     install_compose
-    mod_user
+    # mod_user
 }
 main
