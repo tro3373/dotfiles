@@ -64,7 +64,8 @@ endif
 " 81 文字より後ろの色を変える
 " let &colorcolumn=join(range(81,999),",")
 " 80 に縦 Line 120 文字より後ろの色を変える
-let &colorcolumn="80,".join(range(120,999),",")
+" let &colorcolumn="80,".join(range(120,999),",")
+let &colorcolumn="80,120"
 " autocmd VimEnter,ColorScheme * hi ColorColumn ctermbg=lightblue guibg=lightblue
 " 検索結果ハイライト色設定
 " autocmd VimEnter,ColorScheme * hi Search  xxx ctermfg=234 ctermbg=221 guifg=#1d1f21 guibg=#f0c674
