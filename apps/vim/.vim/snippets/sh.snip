@@ -59,3 +59,11 @@ snippet shebang
 alias envvvv
     #!/usr/bin/env bash
 
+
+snippet case
+alias switch
+    case "$arg" in
+        -h|--help|--help*) ;;
+        *) ;;
+    esac
+
