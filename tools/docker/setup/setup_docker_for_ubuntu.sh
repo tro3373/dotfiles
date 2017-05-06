@@ -62,6 +62,7 @@ install_docker_via_package() {
     local vname="$(lsb_release -cs)"
     # local url="https://download.docker.com/linux/ubuntu/dists/$vname/stable/Contents-amd64.gz"
     local url="https://download.docker.com/linux/ubuntu/dists/$vname/pool/test/amd64/docker-ce_17.05.0~ce~rc3-0~ubuntu-zesty_amd64.deb"
+    local url="https://download.docker.com/linux/ubuntu/dists/yakkety/pool/stable/amd64/docker-ce_17.03.1~ce-0~ubuntu-yakkety_amd64.deb"
     if [[ ! -e ./tmp ]]; then
         mkdir -p ./tmp
     fi
@@ -95,11 +96,11 @@ should_use_package() {
 }
 
 main() {
-    if should_use_package; then
-        install_docker_via_package
-    else
-        echo install_docker_via_repository
-    fi
+    # if should_use_package; then
+    #     install_docker_via_package
+    # else
+    #     install_docker_via_repository
+    # fi
     install_machine
     install_compose
     mod_user
