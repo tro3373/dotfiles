@@ -46,7 +46,7 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'powerline/powerline', {
   "   \ 'rtp': 'powerline/bindings/vim/'}
 
-  Plug 'sudo.vim'                                   " sudo
+  Plug 'vim-scripts/sudo.vim'                                   " sudo
   Plug 'banyan/recognize_charcode.vim'              " 文字コード判定
   Plug 'kana/vim-submode'                           " vim-submode(キーマップ plugin)
   Plug 'nathanaelkane/vim-indent-guides'            " indent guide
@@ -114,7 +114,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'Shougo/unite-outline'                       " 関数一覧とかを表示
   Plug 'vim-scripts/gtags.vim'                      " GNU Global
   if !g:is_windows
-      Plug 'taglist.vim'                            " ソースコードブラウザ
+      Plug 'vim-scripts/taglist.vim'                " ソースコードブラウザ
   endif
 
   " Markdown Preview 関連
