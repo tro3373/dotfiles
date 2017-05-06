@@ -3,6 +3,7 @@
 set -eu
 
 script_dir=$(cd $(dirname $0); pwd)
+DOTPATH=${DOTPATH:-$script_dir}
 
 # Settings for 2byte characters
 # @see https://wiki.ubuntulinux.jp/hito/WIP-ambiwidth
