@@ -18,7 +18,7 @@
     ]
   editor:
     fontFamily: "Osaka-Mono"
-    fontSize: 20
+    fontSize: 21
     invisibles:
       cr: " "
       eol: " "
@@ -34,8 +34,7 @@
     userId: "349411db-9c91-f137-dab4-73b42b83a41f"
   "japanese-wrap":
     characterWidth: {}
-  linter:
-    showErrorPanel: false
+  linter: {}
   "linter-shellcheck": {}
   localization:
     CurrentLanguage: "Japanese"
