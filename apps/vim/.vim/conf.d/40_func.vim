@@ -444,7 +444,7 @@ command! TestScript call TestScript()
 " JavaBean クラス定義項目リスト化
 function! LsJavaBeanFields() abort
   call SilentFExec(':%v/private/d')
-  call SilentFExec(':%s/;//d')
+  call SilentFExec(':%s/;//g')
   call Strip(3)
 endfun
 command! LsJavaBeanFields call LsJavaBeanFields()
