@@ -40,13 +40,13 @@ endif
 
 " 使用するフォントと大きさ
 if (has("win64") || has("win32"))
-    set guifont=Osaka-Mono:h14
-    set guifontwide=Osaka-Mono:h14
+    set guifont=Osaka-Mono:h13
+    set guifontwide=Osaka-Mono:h13
 else
     " set guifont=Ricty\ Discord\ for\ Powerline\ 10
     " set guifontwide=Ricty\ Discord\ for\ Powerline\ 10
-    set guifont=Osaka-Mono\ 14
-    set guifontwide=Osaka-Mono\ 14
+    set guifont=Osaka-Mono\ 13
+    set guifontwide=Osaka-Mono\ 13
 endif
 
 "if (has("win64") || has("win32"))
