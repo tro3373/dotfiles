@@ -42,6 +42,8 @@ nnoremap Y y$
 nnoremap <Leader>y 0v$h"+y
 " alias save
 nnoremap <Leader>w :w<CR>
+" alias quit
+nnoremap <Leader>q :q<CR>
 " Visual line
 nmap <Leader><Leader> V
 " Esc Esc でハイライトOFF nohlsearch
