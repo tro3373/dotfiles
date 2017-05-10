@@ -168,7 +168,7 @@ if g:plug.is_installed("lightline.vim")
     \     'active': {
     \       'left': [
     \         ['mode', 'paste'],
-    \         ['fugitive', 'gitgutter', 'filename'],
+    \         ['fugitive', 'gitgutter', 'filename', 'pwd'],
     \       ],
     \       'right': [
     \         ['lineinfo', 'syntastic'],
@@ -177,6 +177,7 @@ if g:plug.is_installed("lightline.vim")
     \       ]
     \     },
     \     'component_function': {
+    \       'pwd': 'MyPwd',
     \       'modified': 'MyModified',
     \       'readonly': 'MyReadonly',
     \       'fugitive': 'MyFugitive',
@@ -190,6 +191,10 @@ if g:plug.is_installed("lightline.vim")
     \       'gitgutter': 'MyGitGutter',
     \     }
     \ }
+
+    function! MyPwd()
+      return getcwd()
+    endfunction
 
     function! MyModified()
       return &ft =~ 'help\|vimfiler\|gundo' ? '' : &modified ? '+' : &modifiable ? '' : '-'

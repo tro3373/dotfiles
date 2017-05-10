@@ -457,6 +457,7 @@ command!
 
 " テスト用関数
 function! TestScript() abort
+  echo "pwd:".getcwd()
   echo "uname:".system("uname")
   echo "OSTYPE:".system("echo $OSTYPE")
   echo "IsUbuntu: ".IsUbuntu()
