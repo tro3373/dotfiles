@@ -326,22 +326,31 @@ command! OneLineReverse call OneLineReverse()
 command! MultiLine call OneLineReverse()
 
 " タブ空白変換
-function! ToSpace() abort
-  let num = input("Input space number of tab: ")
+function! ToSpace(...) abort
+  let recoveryNum = &tabstop
+  let num = 4
+  if a:0 >= 1
+    let num = a:1
+  end
   call SilentFExec(':set expandtab')
   call SetTabs(num)
   call SilentFExec(':retab! '.num)
+  call SetTabs(recoveryNum)
 endfun
-command! ToSpace call ToSpace()
+command! -nargs=? ToSpace call ToSpace(<f-args>)
 " 空白タブ変換
-function! ToTab() abort
-  let num = input("Input space number of tab: ")
+function! ToTab(...) abort
+  let recoveryNum = &tabstop
+  let num = 4
+  if a:0 >= 1
+    let num = a:1
+  end
   call SilentFExec(':set noexpandtab')
   call SetTabs(num)
   call SilentFExec(':retab! '.num)
+  call SetTabs(recoveryNum)
 endfun
-command! ToTab call ToTab()
-
+command! -nargs=? ToTab call ToTab(<f-args>)
 
 " 選択削除
 function! DeleteSelected() abort
@@ -359,6 +368,20 @@ function! DeleteSelectedLineInvert() abort
   call SilentFExec(':%v//d')
 endfun
 command! DeleteSelectedLineInvert call DeleteSelectedLineInvert()
+" 指定文字より後ろを削除
+function! DeleteAfter(...) abort
+  if a:0 >= 1
+    let val = a:1
+  else
+    let val = input("Input char to delete start: ")
+  endif
+  if val == ""
+    echo "\nSpecify something.."
+    return
+  endif
+  call SilentFExec(':%s/'.val.'.*//g')
+endfun
+command! -nargs=? DeleteAfter call DeleteAfter(<f-args>)
 
 " 選択置換
 function! ReplaceSelected() abort
@@ -449,6 +472,14 @@ function! LsJavaBeanFields() abort
 endfun
 command! LsJavaBeanFields call LsJavaBeanFields()
 command! JavaBeanToList call LsJavaBeanFields()
+
+" Table
+function! Table() abort
+  call SilentFExec(':%s/[\/\*;\(\)]/ /g')
+  call Strip()
+  call SilentFExec(':%s/ \+/\t/g')
+endfun
+command! Table call Table()
 
 " Generate Diffarable table
 function! DiffTable() abort
