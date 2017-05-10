@@ -128,6 +128,12 @@ zle -N cd_up
 bindkey '^f' vi-kill-line # デフォルトのキーバインド(^U)を変更
 bindkey '^u' cd_up
 
+function __exit() {
+    exit
+}
+zle -N __exit
+bindkey -r '^b'
+bindkey '^b' __exit
 
 #
 #
