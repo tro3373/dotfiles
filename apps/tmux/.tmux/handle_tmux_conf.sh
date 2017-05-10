@@ -3,7 +3,7 @@
 current_dir=$(pwd)
 script_dir=$(cd $(dirname $0); pwd)
 
-get_setting_version() {
+get_settings_version() {
     local installed_version="$1"
     local version="$installed_version"
     local tmux_home=~/.tmux/
@@ -27,10 +27,21 @@ osconf() {
     echo $ret
 }
 
+gen_version_file() {
+    local version_file=$1
+    local installed_version=$(tmux -V | cut -d' ' -f2)
+    local use_settings_version=$(get_settings_version $installed_version)
+    echo $use_settings_version > $version_file
+    echo "====> $use_settings_version VERSION file created."
+}
+
 main() {
     local tmux_home=~/.tmux
-    local installed_version=$(tmux -V | cut -d' ' -f2)
-    local version=$(get_setting_version $installed_version)
+    local version_file=$tmux_home/VERSION
+    if [[ ! -e $version_file ]]; then
+        gen_version_file $version_file
+    fi
+    local version="$(cat $version_file)"
     local path="$tmux_home/$version/tmux.conf"
     local path2="$tmux_home/$version/tmux.conf.$(osconf)"
     tmux source-file "$path"
