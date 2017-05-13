@@ -476,7 +476,7 @@ command! JavaBeanToList call LsJavaBeanFields()
 
 " Table
 function! Table() abort
-  call SilentFExec(':%s/[\/\*;\(\)]/ /g')
+  call SilentFExec(':%s/[\/\*;\(\),]/ /g')
   call Strip()
   call SilentFExec(':%s/ \+/\t/g')
 endfun
