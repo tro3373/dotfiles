@@ -23,6 +23,6 @@ EOF
             word=${@:2:($#-1)}
             ;;
     esac
-    find . -name "$fext" -type f |xargs grep --color=auto "$word"
+    find . -name "$fext" -type f |xargs grep --color=auto "$word" 2>/dev/null
 }
 main "$@"
