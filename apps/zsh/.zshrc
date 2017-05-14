@@ -34,6 +34,8 @@ autoload     run-help-git
 autoload     run-help-svk
 autoload     run-help-svn
 
+# Set in .zshrc, because Not work in .zshenv.
+[ ${OSTYPE} = "msys" ] && export WINHOME=/c/Users/`whoami`
 if [ -d ~/.zsh ]; then
     for z in `ls ~/.zsh/*.zsh`; do
         source $z

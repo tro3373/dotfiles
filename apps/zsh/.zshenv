@@ -62,8 +62,6 @@ export PATH="$GOBIN:$PATH"
 export CORRECT_IGNORE='_*'
 export CORRECT_IGNORE_FILE='.*'
 
-[ ${OSTYPE} = "msys" ] && export WINHOME=/c/Users/`whoami`
-
 export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 export WORDCHARS='*?.[]~&;!#$%^(){}<>'
 
