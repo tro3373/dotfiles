@@ -8,6 +8,7 @@ function is_tmux_runnning() { [ ! -z "$TMUX" ]; }
 function is_screen_or_tmux_running() { is_screen_running || is_tmux_runnning; }
 function shell_has_started_interactively() { [ ! -z "$PS1" ]; }
 function is_ssh_running() { [ ! -z "$SSH_CONNECTION" ]; }
+function auto_exit_shell() { echo "Auto exiting.." && sleep 0.5 && exit; }
 
 function tmux_automatically_attach_session()
 {
@@ -55,9 +56,9 @@ function tmux_automatically_attach_session()
                 # on OS X force tmux's default command
                 # to spawn a shell in the user's namespace
                 tmux_config=$(cat $HOME/.tmux.conf <(echo 'set-option -g default-command "reattach-to-user-namespace -l $SHELL"'))
-                tmux -f <(echo "$tmux_config") new-session && echo "$(tmux -V) created new session supported OS X"
+                tmux -f <(echo "$tmux_config") new-session && echo "$(tmux -V) created new session supported OS X" && auto_exit_shell
             else
-                tmux new-session && echo "tmux created new session"
+                tmux new-session && auto_exit_shell
             fi
         fi
     fi
