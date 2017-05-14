@@ -15,7 +15,9 @@ setconfig() {
     # .ssh directory setting
     # link .ssh not work
     # link_to_dot
-    change_to_right_permission
+    if [[ "$DETECT_OS" != "msys" ]]; then
+        change_to_right_permission
+    fi
 }
 
 change_to_right_permission() {
