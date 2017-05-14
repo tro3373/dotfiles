@@ -71,6 +71,7 @@ main() {
     add_winpath "$WINHOME/bin"
     dlog "AllPath: $winpath"
     dlog "Args:    $args"
+    LANGUAGE=ja_JP.UTF-8
     DOTPATH=$dotpath HOME=$homepath SHELL= PATH=$winpath TMP=$tmppath TEMP=$tmppath $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent $args &
 }
 main $*
