@@ -15,8 +15,8 @@ fi
 #[ -f $DOTPATH/etc/install ] && . $DOTPATH/etc/install
 
 # LANGUAGE must be set by en_US
-# export LANGUAGE="en_US.UTF-8"
-export LANGUAGE="ja_JP.UTF-8"
+export LANGUAGE="en_US.UTF-8"
+# export LANGUAGE="ja_JP.UTF-8"
 case ${UID} in
 0)
     LANGUAGE=C
