@@ -1,13 +1,13 @@
 if [ -z "$DOTPATH" ]; then
     _get_dotpath() {
-        if [[ -d ${HOME}/.dot ]]; then
-            echo "$(cd ${HOME}/.dot && pwd)"
-        elif [[ -d ${HOME}/.dotfiles ]]; then
-            echo "$(cd ${HOME}/.dotfiles && pwd)"
-        elif [[ -d ${HOME}/dotfiles ]]; then
-            echo "$(cd ${HOME}/dotfiles && pwd)"
+        if [[ -d ~/.dot ]]; then
+            echo "$(cd ~/.dot && pwd)"
+        elif [[ -d ~/.dotfiles ]]; then
+            echo "$(cd ~/.dotfiles && pwd)"
+        elif [[ -d ~/dotfiles ]]; then
+            echo "$(cd ~/dotfiles && pwd)"
         else
-            echo "$(cd ${HOME} && pwd)/.dot"
+            echo "$(cd ~ && pwd)/.dot"
         fi
     }
     export DOTPATH="$(_get_dotpath)"
@@ -50,8 +50,8 @@ export LESS_TERMCAP_us=$'\E[01;32m'
 # ls command colors
 export LSCOLORS=exfxcxdxbxegedabagacad
 
-# Add ${HOME}/bin to PATH
-export PATH=${HOME}/bin:"$PATH"
+# Add ~/bin to PATH
+export PATH=~/bin:"$PATH"
 
 # Settings for golang
 export GOPATH="$HOME/.go"
@@ -75,7 +75,7 @@ export FZF_DEFAULT_OPTS="--extended --ansi --multi"
 
 # History
 # History file
-export HISTFILE=${HOME}/.zsh_history
+export HISTFILE=~/.zsh_history
 # History size in memory
 export HISTSIZE=50000
 # The number of histsize
@@ -94,4 +94,4 @@ export INTERACTIVE_FILTER="fzf:peco:percol:gof:pick"
 # keybind ^X^X
 export ONELINER_FILE="$DOTPATH/doc/misc/commands.txt"
 
-[ -f ${HOME}/.secret ] && . ${HOME}/.secret
+[ -f ~/.secret ] && . ~/.secret

@@ -17,8 +17,8 @@
 #  on: 依存関係
 #  defer: Defers the loading of a package. If the value is 2 or above,  zplug will source the plugin after compinit (0..3)
 #
-if [ -d ${HOME}/.zplug ] || [ -L ${HOME}/.zplug ]; then
-    source ${HOME}/.zplug/init.zsh
+if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
+    source ~/.zplug/init.zsh
     zstyle :zplug:tag depth 10
 
     local target target_massren target_fzf target_jq
@@ -92,7 +92,7 @@ if [ -d ${HOME}/.zplug ] || [ -L ${HOME}/.zplug ]; then
     fi
 
     # Local loading
-    # zplug "${HOME}/.zsh", from:local, ignore:"*vcs-info.zsh", nice:2
+    # zplug "~/.zsh", from:local, ignore:"*vcs-info.zsh", nice:2
 
     # check コマンドで未インストール項目があるかどうか verbose にチェックし
     # false のとき（つまり未インストール項目がある）y/N プロンプトで

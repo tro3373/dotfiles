@@ -11,9 +11,9 @@ umask 0002
 #bindkey -d
 #
 # NOTE: set fpath before compinit
-fpath=(${HOME}/.zsh/Completion(N-/) $fpath)
-fpath=(${HOME}/.zsh/functions/*(N-/) $fpath)
-fpath=(${HOME}/.zsh/plugins/zsh-completions(N-/) $fpath)
+fpath=(~/.zsh/Completion(N-/) $fpath)
+fpath=(~/.zsh/functions/*(N-/) $fpath)
+fpath=(~/.zsh/plugins/zsh-completions(N-/) $fpath)
 #fpath=(/usr/local/share/zsh/site-functions(N-/) $fpath)
 #
 ## autoload
@@ -34,10 +34,10 @@ autoload     run-help-git
 autoload     run-help-svk
 autoload     run-help-svn
 
-if [ -d ${HOME}/.zsh ]; then
-    for z in `ls ${HOME}/.zsh/*.zsh`; do
+if [ -d ~/.zsh ]; then
+    for z in `ls ~/.zsh/*.zsh`; do
         source $z
     done
 fi
-[ -f ${HOME}/.works.zsh ] && source ${HOME}/.works.zsh
+[ -f ~/.works.zsh ] && source ~/.works.zsh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
