@@ -47,6 +47,7 @@ function tmux_automatically_attach_session() {
             fi
         fi
     fi
-    tmux new-session && auto_exit_shell
+    # tmux new-session && auto_exit_shell
+    tmux new-session
 }
 tmux_automatically_attach_session
