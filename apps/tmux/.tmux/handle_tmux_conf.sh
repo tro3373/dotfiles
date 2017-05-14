@@ -2,16 +2,16 @@
 
 current_dir=$(pwd)
 script_dir=$(cd $(dirname $0); pwd)
+tmux_home=~/.tmux
 
 get_settings_version() {
     local installed_version="$1"
     local version="$installed_version"
-    local tmux_home=~/.tmux/
-    for d in `find $tmux_home -maxdepth 1 -type d |egrep '[0-9]+\.[0-9]+' | sort -u`; do
+    for d in `find $tmux_home/ -maxdepth 1 -type d |egrep '[0-9]+\.[0-9]+' | sort -u`; do
         version=$(basename $d)
         local tmp=$(echo "$version >= $installed_version" | bc)
         if [[ $tmp -eq 1 ]]; then
-            break
+           break
         fi
     done
     echo $version
@@ -36,7 +36,6 @@ gen_version_file() {
 }
 
 main() {
-    local tmux_home=~/.tmux
     local version_file=$tmux_home/VERSION
     if [[ ! -e $version_file ]]; then
         gen_version_file $version_file
@@ -49,4 +48,3 @@ main() {
 }
 
 main "$@"
-
