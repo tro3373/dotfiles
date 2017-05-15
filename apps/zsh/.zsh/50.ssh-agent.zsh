@@ -28,7 +28,7 @@ function start_agent {
 # test for identities
 function test_identities {
     # test whether standard identities have been added to the agent already
-    if /usr/bin/ssh-add -l | grep "The agent has no identities" > /dev/null 2>&1; then
+    if /usr/bin/ssh-add -l | $GREP "The agent has no identities" > /dev/null 2>&1; then
         add_keys
         # $SSH_AUTH_SOCK broken so we start a new proper agent
         if [ $? -eq 2 ];then
@@ -41,18 +41,15 @@ function my_ssh_agent {
     # check for running ssh-agent with proper $SSH_AGENT_PID
     # -n: true if string length greater than 0
     if [ -n "$SSH_AGENT_PID" ]; then
-        # ps -ef | grep "$SSH_AGENT_PID" | grep ssh-agent > /dev/null
-        # if [ $? -eq 0 ]; then
-        if ps -ef | grep "$SSH_AGENT_PID" | grep ssh-agent > /dev/null 2>&1; then
+        if ps -ef | $GREP "$SSH_AGENT_PID" | $GREP ssh-agent > /dev/null 2>&1; then
             test_identities
         fi
     # if $SSH_AGENT_PID is not properly set, we might be able to load one from $SSH_ENV
     else
-        # ps -ef | grep "$SSH_AGENT_PID" | grep ssh-agent > /dev/null
         if [ -f "$SSH_ENV" ]; then
             . "$SSH_ENV" > /dev/null
         fi
-        if ps -ef | grep "$SSH_AGENT_PID" | grep ssh-agent > /dev/null 2>&1; then
+        if ps -ef | $GREP "$SSH_AGENT_PID" | $GREP ssh-agent > /dev/null 2>&1; then
             . "$SSH_ENV" > /dev/null
             test_identities
         else
