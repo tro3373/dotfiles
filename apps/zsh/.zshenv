@@ -59,6 +59,7 @@ export GOBIN="$GOPATH/bin"
 export PATH="$GOBIN:$PATH"
 if grep -qE "(Microsoft | WSL)" /proc/version &> /dev/null ; then
     export WSL=1
+    unsetopt BG_NICE
 fi
 
 # declare the environment variables
