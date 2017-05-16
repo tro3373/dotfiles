@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+
+get_latest_url() {
+    local part="$(curl -fSsl https://github.com/goreliu/wsl-terminal/releases \
+        | grep href |grep download |grep zip |head -1 \
+        | sed -e 's/^.\+href="//g' \
+        | sed -e 's/".\+//g')"
+    echo "https://github.com$part"
+}
+
+main() {
+    set -eu
+    local url=$(get_latest_url)
+    local work_dir=$script_dir/tmp
+    [[ ! -e $work_dir ]] && mkdir -p $work_dir
+    cd $work_dir
+    if [ ! -e wsl*.zip ]; then
+        echo "==> Downloading $url .."
+        # curl -fSlO $url
+        curl -fSlO "https://github.com/goreliu/wsl-terminal/releases/download/v0.6.9/wsl-terminal-0.6.9.zip"
+    fi
+    # unzip wsl*.zip
+}
+
+main "$@"
+
