@@ -57,6 +57,9 @@ export PATH=~/bin:"$PATH"
 export GOPATH="$HOME/.go"
 export GOBIN="$GOPATH/bin"
 export PATH="$GOBIN:$PATH"
+if grep -qE "(Microsoft | WSL)" /proc/version &> /dev/null ; then
+    export WSL=1
+fi
 
 # declare the environment variables
 export CORRECT_IGNORE='_*'
