@@ -13,16 +13,22 @@ get_latest_url() {
 
 main() {
     set -eu
+    local wsl_terminal=wsl-terminal
+    local win_tools=~/win/tools
+    if [[ -e $win_tools/$wsl_terminal ]]; then
+        echo "Already setuped to $win_tools." 1>&2
+        exit 1
+    fi
     local url=$(get_latest_url)
     local work_dir=$script_dir/tmp
     [[ ! -e $work_dir ]] && mkdir -p $work_dir
     cd $work_dir
     if [ ! -e wsl*.zip ]; then
         echo "==> Downloading $url .."
-        # curl -fSlO $url
-        curl -fSlO "https://github.com/goreliu/wsl-terminal/releases/download/v0.6.9/wsl-terminal-0.6.9.zip"
+        curl -sSLO $url \
+            && unzip wsl*.zip \
+            && mv $work_dir/$wsl_terminal $win_tools
     fi
-    # unzip wsl*.zip
 }
 
 main "$@"
