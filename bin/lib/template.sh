@@ -47,6 +47,7 @@ initialize() {
 
 main() {
     initialize "$@"
+    all_args="${args[@]}"
     for arg in "${args[@]}"; do
         echo "Arguments: $arg"
     done
