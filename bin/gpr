@@ -12,7 +12,14 @@ _exe() {
         exit 1
     fi
 }
+is_git_svned_repo() {
+    [ -e $(git rev-parse --show-toplevel)/.git/svn ]
+}
+is_inside_repo() {
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1
+}
 main() {
+    ! is_inside_repo && echo "Not in repository." 1>&2 && exit 1
     if [[ ! -z $target ]]; then
         cd $target
     fi
@@ -27,7 +34,11 @@ main() {
             _exe git stash -q
         fi
     fi
-    _exe git pull --rebase
+    if is_git_svned_repo; then
+        _exe git svn rebase
+    else
+        _exe git pull --rebase
+    fi
     local nochanged=$(echo "$result" | grep "up to date" | wc -l)
     local update_msg="up-to-date"
     if [[ $nochanged -eq 0 ]]; then
@@ -45,3 +56,4 @@ main() {
     fi
 }
 main $*
+
