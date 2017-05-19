@@ -12,6 +12,7 @@ main() {
         | grep '|' \
         | awk '{print $1}' \
         | sed 's/r//g')
+    echo "==> git svn cloning rev:$rev .."
     git svn clone -s --prefix=svn/ -r$rev:HEAD $url
 }
 main
