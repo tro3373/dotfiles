@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+
+usage() {
+    cat <<EOF
+Force ignore(skip) file change settings in git repository.
+  Usage:
+      $command_name [option] <file>
+    Options
+         -h|--help    : Show this usage
+         -s|--status  : Show status
+      -r|-c|--cancel  : Cancel skip setting
+EOF
+}
+
+is_inside_repo() {
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1
+}
+
+add_args() {
+    args=("${args[@]}" "$@")
+}
+
+cancel=0
+set_args() {
+    [[ $# -eq 0 ]] && usage && exit 0
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -s|--status)
+                show_status
+                exit 0
+                ;;
+            -r|-c|--cancel)
+                cancel=1
+                ;;
+            *)
+                add_args "$arg"
+                ;;
+        esac
+    done
+}
+
+check() {
+    ! is_inside_repo && echo "Not in repository." 1>&2 && exit 1
+}
+
+initialize() {
+    args=()
+    set_args "$@"
+    check
+}
+
+show_status() {
+    check
+    git ls-files -v
+    cat <<EOL
+
+Status:
+    H: cached
+    S: skip-worktree
+    M: unmerged
+    R: removed/deleted
+    C: modified/changed
+    K: to be killed
+    ?: other
+    small-case: assume-unchanged
+EOL
+}
+
+main() {
+    initialize "$@"
+    all_args="${args[@]}"
+    if [[ $cancel -eq 1 ]]; then
+        git update-index --no-skip-worktree $all_args
+    else
+        git update-index --skip-worktree $all_args
+    fi
+}
+main "$@"
+
