@@ -15,6 +15,8 @@ set split-view-height = 80%
 # ====================================
 # Mergeコミットの場合、merge diffを見れるようにする
 set diff-options = -m --first-parent
+# インデント、空白のみの変更を無視
+set ignore-space = all
 
 # ====================================
 # Bind Settings
