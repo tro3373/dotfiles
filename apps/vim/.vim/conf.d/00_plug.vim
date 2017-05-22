@@ -73,10 +73,6 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'vim-scripts/Align'                          " CSV,TSV整形
   Plug 'junegunn/vim-easy-align'                    " Align text
 
-  " Plug 'cocopon/vaffle.vim'                         " SimpleFiler 使いづらい
-  " Plug 'scrooloose/nerdtree', {
-  "   \ 'on':  ['NERDTreeToggle'] }                   " NERDTree tree view コマンド実行時に読み込む
-
   Plug 'rking/ag.vim'                               " SilverSearcher
   if !g:is_windows && !g:is_cygmsys2
       Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
@@ -109,6 +105,11 @@ call plug#begin('$HOME/.vim/plugged')
     endif
   endfunction
   Plug 'Shougo/vimproc.vim', { 'do': function('BuildVimproc') }
+  Plug 'Shougo/vimfiler'                            " :VimFiler
+  " Plug 'cocopon/vaffle.vim'                         " SimpleFiler 使いづらい
+  " Plug 'scrooloose/nerdtree', {
+  "   \ 'on':  ['NERDTreeToggle'] }                   " NERDTree tree view コマンド実行時に読み込む
+
 
   " ソース解析
   Plug 'Shougo/unite-outline'                       " 関数一覧とかを表示
@@ -127,7 +128,7 @@ call plug#begin('$HOME/.vim/plugged')
   " if !g:is_windows
   "   Plug 'nixprime/cpsm' , {'do': './install.sh' }  " Plugins for ctrlp.vim A CtrlP matcher, specialized for paths.
   " endif
-  Plug 'mattn/ctrlp-filer'                          " Plugins for ctrlp.vim Filer
+  " Plug 'mattn/ctrlp-filer'                          " Plugins for ctrlp.vim Filer (After start, Ctrl+D will not work bug occure.)
   Plug 'vim-scripts/ctrlp-funky'                    " Plugins for ctrlp.vim Jump to a function
   Plug 'suy/vim-ctrlp-commandline'                  " Plugins for ctrlp.vim command line history navigation
   Plug 'sgur/ctrlp-extensions.vim'                  " Plugins for ctrlp.vim cmdline : cmdline history, yankring : yank history, menu : extension selector menu
@@ -155,6 +156,7 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'junegunn/seoul256.vim'
   " 指定したファイルタイプを開いたときに読み込む
   " Plug 'tpope/vim-fireplace', { 'for': ['clojure'] }
+  " migemo
 call plug#end()
 
 " VimPlug plugin install 判定関数

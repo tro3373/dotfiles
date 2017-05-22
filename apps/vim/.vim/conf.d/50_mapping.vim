@@ -255,8 +255,8 @@ if g:plug.is_installed("ctrlp.vim")
     \ 'file': '\v\.(exe|so|dll)$',
     \ 'link': 'some_bad_symbolic_links',
     \ }
-  let g:ctrlp_max_height          = 90        " CtrlPのウィンドウ最大高さ
-  let g:ctrlp_match_window        = 'bottom,order:btt,min:1,max:18'
+  " let g:ctrlp_max_height          = 90        " CtrlPのウィンドウ最大高さ(match_windowに統合)
+  let g:ctrlp_match_window        = 'bottom,order:btt,min:1,max:30,results:100'
   let g:ctrlp_max_files           = 100000    " 対象ファイル最大数(default:10000)
   let g:ctrlp_max_depth           = 10        " 検索対象の最大階層数(default:40)
   let g:ctrlp_by_filename         = 0         " フルパスではなくファイル名のみで絞込み
@@ -294,13 +294,19 @@ if g:plug.is_installed("ctrlp.vim")
   endif
 
   nnoremap <Leader>p :CtrlPMRU<CR>
+  nnoremap <Leader>j :CtrlPDir<CR>
+  nnoremap <Leader>k :CtrlPFunky<Cr>
+  nnoremap <Leader>l :CtrlPLine<CR>
+  nnoremap <Leader>; :CtrlPYankring<CR>
+  nnoremap <Leader>: :CtrlPCmdline<CR>
+  nnoremap <Leader>@ :CtrlPBuffer<CR>
+  " nnoremap <Leader>: :CtrlPFiler<CR>
+  " narrow the list down with a word under cursor
+  " nnoremap <Leader>@@ :execute 'CtrlPFunky ' . expand('<cword>')<Cr>
   map <Leader>o <C-P><C-\>w
   map <F3> <C-P><C-\>w
   nnoremap st <Nop>
   nnoremap st :<C-u>tabnew<CR>:CtrlPMRU<CR>
-  nnoremap <Leader>@ :CtrlPFunky<Cr>
-  " narrow the list down with a word under cursor
-  " nnoremap <Leader>@@ :execute 'CtrlPFunky ' . expand('<cword>')<Cr>
 endif
 
 
@@ -312,10 +318,10 @@ if executable('fzf')
     " option に関しては、以下が詳しい
     "   https://github.com/junegunn/fzf/wiki
     "   http://koturn.hatenablog.com/entry/2015/11/26/000000
-    nnoremap <Leader>l :FZF .<CR>
-    vnoremap <Leader>l y:FZF -q <C-R>"<CR>
-    nnoremap <Leader>j :FZF -q <C-R><C-W>
-    vnoremap <Leader>j y:FZF -q <C-R>"
+    nnoremap ,l :FZF .<CR>
+    vnoremap ,l y:FZF -q <C-R>"<CR>
+    nnoremap ,j :FZF -q <C-R><C-W>
+    vnoremap ,j y:FZF -q <C-R>"
   endif
 endif
 
