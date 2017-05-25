@@ -31,59 +31,67 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'junegunn/vim-plug',
         \ {'dir': '$HOME/.vim/plugged/vim-plug/autoload'}
 
-  " カラースキーム
-  Plug 'altercation/vim-colors-solarized'           " Solarized
-  Plug 'chriskempson/vim-tomorrow-theme'            " tomorrow
-  Plug 'w0ng/vim-hybrid'                            " hybrid
-  " Plug 'othree/html5.vim'                           " For erb tab indent
+  " color-scheme
+  Plug 'altercation/vim-colors-solarized'                                       " Solarized
 
-  " Plug 'vim-scripts/nginx.vim'                      " Nginx Syntax
-  "
-  "" airline
-  " Plug 'bling/vim-airline'
+  Plug 'chriskempson/vim-tomorrow-theme'                                        " tomorrow
+  Plug 'w0ng/vim-hybrid'                                                        " hybrid
+  Plug 'nanotech/jellybeans.vim'
+  Plug 'joshdick/onedark.vim'
+  Plug 'AlessandroYorba/Sierra'
+  Plug 'romainl/Apprentice'
+
+  Plug 'vim-scripts/twilight'
+  Plug 'AlessandroYorba/Alduin'
+  Plug 'morhetz/gruvbox'
+  Plug 'jeetsukumaran/vim-nefertiti'
+
+  " Plug 'othree/html5.vim'                                                       " For erb tab indent
+  " Plug 'vim-scripts/nginx.vim'                                                  " Nginx Syntax
+
+  " status-line
   Plug 'itchyny/lightline.vim'
-  "" Powerline
-  " Plug 'powerline/powerline', {
-  "   \ 'rtp': 'powerline/bindings/vim/'}
+  " Plug 'bling/vim-airline'
+  " Plug 'powerline/powerline', {'rtp': 'powerline/bindings/vim/'}
 
-  Plug 'vim-scripts/sudo.vim'                                   " sudo
-  Plug 'banyan/recognize_charcode.vim'              " 文字コード判定
-  Plug 'kana/vim-submode'                           " vim-submode(キーマップ plugin)
-  Plug 'nathanaelkane/vim-indent-guides'            " indent guide
+  Plug 'vim-scripts/sudo.vim'                                                   " sudo
+  Plug 'banyan/recognize_charcode.vim'                                          " 文字コード判定
+  Plug 'kana/vim-submode'                                                       " vim-submode(キーマップ plugin)
+  Plug 'nathanaelkane/vim-indent-guides'                                        " indent guide
 
-  Plug 'kana/vim-smartchr'                          " = 等の便利入力
-  Plug 'kana/vim-smartinput'                        " () 等の入力補完
-  Plug 'cohama/vim-smartinput-endwise'              " vim-endwise (ruby 用 end 補完)
-  Plug 'tpope/vim-surround'                         " 囲文字入力アシスト
-  Plug 'tyru/caw.vim'                               " コメントアウトプラグイン <Leader>+c
-  " Plug 'Shougo/neocomplcache.vim'                   " 補完候補を自動でポップアップ(old)
-  Plug 'Shougo/neocomplete.vim'                     " Next generation completion framework after neocomplcache
-  " Plug 'Lokaltog/vim-easymotion'                    " カーソル移動プラグイン(fコマンドが効かなくなるので無効)
-  Plug 'terryma/vim-expand-region'                  " visually select increasingly larger regions of text
-  " Plug 'terryma/vim-multiple-cursors'               " MultiCursor
+  Plug 'kana/vim-smartchr'                                                      " = 等の便利入力
+  Plug 'kana/vim-smartinput'                                                    " () 等の入力補完
+  Plug 'cohama/vim-smartinput-endwise'                                          " vim-endwise (ruby 用 end 補完)
+  Plug 'tpope/vim-surround'                                                     " 囲文字入力アシスト
+  Plug 'tyru/caw.vim'                                                           " コメントアウトプラグイン <Leader>+c
+  " Plug 'Shougo/neocomplcache.vim'                                               " 補完候補を自動でポップアップ(old)
+  Plug 'Shougo/neocomplete.vim'                                                 " Next generation completion framework after neocomplcache
+  " Plug 'Lokaltog/vim-easymotion'                                                " カーソル移動プラグイン(fコマンドが効かなくなるので無効)
+  Plug 'terryma/vim-expand-region'                                              " visually select increasingly larger regions of text
+  " Plug 'terryma/vim-multiple-cursors'                                           " MultiCursor
 
-  Plug 'airblade/vim-gitgutter'                     " Shows a git diff in the gutter!!!!!
-  Plug 'cohama/agit.vim'                            " gitk-like repository viewer ex) type :Agit
-  Plug 'vim-scripts/gitignore'                      " Vim plugin that add the entries in a .gitignore file to 'wildignore'
+  Plug 'airblade/vim-gitgutter'                                                 " Shows a git diff in the gutter!!!!!
+  Plug 'cohama/agit.vim'                                                        " gitk-like repository viewer ex) type :Agit
+  Plug 'vim-scripts/gitignore'                                                  " Vim plugin that add the entries in a .gitignore file to 'wildignore'
 
-  Plug 'Shougo/neosnippet'                          " Ctrl+k でスニペットを用意
-  Plug 'Shougo/neosnippet-snippets'                 " 基本スニペット for neosnippet
-  Plug 'honza/vim-snippets'                         " snipMate UltiSnip Snippets
+  Plug 'Shougo/neosnippet'                                                      " Ctrl+k でスニペットを用意
+  Plug 'Shougo/neosnippet-snippets'                                             " 基本スニペット for neosnippet
+  Plug 'honza/vim-snippets'                                                     " snipMate UltiSnip Snippets
   " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
-  Plug 'vim-scripts/Align'                          " CSV,TSV整形
-  Plug 'junegunn/vim-easy-align'                    " Align text
+  Plug 'vim-scripts/Align'                                                      " CSV,TSV整形
+  Plug 'junegunn/vim-easy-align'                                                " Align text
 
-  Plug 'rking/ag.vim'                               " SilverSearcher
+  Plug 'rking/ag.vim'                                                           " SilverSearcher
   if !g:is_windows && !g:is_cygmsys2
       Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
-        \ 'do': './install --all' }                     " FZF
+        \ 'do': './install --all' }                                             " FZF
       Plug 'junegunn/fzf.vim'
   endif
 
   " Unite関連
-  Plug 'Shougo/unite.vim'                           " ユーザインタフェース統合
-  Plug 'Shougo/neomru.vim'                          " 最近使用したファイルの一覧管理
-  Plug 'ujihisa/unite-colorscheme'                  " カラースキーム変更
+  Plug 'Shougo/unite.vim'                                                       " ユーザインタフェース統合
+  Plug 'Shougo/neomru.vim'                                                      " 最近使用したファイルの一覧管理
+  Plug 'ujihisa/unite-colorscheme'                                              " カラースキーム変更
   function! BuildVimproc(info) abort
     " info is a dictionary with 3 fields
     " - name:   name of the plugin
@@ -105,17 +113,17 @@ call plug#begin('$HOME/.vim/plugged')
     endif
   endfunction
   Plug 'Shougo/vimproc.vim', { 'do': function('BuildVimproc') }
-  Plug 'Shougo/vimfiler'                            " :VimFiler
-  " Plug 'cocopon/vaffle.vim'                         " SimpleFiler 使いづらい
+  Plug 'Shougo/vimfiler'                                                        " :VimFiler
+  " Plug 'cocopon/vaffle.vim'                                                     " SimpleFiler 使いづらい
   " Plug 'scrooloose/nerdtree', {
-  "   \ 'on':  ['NERDTreeToggle'] }                   " NERDTree tree view コマンド実行時に読み込む
+  "   \ 'on':  ['NERDTreeToggle'] }                                               " NERDTree tree view コマンド実行時に読み込む
 
 
   " ソース解析
-  Plug 'Shougo/unite-outline'                       " 関数一覧とかを表示
-  Plug 'vim-scripts/gtags.vim'                      " GNU Global
+  Plug 'Shougo/unite-outline'                                                   " 関数一覧とかを表示
+  Plug 'vim-scripts/gtags.vim'                                                  " GNU Global
   if !g:is_windows
-      Plug 'vim-scripts/taglist.vim'                " ソースコードブラウザ
+      Plug 'vim-scripts/taglist.vim'                                            " ソースコードブラウザ
   endif
 
   " Markdown Preview 関連
@@ -124,38 +132,35 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'kannokanno/previm'
   Plug 'tyru/open-browser.vim'
 
-  Plug 'ctrlpvim/ctrlp.vim'                         " Fuzzy file, buffer, mru, tag, etc finder.
+  Plug 'ctrlpvim/ctrlp.vim'                                                     " Fuzzy file, buffer, mru, tag, etc finder.
   " if !g:is_windows
-  "   Plug 'nixprime/cpsm' , {'do': './install.sh' }  " Plugins for ctrlp.vim A CtrlP matcher, specialized for paths.
+  "   Plug 'nixprime/cpsm' , {'do': './install.sh' }                              " Plugins for ctrlp.vim A CtrlP matcher, specialized for paths.
   " endif
-  " Plug 'mattn/ctrlp-filer'                          " Plugins for ctrlp.vim Filer (After start, Ctrl+D will not work bug occure.)
-  Plug 'vim-scripts/ctrlp-funky'                    " Plugins for ctrlp.vim Jump to a function
-  Plug 'suy/vim-ctrlp-commandline'                  " Plugins for ctrlp.vim command line history navigation
-  Plug 'sgur/ctrlp-extensions.vim'                  " Plugins for ctrlp.vim cmdline : cmdline history, yankring : yank history, menu : extension selector menu
+  " Plug 'mattn/ctrlp-filer'                                                      " Plugins for ctrlp.vim Filer (After start, Ctrl+D will not work bug occure.)
+  Plug 'vim-scripts/ctrlp-funky'                                                " Plugins for ctrlp.vim Jump to a function
+  Plug 'suy/vim-ctrlp-commandline'                                              " Plugins for ctrlp.vim command line history navigation
+  Plug 'sgur/ctrlp-extensions.vim'                                              " Plugins for ctrlp.vim cmdline : cmdline history, yankring : yank history, menu : extension selector menu
 
 
-  Plug 'glidenote/memolist.vim'                     " simple memo plugin for Vim.
+  Plug 'glidenote/memolist.vim'                                                 " simple memo plugin for Vim.
 
   if g:is_windows
-    " Plug 'mattn/webapi-vim'                           " vim interface to Web API
+    " Plug 'mattn/webapi-vim'                                                     " vim interface to Web API
       Plug 'mattn/excelview-vim'
       Plug 'mattn/startmenu-vim'
   endif
 
-  " Plug 'mattn/learn-vimscript.git'                  " Learn VimScript (:help learn-vimscript)
-  " Plug 'vim-jp/vital.vim'                           " A comprehensive Vim utility functions for Vim plugins
-  " Plug 'mattn/wwwrenderer-vim'                      " www renderer for vim
-
-  " Plug 'Shougo/unite-ssh'                           "
-  " Plug 'Shougo/vimshell'                            " uniteインターフェースでシェル使用できる
-  " http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
-  " Plug 'sjl/gundo.vim'                              " UNDO履歴を管理
-  " Plug 'fuenor/qfixhowm'                            " メモプラグイン
-  " Plug 'thinca/vim-quickrun'                        " 現在のファイルを実行して quickfix に表示
-  " Plug 'tpope/vim-fugitive'                         " Git wrapper so awesome
+  " Plug 'mattn/learn-vimscript.git'                                              " Learn VimScript (:help learn-vimscript)
+  " Plug 'vim-jp/vital.vim'                                                       " A comprehensive Vim utility functions for Vim plugins
+  " Plug 'mattn/wwwrenderer-vim'                                                  " www renderer for vim
+  " Plug 'Shougo/unite-ssh'                                                       "
+  " Plug 'Shougo/vimshell'                                                        " uniteインターフェースでシェル使用できる
+  " Plug 'sjl/gundo.vim'                                                          " UNDO履歴を管理 http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
+  " Plug 'fuenor/qfixhowm'                                                        " メモプラグイン
+  " Plug 'thinca/vim-quickrun'                                                    " 現在のファイルを実行して quickfix に表示
+  " Plug 'tpope/vim-fugitive'                                                     " Git wrapper so awesome
   " Plug 'junegunn/seoul256.vim'
-  " 指定したファイルタイプを開いたときに読み込む
-  " Plug 'tpope/vim-fireplace', { 'for': ['clojure'] }
+  " Plug 'tpope/vim-fireplace', { 'for': ['clojure'] }                            " 指定したファイルタイプを開いたときに読み込む
   " migemo
 call plug#end()
 
