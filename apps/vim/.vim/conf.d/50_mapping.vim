@@ -173,6 +173,8 @@ nnoremap ,9 :e ++enc=cp932<CR>
 
 cmap <F3> <C-R>=strftime("%Y-%m-%d")<CR>
 imap <F3> <C-R>=strftime("%Y-%m-%d")<CR>
+cmap <F4> <C-R>=strftime("%Y%m%d_%H%M%S")<CR>
+imap <F4> <C-R>=strftime("%Y%m%d_%H%M%S")<CR>
 
 "=============================================
 " unite-outline 設定
