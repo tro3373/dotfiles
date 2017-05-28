@@ -4,6 +4,11 @@ current_dir=$(pwd)
 script_dir=$(cd $(dirname $0); pwd)
 tmux_home=~/.tmux
 
+has() {
+    which ${1} >/dev/null 2>&1
+    return $?
+}
+
 get_settings_version() {
     local installed_version="$1"
     local version="$installed_version"
@@ -28,6 +33,10 @@ osconf() {
 }
 
 gen_version_file() {
+    if ! has bc; then
+        echo "[[[!!!WARNING!!!]]]No bc command exists." 1>&2
+        exit 2
+    fi
     local version_file=$1
     local installed_version=$(tmux -V | cut -d' ' -f2)
     local use_settings_version=$(get_settings_version $installed_version)
