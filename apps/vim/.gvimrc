@@ -16,38 +16,40 @@ source $VIMRUNTIME/menu.vim
 " Removes the toolbar.
 :set guioptions -=T
 
-" カラーテーマ設定
-if 0 && g:plug.is_installed("vim-colors-solarized")
-    " ==> Solarized
-    " let g:solarized_termcolors=256
-    let g:solarized_termtrans=1
-    set background=dark
-    colorscheme solarized
-elseif 1 && g:plug.is_installed("vim-hybrid")
-    " ==> hybrid
-    set background=dark
-    colorscheme hybrid
-elseif g:plug.is_installed("vim-tomorrow-theme")
-    " ==> TomorrowNight
-    " colorscheme Tomorrow
-    " colorscheme Tomorrow-Night-Bright
-    " colorscheme Tomorrow-Night-Eighties
-    colorscheme Tomorrow-Night
-elseif g:plug.is_installed("molokai")
-    " ==> Molokai
-    colorscheme molokai
-endif
+source $VIMRUNTIME/conf.d/31_colorscheme.vim
 
-" 使用するフォントと大きさ
-if (has("win64") || has("win32"))
-    set guifont=Osaka-Mono:h13
-    set guifontwide=Osaka-Mono:h13
-else
-    " set guifont=Ricty\ Discord\ for\ Powerline\ 10
-    " set guifontwide=Ricty\ Discord\ for\ Powerline\ 10
-    set guifont=Osaka-Mono\ 13
-    set guifontwide=Osaka-Mono\ 13
-endif
+" " カラーテーマ設定
+" if 0 && g:plug.is_installed("vim-colors-solarized")
+"     " ==> Solarized
+"     " let g:solarized_termcolors=256
+"     let g:solarized_termtrans=1
+"     set background=dark
+"     colorscheme solarized
+" elseif 1 && g:plug.is_installed("vim-hybrid")
+"     " ==> hybrid
+"     set background=dark
+"     colorscheme hybrid
+" elseif g:plug.is_installed("vim-tomorrow-theme")
+"     " ==> TomorrowNight
+"     " colorscheme Tomorrow
+"     " colorscheme Tomorrow-Night-Bright
+"     " colorscheme Tomorrow-Night-Eighties
+"     colorscheme Tomorrow-Night
+" elseif g:plug.is_installed("molokai")
+"     " ==> Molokai
+"     colorscheme molokai
+" endif
+"
+" " 使用するフォントと大きさ
+" if (has("win64") || has("win32"))
+"     set guifont=Osaka-Mono:h13
+"     set guifontwide=Osaka-Mono:h13
+" else
+"     " set guifont=Ricty\ Discord\ for\ Powerline\ 10
+"     " set guifontwide=Ricty\ Discord\ for\ Powerline\ 10
+"     set guifont=Osaka-Mono\ 13
+"     set guifontwide=Osaka-Mono\ 13
+" endif
 
 "if (has("win64") || has("win32"))
 "    "set encoding=utf-8
