@@ -1,68 +1,43 @@
-```sh
-# TODO
-read -p  "user: " user
-read -sp "pass: " pass
-```
-=================================================================
-# Zsh Tips
-```
-# ~/script/test.zsh に対して
-${0}        ==> ./test.zsh
-${0:a}      ==> /Users/username/script/test.zsh
-${0:h}      ==> .
-${0:t}      ==> test.zsh
-${0:a:h}    ==> /Users/username/script
-${0:a:h:h}  ==> /Users/username
-${0:a:h:t}  ==> script
-```
-
--------
-
 # bash chips
-
 ## 基本
 
 $? ==> 直前のコマンドの実行結果
 $$ ==> シェル自身のプロセスID
 $! ==> シェルが最後に起動したバックグラウンドプロセスのプロセスID
+!$ ==> 前回実行コマンドの最後の引数を取得
+
+    less /a/b/c
+    vim !$
+
+!! ==> 前回実行コマンドの全体を取得
+
+    service httpd restart
+    sudo !!
+
 $- ==> シェルの起動時のフラグの一覧
+$_ ==> 実行シェル(./hoge.sh => ./hoge.sh, bash hoge.sh => /bin/bash)
 
 $# ==> 引数の数
 $0 ==> スクリプト自体
 $* ==> 引数変数$1、$2、$3...をスペースで区切ってすべて表示(IFSに値をセットしておくと、区切り文字を変更)
 $@ ==> IFSに影響しない$*
 
-## sample
 ```sh
-main() {
-    echo $1
-    echo $2
-    echo $@
-}
-echo "@@@@@"
-main "$@"
-echo '****'
-main "$*"
+## "@", "*" 違いサンプル
+asterisk() { for i in "$*"; do echo $i done }
+asterisk 123 abc
+# ==> 123 abc
+at() { for i in "$@"; do echo $i done }
+at 123 abc
+# ==> 123
+#     abc
 ```
-# 以下の呼び出しの場合
-call target.sh 1 2
-# main "@" の場合は、、
-#    1
-#    2
-#    1 2
-# main "*" の場合は、、
-#    1 2
-#
-#    1 2
 
 ${VAR:-expression}   ==> 値がセットされていない(NULL)場合、   :-以降の式を評価結果を返す。
 ${VAR:+expression}   ==> 値がセットされている(NONE-NULL)場合、:+以降の式を評価結果を返す。
 ${VAR:=expression}   ==> 値がセットされていない(NULL)場合、   :=以降の式を評価結果を返し変数に代入。
 ${VAR:?[expression]} ==> 値がセットされていない(NULL)場合、    式が標準エラーに出力。
 
-
-var=12345; echo ${var:1:3}
-==> 234
 
 { commands ; }, ( commands ) ==> サブシェルでコマンドを実行
 umask [nnn]                  ==> 作成されるファイルのデフォルトのパーミッションを8進数のマスクで設定
@@ -107,7 +82,13 @@ expr1 -o expr2  ==> 式expr1 と式expr2 のいずれかが真であれば真
 　　echo "I'm sorry Dave, I'm afraid I can't do that." 1>&2
 <&-             ==> 標準入力を閉じる
 >&-             ==> 標準出力を閉じる
+&>              ==> 標準出力と標準エラー出力の両方をリダイレクト
+>&              ==> 同義
 
+    ls /home/bin /home/user1 &> hoge.log
+    ls /home/bin /home/user1 >& hoge.log
+    ls /home/bin /home/user1 > hoge.log 2>&1
+    ls /home/user1 | tee hoge.log
 
 command1 | command2  ==> コマンド１の標準出力をコマンド２の標準入力に渡す
 command1 && command2 ==> コマンド１が正常終了すればコマンド２を実行
@@ -129,6 +110,13 @@ BASEDIR=$(cd $(/usr/bin/dirname $0); pwd)
 ```
 
 ## 文字操作
+var=12345; echo ${var:1:3}
+==> 234
+var=12345; echo ${#var}
+==> 5
+==> 文字数を取得
+${変数名^^} →大文字に変換
+${変数名,,} →小文字に変換
 ${変数名#パターン} → 前方一致でのマッチ部分削除(最短マッチ)
 ${変数名##パターン} → 前方一致でのマッチ部分削除(最長マッチ)
 ${変数名%パターン} → 後方一致でのマッチ部分削除(最短マッチ)
@@ -177,61 +165,71 @@ echo /opt/{app,db}/{data,conf}
 ==> /opt/app/data /opt/app/conf /opt/db/data /opt/db/conf
 ```
 
-## Interactive method
-```
-interactive1() {
-    local variable=$1
-    local msg=$2
-    local input_word=
-    local yesno=x
-    while [[ "$input_word" == "" ]]; do
-        echo "$msg"
-        read input_word
-    done
-    eval "$variable=$input_word"
-}
-interactive2() {
-    local variable=$1
-    local msg=$2
-    local input_word=
-    local yesno=x
-    while [[ "$input_word" == "" ]]; do
-        echo "$msg"
-        read input_word
-        echo
-        while [[ ! "$yesno" =~ [yYnN]  ]]; do
-            echo "Are you ok?(y/N) input: ${input_word}"
-            read yesno
-        done
-        if [[ $yesno =~ [nN] ]]; then
-            input_word=
-            yesno=
-        else
-            break
-        fi
-    done
-    eval "$variable=$input_word"
-}
+## exec
+exec &>fileとすると以降のコマンド実行結果は全てfileに書かれる
+
+### 任意のファイルディスクリプタを開く。(出力)
+
+```sh
+exec 3>file         # 3というfileへの出力用のディスクリプタ(3以外でもよい)を開く
+echo "hoge" >&3
+exec 3>&-           # ファイルディスクリプタを閉じる
 ```
 
-## "@", "*" 違い
+### 任意のファイルディスクリプタを開く。(入出力)
+
+```sh
+echo "hoge" > file
+echo "fuga" >> file
+echo "piyo" >> file
+exec 3<> file
+read var1 <&3
+echo $var1  #hoge
+echo 'puyo' >&3
+exec 3>&-
+exec 3<&-
+cat file
+# hoge
+# puyo
+# piyo
+```
+```sh
+# 同義
+echo 'hoge' >hoge.txt
+>hoge.txt echo 'hoge'
+echo >hoge.txt 'hoge'
+```
+
+## historyに日時を残す
+
+HISTTIMEFORMAT="%Y-%m-%d %H:%M:%S "
+
+## 現在のセッションの履歴を残さない
+unset HISTFILE && exit
+
+## 履歴全削除
+HISTFILESIZE=0 && exit
+
+## パイプでコマンドを繋げた時にパイプのどれか1つでも0以外の戻り値を返したら
+   その戻り値(複数あった場合は最も右側)を返す
+
+-o pipefail
+
+
+## EXITをフックする
 ```sh
 #!/bin/bash
 
-main() {
-    echo "count=$#"
-    echo "1=$1"
-    echo "2=$2"
+# 一時ファイルを格納するディレクトリを作成
+tmpfile=$(mktemp -d)
+
+# スクリプト終了時に必ず実行したい処理を記述
+function finally {
+    rm -rf $tmpfile
 }
-main "$@"
-main "$*"
-```
-```log
-# result
-count=2
-1=a
-2=b
-count=1
-1=a b
-2=
+# trapコマンドでEXITシグナル受信時にfinally関数が実行されるようにする
+trap finally EXIT
+
+echo 'start' > $tmpfile/file1
+cat $tmpfile/file1
 ```
