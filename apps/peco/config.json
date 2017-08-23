@@ -1,7 +1,18 @@
 {
-    "Keymap": {
-        "C-u": "peco.ToggleSelectionAndSelectNext",
-        "C-b": "peco.ScrollPageUp",
-        "C-f": "peco.ScrollPageDown"
-    }
+  "Keymap": {
+    "C-u": "peco.ToggleSelectionAndSelectNext",
+    "C-k": "peco.SelectUp",
+    "C-j": "peco.SelectDown",
+    "C-p": "peco.ScrollPageUp",
+    "C-n": "peco.ScrollPageDown"
+  },
+  "Layout": "bottom-up",
+  "Prompt": "[peco]",
+  "Style": {
+    "Basic": ["on_default", "default"],
+    "SavedSelection": ["bold", "on_yellow", "white"],
+    "Selected": ["on_cyan", "default"],
+    "Query": ["yellow"],
+    "Matched": ["black", "on_yellow"]
+  }
 }
