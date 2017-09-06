@@ -68,8 +68,9 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
         zplug "zsh-users/zsh-syntax-highlighting", defer:2
         zplug "yoshikaw/ClipboardTextListener", \
             as:command, use:clipboard_text_listener.pl
-        zplug "junegunn/fzf-bin", from:gh-r, at:0.16.7, as:command, \
-            use:"$target_fzf", rename-to:fzf
+        # zplug "junegunn/fzf-bin", from:gh-r, at:0.17.0, as:command, \
+        #     use:"$target_fzf", rename-to:fzf
+        zplug "junegunn/fzf-bin", from:gh-r, as:command, rename-to:fzf
         zplug "b4b4r07/gomi", as:command, from:gh-r, \
             use:"$target", rename-to:gomi
         # Not work! so i copy fzf-tmux in my dotfiles/bin
