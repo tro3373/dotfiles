@@ -8,7 +8,7 @@ alias       ffname
 
 snippet devnull
 alias tonull
-    >/dev/null 2>&1
+    &> /dev/null
 
 snippet error
 alias toerror
@@ -35,6 +35,18 @@ snippet has
     has() {
         which \${1} >/dev/null 2>&1
         return $?
+    }
+
+snippet usage
+    command_name=$(basename \$0)
+    usage() {
+        cat <<EOF
+    Description for this command.
+      Usage:
+          $command_name [option]
+        Options
+          -h|--help : Show this usage
+    EOF
     }
 
 snippet isfileexists
