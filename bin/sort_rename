@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+target_dir=$current_dir
+
+debug="echo"
+IFS="
+"
+
+usage() {
+    cat <<EOF
+Rename to ordered number name file.
+  Usage:
+    $command_name [option] <suffix> [target_dir]
+  Options
+    -h|--help                               : Show this usage
+    -e|--execute                            : Execute rename
+    -d=<directory>|--directory=<directory>  : Target directory
+EOF
+}
+
+add_args() {
+    args=("${args[@]}" "$@")
+}
+
+set_args() {
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -e|--execute)
+                debug=""
+                ;;
+            -d=*|--directory=*)
+                debug=""
+                target_dir=${current_dir#*=}
+                ;;
+            *)
+                add_args "$arg"
+                ;;
+        esac
+    done
+}
+
+initialize() {
+    args=()
+    set_args "$@"
+    if [[ ${#args[@]} -gt 1 ]]; then
+        usage
+        echo
+        echo "==> Too many args" 1>&2
+        exit 1
+    fi
+    suffix="${args[@]}"
+    if [[ -z $suffix ]]; then
+        suffix=jpg
+        echo "Default suffix $suffix is setted."
+    fi
+}
+
+cnv() {
+    local count=0
+    for f in $(ls *.$suffix | sort -n); do
+        count=$(( count + 1 ))
+        local num=$(printf "%03d" $count)
+        [[ "$f" == "$num.$suffix" ]] && continue
+        $debug mv "$f" $num.$suffix
+    done
+}
+
+main() {
+    initialize "$@"
+
+    set -eu
+    cd $target_dir
+    for d in $(find . -maxdepth 5 -type d); do
+        local is_target_file_exist=$(find $d -maxdepth 1 -type f -name "*.$suffix" |wc -l)
+        [[ $is_target_file_exist -eq 0 ]] && continue
+        echo "==> $d"
+        cd $d
+        cnv
+        cd - &> /dev/null
+    done
+}
+
+main "$@"
+
