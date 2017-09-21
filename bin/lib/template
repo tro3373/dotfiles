@@ -3,6 +3,7 @@
 current_dir=$(pwd)
 script_dir=$(cd $(dirname $0); pwd)
 command_name=$(basename $0)
+args=()
 
 usage() {
     cat <<EOF
@@ -14,43 +15,29 @@ Description for this command.
 EOF
 }
 
-has() {
-    which ${1} >/dev/null 2>&1
-    return $?
-}
-
-add_args() {
-    args=("${args[@]}" "$@")
-}
-
-set_args() {
-    for arg in "$@"; do
-        case "$arg" in
-            -h|--help)
-                usage
-                exit 0
-                ;;
-            # -f*|--file*)
-            #     file=${arg#*=}
-            #     ;;
-            *)
-                add_args "$arg"
-                ;;
-        esac
-    done
-}
+has() { which $1 >& /dev/null; }
+add_args() { args=("${args[@]}" "$@"); }
 
 initialize() {
-    args=()
-    set_args "$@"
+    while true; do
+        [[ -z $1 ]] && break
+        case "$1" in
+            -h|--help) usage && exit 0  ;;
+            #-f*|--file*) file=${1#*=} ;;
+            #-f|--file) shift && file=$1 ;;
+            *) add_args "$1"            ;;
+        esac
+        shift
+    done
+    all_args="${args[@]}"
 }
 
 main() {
     initialize "$@"
-    all_args="${args[@]}"
     for arg in "${args[@]}"; do
         echo "Arguments: $arg"
     done
+    echo $file
 }
 main "$@"
 
