@@ -32,10 +32,7 @@ alias rea
     done
 
 snippet has
-    has() {
-        which \${1} >/dev/null 2>&1
-        return $?
-    }
+    has() { which \${1} >& /dev/null; }
 
 snippet usage
     command_name=$(basename \$0)
