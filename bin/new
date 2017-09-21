@@ -68,9 +68,9 @@ main(){
         echo "Target $target is exist." 1>&2
         exit 1
     fi
-    template=$dotbin/lib/template.sh
+    template=$dotbin/lib/template
     if [[ $simple -eq 1 ]]; then
-        template=$dotbin/lib/template_s.sh
+        template=$dotbin/lib/template_s
     fi
     cp $template $target
     vim $target

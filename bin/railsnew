@@ -2,7 +2,6 @@
 
 current_dir=$(pwd)
 dotbin=${DOTPATH:-~/.dot}/bin
-template=$dotbin/lib/template.sh
 
 usage() {
     local command_name=$(basename $0)
