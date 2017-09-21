@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+has() {
+    which ${1} >/dev/null 2>&1
+    return $?
+}
+
+main() {
+    has bc || (echo "No bc command exists." 1>&2 && exit 1)
+    if [[ $# -eq 0 ]]; then
+        echo "Specify calclatable string" 1>&2
+        exit 1
+    fi
+    echo "scale=3; $*" |bc
+}
+main "$@"
