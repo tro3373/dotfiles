@@ -18,12 +18,11 @@
     ]
   editor:
     fontFamily: "Osaka-Mono"
-    fontSize: 17
+    fontSize: 21
     invisibles:
       cr: " "
       eol: " "
       space: "-"
-      tab: "^"
     lineHeight: 1
     preferredLineLength: 100
     scrollPastEnd: true
