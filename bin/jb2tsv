@@ -4,14 +4,26 @@ current_dir=$(pwd)
 script_dir=$(cd $(dirname $0); pwd)
 script_name=$(basename $0)
 
-tsv_format="%s\t\t\t\t\t\t\t\t\t%s\t\t\t\t%s\t\t\t\t\t\t%s\n"
+tsv_format="%s\t\t\t\t\t\t\t\t\t%s\t\t\t\t%s\t\t\t\t\t\t%s"
 is_out_file=0
-out_dir_root=$current_dir/${script_name}.out
+
+command_name=$(basename $0)
+args=()
+
+usage() {
+    cat <<EOF
+JavaBean to tsv
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+      -o [directory] : Output to file
+EOF
+}
 
 has() { which ${1} >& /dev/null; }
-trim() {
-    echo $* |sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'
-}
+add_args() { args=("${args[@]}" "$@"); }
+trim() { echo $* |sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'; }
 type_to_ja(){
     case "$*" in
         String)         echo "文字列";;
@@ -73,12 +85,12 @@ for_file() {
                 [[ -n $fa_size ]] && f_type_dsp="$f_type_dsp($fa_size)"
 
                 # 1行出力
-                local out_line=$(printf "$tsv_format" "$f_name_ja" "$f_name" "$f_type_dsp" "$f_type_rq")
+                local out_line="$(printf "$tsv_format" "$f_name_ja" "$f_name" "$f_type_dsp" "$f_type_rq")\n"
                 clip_message="$clip_message$out_line\n"
                 if [[ $is_out_file -eq 1 ]]; then
-                    echo -ne $out_line |tee -a $out_file
+                    echo -ne "$out_line" |tee -a $out_file
                 else
-                    : #echo -ne $out_line
+                    echo -ne "$out_line"
                 fi
                 clear
                 ;;
@@ -94,22 +106,35 @@ for_dir() {
     done
 }
 initialize() {
-    if [[ ! -e $out_dir_root ]]; then
-        :
-    fi
+    while true; do
+        [[ -z $1 ]] && break
+        case "$1" in
+            -h|--help) usage && exit 0  ;;
+            #-f*|--file*) file=${1#*=} ;;
+            -o)
+                is_out_file=1
+                shift && _dir=$1
+                [[ -z $_dir ]] && _dir=$current_dir
+                out_dir_root=$_dir/${script_name}.out
+                ;;
+            *) add_args "$1"            ;;
+        esac
+        shift
+    done
+    [[ ${#args[@]} -eq 0 ]] && echo "Specify file path." 1>&2 && exit 1
 }
 main() {
-    [[ $# -eq 0 ]] && echo "Specify file path." 1>&2 && exit 1
-    initialize
+    initialize "$@"
     IFS=$'\n'
-    for f in "$@"; do
+    for f in "${args[@]}"; do
         [[ ! -e "$f" ]] && continue;
         [[ -f $f ]] && for_file "$f"
         [[ -d $f ]] && for_dir "$f"
     done
     if [[ $is_out_file -ne 1 ]]; then
         #echo -ne "$clip_message" 
-        echo -ne "$clip_message\n" >/dev/clipboard
+        #echo -ne "$clip_message\n" >/dev/clipboard
+        :
     fi
 }
 
