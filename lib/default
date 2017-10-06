@@ -1,5 +1,17 @@
 #!/bin/bash
 
+install_msys() { call_default=1; }
+install_cygwin() { call_default=1; }
+install_mac() { call_default=1; }
+install_ubuntu() { call_default=1; }
+install_redhat() { call_default=1; }
+
+setting_msys() { call_default=1; }
+setting_cygwin() { call_default=1; }
+setting_mac() { call_default=1; }
+setting_ubuntu() { call_default=1; }
+setting_redhat() { call_default=1; }
+
 # デフォルトのインストールメソッド定義
 install() {
     dlog " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
