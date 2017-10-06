@@ -1,7 +1,7 @@
 #!/bin/bash
 
 setconfig() {
-    make_link_dot2home $script_dir
+    make_link_dot2home $app_dir
     local list="$(git config --list)"
     if ! is_exists_setting "$list" "user.name"; then
         log "@@@@@ Input Your Git user.name"
@@ -54,7 +54,7 @@ set_gitconfig() {
     fi
     if ! is_exists_setting "$list" "core.filemode"; then
         local filemode=true
-        [ "$DETECT_OS" = "msys" ] && filemode=false
+        is_msys && filemode=false
         dvexec git config --global core.filemode $filemode
     fi
     if ! is_exists_setting "$list" "alias.co"; then

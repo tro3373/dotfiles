@@ -1,9 +1,9 @@
 #!/bin/bash
 
 install() {
-    if [ "$DETECT_OS" = "msys" ]; then
-        dvexec mkdir -p $script_dir/tmp
-        dvexec cd $script_dir/tmp
+    if is_msys; then
+        dvexec mkdir -p $app_dir/tmp
+        dvexec cd $app_dir/tmp
         version=2.1.4
         dvexec wget https://osdn.jp/projects/nkf/downloads/64158/nkf-${version}.tar.gz
         dvexec tar zxvf nkf-${version}.tar.gz

@@ -1,16 +1,16 @@
 #!/bin/bash
 
 install() {
-#    workdir="$script_dir/tmp"
+#    workdir="$app_dir/tmp"
 #    if [ ! -e $workdir ]; then
 #        dvexec "mkdir -p \"$workdir\""
 #    fi
 #    dvexec "cd \"$workdir\""
-    if [ "$DETECT_OS" = "ubuntu" ]; then
+    if is_ubuntu; then
         # for tmux from git
         dvexec sudo apt-get install -y autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev 
         install_common
-    elif [ "$DETECT_OS" = "redhat" ]; then
+    elif is_redhat; then
         # for tmux from git
         dvexec sudo yum install -y libevent libeventdevel automake ncursesdevel
         install_common
@@ -38,6 +38,6 @@ install_common() {
 }
 
 setconfig() {
-    make_link_dot2home $script_dir
+    make_link_dot2home $app_dir
 }
 

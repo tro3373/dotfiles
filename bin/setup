@@ -1,44 +1,203 @@
 #!/usr/bin/env bash
 
-dotpath=~/.dot
+DOT_PATH=~/.dot
 current_dir=$(pwd)
 script_dir=$(cd $(dirname $0); pwd)
 command_name=$(basename $0)
+#all_apps="git ctags curl tree global zsh tmux vim tig ssh ag _peco _fzf _gomi _zplug"
+#all_apps="git ctags curl tree global zsh tmux vim tig ssh nkf ag"
+default_apps=(git ctags curl tree global zsh tmux vim tig ssh nkf ag)
+with_log_file=1
+debug=0
+dry_run=1
+dry_run_commands=""
+force=0
 args=()
 
 usage() {
     cat <<EOF
 Setup my dev env.
   Usage:
-      $command_name [option]
+      $command_name [Option] [App App...]
     Options
-      -h|--help : Show this usage
+      -h|--help
+        Show this usage
+      -e|--exec
+        execute install/setup process.
+      -f|--force
+        install process will be executed forcibly if already installed, and also setup process will be executed.
+      -d|--debug
+        whith debug option
+
+Defaults Apps(No specify App mode) is ..
+    ${default_apps[@]}
 EOF
 }
 
-has() { which $1 >& /dev/null; }
-add_args() { args=("${args[@]}" "$@"); }
+#add_args() { args=("${args[@]}" "$@"); }
+add_args() { args+=("$@"); }
 
 initialize() {
+    # Mac 用 Brew インストールチェック
+    if is_mac; then
+        if ! has brew; then
+            suggest_install_brew
+            exit 1
+        fi
+    fi
     while true; do
         [[ -z $1 ]] && break
         case "$1" in
             -h|--help) usage && exit 0  ;;
             #-f*|--file*) file=${1#*=} ;;
             #-f|--file) shift && file=$1 ;;
-            *) add_args "$1"            ;;
+            -e|--exec) dry_run=0        ;;
+            -f|--force) force=1         ;;
+            -d|--debug) debug=1         ;;
+            *) add_args $1              ;;
         esac
         shift
     done
+    if [[ ${#args[@]} -eq 0 ]]; then
+        # 指定無し時は全インストール
+        args=default_apps
+    fi
     all_args="${args[@]}"
+
+    # 関数ロード
+    source $DOT_PATH/lib/funcs
+
+    is_32bit=0
+    [[ "$DETECT_BIT" != "x86_64" ]] && is_32bit=1
+    # Install command
+    instcmd="sudo apt-get install -y"
+    if is_mac; then
+        instcmd="brew install"
+    elif is_redhat; then
+        instcmd="sudo yum install -y"
+    elif is_cygwin; then
+        instcmd="apt-cyg install"
+    elif is_msys; then
+        instcmd="pacman -S --noconfirm"
+    fi
+    cd $DOT_PATH
+}
+
+make_setup_dirs() {
+    local works_home=$HOME
+    if is_msys; then
+        if [ -z $WINHOME ]; then
+            WINHOME="$(cd /c/Users/`whoami` && pwd)"
+        fi
+        works_home=$WINHOME
+        [ ! -e $WINHOME/bin ] && dvexec mkdir $WINHOME/bin
+        [ ! -e $WINHOME/tools ] && dvexec mkdir $WINHOME/tools
+    fi
+    [ ! -e $HOME/bin ] && dvexec mkdir $HOME/bin
+    [ ! -e $works_home/works/00_memos ] && dvexec mkdir -p $works_home/works/00_memos
+    if is_msys; then
+        make_lnk_with_bkup $WINHOME/works $HOME/works
+        make_lnk_with_bkup $WINHOME $HOME/win
+    fi
+}
+
+suggest_install_brew() {
+    cat <<EOF
+================================================
+ HomeBrew is Not Installed!
+  => Execute this and Install it!
+
+  echo "export PATH=/usr/local/bin:\$PATH" >> ~/.bash_profile
+  sudo mkdir /usr/local/
+  ruby -e "\$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
+  source ~/.bash_profile
+  brew update
+  brew -v
+
+EOF
+}
+
+dump_execute_args() {
+    if [[ $debug -eq 1 ]]; then
+        for ((i = 0; i < ${#args[@]}; i++)) {
+            log " args[$i] = ${args[i]}"
+        }
+        log " force=$force"
+        log " dry=$dry_run"
+    fi
+}
+
+dump_dry_run_commands() {
+    if [[ $dry_run -eq 1 ]]; then
+        log ""
+        log ""
+        log "===================================================="
+        log "==>  This is Dry-run mode."
+        log "==>     Specify 'exec/--exec/-e' option for execute."
+        if [[ -n $dry_run_commands ]]; then
+            log "==>     Below commands will be execute."
+            log $dry_run_commands
+        fi
+        log "===================================================="
+    else
+        # log $dry_run_commands
+        dump_backuped_files
+    fi
+}
+
+start_setup() {
+    set -eu
+    make_setup_dirs
+
+    # インストールアプリディレクトリ
+    apps_dir=$DOT_PATH/apps
+
+    # app ディレクトリ配下のディレクトリに対して、インストール処理を実行
+    # mac/linux にかかわらず、実行される
+    for ((i = 0; i < ${#args[@]}; i++)) {
+        # ディレクトリ名＝アプリ名の前提
+        local app=${args[i]}
+
+        dlog "================================================"
+        log "===> $app"
+
+        # 各スクリプト内で以下コマンドでパスを取得できていたが、、、
+        # ここで定義しておけば良いことに気づいたので設定しておく
+        # # source されるスクリプトを考慮した ファイルの存在するディレクトリ
+        # app_dir="$(cd -- "$(dirname -- "${BASH_SOURCE}}")"; pwd)"
+        app_dir="$apps_dir/$app"
+
+        # デフォルトのインストールコマンド設定
+        def_instcmd="$instcmd $app"
+        # デフォルト関数ロード
+        # 下記 vexec source $script_path にて、install, setconfig メソッドが
+        # 上書き定義される為、ここで初期化する
+        source $DOT_PATH/lib/default
+
+        # 個別インストール設定ファイルが存在する場合は、それを実行する為
+        # config.sh ファイルを読み込み、install, setconfigメソッドをロード
+        local script_path=$app_dir/config.sh
+        [[ -e "$script_path" ]] && source "$script_path"
+
+        if [[ $force -eq 1 ]] || ! has $app; then
+            # 強制インストールまたは、インストールされていない場合は実行
+            # 読み込んだ install コマンドの実行
+            install
+        fi
+        if has $app; then
+            # install された、されている場合
+            # 読み込んだ setconfig コマンドの実行
+            setconfig
+        fi
+    }
 }
 
 main() {
     initialize "$@"
-    for arg in "${args[@]}"; do
-        echo "Arguments: $arg"
-    done
-    echo $file
+    dump_execute_args
+    start_setup
+    dump_dry_run_commands
+    echo "Done!"
 }
 main "$@"
 

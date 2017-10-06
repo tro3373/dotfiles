@@ -4,7 +4,7 @@ script_dir=$(cd $(dirname $0); pwd)
 dry_run=0
 
 # インストール用関数 ロード
-source $DOTPATH/lib/setup_funcs.sh
+source $DOTPATH/lib/funcs
 
 install() {
     cmd_pyenv=~/.anyenv/envs/pyenv/bin/pyenv
@@ -21,16 +21,16 @@ install() {
     #   https://github.com/riywo/anyenv
     # see powerline setting...
     #   http://qiita.com/qurage/items/4edda8559cc4c98758ee
-    if [ "$DETECT_OS" = "mac" ]; then
+    if is_mac; then
         if ! test_cmd xcode-select; then
             dvexec "xcode-select --install"
         fi
         dvexec "brew install readline; brew link readline;"
-    elif [ "$DETECT_OS" = "ubuntu" ]; then
+    elif is_ubuntu; then
         dvexec sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev
-    elif [ "$DETECT_OS" = "redhat" ]; then
+    elif is_redhat; then
         dvexec sudo yum install -y gcc gcc-c++ make git openssl-devel bzip2-devel zlib-devel readline-devel sqlite-devel
-    elif [ "$DETECT_OS" = "cygwin" ]; then
+    elif is_cygwin; then
         dvexec apt-cyg install patch
     fi
 

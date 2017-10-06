@@ -1,7 +1,7 @@
 #!/bin/bash
 
 install() {
-    if [ "$DETECT_OS" = "mac" ]; then
+    if is_mac; then
         dvexec sudo brew tap peco/peco
         dvexec sudo brew install peco
     else
@@ -11,17 +11,17 @@ install() {
         dlurl="https://github.com/peco/peco/releases/download/${peco_latest_version}/peco_linux_amd64.tar.gz"
         log "  ===> Donload from url=${dlurl}"
 
-        workdir="$script_dir/tmp"
+        workdir="$app_dir/tmp"
         if [ ! -e $workdir ]; then
             dvexec "mkdir -p \"$workdir\""
         fi
         dvexec "cd \"$workdir\""
         dvexec wget $dlurl
-        if [ -e "$script_dir/tmp/peco_linux_amd64.tar.gz" ]; then
+        if [ -e "$app_dir/tmp/peco_linux_amd64.tar.gz" ]; then
             dvexec tar xvfpz peco_linux_amd64.tar.gz
             installto=/usr/local/bin
             sudo="sudo"
-            if [ "$DETECT_OS" = "cygwin" ]; then
+            if is_cygwin; then
                 sudo=""
             fi
             dvexec "$sudo cp peco_linux_amd64/peco $installto"
@@ -40,5 +40,5 @@ setconfig() {
     if [ ! -e ${HOME}/.config/peco ]; then
         dvexec "mkdir -p \"${HOME}/.config/peco\""
     fi
-    make_link_bkupable "${script_dir}/config.json" "${HOME}/.config/peco/config.json"
+    make_link_bkupable "${app_dir}/config.json" "${HOME}/.config/peco/config.json"
 }

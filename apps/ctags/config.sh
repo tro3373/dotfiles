@@ -1,5 +1,5 @@
 #!/bin/bash
 
 setconfig() {
-    make_link_dot2home $script_dir
+    make_link_dot2home $app_dir
 }

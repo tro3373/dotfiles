@@ -1,7 +1,7 @@
 #!/bin/bash
 
 install() {
-    if [ "$DETECT_OS" = "msys" ]; then
+    if is_msys; then
         dvexec echo "Nothing todo for ssh on msys"
     else
         dvexec $def_instcmd
@@ -10,12 +10,12 @@ install() {
 
 setconfig() {
     # exchange.key setting
-    make_link_bkupable $script_dir/.exchange.key ~/.exchange.key
+    make_link_bkupable $app_dir/.exchange.key ~/.exchange.key
 
     # .ssh directory setting
     # link .ssh not work
     # link_to_dot
-    if [[ "$DETECT_OS" != "msys" ]]; then
+    if ! is_msys; then
         change_to_right_permission
     fi
 }
@@ -40,7 +40,7 @@ change_to_right_permission() {
 }
 
 link_to_dot() {
-    ssh_inner=$script_dir/.ssh
+    ssh_inner=$app_dir/.ssh
     ssh_outer=${HOME}/.ssh
 
     if [ ! -e $ssh_inner ]; then

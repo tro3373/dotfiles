@@ -17,6 +17,7 @@ EOF
 
 has() { which $1 >& /dev/null; }
 add_args() { args=("${args[@]}" "$@"); }
+#add_args() { args+=("$@"); }
 
 initialize() {
     while true; do

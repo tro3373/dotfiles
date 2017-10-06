@@ -4,13 +4,13 @@ script_dir=$(cd $(dirname $0); pwd)
 dry_run=0
 
 # インストール用関数 ロード
-source $DOTPATH/lib/setup_funcs.sh
+source $DOTPATH/lib/funcs
 initialize
 
-if [ "$DETECT_OS" = "mac" ]; then
+if is_mac; then
     SUBLIMEUSERDIR=~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User
     make_link_bkupable "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" "/usr/local/bin/subl"
-elif [ "$DETECT_OS" = "msys" ]; then
+elif is_msys; then
     SUBLIMEUSERDIR=$WINHOME/AppData/Roaming/Sublime\ Text\ 3/Packages/User
 else
     SUBLIMEUSERDIR=~/.config/sublime-text-3/Packages/User

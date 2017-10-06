@@ -1,17 +1,17 @@
 #!/bin/bash
 
 install() {
-    if [ "$DETECT_OS" = "mac" ]; then
+    if is_mac; then
         dvexec brew install global --with-exuberant-ctags --with-pygments
-    elif [ "$DETECT_OS" = "ubuntu" ]; then
+    elif is_ubuntu; then
         dvexec "$instcmd python-pip exuberant-ctags ncurses-dev"
         dvexec sudo pip install Pygments
         download_global_src_and_build
         dvexec cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc
         dvexec "sed -ri -e 's/^(\t:tc=native:)/\1tc=pygments:/g' ~/.globalrc"
-    elif [ "$DETECT_OS" = "cygwin" ]; then
+    elif is_cygwin; then
         dvexec $def_instcmd
-    elif [ "$DETECT_OS" = "msys" ]; then
+    elif is_msys; then
         dvexec $def_instcmd
     else
         dvexec $def_instcmd
@@ -27,7 +27,7 @@ get_global_src_url() {
 download_global_src_and_build() {
     # http://qiita.com/yoshizow/items/9cc0236ac0249e0638ff
     # ソースコード取得
-    workdir="$script_dir/tmp"
+    workdir="$app_dir/tmp"
     if [[ ! -e $workdir ]]; then
         dvexec "mkdir -p \"$workdir\""
     fi

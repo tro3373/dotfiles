@@ -4,16 +4,16 @@ script_dir=$(cd $(dirname $0); pwd)
 dry_run=0
 
 # インストール用関数 ロード
-source $DOTPATH/lib/setup_funcs.sh
+source $DOTPATH/lib/funcs
 
-if [ "$DETECT_OS" = "mac" ]; then
+if is_mac; then
     brew update
     brew install mercurial
-elif [ "$DETECT_OS" = "ubuntu" ]; then
+elif is_ubuntu; then
     sudo apt-get install curl git mercurial make binutils bison gcc build-essential
-elif [ "$DETECT_OS" = "redhat" ]; then
+elif is_redhat; then
     sudo yum install curl git make bison gcc glibc-devel
-elif [ "$DETECT_OS" = "cygwin" ]; then
+elif is_cygwin; then
     echo "Not Support!!" 1>&2
     exit 1
 fi

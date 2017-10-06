@@ -2,14 +2,14 @@
 
 install() {
     url=https://github.com/ggreer/the_silver_searcher.git
-    if [ "$DETECT_OS" = "mac" ]; then
+    if is_mac; then
         dvexec "$instcmd ag"
-    elif [ "$DETECT_OS" = "ubuntu" ]; then
+    elif is_ubuntu; then
         dvexec "$instcmd silversearcher-ag"
-    elif [ "$DETECT_OS" = "cygwin" ]; then
+    elif is_cygwin; then
         # 必要パッケージインストール
         dvexec "$instcmd autoconf automake gcc-g++ gettext gettext-devel liblzma-devel make mingw-gcc-g++ mingw-zlib-devel pkg-config xz zlib-devel"
-        workdir="$script_dir/tmp"
+        workdir="$app_dir/tmp"
         if [ ! -e $workdir ]; then
             dvexec "mkdir -p \"$workdir\""
         fi
@@ -20,13 +20,13 @@ install() {
         dvexec ./configure
         dvexec make
         dvexec make install
-    elif [ "$DETECT_OS" = "msys" ]; then
+    elif is_msys; then
         local type=package # build/zip/package
         if [ "$type" = "package" ]; then
             dvexec "$instcmd mingw-w64-x86_64-ag"
             return 0
         fi
-        workdir="$script_dir/tmp"
+        workdir="$app_dir/tmp"
         if [ ! -e $workdir ]; then
             dvexec "mkdir -p \"$workdir\""
         fi
@@ -56,6 +56,6 @@ install() {
 }
 
 setconfig() {
-    make_link_dot2home $script_dir
+    make_link_dot2home $app_dir
 }
 
