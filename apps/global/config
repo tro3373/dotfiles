@@ -10,11 +10,11 @@ install() {
         dvexec cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc
         dvexec "sed -ri -e 's/^(\t:tc=native:)/\1tc=pygments:/g' ~/.globalrc"
     elif is_cygwin; then
-        dvexec $def_instcmd
+        install_via_os_default
     elif is_msys; then
-        dvexec $def_instcmd
+        install_via_os_default
     else
-        dvexec $def_instcmd
+        install_via_os_default
     fi
 }
 

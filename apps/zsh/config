@@ -2,7 +2,7 @@
 
 install() {
     # 通常のインストールを実行
-    dvexec $def_instcmd
+    install_via_os_default
     if is_ubuntu; then
         # for .zplug
         dvexec $instcmd gawk

@@ -146,20 +146,22 @@ dump_dry_run_commands() {
 }
 
 install_app() {
-    call_default=0
+    default_called=0
     is_msys     && install_msys
     is_cygwin   && install_cygwin
     is_mac      && install_mac
     is_ubuntu   && install_ubuntu
     is_redhat   && install_redhat
+    [[ $default_called -eq 0 ]] && install_common
 }
 setting_app() {
-    call_default=0
+    default_called=0
     is_msys     && setting_msys
     is_cygwin   && setting_cygwin
     is_mac      && setting_mac
     is_ubuntu   && setting_ubuntu
     is_redhat   && setting_redhat
+    [[ $default_called -eq 0 ]] && setting_common
 }
 
 start_setup() {
@@ -184,16 +186,14 @@ start_setup() {
         # app_dir="$(cd -- "$(dirname -- "${BASH_SOURCE}}")"; pwd)"
         app_dir="$apps_dir/$app"
 
-        # デフォルトのインストールコマンド設定
-        def_instcmd="$instcmd $app"
         # デフォルト関数ロード
         # 下記 vexec source $script_path にて、install, setconfig メソッドが
         # 上書き定義される為、ここで初期化する
         source $DOT_PATH/lib/default
 
         # 個別インストール設定ファイルが存在する場合は、それを実行する為
-        # config.sh ファイルを読み込み、install, setconfigメソッドをロード
-        local script_path=$app_dir/config.sh
+        # config ファイルを読み込み、install, setconfigメソッドをロード
+        local script_path=$app_dir/config
         [[ -e "$script_path" ]] && source "$script_path"
 
         if [[ $force -eq 1 ]] || ! has $app; then

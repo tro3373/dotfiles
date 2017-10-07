@@ -1,28 +1,22 @@
 #!/bin/bash
 
-install_msys() { call_default=1; }
-install_cygwin() { call_default=1; }
-install_mac() { call_default=1; }
-install_ubuntu() { call_default=1; }
-install_redhat() { call_default=1; }
+install_msys() { default_called=1; }
+install_cygwin() { default_called=1; }
+install_mac() { default_called=1; }
+install_ubuntu() { default_called=1; }
+install_redhat() { default_called=1; }
+install_common() { default_called=1; }
 
-setting_msys() { call_default=1; }
-setting_cygwin() { call_default=1; }
-setting_mac() { call_default=1; }
-setting_ubuntu() { call_default=1; }
-setting_redhat() { call_default=1; }
+setting_msys() { default_called=1; }
+setting_cygwin() { default_called=1; }
+setting_mac() { default_called=1; }
+setting_ubuntu() { default_called=1; }
+setting_redhat() { default_called=1; }
+setting_common() { default_called=1; }
 
-# デフォルトのインストールメソッド定義
-install() {
-    dlog " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    dlog "   Default install called. execute default install command."
-    dlog " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    dvexec $def_instcmd
+install_via_os_default() {
+    # dvexec $def_instcmd
+    dvexec $instcmd $app
 }
 
-# デフォルトの設定メソッド定義
-setconfig() {
-    dlog " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    dlog "   Default setconfig called. do nothing."
-    dlog " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-}
+setconfig() { : }

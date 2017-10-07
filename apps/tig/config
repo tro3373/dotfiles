@@ -30,7 +30,7 @@ install() {
         #    cmd="sudo rpm -ivh http://pkgs.repoforge.org/rpmforge-release/${targetrpm}.rpm"
         #    dvexec "$cmd"
         #fi
-        #dvexec $def_instcmd
+        #install_via_os_default
         # ソースコード取得
         workdir="$script_dir/tmp"
         if [ ! -e $workdir ]; then
@@ -50,7 +50,7 @@ install() {
         dvexec sudo sudo make install
         dvexec /usr/local/bin/tig -v
     else
-        dvexec $def_instcmd
+        install_via_os_default
     fi
 }
 
