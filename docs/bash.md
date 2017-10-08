@@ -108,6 +108,8 @@ dirname '/a/b/c.d.e'
 # スクリプトファイルのディレクトリを取得
 BASEDIR=$(cd $(/usr/bin/dirname $0); pwd)
 ```
+# source されるスクリプトを考慮した ファイルの存在するディレクトリ
+app_dir="$(cd -- "$(dirname -- "${BASH_SOURCE}}")"; pwd)"
 
 ## 文字操作
 var=12345; echo ${var:1:3}
