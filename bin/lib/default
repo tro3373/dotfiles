@@ -19,4 +19,5 @@ install_via_os_default() {
     dvexec $instcmd $app
 }
 
-setconfig() { : }
+setconfig() { :; }
+

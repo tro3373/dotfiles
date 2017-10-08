@@ -199,7 +199,7 @@ start_setup() {
 main() {
     initialize "$@"
     dump_execute_args
-    # start_setup
+    start_setup
     dump_result
     echo "Done!"
 }
