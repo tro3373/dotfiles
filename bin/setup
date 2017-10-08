@@ -30,6 +30,8 @@ Setup my dev env.
 
 Defaults Apps(No specify App mode) is ..
     ${default_apps[@]}
+Installable Apps is ..
+    $(ls $DOT_PATH/apps |tr '\n' ' ')
 EOF
 }
 
