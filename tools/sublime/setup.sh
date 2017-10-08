@@ -1,11 +1,10 @@
 #!/bin/bash
 
 script_dir=$(cd $(dirname $0); pwd)
-dry_run=0
 
 # インストール用関数 ロード
-source $DOTPATH/lib/funcs
-initialize
+dry_run=0
+source $DOTPATH/bin/lib/funcs
 
 if is_mac; then
     SUBLIMEUSERDIR=~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User

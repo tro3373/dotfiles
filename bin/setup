@@ -7,7 +7,6 @@ command_name=$(basename $0)
 #all_apps="git ctags curl tree global zsh tmux vim tig ssh ag _peco _fzf _gomi _zplug"
 #all_apps="git ctags curl tree global zsh tmux vim tig ssh nkf ag"
 default_apps=(git ctags curl tree global zsh tmux vim tig ssh nkf ag)
-with_log_file=1
 debug=0
 dry_run=1
 dry_run_commands=""
@@ -38,13 +37,6 @@ EOF
 add_args() { args+=("$@"); }
 
 initialize() {
-    # Mac 用 Brew インストールチェック
-    if is_mac; then
-        if ! has brew; then
-            suggest_install_brew
-            exit 1
-        fi
-    fi
     while true; do
         [[ -z $1 ]] && break
         case "$1" in
@@ -65,7 +57,14 @@ initialize() {
     all_args="${args[@]}"
 
     # 関数ロード
-    source $DOT_PATH/lib/funcs
+    source $DOT_PATH/bin/lib/funcs
+
+    if is_mac; then
+        if ! has brew; then
+            suggest_install_brew
+            exit 1
+        fi
+    fi
 
     is_32bit=0
     [[ "$DETECT_BIT" != "x86_64" ]] && is_32bit=1
@@ -127,24 +126,6 @@ dump_execute_args() {
     fi
 }
 
-dump_dry_run_commands() {
-    if [[ $dry_run -eq 1 ]]; then
-        log ""
-        log ""
-        log "===================================================="
-        log "==>  This is Dry-run mode."
-        log "==>     Specify 'exec/--exec/-e' option for execute."
-        if [[ -n $dry_run_commands ]]; then
-            log "==>     Below commands will be execute."
-            log $dry_run_commands
-        fi
-        log "===================================================="
-    else
-        # log $dry_run_commands
-        dump_backuped_files
-    fi
-}
-
 install_app() {
     default_called=0
     is_msys     && install_msys
@@ -186,7 +167,7 @@ start_setup() {
         app_dir="$apps_dir/$app"
 
         # デフォルト関数ロード
-        source $DOT_PATH/lib/default
+        source $DOT_PATH/bin/lib/default
 
         # 個別インストール設定ファイルが存在する場合は、それを実行
         local script_path=$app_dir/config
@@ -204,8 +185,8 @@ start_setup() {
 main() {
     initialize "$@"
     dump_execute_args
-    start_setup
-    dump_dry_run_commands
+    # start_setup
+    dump_result
     echo "Done!"
 }
 main "$@"

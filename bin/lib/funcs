@@ -10,7 +10,7 @@ _log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
 # echo するのみ
 log() {
     echo -e "$*"
-    if [[ -n $with_log_file ]] && [[ $with_log_file -eq 1 ]]; then
+    if [[ -n $dry_run ]] && [[ $dry_run -eq 0 ]]; then
         echo -e "$*" >> $_log_file
     fi
 }
@@ -188,6 +188,25 @@ dump_backuped_files() {
         log $_bkup_files
     fi
 }
+
+dump_result() {
+    if [[ $dry_run -eq 1 ]]; then
+        log ""
+        log ""
+        log "===================================================="
+        log "==>  This is Dry-run mode."
+        log "==>     Specify 'exec/--exec/-e' option for execute."
+        if [[ -n $dry_run_commands ]]; then
+            log "==>     Below commands will be execute."
+            log $dry_run_commands
+        fi
+        log "===================================================="
+        usage
+    else
+        dump_backuped_files
+    fi
+}
+
 
 # 存在する場合のみ削除
 del_if_exist() {
