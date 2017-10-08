@@ -52,7 +52,7 @@ initialize() {
     done
     if [[ ${#args[@]} -eq 0 ]]; then
         # 指定無し時は全インストール
-        args=default_apps
+        args+=(${default_apps[@]})
     fi
     all_args="${args[@]}"
 

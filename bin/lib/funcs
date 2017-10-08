@@ -9,9 +9,10 @@ _log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
 
 # echo するのみ
 log() {
-    echo -e "$*"
     if [[ -n $dry_run ]] && [[ $dry_run -eq 0 ]]; then
         echo -e "$*" |tee -a $_log_file
+    else
+        echo -e "$*"
     fi
 }
 dlog() { [[ $debug -eq 1 ]] && log "$*"; }
