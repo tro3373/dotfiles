@@ -118,11 +118,13 @@ EOF
 
 dump_execute_args() {
     if [[ $debug -eq 1 ]]; then
+        log "===================================================="
         for ((i = 0; i < ${#args[@]}; i++)) {
             log " args[$i] = ${args[i]}"
         }
         log " force=$force"
         log " dry=$dry_run"
+        log "===================================================="
     fi
 }
 
@@ -130,6 +132,7 @@ dump_result() {
     if [[ $dry_run -eq 1 ]]; then
         log ""
         log ""
+        usage
         log "===================================================="
         log "==>  This is Dry-run mode."
         log "==>     Specify 'exec/--exec/-e' option for execute."
@@ -138,7 +141,6 @@ dump_result() {
             log $dry_run_commands
         fi
         log "===================================================="
-        usage
     else
         dump_backuped_files
     fi
