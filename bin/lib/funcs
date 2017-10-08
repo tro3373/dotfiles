@@ -11,7 +11,7 @@ _log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
 log() {
     echo -e "$*"
     if [[ -n $dry_run ]] && [[ $dry_run -eq 0 ]]; then
-        echo -e "$*" >> $_log_file
+        echo -e "$*" |tee -a $_log_file
     fi
 }
 dlog() { [[ $debug -eq 1 ]] && log "$*"; }
@@ -21,7 +21,7 @@ dlog() { [[ $debug -eq 1 ]] && log "$*"; }
 vexec() {
     cmd="$*"
     dlog "===> Executing: $cmd"
-    eval $cmd
+    eval $cmd |tee -a $_log_file
     if [ $? -eq 0 ]; then
         dlog "    => Command Sucessfully."
     else
