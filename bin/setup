@@ -156,6 +156,7 @@ install_app() {
     is_ubuntu   && install_ubuntu
     is_redhat   && install_redhat
     [[ $default_called -eq 1 ]] && install_common
+    [[ $default_called -eq 1 ]] && log "====> No setup for $app"
 }
 
 setting_app() {
@@ -166,6 +167,7 @@ setting_app() {
     is_ubuntu   && setting_ubuntu
     is_redhat   && setting_redhat
     [[ $default_called -eq 1 ]] && setting_common
+    [[ $default_called -eq 1 ]] && log "====> No install setting for $app"
 }
 
 start_setup() {
