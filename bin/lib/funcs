@@ -189,25 +189,6 @@ dump_backuped_files() {
     fi
 }
 
-dump_result() {
-    if [[ $dry_run -eq 1 ]]; then
-        log ""
-        log ""
-        log "===================================================="
-        log "==>  This is Dry-run mode."
-        log "==>     Specify 'exec/--exec/-e' option for execute."
-        if [[ -n $dry_run_commands ]]; then
-            log "==>     Below commands will be execute."
-            log $dry_run_commands
-        fi
-        log "===================================================="
-        usage
-    else
-        dump_backuped_files
-    fi
-}
-
-
 # 存在する場合のみ削除
 del_if_exist() {
     local rm_target="$*"

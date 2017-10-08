@@ -126,6 +126,24 @@ dump_execute_args() {
     fi
 }
 
+dump_result() {
+    if [[ $dry_run -eq 1 ]]; then
+        log ""
+        log ""
+        log "===================================================="
+        log "==>  This is Dry-run mode."
+        log "==>     Specify 'exec/--exec/-e' option for execute."
+        if [[ -n $dry_run_commands ]]; then
+            log "==>     Below commands will be execute."
+            log $dry_run_commands
+        fi
+        log "===================================================="
+        usage
+    else
+        dump_backuped_files
+    fi
+}
+
 install_app() {
     default_called=0
     is_msys     && install_msys
@@ -150,11 +168,6 @@ start_setup() {
     set -eu
     make_setup_dirs
 
-    # インストールアプリディレクトリ
-    apps_dir=$DOT_PATH/apps
-
-    # app ディレクトリ配下のディレクトリに対して、インストール処理を実行
-    # mac/linux にかかわらず、実行される
     for ((i = 0; i < ${#args[@]}; i++)) {
         # ディレクトリ名＝アプリ名の前提
         local app=${args[i]}
@@ -162,16 +175,15 @@ start_setup() {
         dlog "================================================"
         log "===> $app"
 
-        # # source されるスクリプトを考慮した ファイルの存在するディレクトリ
-        # app_dir="$(cd -- "$(dirname -- "${BASH_SOURCE}}")"; pwd)"
-        app_dir="$apps_dir/$app"
-
-        # デフォルト関数ロード
         source $DOT_PATH/bin/lib/default
 
-        # 個別インストール設定ファイルが存在する場合は、それを実行
+        app_dir=$DOT_PATH/apps/$app
         local script_path=$app_dir/config
-        [[ -e $script_path ]] && source $script_path
+        if [[ ! -e $script_path ]]; then
+            log "===> No config file for $app. skip."
+            continue
+        fi
+        source $script_path
 
         if [[ $force -eq 1 ]] || ! has $app; then
             install_app
