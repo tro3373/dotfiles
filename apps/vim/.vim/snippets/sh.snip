@@ -126,3 +126,18 @@ snippet readuser
 snippet readpass
     read -sp "pass: " pass
 
+snippet install_setup_template
+    install_common() { install_via_os_default; }
+    install_common() { : }
+    install_msys() { : }
+    install_cygwin() { : }
+    install_mac() { : }
+    install_ubuntu() { : }
+    install_redhat() { : }
+    setting_common() { : }
+    setting_msys() { : }
+    setting_cygwin() { : }
+    setting_mac() { : }
+    setting_ubuntu() { : }
+    setting_redhat() { : }
+
