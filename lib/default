@@ -1,18 +1,18 @@
 #!/bin/bash
 
+install_common() { default_called=1; }
 install_msys() { default_called=1; }
 install_cygwin() { default_called=1; }
 install_mac() { default_called=1; }
 install_ubuntu() { default_called=1; }
 install_redhat() { default_called=1; }
-install_common() { default_called=1; }
 
+setting_common() { default_called=1; }
 setting_msys() { default_called=1; }
 setting_cygwin() { default_called=1; }
 setting_mac() { default_called=1; }
 setting_ubuntu() { default_called=1; }
 setting_redhat() { default_called=1; }
-setting_common() { default_called=1; }
 
 install_via_os_default() {
     # dvexec $def_instcmd

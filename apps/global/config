@@ -1,21 +1,19 @@
 #!/bin/bash
 
-install() {
-    if is_mac; then
-        dvexec brew install global --with-exuberant-ctags --with-pygments
-    elif is_ubuntu; then
-        dvexec "$instcmd python-pip exuberant-ctags ncurses-dev"
-        dvexec sudo pip install Pygments
-        download_global_src_and_build
-        dvexec cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc
-        dvexec "sed -ri -e 's/^(\t:tc=native:)/\1tc=pygments:/g' ~/.globalrc"
-    elif is_cygwin; then
-        install_via_os_default
-    elif is_msys; then
-        install_via_os_default
-    else
-        install_via_os_default
-    fi
+install_common() {
+    install_via_os_default
+}
+
+install_mac() {
+    dvexec brew install global --with-exuberant-ctags --with-pygments
+}
+
+install_ubuntu() {
+    dvexec "$instcmd python-pip exuberant-ctags ncurses-dev"
+    dvexec sudo pip install Pygments
+    download_global_src_and_build
+    dvexec cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc
+    dvexec "sed -ri -e 's/^(\t:tc=native:)/\1tc=pygments:/g' ~/.globalrc"
 }
 
 get_global_src_url() {
@@ -46,6 +44,3 @@ download_global_src_and_build() {
     dvexec sudo make install
 }
 
-setconfig() {
-    :
-}

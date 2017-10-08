@@ -1,25 +1,18 @@
 #!/bin/bash
 
-install() {
-#    workdir="$app_dir/tmp"
-#    if [ ! -e $workdir ]; then
-#        dvexec "mkdir -p \"$workdir\""
-#    fi
-#    dvexec "cd \"$workdir\""
-    if is_ubuntu; then
-        # for tmux from git
-        dvexec sudo apt-get install -y autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev 
-        install_common
-    elif is_redhat; then
-        # for tmux from git
-        dvexec sudo yum install -y libevent libeventdevel automake ncursesdevel
-        install_common
-    else
-        install_via_os_default
-    fi
+install_common() {
+    install_via_os_default
+}
+install_ubuntu() {
+    dvexec sudo apt-get install -y autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev 
+    _install_common
+}
+install_redhat() {
+    dvexec sudo yum install -y libevent libeventdevel automake ncursesdevel
+    _install_common
 }
 
-install_common() {
+_install_common() {
     local target_dir=/usr/local/src/tmux
     if [[ ! -e $target_dir ]]; then
         dvexec sudo git clone https://github.com/tmux/tmux.git $target_dir
@@ -37,7 +30,7 @@ install_common() {
     dvexec sudo make install
 }
 
-setconfig() {
+setting_common() {
     make_link_dot2home $app_dir
 }
 

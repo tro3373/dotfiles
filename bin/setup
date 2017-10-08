@@ -152,8 +152,9 @@ install_app() {
     is_mac      && install_mac
     is_ubuntu   && install_ubuntu
     is_redhat   && install_redhat
-    [[ $default_called -eq 0 ]] && install_common
+    [[ $default_called -eq 1 ]] && install_common
 }
+
 setting_app() {
     default_called=0
     is_msys     && setting_msys
@@ -161,7 +162,7 @@ setting_app() {
     is_mac      && setting_mac
     is_ubuntu   && setting_ubuntu
     is_redhat   && setting_redhat
-    [[ $default_called -eq 0 ]] && setting_common
+    [[ $default_called -eq 1 ]] && setting_common
 }
 
 start_setup() {
@@ -180,30 +181,21 @@ start_setup() {
         dlog "================================================"
         log "===> $app"
 
-        # 各スクリプト内で以下コマンドでパスを取得できていたが、、、
-        # ここで定義しておけば良いことに気づいたので設定しておく
         # # source されるスクリプトを考慮した ファイルの存在するディレクトリ
         # app_dir="$(cd -- "$(dirname -- "${BASH_SOURCE}}")"; pwd)"
         app_dir="$apps_dir/$app"
 
         # デフォルト関数ロード
-        # 下記 vexec source $script_path にて、install, setconfig メソッドが
-        # 上書き定義される為、ここで初期化する
         source $DOT_PATH/lib/default
 
-        # 個別インストール設定ファイルが存在する場合は、それを実行する為
-        # config ファイルを読み込み、install, setconfigメソッドをロード
+        # 個別インストール設定ファイルが存在する場合は、それを実行
         local script_path=$app_dir/config
-        [[ -e "$script_path" ]] && source "$script_path"
+        [[ -e $script_path ]] && source $script_path
 
         if [[ $force -eq 1 ]] || ! has $app; then
-            # 強制インストールまたは、インストールされていない場合は実行
-            # 読み込んだ install コマンドの実行
             install_app
         fi
         if has $app; then
-            # install された、されている場合
-            # 読み込んだ setconfig コマンドの実行
             setting_app
         fi
     }

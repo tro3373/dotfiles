@@ -1,14 +1,13 @@
 #!/bin/bash
 
-install() {
-    if is_msys; then
-        dvexec echo "Nothing todo for ssh on msys"
-    else
-        install_via_os_default
-    fi
+install_common() {
+    install_via_os_default
+}
+install_msys() {
+    dvexec echo "Nothing todo for ssh on msys"
 }
 
-setconfig() {
+setting_common() {
     # exchange.key setting
     make_link_bkupable $app_dir/.exchange.key ~/.exchange.key
 

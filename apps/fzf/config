@@ -1,10 +1,7 @@
 #!/bin/bash
 
-install() {
+install_common() {
     dvexec git clone https://github.com/junegunn/fzf.git ~/.fzf
     dvexec ~/.fzf/install
 }
 
-setconfig() {
-    :
-}

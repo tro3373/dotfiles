@@ -1,33 +1,33 @@
 #!/bin/bash
 
-install() {
-    if is_mac; then
-        dvexec sudo brew tap peco/peco
-        dvexec sudo brew install peco
-    else
-        # peco 最新バージョンを取得
-        peco_latest_version="`get_pecoltver`"
-        log "  ===> Peco latest version=${peco_latest_version}"
-        dlurl="https://github.com/peco/peco/releases/download/${peco_latest_version}/peco_linux_amd64.tar.gz"
-        log "  ===> Donload from url=${dlurl}"
+install_common() {
+    # peco 最新バージョンを取得
+    peco_latest_version="`get_pecoltver`"
+    log "  ===> Peco latest version=${peco_latest_version}"
+    dlurl="https://github.com/peco/peco/releases/download/${peco_latest_version}/peco_linux_amd64.tar.gz"
+    log "  ===> Donload from url=${dlurl}"
 
-        workdir="$app_dir/tmp"
-        if [ ! -e $workdir ]; then
-            dvexec "mkdir -p \"$workdir\""
-        fi
-        dvexec "cd \"$workdir\""
-        dvexec wget $dlurl
-        if [ -e "$app_dir/tmp/peco_linux_amd64.tar.gz" ]; then
-            dvexec tar xvfpz peco_linux_amd64.tar.gz
-            installto=/usr/local/bin
-            sudo="sudo"
-            if is_cygwin; then
-                sudo=""
-            fi
-            dvexec "$sudo cp peco_linux_amd64/peco $installto"
-            log "  ===> peco installed to $installto"
-        fi
+    workdir="$app_dir/tmp"
+    if [ ! -e $workdir ]; then
+        dvexec "mkdir -p \"$workdir\""
     fi
+    dvexec "cd \"$workdir\""
+    dvexec wget $dlurl
+    if [ -e "$app_dir/tmp/peco_linux_amd64.tar.gz" ]; then
+        dvexec tar xvfpz peco_linux_amd64.tar.gz
+        installto=/usr/local/bin
+        sudo="sudo"
+        if is_cygwin; then
+            sudo=""
+        fi
+        dvexec "$sudo cp peco_linux_amd64/peco $installto"
+        log "  ===> peco installed to $installto"
+    fi
+}
+
+install_mac() {
+    dvexec sudo brew tap peco/peco
+    dvexec sudo brew install peco
 }
 
 # peco 最新バージョンを取得
@@ -36,9 +36,10 @@ get_pecoltver() {
     echo "$version"
 }
 
-setconfig() {
+setting_common() {
     if [ ! -e ${HOME}/.config/peco ]; then
         dvexec "mkdir -p \"${HOME}/.config/peco\""
     fi
     make_link_bkupable "${app_dir}/config.json" "${HOME}/.config/peco/config.json"
 }
+

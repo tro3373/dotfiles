@@ -1,19 +1,22 @@
 #!/bin/bash
 
-install() {
-    # 通常のインストールを実行
+install_common() {
     install_via_os_default
-    if is_ubuntu; then
-        # for .zplug
-        dvexec $instcmd gawk
-    fi
-    if is_mac; then
-        # GNU系コマンド集のインストール（gdircolors 用）
-        dvexec $instcmd coreutils
-    fi
 }
 
-setconfig() {
+install_msys() {
+    install_common
+    # GNU系コマンド集のインストール（gdircolors 用）
+    dvexec $instcmd coreutils
+}
+
+install_ubuntu() {
+    install_common
+    # for .zplug
+    dvexec $instcmd gawk
+}
+
+setting_common() {
     # .works.zsh
     [ ! -e ~/.works.zsh ] && dvexec touch ~/.works.zsh && dvexec chmod 755 ~/.works.zsh
 
