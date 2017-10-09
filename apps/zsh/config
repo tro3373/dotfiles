@@ -44,7 +44,7 @@ setting_common() {
     # setcolortheme=dircolors.ansi-light
     # setcolortheme=dircolors.ansi-universal
     if [ -e "${workdir}/dircolors-solarized/${setcolortheme}" ]; then
-        make_link_bkupable "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
+        make_lnk_with_bkup "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
     fi
 
     if [ ! -e "$workdir/tomorrow-theme" ]; then

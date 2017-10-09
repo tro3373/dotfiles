@@ -8,11 +8,11 @@ source $DOTPATH/bin/lib/funcs
 
 if is_mac; then
     SUBLIMEUSERDIR=~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User
-    make_link_bkupable "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" "/usr/local/bin/subl"
+    make_lnk_with_bkup "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" "/usr/local/bin/subl"
 elif is_msys; then
     SUBLIMEUSERDIR=$WINHOME/AppData/Roaming/Sublime\ Text\ 3/Packages/User
 else
     SUBLIMEUSERDIR=~/.config/sublime-text-3/Packages/User
 fi
-make_link_bkupable "$script_dir/User" "$SUBLIMEUSERDIR"
+make_lnk_with_bkup "$script_dir/User" "$SUBLIMEUSERDIR"
 

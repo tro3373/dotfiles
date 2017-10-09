@@ -40,6 +40,6 @@ setting_common() {
     if [ ! -e ${HOME}/.config/peco ]; then
         dvexec "mkdir -p \"${HOME}/.config/peco\""
     fi
-    make_link_bkupable "${app_dir}/config.json" "${HOME}/.config/peco/config.json"
+    make_lnk_with_bkup "${app_dir}/config.json" "${HOME}/.config/peco/config.json"
 }
 

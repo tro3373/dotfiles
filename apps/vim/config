@@ -150,11 +150,11 @@ setting_common() {
 
 setting_msys() {
     setting_common
-    make_link_bkupable "$app_dir/.vimrc" "${WINHOME}/_vimrc"
-    make_link_bkupable "$app_dir/.gvimrc" "${WINHOME}/_gvimrc"
-    make_link_bkupable "$app_dir/.vim" "${WINHOME}/.vim"
+    make_lnk_with_bkup "$app_dir/.vimrc" "${WINHOME}/_vimrc"
+    make_lnk_with_bkup "$app_dir/.gvimrc" "${WINHOME}/_gvimrc"
+    make_lnk_with_bkup "$app_dir/.vim" "${WINHOME}/.vim"
     local buildvim=/usr/local/src/Msys2-packages/vim/pkg/vim/usr/bin/vim.exe
     if [ -e $buildvim ]; then
-        make_link_bkupable "$buildvim" "${HOME}/bin/vim"
+        make_lnk_with_bkup "$buildvim" "${HOME}/bin/vim"
     fi
 }

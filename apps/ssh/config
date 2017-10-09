@@ -9,7 +9,7 @@ install_msys() {
 
 setting_common() {
     # exchange.key setting
-    make_link_bkupable $app_dir/.exchange.key ~/.exchange.key
+    make_lnk_with_bkup $app_dir/.exchange.key ~/.exchange.key
 
     # .ssh directory setting
     # link .ssh not work
@@ -52,5 +52,5 @@ link_to_dot() {
     if [ $inner_count -eq 0 ] && [ $outer_count -ne 0 ]; then
         dvexec mv $ssh_outer/* $ssh_inner/
     fi
-    make_link_bkupable $ssh_inner $ssh_outer
+    make_lnk_with_bkup $ssh_inner $ssh_outer
 }

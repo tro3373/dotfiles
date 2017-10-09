@@ -163,10 +163,6 @@ make_lnk_with_bkup() {
     make_link "$src" "$lnk"
 }
 
-make_link_bkupable() {
-    make_lnk_with_bkup
-}
-
 # $* のファイルを${_backup_dir}に移動する
 _bkup_files=""
 bkup_orig_file() {

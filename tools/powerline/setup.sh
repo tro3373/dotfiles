@@ -65,8 +65,8 @@ install() {
     if [ ! -e ~/.config/powerline ]; then
         dvexec mkdir -p ~/.config/powerline
         dvexec cp -R ~/.local/lib/python2.7/site-packages/powerline/config_files/* ~/.config/powerline/
-        make_link_bkupable $script_dir/default.json ~/.config/powerline/themes/tmux/default.json
-        make_link_bkupable $script_dir/powerline.json ~/.config/powerline/themes/powerline.json
+        make_lnk_with_bkup $script_dir/default.json ~/.config/powerline/themes/tmux/default.json
+        make_lnk_with_bkup $script_dir/powerline.json ~/.config/powerline/themes/powerline.json
     fi
 }
 install
