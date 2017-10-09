@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# install_common() { install_via_os_default; }
+# install_common() { :; }
+# install_msys() { :; }
+# install_cygwin() { :; }
+# install_mac() { :; }
+# install_ubuntu() { :; }
+# install_redhat() { :; }
+
+setting_common() {
+    make_lnk_with_bkup "$app_dir/.atom" "$HOME/.atom"
+}
+setting_msys() {
+    make_lnk_with_bkup "$app_dir/.atom" "$WINHOME/.atom"
+}
+

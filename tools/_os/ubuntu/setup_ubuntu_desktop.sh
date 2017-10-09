@@ -63,14 +63,14 @@ if ! type google-chrome-stable > /dev/null 2>&1; then
 fi
 
 # sublime install
-if ! type subl > /dev/null 2>&1; then
-    sudo add-apt-repository -y ppa:webupd8team/sublime-text-3
-    sudo apt-get update
-    sudo apt-get install -y sublime-text-installer ibus-mozc emacs-mozc
-    cd $DOTPATH/tools/sublime
-    ./setup.sh
-    cd -
-fi
+# if ! type subl > /dev/null 2>&1; then
+#     sudo add-apt-repository -y ppa:webupd8team/sublime-text-3
+#     sudo apt-get update
+#     sudo apt-get install -y sublime-text-installer ibus-mozc emacs-mozc
+#     cd $DOTPATH/tools/sublime
+#     ./setup.sh
+#     cd -
+# fi
 
 # atom install
 if ! type apm > /dev/null 2>&1; then
