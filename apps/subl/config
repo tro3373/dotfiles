@@ -1,0 +1,57 @@
+#!/bin/bash
+
+install_msys() {
+    local url=$(get_dl_url_win)
+    workdir="$app_dir/tmp"
+    if [[ ! -e $workdir ]]; then
+        dvexec "mkdir -p \"$workdir\""
+    fi
+    (cd $workdir && dvexec curl -fsSLO $url)
+}
+install_mac() {
+    local url=$(get_dl_url_mac)
+    workdir="$app_dir/tmp"
+    if [[ ! -e $workdir ]]; then
+        dvexec "mkdir -p \"$workdir\""
+    fi
+    (cd $workdir && dvexec curl -fsSLO $url)
+}
+install_ubuntu() {
+    # sudo add-apt-repository --remove ppa:webupd8team/sublime-text-3
+    # sudo add-apt-repository -y ppa:webupd8team/sublime-text-3
+    # sudo apt-get update
+    # sudo apt-get install -y sublime-text-installer ibus-mozc emacs-mozc
+    dvexec 'wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -'
+    dvexec sudo apt-get install apt-transport-https
+    dvexec 'echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sources.list.d/sublime-text.list'
+    dvexec sudo apt-get update
+    dvexec sudo apt-get install -y sublime-text
+}
+setting_redhat() {
+    dvexec sudo rpm -v --import https://download.sublimetext.com/sublimehq-rpm-pub.gpg
+    dvexec sudo yum-config-manager --add-repo https://download.sublimetext.com/rpm/stable/x86_64/sublime-text.repo
+    dvexec sudo yum install -y sublime-text
+}
+
+setting_common() {
+    make_lnk_with_bkup "$app_dir/User" "$HOME/.config/sublime-text-3/Packages/User"
+}
+
+setting_msys() {
+    WINHOME=${WINHOME:-~/win}
+    make_lnk_with_bkup "$app_dir/User" "$WINHOME/AppData/Roaming/Sublime\ Text\ 3/Packages/User"
+}
+
+setting_mac() {
+    make_lnk_with_bkup "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" "/usr/local/bin/subl"
+    make_lnk_with_bkup "$app_dir/User" "$HOME/Library/Application\ Support/Sublime\ Text\ 3/Packages/User"
+}
+
+get_dl_url_mac() {
+    curl -fsSL http://www.sublimetext.com/3 | grep "a href" | grep download.sublimetext.com | grep "OS X" | cut -d"\"" -f4
+}
+
+get_dl_url_win() {
+    curl -fsSL http://www.sublimetext.com/3 | grep "a href" | grep download.sublimetext.com | grep "Windows 64 bit" | cut -d"\"" -f6
+}
+

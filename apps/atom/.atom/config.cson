@@ -12,13 +12,14 @@
       "ex-mode"
       "vim-mode-plus"
     ]
+    telemetryConsent: "no"
     themes: [
       "atom-dark-ui"
       "base16-tomorrow-dark-theme"
     ]
   editor:
     fontFamily: "Osaka-Mono"
-    fontSize: 17
+    fontSize: 24
     invisibles:
       cr: " "
       eol: " "
