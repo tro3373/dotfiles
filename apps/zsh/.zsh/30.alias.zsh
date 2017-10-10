@@ -27,9 +27,9 @@ case "${OSTYPE}" in
     # for Linux
     linux*)
         alias ls='ls -F --color=auto'
-        _open() { nautilus 2>/dev/null }                # xdg-open command also useful.
-        alias nt=_open                                  # 指定ディレクトリをnautilusで開く
-        alias open=_open                                # 指定ディレクトリをnautilusで開く
+        _open() { local p=${1:-.}; xdg-open $p >& /dev/null }
+        alias nt=_open
+        alias open=_open
         $ gv() {gvim -f $1 &!}                          # コマンドラインからgVim起動
         alias pbcopy='xsel --clipboard --input'         # Mac OS-Xのpbcopyの代わり
         alias pbpaste='xsel --clipboard --output'       # Mac OS-Xのpbpasteの代わり
