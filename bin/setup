@@ -9,7 +9,6 @@ command_name=$(basename $0)
 default_apps=(git ctags curl tree global zsh tmux vim tig ssh nkf ag)
 debug=0
 dry_run=1
-dry_run_commands=""
 force=0
 args=()
 
@@ -119,30 +118,17 @@ EOF
 }
 
 dump_execute_args() {
-    if [[ $debug -eq 1 ]]; then
-        log "===================================================="
-        for ((i = 0; i < ${#args[@]}; i++)) {
-            log " args[$i] = ${args[i]}"
-        }
-        log " force=$force"
-        log " dry=$dry_run"
-        log "===================================================="
-    fi
+    dlog "===================================================="
+    dlog " Execute with below args."
+    dlog "   ===> Apps: $all_args"
+    dlog "   ===> force: $force"
+    dlog "   ===> dry_run: $dry_run"
+    dlog "===================================================="
 }
 
 dump_result() {
     if [[ $dry_run -eq 1 ]]; then
-        log ""
-        log ""
-        usage
-        log "===================================================="
-        log "==>  This is Dry-run mode."
-        log "==>     Specify 'exec/--exec/-e' option for execute."
-        if [[ -n $dry_run_commands ]]; then
-            log "==>     Below commands will be execute."
-            log $dry_run_commands
-        fi
-        log "===================================================="
+        dump_run_commands
     else
         dump_backuped_files
     fi
@@ -156,9 +142,7 @@ install_app() {
     is_ubuntu   && install_ubuntu
     is_redhat   && install_redhat
     if [[ $default_called -eq 1 ]]; then
-        default_called=0
         install_common
-        [[ $default_called -eq 1 ]] && log "====> No setup for $app"
     fi
 }
 
@@ -170,9 +154,7 @@ setting_app() {
     is_ubuntu   && setting_ubuntu
     is_redhat   && setting_redhat
     if [[ $default_called -eq 1 ]]; then
-        default_called=0
         setting_common
-        [[ $default_called -eq 1 ]] && log "====> No install setting for $app"
     fi
 }
 
@@ -185,18 +167,14 @@ start_setup() {
         local app=${args[i]}
 
         dlog "================================================"
-        log "===> $app"
-
-        source $DOT_PATH/bin/lib/default
+        dlog "===> $app"
 
         app_dir=$DOT_PATH/apps/$app
+        source $DOT_PATH/bin/lib/default
         local script_path=$app_dir/config
-        if [[ ! -e $script_path ]]; then
-            log "===> No config file for $app. skip."
-            continue
+        if [[ -e $script_path ]]; then
+            source $script_path
         fi
-        source $script_path
-
         if [[ $force -eq 1 ]] || ! is_installed; then
             install_app
         fi

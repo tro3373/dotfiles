@@ -62,7 +62,7 @@ if ! type google-chrome-stable > /dev/null 2>&1; then
     sudo apt-get install -y google-chrome-stable
 fi
 
-# sublime install
+## sublime install
 # if ! type subl > /dev/null 2>&1; then
 #     sudo add-apt-repository -y ppa:webupd8team/sublime-text-3
 #     sudo apt-get update
@@ -72,16 +72,16 @@ fi
 #     cd -
 # fi
 
-# atom install
-if ! type apm > /dev/null 2>&1; then
-    sudo add-apt-repository -y ppa:webupd8team/atom
-    sudo apt-get update
-    sudo apt-get install -y atom
-    cd $DOTPATH/tools/atom
-    ./setup.sh
-    ./install_from_package_list.sh
-    cd -
-fi
+## atom install
+#if ! type apm > /dev/null 2>&1; then
+#    sudo add-apt-repository -y ppa:webupd8team/atom
+#    sudo apt-get update
+#    sudo apt-get install -y atom
+#    cd $DOTPATH/tools/atom
+#    ./setup.sh
+#    ./install_from_package_list.sh
+#    cd -
+#fi
 
 # geany install
 geany_install() {

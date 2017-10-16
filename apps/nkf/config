@@ -1,12 +1,8 @@
 #!/bin/bash
 
-install_common() {
-    install_via_os_default
-}
-
 install_msys() {
-    dvexec mkdir -p $app_dir/tmp
-    dvexec cd $app_dir/tmp
+    make_work_if_needed
+    cd_work
     version=2.1.4
     dvexec wget https://osdn.jp/projects/nkf/downloads/64158/nkf-${version}.tar.gz
     dvexec tar zxvf nkf-${version}.tar.gz

@@ -1,9 +1,5 @@
 #!/bin/bash
 
-install_common() {
-    install_via_os_default
-}
-
 install_msys() {
     url=https://github.com/ggreer/the_silver_searcher.git
     local type=package # build/zip/package
@@ -11,11 +7,8 @@ install_msys() {
         dvexec "$instcmd mingw-w64-x86_64-ag"
         return 0
     fi
-    workdir="$app_dir/tmp"
-    if [ ! -e $workdir ]; then
-        dvexec "mkdir -p \"$workdir\""
-    fi
-    dvexec "cd \"$workdir\""
+    make_work_if_needed
+    cd_work
     if [ "$type" = "zip" ]; then
         if [ ! -e $workdir/ag.zip ]; then
             dvexec wget https://kjkpub.s3.amazonaws.com/software/the_silver_searcher/rel/0.29.1-1641/ag.zip
@@ -39,11 +32,8 @@ install_cygwin() {
     url=https://github.com/ggreer/the_silver_searcher.git
     # 必要パッケージインストール
     dvexec "$instcmd autoconf automake gcc-g++ gettext gettext-devel liblzma-devel make mingw-gcc-g++ mingw-zlib-devel pkg-config xz zlib-devel"
-    workdir="$app_dir/tmp"
-    if [ ! -e $workdir ]; then
-        dvexec "mkdir -p \"$workdir\""
-    fi
-    dvexec "cd \"$workdir\""
+    make_work_if_needed
+    cd_work
     dvexec git clone $url
     dvexec cd the_silver_searcher/
     dvexec aclocal && autoconf && autoheader && automake --add-missing

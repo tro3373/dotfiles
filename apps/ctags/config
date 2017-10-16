@@ -1,9 +1,5 @@
 #!/bin/bash
 
-install_common() {
-    install_via_os_default
-}
-
 setting_common() {
     make_link_dot2home $app_dir
 }

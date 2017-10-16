@@ -1,12 +1,30 @@
 #!/bin/bash
 
-# install_common() { install_via_os_default; }
-# install_common() { :; }
-# install_msys() { :; }
-# install_cygwin() { :; }
-# install_mac() { :; }
-# install_ubuntu() { :; }
-# install_redhat() { :; }
+is_installed() {
+    if is_win; then
+        # TODO check program files?
+        return 1
+    fi
+    if has apm; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+install_ubuntu() {
+    make_work_if_needed
+    cd_work
+    dl https://atom.io/download/deb atom.deb
+    dvexec sudo dpkg -i atom.deb
+}
+
+install_redhat() {
+    make_work_if_needed
+    cd_work
+    dl https://atom.io/download/rpm atom.rpm
+    dvexec sudo rpm -ivh atom.rpm
+}
 
 setting_common() {
     make_lnk_with_bkup "$app_dir/.atom" "$HOME/.atom"

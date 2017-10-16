@@ -1,8 +1,5 @@
 #!/bin/bash
 
-install_common() {
-    install_via_os_default
-}
 install_ubuntu() {
     dvexec sudo apt-get install -y autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev 
     _install_common

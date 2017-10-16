@@ -1,6 +1,6 @@
 #!/bin/bash
 
-setconfig() {
+setting_common() {
     make_link_dot2home $app_dir
     local list="$(git config --list)"
     if ! is_exists_setting "$list" "user.name"; then
@@ -26,10 +26,6 @@ setconfig() {
 }
 
 set_gitconfig() {
-    if ! test_cmd git; then
-        log "No git exist"
-        return
-    fi
     local list="$(git config --list)"
     if ! is_exists_setting "$list" "core.editor"; then
         dvexec "git config --global core.editor \"vim -c 'set fenc=utf-8'\""

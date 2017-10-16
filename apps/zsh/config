@@ -1,17 +1,13 @@
 #!/bin/bash
 
-install_common() {
-    install_via_os_default
-}
-
 install_msys() {
-    install_common
+    install_via_os_default
     # GNU系コマンド集のインストール（gdircolors 用）
     dvexec $instcmd coreutils
 }
 
 install_ubuntu() {
-    install_common
+    install_via_os_default
     # for .zplug
     dvexec $instcmd gawk
 }
@@ -30,13 +26,9 @@ setting_common() {
     # http://qiita.com/yuyuchu3333/items/84fa4e051c3325098be3
     # https://github.com/seebi/dircolors-solarized
     # ソースコード取得
-    workdir=$app_dir/tmp
-    if [ ! -e $workdir ]; then
-        dvexec mkdir -p $workdir
-    fi
+    make_work_if_needed
     if [ ! -e "$workdir/dircolors-solarized" ]; then
-        dvexec cd $workdir
-        dvexec git clone https://github.com/seebi/dircolors-solarized.git
+        dvexec git clone https://github.com/seebi/dircolors-solarized.git $workdir/
     fi
     local setcolortheme
     # setcolortheme=dircolors.256dark
@@ -48,18 +40,15 @@ setting_common() {
     fi
 
     if [ ! -e "$workdir/tomorrow-theme" ]; then
-        dvexec cd $workdir
-        dvexec git clone https://github.com/chriskempson/tomorrow-theme.git
-        dvexec ./tomorrow-theme/Gnome-Terminal/setup-theme.sh
+        dvexec git clone https://github.com/chriskempson/tomorrow-theme.git $workdir/
+        dvexec $workdir/tomorrow-theme/Gnome-Terminal/setup-theme.sh
     fi
 
     if is_mac && [ ! -e "$workdir/solarized.git" ]; then
-        dvexec cd $workdir
-        dvexec git clone https://github.com/tomislav/osx-terminal.app-colors-solarized solarized.git
+        dvexec git clone https://github.com/tomislav/osx-terminal.app-colors-solarized $workdir/solarized.git
     fi
     if is_msys && [ ! -e "$workdir/mintty-colors-solarized" ]; then
-        dvexec cd $workdir
-        dvexec git clone https://github.com/mavnn/mintty-colors-solarized.git
+        dvexec git clone https://github.com/mavnn/mintty-colors-solarized.git $workdir/
     fi
 
     # その他ドットファイルリンク作成

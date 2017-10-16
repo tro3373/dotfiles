@@ -1,59 +1,51 @@
 #!/bin/bash
 
-install() {
-    if is_ubuntu; then
-        # build tool のインストール
-        dvexec "$instcmd build-essential"
-        # https://gist.github.com/raimon49/9d45d480a607fb463ffe
-        # 日本語用
-        dvexec "$instcmd libncursesw5-dev"
+install_ubuntu() {
+    # build tool のインストール
+    dvexec "$instcmd build-essential"
+    # https://gist.github.com/raimon49/9d45d480a607fb463ffe
+    # 日本語用
+    dvexec "$instcmd libncursesw5-dev"
 
-        # ソースコード取得
-        workdir="$script_dir/tmp"
-        if [ ! -e $workdir ]; then
-            dvexec "mkdir -p \"$workdir\""
-        fi
-        dvexec "cd \"$workdir\""
-        if [ ! -e "$script_dir/tmp/tig" ]; then
-            dvexec git clone https://github.com/jonas/tig.git
-        fi
-        dvexec "cd tig"
-        dvexec git checkout tig-2.1.1
-
-        # ビルド, インストール
-        dvexec sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
-        dvexec /usr/local/bin/tig -v
-    elif is_redhat; then
-        #targetrpm="rpmforge-release-0.5.2-2.el6.rf.x86_64"
-        #result=`rpm -qa |grep $targetrpm`
-        #if [ "$result" = "" ]; then
-        #    cmd="sudo rpm -ivh http://pkgs.repoforge.org/rpmforge-release/${targetrpm}.rpm"
-        #    dvexec "$cmd"
-        #fi
-        #install_via_os_default
-        # ソースコード取得
-        workdir="$script_dir/tmp"
-        if [ ! -e $workdir ]; then
-            dvexec "mkdir -p \"$workdir\""
-        fi
-        dvexec "cd \"$workdir\""
-        if [ ! -e "$script_dir/tmp/tig" ]; then
-            dvexec git clone https://github.com/jonas/tig.git
-        fi
-        dvexec "cd tig"
-        # dvexec git checkout tig-2.1.1
-
-        # ビルド, インストール
-        dvexec ./autogen.sh
-        dvexec ./configure prefix=/usr/local
-        dvexec sudo make
-        dvexec sudo sudo make install
-        dvexec /usr/local/bin/tig -v
-    else
-        install_via_os_default
+    # ソースコード取得
+    make_work_if_needed
+    cd_work
+    if [ ! -e "$script_dir/tmp/tig" ]; then
+        dvexec git clone https://github.com/jonas/tig.git
     fi
+    dvexec "cd tig"
+    dvexec git checkout tig-2.1.1
+
+    # ビルド, インストール
+    dvexec sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
+    dvexec /usr/local/bin/tig -v
 }
 
-setconfig() {
+install_redhat() {
+    #targetrpm="rpmforge-release-0.5.2-2.el6.rf.x86_64"
+    #result=`rpm -qa |grep $targetrpm`
+    #if [ "$result" = "" ]; then
+    #    cmd="sudo rpm -ivh http://pkgs.repoforge.org/rpmforge-release/${targetrpm}.rpm"
+    #    dvexec "$cmd"
+    #fi
+    #install_via_os_default
+    # ソースコード取得
+    make_work_if_needed
+    cd_work
+    if [ ! -e "$workdir/tig" ]; then
+        dvexec git clone https://github.com/jonas/tig.git
+    fi
+    dvexec "cd tig"
+    # dvexec git checkout tig-2.1.1
+
+    # ビルド, インストール
+    dvexec ./autogen.sh
+    dvexec ./configure prefix=/usr/local
+    dvexec sudo make
+    dvexec sudo sudo make install
+    dvexec /usr/local/bin/tig -v
+}
+
+setting_common() {
     make_link_dot2home $script_dir
 }

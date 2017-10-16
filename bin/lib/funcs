@@ -6,13 +6,14 @@ DETECT_BIT=$($DOT_PATH/bin/bit)
 _timestamp=$(date +%Y%m%d%H%M%S)
 _backup_dir="${DOT_PATH}/bkup/$_timestamp"
 _log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
+_dry_run_commands=""
 
 # echo するのみ
 log() {
-    if [[ -n $dry_run ]] && [[ $dry_run -eq 0 ]]; then
-        echo -e "$*" |tee -a $_log_file
-    else
+    if [[ $dry_run -eq 1 ]]; then
         echo -e "$*"
+    else
+        echo -e "$*" |tee -a $_log_file
     fi
 }
 dlog() {
@@ -61,11 +62,11 @@ make_link() {
 # Dry run 実行用の関数定義
 dvexec() {
     local cmd="$*"
-    if [ $dry_run -eq 0 ]; then
-        vexec $cmd
-    else
+    if [[ $dry_run -eq 1 ]]; then
         dry_vexec $cmd
-        dry_run_commands="$dry_run_commands\n Dummy Exec: $cmd"
+        _dry_run_commands="$_dry_run_commands\n   For $app: $cmd"
+    else
+        vexec $cmd
     fi
 }
 
@@ -174,15 +175,27 @@ bkup_orig_file() {
     # バックアップ先ディレクトリにmv
     dvexec "mv -fv \"$bkup_target\" \"${_backup_dir}\"/"
     del_if_exist $bkup_target
-    _bkup_files="${_bkup_files}\nbackup to ${_backup_dir}/`basename "$bkup_target"`"
+    _bkup_files="$_bkup_files\n       $bkup_target"
 }
 
 dump_backuped_files() {
-    if [[ -n $_bkup_files ]]; then
-        log "======================================>"
-        log " Below files is backuped."
-        log $_bkup_files
+    if [[ -z $_bkup_files ]]; then
+        return
     fi
+    log "===================================================="
+    log "==>  Below files is backuped to $_backup_dir.$_bkup_files"
+    log "===================================================="
+}
+
+dump_run_commands() {
+    if [[ -z $_dry_run_commands ]]; then
+        return
+    fi
+    log "===================================================="
+    log "==>  This is Dry-run mode."
+    log "==>     Below commands will be execute."
+    log $_dry_run_commands
+    log "===================================================="
 }
 
 # 存在する場合のみ削除
@@ -204,4 +217,23 @@ is_ubuntu() { [[ "$DETECT_OS" == "ubuntu" ]]; }
 is_redhat() { [[ "$DETECT_OS" == "redhat" ]]; }
 is_win() { is_msys || is_cygwin; }
 is_unix() { ! is_win; }
+
+make_work_if_needed() {
+    if [[ ! -e "$workdir" ]]; then
+        dvexec "mkdir -p \"$workdir\""
+    fi
+}
+cd_work() {
+    dvexec "cd \"$workdir\""
+}
+dl() {
+    if [[ $# -eq 1 ]]; then
+        log "===> Downloading from $1"
+        dvexec curl -fsSLO "$1"
+    else
+        # dvexec wget "$1" -O "$2"
+        log "===> Downloading from $1 to $2"
+        dvexec curl -fsSLO "$1" -o "$2"
+    fi
+}
 

@@ -1,9 +1,5 @@
 #!/bin/bash
 
-install_common() {
-    install_via_os_default
-}
-
 install_mac() {
     dvexec brew install global --with-exuberant-ctags --with-pygments
 }
@@ -23,13 +19,10 @@ get_global_src_url() {
 }
 
 download_global_src_and_build() {
+    make_work_if_needed
     # http://qiita.com/yoshizow/items/9cc0236ac0249e0638ff
     # ソースコード取得
-    workdir="$app_dir/tmp"
-    if [[ ! -e $workdir ]]; then
-        dvexec "mkdir -p \"$workdir\""
-    fi
-    dvexec "cd \"$workdir\""
+    cd_work
     if [[ ! -e "$workdir/global.tar.gz" ]]; then
         local dlurl=$(get_global_src_url)
         dvexec curl -sS -o global.tar.gz $dlurl

@@ -1,8 +1,5 @@
 #!/bin/bash
 
-install_common() {
-    install_via_os_default
-}
 install_msys() {
     dvexec echo "Nothing todo for ssh on msys"
 }

@@ -1,20 +1,27 @@
 #!/bin/bash
 
+is_installed() {
+    if is_win; then
+        # TODO check program files?
+        return 1
+    fi
+    if has $app; then
+        return 0
+    else
+        return 1
+    fi
+}
 install_msys() {
     local url=$(get_dl_url_win)
-    workdir="$app_dir/tmp"
-    if [[ ! -e $workdir ]]; then
-        dvexec "mkdir -p \"$workdir\""
-    fi
-    (cd $workdir && dvexec curl -fsSLO $url)
+    make_work_if_needed
+    cd_work
+    dl $url
 }
 install_mac() {
     local url=$(get_dl_url_mac)
-    workdir="$app_dir/tmp"
-    if [[ ! -e $workdir ]]; then
-        dvexec "mkdir -p \"$workdir\""
-    fi
-    (cd $workdir && dvexec curl -fsSLO $url)
+    make_work_if_needed
+    cd_work
+    dl $url
 }
 install_ubuntu() {
     # sudo add-apt-repository --remove ppa:webupd8team/sublime-text-3

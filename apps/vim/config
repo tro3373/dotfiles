@@ -1,9 +1,5 @@
 #!/bin/bash
 
-install_common() {
-    install_via_os_default
-}
-
 install_msys() {
     # for msys2.
     local type=build # build/package
