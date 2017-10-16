@@ -1,5 +1,6 @@
 #!/bin/bash
 
+is_installed() { has $app; }
 install_common() { default_called=1; }
 install_msys() { default_called=1; }
 install_cygwin() { default_called=1; }
