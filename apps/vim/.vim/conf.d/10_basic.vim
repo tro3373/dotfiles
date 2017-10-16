@@ -59,6 +59,12 @@ augroup swapchoice-readonly
   autocmd SwapExists * let v:swapchoice = 'o'
 augroup END
 
+" ファイルオープン時に元の位置を開く
+augroup vimrcEx
+  au BufRead * if line("'\"") > 0 && line("'\"") <= line("$") |
+  \ exe "normal g`\"" | endif
+augroup END
+
 " インクリメンタルサーチを有効にする
 set incsearch
 " 検索結果のハイライト表示を有効にする
