@@ -3,18 +3,14 @@
 DOT_PATH=~/.dot
 DETECT_OS=$($DOT_PATH/bin/os)
 DETECT_BIT=$($DOT_PATH/bin/bit)
-_timestamp=$(date +%Y%m%d%H%M%S)
+_timestamp=$(date +%Y%m%d.%H%M%S)
 _backup_dir="${DOT_PATH}/bkup/$_timestamp"
-_log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
+# _log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
 _dry_run_commands=""
 
 # echo するのみ
 log() {
-    if [[ $dry_run -eq 1 ]]; then
-        echo -e "$*"
-    else
-        echo -e "$*" |tee -a $_log_file
-    fi
+    echo -e "$*"
 }
 dlog() {
     [[ $debug -eq 1 ]] && log "$*"
@@ -26,8 +22,10 @@ dlog() {
 vexec() {
     cmd="$*"
     dlog "===> Executing: $cmd"
-    eval "$cmd" 2>&1 |tee -a $_log_file
-    if [ ${PIPESTATUS[0]} -eq 0 ]; then
+    # eval "$cmd" 2>&1 |tee -a $_log_file
+    # if [ ${PIPESTATUS[0]} -eq 0 ]; then
+    eval "$cmd"
+    if [ $? -eq 0 ]; then
         dlog "    => Command Sucessfully."
     else
         dlog "    => Command Failed......"
