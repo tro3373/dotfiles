@@ -26,7 +26,7 @@ dlog() {
 vexec() {
     cmd="$*"
     dlog "===> Executing: $cmd"
-    eval $cmd 2>&1 |tee -a $_log_file
+    eval "$cmd" 2>&1 |tee -a $_log_file
     if [ ${PIPESTATUS[0]} -eq 0 ]; then
         dlog "    => Command Sucessfully."
     else
@@ -229,11 +229,13 @@ cd_work() {
 dl() {
     if [[ $# -eq 1 ]]; then
         log "===> Downloading from $1"
-        dvexec curl -fsSLO "$1"
+        # dvexec curl -fsSLO "$1"
+        dvexec curl -fLO "$1"
     else
         # dvexec wget "$1" -O "$2"
         log "===> Downloading from $1 to $2"
-        dvexec curl -fsSLO "$1" -o "$2"
+        # dvexec curl -fsSL "$1" -o "$2"
+        dvexec curl -fL "$1" -o "$2"
     fi
 }
 
