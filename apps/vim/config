@@ -1,12 +1,39 @@
 #!/bin/bash
 
+kaoriya_dir_name=vim80-kaoriya-win64
+is_installed() {
+    ! is_win && return $(has $app)
+    # for windows
+    if has $app; then
+        if [[ -e $WINHOME/tools/$kaoriya_dir_name ]]; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
 install_msys() {
-    # for msys2.
     local type=build # build/package
     if [ "$type" = "package" ]; then
         install_via_os_default
+    else
+        build_msys
+    fi
+    if [[ ! -e $WINHOME/tools/$kaoriya_dir_name ]]; then
         return 0
     fi
+    install_kaoriya_msys
+}
+
+install_kaoriya_msys() {
+    dl_unzip "$(get_dl_url_win)" "$WINHOME/tools/$kaoriya_dir_name"
+}
+
+get_dl_url_win() {
+    curl -fsSL http://www.sublimetext.com/3 | grep "a href" |awk -F\" '{print $2}'
+}
+
+build_msys() {
     # install lua.
     dlog "===> Lua Building .."
     dvexec $instcmd ncurses-devel libcrypt-devel gettext-devel gcc make

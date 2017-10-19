@@ -236,4 +236,14 @@ dl() {
         dvexec "curl -fL \"$1\" -o \"$2\""
     fi
 }
+dl_unzip () {
+    local url="$1"
+    local to="${2}"
+    make_work_if_needed
+    cd_work
+    dl "$url" dl.zip
+    if [[ -n "$to" ]]; then
+        dvexec "unzip dl.zip -d \"$to\""
+    fi
+}
 
