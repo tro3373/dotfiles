@@ -228,12 +228,12 @@ dl() {
     if [[ $# -eq 1 ]]; then
         log "===> Downloading from $1"
         # dvexec curl -fsSLO "$1"
-        dvexec curl -fLO "$1"
+        dvexec "curl -fLO \"$1\""
     else
         # dvexec wget "$1" -O "$2"
         log "===> Downloading from $1 to $2"
         # dvexec curl -fsSL "$1" -o "$2"
-        dvexec curl -fL "$1" -o "$2"
+        dvexec "curl -fL \"$1\" -o \"$2\""
     fi
 }
 

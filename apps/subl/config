@@ -2,8 +2,11 @@
 
 is_installed() {
     if is_win; then
-        # TODO check program files?
-        return 1
+        if [[ -w $WINHOME/tools/sublime-text-3 ]]; then
+            return 0;
+        else
+            return 1
+        fi
     fi
     if has $app; then
         return 0
@@ -15,13 +18,14 @@ install_msys() {
     local url=$(get_dl_url_win)
     make_work_if_needed
     cd_work
-    dl $url
+    dl "$url" sublime.zip
+    dvexec unzip sublime.zip -d $WINHOME/tools/sublime-text-3
 }
 install_mac() {
     local url=$(get_dl_url_mac)
     make_work_if_needed
     cd_work
-    dl $url
+    dl "$url"
 }
 install_ubuntu() {
     # sudo add-apt-repository --remove ppa:webupd8team/sublime-text-3
@@ -46,12 +50,15 @@ setting_common() {
 
 setting_msys() {
     WINHOME=${WINHOME:-~/win}
-    make_lnk_with_bkup "$app_dir/User" "$WINHOME/AppData/Roaming/Sublime\ Text\ 3/Packages/User"
+    # make_lnk_with_bkup "$app_dir/User" "$WINHOME/AppData/Roaming/Sublime Text 3/Packages/User"
+    local tmp="$WINHOME/tools/sublime-text-3/Data/Packages"
+    [[ -e $tmp ]] && mkdir -p $tmp
+    make_lnk_with_bkup "$app_dir/User" "$WINHOME/tools/sublime-text-3/Data/Packages/User"
 }
 
 setting_mac() {
     make_lnk_with_bkup "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" "/usr/local/bin/subl"
-    make_lnk_with_bkup "$app_dir/User" "$HOME/Library/Application\ Support/Sublime\ Text\ 3/Packages/User"
+    make_lnk_with_bkup "$app_dir/User" "$HOME/Library/Application Support/Sublime Text 3/Packages/User"
 }
 
 get_dl_url_mac() {
