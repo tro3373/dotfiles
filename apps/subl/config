@@ -1,18 +1,11 @@
 #!/bin/bash
 
 is_installed() {
-    if is_win; then
-        if [[ -w $WINHOME/tools/sublime-text-3 ]]; then
-            return 0;
-        else
-            return 1
-        fi
-    fi
     if has $app; then
         return 0
-    else
-        return 1
     fi
+    is_win && [[ -e $WINHOME/tools/sublime-text-3 ]] && return 0
+    return 1
 }
 install_msys() {
     local url=$(get_dl_url_win)
