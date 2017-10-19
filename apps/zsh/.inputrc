@@ -1,0 +1,52 @@
+$if Bash
+    set editing-mode vi
+    # ベル無
+    set bell-style none
+    # 補間時大文字小文字無視
+    set completion-ignore-case on
+
+    set horizontal-scroll-mode off
+    # １回で補完候補の一覧表示
+    set show-all-if-ambiguous off
+    # ~ 置換
+    set expand-tilde off
+    # 補完候補表示時のファイルタイプ表示
+    set visible-stats on
+    # ディレクトリマーク
+    set mark-directories on
+    # 隠しファイル表示
+    set match-hidden-files on
+    # 日本語対応
+    set convert-meta off
+    set input-meta on
+    set output-meta on
+
+    space: magic-space
+
+    "\C-p": history-search-backward
+    "\C-n": history-search-forward
+    "\e[A": history-search-backward
+    "\e[B": history-search-forward
+
+    "\C-u": "cd ..\n"
+
+#    "\C-xp": "PATH=${PATH}\e\C-e\C-a\ef\C-f"
+#
+#    "\es":"\C-e\C-uls\C-m"
+#
+#    "\C-g": ""
+#    "\C-gr": "grep -r ./\eb\C-f \"\"\C-b"
+#    "\C-gg": "grep *\C-b\C-b \"\"\C-b"
+#
+#    "\e\"": "\eb\"\ef\""
+#
+#    "\e\"": "\eb\"\ef\""
+#    "\e\'": "\eb\'\ef\'"
+#    "\e\`": "\eb\`\ef\`"
+#    "\e\]": "\eb\[\ef\]"
+#    "\e\[": "\eb\[\ef\]"
+#    "\e\}": "\eb\{\ef\}"
+#    "\e\{": "\eb\{\ef\}"
+#    "\e\)": "\eb\(\ef\)"
+#    "\e\(": "\eb\(\ef\)"
+$endif
