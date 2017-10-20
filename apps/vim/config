@@ -30,7 +30,9 @@ install_kaoriya_msys() {
 }
 
 get_dl_url_win() {
-    curl -fsSL http://www.sublimetext.com/3 | grep "a href" |awk -F\" '{print $2}'
+    curl -fsSL http://vim-jp.org/redirects/koron/vim-kaoriya/latest/win64/ \
+        | grep "a href" \
+        | awk -F\" '{print $2}'
 }
 
 build_msys() {

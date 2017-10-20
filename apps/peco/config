@@ -22,6 +22,9 @@ install_common() {
     fi
 }
 
+install_msys() { :; }
+install_cygwin() { :; }
+
 install_mac() {
     dvexec sudo brew tap peco/peco
     dvexec sudo brew install peco

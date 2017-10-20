@@ -1,6 +1,18 @@
 #!/bin/bash
 
-install_common() {
+install_msys() { ;: }
+install_cygwin() { ;: }
+install_ubuntu() {
+    _install_common
+}
+install_redhat() {
+    _install_common
+}
+install_mac() {
+    _install_common
+}
+
+_install_common() {
     dvexec git clone https://github.com/junegunn/fzf.git ~/.fzf
     dvexec ~/.fzf/install
 }

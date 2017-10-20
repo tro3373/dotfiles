@@ -128,6 +128,7 @@ add_path ${HOME}/Android/Sdk/platform-tools
 add_path ${HOME}/android-studio/bin
 
 add_path $HOME/win/tools/sublime-text-3
+add_path $HOME/win/tools/atom
 
 # .local/bin
 add_path ${HOME}/.local/bin

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
 
+has() { which ${1} >& /dev/null; }
+! has fzf && echo "Not supported." 1>&2 && exit 1
 vim $(git status -s | cut -c4- |fzf)
 

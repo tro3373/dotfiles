@@ -49,10 +49,18 @@ setting_mac() {
 }
 
 get_dl_url_mac() {
-    curl -fsSL http://www.sublimetext.com/3 | grep "a href" | grep download.sublimetext.com | grep "OS X" | cut -d"\"" -f4
+    curl -fsSL http://www.sublimetext.com/3 \
+        | grep "a href" \
+        | grep download.sublimetext.com \
+        | grep "OS X" \
+        | cut -d"\"" -f4
 }
 
 get_dl_url_win() {
-    curl -fsSL http://www.sublimetext.com/3 | grep "a href" | grep download.sublimetext.com | grep "Windows 64 bit" | cut -d"\"" -f6
+    curl -fsSL http://www.sublimetext.com/3 \
+        | grep "a href" \
+        | grep download.sublimetext.com \
+        | grep "Windows 64 bit" \
+        | cut -d"\"" -f6
 }
 

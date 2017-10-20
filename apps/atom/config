@@ -1,15 +1,20 @@
 #!/bin/bash
 
+atom_dir_name=atom
 is_installed() {
-    if is_win; then
-        # TODO check program files?
-        return 1
-    fi
     if has apm; then
         return 0
-    else
-        return 1
     fi
+    is_win && [[ -e $WINHOME/tools/$atom_dir_name ]] && return 0
+    return 1
+}
+
+install_msys() {
+    make_work_if_needed
+    cd_work
+    dl "$(get_dl_url_win)" dl.zip
+    dvexec unzip dl.zip -d dl
+    dvexec "mv \"dl/Atom x64\" \"$WINHOME/tools/$atom_dir_name\""
 }
 
 install_ubuntu() {
@@ -24,6 +29,13 @@ install_redhat() {
     cd_work
     dl https://atom.io/download/rpm atom.rpm
     dvexec sudo rpm -ivh atom.rpm
+}
+
+get_dl_url_win() {
+    curl -fsSL https://github.com/atom/atom/releases/latest \
+        | grep "a href" \
+        | grep "atom-x64-windows.zip" \
+        | awk -F\" '{print "https://github.com" $2}'
 }
 
 setting_common() {
