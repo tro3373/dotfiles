@@ -178,6 +178,7 @@ setting_msys() {
     make_lnk_with_bkup "$app_dir/.vimrc" "${WINHOME}/_vimrc"
     make_lnk_with_bkup "$app_dir/.gvimrc" "${WINHOME}/_gvimrc"
     make_lnk_with_bkup "$app_dir/.vim" "${WINHOME}/.vim"
+    make_lnk_with_bkup "$app_dir/gvim.bat" "${WINHOME}/bin/gvim.bat"
     local buildvim=/usr/local/src/Msys2-packages/vim/pkg/vim/usr/bin/vim.exe
     if [ -e $buildvim ]; then
         make_lnk_with_bkup "$buildvim" "${HOME}/bin/vim"

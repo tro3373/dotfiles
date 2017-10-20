@@ -50,6 +50,13 @@ isexist() {
     return 0
 }
 
+make_dir_if_needed() {
+    local tmp="$*"
+    if [[ ! -e "$tmp" ]]; then
+        dvexec "mkdir -p \"$tmp\""
+    fi
+}
+
 # $1のファイルを$2へリンクを作成する
 make_link() {
     local from=$1
@@ -60,9 +67,10 @@ make_link() {
 # Dry run 実行用の関数定義
 dvexec() {
     local cmd="$*"
+    local for_app="${app:+For $app}"
     if [[ $dry_run -eq 1 ]]; then
         dry_vexec $cmd
-        _dry_run_commands="$_dry_run_commands\n   For $app: $cmd"
+        _dry_run_commands="$_dry_run_commands\n   $for_app: $cmd"
     else
         vexec $cmd
     fi
@@ -139,17 +147,17 @@ make_lnk_with_bkup() {
         elif [ -d "${lnk}" ]; then
             # ディレクトリはバックアップする
             # dlog "   @@@@@@ Dir!"
-            log "  => Directory exist. Backup it. path=$lnk"
+            dlog "  => Directory exist. Backup it. path=$lnk"
             need_backup=1
         elif [ -f "${lnk}" ]; then
             # 既存のファイルをバックアップする
             # dlog "   @@@@@@ File!"
-            log "  => File exist. Backup it. path=$lnk"
+            dlog "  => File exist. Backup it. path=$lnk"
             need_backup=1
         else
             # dlog "   @@@@@@ little bit!"
             # ないと思う
-            log "  => Little bit strange exist. path=${lnk} ... Do nothing"
+            dlog "  => Little bit strange exist. path=${lnk} ... Do nothing"
             return 0
         fi
     fi
@@ -166,9 +174,7 @@ _bkup_files=""
 bkup_orig_file() {
     local bkup_target="$*"
     # バックアップ先のディレクトリがない場合は作成する
-    if [ ! -e "${_backup_dir}" ]; then
-        dvexec "mkdir -p \"${_backup_dir}\""
-    fi
+    make_dir_if_needed "$_backup_dir"
 
     # バックアップ先ディレクトリにmv
     dvexec "mv -fv \"$bkup_target\" \"${_backup_dir}\"/"
@@ -217,9 +223,7 @@ is_win() { is_msys || is_cygwin; }
 is_unix() { ! is_win; }
 
 make_work_if_needed() {
-    if [[ ! -e "$workdir" ]]; then
-        dvexec "mkdir -p \"$workdir\""
-    fi
+    make_dir_if_needed "$workdir"
 }
 cd_work() {
     dvexec "cd \"$workdir\""

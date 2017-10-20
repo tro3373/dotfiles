@@ -90,14 +90,15 @@ make_setup_dirs() {
             WINHOME="$(cd /c/Users/`whoami` && pwd)"
         fi
         works_home=$WINHOME
-        [ ! -e $WINHOME/bin ] && dvexec mkdir $WINHOME/bin
-        [ ! -e $WINHOME/tools ] && dvexec mkdir $WINHOME/tools
     fi
-    [ ! -e $HOME/bin ] && dvexec mkdir $HOME/bin
-    [ ! -e $works_home/works/00_memos ] && dvexec mkdir -p $works_home/works/00_memos
+    make_dir_if_needed "$works_home/bin"
+    make_dir_if_needed "$works_home/tools"
+    make_dir_if_needed "$works_home/works/00_memos"
     if is_msys; then
-        make_lnk_with_bkup $WINHOME/works $HOME/works
         make_lnk_with_bkup $WINHOME $HOME/win
+        make_lnk_with_bkup $WINHOME/bin $HOME/bin
+        make_lnk_with_bkup $WINHOME/tools $HOME/tools
+        make_lnk_with_bkup $WINHOME/works $HOME/works
     fi
 }
 
