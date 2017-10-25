@@ -1,14 +1,25 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 backup_root="${DOTPATH:-~}/bkup"
-#dst="${backup_root}/`date +%Y%m%d%H%M%S`"
-dst="${backup_root}/`date +%Y%m%d`"
-set -eu
-main() {
-    if [ $# -ne 0 ]; then
-        [ ! -e $dst ] && mkdir -p $dst
-        mv -fv $* $dst
-    fi
+ym=$(date +%Y%m)
+timestamp=$(date +%Y%m%d_%H%M%S)
+dst="${backup_root}/$ym"
+
+ls_bkup() {
     ls -la $backup_root
 }
-main $*
+
+main() {
+    set -eu
+    if [[ $# -eq 0 ]]; then
+        ls_bkup
+        return
+    fi
+    [ ! -e $dst ] && mkdir -p $dst
+    for f in "$@"; do
+        [[ ! -e "$f" ]] && continue
+        local fname="$(basename "$f")"
+        mv -v "$f" "$dst/${timestamp}.$fname"
+    done
+}
+main "$@"
