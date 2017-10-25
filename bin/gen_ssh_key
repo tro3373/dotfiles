@@ -6,7 +6,7 @@
 # done
 
 email="$1"
-cmd="ssh-keygen -t rsa -b 4096"
+cmd="ssh-keygen -t rsa -b 4096 -f id_rsa"
 if [ ! "$email" = "" ]; then
     cmd="$cmd -C \"$email\""
 fi
