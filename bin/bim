@@ -29,7 +29,9 @@ interactive() {
 main() {
     local args="$@"
     local target=
-    if has fzf; then
+    if has fzy; then
+        target=$(ls $dotbin |fzy -q "$args")
+    elif has fzf; then
         target=$(ls $dotbin |fzf -q "$args")
     elif has peco; then
         target=$(ls $dotbin |peco --query "$args")

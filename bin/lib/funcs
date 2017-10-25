@@ -226,7 +226,23 @@ make_work_if_needed() {
     make_dir_if_needed "$workdir"
 }
 cd_work() {
+    make_work_if_needed
     dvexec "cd \"$workdir\""
+}
+gh() {
+    local url=$1
+    local tag=${2:-}
+    local repo_name=${url##*/}
+    repo_name=${repo_name%%\.git}
+    if [[ ! -e $workdir/$repo_name ]]; then
+        dvexec git clone $url $workdir/$repo_name
+    fi
+    cd_work
+    dvexec cd $repo_name
+    dvexec git fetch
+    if [[ -n $tag ]]; then
+        dvexec git checkout -b $tag $tag
+    fi
 }
 dl() {
     if [[ $# -eq 1 ]]; then

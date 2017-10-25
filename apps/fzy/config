@@ -1,0 +1,20 @@
+install_common() {
+    dlog "Not supported."
+}
+install_msys() {
+    dlog "Not supported."
+}
+install_cygwin() {
+    dlog "Not supported."
+}
+install_mac() {
+    dlog "Not supported."
+}
+install_ubuntu() {
+    gh "https://github.com/jhawthorn/fzy.git"
+    dvexec make
+    dvexec sudo make install
+}
+install_redhat() {
+    dlog "Not supported."
+}
