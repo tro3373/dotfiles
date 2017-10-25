@@ -27,15 +27,18 @@ interactive() {
 }
 
 main() {
+    local args="$@"
     local target=
     if has fzf; then
-        target=$(ls $dotbin |fzf)
+        target=$(ls $dotbin |fzf -q "$args")
     elif has peco; then
-        target=$(ls $dotbin |peco)
+        target=$(ls $dotbin |peco --query "$args")
     else
         interactive "$@"
     fi
-    [[ -n $target ]] && vim $dotbin/$target
+    if [[ -n $target ]]; then
+        vim $dotbin/$target
+    fi
 }
 main "$@"
 
