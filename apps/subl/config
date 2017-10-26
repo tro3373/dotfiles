@@ -39,7 +39,7 @@ setting_msys() {
     WINHOME=${WINHOME:-~/win}
     # make_lnk_with_bkup "$app_dir/User" "$WINHOME/AppData/Roaming/Sublime Text 3/Packages/User"
     local tmp="$WINHOME/tools/$sublime_dir_name/Data/Packages"
-    [[ -e $tmp ]] && mkdir -p $tmp
+    [[ ! -e $tmp ]] && mkdir -p $tmp
     make_lnk_with_bkup "$app_dir/User" "$WINHOME/tools/$sublime_dir_name/Data/Packages/User"
 }
 
