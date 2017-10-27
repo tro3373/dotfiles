@@ -11,15 +11,16 @@ install_redhat() {
 
 _install_common() {
     local target_dir=/usr/local/src/tmux
-    if [[ ! -e $target_dir ]]; then
-        mexe sudo git clone https://github.com/tmux/tmux.git $target_dir
-    fi
     if [[ -e $target_dir ]]; then
-        cd $target_dir
-        local tag=$(git tag --list | tail -1)
-        if [[ ! -z $tag ]]; then
-            mexe sudo git checkout $tag
-        fi
+        mexe cd $target_dir
+        mexe sudo git pull --rebase
+    else
+        mexe sudo git clone https://github.com/tmux/tmux.git $target_dir
+        mexe cd $target_dir
+    fi
+    local tag=$(git tag --list | tail -1)
+    if [[ ! -z $tag ]]; then
+        mexe sudo git checkout $tag
     fi
     mexe sudo ./autogen.sh
     mexe sudo ./configure --prefix=/usr/local
