@@ -151,13 +151,13 @@ make_lnk_with_bkup() {
     # バックアップが必要ならバックアップする
     if [ $need_backup -eq 1 ]; then
         # dlog "   @@@@@@ Backup!"
-        bkup_orig_file "${lnk}"
+        backup_file "${lnk}"
     fi
     make_link "$src" "$lnk"
 }
 
 # $* のファイルを${_backup_root}に移動する
-bkup_orig_file() {
+backup_file() {
     local _target="$*"
     # バックアップ先のディレクトリがない場合は作成する
     make_dir_if_needed "$_backup_root"

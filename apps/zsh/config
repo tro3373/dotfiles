@@ -69,7 +69,7 @@ gen_zshrc_for_msys2() {
     #     .zsh/60.tmux.zsh
     local outfile=~/.zshrc
     if [[ -e $outfile ]]; then
-        bkup_orig_file $outfile
+        backup_file $outfile
     fi
     for file in "$@"; do
         dvexec "cat $app_dir/$file >> $outfile"
