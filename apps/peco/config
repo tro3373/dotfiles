@@ -7,7 +7,6 @@ install_common() {
     dlurl="https://github.com/peco/peco/releases/download/${peco_latest_version}/peco_linux_amd64.tar.gz"
     log "  ===> Donload from url=${dlurl}"
 
-    make_work_if_needed
     cd_work
     dvexec wget $dlurl
     if [ -e "$app_dir/tmp/peco_linux_amd64.tar.gz" ]; then

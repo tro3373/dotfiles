@@ -10,7 +10,6 @@ is_installed() {
 }
 
 install_msys() {
-    make_work_if_needed
     cd_work
     dl "$(get_dl_url_win)" dl.zip
     dvexec unzip dl.zip -d dl
@@ -18,14 +17,12 @@ install_msys() {
 }
 
 install_ubuntu() {
-    make_work_if_needed
     cd_work
     dl https://atom.io/download/deb atom.deb
     dvexec sudo dpkg -i atom.deb
 }
 
 install_redhat() {
-    make_work_if_needed
     cd_work
     dl https://atom.io/download/rpm atom.rpm
     dvexec sudo rpm -ivh atom.rpm

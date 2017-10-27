@@ -1,7 +1,6 @@
 #!/bin/bash
 
 install_msys() {
-    make_work_if_needed
     cd_work
     version=2.1.4
     dvexec wget https://osdn.jp/projects/nkf/downloads/64158/nkf-${version}.tar.gz

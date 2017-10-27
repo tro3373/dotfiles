@@ -8,7 +8,6 @@ install_ubuntu() {
     dvexec "$instcmd libncursesw5-dev"
 
     # ソースコード取得
-    make_work_if_needed
     cd_work
     if [ ! -e "$script_dir/tmp/tig" ]; then
         dvexec git clone https://github.com/jonas/tig.git
@@ -30,7 +29,6 @@ install_redhat() {
     #fi
     #install_via_os_default
     # ソースコード取得
-    make_work_if_needed
     cd_work
     if [ ! -e "$workdir/tig" ]; then
         dvexec git clone https://github.com/jonas/tig.git

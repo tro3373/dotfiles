@@ -7,7 +7,6 @@ install_msys() {
         dvexec "$instcmd mingw-w64-x86_64-ag"
         return 0
     fi
-    make_work_if_needed
     cd_work
     if [ "$type" = "zip" ]; then
         if [ ! -e $workdir/ag.zip ]; then
@@ -32,7 +31,6 @@ install_cygwin() {
     url=https://github.com/ggreer/the_silver_searcher.git
     # 必要パッケージインストール
     dvexec "$instcmd autoconf automake gcc-g++ gettext gettext-devel liblzma-devel make mingw-gcc-g++ mingw-zlib-devel pkg-config xz zlib-devel"
-    make_work_if_needed
     cd_work
     dvexec git clone $url
     dvexec cd the_silver_searcher/

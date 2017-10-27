@@ -19,7 +19,6 @@ get_global_src_url() {
 }
 
 download_global_src_and_build() {
-    make_work_if_needed
     # http://qiita.com/yoshizow/items/9cc0236ac0249e0638ff
     # ソースコード取得
     cd_work
