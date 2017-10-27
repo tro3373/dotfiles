@@ -38,40 +38,40 @@ get_dl_url_win() {
 build_msys() {
     # install lua.
     dlog "===> Lua Building .."
-    dvexec $instcmd ncurses-devel libcrypt-devel gettext-devel gcc make
+    mexe $instcmd ncurses-devel libcrypt-devel gettext-devel gcc make
     if [[ ! -e /usr/local/src/lua ]]; then
-        dvexec mkdir -p /usr/local/src/lua
+        mexe mkdir -p /usr/local/src/lua
     fi
-    dvexec cd /usr/local/src/lua
+    mexe cd /usr/local/src/lua
     local lua_version=5.3.3
     if [[ ! -e "/usr/local/src/lua/lua-$lua_version.tar.gz" ]]; then
-        dvexec rm -rf /usr/local/src/lua/*
-        dvexec wget http://www.lua.org/ftp/lua-$lua_version.tar.gz
-        dvexec tar xvfpz ./lua-$lua_version.tar.gz
+        mexe rm -rf /usr/local/src/lua/*
+        mexe wget http://www.lua.org/ftp/lua-$lua_version.tar.gz
+        mexe tar xvfpz ./lua-$lua_version.tar.gz
     fi
-    dvexec cd ./lua-$lua_version
-    dvexec make mingw
-    dvexec make install
+    mexe cd ./lua-$lua_version
+    mexe make mingw
+    mexe make install
 
     # install vim.
     dlog "===> Vim Building .."
-    dvexec $instcmd python3 ruby
+    mexe $instcmd python3 ruby
 
     dlog "===> Msys2 packages Cloning .."
     local msys2packages=/usr/local/src/Msys2-packages
     if [[ ! -e "$msys2packages/.git" ]]; then
-        dvexec cd /usr/local/src
-        dvexec git clone https://github.com/Alexpux/MSYS2-packages.git
+        mexe cd /usr/local/src
+        mexe git clone https://github.com/Alexpux/MSYS2-packages.git
     fi
-    dvexec cd /usr/local/src/MSYS2-packages
-    dvexec git checkout .
+    mexe cd /usr/local/src/MSYS2-packages
+    mexe git checkout .
     local ver=92832fb441011827cfb93ec3208b86cecce05648
-    dvexec git checkout $ver
-    dvexec patch -p1 < $app_dir/vim_pkgbuild.patch
-    dvexec cd vim
-    dvexec makepkg
+    mexe git checkout $ver
+    mexe patch -p1 < $app_dir/vim_pkgbuild.patch
+    mexe cd vim
+    mexe makepkg
     # upgrade error will occur
-    #dvexec pacman -U --noconfirm vim*.pkg.tar.xz
+    #mexe pacman -U --noconfirm vim*.pkg.tar.xz
     # GuiBuild?
     # mingw32-make -f Make_ming.mak GUI=yes ARCH=x86-64 clean
     # mingw32-make -f Make_ming.mak GUI=yes ARCH=x86-64 FEATURES=HUGE
@@ -81,33 +81,33 @@ build_msys() {
 }
 
 install_mac() {
-    dvexec $instcmd lua
-    dvexec $instcmd vim --with-lua
+    mexe $instcmd lua
+    mexe $instcmd vim --with-lua
 }
 
 install_ubuntu() {
-#        dvexec "$instcmd --force-yes vim vim-gtk vim-athena vim-gnome"
-    dvexec sudo apt-get remove -y --purge vim vim-runtime vim-gnome vim-tiny vim-common vim-gui-common
-    dvexec sudo apt-get install -y liblua5.1-dev luajit \
+#        mexe "$instcmd --force-yes vim vim-gtk vim-athena vim-gnome"
+    mexe sudo apt-get remove -y --purge vim vim-runtime vim-gnome vim-tiny vim-common vim-gui-common
+    mexe sudo apt-get install -y liblua5.1-dev luajit \
         libluajit-5.1 python-dev ruby ruby-dev libperl-dev \
         mercurial libncurses5-dev libgnome2-dev libgnomeui-dev \
         libgtk2.0-dev libatk1.0-dev libbonoboui2-dev libcairo2-dev \
         libx11-dev libxpm-dev libxt-dev
 
     if [[ ! -e /usr/include/lua5.1/include ]]; then
-        dvexec sudo mkdir /usr/include/lua5.1/include
+        mexe sudo mkdir /usr/include/lua5.1/include
     fi
-    dvexec sudo ln -sf /usr/include/luajit-2.0 /usr/include/lua5.1/include
-    dvexec cd /usr/local/src/
+    mexe sudo ln -sf /usr/include/luajit-2.0 /usr/include/lua5.1/include
+    mexe cd /usr/local/src/
     if [[ ! -e /usr/local/src/vim ]]; then
-        dvexec sudo git clone https://github.com/vim/vim.git
-        dvexec cd vim/src
+        mexe sudo git clone https://github.com/vim/vim.git
+        mexe cd vim/src
     else
-        dvexec cd vim
-        dvexec sudo git pull --rebase
-        dvexec cd src
+        mexe cd vim
+        mexe sudo git pull --rebase
+        mexe cd src
     fi
-    dvexec sudo ./configure --with-features=huge \
+    mexe sudo ./configure --with-features=huge \
         --enable-rubyinterp \
         --enable-largefile \
         --disable-netbeans \
@@ -120,40 +120,40 @@ install_ubuntu() {
         --enable-fail-if-missing \
         --with-lua-prefix=/usr/include/lua5.1 \
         --enable-cscope
-    dvexec sudo make
-    dvexec sudo make install
-    # dvexec cd ..
+    mexe sudo make
+    mexe sudo make install
+    # mexe cd ..
     # if [[ ! -e /usr/share/vim ]]; then
-    #     dvexec sudo mkdir /usr/share/vim
+    #     mexe sudo mkdir /usr/share/vim
     # fi
     # if [[ ! -e /usr/share/vim/vim74 ]]; then
-    #     dvexec sudo mkdir /usr/share/vim/vim74
+    #     mexe sudo mkdir /usr/share/vim/vim74
     # fi
-    # dvexec sudo cp -fr runtime/* /usr/share/vim/vim74/
+    # mexe sudo cp -fr runtime/* /usr/share/vim/vim74/
 }
 
 install_redhat() {
-    dvexec cd /usr/local/src/
+    mexe cd /usr/local/src/
     if [[ ! -e /usr/local/src/luajit ]]; then
-        dvexec sudo git clone http://luajit.org/git/luajit-2.0.git luajit
+        mexe sudo git clone http://luajit.org/git/luajit-2.0.git luajit
     fi
-    dvexec cd luajit
-    dvexec sudo make
-    dvexec sudo make install
-    dvexec cd ../
+    mexe cd luajit
+    mexe sudo make
+    mexe sudo make install
+    mexe cd ../
     if [[ ! -e /usr/local/src/vim ]]; then
-        dvexec sudo git clone https://github.com/vim/vim.git
-        dvexec cd vim/src
+        mexe sudo git clone https://github.com/vim/vim.git
+        mexe cd vim/src
     else
-        dvexec cd vim
-        dvexec sudo git pull --rebase
-        dvexec cd src
+        mexe cd vim
+        mexe sudo git pull --rebase
+        mexe cd src
     fi
-    dvexec sudo yum install -y ruby ruby-devel lua lua-devel luajit luajit-devel \
+    mexe sudo yum install -y ruby ruby-devel lua lua-devel luajit luajit-devel \
         ctags mercurial python python-devel python3 python3-devel tcl-devel perl \
         perl-devel perl-ExtUtils-ParseXS perl-ExtUtils-XSpp perl-ExtUtils-CBuilder \
         perl-ExtUtils-Embed ncurses-devel
-    dvexec sudo ./configure --enable-multibyte \
+    mexe sudo ./configure --enable-multibyte \
         --with-features=huge \
         --enable-luainterp \
         --enable-perlinterp \
@@ -165,8 +165,8 @@ install_redhat() {
         --enable-cscope \
         --with-tlib=ncurses \
         --prefix=/usr/local
-    dvexec sudo make
-    dvexec sudo make install
+    mexe sudo make
+    mexe sudo make install
 }
 
 setting_common() {

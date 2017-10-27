@@ -12,8 +12,8 @@ install_mac() {
 }
 install_ubuntu() {
     gh "https://github.com/jhawthorn/fzy.git"
-    dvexec make
-    dvexec sudo make install
+    mexe make
+    mexe sudo make install
 }
 install_redhat() {
     dlog "Not supported."

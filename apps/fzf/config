@@ -13,7 +13,7 @@ install_mac() {
 }
 
 _install_common() {
-    dvexec git clone https://github.com/junegunn/fzf.git ~/.fzf
-    dvexec ~/.fzf/install
+    mexe git clone https://github.com/junegunn/fzf.git ~/.fzf
+    mexe ~/.fzf/install
 }
 

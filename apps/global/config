@@ -1,15 +1,15 @@
 #!/bin/bash
 
 install_mac() {
-    dvexec brew install global --with-exuberant-ctags --with-pygments
+    mexe brew install global --with-exuberant-ctags --with-pygments
 }
 
 install_ubuntu() {
-    dvexec "$instcmd python-pip exuberant-ctags ncurses-dev"
-    dvexec sudo pip install Pygments
+    mexe "$instcmd python-pip exuberant-ctags ncurses-dev"
+    mexe sudo pip install Pygments
     download_global_src_and_build
-    dvexec cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc
-    dvexec "sed -ri -e 's/^(\t:tc=native:)/\1tc=pygments:/g' ~/.globalrc"
+    mexe cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc
+    mexe "sed -ri -e 's/^(\t:tc=native:)/\1tc=pygments:/g' ~/.globalrc"
 }
 
 get_global_src_url() {
@@ -24,15 +24,15 @@ download_global_src_and_build() {
     cd_work
     if [[ ! -e "$workdir/global.tar.gz" ]]; then
         local dlurl=$(get_global_src_url)
-        dvexec curl -sS -o global.tar.gz $dlurl
+        mexe curl -sS -o global.tar.gz $dlurl
     fi
     if [[ ! -e "$workdir/global" ]]; then
-        dvexec mkdir -p $workdir/global
-        dvexec tar xvfpz $workdir/global.tar.gz -C $workdir/global
+        mexe mkdir -p $workdir/global
+        mexe tar xvfpz $workdir/global.tar.gz -C $workdir/global
     fi
-    dvexec cd $workdir/global/global*
-    dvexec ./configure --prefix=/usr/local
-    dvexec make
-    dvexec sudo make install
+    mexe cd $workdir/global/global*
+    mexe ./configure --prefix=/usr/local
+    mexe make
+    mexe sudo make install
 }
 

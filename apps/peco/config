@@ -8,15 +8,15 @@ install_common() {
     log "  ===> Donload from url=${dlurl}"
 
     cd_work
-    dvexec wget $dlurl
+    mexe wget $dlurl
     if [ -e "$app_dir/tmp/peco_linux_amd64.tar.gz" ]; then
-        dvexec tar xvfpz peco_linux_amd64.tar.gz
+        mexe tar xvfpz peco_linux_amd64.tar.gz
         installto=/usr/local/bin
         sudo="sudo"
         if is_cygwin; then
             sudo=""
         fi
-        dvexec "$sudo cp peco_linux_amd64/peco $installto"
+        mexe "$sudo cp peco_linux_amd64/peco $installto"
         log "  ===> peco installed to $installto"
     fi
 }
@@ -25,8 +25,8 @@ install_msys() { :; }
 install_cygwin() { :; }
 
 install_mac() {
-    dvexec sudo brew tap peco/peco
-    dvexec sudo brew install peco
+    mexe sudo brew tap peco/peco
+    mexe sudo brew install peco
 }
 
 # peco 最新バージョンを取得
@@ -37,7 +37,7 @@ get_pecoltver() {
 
 setting_common() {
     if [ ! -e ${HOME}/.config/peco ]; then
-        dvexec "mkdir -p \"${HOME}/.config/peco\""
+        mexe "mkdir -p \"${HOME}/.config/peco\""
     fi
     make_lnk_with_bkup "${app_dir}/config.json" "${HOME}/.config/peco/config.json"
 }

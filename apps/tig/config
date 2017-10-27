@@ -2,22 +2,22 @@
 
 install_ubuntu() {
     # build tool のインストール
-    dvexec "$instcmd build-essential"
+    mexe "$instcmd build-essential"
     # https://gist.github.com/raimon49/9d45d480a607fb463ffe
     # 日本語用
-    dvexec "$instcmd libncursesw5-dev"
+    mexe "$instcmd libncursesw5-dev"
 
     # ソースコード取得
     cd_work
     if [ ! -e "$script_dir/tmp/tig" ]; then
-        dvexec git clone https://github.com/jonas/tig.git
+        mexe git clone https://github.com/jonas/tig.git
     fi
-    dvexec "cd tig"
-    dvexec git checkout tig-2.1.1
+    mexe "cd tig"
+    mexe git checkout tig-2.1.1
 
     # ビルド, インストール
-    dvexec sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
-    dvexec /usr/local/bin/tig -v
+    mexe sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
+    mexe /usr/local/bin/tig -v
 }
 
 install_redhat() {
@@ -25,23 +25,23 @@ install_redhat() {
     #result=`rpm -qa |grep $targetrpm`
     #if [ "$result" = "" ]; then
     #    cmd="sudo rpm -ivh http://pkgs.repoforge.org/rpmforge-release/${targetrpm}.rpm"
-    #    dvexec "$cmd"
+    #    mexe "$cmd"
     #fi
     #install_via_os_default
     # ソースコード取得
     cd_work
     if [ ! -e "$workdir/tig" ]; then
-        dvexec git clone https://github.com/jonas/tig.git
+        mexe git clone https://github.com/jonas/tig.git
     fi
-    dvexec "cd tig"
-    # dvexec git checkout tig-2.1.1
+    mexe "cd tig"
+    # mexe git checkout tig-2.1.1
 
     # ビルド, インストール
-    dvexec ./autogen.sh
-    dvexec ./configure prefix=/usr/local
-    dvexec sudo make
-    dvexec sudo sudo make install
-    dvexec /usr/local/bin/tig -v
+    mexe ./autogen.sh
+    mexe ./configure prefix=/usr/local
+    mexe sudo make
+    mexe sudo sudo make install
+    mexe /usr/local/bin/tig -v
 }
 
 setting_common() {

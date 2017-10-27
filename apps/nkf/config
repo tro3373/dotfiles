@@ -3,11 +3,11 @@
 install_msys() {
     cd_work
     version=2.1.4
-    dvexec wget https://osdn.jp/projects/nkf/downloads/64158/nkf-${version}.tar.gz
-    dvexec tar zxvf nkf-${version}.tar.gz
-    dvexec cd nkf-${version}
-    dvexec make
-    dvexec mkdir -p /usr/local/bin
-    dvexec make install
+    mexe wget https://osdn.jp/projects/nkf/downloads/64158/nkf-${version}.tar.gz
+    mexe tar zxvf nkf-${version}.tar.gz
+    mexe cd nkf-${version}
+    mexe make
+    mexe mkdir -p /usr/local/bin
+    mexe make install
 }
 

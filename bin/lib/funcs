@@ -19,7 +19,7 @@ dlog() {
     fi
 }
 
-dvexec() {
+mexe() {
     local cmd="$*"
 
     if [[ $dry_run -eq 1 ]]; then
@@ -52,7 +52,7 @@ isexist() {
 make_dir_if_needed() {
     local tmp="$*"
     if [[ ! -e "$tmp" ]]; then
-        dvexec "mkdir -p \"$tmp\""
+        mexe "mkdir -p \"$tmp\""
     fi
 }
 
@@ -60,7 +60,7 @@ make_dir_if_needed() {
 make_link() {
     local from=$1
     local to=$2
-    dvexec "ln -s \"$from\" \"$to\""
+    mexe "ln -s \"$from\" \"$to\""
 }
 
 # $* のリンクを 絶対パスで表示する（readlink -f の代用（For Mac））
@@ -164,7 +164,7 @@ backup_file() {
 
     local _name="$(basename "$_target")"
     # バックアップ先ディレクトリにmv
-    dvexec "mv -fv \"$_target\" \"${_backup_root}/${_timestamp}.$_name\""
+    mexe "mv -fv \"$_target\" \"${_backup_root}/${_timestamp}.$_name\""
     del_if_exist "$_target"
     if [[ ! -e "$_target" ]]; then
         dlog "===> Backuped $_target"
@@ -190,7 +190,7 @@ del_if_exist() {
         return
     fi
     if isexist "$rm_target"; then
-        dvexec "rm -rf \"$rm_target\""
+        mexe "rm -rf \"$rm_target\""
     fi
 }
 
@@ -207,7 +207,7 @@ make_work_if_needed() {
 }
 cd_work() {
     make_work_if_needed
-    dvexec "cd \"$workdir\""
+    mexe "cd \"$workdir\""
 }
 gh() {
     local url=$1
@@ -215,25 +215,25 @@ gh() {
     local repo_name=${url##*/}
     repo_name=${repo_name%%\.git}
     if [[ ! -e $workdir/$repo_name ]]; then
-        dvexec git clone $url $workdir/$repo_name
+        mexe git clone $url $workdir/$repo_name
     fi
     cd_work
-    dvexec cd $repo_name
-    dvexec git fetch
+    mexe cd $repo_name
+    mexe git fetch
     if [[ -n $tag ]]; then
-        dvexec git checkout -b $tag $tag
+        mexe git checkout -b $tag $tag
     fi
 }
 dl() {
     if [[ $# -eq 1 ]]; then
         log "===> Downloading from $1"
-        # dvexec curl -fsSLO "$1"
-        dvexec "curl -fLO \"$1\""
+        # mexe curl -fsSLO "$1"
+        mexe "curl -fLO \"$1\""
     else
-        # dvexec wget "$1" -O "$2"
+        # mexe wget "$1" -O "$2"
         log "===> Downloading from $1 to $2"
-        # dvexec curl -fsSL "$1" -o "$2"
-        dvexec "curl -fL \"$1\" -o \"$2\""
+        # mexe curl -fsSL "$1" -o "$2"
+        mexe "curl -fL \"$1\" -o \"$2\""
     fi
 }
 dl_unzip () {
@@ -243,7 +243,7 @@ dl_unzip () {
     cd_work
     dl "$url" dl.zip
     if [[ -n "$to" ]]; then
-        dvexec "unzip dl.zip -d \"$to\""
+        mexe "unzip dl.zip -d \"$to\""
     fi
 }
 
