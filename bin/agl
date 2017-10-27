@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+if [[ $# -eq 0 ]]; then
+    echo "too few argument." 1>&2
+    exit 1
+fi
+ag -wsul $* 2>/dev/null
+
