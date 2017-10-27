@@ -225,21 +225,27 @@ gh() {
     fi
 }
 dl() {
+    local _url="$1"
+    local _dst="$2"
     if [[ $# -eq 1 ]]; then
-        log "===> Downloading from $1"
-        # mexe curl -fsSLO "$1"
-        mexe "curl -fLO \"$1\""
+        log "===> Downloading from $_url"
+        if has curl; then
+            mexe "curl -fLO \"$_url\""
+        else
+            mexe "wget \"$_url\""
+        fi
     else
-        # mexe wget "$1" -O "$2"
-        log "===> Downloading from $1 to $2"
-        # mexe curl -fsSL "$1" -o "$2"
-        mexe "curl -fL \"$1\" -o \"$2\""
+        log "===> Downloading from $_url to $_dst"
+        if has curl; then
+            mexe "curl -fL \"$_url\" -o \"$_dst\""
+        else
+            mexe "wget \"$_url\" -O \"$_dst\""
+        fi
     fi
 }
 dl_unzip () {
     local url="$1"
     local to="${2}"
-    make_work_if_needed
     cd_work
     dl "$url" dl.zip
     if [[ -n "$to" ]]; then
