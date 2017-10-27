@@ -1,9 +1,17 @@
 bind C-o display-message "Linux conf loaded"
 
 # コピーした内容をクリップボードに送る
-# unbind   -T copy-mode-vi Enter
-# bind-key -T copy-mode-vi Enter send -X copy-pipe "xsel -bi > /dev/null"
-bind-key -T copy-mode-vi y     send -X copy-pipe "xsel -bi > /dev/null"
+unbind -T copy-mode-vi y
+# ゴミがでる
+# bind-key -T copy-mode-vi y     send -X copy-pipe "xsel -bi" \; send -X clear-selection
+# ゴミが出ないが、キャンセルされる
+# bind-key -T copy-mode-vi y     send -X copy-pipe-and-cancel "xsel -bi"
+# コピー後にカーソル位置をクリアしたくないので、cancelは呼びたくないが、ゴミがでるため、強制リフレッシュを行う
+bind-key -T copy-mode-vi y     send -X copy-pipe "xsel -bi" \; send -X clear-selection \; send -X refresh-client \; display "copied."
+# Enter はキャンセルに使う為バインドしない
+# unbind -T copy-mode-vi Enter
+# bind-key -T copy-mode-vi Enter send -X copy-pipe "xsel -bi" \; send -X clear-selection \; send -X refresh-client \; display "copied."
 
 # クリップボードの内容を貼り付ける
 bind -r C-v run-shell "tmux set-buffer -- \"$(xsel -o --clipboard)\"; tmux paste-buffer"
+
