@@ -22,14 +22,7 @@ dlog() {
 
 mexe() {
     local cmd="$*"
-
-    if is_dry; then
-        dlog " Dummy Exec: $cmd"
-        local for_app="${app:+For $app}"
-        _dry_run_commands="$_dry_run_commands\n   $for_app: $cmd"
-        return
-    fi
-
+    is_dry && log "   $cmd" && return
     dlog "===> Executing: $cmd"
     if eval "$cmd"; then
         dlog "    => Command Sucessfully."
@@ -169,17 +162,6 @@ backup_file() {
     if [[ ! -e "$_target" ]]; then
         dlog "===> Backuped $_target"
     fi
-}
-
-dump_run_commands() {
-    if [[ -z $_dry_run_commands ]]; then
-        return
-    fi
-    log "===================================================="
-    log "==>  This is Dry-run mode."
-    log "==>     Below commands will be execute."
-    log $_dry_run_commands
-    log "===================================================="
 }
 
 # 存在する場合のみ削除
