@@ -181,7 +181,7 @@ main() {
     initialize "$@"
     debug_options
     start_setup
-    if [[ $dry_run -eq 1 ]]; then
+    if is_dry;; then
         dump_run_commands
     fi
     echo "Done!"

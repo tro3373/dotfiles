@@ -8,13 +8,14 @@ _backup_root="${DOT_PATH}/bkup/setup"
 # _log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
 _dry_run_commands=""
 
-# echo するのみ
+is_debug() { [[ $debug -eq 1 ]]; }
+is_dry() { [[ $dry_run -eq 1 ]]; }
 log() {
     echo -e "$*"
 }
 
 dlog() {
-    if [[ $debug -eq 1 ]]; then
+    if is_debug; then
         log "$*"
     fi
 }
@@ -22,7 +23,7 @@ dlog() {
 mexe() {
     local cmd="$*"
 
-    if [[ $dry_run -eq 1 ]]; then
+    if is_dry; then
         dlog " Dummy Exec: $cmd"
         local for_app="${app:+For $app}"
         _dry_run_commands="$_dry_run_commands\n   $for_app: $cmd"
