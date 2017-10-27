@@ -4,7 +4,7 @@ DOT_PATH=~/.dot
 DETECT_OS=$($DOT_PATH/bin/os)
 DETECT_BIT=$($DOT_PATH/bin/bit)
 _timestamp=$(date +%Y%m%d.%H%M%S)
-_backup_dir="${DOT_PATH}/bkup/$_timestamp"
+_backup_root="${DOT_PATH}/bkup/setup"
 # _log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
 _dry_run_commands=""
 
@@ -12,31 +12,30 @@ _dry_run_commands=""
 log() {
     echo -e "$*"
 }
+
 dlog() {
-    [[ $debug -eq 1 ]] && log "$*"
-    :
+    if [[ $debug -eq 1 ]]; then
+        log "$*"
+    fi
 }
 
-# コマンド実行
-# log メソッドを呼びつつ実行する
-vexec() {
-    cmd="$*"
+dvexec() {
+    local cmd="$*"
+
+    if [[ $dry_run -eq 1 ]]; then
+        dlog " Dummy Exec: $cmd"
+        local for_app="${app:+For $app}"
+        _dry_run_commands="$_dry_run_commands\n   $for_app: $cmd"
+        return
+    fi
+
     dlog "===> Executing: $cmd"
-    # eval "$cmd" 2>&1 |tee -a $_log_file
-    # if [ ${PIPESTATUS[0]} -eq 0 ]; then
     eval "$cmd"
     if [ $? -eq 0 ]; then
         dlog "    => Command Sucessfully."
     else
         dlog "    => Command Failed......"
     fi
-}
-
-# コマンドダミー実行
-# echoするのみ
-dry_vexec() {
-    cmd="$*"
-    dlog " Dummy Exec: $cmd"
 }
 
 # コマンドがインストールされているかチェックする
@@ -62,18 +61,6 @@ make_link() {
     local from=$1
     local to=$2
     dvexec "ln -s \"$from\" \"$to\""
-}
-
-# Dry run 実行用の関数定義
-dvexec() {
-    local cmd="$*"
-    local for_app="${app:+For $app}"
-    if [[ $dry_run -eq 1 ]]; then
-        dry_vexec $cmd
-        _dry_run_commands="$_dry_run_commands\n   $for_app: $cmd"
-    else
-        vexec $cmd
-    fi
 }
 
 # $* のリンクを 絶対パスで表示する（readlink -f の代用（For Mac））
@@ -169,26 +156,19 @@ make_lnk_with_bkup() {
     make_link "$src" "$lnk"
 }
 
-# $* のファイルを${_backup_dir}に移動する
-_bkup_files=""
+# $* のファイルを${_backup_root}に移動する
 bkup_orig_file() {
-    local bkup_target="$*"
+    local _target="$*"
     # バックアップ先のディレクトリがない場合は作成する
-    make_dir_if_needed "$_backup_dir"
+    make_dir_if_needed "$_backup_root"
 
+    local _name="$(basename "$_target")"
     # バックアップ先ディレクトリにmv
-    dvexec "mv -fv \"$bkup_target\" \"${_backup_dir}\"/"
-    del_if_exist $bkup_target
-    _bkup_files="$_bkup_files\n       $bkup_target"
-}
-
-dump_backuped_files() {
-    if [[ -z $_bkup_files ]]; then
-        return
+    dvexec "mv -fv \"$_target\" \"${_backup_root}/${_timestamp}.$_name\""
+    del_if_exist "$_target"
+    if [[ ! -e "$_target" ]]; then
+        dlog "===> Backuped $_target"
     fi
-    log "===================================================="
-    log "==>  Below files is backuped to $_backup_dir.$_bkup_files"
-    log "===================================================="
 }
 
 dump_run_commands() {

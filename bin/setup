@@ -118,21 +118,13 @@ suggest_install_brew() {
 EOF
 }
 
-dump_execute_args() {
+debug_options() {
     dlog "===================================================="
     dlog " Execute with below args."
     dlog "   ===> Apps: $all_args"
     dlog "   ===> force: $force"
     dlog "   ===> dry_run: $dry_run"
     dlog "===================================================="
-}
-
-dump_result() {
-    if [[ $dry_run -eq 1 ]]; then
-        dump_run_commands
-    else
-        dump_backuped_files
-    fi
 }
 
 install_app() {
@@ -187,9 +179,11 @@ start_setup() {
 
 main() {
     initialize "$@"
-    dump_execute_args
+    debug_options
     start_setup
-    dump_result
+    if [[ $dry_run -eq 1 ]]; then
+        dump_run_commands
+    fi
     echo "Done!"
 }
 main "$@"
