@@ -82,12 +82,14 @@ alias where="command -v"
 alias diff="diff -Nru"
 #alias j="jobs -l"
 alias vi=vim
+alias v=vim
 alias gp="git pull --rebase"
 alias gb="git branch -vv"
 alias gt="git tag"
 alias gc="git commit"
 alias gr="git remote -v"
 alias gs="git status"
+alias f="find -name"
 # --------------------------------------------------------
 # ag 設定
 # --------------------------------------------------------
