@@ -151,6 +151,18 @@ setting_app() {
     fi
 }
 
+setup_for_app() {
+    dlog "================================================"
+    dlog "===> $app"
+
+    if [[ $force -eq 1 ]] || ! is_installed; then
+        install_app
+    fi
+    if is_installed; then
+        setting_app
+    fi
+}
+
 start_setup() {
     set -eu
     make_setup_dirs
@@ -159,21 +171,13 @@ start_setup() {
         # ディレクトリ名＝アプリ名の前提
         local app=${args[i]}
 
-        dlog "================================================"
-        dlog "===> $app"
-
         app_dir=$DOT_PATH/apps/$app
         source $DOT_PATH/bin/lib/default
         local script_path=$app_dir/config
         if [[ -e $script_path ]]; then
             source $script_path
         fi
-        if [[ $force -eq 1 ]] || ! is_installed; then
-            install_app
-        fi
-        if is_installed; then
-            setting_app
-        fi
+        setup_for_app
     }
 }
 

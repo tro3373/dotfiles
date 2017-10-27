@@ -31,8 +31,7 @@ mexe() {
     fi
 
     dlog "===> Executing: $cmd"
-    eval "$cmd"
-    if [ $? -eq 0 ]; then
+    if eval "$cmd"; then
         dlog "    => Command Sucessfully."
     else
         dlog "    => Command Failed......"
@@ -229,14 +228,14 @@ dl() {
     local _url="$1"
     local _dst="$2"
     if [[ $# -eq 1 ]]; then
-        log "===> Downloading from $_url"
+        ! is_dry && log "===> Downloading from $_url"
         if has curl; then
             mexe "curl -fLO \"$_url\""
         else
             mexe "wget \"$_url\""
         fi
     else
-        log "===> Downloading from $_url to $_dst"
+        ! is_dry && log "===> Downloading from $_url to $_dst"
         if has curl; then
             mexe "curl -fL \"$_url\" -o \"$_dst\""
         else
