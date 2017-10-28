@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+main() {
+    [[ ! -e /etc/hosts ]] && echo "Not supported" 1>&2 && exit 1
+    cat /etc/hosts |\
+        if [[ $# -ne 0 ]]; then
+            cat | grep $*
+        else
+            cat
+        fi
+}
+
+main "$@"
+
