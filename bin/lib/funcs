@@ -3,7 +3,7 @@
 DOT_PATH=~/.dot
 DETECT_OS=$($DOT_PATH/bin/os)
 DETECT_BIT=$($DOT_PATH/bin/bit)
-_timestamp=$(date +%Y%m%d.%H%M%S)
+_timestamp=$(date +%Y%m%d_%H%M%S)
 _backup_root="${DOT_PATH}/bkup/setup"
 # _log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
 _dry_run_commands=""
@@ -157,7 +157,7 @@ backup_file() {
 
     local _name="$(basename "$_target")"
     # バックアップ先ディレクトリにmv
-    mexe "mv -fv \"$_target\" \"${_backup_root}/${_timestamp}.$_name\""
+    mexe "mv -fv \"$_target\" \"${_backup_root}/${_timestamp}_$_name\""
     del_if_exist "$_target"
     if [[ ! -e "$_target" ]]; then
         dlog "===> Backuped $_target"
