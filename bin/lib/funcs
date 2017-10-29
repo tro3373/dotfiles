@@ -184,6 +184,9 @@ is_redhat() { [[ "$DETECT_OS" == "redhat" ]]; }
 is_win() { is_msys || is_cygwin; }
 is_unix() { ! is_win; }
 
+def_install() {
+    mexe $instcmd $*
+}
 make_work_if_needed() {
     make_dir_if_needed "$workdir"
 }
@@ -191,20 +194,39 @@ cd_work() {
     make_work_if_needed
     mexe "cd \"$workdir\""
 }
+
+_gh() {
+    local dst="$1"
+    local url="$2"
+    local tag="${3:-}"
+    local _sudo=""
+    if ! is_win && [[ "$dst" == "/usr/local/src" ]]; then
+        _sudo="sudo"
+    fi
+    local repo_name="${url##*/}"
+    repo_name="${repo_name%%\.git}"
+    local _path="$dst/$repo_name"
+    if [[ -e "$_path" ]]; then
+        mexe cd $_path
+        mexe $_sudo git fetch
+    else
+        mexe $_sudo git clone "$url" $_path
+        mexe cd $_path
+    fi
+    if [[ -z $tag ]]; then
+        is_dry && return
+        tag=$(mexe git tag --list |tail -1 2>/dev/null)
+        if [[ -z $tag ]]; then
+            return
+        fi
+    fi
+    mexe $_sudo git checkout -b $tag $tag
+}
+gh_user_local() {
+    _gh /usr/local/src "$@"
+}
 gh() {
-    local url=$1
-    local tag=${2:-}
-    local repo_name=${url##*/}
-    repo_name=${repo_name%%\.git}
-    if [[ ! -e $workdir/$repo_name ]]; then
-        mexe git clone $url $workdir/$repo_name
-    fi
-    cd_work
-    mexe cd $repo_name
-    mexe git fetch
-    if [[ -n $tag ]]; then
-        mexe git checkout -b $tag $tag
-    fi
+    _gh "$wodkdir" "$@"
 }
 dl() {
     local _url="$1"

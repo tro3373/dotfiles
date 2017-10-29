@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
 install_common() {
-    gh "https://github.com/jhawthorn/fzy.git"
+    gh_user_local "https://github.com/jhawthorn/fzy.git"
     mexe make
     mexe sudo make install
+}
+
+install_msys() {
+   dlog "Not supported."
 }
 
