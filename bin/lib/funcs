@@ -24,11 +24,7 @@ mexe() {
     local cmd="$*"
     is_dry && log "   $cmd" && return
     dlog "===> Executing: $cmd"
-    if eval "$cmd"; then
-        dlog "    => Command Sucessfully."
-    else
-        dlog "    => Command Failed......"
-    fi
+    eval "$cmd" || (echo "===> Failed..... Executing $cmd" && exit 1)
 }
 
 # コマンドがインストールされているかチェックする
@@ -214,13 +210,19 @@ _gh() {
         mexe cd $_path
     fi
     if [[ -z $tag ]]; then
-        is_dry && return
-        tag=$(mexe git tag --list |tail -1 2>/dev/null)
+        if ! is_dry; then
+            local tag=$(git tag --list |tail -1 2>/dev/null)
+        fi
         if [[ -z $tag ]]; then
             return
         fi
     fi
-    mexe $_sudo git checkout -b $tag $tag
+    if ! is_dry; then
+        local now_branch=$(git branch |grep "*" |tr -d "*" |tr -d " ")
+    fi
+    if [[ -n $now_branch && $now_branch != $tag ]]; then
+        mexe $_sudo git checkout -b $tag $tag
+    fi
 }
 gh_user_local() {
     _gh /usr/local/src "$@"
@@ -231,6 +233,10 @@ gh() {
 dl() {
     local _url="$1"
     local _dst="$2"
+    if [[ -e "$_dst" ]] && [[ ! -d "$_dst" ]]; then
+        dlog "Already exists file $_dst"
+        return
+    fi
     if [[ $# -eq 1 ]]; then
         ! is_dry && log "===> Downloading from $_url"
         if has curl; then
@@ -247,13 +253,32 @@ dl() {
         fi
     fi
 }
+dl_untar() {
+    local url="$1"
+    local to="${2}"
+    local strip=${3:-0}
+    local _fname="${url##*/}"
+    [[ -z $_fname ]] && _fname=dl.tgz
+    cd_work
+    dl "$url" $_fname
+    if [[ -z $to ]]; then
+        to=$workdir/${_fname%%.*}
+    fi
+    if [[ ! -e $to ]]; then
+        mexe mkdir -p "$to"
+    fi
+    if [[ $(ls $to/ |wc -l) -eq 0 ]]; then
+        mexe "tar xvfpz $_fname -C \"$to\" --strip-components $strip"
+    fi
+}
 dl_unzip () {
     local url="$1"
     local to="${2}"
     cd_work
     dl "$url" dl.zip
-    if [[ -n "$to" ]]; then
-        mexe "unzip dl.zip -d \"$to\""
+    if [[ -z $to ]]; then
+        to=$workdir
     fi
+    mexe "unzip dl.zip -d \"$to\""
 }
 
