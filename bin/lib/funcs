@@ -228,7 +228,7 @@ gh_user_local() {
     _gh /usr/local/src "$@"
 }
 gh() {
-    _gh "$wodkdir" "$@"
+    _gh "$workdir" "$@"
 }
 dl() {
     local _url="$1"
@@ -280,5 +280,12 @@ dl_unzip () {
         to=$workdir
     fi
     mexe "unzip dl.zip -d \"$to\""
+}
+
+tool_env() {
+    set -eu
+    dry_run=0
+    debug=1
+    workdir=$script_dir/tmp
 }
 
