@@ -10,7 +10,6 @@
       "symbols-view"
       "vim-mode"
       "ex-mode"
-      "vim-mode-plus"
     ]
     telemetryConsent: "no"
     themes: [
@@ -53,6 +52,7 @@
     ignoreCaseForSearch: true
     ignoreCaseForSearchCurrentWord: true
     incrementalSearch: true
+    notifiedCoffeeScriptNoLongerSupportedToExtendVMP: true
     stayOnTransformString: true
     stayOnYank: true
     useClipboardAsDefaultRegister: true
