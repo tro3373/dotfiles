@@ -135,3 +135,14 @@ function ssh() {
 #    fi
 #fi
 
+## EnterKey bindings
+##
+#_success_enter() {
+#  zle accept-line
+#  if [[ -z "$BUFFER" ]]; then
+#      :
+#  fi
+#}
+#zle -N _success_enter
+#bindkey "\C-m" _success_enter
+
