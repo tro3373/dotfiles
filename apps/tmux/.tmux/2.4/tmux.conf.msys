@@ -3,7 +3,7 @@ bind C-o display-message "Msys2 conf loaded"
 # コピーした内容をクリップボードに送る
 # unbind   -T copy-mode-vi Enter
 # bind-key -T copy-mode-vi Enter  send -X copy-pipe "cat > /dev/clipboard"
-bind-key -T copy-mode-vi y      send -X copy-pipe "cat > /dev/clipboard"
+bind-key -T copy-mode-vi y send -X copy-pipe "cat > /dev/clipboard" \; send -X clear-selection \; send -X refresh-client \; display "copied."
 
 # クリップボードの内容を貼り付ける
 bind -r C-v run "cat /dev/clipboard | tmux load-buffer - && tmux paste-buffer"
