@@ -1,15 +1,92 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# while [[ "$email" == "" ]]; do
-#     echo "Input Your email for this key."
-#     read email
-# done
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+args=()
+rm_pass=0
+rm_force=0
 
-email="$1"
-cmd="ssh-keygen -t rsa -b 4096 -f id_rsa"
-if [ ! "$email" = "" ]; then
-    cmd="$cmd -C \"$email\""
-fi
-echo $cmd
-$cmd
+usage() {
+    cat <<EOF
+Generate sshkey
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help:
+        Show this usage
+      -e=<email>|--email=<email>:
+        specify email
+      -f=<file>|--file=<file>:
+        specify generate file
+      -r|--rm:
+        specify rm passphrase file
+      -rf|--rmf:
+        specify rm passphrase file force
+EOF
+}
+
+has() { which $1 >& /dev/null; }
+add_args() { args=("${args[@]}" "$@"); }
+#add_args() { args+=("$@"); }
+
+initialize() {
+    while true; do
+        [[ -z $1 ]] && break
+        case "$1" in
+            -h|--help)      usage && exit 0         ;;
+            -e=*|--email=*) email=${1#*=}           ;;
+            -e|--email)     shift;email=$1          ;;
+            -f=*|--file=*)  file=${1#*=}            ;;
+            -f|--file)      shift;file=$1           ;;
+            -r|-rm|--rm)    rm_pass=1               ;;
+            -rf|-rmf|--rmf) rm_pass=1;rm_force=1    ;;
+            *)              add_args "$1"           ;;
+        esac
+        shift
+    done
+    file=${file:-id_rsa}
+    email_opt=
+    [[ -n $email ]] && email_opt="-C \"$email\""
+    all_args="${args[@]}"
+}
+
+rm_pass_phrase() {
+    local file=$1
+    local dst=$file.nopass
+    if [[ ! -e $file ]]; then
+        echo "No such file exists. $file" 1>&2
+        exit 1
+    fi
+    if [[ -e $dst && $rm_force -ne 1 ]]; then
+        echo "dest file exists. $dst" 1>&2
+        exit 1
+    fi
+    openssl rsa -in $file -out $dst
+    chmod 600 $dst
+    echo "==> No pass key generated. $dst"
+    if [[ $rm_force -ne 1 ]]; then
+        local answer="hoge"
+        while [[ ! $answer =~ [yYnN] ]]; do
+            echo "===> overwrite to $file ?(yn)"
+            read answer
+        done
+        if [[ $answer =~ [nN] ]]; then
+            return
+        fi
+    fi
+    mv -vf $dst $file
+    echo "==> $file orverwrited by nopass key"
+}
+
+main() {
+    initialize "$@"
+    set -eu
+    if [[ $rm_pass -eq 1 ]]; then
+        rm_pass_phrase $file
+    else
+        ssh-keygen -t rsa -b 4096 -f $file $email_opt
+    fi
+}
+main "$@"
 
