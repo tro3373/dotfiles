@@ -7,6 +7,50 @@ install_common() {
 }
 
 install_msys() {
-   dlog "Not supported."
+    dlog "Not supported."
+    return
+
+    def_install mingw-w64-i686-toolchain
+    cd_work
+    local v=$(get_latest_version)
+    if [[ -z $v ]]; then
+        echo "Failed to get latest version for fzf" 1>&2
+        exit 1
+    fi
+    if ! is_dry && [[ ! -e PKGBUILD ]]; then
+        mexe cat <<EOF>PKGBUILD
+pkgname=fzy
+pkgver=$v
+pkgrel=1
+arch=('i686' 'x86_64')
+license=('MIT')
+url="https://github.com/jhawthorn/fzy"
+source=("https://github.com/jhawthorn/fzy/archive/$v.tar.gz")
+sha256sums=('SKIP')
+
+# prepare() {
+#   cd $srcdir/$pkgname-$pkgver
+#   patch -p1 -i $srcdir/0010-fix-homedir.patch
+# }
+
+build() {
+  cd $srcdir/$pkgname-$pkgver
+
+  make PREFIX=/usr
+}
+
+package() {
+  cd $srcdir/$pkgname-$pkgver
+  make PREFIX=/usr DESTDIR="${pkgdir}" install
+}
+
+EOF
+    fi
+    mexe makepkg-mingw -f
+    mexe pacman -U --noconfirm fzy-$v-1-x86_64.pkg.tar.xz
+}
+
+get_latest_version() {
+    curl -fSsL https://github.com/jhawthorn/fzy/releases |grep tar.gz |head -1 |cut -d"\"" -f2 |sed -e 's|.*/||g' -e 's|.tar.gz||g'
 }
 
