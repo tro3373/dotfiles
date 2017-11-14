@@ -127,8 +127,10 @@ add_path ${HOME}/Library/Android/sdk/platform-tools
 add_path ${HOME}/Android/Sdk/platform-tools
 add_path ${HOME}/android-studio/bin
 
+add_path "/c/Program Files (x86)/Google/Chrome/Application"
+add_path "/c/Program Files/Google/Chrome/Application"
 add_path $HOME/win/tools/sublime-text-3
-add_path $HOME/win/tools/atom
+add_path $HOME/win/tools/atom/resources/app/apm/bin
 
 # .local/bin
 add_path ${HOME}/.local/bin
