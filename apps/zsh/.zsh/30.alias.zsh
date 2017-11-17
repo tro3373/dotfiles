@@ -62,6 +62,7 @@ case "${OSTYPE}" in
         alias vim=gvim
         open() { local p=${1:-.}; explorer $p }
         alias nvim=$(which vim)
+        alias git="PATH=/usr/bin winpty git"
         ;;
 esac
 
