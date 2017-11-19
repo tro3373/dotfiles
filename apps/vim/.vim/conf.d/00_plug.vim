@@ -113,7 +113,7 @@ call plug#begin('$HOME/.vim/plugged')
     endif
   endfunction
   Plug 'Shougo/vimproc.vim', { 'do': function('BuildVimproc') }
-  " Plug 'Shougo/vimfiler'                                                        " :VimFiler 遅い
+  Plug 'Shougo/vimfiler'                                                        " :VimFiler 遅い
   " Plug 'cocopon/vaffle.vim'                                                     " SimpleFiler 使いづらい
   " Plug 'scrooloose/nerdtree', {
   "   \ 'on':  ['NERDTreeToggle'] }                                               " NERDTree tree view コマンド実行時に読み込む
