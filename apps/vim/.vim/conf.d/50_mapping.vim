@@ -616,14 +616,12 @@ nnoremap <silent> ,y :call Yank2Remote()<CR>
 " 遅いので使わない
 if g:plug.is_installed("vimfiler")
   let g:vimfiler_as_default_explorer = 1
-  let g:vimfiler_safe_mode_by_default = 0
-  let g:vimfiler_enable_auto_cd = 1
-  " Like Textmate icons.
-  " let g:vimfiler_tree_leaf_icon = ' '
-  " let g:vimfiler_tree_opened_icon = '▾'
-  " let g:vimfiler_tree_closed_icon = '▸'
-  " let g:vimfiler_file_icon = '-'
-  " let g:vimfiler_marked_file_icon = '*'
+  call vimfiler#custom#profile('default', 'context', {
+  \   'explorer' : 1,
+  \   'safe' : 0
+  \ })
+  " let g:vimfiler_safe_mode_by_default = 0
+  " let g:vimfiler_enable_auto_cd = 1
   let g:vimfiler_ignore_pattern = ['^\.git$', '^\.DS_Store$']
   function! s:MyVimFilerKeyMapping()
     nmap <silent><buffer> q <Plug>(vimfiler_close)
