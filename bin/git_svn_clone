@@ -6,6 +6,7 @@ command_name=$(basename $0)
 args=()
 
 is_all=0
+clone=0
 usage() {
     cat <<EOF
 Description for this command.
@@ -104,8 +105,19 @@ do_clone() {
         fi
         rev_option="-r$rev"
     fi
-    echo "==> git svn cloning to dir:$dst url:$url opt:$rev_option sopt:$s_option .."
-    git svn clone --prefix=svn/ $s_option $rev_option "$url" "$dst"
+    if [[ $clone -eq 1 ]]; then
+        echo "==> git svn cloning to dir:$dst url:$url opt:$rev_option sopt:$s_option .."
+        git svn clone --prefix=svn/ $s_option $rev_option "$url" "$dst"
+        cd $dst
+        git reset
+        git checkout .
+    else
+        echo "==> git svn initializing to dir:$dst url:$url opt:$rev_option sopt:$s_option .."
+        git svn init --prefix=svn/ $s_option "$url" "$dst"
+        cd $dst
+        echo "==> git svn fetching $rev_option to dir:$dst .."
+        git svn fetch $rev_option
+    fi
     echo "==> Done."
 }
 
