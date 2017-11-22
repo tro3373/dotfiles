@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+install_common() {
+    # setup for posix system
+    setup_goenv
+}
+install_msys() {
+    dlog "Not supported."
+}
+install_cygwin() {
+    dlog "Not supported."
+}
+
+setup_gvm() {
+    if is_mac; then
+        mexe brew update
+        def_install mercurial
+    elif is_ubuntu; then
+        def_install curl git mercurial make binutils bison gcc build-essential
+    elif is_redhat; then
+        def_install curl git make bison gcc glibc-devel
+    fi
+
+    local url_gvm_installer=https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer
+    if is_dry; then
+        log "install via $url_gvm_installer"
+    else
+        # Install gvm
+        bash < <(curl -s -S -L $url_gvm_installer)
+    fi
+
+    # echo '[[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"' >> .zshrc
+    # gvm install go1.4
+    # gvm use go1.4
+    # gvm install go1.5
+
+    # go version
+    # gvm use go1.4.2 --default
+    # gvm list
+    # gvm listall
+
+    ## go setting(@see https://github.com/astaxie/build-web-application-with-golang/blob/master/ja/01.1.md)
+    # export GOROOT=$HOME/go
+    # export GOPATH=$HOME/gopath
+    # export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+
+    # [ dufferzafar/cheat ]( http://mattn.kaoriya.net/software/lang/go/20150518101220.htm )
+    # - https://github.com/dufferzafar/cheat
+    # - https://github.com/jahendrie/cheat
+    # go get github.com/dufferzafar/cheat
+}
+
+setup_goenv() {
+    if [ ! type anyenv >/dev/null 2>&1 ]; then
+        log "No anyenv exist. install it." 1>&2
+        return
+    fi
+    if ! type goenv >/dev/null 2>&1; then
+        mexe anyenv install goenv
+        log "===> one more!"
+        return
+    fi
+    local version=1.9
+    goenv install $version
+    goenv global $version
+    goenv rehash
+    go version
+    echo "Done!"
+}
