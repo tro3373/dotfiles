@@ -15,7 +15,7 @@ alias toerror
     1>&2
 
 snippet script_dir
-    script_dir=$(cd $(dirname $\$0); pwd)
+    script_dir=$(cd $(dirname \$0); pwd)
 
 snippet script_real_dir
     script_dir=$(cd $(dirname $(readlink -f \$0)); pwd)
