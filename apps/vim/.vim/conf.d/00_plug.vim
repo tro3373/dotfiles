@@ -32,66 +32,23 @@ call plug#begin('$HOME/.vim/plugged')
         \ {'dir': '$HOME/.vim/plugged/vim-plug/autoload'}
 
   " color-scheme
-  Plug 'altercation/vim-colors-solarized'                                       " Solarized
-
-  Plug 'chriskempson/vim-tomorrow-theme'                                        " tomorrow
-  Plug 'w0ng/vim-hybrid'                                                        " hybrid
-  Plug 'nanotech/jellybeans.vim'
-  Plug 'joshdick/onedark.vim'
-  Plug 'AlessandroYorba/Sierra'
   Plug 'romainl/Apprentice'
-
-  Plug 'vim-scripts/twilight'
-  Plug 'AlessandroYorba/Alduin'
-  Plug 'morhetz/gruvbox'
-  Plug 'jeetsukumaran/vim-nefertiti'
-
-  " Plug 'othree/html5.vim'                                                       " For erb tab indent
-  " Plug 'vim-scripts/nginx.vim'                                                  " Nginx Syntax
+  " Plug 'morhetz/gruvbox'
+  " Plug 'w0ng/vim-hybrid'
+  " Plug 'chriskempson/vim-tomorrow-theme'
+  " Plug 'altercation/vim-colors-solarized'
+  " Plug 'nanotech/jellybeans.vim'
+  " Plug 'AlessandroYorba/Alduin'
+  " Plug 'joshdick/onedark.vim'
+  " Plug 'AlessandroYorba/Sierra'
+  " Plug 'vim-scripts/twilight'
+  " Plug 'jeetsukumaran/vim-nefertiti'
 
   " status-line
   Plug 'itchyny/lightline.vim'
-  " Plug 'bling/vim-airline'
-  " Plug 'powerline/powerline', {'rtp': 'powerline/bindings/vim/'}
-
-  Plug 'vim-scripts/sudo.vim'                                                   " sudo
-  Plug 'banyan/recognize_charcode.vim'                                          " 文字コード判定
-  Plug 'kana/vim-submode'                                                       " vim-submode(キーマップ plugin)
-  Plug 'nathanaelkane/vim-indent-guides'                                        " indent guide
-
-  Plug 'kana/vim-smartchr'                                                      " = 等の便利入力
-  Plug 'kana/vim-smartinput'                                                    " () 等の入力補完
-  Plug 'cohama/vim-smartinput-endwise'                                          " vim-endwise (ruby 用 end 補完)
-  Plug 'tpope/vim-surround'                                                     " 囲文字入力アシスト
-  Plug 'tyru/caw.vim'                                                           " コメントアウトプラグイン <Leader>+c
-  " Plug 'Shougo/neocomplcache.vim'                                               " 補完候補を自動でポップアップ(old)
-  Plug 'Shougo/neocomplete.vim'                                                 " Next generation completion framework after neocomplcache
-  " Plug 'Lokaltog/vim-easymotion'                                                " カーソル移動プラグイン(fコマンドが効かなくなるので無効)
-  Plug 'terryma/vim-expand-region'                                              " visually select increasingly larger regions of text
-  " Plug 'terryma/vim-multiple-cursors'                                           " MultiCursor
-
-  Plug 'airblade/vim-gitgutter'                                                 " Shows a git diff in the gutter!!!!!
-  Plug 'cohama/agit.vim'                                                        " gitk-like repository viewer ex) type :Agit
-  Plug 'vim-scripts/gitignore'                                                  " Vim plugin that add the entries in a .gitignore file to 'wildignore'
-
-  Plug 'Shougo/neosnippet'                                                      " Ctrl+k でスニペットを用意
-  Plug 'Shougo/neosnippet-snippets'                                             " 基本スニペット for neosnippet
-  Plug 'honza/vim-snippets'                                                     " snipMate UltiSnip Snippets
-  " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
-  Plug 'vim-scripts/Align'                                                      " CSV,TSV整形
-  Plug 'junegunn/vim-easy-align'                                                " Align text
-
-  Plug 'rking/ag.vim'                                                           " SilverSearcher
-  if !g:is_windows && !g:is_cygmsys2
-      Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
-        \ 'do': './install --all' }                                             " FZF
-      Plug 'junegunn/fzf.vim'
-  endif
+  Plug 'nathanaelkane/vim-indent-guides'                  " indent guide
 
   " Unite関連
-  Plug 'Shougo/unite.vim'                                                       " ユーザインタフェース統合
-  Plug 'Shougo/neomru.vim'                                                      " 最近使用したファイルの一覧管理
-  Plug 'ujihisa/unite-colorscheme'                                              " カラースキーム変更
   function! BuildVimproc(info) abort
     " info is a dictionary with 3 fields
     " - name:   name of the plugin
@@ -112,22 +69,66 @@ call plug#begin('$HOME/.vim/plugged')
         endif
     endif
   endfunction
-  Plug 'Shougo/vimproc.vim', { 'do': function('BuildVimproc') }
-  Plug 'Shougo/vimfiler'                                                        " :VimFiler 遅い
-  " Plug 'cocopon/vaffle.vim'                                                     " SimpleFiler 使いづらい
-  " Plug 'scrooloose/nerdtree', {
-  "   \ 'on':  ['NERDTreeToggle'] }                                               " NERDTree tree view コマンド実行時に読み込む
+  Plug 'Shougo/vimproc.vim',
+      \ { 'do': function('BuildVimproc') }
+  Plug 'Shougo/vimfiler'                                  " :VimFiler
+  Plug 'Shougo/unite.vim'                                 " ユーザインタフェース統合
+  Plug 'Shougo/neomru.vim'                                " 最近使用したファイルの一覧管理
+  Plug 'ujihisa/unite-colorscheme'                        " カラースキーム変更
 
+  " Fuzzy Finder
+  Plug 'ctrlpvim/ctrlp.vim'                               " Fuzzy file, buffer, mru, tag, etc finder.
+  " if !g:is_windows
+  "   Plug 'nixprime/cpsm' , {'do': './install.sh' }        " Plugins for ctrlp.vim A CtrlP matcher, specialized for paths.
+  " endif
+  " Plug 'mattn/ctrlp-filer'                                " Plugins for ctrlp.vim Filer (After start, Ctrl+D will not work bug occure.)
+  Plug 'vim-scripts/ctrlp-funky'                          " Plugins for ctrlp.vim Jump to a function
+  Plug 'suy/vim-ctrlp-commandline'                        " Plugins for ctrlp.vim command line history navigation
+  Plug 'sgur/ctrlp-extensions.vim'                        " Plugins for ctrlp.vim cmdline : cmdline history,
+                                                          " yankring : yank history, menu : extension selector menu
+
+  Plug 'rking/ag.vim'                                     " SilverSearcher
+  if !g:is_windows && !g:is_cygmsys2
+      Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
+        \ 'do': './install --all' }                       " FZF
+      Plug 'junegunn/fzf.vim'
+  endif
+
+
+  Plug 'banyan/recognize_charcode.vim'                    " 文字コード判定
+  Plug 'kana/vim-submode'                                 " vim-submode(キーマップ plugin)
+  Plug 'vim-scripts/sudo.vim'                             " sudo
+  Plug 'airblade/vim-gitgutter'                           " Shows a git diff in the gutter!!!!!
+
+  Plug 'Shougo/neosnippet'                                " Ctrl+k でスニペットを用意
+  Plug 'Shougo/neosnippet-snippets'                       " 基本スニペット for neosnippet
+  Plug 'honza/vim-snippets'                               " snipMate UltiSnip Snippets
+  " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
+
+  " Plug 'Shougo/neocomplcache.vim'                         " 補完候補を自動でポップアップ(old)
+  Plug 'Shougo/neocomplete.vim'                           " Next generation completion framework after neocomplcache
+  Plug 'terryma/vim-expand-region'                        " visually select increasingly larger regions of text
+
+  Plug 'tyru/caw.vim'                                     " コメントアウトプラグイン <Leader>+c
+  Plug 'tpope/vim-surround'                               " 囲文字入力アシスト
+  Plug 'kana/vim-smartchr'                                " = 等の便利入力
+  Plug 'kana/vim-smartinput'                              " () 等の入力補完
+  Plug 'cohama/vim-smartinput-endwise'                    " vim-endwise (ruby 用 end 補完)
+  Plug 'vim-scripts/Align'                                " CSV,TSV整形
+  Plug 'junegunn/vim-easy-align'                          " Align text
+  " Plug 'terryma/vim-multiple-cursors'                     " MultiCursor
 
   " ソース解析
-  Plug 'Shougo/unite-outline'                                                   " 関数一覧とかを表示
-  Plug 'vim-scripts/gtags.vim'                                                  " GNU Global
+  Plug 'Shougo/unite-outline'                             " 関数一覧とかを表示
+  Plug 'vim-scripts/gtags.vim'                            " GNU Global
   if !g:is_windows
-      Plug 'vim-scripts/taglist.vim'                                            " ソースコードブラウザ
+      Plug 'vim-scripts/taglist.vim'                      " ソースコードブラウザ
   endif
-  " Plug 'google/vim-maktaba'                                                     " GoogleCodeFormatter depends
-  " Plug 'google/vim-codefmt'                                                     " GoogleCodeFormatter
-  " Plug 'google/vim-glaive'                                                      " GoogleCodeFormatter depends
+
+  " コードフォーマッター
+  " Plug 'google/vim-maktaba'                               " GoogleCodeFormatter depends
+  " Plug 'google/vim-codefmt'                               " GoogleCodeFormatter
+  " Plug 'google/vim-glaive'                                " GoogleCodeFormatter depends
 
   " Markdown Preview 関連
   Plug 'plasticboy/vim-markdown'
@@ -135,36 +136,37 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'kannokanno/previm'
   Plug 'tyru/open-browser.vim'
 
-  Plug 'ctrlpvim/ctrlp.vim'                                                     " Fuzzy file, buffer, mru, tag, etc finder.
-  " if !g:is_windows
-  "   Plug 'nixprime/cpsm' , {'do': './install.sh' }                              " Plugins for ctrlp.vim A CtrlP matcher, specialized for paths.
-  " endif
-  " Plug 'mattn/ctrlp-filer'                                                      " Plugins for ctrlp.vim Filer (After start, Ctrl+D will not work bug occure.)
-  Plug 'vim-scripts/ctrlp-funky'                                                " Plugins for ctrlp.vim Jump to a function
-  Plug 'suy/vim-ctrlp-commandline'                                              " Plugins for ctrlp.vim command line history navigation
-  Plug 'sgur/ctrlp-extensions.vim'                                              " Plugins for ctrlp.vim cmdline : cmdline history, yankring : yank history, menu : extension selector menu
-
-
-  Plug 'glidenote/memolist.vim'                                                 " simple memo plugin for Vim.
-
   if g:is_windows
-    " Plug 'mattn/webapi-vim'                                                     " vim interface to Web API
+    " Plug 'mattn/webapi-vim'                               " vim interface to Web API
       Plug 'mattn/excelview-vim'
       Plug 'mattn/startmenu-vim'
   endif
 
-  " Plug 'mattn/learn-vimscript.git'                                              " Learn VimScript (:help learn-vimscript)
-  " Plug 'vim-jp/vital.vim'                                                       " A comprehensive Vim utility functions for Vim plugins
-  " Plug 'mattn/wwwrenderer-vim'                                                  " www renderer for vim
-  " Plug 'Shougo/unite-ssh'                                                       "
-  " Plug 'Shougo/vimshell'                                                        " uniteインターフェースでシェル使用できる
-  " Plug 'sjl/gundo.vim'                                                          " UNDO履歴を管理 http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
-  " Plug 'fuenor/qfixhowm'                                                        " メモプラグイン
-  " Plug 'thinca/vim-quickrun'                                                    " 現在のファイルを実行して quickfix に表示
-  " Plug 'tpope/vim-fugitive'                                                     " Git wrapper so awesome
+  " Plug 'othree/html5.vim'                                 " For erb tab indent
+  " Plug 'vim-scripts/nginx.vim'                            " Nginx Syntax
+  " Plug 'mattn/learn-vimscript.git'                        " Learn VimScript (:help learn-vimscript)
+  " Plug 'vim-jp/vital.vim'                                 " A comprehensive Vim utility functions for Vim plugins
+  " Plug 'mattn/wwwrenderer-vim'                            " www renderer for vim
+  " Plug 'Shougo/unite-ssh'                                 "
+  " Plug 'Shougo/vimshell'                                  " uniteインターフェースでシェル使用できる
+  " Plug 'sjl/gundo.vim'                                    " UNDO履歴を管理 http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
+  " Plug 'fuenor/qfixhowm'                                  " メモプラグイン
+  " Plug 'thinca/vim-quickrun'                              " 現在のファイルを実行して quickfix に表示
+  " Plug 'tpope/vim-fugitive'                               " Git wrapper so awesome
   " Plug 'junegunn/seoul256.vim'
-  " Plug 'tpope/vim-fireplace', { 'for': ['clojure'] }                            " 指定したファイルタイプを開いたときに読み込む
+  " Plug 'tpope/vim-fireplace', { 'for': ['clojure'] }      " 指定したファイルタイプを開いたときに読み込む
   " migemo
+  " ================================== drop
+  " Plug 'Lokaltog/vim-easymotion'                          " カーソル移動プラグイン(fコマンドが効かなくなるので無効)
+  " Plug 'bling/vim-airline'
+  " Plug 'powerline/powerline',
+  "     \ {'rtp': 'powerline/bindings/vim/'}
+  " Plug 'glidenote/memolist.vim'                           " simple memo plugin for Vim. No use
+  " Plug 'cocopon/vaffle.vim'                               " SimpleFiler nouse
+  " Plug 'scrooloose/nerdtree', {
+  "   \ 'on':  ['NERDTreeToggle'] }                         " NERDTree tree view コマンド実行時に読み込む
+  " Plug 'cohama/agit.vim'                                  " gitk-like repository viewer ex) type :Agit
+  " Plug 'vim-scripts/gitignore'                            " Vim plugin that add the entries in a .gitignore file to 'wildignore'
 call plug#end()
 
 " GoogleCodeFormatter depends

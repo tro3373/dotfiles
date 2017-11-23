@@ -14,9 +14,10 @@ source $VIMRUNTIME/menu.vim
 " Removes the menubar.
 " :set guioptions -=m
 " Removes the toolbar.
-:set guioptions -=T
+set guioptions -=T
+set viminfo+=n~/.vim/_viminfo
 
-source ~/.vim/conf.d/31_colorscheme.vim
+source ~/.vim/conf.d/20_colorscheme.vim
 
 " 使用するフォントと大きさ
 if (has("win64") || has("win32"))

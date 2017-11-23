@@ -132,16 +132,12 @@ map s\ :cd %:h<Enter><Enter>
 " map sj :! C:\Users\hogeuser\DOC\tools\jsl-0.3.0\jsl -process %<ENTER>
 
 
-" .vimrcを再読み込みする
-command! Reloadvimrc source $MYVIMRC
 " 設定ファイルディレクトリを開く
 function! Settings()
     :tabe $HOME/.vim/conf.d/
 endfunction
 command! Settings call Settings()
 command! Editvimrc call Settings()
-nmap <Leader>0 :Settings<CR>
-
 " doc ディレクトリを開く
 function! Doc(...)
   let dotdir = GetDotDir()
@@ -155,16 +151,12 @@ function! Doc(...)
   exe "tabe" target
 endfunction
 command! -nargs=? Doc call Doc(<f-args>)
-nmap <Leader>9 :Doc<CR>
 
-" memo ディレクトリを開く
-nmap <Leader>8 :tabe $HOME/works/00_memos<ENTER>
-
-" snippet ディレクトリを開く
-nmap <Leader>7 :tabe $HOME/.vim/snippets<ENTER>
-
-" バックアップディレクトリを開く
-nmap <Leader>6 :tabe $HOME/.vim/backup<ENTER>
+nmap <Leader>0 :Settings<CR>
+nmap <Leader>9 :tabe $HOME/.vim/snippets<CR>
+nmap <Leader>8 :Doc<CR>
+nmap <Leader>7 :tabe $HOME/works/00_memos<CR>
+nmap <Leader>6 :tabe $HOME/.vim/backup<CR>
 
 " エンコーディングutf-8を指定して開き直す
 nnoremap ,8 :e ++enc=utf-8<CR>
@@ -403,22 +395,22 @@ if g:plug.is_installed("vim-expand-region")
   vmap <C-v> <Plug>(expand_region_shrink)
 endif
 
-"=============================================
-" NERDTree 設定
-"=============================================
-if g:plug.is_installed("nerdtree")
-  " 隠しファイルをデフォルトで表示させる
-  let NERDTreeShowHidden = 1
-  " デフォルトでツリーを表示させる
-  " autocmd VimEnter * execute 'NERDTree'
-  "<C-e>でNERDTreeをオンオフ
-  " map <silent> <C-e>   :NERDTreeToggle<CR>
-  " lmap <silent> <C-e>  :NERDTreeToggle<CR>
-  nmap <silent> <C-e>      :NERDTreeToggle<CR>
-  vmap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
-  omap <silent> <C-e>      :NERDTreeToggle<CR>
-  imap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
-endif
+" "=============================================
+" " NERDTree 設定
+" "=============================================
+" if g:plug.is_installed("nerdtree")
+"   " 隠しファイルをデフォルトで表示させる
+"   let NERDTreeShowHidden = 1
+"   " デフォルトでツリーを表示させる
+"   " autocmd VimEnter * execute 'NERDTree'
+"   "<C-e>でNERDTreeをオンオフ
+"   " map <silent> <C-e>   :NERDTreeToggle<CR>
+"   " lmap <silent> <C-e>  :NERDTreeToggle<CR>
+"   nmap <silent> <C-e>      :NERDTreeToggle<CR>
+"   vmap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
+"   omap <silent> <C-e>      :NERDTreeToggle<CR>
+"   imap <silent> <C-e> <Esc>:NERDTreeToggle<CR>
+" endif
 
 ""=============================================
 "" Lokaltog/vim-easymotion
@@ -483,7 +475,7 @@ if g:plug.is_installed("vim-smartchr")
   " inoremap <buffer><expr> / smartchr#one_of(' / ', '// ', '/')
   " *はポインタで使うので、空白はいれない
   " inoremap <buffer><expr> & smartchr#one_of(' & ', ' && ', '&')
-  inoremap <buffer><expr> % smartchr#one_of(' % ', '%')
+  " inoremap <buffer><expr> % smartchr#one_of(' % ', '%')
   inoremap <buffer><expr> <Bar> smartchr#one_of(' <Bar> ', ' <Bar><Bar> ', '<Bar>')
   inoremap <buffer><expr> , smartchr#one_of(', ', ',')
   " 3項演算子の場合は、後ろのみ空白を入れる
@@ -519,22 +511,20 @@ if g:plug.is_installed("caw.vim")
 endif
 
 "=============================================
-" Markdown Syntax etc
+" Markdown Preview Syntax etc
 " 'plasticboy/vim-markdown'
+" vim-markdown, preview, open-browser
 "=============================================
 if g:plug.is_installed("vim-markdown")
   " hide/no hide markdown controll word
   let g:vim_markdown_conceal = 1
-endif
-
-"=============================================
-" Markdown Preview
-" vim-markdown, preview, open-browser
-"=============================================
-if g:plug.is_installed("vim-markdown")
   " 折りたたみ設定
   let g:vim_markdown_folding_disabled=1
 endif
+
+"=============================================
+" previm
+"=============================================
 if g:plug.is_installed("previm")
   if g:plug.is_installed("open-browser.vim")
     au BufRead,BufNewFile *.md set filetype=markdown
@@ -546,35 +536,35 @@ if g:plug.is_installed("previm")
   endif
 endif
 
-"=============================================
-" Memolist
-"=============================================
-if g:plug.is_installed('memolist.vim')
-  let g:memolist_path = "$HOME/works/memos"
-  let g:memolist_memo_date = "%Y-%m-%d %H:%M"                 " date format (default %Y-%m-%d %H:%M) ex) epoch/%D %T
-  let g:memolist_template_dir_path = "/path/to/template/dir"
-  let g:memolist_memo_suffix = "md"                           " suffix type (default markdown)
-  let g:memolist_prompt_tags = 1                              " tags prompt (default 0)
-  let g:memolist_prompt_categories = 0                        " categories prompt (default 0)
-  let g:memolist_filename_prefix_none = 0                     " remove filename prefix (default 0)
-  let g:memolist_qfixgrep = 0                                 " use qfixgrep (default 0)
-  let g:memolist_vimfiler = 0                                 " use vimfler (default 0)
-  let g:memolist_unite = 0                                    " use unite (default 0)
-  let g:memolist_unite_source = "file_rec"                    " use arbitrary unite source (default is 'file')
-  let g:memolist_unite_option = "-auto-preview -start-insert" " use arbitrary unite option (default is empty)
-  let g:memolist_denite = 0                                   " use denite (default 0)
-  " let g:memolist_denite_source = "anything"                   " use arbitrary denite source (default is 'file_rec')
-  " let g:memolist_denite_option = "anything"                   " use arbitrary denite option (default is empty)
-  let g:memolist_ex_cmd = 'CtrlP'                             " use various Ex commands (default '')
-  let g:memolist_delimiter_yaml_array = ','                   " use delimiter of array in yaml front matter (default is ' ')
-  let g:memolist_delimiter_yaml_start = '---'                 " first line string pattern of yaml front matter (default '==========')
-  let g:memolist_delimiter_yaml_end = '---'                   " last line string pattern of yaml front matter (default '---')
-
-
-  nmap <Leader>mm :exe "CtrlP" g:memolist_path<cr><f5>
-  nmap <Leader>mc :MemoNew<cr>
-  nmap <Leader>mg :MemoGrep<cr>
-endif
+" "=============================================
+" " Memolist
+" "=============================================
+" if g:plug.is_installed('memolist.vim')
+"   let g:memolist_path = "$HOME/works/memos"
+"   let g:memolist_memo_date = "%Y-%m-%d %H:%M"                 " date format (default %Y-%m-%d %H:%M) ex) epoch/%D %T
+"   let g:memolist_template_dir_path = "/path/to/template/dir"
+"   let g:memolist_memo_suffix = "md"                           " suffix type (default markdown)
+"   let g:memolist_prompt_tags = 1                              " tags prompt (default 0)
+"   let g:memolist_prompt_categories = 0                        " categories prompt (default 0)
+"   let g:memolist_filename_prefix_none = 0                     " remove filename prefix (default 0)
+"   let g:memolist_qfixgrep = 0                                 " use qfixgrep (default 0)
+"   let g:memolist_vimfiler = 0                                 " use vimfler (default 0)
+"   let g:memolist_unite = 0                                    " use unite (default 0)
+"   let g:memolist_unite_source = "file_rec"                    " use arbitrary unite source (default is 'file')
+"   let g:memolist_unite_option = "-auto-preview -start-insert" " use arbitrary unite option (default is empty)
+"   let g:memolist_denite = 0                                   " use denite (default 0)
+"   " let g:memolist_denite_source = "anything"                   " use arbitrary denite source (default is 'file_rec')
+"   " let g:memolist_denite_option = "anything"                   " use arbitrary denite option (default is empty)
+"   let g:memolist_ex_cmd = 'CtrlP'                             " use various Ex commands (default '')
+"   let g:memolist_delimiter_yaml_array = ','                   " use delimiter of array in yaml front matter (default is ' ')
+"   let g:memolist_delimiter_yaml_start = '---'                 " first line string pattern of yaml front matter (default '==========')
+"   let g:memolist_delimiter_yaml_end = '---'                   " last line string pattern of yaml front matter (default '---')
+"
+"
+"   nmap <Leader>mm :exe "CtrlP" g:memolist_path<cr><f5>
+"   nmap <Leader>mc :MemoNew<cr>
+"   nmap <Leader>mg :MemoGrep<cr>
+" endif
 
 
 " 開いているファイルのディレクトリをエクスプローラで開く

@@ -2,6 +2,9 @@
 " func.vim
 "     ユーザ定義関数やマクロの定義をする
 "######################################################################
+" .vimrcを再読み込みする
+command! Reloadvimrc source $MYVIMRC
+
 " private関数
 
 " Ubuntu 判定
