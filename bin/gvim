@@ -1,20 +1,19 @@
 #!/bin/bash
 
-set -eu
-
 debug=0
+use_wingit=0
+use_msys_env=1
+
 dlog() {
     if [ $debug -eq 1 ]; then
         echo "gvim debug: $*"
     fi
 }
-change() {
-    echo $(cygpath -aw "$*")
-}
+change() { cygpath -aw "$*"; }
 changes() {
     local tmp=
-    for v in $*; do
-        tmp="$tmp $(change $v)"
+    for v in "$@"; do
+        tmp="$tmp $(change "$v")"
     done
     echo $tmp
 }
@@ -22,57 +21,73 @@ winpath=
 add_winpath() {
     local str="$*"
     local IFS=:
-    arr=($str)
+    local arr=($str)
     unset IFS
+    local path
     for path in "${arr[@]}"; do
         local tmp="$(change "$path")"
         winpath="$tmp;$winpath"
         dlog "$path ==> $tmp"
     done
 }
+
+set_msys_env() {
+    # Msys path/shell ==> So Buggie...
+    # $WINHOME/AppData/Local/Temp
+    # TMP=$ORIGINAL_TMP
+    # TEMP=$ORIGINAL_TEMP
+    :
+}
+
+set_win_env() {
+    # Windows path/shell
+    # $PROGRAMFILES,$LOCALAPPDATA is not working
+    add_winpath "$ORIGINAL_PATH"
+
+    # git setting
+    local wingit="/c/Program Files/Git/cmd"
+    if [[ $use_wingit -eq 1 && -e "$wingit" ]]; then
+        add_winpath "$wingit"
+    else
+        add_winpath "/usr/bin/" # msys git
+    fi
+
+    add_winpath "/mingw64/bin" # For silver searcher ag
+    add_winpath "$WINHOME/bin" # local bin command path
+
+    # HOME="$(change "$HOME")"
+    HOME=
+    SHELL=
+    TMP="$(change "$WINHOME/AppData/Local/Temp")"
+    TEMP="$TMP"
+    LANGUAGE=ja_JP.UTF-8
+    DOTPATH="$(change "$DOTPATH")"
+    PATH="$winpath"
+}
+
 main() {
+    set -eu
     if [[ ${OSTYPE} != "msys" ]]; then
-        gvim $*
+        gvim "$@"
         return 0
     fi
-    local gvim_dir=vim80-kaoriya-win64
-    args=$*
+
+    local args="$@"
     if [ "$args" = "" ]; then
         #args=$(change "$(pwd)")
         args=$(pwd)
     fi
-
-    if false; then
-        # Msys path/shell ==> So Buggie...
-        # $WINHOME/AppData/Local/Temp
-        TMP=$ORIGINAL_TMP TEMP=$ORIGINAL_TEMP $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent "$args" &
-        return 0
-    fi
-
-    # Windows path/shell
-    # $PROGRAMFILES,$LOCALAPPDATA is not working
-
     args="$(changes $args)"
-    # homepath="$(change "$HOME")"
-    homepath=""
-    tmppath="$(change "$WINHOME/AppData/Local/Temp")"
-    dotpath="$(change "$DOTPATH")"
-    add_winpath "$ORIGINAL_PATH"
-    local wingit="/c/Program Files/Git/cmd"
-    if [ -e "$wingit" ]; then
-        add_winpath "$wingit"
+
+    if [[ $use_msys_env -eq 1 ]]; then
+        set_msys_env
     else
-        # GitGutter Not work
-        add_winpath "/usr/bin/"
-        # File path Not work
-        # add_winpath "/usr/bin/git.exe"
+        set_win_env
     fi
-    add_winpath "/mingw64/bin" # For silver searcher ag
-    add_winpath "$WINHOME/bin"
-    dlog "AllPath: $winpath"
-    dlog "Args:    $args"
-    LANGUAGE=ja_JP.UTF-8
-    DOTPATH=$dotpath HOME=$homepath SHELL= PATH=$winpath TMP=$tmppath TEMP=$tmppath $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent $args &
+    dlog "AllPath: ==> $winpath"
+    dlog "Args: =====> $args"
+    local gvim_dir=vim80-kaoriya-win64
+    $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent $args &
 }
-main $*
+main "$@"
 
