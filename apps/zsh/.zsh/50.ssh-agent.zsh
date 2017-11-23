@@ -93,6 +93,7 @@ function my_ssh_agent {
 }
 
 function my_ssh_agent2 {
+    [[ $OSTYPE == "msys" ]] && return
     dlog "my_ssh_agent2!"
     ! should_continue && return
 
