@@ -7,7 +7,7 @@ set bin=%msys64root%\usr\bin
 set msys2_shell=%msys64root%\msys2_shell.cmd
 set fstab=%msys64root%\etc\fstab
 set hosts=%msys64root%\etc\hosts
-set unxrel=.cache/unxh
+set unxrel=.unxh
 
 if not exist "%msys64root%" (
     echo No msys root dir. %msys64root%

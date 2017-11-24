@@ -3,7 +3,7 @@
 to="$1"
 if [ -z $to ]; then
     if [ $OSTYPE = "msys" ]; then
-        to="/c/Users/`whoami`/.cache/unxh/.dot"
+        to="/c/Users/`whoami`/.unxh/.dot"
     else
         to=$HOME/.dot
     fi
