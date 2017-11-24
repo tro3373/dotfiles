@@ -14,14 +14,14 @@ nnoremap gj j
 nnoremap gk k
 " insertモードから抜ける
 inoremap <silent> jj <ESC>
-inoremap <silent> <C-j> j
+" inoremap <silent> <C-j> j
 inoremap <silent> kk <ESC>
-inoremap <silent> <C-k> k
+" inoremap <silent> <C-k> k
 " 挿入モードでのカーソル移動
-inoremap <C-j> <Down>
-inoremap <C-k> <Up>
-inoremap <C-h> <Left>
-inoremap <C-l> <Right>
+" inoremap <C-j> <Down>
+" inoremap <C-k> <Up>
+" inoremap <C-h> <Left>
+" inoremap <C-l> <Right>
 nnoremap n nzz
 nnoremap N Nzz
 nnoremap S *zz
