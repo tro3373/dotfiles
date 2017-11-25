@@ -71,7 +71,7 @@ call plug#begin('$HOME/.vim/plugged')
   endfunction
   Plug 'Shougo/vimproc.vim',
       \ { 'do': function('BuildVimproc') }
-  Plug 'Shougo/vimfiler'                                  " :VimFiler
+  " Plug 'Shougo/vimfiler'                                  " :VimFiler
   Plug 'Shougo/unite.vim'                                 " ユーザインタフェース統合
   Plug 'Shougo/neomru.vim'                                " 最近使用したファイルの一覧管理
   Plug 'ujihisa/unite-colorscheme'                        " カラースキーム変更
