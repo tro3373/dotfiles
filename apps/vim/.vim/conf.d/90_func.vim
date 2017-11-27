@@ -46,6 +46,11 @@ function! GetGitRoot() abort
   endtry
 endfunction
 
+function! GitRoot() abort
+  echo GetGitRoot()
+endfunction
+command! GitRoot call GitRoot()
+
 " Clipboadの値取得
 function! GetClipboad() abort
   let l:result = ""
