@@ -73,28 +73,28 @@ function is_agent_running {
     return 1
 }
 
-function my_ssh_agent {
-    dlog "my_ssh_agent!"
-    # check for running ssh-agent with proper $SSH_AGENT_PID
-    if [ -n "$SSH_AGENT_PID" ]; then
-        # -n: true if string length greater than 0
-        if is_agent_running; then
-            test_identities
-        fi
-    else
-        # if $SSH_AGENT_PID is not properly set, we might be able to load one from $ssh_env
-        load_ssh_env
-        if is_agent_running; then
-            test_identities
-        else
-            start_agent
-        fi
-    fi
-}
+# function my_ssh_agent {
+#     dlog "my_ssh_agent!"
+#     # check for running ssh-agent with proper $SSH_AGENT_PID
+#     if [ -n "$SSH_AGENT_PID" ]; then
+#         # -n: true if string length greater than 0
+#         if is_agent_running; then
+#             test_identities
+#         fi
+#     else
+#         # if $SSH_AGENT_PID is not properly set, we might be able to load one from $ssh_env
+#         load_ssh_env
+#         if is_agent_running; then
+#             test_identities
+#         else
+#             start_agent
+#         fi
+#     fi
+# }
 
-function my_ssh_agent2 {
+function my_ssh_agent {
     [[ $OSTYPE == "msys" ]] && return
-    dlog "my_ssh_agent2!"
+    dlog "my_ssh_agent!"
     ! should_continue && return
 
     if [ -z $SSH_AGENT_PID ]; then
@@ -110,7 +110,7 @@ function my_ssh_agent2 {
     fi
     start_agent
 }
-my_ssh_agent2
+my_ssh_agent
 
 # --------------------------------------------------------
 # zshが終了するときに自動的にssh-agentを終了させる

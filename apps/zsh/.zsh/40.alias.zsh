@@ -2,57 +2,29 @@
 # Alias
 ##############################################
 case "${OSTYPE}" in
-    # for MAC-OS
     darwin*)
         #alias ls="ls -G -w"
         alias ls='gls -F --color=auto'
         alias xcode='open -a Xcode'         # コマンドラインからXcode起動
-        alias gvim='open -a MacVim'         # コマンドラインからMacVim起動
-
-        fnd() {                             # 指定ディレクトリをFinderで開く
-            if [ $# = 0 ]; then
-                open `pwd`
-            else
-                for arg in $@; do
-                    if [ -d ${arg} ]; then
-                        open ${arg}
-                    else
-                        open -R ${arg}
-                    fi
-                done
-            fi
-        }
+        # alias gvim='open -a MacVim'         # コマンドラインからMacVim起動
         ;;
-
-    # for Linux
     linux*)
         alias ls='ls -F --color=auto'
-        _open() { local p=${1:-.}; xdg-open $p >& /dev/null }
-        alias nt=_open
-        alias open=_open
-        $ gv() {gvim -f $1 &!}                          # コマンドラインからgVim起動
         alias pbcopy='xsel --clipboard --input'         # Mac OS-Xのpbcopyの代わり
         alias pbpaste='xsel --clipboard --output'       # Mac OS-Xのpbpasteの代わり
         alias tmux-copy='tmux save-buffer - | pbcopy'   # tmuxのコピーバッファとクリップボードを連携
         alias tmux='tmux -2'                            # Ubuntu12.04で256を使用するため
         alias git='nocorrect git'                       # Ubuntuで_gitと誤解されるため
         ;;
-
-    #for FreeBSD
     freebsd*)
         alias ls="ls -G -w"
         ;;
-
-    #cygwin
     cygwin*)
         alias ls='ls -F --color=auto'
-        alias open='cygstart'                           # 指定ディレクトリをwindowエクスプローラで開く
         alias apt-get='apt-cyg'                         # apt-get emulate
         alias tmux='tmux -2'                            # 256Color有効化
         alias sudo='echo "No sudo...";'                 # sudo がないので、エイリアスで逃げる
         ;;
-
-    #msys
     msys*)
         alias ls='ls -F --color=auto'
         alias pbcopy='cat - >/dev/clipboard'
@@ -60,18 +32,16 @@ case "${OSTYPE}" in
         alias tmux='tmux -2'                            # 256Color有効化
         alias sudo='echo "No sudo...";'                 # sudo がないので、エイリアスで逃げる
         alias vim=gvim
-        open() { local p=${1:-.}; explorer $p }
         alias nvim=$(which vim)
         alias git="PATH=/usr/bin winpty git"
         ;;
 esac
 
-alias cddot="cd $DOTPATH"
-alias la="ls -a"
-alias lf="ls -F"
 alias l="ls -lFh"
 alias ll="ls -laFh"
 alias lla="ls -laFh"
+alias la="ls -a"
+alias lf="ls -F"
 alias du="du -h"
 alias df="df -h"
 alias su="su -l"
@@ -81,16 +51,18 @@ alias egrep='egrep --color=auto'
 alias pod='nocorrect pod'
 alias where="command -v"
 alias diff="diff -Nru"
-#alias j="jobs -l"
-alias vi=vim
-alias v=vim
 alias gp="git pull --rebase"
 alias gb="git branch -vv"
 alias gt="git tag"
 alias gc="git commit"
 alias gr="git remote -v"
 alias gs="git status"
+alias v=vim
+alias vi=vim
 alias f="find -name"
+alias j="jobs -l"
+alias cddot="cd $DOTPATH"
+
 # --------------------------------------------------------
 # ag 設定
 # --------------------------------------------------------
@@ -120,9 +92,13 @@ fi
 
 # http://qiita.com/yuku_t/items/4ffaa516914e7426419a
 function ssh() {
-    local window_name=$(tmux display -p '#{window_name}')
-    command ssh $@
-    tmux rename-window $window_name
+    if [[ -z $TMUX ]]; then
+        command ssh $@
+    else
+        local window_name=$(tmux display -p '#{window_name}')
+        command ssh $@
+        tmux rename-window $window_name
+    fi
 }
 
 ## --------------------------------------------------------
@@ -146,4 +122,15 @@ function ssh() {
 #}
 #zle -N _success_enter
 #bindkey "\C-m" _success_enter
+
+#
+# 'cd ..' する
+#
+function cd_up() {
+    cd ../
+    zle reset-prompt
+}
+zle -N cd_up
+bindkey '^f' vi-kill-line # デフォルトのキーバインド(^U)を変更
+bindkey '^u' cd_up
 

@@ -51,3 +51,4 @@ function tmux_automatically_attach_session() {
     tmux new-session
 }
 tmux_automatically_attach_session
+
