@@ -21,74 +21,74 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     source ~/.zplug/init.zsh
     zstyle :zplug:tag depth 10
 
-    local target target_massren target_fzf target_jq
-    local is_msys=0
-    case "$OSTYPE" in
-        *'linux'*)
-            target='*linux*amd64*'
-            target_massren=$target
-            target_fzf=$target
-            target_jq=$target
-            ;;
-        *'darwin'*)
-            target='*darwin*amd64*'
-            target_massren='*osx*'
-            target_fzf=$target
-            target_jq=$target
-            ;;
-        *'msys'*)
-            is_msys=1
-            target='os'
-            target_massren='*win*'
-            target_fzf="*windows*amd64*"
-            target_jq="*win64*"
-            ;;
-        *)
-            target='os'
-            target_massren=$target
-            target_fzf=$target
-            target_jq=$target
-            ;;
-    esac
+    # local target target_massren target_fzf target_jq
+    # local is_msys=0
+    # case "$OSTYPE" in
+    #     *'linux'*)
+    #         target='*linux*amd64*'
+    #         target_massren=$target
+    #         target_fzf=$target
+    #         target_jq=$target
+    #         ;;
+    #     *'darwin'*)
+    #         target='*darwin*amd64*'
+    #         target_massren='*osx*'
+    #         target_fzf=$target
+    #         target_jq=$target
+    #         ;;
+    #     *'msys'*)
+    #         is_msys=1
+    #         target='os'
+    #         target_massren='*win*'
+    #         target_fzf="*windows*amd64*"
+    #         target_jq="*win64*"
+    #         ;;
+    #     *)
+    #         target='os'
+    #         target_massren=$target
+    #         target_fzf=$target
+    #         target_jq=$target
+    #         ;;
+    # esac
 
     # common install
     zplug "zplug/zplug"
-    zplug "zsh-users/zsh-completions"
+    zplug "zsh-users/zsh-completions", lazy:true
+    zplug "zsh-users/zsh-history-substring-search"
+    zplug "zsh-users/zsh-syntax-highlighting", defer:2
 
-    if [[ $is_msys -ne 1 ]]; then
-        zplug "zsh-users/zsh-history-substring-search"
-        zplug "zsh-users/zsh-syntax-highlighting", defer:2
-
-        # zplug "stedolan/jq", from:gh-r, as:command, rename-to:jq
-        # zplug "peco/peco", as:command, from:gh-r, use:"$target"
-        # zplug "junegunn/fzf-bin", from:gh-r, as:command, rename-to:fzf
-        # zplug "junegunn/fzf", use:"shell/*.zsh"
-        # zplug "b4b4r07/enhancd", use:enhancd.sh
-        # zplug "b4b4r07/httpstat", as:command, use:'*.sh', rename-to:'httpstat'
-        # zplug "b4b4r07/emoji-cli", on:"stedolan/jq"
-        # zplug "b4b4r07/gomi", as:command, from:gh-r, \
-        #     use:"$target", rename-to:gomi
-        # massren/file name replacer
-        # zplug "laurent22/massren", as:command, from:gh-r, at:v1.3.0, \
-        #     use:"$target_massren", hook-build:"./massren --config editor vim"
-
-        # zplug "yoshikaw/ClipboardTextListener", \
-        #     as:command, use:clipboard_text_listener.pl
-        # zplug "mollifier/cd-gitroot"
-        # zplug "mrowa44/emojify", as:command
-
-        # Not work! so i copy fzf-tmux in my dotfiles/bin
-        # zplug "junegunn/fzf", as:command, use:"bin/{fzf-tmux}", rename-to:fzf-tmux
-        # zplug "Jxck/dotfiles", as:command, use:"bin/{histuniq,color}"
-        # zplug "b4b4r07/easy-oneliner" on:"junegunn/fzf"
-        # zplug "b4b4r07/dotfiles", as:command, use:bin/peco-tmux
-
-        # # Run a command after a plugin is installed/updated
-        # # Provided, it requires to set the variable like the following:
-        # # ZPLUG_SUDO_PASSWORD="********"
-        # zplug "jhawthorn/fzy", as:command, rename-to:fzy, \
-        #     hook-build:"make && sudo make install"
-    fi
+    # if [[ $is_msys -ne 1 ]]; then
+    #
+    #     # zplug "stedolan/jq", from:gh-r, as:command, rename-to:jq
+    #     # zplug "peco/peco", as:command, from:gh-r, use:"$target"
+    #     # zplug "junegunn/fzf-bin", from:gh-r, as:command, rename-to:fzf
+    #     # zplug "junegunn/fzf", use:"shell/*.zsh"
+    #     # zplug "b4b4r07/enhancd", use:enhancd.sh
+    #     # zplug "b4b4r07/httpstat", as:command, use:'*.sh', rename-to:'httpstat'
+    #     # zplug "b4b4r07/emoji-cli", on:"stedolan/jq"
+    #     # zplug "b4b4r07/gomi", as:command, from:gh-r, \
+    #     #     use:"$target", rename-to:gomi
+    #     # massren/file name replacer
+    #     # zplug "laurent22/massren", as:command, from:gh-r, at:v1.3.0, \
+    #     #     use:"$target_massren", hook-build:"./massren --config editor vim"
+    #
+    #     # zplug "yoshikaw/ClipboardTextListener", \
+    #     #     as:command, use:clipboard_text_listener.pl
+    #     # zplug "mollifier/cd-gitroot"
+    #     # zplug "mrowa44/emojify", as:command
+    #
+    #     # Not work! so i copy fzf-tmux in my dotfiles/bin
+    #     # zplug "junegunn/fzf", as:command, use:"bin/{fzf-tmux}", rename-to:fzf-tmux
+    #     # zplug "Jxck/dotfiles", as:command, use:"bin/{histuniq,color}"
+    #     # zplug "b4b4r07/easy-oneliner" on:"junegunn/fzf"
+    #     # zplug "b4b4r07/dotfiles", as:command, use:bin/peco-tmux
+    #
+    #     # # Run a command after a plugin is installed/updated
+    #     # # Provided, it requires to set the variable like the following:
+    #     # # ZPLUG_SUDO_PASSWORD="********"
+    #     # zplug "jhawthorn/fzy", as:command, rename-to:fzy, \
+    #     #     hook-build:"make && sudo make install"
+    # fi
 
     # Local loading
     # zplug "~/.zsh", from:local, ignore:"*vcs-info.zsh", nice:2
