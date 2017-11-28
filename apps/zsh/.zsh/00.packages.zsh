@@ -56,27 +56,29 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
     zplug "zsh-users/zsh-completions"
 
     if [[ $is_msys -ne 1 ]]; then
-        zplug "b4b4r07/enhancd", use:enhancd.sh
-        zplug "b4b4r07/httpstat", as:command, use:'*.sh', rename-to:'httpstat'
-        # windows Not work
-        # zplug "stedolan/jq", from:gh-r, at:1.5, as:command, use:"$target_jq", rename-to:jq
-        zplug "stedolan/jq", from:gh-r, as:command, rename-to:jq
-        zplug "b4b4r07/emoji-cli", on:"stedolan/jq"
-        zplug "mrowa44/emojify", as:command
-        zplug "mollifier/cd-gitroot"
         zplug "zsh-users/zsh-history-substring-search"
         zplug "zsh-users/zsh-syntax-highlighting", defer:2
-        zplug "yoshikaw/ClipboardTextListener", \
-            as:command, use:clipboard_text_listener.pl
-        # zplug "junegunn/fzf-bin", from:gh-r, at:0.17.0, as:command, \
-        #     use:"$target_fzf", rename-to:fzf
-        zplug "junegunn/fzf-bin", from:gh-r, as:command, rename-to:fzf
-        zplug "b4b4r07/gomi", as:command, from:gh-r, \
-            use:"$target", rename-to:gomi
+
+        # zplug "stedolan/jq", from:gh-r, as:command, rename-to:jq
+        # zplug "peco/peco", as:command, from:gh-r, use:"$target"
+        # zplug "junegunn/fzf-bin", from:gh-r, as:command, rename-to:fzf
+        # zplug "junegunn/fzf", use:"shell/*.zsh"
+        # zplug "b4b4r07/enhancd", use:enhancd.sh
+        # zplug "b4b4r07/httpstat", as:command, use:'*.sh', rename-to:'httpstat'
+        # zplug "b4b4r07/emoji-cli", on:"stedolan/jq"
+        # zplug "b4b4r07/gomi", as:command, from:gh-r, \
+        #     use:"$target", rename-to:gomi
+        # massren/file name replacer
+        # zplug "laurent22/massren", as:command, from:gh-r, at:v1.3.0, \
+        #     use:"$target_massren", hook-build:"./massren --config editor vim"
+
+        # zplug "yoshikaw/ClipboardTextListener", \
+        #     as:command, use:clipboard_text_listener.pl
+        # zplug "mollifier/cd-gitroot"
+        # zplug "mrowa44/emojify", as:command
+
         # Not work! so i copy fzf-tmux in my dotfiles/bin
         # zplug "junegunn/fzf", as:command, use:"bin/{fzf-tmux}", rename-to:fzf-tmux
-        zplug "junegunn/fzf", use:"shell/*.zsh"
-        zplug "peco/peco", as:command, from:gh-r, use:"$target"
         # zplug "Jxck/dotfiles", as:command, use:"bin/{histuniq,color}"
         # zplug "b4b4r07/easy-oneliner" on:"junegunn/fzf"
         # zplug "b4b4r07/dotfiles", as:command, use:bin/peco-tmux
@@ -86,10 +88,6 @@ if [ -d ~/.zplug ] || [ -L ~/.zplug ]; then
         # # ZPLUG_SUDO_PASSWORD="********"
         # zplug "jhawthorn/fzy", as:command, rename-to:fzy, \
         #     hook-build:"make && sudo make install"
-
-        # massren/file name replacer
-        zplug "laurent22/massren", as:command, from:gh-r, at:v1.3.0, \
-            use:"$target_massren", hook-build:"./massren --config editor vim"
     fi
 
     # Local loading
