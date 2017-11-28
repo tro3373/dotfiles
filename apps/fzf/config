@@ -1,7 +1,11 @@
 #!/bin/bash
 
-install_msys() { ;: }
-install_cygwin() { ;: }
+install_msys() {
+    not_supported
+}
+install_cygwin() {
+    not_supported
+}
 install_ubuntu() {
     _install_common
 }

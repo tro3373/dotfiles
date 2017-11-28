@@ -7,7 +7,7 @@ install_common() {
 }
 
 install_msys() {
-    dlog "Not supported."
+    not_supported
     return
 
     def_install mingw-w64-i686-toolchain

@@ -323,3 +323,7 @@ tool_env() {
     workdir=$script_dir/tmp
 }
 
+not_supported() {
+    dlog "Not supported."
+}
+

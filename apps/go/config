@@ -5,10 +5,10 @@ install_common() {
     setup_goenv
 }
 install_msys() {
-    dlog "Not supported."
+    not_supported
 }
 install_cygwin() {
-    dlog "Not supported."
+    not_supported
 }
 
 setup_gvm() {

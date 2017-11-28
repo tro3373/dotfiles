@@ -21,8 +21,12 @@ install_common() {
     fi
 }
 
-install_msys() { :; }
-install_cygwin() { :; }
+install_msys() {
+    not_supported
+}
+install_cygwin() {
+    not_supported
+}
 
 install_mac() {
     mexe sudo brew tap peco/peco
