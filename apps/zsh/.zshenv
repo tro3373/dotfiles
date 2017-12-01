@@ -54,9 +54,16 @@ export LSCOLORS=exfxcxdxbxegedabagacad
 export PATH=~/bin:"$PATH"
 
 # Settings for golang
-export GOPATH="$HOME/.go"
-export GOBIN="$GOPATH/bin"
-export PATH="$GOBIN:$PATH"
+if [[ "$OSTYPE" == "msys" ]]; then
+    export GOROOT=/mingw64/lib/go
+    export GOPATH=/mingw64
+    export GOBIN="$GOPATH/bin"
+    export PATH="$GOBIN:$PATH"
+else
+    export GOPATH="$HOME/.go"
+    export GOBIN="$GOPATH/bin"
+    export PATH="$GOBIN:$PATH"
+fi
 if grep -qE "(Microsoft | WSL)" /proc/version &> /dev/null ; then
     export WSL=1
     unsetopt BG_NICE
