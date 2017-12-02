@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+dotbin=${DOTPATH:-~/.dot}/bin
+args=()
+
+usage() {
+    cat <<EOF
+Generate new apps dir and config file.
+  Usage:
+      $command_name [option] <NewAppName>
+    Options
+      -h|--help : Show this usage
+EOF
+}
+
+has() { which $1 >& /dev/null; }
+add_args() { args=("${args[@]}" "$@"); }
+#add_args() { args+=("$@"); }
+
+initialize() {
+    while true; do
+        [[ -z $1 ]] && break
+        case "$1" in
+            -h|--help) usage && exit 0  ;;
+            #-f*|--file*) file=${1#*=} ;;
+            #-f|--file) shift && file=$1 ;;
+            *) add_args "$1"            ;;
+        esac
+        shift
+    done
+    all_args="${args[@]}"
+}
+
+gen_config() {
+    local file=$1
+    cat <<EOF>>$file
+#!/usr/bin/env bash
+
+install_common() { not_supported; }
+install_msys()   { not_supported; }
+install_cygwin() { not_supported; }
+install_mac()    { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+setting_common() { not_supported; }
+setting_msys()   { not_supported; }
+setting_cygwin() { not_supported; }
+setting_mac()    { not_supported; }
+setting_ubuntu() { not_supported; }
+setting_redhat() { not_supported; }
+
+## Usable methods
+# is_msys
+# is_cygwin
+# is_mac
+# is_ubuntu
+# is_redhat
+# is_win
+# is_unix
+# def_install
+# cd_work
+# gh
+# dl
+# dl_untar
+# dl_unzip
+
+EOF
+    chmod 755 $file
+}
+
+main() {
+    initialize "$@"
+    for arg in "${args[@]}"; do
+        local app_path=$dotbin/apps/$arg
+        if [[ -e $app_path ]]; then
+            echo "Already $arg exist in $dobin/apps" 1>&2
+            continue
+        fi
+        mkdir -p $app_path
+        gen_config $app_path/config
+    done
+}
+main "$@"
+
