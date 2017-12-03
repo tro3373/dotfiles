@@ -3,7 +3,7 @@
 current_dir=$(pwd)
 script_dir=$(cd $(dirname $0); pwd)
 command_name=$(basename $0)
-dotbin=${DOTPATH:-~/.dot}/bin
+dotpath=${DOTPATH:-~/.dot}
 args=()
 
 usage() {
@@ -74,13 +74,14 @@ EOF
 main() {
     initialize "$@"
     for arg in "${args[@]}"; do
-        local app_path=$dotbin/apps/$arg
+        local app_path=$dotpath/apps/$arg
         if [[ -e $app_path ]]; then
             echo "Already $arg exist in $dobin/apps" 1>&2
             continue
         fi
         mkdir -p $app_path
         gen_config $app_path/config
+        echo "===> Generated $app_path/config"
     done
 }
 main "$@"
