@@ -90,6 +90,22 @@ if type ag > /dev/null 2>&1; then
     fi
 fi
 
+if type pt > /dev/null 2>&1; then
+    if [ "${OSTYPE}" = "msys" ]; then
+        # . が最後につかないと固まるので暫定
+        org_pt=$(which pt)
+        function mymsys_pt() {
+            winpty $org_pt -S $* .
+        }
+        alias pt="mymsys_pt"
+    else
+        # Smart Case による検索を有効に設定する
+        alias pt='pt -S'
+    fi
+    alias pth='pt --hidden'
+fi
+
+
 # http://qiita.com/yuku_t/items/4ffaa516914e7426419a
 function ssh() {
     if [[ -z $TMUX ]]; then
