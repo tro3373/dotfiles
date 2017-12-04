@@ -289,15 +289,12 @@ dl() {
 }
 dl_untar() {
     local url="$1"
-    local to="${2}"
-    local strip=${3:-0}
     local _fname="${url##*/}"
+    local to="${2:-$workdir/${_fname%%.*}}"
+    local strip=${3:-1}
     [[ -z $_fname ]] && _fname=dl.tgz
     cd_work
     dl "$url" $_fname
-    if [[ -z $to ]]; then
-        to=$workdir/${_fname%%.*}
-    fi
     if [[ ! -e $to ]]; then
         mexe mkdir -p "$to"
     fi
@@ -307,12 +304,9 @@ dl_untar() {
 }
 dl_unzip () {
     local url="$1"
-    local to="${2}"
+    local to="${2:-$workdir}"
     cd_work
     dl "$url" dl.zip
-    if [[ -z $to ]]; then
-        to=$workdir
-    fi
     mexe "unzip dl.zip -d \"$to\""
 }
 
