@@ -1,31 +1,15 @@
 #!/bin/bash
 
 install_common() {
-    # peco 最新バージョンを取得
-    peco_latest_version="`get_pecoltver`"
-    log "  ===> Peco latest version=${peco_latest_version}"
-    dlurl="https://github.com/peco/peco/releases/download/${peco_latest_version}/peco_linux_amd64.tar.gz"
-    log "  ===> Donload from url=${dlurl}"
-
-    cd_work
-    mexe wget $dlurl
-    if [ -e "$app_dir/tmp/peco_linux_amd64.tar.gz" ]; then
-        mexe tar xvfpz peco_linux_amd64.tar.gz
-        installto=/usr/local/bin
-        sudo="sudo"
-        if is_cygwin; then
-            sudo=""
-        fi
-        mexe "$sudo cp peco_linux_amd64/peco $installto"
-        log "  ===> peco installed to $installto"
-    fi
+    dl_untar "$(get_dl_url linux)"
+    mexe cp peco_linux_amd64/peco $HOME/bin
 }
 
 install_msys() {
     not_supported
-}
-install_cygwin() {
-    not_supported
+    return
+    # dl_unzip "$(get_dl_url windows)"
+    # mexe cp peco_windows_amd64/peco.exe $HOME/bin
 }
 
 install_mac() {
@@ -33,10 +17,14 @@ install_mac() {
     mexe sudo brew install peco
 }
 
-# peco 最新バージョンを取得
-get_pecoltver() {
-    version="`curl -sI https://github.com/peco/peco/releases/latest | awk -F'/' '/^Location:/{print $NF}' |sed 's/\r//g'`"
-    echo "$version"
+get_dl_url() {
+    local base_url=https://github.com
+    local rel_url=$(curl -fsSL $base_url/peco/peco/releases |
+        grep "a href" |
+        grep ${1}_amd64 |
+        head -1 |
+        cut -d"\"" -f2)
+    echo $base_url$rel_url
 }
 
 setting_common() {
