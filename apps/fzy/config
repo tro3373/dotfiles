@@ -9,12 +9,15 @@ install_common() {
 install_msys() {
     not_supported
     return
+    msys_build
+}
 
-    def_install mingw-w64-i686-toolchain
+msys_build_ng() {
     cd_work
+    def_install mingw-w64-i686-toolchain
     local v=$(get_latest_version)
     if [[ -z $v ]]; then
-        echo "Failed to get latest version for fzf" 1>&2
+        echo "Failed to get latest version for fzy" 1>&2
         exit 1
     fi
     if ! is_dry && [[ ! -e PKGBUILD ]]; then
@@ -48,6 +51,36 @@ EOF
     fi
     mexe makepkg-mingw -f
     mexe pacman -U --noconfirm fzy-$v-1-x86_64.pkg.tar.xz
+}
+
+msys_build() {
+    cd_work
+    cat <<'EOF'>PKGBUILD
+# Maintainer: Erich Gubler <erichdongubler@gmail.com>
+
+pkgname=fzy
+pkgver=0.9
+pkgrel=1
+pkgdesc="A better fuzzy finder"
+url="https://github.com/jhawthorn/fzy"
+arch=('i686' 'x86_64')
+license=('MIT')
+source=(https://github.com/jhawthorn/${pkgname}/archive/${pkgver}.tar.gz)
+sha512sums=('71a44bc3bbef3a2d82476a69b5c9e28753e760bbb8d453a9e44b57f34a79dd8ebcd510a869dfeae95f522ba6ccb4b8f10f79c081ce6bc6cfae9a41f4071fefc0')
+
+build() {
+  cd "${srcdir}/${pkgname}-${pkgver}/"
+  make
+}
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver}/"
+  make PREFIX=/usr DESTDIR="$pkgdir/" install
+  install -Dm644 LICENSE "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
+}
+EOF
+    mexe makepkg
+    mexe pacman -U "${package-name}*.pkg.tar.xz"
 }
 
 get_latest_version() {
