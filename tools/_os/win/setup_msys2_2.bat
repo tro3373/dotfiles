@@ -43,7 +43,10 @@ if not exist "%hosts%" (
     echo Third setup Done. pakages updated. ReRun
 ) else if not exist "%msys64root%\mingw64\bin\ag.exe" (
     rem Install pakages
-    %bin%\bash.exe -c "/usr/bin/pacman -S --noconfirm man zsh vim git winpty svn wget sed diffutils grep tar unzip patch mingw-w64-x86_64-gcc make gcc bc mingw-w64-x86_64-ag"
+    rem base-devel: grep make
+    rem msys2-devel: gcc
+    rem mingw-w64-x86_64-toolchain mingw-w64-x86_64-gcc
+    %bin%\bash.exe -c "/usr/bin/pacman -S --noconfirm base-devel msys2-devel mingw-w64-i686-toolchain mingw-w64-x86_64-toolchain man zsh vim git winpty svn wget sed diffutils tar unzip patch bc mingw-w64-x86_64-ag"
     rem Change login shell to zsh
     %bin%\bash.exe -c "/usr/bin/sed -ri -e 's/bash/zsh/g' /msys2_shell.cmd"
     rem SHELL variable change to zsh
