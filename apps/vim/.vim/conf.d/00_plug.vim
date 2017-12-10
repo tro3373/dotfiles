@@ -116,6 +116,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'cohama/vim-smartinput-endwise'                    " vim-endwise (ruby 用 end 補完)
   Plug 'vim-scripts/Align'                                " CSV,TSV整形
   Plug 'junegunn/vim-easy-align'                          " Align text
+  Plug 'rhysd/clever-f.vim'                               " f検索
   " Plug 'terryma/vim-multiple-cursors'                     " MultiCursor
 
   " ソース解析
