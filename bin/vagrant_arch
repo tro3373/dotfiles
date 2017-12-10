@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+has() { which ${1} >& /dev/null; }
+
+initialize() {
+    if [[ ! has vagrant ]]; then
+        echo "No vagrant exist." 1>&2
+        exit 1
+    fi
+}
+boxadd() {
+    :
+}
+main() {
+    local d=${1:-$current_dir}
+
+}
+
+main "$@"
+
+# @see https://qiita.com/CirocMK2/items/b05c410b57fbd984443e
+# loadkeys jp106
