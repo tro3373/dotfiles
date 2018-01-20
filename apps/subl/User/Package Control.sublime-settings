@@ -2,6 +2,10 @@
 	"bootstrapped": true,
 	"in_process_packages":
 	[
+		"BracketHighlighter",
+		"Dotfiles Syntax Highlighting",
+		"GitGutter",
+		"IMESupport"
 	],
 	"installed_packages":
 	[
