@@ -28,7 +28,7 @@ setting_common() {
     # ソースコード取得
     make_work_if_needed
     if [ ! -e "$workdir/dircolors-solarized" ]; then
-        mexe git clone https://github.com/seebi/dircolors-solarized.git $workdir/
+        mexe git clone https://github.com/seebi/dircolors-solarized.git $workdir/dircolors-solarized
     fi
     local setcolortheme
     # setcolortheme=dircolors.256dark
@@ -40,7 +40,7 @@ setting_common() {
     fi
 
     if [ ! -e "$workdir/tomorrow-theme" ]; then
-        mexe git clone https://github.com/chriskempson/tomorrow-theme.git $workdir/
+        mexe git clone https://github.com/chriskempson/tomorrow-theme.git $workdir/tomorrow-theme
         mexe $workdir/tomorrow-theme/Gnome-Terminal/setup-theme.sh
     fi
 
@@ -48,7 +48,7 @@ setting_common() {
         mexe git clone https://github.com/tomislav/osx-terminal.app-colors-solarized $workdir/solarized.git
     fi
     if is_msys && [ ! -e "$workdir/mintty-colors-solarized" ]; then
-        mexe git clone https://github.com/mavnn/mintty-colors-solarized.git $workdir/
+        mexe git clone https://github.com/mavnn/mintty-colors-solarized.git $workdir/mintty-colors-solarized
     fi
 
     # その他ドットファイルリンク作成
