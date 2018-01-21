@@ -34,11 +34,11 @@ if [ ! -e ~/Desktop ]; then
     env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
 fi
 # visudo エディタをvimに設定
-sudo apt-get install vim
+sudo apt-get install -y vim
 sudo update-alternatives --config editor
 
-# Unity Tweak Tool
-sudo apt-get install -y unity-tweak-tool
+# Tweak Tool
+sudo apt-get install -y unity-tweak-tool gnome-tweak-tool
 # Numix Icon theme
 sudo apt-add-repository -y ppa:numix/ppa
 sudo apt-get update
