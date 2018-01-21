@@ -62,7 +62,12 @@ rm_pass_phrase() {
         echo "dest file exists. $dst" 1>&2
         exit 1
     fi
-    openssl rsa -in $file -out $dst
+    echo openssl rsa -in $file -out $dst |
+        if [[ $OSTYPE != msys ]]; then
+            echo winpty $(cat -)
+        else
+            cat -
+        fi | sh
     chmod 600 $dst
     echo "==> No pass key generated. $dst"
     if [[ $rm_force -ne 1 ]]; then
