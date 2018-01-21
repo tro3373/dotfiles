@@ -2,7 +2,7 @@
 
 script_dir=$(cd $(dirname $0); pwd)
 main() {
-    local msys64=$WINHOME/AppData/Local/Msys64
+    local msys64=${WINHOME:-/c/Users/$(whoami)}/AppData/Local/Msys64
     [ -e $msys64 ] && echo "Already msys64 exist at $msys64. do nothing." && exit 1
     local work_dir=$script_dir/tmp
     [ ! -e $work_dir ] && mkdir $work_dir
@@ -14,7 +14,7 @@ main() {
     fi
     if [ ! -e msys64 ]; then
         echo "==> Untaring .."
-        tar Jxfv msys2-x86_64-latest.tar.xz
+        tar Jxfv $target
     fi
     if [ ! -e $msys64 ]; then
         echo "==> Moving to $msys64 .."
