@@ -111,7 +111,7 @@ call plug#begin('$HOME/.vim/plugged')
 
   Plug 'tyru/caw.vim'                                     " コメントアウトプラグイン <Leader>+c
   Plug 'tpope/vim-surround'                               " 囲文字入力アシスト
-  Plug 'kana/vim-smartchr'                                " = 等の便利入力
+  " Plug 'kana/vim-smartchr'                                " = 等の便利入力
   Plug 'kana/vim-smartinput'                              " () 等の入力補完
   Plug 'cohama/vim-smartinput-endwise'                    " vim-endwise (ruby 用 end 補完)
   Plug 'vim-scripts/Align'                                " CSV,TSV整形
