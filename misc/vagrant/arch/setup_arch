@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+main() {
+    #https://qiita.com/tomi_sheep/items/ddd9c7b0f0f7c774a222
+    # boot arch in virtualbox
+    loadkeys jp106
+    timedatectl set-ntp true
+
+    # setup partition
+    # gdisk /dev/sda
+    # o n 1 Enter +512M EF00 n 2 Enter Enter 8300 w
+
+    # mkfs.vfat -F32 /dev/sda1
+    # mkfs.ext4 /dev/sda2
+    # mount /dev/sda2 /mnt
+    # mkdir -p /mnt/boot
+    # mount /dev/sda1 /mnt/boot
+
+    vi /etc/pacman.d/mirrorlist
+    # move the record to top `## Score: 2.0, Japan`
+    pacman -Syy
+    pacstrap /mnt base base-devel
+    genfstab -U /mnt >> /mnt/etc/fstab
+    arch-chroot /mnt /bin/bash
+    sed -i -e "/en_US.UTF-8/s/^# //g" /etc/locale.gen
+    sed -i -e "/ja_JP.UTF-8/s/^# //g" /etc/locale.gen
+    locale.gen
+    echo LANG=en_US.UTF-8 > /etc/locale.conf
+    export LANG=en_US.UTF-8
+
+    cat <<EOF>>/etc/vconsole.conf
+KEYMAP=jp106
+FONT=lat9w-16
+EOF
+    rm /etc/localtime
+    ln -s /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+    hwclock --systohc --utc
+
+    local _hostname=vagrant
+    echo $_hostname > /etc/hostname
+    cat <<EOF>>/etc/hosts
+127.0.0.1 localhost.localdomain localhost $_hostname
+::1   localhost.localdomain localhost $_hostname
+EOF
+    systemctl enable dhcpcd
+    passwd
+
+    pacman -S grub dosfstools efibootmgr
+    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=arch_grub --recheck
+    grub-mkconfig -o /boot/grub/grub.cfg
+    mkdir /boot/EFI/boot
+    cp /boot/EFI/arch_grub/grubx64.efi  /boot/EFI/boot/bootx64.efi
+
+    exit
+    umount -R /mnt
+    shutdown -h now
+
+    local _user=vagrant
+    useradd -m -G wheel -s /bin/bash $_user
+    passwd $_user
+    visudo
+
+    cat <<'EOF'>>/etc/pacman.conf
+[archlinuxfr]
+SigLevel = Never
+Server = http://repo.archlinux.fr/$arch
+EOF
+
+    pacman -Syy yaourt
+
+    sudo pacman -S linux-lts linux-lts-headers
+    sudo grub-mkconfig -o /boot/grub/grub.cfg
+    sudo reboot
+
+    sudo pacman -S virtualbox-guest-utils
+    sudo systemctl enable vboxservice
+    sudo reboot
+}
+main "$@"

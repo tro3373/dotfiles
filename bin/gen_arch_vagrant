@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+dotmisc=${DOTPATH:-~/.dot}/misc
+
+has() { which ${1} >& /dev/null; }
+
+initialize() {
+    arch_root=$HOME/works
+    if [[ -e $arch_root/Vagrantfile ]]; then
+        echo "==> Already setuped in $arch_root" 1>&2
+        exit 1
+    fi
+}
+main() {
+    initialize
+    [[ ! -e $arch_root ]] && mkdir $arch_root
+    cp $dotmisc/vagrant/arch/Vagrantfile $arch_root
+    echo "==> Vagrantfile generated in $arch_root !"
+    echo "==> Run 'vagrant up' in $arch_root !"
+    echo "==> Done."
+}
+
+main "$@"
+
