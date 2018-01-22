@@ -2,6 +2,6 @@
 
 main() {
     [ $# -eq 0 ] && echo "Usage $0 <file> [<file> .. ]" && exit 1
-    git update-index --add --chmod=-x $*
+    git update-index --add --chmod=+x $*
 }
 main $*
