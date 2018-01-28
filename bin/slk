@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+config=$0.conf
+args=()
+
+usage() {
+    cat <<EOF
+Send message to slack
+when no argument specified, we use normal input.
+
+$0.conf is config file.
+when config file exist, slack send setting loaded from config file.
+  Usage:
+      $command_name [send message] [option]
+    Options
+      -h|--help : Show this usage
+      -f|--file : specify send payload message
+EOF
+}
+
+has() { which $1 >& /dev/null; }
+add_args() { args=("${args[@]}" "$@"); }
+initialize() {
+    if [[ -e $config ]]; then
+        source $config
+    fi
+    slk_url=${slk_url:-https://hooks.slack.com/services/hoge/huga/piyo}
+    botname=${botname:-"MyBot"}
+    icon_emoji=${icon_emoji:-":penguin:"}
+    while true; do
+        [[ -z $1 ]] && break
+        case "$1" in
+            -h|--help) usage && exit 0  ;;
+            #-f*|--file*) file=${1#*=} ;;
+            -f|--file) shift && file=$1 ;;
+            *) add_args "$1"            ;;
+        esac
+        shift
+    done
+    all_args="${args[@]}"
+}
+send() {
+    curl -X POST "$slk_url" -d @- <<EOF
+payload={
+      "username": "$botname"
+    , "text": "$(cat -)"
+    , "icon_emoji": "$icon_emoji"
+}
+EOF
+    # , "channel": "@username"
+    # , "channel": "#channel_name"
+}
+
+main() {
+    initialize "$@"
+    if [[ -n $file && -f $file ]]; then
+        cat $file
+    else
+        if [[ ${#args[@]} -eq 0 ]]; then
+            cat -
+        else
+            echo "$@"
+        fi
+    fi |
+        sed -z "s|\n|\\\\n|g" |
+        send
+}
+main "$@"
+

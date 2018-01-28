@@ -10,3 +10,6 @@ tmp
 
 *.work
 *.home
+
+bin/slk.conf
+
