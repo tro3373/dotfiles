@@ -1,27 +1,48 @@
 #!/usr/bin/env bash
 
-main() {
-    #https://qiita.com/tomi_sheep/items/ddd9c7b0f0f7c774a222
-    # boot arch in virtualbox
+# https://qiita.com/tomi_sheep/items/ddd9c7b0f0f7c774a222
+# https://qiita.com/okash1n/items/8929a67a3cd7223fb90c
+
+do_in_host() {
+    # 1. Install virtual box. http://www.oracle.com/technetwork/server-storage/virtualbox/downloads/index.html?ssSourceSiteId=otnjp
+
+    # 2. Download arch image iso. http://ftp.tsukuba.wide.ad.jp/Linux/archlinux/iso/latest/
+
+    # 3. Create virtual box new vm.
+        # - Enable EFI
+        # - Set Storage and mont arch iso
+        # - boot.
+
+    # 4. boot arch in virtualbox
+    :
+}
+
+do_in_guest() {
     loadkeys jp106
     timedatectl set-ntp true
 
-    # setup partition
+    # 1. setup partition
     # gdisk /dev/sda
     # o n 1 Enter +512M EF00 n 2 Enter Enter 8300 w
-
     # mkfs.vfat -F32 /dev/sda1
     # mkfs.ext4 /dev/sda2
+
+    # 2. mount partition
     # mount /dev/sda2 /mnt
     # mkdir -p /mnt/boot
     # mount /dev/sda1 /mnt/boot
 
+    # 3. install packages setting
     vi /etc/pacman.d/mirrorlist
     # move the record to top `## Score: 2.0, Japan`
+
     pacman -Syy
     pacstrap /mnt base base-devel
+
     genfstab -U /mnt >> /mnt/etc/fstab
     arch-chroot /mnt /bin/bash
+
+
     sed -i -e "/en_US.UTF-8/s/^# //g" /etc/locale.gen
     sed -i -e "/ja_JP.UTF-8/s/^# //g" /etc/locale.gen
     locale.gen
@@ -59,6 +80,7 @@ EOF
     useradd -m -G wheel -s /bin/bash $_user
     passwd $_user
     visudo
+    # uncomment %wheel ALL=(ALL) NOPASSWD: ALL
 
     cat <<'EOF'>>/etc/pacman.conf
 [archlinuxfr]
@@ -74,6 +96,32 @@ EOF
 
     sudo pacman -S virtualbox-guest-utils
     sudo systemctl enable vboxservice
+    sudo modprobe -a vboxguest vboxsf vboxvideo
+    cat <<EOF |sudo tee /etc/modules-load.d/virtualbox.conf
+vboxguest
+vboxsf
+vboxvideo
+EOF
     sudo reboot
+
+    yaourt -S openssh
+    sudo systemctl start sshd
+    sudo systemctl enable sshd
+
+    # setting port forwarding via gui vbox. guest 22 to host 2222
+
+    yaourt -S wget
+    wget --no-check-certificate "https://raw.github.com/mitchellh/vagrant/master/keys/vagrant.pub" -O ~/.ssh/authorized_keys
+
+    # create box
+    vagrant package --base archlinux --output arch.box
+
+    # generate sshconfig
+    # vagrant ssh-config --host vag >> ~/.ssh/config
+}
+
+main() {
+    do_in_host
+    do_in_guest
 }
 main "$@"
