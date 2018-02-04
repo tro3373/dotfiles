@@ -6,6 +6,9 @@ install_msys() {
 install_cygwin() {
     not_supported
 }
+install_arch() {
+    install_via_os_default
+}
 install_ubuntu() {
     _install_common
 }

@@ -6,6 +6,10 @@ install_common() {
     mexe sudo make install
 }
 
+install_arch() {
+    install_via_os_default
+}
+
 install_msys() {
     not_supported
     return

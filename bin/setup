@@ -80,7 +80,11 @@ initialize() {
     elif is_msys; then
         instcmd="pacman -S --noconfirm"
     elif is_arch; then
-        instcmd="sudo pacman -S --noconfirm"
+        if has yaourt; then
+            instcmd="yaourt -S --noconfirm"
+        else
+            instcmd="sudo pacman -S --noconfirm"
+        fi
     fi
     cd $DOT_PATH
 }

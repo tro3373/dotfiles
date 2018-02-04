@@ -40,6 +40,10 @@ install_cygwin() {
     mexe make install
 }
 
+install_arch() {
+    mexe "$instcmd the_silver_searcher"
+}
+
 install_ubuntu() {
     mexe "$instcmd silversearcher-ag"
 }
