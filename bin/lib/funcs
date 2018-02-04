@@ -206,6 +206,7 @@ del_if_exist() {
     fi
 }
 
+is_arch() { [[ "$DETECT_OS" == "arch" ]]; }
 is_msys() { [[ "$DETECT_OS" == "msys" ]]; }
 is_cygwin() { [[ "$DETECT_OS" == "cygwin" ]]; }
 is_mac() { [[ "$DETECT_OS" == "mac" ]]; }

@@ -16,8 +16,16 @@ check_os() {
         # Fedra
         result="fedora"
     elif [[ -e /etc/redhat-release ]]; then
-        # CentOS
-        result="redhat"
+        if [ -e /etc/oracle-release ]; then
+            # Oracle Linux
+            result="oracle"
+        else
+            # Red Hat Enterprise Linux
+            result="redhat"
+        fi
+    elif [ -e /etc/arch-release ]; then
+        # Arch Linux
+        result="arch"
     elif [[ -e /etc/turbolinux-release ]]; then
         # Turbolinux
         result="turbol"
