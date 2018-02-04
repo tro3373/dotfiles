@@ -57,6 +57,70 @@ initialize() {
     check
 }
 
+cat_template() {
+    local simple=$1
+    if [[ $simple -eq 1 ]]; then
+        cat <<'EOL'
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+has() { which ${1} >& /dev/null; }
+
+main() {
+    :
+}
+main "$@"
+EOL
+    else
+        cat <<'EOL'
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+args=()
+
+usage() {
+    cat <<EOF
+Description for this command.
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+EOF
+}
+
+has() { which $1 >& /dev/null; }
+add_args() { args=("${args[@]}" "$@"); }
+#add_args() { args+=("$@"); }
+
+initialize() {
+    while true; do
+        [[ -z $1 ]] && break
+        case "$1" in
+            -h|--help) usage && exit 0  ;;
+            #-f*|--file*) file=${1#*=} ;;
+            #-f|--file) shift && file=$1 ;;
+            *) add_args "$1"            ;;
+        esac
+        shift
+    done
+    all_args="${args[@]}"
+}
+
+main() {
+    initialize "$@"
+    for arg in "${args[@]}"; do
+        echo "Arguments: $arg"
+    done
+    echo $file
+}
+main "$@"
+EOL
+    fi
+}
+
 main(){
     initialize "$@"
     local out=$current_dir
@@ -68,12 +132,14 @@ main(){
         echo "Target $target is exist." 1>&2
         exit 1
     fi
-    template=$dotbin/lib/template
-    if [[ $simple -eq 1 ]]; then
-        template=$dotbin/lib/template_s
+    cat_template $simple > $target
+    chmod 775 $target
+    echo "==> New shell template file generated to $target."
+    echo "==> Edit it?(y/N)"
+    read yes_i_edit
+    if [[ $yes_i_edit =~ [yY] ]]; then
+        vim $target
     fi
-    cp $template $target
-    vim $target
 }
 main "$@"
 
