@@ -9,7 +9,6 @@ if [ -z $to ]; then
     fi
 fi
 [ ! -e $to ] && git clone -q "$(curl -fsSLI git.io/tr3d |grep Location |grep "\.git" |awk '{print $2}')" "$to"
-echo "==> cloned to $to. and setup?"
-read is_setup
-. $to/bin/setup -e
+echo "==> cloned to $to. "
+ecoh "==> done."
 
