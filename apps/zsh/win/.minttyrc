@@ -7,8 +7,10 @@ FontHeight=13
 Locale=ja_JP
 Charset=UTF-8
 RightClickAction=paste
-Columns=156
-Rows=27
+Columns=164
+Rows=45
+X=64
+Y=0
 
 # Soralized Dark
 ForegroundColour=131, 148, 150
