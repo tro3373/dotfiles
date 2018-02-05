@@ -15,6 +15,9 @@ case "${OSTYPE}" in
         alias tmux-copy='tmux save-buffer - | pbcopy'   # tmuxのコピーバッファとクリップボードを連携
         alias tmux='tmux -2'                            # Ubuntu12.04で256を使用するため
         alias git='nocorrect git'                       # Ubuntuで_gitと誤解されるため
+        if [[ -e /etc/arch-release ]]; then
+            alias y=yaourt
+        fi
         ;;
     freebsd*)
         alias ls="ls -G -w"
