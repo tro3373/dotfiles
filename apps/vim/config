@@ -100,7 +100,7 @@ install_ubuntu() {
     mexe sudo ln -sf /usr/include/luajit-2.0 /usr/include/lua5.1/include
     mexe cd /usr/local/src/
     if [[ ! -e /usr/local/src/vim ]]; then
-        mexe sudo git clone https://github.com/vim/vim.git
+        mexe sudo git clone --depth 1 https://github.com/vim/vim.git
         mexe cd vim/src
     else
         mexe cd vim
@@ -135,14 +135,14 @@ install_ubuntu() {
 install_redhat() {
     mexe cd /usr/local/src/
     if [[ ! -e /usr/local/src/luajit ]]; then
-        mexe sudo git clone http://luajit.org/git/luajit-2.0.git luajit
+        mexe sudo git clone --depth 1 http://luajit.org/git/luajit-2.0.git luajit
     fi
     mexe cd luajit
     mexe sudo make
     mexe sudo make install
     mexe cd ../
     if [[ ! -e /usr/local/src/vim ]]; then
-        mexe sudo git clone https://github.com/vim/vim.git
+        mexe sudo git clone --depth 1 https://github.com/vim/vim.git
         mexe cd vim/src
     else
         mexe cd vim

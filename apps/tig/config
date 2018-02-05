@@ -10,10 +10,9 @@ install_ubuntu() {
     # ソースコード取得
     cd_work
     if [ ! -e "$script_dir/tmp/tig" ]; then
-        mexe git clone https://github.com/jonas/tig.git
+        mexe git clone --depth 1 -b tig-2.1.1 https://github.com/jonas/tig.git
     fi
     mexe "cd tig"
-    mexe git checkout tig-2.1.1
 
     # ビルド, インストール
     mexe sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
@@ -31,7 +30,7 @@ install_redhat() {
     # ソースコード取得
     cd_work
     if [ ! -e "$workdir/tig" ]; then
-        mexe git clone https://github.com/jonas/tig.git
+        mexe git clone --depth 1 https://github.com/jonas/tig.git
     fi
     mexe "cd tig"
     # mexe git checkout tig-2.1.1

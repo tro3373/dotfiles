@@ -20,7 +20,7 @@ install_msys() {
     # for build
     mexe $instcmd base-devel mingw-w64-x86_64-gcc mingw-w64-x86_64-pcre mingw-w64-x86_64-xz
     if [ ! -e the_silver_searcher/.git ]; then
-        mexe git clone $url
+        mexe git clone --depth 1 $url
     fi
     mexe cd the_silver_searcher/
     mexe ./build.sh PCRE_CFLAGS=-DPCRE_STATIC LDFLAGS=-static
@@ -32,7 +32,7 @@ install_cygwin() {
     # 必要パッケージインストール
     mexe "$instcmd autoconf automake gcc-g++ gettext gettext-devel liblzma-devel make mingw-gcc-g++ mingw-zlib-devel pkg-config xz zlib-devel"
     cd_work
-    mexe git clone $url
+    mexe git clone --depth 1 $url
     mexe cd the_silver_searcher/
     mexe aclocal && autoconf && autoheader && automake --add-missing
     mexe ./configure

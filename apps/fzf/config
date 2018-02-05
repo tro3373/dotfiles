@@ -20,7 +20,7 @@ install_mac() {
 }
 
 _install_common() {
-    mexe git clone https://github.com/junegunn/fzf.git ~/.fzf
+    mexe git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
     mexe ~/.fzf/install
 }
 

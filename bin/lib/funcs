@@ -241,7 +241,7 @@ _gh() {
         mexe cd $_path
         mexe $_sudo git fetch
     else
-        mexe $_sudo git clone "$url" $_path
+        mexe $_sudo git clone --depth 1 "$url" $_path
         mexe cd $_path
     fi
     if [[ -z $tag ]]; then
