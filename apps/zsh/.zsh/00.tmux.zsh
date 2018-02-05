@@ -13,7 +13,7 @@ function auto_exit_shell() { echo "Auto exiting.." && sleep 0.5 && exit; }
 function tmux_automatically_attach_session() {
 
     ! shell_has_started_interactively && return 0
-    is_ssh_running && return 0
+    #is_ssh_running && return 0
     is_screen_running && echo "This is on screen." && return 1
     ! is_exists 'tmux' && echo 'Error: tmux command not found' 2>&1 && return 1
 
