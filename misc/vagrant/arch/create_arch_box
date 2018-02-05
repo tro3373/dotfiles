@@ -118,6 +118,11 @@ EOF
 
     # generate sshconfig
     # vagrant ssh-config --host vag >> ~/.ssh/config
+
+    # [clipboard](http://subtech.g.hatena.ne.jp/secondlife/20100526/1274883708)
+    # yaourt -S xorg-server-xvfb
+    # Xvfb -screen 0 320x240x8 &
+    # DISPLAY=:0 VBoxClient --clipboard &
 }
 
 main() {
