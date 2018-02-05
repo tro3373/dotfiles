@@ -169,6 +169,18 @@ install_redhat() {
     mexe sudo make install
 }
 
+install_arch() {
+    cd_work
+    if [[ ! -e vim ]]; then
+        mexe yaourt -G vim
+    fi
+    mexe cd vim
+    mexe sed -ie "s/^pkgbase=vim/pkgbase=vim\ngroup=('modified')/g" PKGBUILD
+    mexe sed -ie "s/with-x=no/with-x=yes/g" PKGBUILD
+    mexe makepkg --noconfirm -s
+    mexe sudo pacman --noconfirm -U vim-*tar.xz
+}
+
 setting_common() {
     make_link_dot2home $app_dir
 }
