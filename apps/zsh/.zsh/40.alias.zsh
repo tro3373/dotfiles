@@ -65,6 +65,7 @@ alias vi=vim
 alias f="find -name"
 alias j="jobs -l"
 alias cddot="cd $DOTPATH"
+alias history="history -i"
 
 # --------------------------------------------------------
 # ag 設定

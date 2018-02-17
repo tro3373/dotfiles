@@ -131,6 +131,7 @@ export HISTFILESIZE=100000
 # export HISTIGNORE=?:??:exit # history:ls:ll:'ls -la' 無視リスト
 export HISTFILE=~/.bash_history
 # export HISTFILE=~/.bash_history/.bash_history-$OSTYPE-`date +%Y%m%d`
+export HISTTIMEFORMAT='%F %T ' # %F %T ==> YYYY-MM-DD HH:MM:SS
 
 # 標準エディタ環境変数の設定
 EDITOR=vim
