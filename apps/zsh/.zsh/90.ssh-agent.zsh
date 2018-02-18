@@ -1,6 +1,7 @@
 #
 # ssh-agent start settings
 #
+[[ $OSTYPE == "msys" ]] && return
 _grep=`bash -c 'which grep'`
 _ls=`bash -c 'which ls'`
 
@@ -93,7 +94,6 @@ function is_agent_running {
 # }
 
 function my_ssh_agent {
-    [[ $OSTYPE == "msys" ]] && return
     dlog "my_ssh_agent!"
     ! should_continue && return
 
