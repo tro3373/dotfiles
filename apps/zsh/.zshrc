@@ -39,7 +39,7 @@ autoload     run-help-svn
 [ ${OSTYPE} = "msys" ] && export WINHOME=/c/Users/`whoami`
 if [ -d ~/.zsh ]; then
     for z in `ls ~/.zsh/*.zsh`; do
-        if [ $z -nt $z.zwc ]; then
+        if [[ ! -e $z.zwc || $z -nt $z.zwc ]]; then
             echo "==> zcompiling $z .."
             zcompile $z
         fi
