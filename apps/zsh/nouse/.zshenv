@@ -7,22 +7,9 @@ function debug_load() {
     local t=$(($(now_msec)-LOADST))
     echo "==> $(printf "%05d" $t) msec $1 load starting .."
 }
-#export LOADST=$(now_msec)
+export LOADST=$(now_msec)
 debug_load $0
-if [ -z "$DOTPATH" ]; then
-    _get_dotpath() {
-        if [[ -d ~/.dot ]]; then
-            echo "$(cd ~/.dot && pwd)"
-        elif [[ -d ~/.dotfiles ]]; then
-            echo "$(cd ~/.dotfiles && pwd)"
-        elif [[ -d ~/dotfiles ]]; then
-            echo "$(cd ~/dotfiles && pwd)"
-        else
-            echo "$(cd ~ && pwd)/.dot"
-        fi
-    }
-    export DOTPATH="$(_get_dotpath)"
-fi
+export DOTPATH="~/.dot"
 #[ -f $DOTPATH/etc/install ] && . $DOTPATH/etc/install
 
 # LANGUAGE must be set by en_US
