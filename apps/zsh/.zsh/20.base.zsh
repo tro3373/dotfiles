@@ -12,7 +12,7 @@ bindkey -v                  # <ESC>を押した時にvi風のキー操作がで�
 ## コマンド履歴
 # History
 # History file
-export HISTFILE=~/.zsh_history
+export HISTFILE=$HOME/.zsh_history
 # History size in memory
 export HISTSIZE=50000
 # The number of histsize

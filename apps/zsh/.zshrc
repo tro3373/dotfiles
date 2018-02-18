@@ -92,7 +92,7 @@ fi
 # available $INTERACTIVE_FILTER
 # export INTERACTIVE_FILTER="fzf:peco:percol:gof:pick"
 
-export DOTPATH="~/.dot"
+export DOTPATH="$HOME/.dot"
 # keybind ^X^X
 # export ONELINER_FILE="$DOTPATH/doc/misc/commands.txt"
 

@@ -1,7 +1,7 @@
 ## PATHの設定
 #
-export GENPATHF=~/.path
-export WORKPATHF=~/.work.path
+export GENPATHF=$HOME/.path
+export WORKPATHF=$HOME/.work.path
 # function is_exist_path() {
 #     echo "$PATH:" |grep "$@:" >& /dev/null
 # }
@@ -159,9 +159,9 @@ function build_path() {
     IFS='$\n'
     echo $PATH |tr ":" "\n" |
         while read -r p; do
+            echo "==> p: $p"
             [[ -z $p ]] && continue
             [[ ! -e $p ]] && continue
-            # echo "==> p: $p"
             if ! echo "$_path:" |grep "$p:" >& /dev/null; then
                 [[ -n $_path ]] && _path="$_path:"
                 _path="$_path$p"
