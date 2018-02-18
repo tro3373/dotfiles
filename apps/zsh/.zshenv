@@ -1,3 +1,14 @@
+#zmodload zsh/zprof && zprof
+function now_msec() {
+    echo "$(date +%s)$(printf "%03d" $(($(date +%N)/1000000)))"
+}
+function debug_load() {
+    [[ -z $LOADST ]] && return
+    local t=$(($(now_msec)-LOADST))
+    echo "==> $(printf "%05d" $t) msec $1 load starting .."
+}
+#export LOADST=$(now_msec)
+debug_load $0
 if [ -z "$DOTPATH" ]; then
     _get_dotpath() {
         if [[ -d ~/.dot ]]; then

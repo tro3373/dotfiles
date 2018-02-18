@@ -1,3 +1,4 @@
+debug_load $0
 ##          _              
 ##  _______| |__  _ __ ___ 
 ## |_  / __| '_ \| '__/ __|
@@ -38,8 +39,20 @@ autoload     run-help-svn
 [ ${OSTYPE} = "msys" ] && export WINHOME=/c/Users/`whoami`
 if [ -d ~/.zsh ]; then
     for z in `ls ~/.zsh/*.zsh`; do
+        if [ $z -nt $z.zwc ]; then
+            echo "==> zcompiling $z .."
+            zcompile $z
+        fi
+        debug_load $z
         source $z
     done
 fi
+if [ ~/.zshrc -nt ~/.zshrc.zwc ]; then
+    zcompile ~/.zshrc
+    find ~/.zplug/repos/ -name "*.zsh" |while read -r line; do zcompile $line ; done
+fi
 [ -f ~/.works.zsh ] && source ~/.works.zsh
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+#if (which zprof > /dev/null) ;then
+#  zprof | less
+#fi
