@@ -1,8 +1,7 @@
 ## PATHの設定
 #
 function is_exist_path() {
-    echo "$PATH:" |grep "$@:" > /dev/null 2>&1
-    return $?
+    echo "$PATH:" |grep "$@:" >& /dev/null
 }
 # パス追加(追加パスは前から重複を無くして追加)
 #
