@@ -1,30 +1,32 @@
 ## PATHの設定
 #
-function is_exist_path() {
-    echo "$PATH:" |grep "$@:" >& /dev/null
-}
-# パス追加(追加パスは前から重複を無くして追加)
-#
+export GENPATHF=~/.path
+export WORKPATHF=~/.work.path
+# function is_exist_path() {
+#     echo "$PATH:" |grep "$@:" >& /dev/null
+# }
 function add_path() {
-    local targetPath="$@"
-    #echo "==============> Add start!!!!!"
-    #echo "targetPath="$targetPath
-    if [ ! -f ${targetPath} ] &&
-        [ ! -d ${targetPath} ] &&
-        [ ! -L ${targetPath} ]; then
-        # 存在しないパスの場合無視する.
-        #echo "$targetPath is not exist. return."
-        return
-    fi
-    # 既にパスに追加されている場合は削除する.
-    if is_exist_path $targetPath; then
-        #echo "$targetPath is already pathed. remove it."
-        # $targetPath を $PATH から削除.
-        #PATH=${PATH#"$targetPath:"}
-        PATH=`echo $PATH |sed -e "s|$targetPath||g" |sed -e 's/::/:/g'`
-    fi
-    #echo "$targetPath is will be pathed."
-    export PATH=$targetPath:$PATH
+    [[ -e $GENPATHF ]] && return
+    export PATH=$@:$PATH
+    # local targetPath="$@"
+    # #echo "==============> Add start!!!!!"
+    # #echo "targetPath="$targetPath
+    # if [ ! -f ${targetPath} ] &&
+    #     [ ! -d ${targetPath} ] &&
+    #     [ ! -L ${targetPath} ]; then
+    #     # 存在しないパスの場合無視する.
+    #     #echo "$targetPath is not exist. return."
+    #     return
+    # fi
+    # # 既にパスに追加されている場合は削除する.
+    # if is_exist_path $targetPath; then
+    #     #echo "$targetPath is already pathed. remove it."
+    #     # $targetPath を $PATH から削除.
+    #     #PATH=${PATH#"$targetPath:"}
+    #     PATH=`echo $PATH |sed -e "s|$targetPath||g" |sed -e 's/::/:/g'`
+    # fi
+    # #echo "$targetPath is will be pathed."
+    # export PATH=$targetPath:$PATH
 }
 
 [ "${OSTYPE}" = "msys" ] && add_path "/mingw64/bin" # For silver searcher ag
@@ -132,7 +134,41 @@ add_path "/c/Program Files/Google/Chrome/Application"
 add_path $HOME/win/tools/sublime-text-3
 add_path $HOME/win/tools/atom/resources/app/apm/bin
 
+# Settings for golang
+export GOPATH="$HOME/.go"
+export GOROOT=$GOPATH/lib/go
+export GOBIN="$GOPATH/bin"
+export PATH="$GOBIN:$PATH"
+
 add_path ${HOME}/.local/bin
 add_path ${DOTPATH}/bin
 add_path ${HOME}/bin
 
+function build_path() {
+    if [[ -e $GENPATHF ]]; then
+        export PATH="$(cat $GENPATHF)"
+        return
+    fi
+    local work_path=
+    if [[ -e $WORKPATHF ]]; then
+        echo "==> $WORKPATHF loaded."
+        work_path="$(cat $WORKPATHF)"
+    fi
+    PATH="$work_path:$PATH"
+    local _path=
+    IFS='$\n'
+    echo $PATH |tr ":" "\n" |
+        while read -r p; do
+            [[ -z $p ]] && continue
+            [[ ! -e $p ]] && continue
+            # echo "==> p: $p"
+            if ! echo "$_path:" |grep "$p:" >& /dev/null; then
+                [[ -n $_path ]] && _path="$_path:"
+                _path="$_path$p"
+            fi
+        done
+    echo "$_path" > $GENPATHF
+    echo "==> $GENPATHF generated."
+    export PATH=$_path
+}
+build_path

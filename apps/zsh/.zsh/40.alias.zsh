@@ -66,8 +66,6 @@ alias f="find -name"
 alias j="jobs -l"
 alias cddot="cd $DOTPATH"
 alias history="history -i"
-function zsh_time() { for i in $(seq 1 10); do (time zsh -i -c exit); done }
-alias zshtime="zsh_time"
 
 # --------------------------------------------------------
 # ag 設定
