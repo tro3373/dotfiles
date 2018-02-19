@@ -7,7 +7,7 @@ export WORKPATHF=$HOME/.work.path
 # }
 function add_path() {
     [[ -e $GENPATHF ]] && return
-    export PATH=$@:$PATH
+    export PATH="$@:$PATH"
     # local targetPath="$@"
     # #echo "==============> Add start!!!!!"
     # #echo "targetPath="$targetPath
@@ -28,8 +28,6 @@ function add_path() {
     # #echo "$targetPath is will be pathed."
     # export PATH=$targetPath:$PATH
 }
-
-[ "${OSTYPE}" = "msys" ] && add_path "/mingw64/bin" # For silver searcher ag
 
 # --------------------------------------------------------
 # anyenv
@@ -129,6 +127,7 @@ add_path ${HOME}/Android/Sdk/platform-tools
 add_path ${HOME}/android-studio/bin
 
 # For Win.
+add_path "/mingw64/bin" # For silver searcher ag
 add_path "/c/Program Files (x86)/Google/Chrome/Application"
 add_path "/c/Program Files/Google/Chrome/Application"
 add_path $HOME/win/tools/sublime-text-3
@@ -138,7 +137,7 @@ add_path $HOME/win/tools/atom/resources/app/apm/bin
 export GOPATH="$HOME/.go"
 export GOROOT=$GOPATH/lib/go
 export GOBIN="$GOPATH/bin"
-export PATH="$GOBIN:$PATH"
+add_path $GOBIN
 
 add_path ${HOME}/.local/bin
 add_path ${DOTPATH}/bin
