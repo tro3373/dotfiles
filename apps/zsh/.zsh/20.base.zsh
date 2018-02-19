@@ -1,6 +1,100 @@
 ## Environment variable configuration
 ## Default shell configuration
 
+# umask settnig
+umask 0002
+
+source_pkg https://github.com/zsh-users/zsh-completions.git
+source_pkg https://github.com/zsh-users/zsh-history-substring-search.git 1
+source_pkg https://github.com/zsh-users/zsh-syntax-highlighting.git 1
+
+#limit coredumpsize 0
+#bindkey -d
+#
+# NOTE: set fpath before compinit
+fpath=(~/.zsh/Completion(N-/) $fpath)
+fpath=(~/.zsh/functions/*(N-/) $fpath)
+fpath=(~/.zsh/plugins/zsh-completions(N-/) $fpath)
+#fpath=(/usr/local/share/zsh/site-functions(N-/) $fpath)
+#
+## autoload
+autoload -U  run-help
+#autoload -Uz add-zsh-hook
+autoload -Uz cdr
+#autoload -Uz colors; colors
+autoload -Uz compinit; compinit -u
+#autoload -Uz is-at-least
+#autoload -Uz history-search-end
+#autoload -Uz modify-current-argument
+#autoload -Uz smart-insert-last-word
+#autoload -Uz terminfo
+#autoload -Uz vcs_info
+#autoload -Uz zcalc
+#autoload -Uz zmv
+autoload     run-help-git
+autoload     run-help-svk
+autoload     run-help-svn
+
+# LANGUAGE must be set by en_US
+export LANGUAGE="en_US.UTF-8"
+# export LANGUAGE="ja_JP.UTF-8"
+case ${UID} in
+0)
+    LANGUAGE=C
+    ;;
+esac
+export LANG="${LANGUAGE}"
+export LC_ALL="${LANGUAGE}"
+export LC_CTYPE="${LANGUAGE}"
+
+# Editor
+export EDITOR=vim
+export CVSEDITOR="${EDITOR}"
+export SVN_EDITOR="${EDITOR}"
+export GIT_EDITOR="${EDITOR}"
+
+# Pager
+export PAGER=less
+# Less status line
+export LESS='-R -f -X -i -P ?f%f:(stdin). ?lb%lb?L/%L.. [?eEOF:?pb%pb\%..]'
+export LESSCHARSET='utf-8'
+
+# LESS man page colors (makes Man pages more readable).
+export LESS_TERMCAP_mb=$'\E[01;31m'
+export LESS_TERMCAP_md=$'\E[01;31m'
+export LESS_TERMCAP_me=$'\E[0m'
+export LESS_TERMCAP_se=$'\E[0m'
+export LESS_TERMCAP_so=$'\E[00;44;37m'
+export LESS_TERMCAP_ue=$'\E[0m'
+export LESS_TERMCAP_us=$'\E[01;32m'
+
+# ls command colors
+export LSCOLORS=exfxcxdxbxegedabagacad
+
+if grep -qE "(Microsoft | WSL)" /proc/version &> /dev/null ; then
+    export WSL=1
+    unsetopt BG_NICE
+fi
+
+# declare the environment variables
+# export CORRECT_IGNORE='_*'
+# export CORRECT_IGNORE_FILE='.*'
+#
+# export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
+# export WORDCHARS='*?.[]~&;!#$%^(){}<>'
+#
+# fzf - command-line fuzzy finder (https://github.com/junegunn/fzf)
+# export FZF_DEFAULT_OPTS="--extended --ansi --multi"
+#
+# Cask
+#export HOMEBREW_CASK_OPTS="--appdir=/Applications"
+#
+# available $INTERACTIVE_FILTER
+# export INTERACTIVE_FILTER="fzf:peco:percol:gof:pick"
+
+# keybind ^X^X
+# export ONELINER_FILE="$DOTPATH/doc/misc/commands.txt"
+
 setopt auto_cd              # 'cd'を打たなくてもディレクトリ名だけで移動できるようにする
 setopt auto_pushd           # 移動ディレクトリ管理 ex) cd -3 ex) cd -<TAB> で履歴
 setopt correct              # コマンドの打ち間違い(typo)を訂正してくれるようにする
