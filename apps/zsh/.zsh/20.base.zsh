@@ -160,7 +160,10 @@ autoload zed                    # zsh editorを有効にする
 #  または
 #   for c in {016..255}; do echo -n "\e[38;5;${c}m $c" ; [ $(($((c-16))%6)) -eq 5 ] && echo;done;echo
 #
-autoload colors
+# colors: これ以降は${fg[色指定]}と${reset_color}で囲んだ部分がカラー表示になる。
+# -U: 呼び出し側のシェルで alias 設定を設定していたとしても、中の関数側ではその影響を受けなくなる
+# -z: 関数を zsh 形式で読み込む
+autoload -Uz colors
 colors
 case ${UID} in
 0)
