@@ -175,8 +175,8 @@ install_arch() {
         mexe yaourt -G vim
     fi
     mexe cd vim
-    mexe sed -ie "s/^pkgbase=vim/pkgbase=vim\ngroup=('modified')/g" PKGBUILD
-    mexe sed -ie "s/with-x=no/with-x=yes/g" PKGBUILD
+    mexe "sed -i -e \"s/^pkgbase=vim/pkgbase=vim\ngroup=('modified')/g\" PKGBUILD"
+    mexe "sed -i -e \"s/with-x=no/with-x=yes/g\" PKGBUILD"
     mexe makepkg --noconfirm -s
     mexe sudo pacman --noconfirm -U vim-*tar.xz
 }
