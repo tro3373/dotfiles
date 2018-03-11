@@ -33,6 +33,7 @@ if [[ $LOADDEBUG -eq 1 ]]; then
     debug_load ".zshrc load start"
 fi
 
+export TERM=xterm-256color
 if [ -d ~/.zsh ]; then
     debug_load ".zsh/ load start"
     for z in $(ls ~/.zsh/??\.*\.zsh); do
