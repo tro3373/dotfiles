@@ -34,6 +34,8 @@ bind generic ` :?^@@
 bind generic + !git commit --amend
 # rebase
 bind main B !git rebase -i %(commit)
+# checkout
+bind main O ?git checkout %(commit)
 # stash
 bind stash A !?git stash apply %(stash)
 bind stash D !?git stash drop %(stash)
