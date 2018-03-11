@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+has() { which ${1} >& /dev/null; }
+
+main() {
+    set -eu
+    if [[ ${OSTYPE} != "msys" ]]; then
+        echo "Not supported"
+        return 0
+    fi
+    local src=$(cat /dev/clipboard |tr -d "\"" |tr -d "\r")
+    if [[ -z $src ]]; then
+        echo "clipboard is empty." 1>&2
+        exit 1
+    fi
+    local dst="$(cygpath -au "$src")"
+    echo "$src changed to $dst"
+    echo -e "$dst" |tr -d "\n">/dev/clipboard
+}
+main "$@"
