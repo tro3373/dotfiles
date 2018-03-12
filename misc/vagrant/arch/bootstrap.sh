@@ -32,35 +32,40 @@ main() {
     sudo pacman -R --noconfirm xorg-fonts-misc xorg-font-utils xorg-server xorg-server-common xorg-bdftopcf libxfont libxfont2
 
     sudo pacman -Syyu --noconfirm
-    if ! has powerpill; then
-        sudo pacman -S --noconfirm reflector
-    fi
-    if [[ ! -e /etc/pacman.d/mirrorlist.bk ]]; then
-        sudo cp /etc/pacman.d/mirrorlist{,.bk}
-        sudo reflector --verbose --country 'Japan' -l 10 --sort rate --save /etc/pacman.d/mirrorlist
+
+    sudo pacman -S --noconfirm libxfont2
+
+    if ! has yaourt; then
+        sudo pacman -S --noconfirm yaourt
     fi
 
+    if ! sudo test -e /etc/pacman.d/mirrorlist.bk; then
+        sudo cp /etc/pacman.d/mirrorlist{,.bk}
+    fi
+    if ! has reflector; then
+        sudo pacman -S --noconfirm reflector
+        sudo reflector --verbose --country 'Japan' -l 10 --sort rate --save /etc/pacman.d/mirrorlist
+    fi
     if ! has powerpill; then
         gpg --recv-keys --keyserver hkp://pgp.mit.edu 1D1F0DC78F173680
         yaourt -S --noconfirm powerpill  # Use powerpill instead of pacman. Bye pacman...
     fi
 
     ### =================powerpill SigLevel書き換え===================
-    if [[ ! -e /etc/pacman.conf.bk ]]; then
+    if ! sudo test -e /etc/pacman.conf.bk; then
         sudo cp /etc/pacman.conf{,.bk}
         cat /etc/pacman.conf |
            sed -e 's/Required DatabaseOptional/PackageRequired/' |
                sudo tee /etc/pacman.conf
     fi
 
-    if ! has yaourt; then
-        sudo pacman -S yaourt
-    fi
-
     # =================全パッケージのアップデート===================
     sudo powerpill -Syu --noconfirm
     yaourt -Syua --noconfirm
 
+    # for clipboard
+    sudo powerpill -S xsel #xorg-x11-server-Xvfb
+    yaourt -S xorg-server-xvfb
     # =================GUI環境===================
     # sudo pacman -S --noconfirm xorg-xinit lightdm-gtk-greeter
     # sudo pacman -S --noconfirm xorg-xinit
@@ -136,3 +141,4 @@ main() {
     echo "===> sudo reboot"
 }
 main
+
