@@ -2,17 +2,21 @@
 
 has() { which ${1} >& /dev/null; }
 
+backup() {
+    for f in "$@"; do
+        local dst=$f.org
+        sudo test -e $dst && continue
+        sudo cp -rf $f $dst
+    done
+}
 main() {
-    # 起動時に一度だけ実行されるprovisioning
-
-    # Exit if already bootstrapped
-    test -f /etc/bootstrapped && exit
+    if test -f /etc/bootstrapped; then
+        return
+    fi
 
     set -e
     ## =================キーボードの設定===================
     sudo localectl set-keymap jp106
-
-    # =================実行したいスクリプト===================
 
     ## =================日本語環境の構築===================
     sudo timedatectl set-timezone Asia/Tokyo  # タイムゾーン設定
@@ -39,9 +43,7 @@ main() {
         sudo pacman -S --noconfirm yaourt
     fi
 
-    if ! sudo test -e /etc/pacman.d/mirrorlist.bk; then
-        sudo cp /etc/pacman.d/mirrorlist{,.bk}
-    fi
+    backup /etc/pacman.d/mirrorlist
     if ! has reflector; then
         sudo pacman -S --noconfirm reflector
         sudo reflector --verbose --country 'Japan' -l 10 --sort rate --save /etc/pacman.d/mirrorlist
@@ -52,11 +54,9 @@ main() {
     fi
 
     ### =================powerpill SigLevel書き換え===================
-    if ! sudo test -e /etc/pacman.conf.bk; then
-        sudo cp /etc/pacman.conf{,.bk}
-        cat /etc/pacman.conf |
-           sed -e 's/Required DatabaseOptional/PackageRequired/' |
-               sudo tee /etc/pacman.conf
+    if ! sudo test -e /etc/pacman.conf.org; then
+        backup /etc/pacman.conf
+        sudo sed -i -e 's/Required DatabaseOptional/PackageRequired/' /etc/pacman.conf
     fi
 
     # =================全パッケージのアップデート===================
@@ -64,8 +64,8 @@ main() {
     yaourt -Syua --noconfirm
 
     # for clipboard
-    sudo powerpill -S xsel #xorg-x11-server-Xvfb
-    yaourt -S xorg-server-xvfb
+    sudo powerpill -S --noconfirm xsel
+    yaourt -S --noconfirm xorg-server-xvfb
     # =================GUI環境===================
     # sudo pacman -S --noconfirm xorg-xinit lightdm-gtk-greeter
     # sudo pacman -S --noconfirm xorg-xinit
