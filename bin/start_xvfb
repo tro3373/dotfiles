@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+has() { which ${1} >& /dev/null; }
+main() {
+    if ! has Xvfb || ! has VBoxClient; then
+        return
+    fi
+    export DISPLAY=:0
+    if [[ ! -f /tmp/.X0-lock ]]; then
+        Xvfb -screen 0 320x240x8 > /dev/null 2>&1 &
+        sleep 0.5
+    fi
+    if ! ps ux |grep VBoxClient >& /dev/null; then
+        VBoxClient --clipboard
+    fi
+}
+main

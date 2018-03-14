@@ -4,6 +4,7 @@ has() { which ${1} >& /dev/null; }
 
 backup() {
     for f in "$@"; do
+        sudo test ! -e $f && continue
         local dst=$f.org
         sudo test -e $dst && continue
         sudo cp -rf $f $dst
@@ -20,18 +21,18 @@ main() {
 
     ## =================日本語環境の構築===================
     sudo timedatectl set-timezone Asia/Tokyo  # タイムゾーン設定
-    #sudo cat << 'EOF' | sudo tee /etc/locale.conf
-    #LANG=ja_JP.UTF8
-    #LC_NUMERIC=ja_JP.UTF8
-    #LC_TIME=ja_JP.UTF8
-    #LC_MONETARY=ja_JP.UTF8
-    #LC_PAPER=ja_JP.UTF8
-    #LC_MEASUREMENT=ja_JP.UTF8
-    #EOF
-    #sudo mv /etc/locale.gen /etc/locale.gen.bac
-    #echo ja_JP.UTF-8 UTF-8 | sudo tee /etc/locale.gen
-    #sudo locale-gen
-    #sudo pacman -Syy
+    backup /etc/locale.conf
+    cat << 'EOF' | sudo tee /etc/locale.conf
+LANG=ja_JP.UTF8
+LC_NUMERIC=ja_JP.UTF8
+LC_TIME=ja_JP.UTF8
+LC_MONETARY=ja_JP.UTF8
+LC_PAPER=ja_JP.UTF8
+LC_MEASUREMENT=ja_JP.UTF8
+EOF
+    backup /etc/locale.gen
+    echo ja_JP.UTF-8 UTF-8 | sudo tee /etc/locale.gen
+    sudo locale-gen
 
     sudo pacman -R --noconfirm xorg-fonts-misc xorg-font-utils xorg-server xorg-server-common xorg-bdftopcf libxfont libxfont2
 

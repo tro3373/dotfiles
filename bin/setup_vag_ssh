@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+setup_host() {
+    echo "==> setupping Host .."
+    if [[ ! -e ~/.ssh/config ]]; then
+        echo "===> No .ssh/config exist."
+        return
+    fi
+    if grep vagrant ~/.ssh/config >& /dev/null; then
+        echo "===> Already setupped .ssh/config"
+        return
+    fi
+    cat << EOL >> ~/.ssh/config
+Host vag
+  HostName localhost
+  Port 2222
+  User vagrant
+EOL
+    echo "===> vag config setupped  to .ssh/config."
+}
+setup_guest() {
+    echo "==> setupping Guest .."
+    if [[ ! -e ~/.ssh/id_rsa.pub ]]; then
+        echo "===> No .ssh/id_rsa.pub key exists."
+        return
+    fi
+    echo "==> checking guest authorized_keys .."
+    local grep_key="$(cat ~/.ssh/id_rsa.pub |cut -c-50)"
+    echo "===> grep_key: $grep_key"
+    if ssh vag "test -e ~/.ssh/authorized_keys && grep \"$grep_key\" ~/.ssh/authorized_keys" >& /dev/null; then
+        echo "===> Already setupped to .ssh/authorized_keys in guest."
+        return
+    fi
+    echo "===> not setupped guest authorized_keys yet."
+    echo "==> setupping guest authorized_keys .."
+    cat ~/.ssh/id_rsa.pub |ssh vag "cat - |tee -a ~/.ssh/authorized_keys " >/dev/null
+    echo "===> guest authorized_keys setupped."
+}
+main() {
+    set -eu
+    setup_host
+    setup_guest
+    echo "==> Done."
+}
+main "$@"

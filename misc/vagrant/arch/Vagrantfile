@@ -87,4 +87,5 @@ Vagrant.configure("2") do |config|
   #   apt-get install -y apache2
   # SHELL
   config.ssh.insert_key=false  # root user ssh for sharing with windows machine
+  config.ssh.forward_x11=true  # enable X11 forwarding for xvfb/xsel clipboard
 end
