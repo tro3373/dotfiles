@@ -22,16 +22,19 @@ main() {
     ## =================日本語環境の構築===================
     sudo timedatectl set-timezone Asia/Tokyo  # タイムゾーン設定
     backup /etc/locale.conf
-    cat << 'EOF' | sudo tee /etc/locale.conf
-LANG=ja_JP.UTF8
-LC_NUMERIC=ja_JP.UTF8
-LC_TIME=ja_JP.UTF8
-LC_MONETARY=ja_JP.UTF8
-LC_PAPER=ja_JP.UTF8
-LC_MEASUREMENT=ja_JP.UTF8
+    cat << 'EOF' | sudo tee /etc/locale.conf >/dev/null
+LANG=en_US.UTF8
+LC_NUMERIC=en_US.UTF8
+LC_TIME=en_US.UTF8
+LC_MONETARY=en_US.UTF8
+LC_PAPER=en_US.UTF8
+LC_MEASUREMENT=en_US.UTF8
 EOF
     backup /etc/locale.gen
-    echo ja_JP.UTF-8 UTF-8 | sudo tee /etc/locale.gen
+    cat << EOF | sudo tee /etc/locale.gen >/dev/null
+en_US.UTF-8 UTF-8
+ja_JP.UTF-8 UTF-8
+EOF
     sudo locale-gen
 
     sudo pacman -R --noconfirm xorg-fonts-misc xorg-font-utils xorg-server xorg-server-common xorg-bdftopcf libxfont libxfont2
