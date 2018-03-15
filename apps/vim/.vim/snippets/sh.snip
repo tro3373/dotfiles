@@ -26,6 +26,8 @@ snippet dotbin
 
 snippet while_read_line
     while read -r line; do
+        [[ -z \$line ]] && continue
+        [[ \$line =~ ^#.* ]] && continue
     done
 
 snippet readwhil
