@@ -8,19 +8,19 @@ install_msys() {
 
 install_ubuntu() {
     install_via_os_default
-    # for .zplug
-    mexe $instcmd gawk
+    ## for .zplug
+    #mexe $instcmd gawk
 }
 
 setting_common() {
     # .works.zsh
     [ ! -e ~/.works.zsh ] && mexe touch ~/.works.zsh && mexe chmod 755 ~/.works.zsh
 
-    # ZPlug
-    local zplug_home=~/.zplug
-    if [ ! -d $zplug_home ] && [ ! -L $zplug_home ]; then
-        mexe git clone --depth 1 https://github.com/zplug/zplug $zplug_home
-    fi
+    ## ZPlug
+    #local zplug_home=~/.zplug
+    #if [ ! -d $zplug_home ] && [ ! -L $zplug_home ]; then
+    #    mexe git clone --depth 1 https://github.com/zplug/zplug $zplug_home
+    #fi
 
     # LS_COLORS 設定
     # http://qiita.com/yuyuchu3333/items/84fa4e051c3325098be3
