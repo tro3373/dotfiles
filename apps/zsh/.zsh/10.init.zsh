@@ -26,7 +26,8 @@ source_pkg() {
     local dst=~/.zsh/plugins/$nm
     if [[ ! -e $dst ]]; then
         echo "==> cloning $nm .."
-        git clone --depth 1 -q $url $dst
+        #git clone -q $url $dst
+        git clone --depth 1 $url $dst
         echo "==> zcompiling $nm .."
         find $dst -name "*.zsh" |while read -r line; do zcompile $line ; done
     fi
