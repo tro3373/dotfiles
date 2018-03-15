@@ -17,6 +17,11 @@ case "${OSTYPE}" in
         alias git='nocorrect git'                       # Ubuntuで_gitと誤解されるため
         if [[ -e /etc/arch-release ]]; then
             alias y=yaourt
+            if has powerpill; then
+                alias p=powerpill
+            else
+                alias p=pacman
+            fi
         fi
         ;;
     freebsd*)
