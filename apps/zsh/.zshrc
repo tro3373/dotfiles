@@ -40,6 +40,7 @@ if [ -d ~/.zsh ]; then
         debug_load "$z load start"
         source $z
     done
+    load_zsh ~/.fzf.zsh
     debug_load ".zsh/ load end"
 fi
 

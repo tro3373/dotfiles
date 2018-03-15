@@ -207,7 +207,6 @@ _initialize() {
     export PATH="$(cat $GENPATHF)"
 
     load_zsh ~/.works.zsh
-    load_zsh ~/.fzf.zsh
     [ -f ~/.secret ] && . ~/.secret
 }
 _initialize
