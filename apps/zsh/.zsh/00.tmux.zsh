@@ -1,19 +1,34 @@
 #
 # tmux start settings
 #
-function is_exists() { type "$1" >/dev/null 2>&1; return $?; }
-function is_osx() { [[ $OSTYPE == darwin* ]]; }
-function is_screen_running() { [ ! -z "$STY" ]; }
-function is_tmux_runnning() { [ ! -z "$TMUX" ]; }
-function is_screen_or_tmux_running() { is_screen_running || is_tmux_runnning; }
-function shell_has_started_interactively() { [ ! -z "$PS1" ]; }
-function is_ssh_running() { [ ! -z "$SSH_CONNECTION" ]; }
-function auto_exit_shell() { echo "Auto exiting.." && sleep 0.5 && exit; }
+is_exists() { type "$1" >/dev/null 2>&1; return $?; }
+is_osx() { [[ $OSTYPE == darwin* ]]; }
+is_screen_running() { [ ! -z "$STY" ]; }
+is_tmux_runnning() { [ ! -z "$TMUX" ]; }
+is_screen_or_tmux_running() { is_screen_running || is_tmux_runnning; }
+shell_has_started_interactively() { [ ! -z "$PS1" ]; }
+auto_exit_shell() { echo "Auto exiting.." && sleep 0.5 && exit; }
+is_enabled() {
+    #[[ -z "$SSH_CONNECTION" ]] && return 0 # always run in local
+    local _enabled=~/.tmux_enabled
+    local _disabled=~/.tmux_disabled
+    [[ -e $_enabled ]] && return 0 # tmux enabled
+    [[ -e $_disabled ]] && return 1 # tmux disabled
 
-function tmux_automatically_attach_session() {
+    # gen process
+    echo "==> enable tmux?(yN)"
+    read res
+    local ret=1
+    local gen_file=$_disabled
+    [[ $res =~ (y|Y) ]] && gen_file=$_enabled && ret=0
+    touch $gen_file
+    return $ret
+}
+
+tmux_automatically_attach_session() {
 
     ! shell_has_started_interactively && return 0
-    is_ssh_running && return 0
+    ! is_enabled && return 0
     is_screen_running && echo "This is on screen." && return 1
     ! is_exists 'tmux' && echo 'Error: tmux command not found' 2>&1 && return 1
 
