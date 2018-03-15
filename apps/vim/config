@@ -2,7 +2,13 @@
 
 kaoriya_dir_name=vim80-kaoriya-win64
 is_installed() {
-    ! is_win && return $(has $app)
+    if is_arch; then
+        # gvim で +clipboardを狙う
+        return $(has gvim)
+    fi
+    if ! is_win; then
+        return $(has $app)
+    fi
     # for windows
     if has $app; then
         if [[ -e $WINHOME/tools/$kaoriya_dir_name ]]; then
@@ -170,6 +176,10 @@ install_redhat() {
 }
 
 install_arch() {
+    def_install gvim
+}
+
+build_arch() {
     cd_work
     if [[ ! -e vim ]]; then
         mexe yaourt -G vim
