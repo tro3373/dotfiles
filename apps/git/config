@@ -1,136 +1,289 @@
 #!/bin/bash
 
+setup_username() {
+    log "@@@@@ Input Your Git user.name"
+    read gitusername
+    if [ ! "$gitusername" = "" ]; then
+        mexe git config --global user.name "$gitusername"
+    else
+        log "  => Do Nothing for git user.name"
+    fi
+}
+setup_email() {
+    log "@@@@@ Input Your Git user.email"
+    read gituseremail
+    if [ ! "$gituseremail" = "" ]; then
+        mexe git config --global user.email "$gituseremail"
+    else
+        log "  => Do Nothing for git user.email"
+    fi
+}
 setting_common() {
     make_link_dot2home $app_dir
-    local list="$(git config --list)"
-    if ! is_exists_setting "$list" "user.name"; then
-        log "@@@@@ Input Your Git user.name"
-        read gitusername
-        if [ ! "$gitusername" = "" ]; then
-            mexe git config --global user.name "$gitusername"
-        else
-            log "  => Do Nothing for git user.name"
+    local usrn=0
+    local mail=0
+    local list="$(git config --list --global 2>/dev/null)"
+    while read -r line; do
+        [[ -z $line ]] && continue
+        [[ $line =~ ^#.* ]] && continue
+
+        local key=$(echo "$line" |sed -e 's,^.\+global ,,g' -e 's, .\+,,g')
+        # echo "$(printf "% -20s" $key) ==> $line"
+        if echo -e "$list" |grep "$key=" >& /dev/null; then
+            # already configed.
+            continue
         fi
-    fi
-    if ! is_exists_setting "$list" "user.email"; then
-        log "@@@@@ Input Your Git user.email"
-        read gituseremail
-        if [ ! "$gituseremail" = "" ]; then
-            mexe git config --global user.email "$gituseremail"
-        else
-            log "  => Do Nothing for git user.email"
-        fi
-    fi
-    # Git Global 設定
-    set_gitconfig
+
+        case "$key" in
+            user.name)
+                is_dry && mexe "$line" && continue
+                usrn=1
+                ;;
+            user.email)
+                is_dry && mexe "$line" && continue
+                mail=1
+                ;;
+            core.filemode)
+                local filemode=true
+                is_msys && filemode=false
+                mexe git config --global core.filemode $filemode
+                ;;
+            *)
+                mexe "$line"
+                ;;
+        esac
+
+    done <<'EOF'
+git config --global user.name sample_username
+git config --global user.email sample_email@domain.com
+git config --global core.editor "vim -c 'set fenc=utf-8'"
+git config --global core.quotepath false
+git config --global color.ui auto
+git config --global push.default simple
+git config --global http.sslverify false
+git config --global core.preloadindex true
+git config --global core.fscache true
+git config --global core.filemode true
+git config --global alias.co checkout
+git config --global alias.cm commit
+git config --global alias.st status
+git config --global alias.br branch
+git config --global alias.lgo "log --oneline"
+git config --global alias.lg "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+git config --global alias.lga "log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+git config --global alias.tar "archive --format=tar HEAD -o"
+git config --global alias.tgz "archive --format=tgz HEAD -o"
+git config --global alias.zip "archive --format=zip HEAD -o"
+git config --global alias.or orphan
+git config --global init.templatedir '~/.git_template'
+git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'
+git config --global commit.template ~/.gitmessage
+EOF
+    [[ $usrn -eq 1 ]] && setup_username
+    [[ $mail -eq 1 ]] && setup_email
 }
 
-set_gitconfig() {
-    local list="$(git config --list)"
-    if ! is_exists_setting "$list" "core.editor"; then
-        mexe "git config --global core.editor \"vim -c 'set fenc=utf-8'\""
-    fi
-    if ! is_exists_setting "$list" "core.quotepath"; then
-        mexe git config --global core.quotepath false
-    fi
-    if ! is_exists_setting "$list" "color.ui"; then
-        mexe git config --global color.ui auto
-    fi
-    if ! is_exists_setting "$list" "push.default"; then
-        mexe git config --global push.default simple
-    fi
-    if ! is_exists_setting "$list" "http.sslverify"; then
-        mexe git config --global http.sslVerify false
-    fi
-    if ! is_exists_setting "$list" "core.preloadindex"; then
-        mexe git config --global core.preloadindex true
-    fi
-    if ! is_exists_setting "$list" "core.fscache"; then
-        mexe git config --global core.fscache true
-    fi
-    if ! is_exists_setting "$list" "core.filemode"; then
-        local filemode=true
-        is_msys && filemode=false
-        mexe git config --global core.filemode $filemode
-    fi
-    if ! is_exists_setting "$list" "alias.co"; then
-        mexe git config --global alias.co checkout
-    fi
-    if ! is_exists_setting "$list" "alias.cm"; then
-        mexe git config --global alias.cm commit
-    fi
-    if ! is_exists_setting "$list" "alias.st"; then
-        mexe git config --global alias.st status
-    fi
-    if ! is_exists_setting "$list" "alias.br"; then
-        mexe git config --global alias.br branch
-    fi
-    if ! is_exists_setting "$list" "alias.lgo"; then
-        mexe "git config --global alias.lgo \"log --oneline\""
-    fi
-    if ! is_exists_setting "$list" "alias.lg"; then
-        mexe "git config --global alias.lg \"log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative\""
-    fi
-    if ! is_exists_setting "$list" "alias.lga"; then
-        mexe "git config --global alias.lga \"log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative\""
-    fi
-    if ! is_exists_setting "$list" "alias.tar"; then
-        mexe "git config --global alias.tar \"archive --format=tar HEAD -o\""
-    fi
-    if ! is_exists_setting "$list" "alias.tgz"; then
-        mexe "git config --global alias.tgz \"archive --format=tgz HEAD -o\""
-    fi
-    if ! is_exists_setting "$list" "alias.zip"; then
-        mexe "git config --global alias.zip \"archive --format=zip HEAD -o\""
-    fi
-    if ! is_exists_setting "$list" "alias.or"; then
-        mexe git config --global alias.or orphan
-    fi
-    if ! is_exists_setting "$list" "init.templatedir"; then
-        mexe git config --global init.templatedir '~/.git_template'
-    fi
-    if ! is_exists_setting "$list" "alias.ignore"; then
-        mexe "git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/\$@ ;}; gi'"
-    fi
-    if ! is_exists_setting "$list" "commit.template"; then
-        mexe "git config --global commit.template ~/.gitmessage"
-    fi
-}
+# setting_common() {
+#     make_link_dot2home $app_dir
+#     local list="$(git config --list)"
+#     if ! is_exists_setting "$list" "user.name"; then
+#         log "@@@@@ Input Your Git user.name"
+#         read gitusername
+#         if [ ! "$gitusername" = "" ]; then
+#             mexe git config --global user.name "$gitusername"
+#         else
+#             log "  => Do Nothing for git user.name"
+#         fi
+#     fi
+#     if ! is_exists_setting "$list" "user.email"; then
+#         log "@@@@@ Input Your Git user.email"
+#         read gituseremail
+#         if [ ! "$gituseremail" = "" ]; then
+#             mexe git config --global user.email "$gituseremail"
+#         else
+#             log "  => Do Nothing for git user.email"
+#         fi
+#     fi
+#     # Git Global 設定
+#     set_gitconfig
+# }
+#
+# set_gitconfig() {
+#     local list="$(git config --list)"
+#     if ! is_exists_setting "$list" "core.editor"; then
+#         mexe "git config --global core.editor \"vim -c 'set fenc=utf-8'\""
+#     fi
+#     if ! is_exists_setting "$list" "core.quotepath"; then
+#         mexe git config --global core.quotepath false
+#     fi
+#     if ! is_exists_setting "$list" "color.ui"; then
+#         mexe git config --global color.ui auto
+#     fi
+#     if ! is_exists_setting "$list" "push.default"; then
+#         mexe git config --global push.default simple
+#     fi
+#     if ! is_exists_setting "$list" "http.sslverify"; then
+#         mexe git config --global http.sslVerify false
+#     fi
+#     if ! is_exists_setting "$list" "core.preloadindex"; then
+#         mexe git config --global core.preloadindex true
+#     fi
+#     if ! is_exists_setting "$list" "core.fscache"; then
+#         mexe git config --global core.fscache true
+#     fi
+#     if ! is_exists_setting "$list" "core.filemode"; then
+#         local filemode=true
+#         is_msys && filemode=false
+#         mexe git config --global core.filemode $filemode
+#     fi
+#     if ! is_exists_setting "$list" "alias.co"; then
+#         mexe git config --global alias.co checkout
+#     fi
+#     if ! is_exists_setting "$list" "alias.cm"; then
+#         mexe git config --global alias.cm commit
+#     fi
+#     if ! is_exists_setting "$list" "alias.st"; then
+#         mexe git config --global alias.st status
+#     fi
+#     if ! is_exists_setting "$list" "alias.br"; then
+#         mexe git config --global alias.br branch
+#     fi
+#     if ! is_exists_setting "$list" "alias.lgo"; then
+#         mexe "git config --global alias.lgo \"log --oneline\""
+#     fi
+#     if ! is_exists_setting "$list" "alias.lg"; then
+#         mexe "git config --global alias.lg \"log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative\""
+#     fi
+#     if ! is_exists_setting "$list" "alias.lga"; then
+#         mexe "git config --global alias.lga \"log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative\""
+#     fi
+#     if ! is_exists_setting "$list" "alias.tar"; then
+#         mexe "git config --global alias.tar \"archive --format=tar HEAD -o\""
+#     fi
+#     if ! is_exists_setting "$list" "alias.tgz"; then
+#         mexe "git config --global alias.tgz \"archive --format=tgz HEAD -o\""
+#     fi
+#     if ! is_exists_setting "$list" "alias.zip"; then
+#         mexe "git config --global alias.zip \"archive --format=zip HEAD -o\""
+#     fi
+#     if ! is_exists_setting "$list" "alias.or"; then
+#         mexe git config --global alias.or orphan
+#     fi
+#     if ! is_exists_setting "$list" "init.templatedir"; then
+#         mexe git config --global init.templatedir '~/.git_template'
+#     fi
+#     if ! is_exists_setting "$list" "alias.ignore"; then
+#         mexe "git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/\$@ ;}; gi'"
+#     fi
+#     if ! is_exists_setting "$list" "commit.template"; then
+#         mexe "git config --global commit.template ~/.gitmessage"
+#     fi
+# }
 
 is_exists_setting() {
     echo -e "$1" |grep "$2=" >/dev/null 2>&1
     return $?
 }
 
-get_gitsettingcnt() {
-    target=$1
-    count=`git config --list |grep $target |wc -l`
-    return $count
-}
-
-execGitConfigForce() {
-    git config --global user.name sample_username
-    git config --global user.email sample_email@domain.com
-    git config --global core.editor "vim -c 'set fenc=utf-8'"
-    git config --global core.quotepath false
-    git config --global color.ui auto
-    git config --global push.default simple
-    git config --global http.sslVerify false
-    git config --global core.preloadindex true
-    git config --global core.fscache true
-    git config --global core.filemode true
-    git config --global alias.co checkout
-    git config --global alias.cm commit
-    git config --global alias.st status
-    git config --global alias.br branch
-    git config --global alias.lgo "log --oneline"
-    git config --global alias.lg "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
-    git config --global alias.lga "log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
-    git config --global alias.tar "archive --format=tar HEAD -o"
-    git config --global alias.tgz "archive --format=tgz HEAD -o"
-    git config --global alias.zip "archive --format=zip HEAD -o"
-    git config --global alias.or orphan
-    git config --global init.templatedir '~/.git_template'
-    git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'
-    git config --global commit.template ~/.gitmessage
-}
+# get_gitsettingcnt() {
+#     target=$1
+#     count=`git config --list |grep $target |wc -l`
+#     return $count
+# }
+#
+# execGitConfigForce() {
+#     git config --global user.name sample_username
+#     git config --global user.email sample_email@domain.com
+#     git config --global core.editor "vim -c 'set fenc=utf-8'"
+#     git config --global core.quotepath false
+#     git config --global color.ui auto
+#     git config --global push.default simple
+#     git config --global http.sslVerify false
+#     git config --global core.preloadindex true
+#     git config --global core.fscache true
+#     git config --global core.filemode true
+#     git config --global alias.co checkout
+#     git config --global alias.cm commit
+#     git config --global alias.st status
+#     git config --global alias.br branch
+#     git config --global alias.lgo "log --oneline"
+#     git config --global alias.lg "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+#     git config --global alias.lga "log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+#     git config --global alias.tar "archive --format=tar HEAD -o"
+#     git config --global alias.tgz "archive --format=tgz HEAD -o"
+#     git config --global alias.zip "archive --format=zip HEAD -o"
+#     git config --global alias.or orphan
+#     git config --global init.templatedir '~/.git_template'
+#     git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'
+#     git config --global commit.template ~/.gitmessage
+# }
+# main() {
+#     local list="$(git config --list --global)"
+#     while read -r line; do
+#         [[ -z $line ]] && continue
+#         [[ $line =~ ^#.* ]] && continue
+#         local key=$(echo "$line" |sed -e 's,^.\+global ,,g' -e 's, .\+,,g')
+#         if echo -e "$list" |grep "$key=" >& /dev/null; then
+#             # already configed.
+#             continue
+#         fi
+#
+#         case "$key" in
+#             user.name)
+#                 is_dry && mexe "$line" && continue
+#                 log "@@@@@ Input Your Git user.name"
+#                 read gitusername
+#                 if [ ! "$gitusername" = "" ]; then
+#                     mexe git config --global user.name "$gitusername"
+#                 else
+#                     log "  => Do Nothing for git user.name"
+#                 fi
+#                 ;;
+#             user.email)
+#                 is_dry && mexe "$line" && continue
+#                 log "@@@@@ Input Your Git user.email"
+#                 read gituseremail
+#                 if [ ! "$gituseremail" = "" ]; then
+#                     mexe git config --global user.email "$gituseremail"
+#                 else
+#                     log "  => Do Nothing for git user.email"
+#                 fi
+#                 ;;
+#             core.filemode)
+#                 local filemode=true
+#                 is_msys && filemode=false
+#                 mexe git config --global core.filemode $filemode
+#             *)
+#                 mexe "$line"
+#                 ;;
+#         esac
+#
+#         echo "$(printf "% -20s" $key) ==> $line"
+#     done <<'EOF'
+# git config --global user.name sample_username
+# git config --global user.email sample_email@domain.com
+# git config --global core.editor "vim -c 'set fenc=utf-8'"
+# git config --global core.quotepath false
+# git config --global color.ui auto
+# git config --global push.default simple
+# git config --global http.sslVerify false
+# git config --global core.preloadindex true
+# git config --global core.fscache true
+# git config --global core.filemode true
+# git config --global alias.co checkout
+# git config --global alias.cm commit
+# git config --global alias.st status
+# git config --global alias.br branch
+# git config --global alias.lgo "log --oneline"
+# git config --global alias.lg "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+# git config --global alias.lga "log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+# git config --global alias.tar "archive --format=tar HEAD -o"
+# git config --global alias.tgz "archive --format=tgz HEAD -o"
+# git config --global alias.zip "archive --format=zip HEAD -o"
+# git config --global alias.or orphan
+# git config --global init.templatedir '~/.git_template'
+# git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'
+# git config --global commit.template ~/.gitmessage
+# EOF
+# }
+# main
