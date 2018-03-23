@@ -181,8 +181,8 @@ case ${UID} in
     #PROMPT=$'%{\e[38;5;030m%}%m%(!.#.$)%{\e[m%} '
     # cyan
     #PROMPT=$'%{\e[38;5;030m%}%/$%{\e[m%} '
-    PROMPT=$'%{\e[38;5;%(?.033.013)m%}%/>%{\e[m%} '
-    PROMPT2=$'%{\e[38;5;%(?.033.013)m%}%_> %{\e[m%} '
+    PROMPT=$'%{\e[38;5;%(?.012.013)m%}%/>%{\e[m%} '
+    PROMPT2=$'%{\e[38;5;%(?.012.013)m%}%_> %{\e[m%} '
     SPROMPT="%{${fg[red]}%}%r is correct? [n,y,a,e]:%{${reset_color}%} "
     [ -n "${REMOTEHOST}${SSH_CONNECTION}" ] &&
         #PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*} | tr '[a-z]' '[A-Z]') ${PROMPT}"
