@@ -117,6 +117,7 @@ fi
 
 # http://qiita.com/yuku_t/items/4ffaa516914e7426419a
 function ssh() {
+    TERM=xterm
     if [[ -z $TMUX ]]; then
         command ssh $@
     else
