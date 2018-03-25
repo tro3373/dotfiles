@@ -56,6 +56,52 @@ EOF
         sudo locale-gen
     fi
 }
+
+setup_samba() {
+    if ! has samba; then
+        sudo powerpill -S samba
+    fi
+    if sudo test -e /etc/samba/smb.conf; then
+        return
+    fi
+    sudo wget "https://git.samba.org/samba.git/?p=samba.git;a=blob_plain;f=examples/smb.conf.default;hb=HEAD" -O /etc/samba/smb.conf.org
+    cat << EOF |sudo tee -a /etc/samba/smb.conf >/dev/null
+[global]
+    # TBD ファイルを使用
+    passdb backend = tdbsam
+    # アーカイブ属性と実行属性を相互変換しない
+    map archive = no
+    unix charset = UTF-8
+    dos charset = CP932
+    # Windowsのワークグループ名と合わせる
+    workgroup = WORKGROUP
+    # ユーザー単位でパスワード認証を行う
+    security = user
+    hosts allow = 192.168.33. 127.
+    map to guest = Bad User
+    create mode = 0644
+    directory mode = 0755
+
+[homes]
+    comment = Home Directories
+    browseable = no
+    writable = yes
+    valid users = %S
+
+#[vagrant]
+#    path = /home/vagrant
+#    writable = yes
+#    force user = vagrant
+#    force group = vagrant
+#    guest ok = yes
+#    guest only = yes
+#    inherit acls = Yes
+EOF
+    sudo systemctl enable smbd nmbd
+    sudo systemctl start smbd nmbd
+}
+
+
 setup_packages() {
     echo "==> setupping packages .."
     # パッケージ更新が X用のパッケージが邪魔してできないので、先にアンインストール
@@ -89,6 +135,9 @@ setup_packages() {
     # for clipboard
     sudo powerpill -S --noconfirm xsel
     yaourt -S --noconfirm xorg-server-xvfb
+
+    # setup samba
+    setup_samba
 
     # =================GUI環境===================
     # sudo pacman -S --noconfirm xorg-xinit lightdm-gtk-greeter
@@ -153,5 +202,6 @@ main() {
     echo "==> Done."
     echo "===> sudo reboot"
 }
-main
+#main
 
+    setup_samba
