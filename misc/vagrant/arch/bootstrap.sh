@@ -23,10 +23,9 @@ initialize() {
 }
 finalize() {
     date | sudo tee $bootstrapf >/dev/null
-    echo "==> Done."
-    echo "===> sudo reboot"
 }
 setup_keyboard() {
+    echo "==> setupping keyboard .."
     local val=jp106
     if localectl |grep "Keymap" |grep $val >/dev/null; then
         return
@@ -34,6 +33,7 @@ setup_keyboard() {
     sudo localectl set-keymap $val
 }
 setup_lang_locale() {
+    echo "==> setupping lang locale .."
     local val="Asia/Tokyo"
     if ! timedatectl |grep "Time zone" |grep "$val" >/dev/null; then
         sudo timedatectl set-timezone Asia/Tokyo  # タイムゾーン設定
@@ -57,6 +57,7 @@ EOF
     fi
 }
 setup_packages() {
+    echo "==> setupping packages .."
     # パッケージ更新が X用のパッケージが邪魔してできないので、先にアンインストール
     sudo pacman -R --noconfirm xorg-fonts-misc xorg-font-utils xorg-server xorg-server-common xorg-bdftopcf libxfont libxfont2
     # パッケージ更新
@@ -130,10 +131,14 @@ setup_packages() {
     # sudo pacman -S --noconfirm python-pygments pygmentize  # Python syntax highlighter
 }
 setup_dots() {
+    echo "==> setupping .dot .."
     [[ -e ~/.dot ]] && return
     curl -fSsL git.io/tr3s |sh
+    cd ~/.dot/bin
+    ./setup -e
 }
 setup_login_shell() {
+    echo "==> setupping login shell .."
     ! has zsh && return
     sudo chsh vagrant -s /usr/bin/zsh
 }
@@ -142,9 +147,11 @@ main() {
     setup_keyboard
     setup_lang_locale
     setup_packages
-    setup_dots
     setup_login_shell
+    setup_dots
     finalize
+    echo "==> Done."
+    echo "===> sudo reboot"
 }
 main
 
