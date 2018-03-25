@@ -18,9 +18,9 @@ case "${OSTYPE}" in
         if [[ -e /etc/arch-release ]]; then
             alias y=yaourt
             if has powerpill; then
-                alias p=powerpill
+                alias p='sudo powerpill'
             else
-                alias p=pacman
+                alias p='sudo pacman'
             fi
         fi
         ;;
