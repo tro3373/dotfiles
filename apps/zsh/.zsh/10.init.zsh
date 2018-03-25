@@ -167,6 +167,8 @@ load_my_env() {
     export GOBIN="$GOPATH/bin"
 }
 
+is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
+
 _initialize() {
     zcompile_ifneeded ~/.zshrc
     for z in $(ls ~/.zsh/*.zsh); do
@@ -206,6 +208,7 @@ _initialize() {
     fi
     export PATH="$(cat $GENPATHF)"
 
+    is_vagrant && source ${DOTPATH}/bin/start_xvfb
     load_zsh ~/.works.zsh
     [ -f ~/.secret ] && . ~/.secret
 }
