@@ -7,10 +7,12 @@ main() {
     fi
     export DISPLAY=:0
     if [[ ! -f /tmp/.X0-lock ]]; then
+        echo "==> Starting Xvfb .."
         Xvfb -screen 0 320x240x8 > /dev/null 2>&1 &
         sleep 0.5
     fi
-    if ! ps ux |grep VBoxClient >& /dev/null; then
+    if ! ps ux |grep VBoxClient |grep -v grep >& /dev/null; then
+        echo "==> Starting VBoxClient .."
         VBoxClient --clipboard
     fi
 }
