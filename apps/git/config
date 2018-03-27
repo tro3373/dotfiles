@@ -81,6 +81,7 @@ git config --global commit.template ~/.gitmessage
 EOF
     [[ $usrn -eq 1 ]] && setup_username
     [[ $mail -eq 1 ]] && setup_email
+    :
 }
 
 # setting_common() {
