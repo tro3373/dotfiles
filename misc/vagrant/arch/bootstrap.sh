@@ -24,6 +24,22 @@ initialize() {
 finalize() {
     date | sudo tee $bootstrapf >/dev/null
 }
+
+setup_network() {
+    local net_rule=/etc/udev/rules.d/66-persistent-net.rules
+    if sudo grep eth1 $net_rule>/dev/null; then
+        return
+    fi
+    cat << EOF |sudo tee -a $net_rule >/dev/null
+# from enp0s8 to eth1
+SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="08:00:27:74:f7:e0", NAME="eth1"
+EOF
+    #if ! sudo test -e /etc/netctl/eth0; then
+    #    return
+    #fi
+    #sudo netctl disable eth0
+}
+
 setup_keyboard() {
     echo "==> setupping keyboard .."
     local val=jp106
@@ -73,29 +89,23 @@ setup_samba() {
     map archive = no
     unix charset = UTF-8
     dos charset = CP932
-    # Windowsのワークグループ名と合わせる
-    workgroup = WORKGROUP
-    # ユーザー単位でパスワード認証を行う
+    #workgroup = WORKGROUP
+    #local master = yes
     security = user
-    hosts allow = 192.168.33. 127.
+    dns proxy = no
+    hosts allow = 127. 192.168.33.
     map to guest = Bad User
     create mode = 0644
     directory mode = 0755
-
-[homes]
-    comment = Home Directories
-    browseable = no
-    writable = yes
-    valid users = %S
-
-#[vagrant]
-#    path = /home/vagrant
-#    writable = yes
-#    force user = vagrant
-#    force group = vagrant
-#    guest ok = yes
-#    guest only = yes
-#    inherit acls = Yes
+    guest account = vagrant
+[share]
+   public = true
+   path = /home/vagrant
+   writeable = true
+   force user = vagrant
+   force group = vagrant
+   guest ok = yes
+   guest only = yes
 EOF
     sudo systemctl enable smbd nmbd
     sudo systemctl start smbd nmbd
@@ -193,6 +203,7 @@ setup_login_shell() {
 }
 main() {
     ! initialize && return
+    setup_network
     setup_keyboard
     setup_lang_locale
     setup_packages
@@ -202,6 +213,4 @@ main() {
     echo "==> Done."
     echo "===> sudo reboot"
 }
-#main
-
-    setup_samba
+main
