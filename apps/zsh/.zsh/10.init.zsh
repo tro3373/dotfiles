@@ -29,7 +29,7 @@ source_pkg() {
         #git clone -q $url $dst
         git clone --depth 1 $url $dst
         echo "==> zcompiling $nm .."
-        find $dst -name "*.zsh" |while read -r line; do zcompile $line ; done
+        find $dst/ -name "*.zsh" |while read -r line; do zcompile $line ; done
     fi
     local src=$dst/$nm.zsh
     if [[ $with_source -eq 1 && -e $src ]]; then
@@ -211,6 +211,10 @@ _initialize() {
     is_vagrant && source ${DOTPATH}/bin/start_xvfb
     load_zsh ~/.works.zsh
     [ -f ~/.secret ] && . ~/.secret
+    # source zsh plugins. defined at 10.init.zsh.
+    source_pkg https://github.com/zsh-users/zsh-completions.git
+    source_pkg https://github.com/zsh-users/zsh-history-substring-search.git 1
+    source_pkg https://github.com/zsh-users/zsh-syntax-highlighting.git 1
 }
 _initialize
 

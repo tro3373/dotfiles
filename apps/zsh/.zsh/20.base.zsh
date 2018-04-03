@@ -4,11 +4,6 @@
 # umask settnig
 umask 0002
 
-# source zsh plugins. defined at 10.init.zsh.
-source_pkg https://github.com/zsh-users/zsh-completions.git
-source_pkg https://github.com/zsh-users/zsh-history-substring-search.git 1
-source_pkg https://github.com/zsh-users/zsh-syntax-highlighting.git 1
-
 #limit coredumpsize 0
 #bindkey -d
 #
