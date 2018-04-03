@@ -4,12 +4,15 @@ current_dir=$(pwd)
 script_dir=$(cd $(dirname $0); pwd)
 
 src_vag_dir=~/.dot/misc/vagrant/arch
-gen_file=~/win/Desktop/vagrantup.bat
+gen_dir=~/win/Desktop
+gen_file=$gen_dir/vagrantup.bat
 
 has() { which ${1} >& /dev/null; }
 change() { cygpath -aw "$*"; }
 
 gen() {
+    cp $src_vag_dir/mount.bat $gen_dir/
+    cp $src_vag_dir/umount.bat $gen_dir/
     cat <<EOF >$gen_file
 @echo off
 cd $(change $src_vag_dir)
