@@ -89,24 +89,32 @@ setup_samba() {
     map archive = no
     unix charset = UTF-8
     dos charset = CP932
+
     #workgroup = WORKGROUP
     #local master = yes
-    security = user
     dns proxy = no
-    hosts allow = 127. 192.168.33.
+
+    hosts allow = 127.0.0.0/8 192.168.33.0/24
+    host deny = all
+
+    security = user
     map to guest = Bad User
+    guest account = vagrant
+    #unix password sync = yes
+
     create mode = 0644
     directory mode = 0755
-    guest account = vagrant
 [share]
-   public = true
    path = /home/vagrant
    writeable = true
    force user = vagrant
    force group = vagrant
-   guest ok = yes
+   public = true
+   #guest ok = yes # public の alias
    guest only = yes
 EOF
+    #sudo smbpasswd vagrant
+    sudo chmod 775 /home/vagrant
     sudo systemctl enable smbd nmbd
     sudo systemctl start smbd nmbd
 }
