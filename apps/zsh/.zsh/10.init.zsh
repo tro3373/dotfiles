@@ -79,10 +79,10 @@ gen_path_file() {
     IFS='$\n'
     echo $PATH |tr ":" "\n" |
         while read -r p; do
-            echo "==> p: $p"
             [[ -z $p ]] && continue
+            echo "==> p: $p"
             [[ ! -e $p ]] && continue
-            if ! echo "$_path:" |grep "$p:" >& /dev/null; then
+            if ! echo ":$_path:" |grep ":$p:" >& /dev/null; then
                 # add if not added
                 [[ -n $_path ]] && _path="$_path:"
                 _path="$_path$p"
