@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+has() { which ${1} >& /dev/null; }
+
+main() {
+    cat <<EOF
+ctrl+z
+bg 1
+jobs 1
+disown %1
+EOF
+}
+main "$@"
