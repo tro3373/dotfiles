@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+has() { which ${1} >& /dev/null; }
+
+main() {
+    while read -r line; do
+        [[ -z $line ]] && continue
+        [[ $line =~ ^#.* ]] && continue
+        [[ ! -e $line ]] && continue
+        echo "==> Edit!! $line" 1>&2
+        ~/.dot/bin/gvim $line
+        sleep 0.2
+    done
+}
+main "$@"
+
