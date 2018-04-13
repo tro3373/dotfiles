@@ -1,4 +1,36 @@
 # bash chips
+
+## test コマンド
+
+```
+test コマンドのオプションの意味
+-p	名前付きパイプであれば真
+-t	端末にてオープンされていれば真
+```
+## プロセス置換
+
+```
+# 実行結果をdiffする
+diff <(cat file1) <(cat file1 |grep hogehoge)
+# command1の結果をcommand2とcommand3に渡す
+command1 | tee >(command2) | command3
+
+# 標準エラー出力の行頭に[ERROR]を付けて標準出力に出力する
+command 2> >(awk '{print "[ERROR]", $0}')
+```
+
+
+
+## 標準入力
+```
+diff <(cat file1) <(cat file1 |grep hogehoge)
+
+# ファイルの内容を変数へ格納する
+VAR2=$(<file)
+# 変数の値をファイルとしてコマンドへ渡す
+command <<< $VAR1
+```
+
 ## 基本
 
 $? ==> 直前のコマンドの実行結果
