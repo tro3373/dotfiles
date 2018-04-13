@@ -8,13 +8,16 @@ dotbin=${DOTPATH:-~/.dot}/bin
 target=
 usage() {
     cat <<EOF
+
 Create new executable shell file.
+
   Usage:
       $command_name [option] <create_file_name>
     Options
       -h|--help : Show this usage
       -b|--bin : Create new command file in $dotbin
-      -s|--simple : Use simple template
+      --hard|-l|--long : Use hard template
+
 EOF
 }
 
@@ -34,8 +37,8 @@ set_args() {
                 # file=${arg#*=}
                 tobin=1
                 ;;
-            -s|--simple)
-                simple=1
+            --hard|-l|--long)
+                hard=1
                 ;;
             *)
                 target="$arg"
@@ -58,21 +61,8 @@ initialize() {
 }
 
 cat_template() {
-    local simple=$1
-    if [[ $simple -eq 1 ]]; then
-        cat <<'EOL'
-#!/usr/bin/env bash
-
-current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
-has() { which ${1} >& /dev/null; }
-
-main() {
-    :
-}
-main "$@"
-EOL
-    else
+    local hard=$1
+    if [[ $hard -eq 1 ]]; then
         cat <<'EOL'
 #!/usr/bin/env bash
 
@@ -83,11 +73,14 @@ args=()
 
 usage() {
     cat <<EOF
+
 Description for this command.
+
   Usage:
       $command_name [option]
     Options
       -h|--help : Show this usage
+
 EOF
 }
 
@@ -118,6 +111,19 @@ main() {
 }
 main "$@"
 EOL
+    else
+        cat <<'EOL'
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+has() { which ${1} >& /dev/null; }
+
+main() {
+    :
+}
+main "$@"
+EOL
     fi
 }
 
@@ -132,7 +138,7 @@ main(){
         echo "Target $target is exist." 1>&2
         exit 1
     fi
-    cat_template $simple > $target
+    cat_template $hard > $target
     chmod 775 $target
     echo "==> New shell template file generated to $target."
     echo "==> Edit it?(y/N)"
