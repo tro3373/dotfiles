@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+clip_val=
+
+usage() {
+    cat <<EOF
+
+Copy to os clipboard for wrap different distribution.
+Arguments and Normal input will be clipped.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+
+EOF
+}
+
+has() { which $1 >& /dev/null; }
+
+initialize() {
+    if [[ $# -eq 1 && $1 =~ ^(-h|--help)$ ]]; then
+        usage
+        exit 0
+    fi
+    # if [[ $# -gt 0 ]]; then
+    #     clip_val="$*"
+    # elif [[ $# -eq 0 ]]; then
+    #     clip_val="$(cat -)"
+    # fi
+    if [[ $# -gt 0 ]]; then
+        clip_val="$*"
+    fi
+    if [[ -p /dev/stdin ]]; then
+        clip_val="$clip_val$(cat -)"
+    fi
+    if [[ -z $clip_val ]]; then
+        exit 0
+    fi
+}
+
+check() {
+    if ! has $1; then
+        echo "==> No $1 command exist." >&2
+        exit 1
+    fi
+}
+
+_clip() {
+    case "${OSTYPE}" in
+        msys*)
+            echo -e "$clip_val" >/dev/clipboard
+            ;;
+        darwin*)
+            check pbcopy
+            echo -e "$clip_val" |pbcopy
+            ;;
+        *)
+            check xsel
+            echo -e "$clip_val" |xsel -bi
+            ;;
+    esac
+}
+
+main() {
+    initialize "$@"
+    _clip && echo "==> clipped."
+}
+main "$@"
