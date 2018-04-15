@@ -21,10 +21,10 @@ set ignore-space = all
 # ====================================
 # Bind Settings
 # ====================================
+# Copy commit id
+bind generic 0 !@sh -c "echo %(commit) | ~/.dot/bin/clip"
 # Copy commit title to clipboard:
-#bind generic 9 !@sh -c "git show -s --format=%s %(commit) > /dev/clipboard" # Cygwin
-#bind generic 9 !@sh -c "git show -s --format=%s %(commit) | xclip -selection c" # Linux
-#bind generic 9 !@sh -c "git show -s --format=%s %(commit) | pbcopy" # Mac
+bind generic 9 !@sh -c "git show -s --format=%s %(commit) | ~/.dot/bin/clip"
 # デフォルトの !git gcを無効化して文頭、文末移動にする
 bind generic g move-first-line
 bind generic G move-last-line
