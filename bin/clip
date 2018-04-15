@@ -26,20 +26,20 @@ initialize() {
         usage
         exit 0
     fi
-    # if [[ $# -gt 0 ]]; then
-    #     clip_val="$*"
-    # elif [[ $# -eq 0 ]]; then
-    #     clip_val="$(cat -)"
-    # fi
-    if [[ $# -gt 0 ]]; then
-        clip_val="$*"
-    fi
-    if [[ -p /dev/stdin ]]; then
-        clip_val="$clip_val$(cat -)"
-    fi
-    if [[ -z $clip_val ]]; then
+    if [[ $# -eq 0 && ! -p /dev/stdin ]]; then
+        usage
         exit 0
     fi
+    case "${OSTYPE}" in
+        msys*)
+            ;;
+        darwin*)
+            check pbcopy
+            ;;
+        *)
+            check xsel
+            ;;
+    esac
 }
 
 check() {
@@ -50,23 +50,28 @@ check() {
 }
 
 _clip() {
-    case "${OSTYPE}" in
-        msys*)
-            echo -e "$clip_val" >/dev/clipboard
-            ;;
-        darwin*)
-            check pbcopy
-            echo -e "$clip_val" |pbcopy
-            ;;
-        *)
-            check xsel
-            echo -e "$clip_val" |xsel -bi
-            ;;
+    if [[ $# -gt 0 ]]; then
+        clip_val="$*"
+    fi
+    if [[ -p /dev/stdin ]]; then
+        clip_val="$clip_val$(cat -)"
+    fi
+    echo -n -e "$clip_val" |
+        case "${OSTYPE}" in
+            msys*)
+                cat - >/dev/clipboard
+                ;;
+            darwin*)
+                pbcopy
+                ;;
+            *)
+                xsel -bi
+                ;;
     esac
 }
 
 main() {
     initialize "$@"
-    _clip && echo "==> clipped."
+    _clip "$@" && echo "==> clipped."
 }
 main "$@"
