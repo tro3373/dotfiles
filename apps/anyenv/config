@@ -3,7 +3,11 @@ is_installed() {
 }
 
 install_common() {
-    git clone https://github.com/riywo/anyenv ~/.anyenv
+    mexe git clone https://github.com/riywo/anyenv ~/.anyenv
+    if [[ -e ~/.path ]]; then
+        # ~/.anyenv/bin へ path を通す必要がある
+        mexe rm ~/.path
+    fi
 }
 install_msys()   { not_supported; }
 install_cygwin() { not_supported; }

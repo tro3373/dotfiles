@@ -93,7 +93,7 @@ gen_path_file() {
 }
 
 load_my_env() {
-    if [ -d ${HOME}/.anyenv ] ; then
+    if test -d ${HOME}/.anyenv && has anyenv ; then
         eval "$(anyenv init -)"
         # for D in `ls $HOME/.anyenv/envs`; do
         #     export PATH="$HOME/.anyenv/envs/$D/shims:$PATH"
