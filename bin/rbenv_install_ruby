@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
+dotbin=${DOTPATH:-~/.dot}/bin
 version=${1:-}
-has() {
-    which ${1} >/dev/null 2>&1
-    return $?
-}
+has() { which ${1} >& /dev/null; }
 intaractive() {
     while [[ "$input_word" == "" ]]; do
         rbenv install -l | grep -v rbx | grep -v topaz | grep -v mruby | grep -v maglev | grep -v jruby | grep -v ree
@@ -17,8 +15,8 @@ intaractive() {
 }
 main() {
     if ! has anyenv; then
-        echo "Installing anyenv ..."
-        ./setup.sh
+        echo "No anyenv exists." 1>&2
+        exit 1
     fi
     if ! has rbenv; then
         echo "Installing rbenv ..."
@@ -26,7 +24,7 @@ main() {
     fi
     if has ruby; then
         echo "Upgrading rbenv ..."
-        ./rbenv_upgrade
+        $dotbin/rbenv_upgrade
     fi
 
     if [[ -z $version ]]; then

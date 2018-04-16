@@ -1,0 +1,10 @@
+is_installed() {
+    test -d ~/.anyenv/
+}
+
+install_common() {
+    git clone https://github.com/riywo/anyenv ~/.anyenv
+}
+install_msys()   { not_supported; }
+install_cygwin() { not_supported; }
+
