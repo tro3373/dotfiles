@@ -53,6 +53,7 @@ setting_ubuntu() { not_supported; }
 setting_redhat() { not_supported; }
 
 ## Usable methods
+# is_installed
 # is_msys
 # is_cygwin
 # is_mac
