@@ -2,23 +2,15 @@
 
 install_common() {
     # setup for posix system
-    if ! has goenv; then
-        "No goenv exist. install it." 1>&2
+    if ! has anyenv; then
+        echo "No anyenv exist. install it." 1>&2
         return
     fi
-    local version=1.9
-    mexe goenv install $version
-    mexe goenv global $version
-    mexe goenv rehash
-    mexe go version
+    mexe anyenv install goenv
 }
 
-install_msys() {
-    def_install mingw-w64-x86_64-go
-}
-install_cygwin() {
-    not_supported
-}
+install_msys()   { not_supported; }
+install_cygwin() { not_supported; }
 
 setting_common() { not_supported; }
 setting_arch()   { not_supported; }
