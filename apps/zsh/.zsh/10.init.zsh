@@ -80,8 +80,8 @@ gen_path_file() {
     echo $PATH |tr ":" "\n" |
         while read -r p; do
             [[ -z $p ]] && continue
-            echo "==> p: $p"
             [[ ! -e $p ]] && continue
+            echo "==> p: $p"
             if ! echo ":$_path:" |grep ":$p:" >& /dev/null; then
                 # add if not added
                 [[ -n $_path ]] && _path="$_path:"
