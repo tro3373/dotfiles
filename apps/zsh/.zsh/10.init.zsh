@@ -37,6 +37,11 @@ source_pkg() {
     fi
 }
 
+source_pkgs() {
+    source_pkg https://github.com/zsh-users/zsh-completions.git
+    source_pkg https://github.com/zsh-users/zsh-history-substring-search.git 1
+    source_pkg https://github.com/zsh-users/zsh-syntax-highlighting.git 1
+}
 # function is_exist_path() {
 #     echo "$PATH:" |grep "$@:" >& /dev/null
 # }
@@ -64,6 +69,7 @@ source_pkg() {
 # }
 
 add_path() {
+    # for .works.zsh
     [[ -e $GENPATHF ]] && return
     export PATH="$@:$PATH"
 }
@@ -92,36 +98,40 @@ gen_path_file() {
     echo "==> $GENPATHF generated."
 }
 
-load_my_env() {
-    if test -d ${HOME}/.anyenv && has anyenv; then
-        eval "$(anyenv init -)"
-        exec $SHELL -l
-        # for D in $(bin/ls $HOME/.anyenv/envs/); do
-        #     add_path $HOME/.anyenv/envs/$D/shims
-        # done
+gen_path_file_ifneeded() {
+    if [[ -e $GENPATHF ]]; then
+        return
     fi
-    ## --------------------------------------------------------
-    ## rbenv
-    ## --------------------------------------------------------
-    #if [ -e ${HOME}/.rbenv ]; then
-    #    export PATH="$HOME/.rbenv/bin:$PATH"
-    #    eval "$(rbenv init -)"
-    #fi
-    ## --------------------------------------------------------
-    ## nvm
-    ## --------------------------------------------------------
-    #if [ -e ${HOME}/.nvm ]; then
-    #    . ${HOME}/.nvm/nvm.sh
-    #    nvm use v0.10.38
-    #fi
-    ## --------------------------------------------------------
-    ## Python
-    ## --------------------------------------------------------
-    #if [ "`which virtualenvwrapper.sh >/dev/null 2>&1; echo $?`" = "0" ]; then
-    #    export WORKON_HOME=$HOME/.virtualenvs
-    #    export PROJECT_HOME=$HOME/Devel
-    #    source virtualenvwrapper.sh
-    #fi
+    add_path ${JAVA_HOME}/bin # for java
+    add_path ${M2_HOME}/bin # for maven
+    add_path /opt/bin # for docker-machine
+    add_path /usr/local/heroku/bin # for heroku
+    add_path ${HOME}/Library/Android/sdk/platform-tools # for Android Mac.
+    add_path ${HOME}/Android/Sdk/platform-tools # for Android Linux.
+    add_path ${HOME}/android-studio/bin # for android
+
+    # For Win.
+    add_path "/mingw64/bin" # for silver searcher ag
+    add_path "/c/Program Files (x86)/Google/Chrome/Application"
+    add_path "/c/Program Files/Google/Chrome/Application"
+    add_path $HOME/win/tools/sublime-text-3
+    add_path $HOME/win/tools/atom/resources/app/apm/bin
+
+    add_path $GOBIN # for golang
+
+    # add main env path
+    add_path ${HOME}/.local/bin
+    add_path ${DOTPATH}/bin
+    add_path ${HOME}/bin
+
+    # load for add_path in .works.zsh
+    load_zsh ~/.works.zsh
+
+    # generate path file.
+    gen_path_file
+}
+
+load_my_env() {
     # --------------------------------------------------------
     # Java
     # --------------------------------------------------------
@@ -166,6 +176,9 @@ load_my_env() {
     export GOPATH="$HOME/.go"
     export GOROOT=$GOPATH/lib/go
     export GOBIN="$GOPATH/bin"
+
+    gen_path_file_ifneeded
+    export PATH="$(cat $GENPATHF)"
 }
 
 is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
@@ -175,47 +188,12 @@ _initialize() {
     for z in $(ls ~/.zsh/*.zsh); do
         zcompile_ifneeded $z
     done
-
     load_my_env
-
-    if [[ ! -e $GENPATHF ]]; then
-        add_path ${HOME}/.anyenv/bin # for anyenv
-        add_path ${JAVA_HOME}/bin # for java
-        add_path ${M2_HOME}/bin # for maven
-        add_path /opt/bin # for docker-machine
-        add_path /usr/local/heroku/bin # for heroku
-        add_path ${HOME}/Library/Android/sdk/platform-tools # for Android Mac.
-        add_path ${HOME}/Android/Sdk/platform-tools # for Android Linux.
-        add_path ${HOME}/android-studio/bin # for android
-
-        # For Win.
-        add_path "/mingw64/bin" # for silver searcher ag
-        add_path "/c/Program Files (x86)/Google/Chrome/Application"
-        add_path "/c/Program Files/Google/Chrome/Application"
-        add_path $HOME/win/tools/sublime-text-3
-        add_path $HOME/win/tools/atom/resources/app/apm/bin
-
-        add_path $GOBIN # for golang
-
-        add_path ${HOME}/.local/bin
-        add_path ${DOTPATH}/bin
-        add_path ${HOME}/bin
-
-        # load for add_path in .works.zsh
-        load_zsh ~/.works.zsh
-
-        # generate path file.
-        gen_path_file
-    fi
-    export PATH="$(cat $GENPATHF)"
-
     is_vagrant && source ${DOTPATH}/bin/start_xvfb
     load_zsh ~/.works.zsh
     [ -f ~/.secret ] && . ~/.secret
-    # source zsh plugins. defined at 10.init.zsh.
-    source_pkg https://github.com/zsh-users/zsh-completions.git
-    source_pkg https://github.com/zsh-users/zsh-history-substring-search.git 1
-    source_pkg https://github.com/zsh-users/zsh-syntax-highlighting.git 1
+    # source zsh plugins.
+    source_pkgs
 }
 _initialize
 
