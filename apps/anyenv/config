@@ -1,19 +1,22 @@
+#!/usr/bin/env bash
+
 is_installed() {
     test -d ~/.anyenv/
 }
 
+install_msys()   { not_supported; }
+install_cygwin() { not_supported; }
 install_common() {
     mexe "git clone https://github.com/riywo/anyenv ~/.anyenv"
+}
+
+setting_common() {
     if grep "anyenv init" ~/.works.zsh >& /dev/null; then
         return
     fi
-    if is_dry; then
-        log '   echo "add_path ${HOME}/.anyenv/bin" >> ~/.works.zsh'
-        log '   echo eval "$(~/.anyenv/bin/anyenv init -)" >> ~/.works.zsh'
-    else
-        echo 'add_path ${HOME}/.anyenv/bin' >> ~/.works.zsh
-        echo 'eval "$(anyenv init -)"' >> ~/.works.zsh
-    fi
+    mexe "echo 'add_path \${HOME}/.anyenv/bin' >> ~/.works.zsh"
+    mexe "echo 'eval \"\$(anyenv init -)\"' >> ~/.works.zsh"
+    rm_dotpath
 
     #exec $SHELL -l
     # for D in $(bin/ls $HOME/.anyenv/envs/); do
@@ -47,6 +50,3 @@ install_common() {
     #    source virtualenvwrapper.sh
     #fi
 }
-install_msys()   { not_supported; }
-install_cygwin() { not_supported; }
-

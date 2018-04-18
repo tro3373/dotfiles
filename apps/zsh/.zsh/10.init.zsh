@@ -117,8 +117,6 @@ gen_path_file_ifneeded() {
     add_path $HOME/win/tools/sublime-text-3
     add_path $HOME/win/tools/atom/resources/app/apm/bin
 
-    add_path $GOBIN # for golang
-
     # add main env path
     add_path ${HOME}/.local/bin
     add_path ${DOTPATH}/bin
@@ -170,12 +168,6 @@ load_my_env() {
     # Ubuntu の設定
     # http://tools.android.com/knownissues/ibus
     #IBUS_ENABLE_SYNC_MODE=1 ibus-daemon -xrd
-    # --------------------------------------------------------
-    # Go
-    # --------------------------------------------------------
-    export GOPATH="$HOME/.go"
-    export GOROOT=$GOPATH/lib/go
-    export GOBIN="$GOPATH/bin"
 
     gen_path_file_ifneeded
     export PATH="$(cat $GENPATHF)"
