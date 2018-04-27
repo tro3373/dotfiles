@@ -102,8 +102,8 @@ setup_samba() {
     guest account = vagrant
     #unix password sync = yes
 
-    create mode = 0644
-    directory mode = 0755
+    create mode = 0664
+    directory mode = 0775
 [share]
    path = /home/vagrant
    writeable = true
