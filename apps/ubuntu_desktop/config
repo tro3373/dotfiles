@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+
+maker=~/.ubuntu_desktoped
+is_installed() {
+    [[ -e $maker ]]
+}
+
+setup_dconf() {
+    local k="$1"
+    local v="$2"
+    local tmp=$(dconf read "$k")
+    if [[ "$tmp" == "$v" ]]; then
+        return
+    fi
+    mexe dconf reset "$k"
+    mexe "dconf write \"$k\" \"$v\""
+}
+
+setup_capslocks() {
+    if ! has dconf; then
+        log "==> No dconf command exist."
+        return
+    fi
+    # Cpas Lock => Ctrl setting
+    setup_dconf /org/gnome/settings-daemon/plugins/keyboard/active true
+    setup_dconf /org/gnome/desktop/input-sources/xkb-options "['ctrl:nocaps']"
+}
+
+setup_home_dir_names() {
+    if [ -e ~/Desktop ]; then
+        return
+    fi
+    # 日本語ディレクトリ名を英語化
+    mexe env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
+}
+
+setup_mount_media_setting() {
+    # Disable automount external media
+    mexe gsettings set org.gnome.desktop.media-handling automount false
+}
+
+install_apps() {
+    #guake
+    #unity-tweak-tool
+    local apps=(google-chrome-stable numix-gtk-theme numix-icon-theme numix-icon-theme-circle gnome-tweak-tool meld rapidsvn smartmontools hardinfo xsel)
+    local iapps=()
+    for a in ${apps[@]}; do
+        dpkg -l $a >&/dev/null && continue
+        iapps+=("$a")
+    done
+    if [[ ${#iapps[@]} -eq 0 ]]; then
+        return
+    fi
+    # Chrome install
+    _update=0
+    if [[ ! -e /etc/apt/sources.list.d/google-chrome.list ]]; then
+        mexe 'wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -'
+        mexe 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" |sudo tee -a /etc/apt/sources.list.d/google-chrome.list >& /dev/null'
+        _update=1
+    fi
+    # Numix Icon theme
+    if ! ls /etc/apt/sources.list.d |grep numix >& /dev/null; then
+        mexe sudo apt-add-repository -y ppa:numix/ppa
+        _update=1
+    fi
+
+    if [[ $_update -eq 1 ]]; then
+        mexe sudo apt-get update
+    fi
+
+    def_install "${iapps[@]}"
+
+    # y-ppa-manager for fix GPG keys errors.
+    #sudo add-apt-repository -y ppa:webupd8team/y-ppa-manager
+    #sudo apt-get update
+    #sudo apt-get install -y y-ppa-manager
+}
+
+setup_default_editor() {
+    if ! has vim; then
+        def_install vim
+    fi
+    if sudo update-alternatives --get-selections |grep -E "^editor" |grep vim >&/dev/null; then
+        return
+    fi
+    # visudo エディタをvimに設定
+    mexe sudo update-alternatives --config editor
+}
+
+install_common() { not_supported; }
+install_arch()   { not_supported; }
+install_msys()   { not_supported; }
+install_cygwin() { not_supported; }
+install_mac()    { not_supported; }
+install_ubuntu() {
+    # setup_capslocks
+    # setup_home_dir_names
+    # setup_default_editor
+    # setup_mount_media_setting
+    # smartctl -s on /dev/sda
+    install_apps
+    # mexe touch $maker
+}
+install_redhat() { not_supported; }
+setting_common() { not_supported; }
+setting_arch()   { not_supported; }
+setting_msys()   { not_supported; }
+setting_cygwin() { not_supported; }
+setting_mac()    { not_supported; }
+setting_ubuntu() { not_supported; }
+setting_redhat() { not_supported; }
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#gh
+#gh_user_local
