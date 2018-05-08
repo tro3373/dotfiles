@@ -40,14 +40,14 @@ initialize() {
 
 cat_template() {
     cat <<EOL
-Host [server1] [server2]
+Host *
   IdentityFile /path/to/your/identity/file
   ServerAliveInterval 30
   PermitLocalCommand  yes
-  LocalCommand tmux rename-window %n
   ForwardX11 yes
   ForwardX11Trusted yes
-  RemoteForward 52224 localhost:52224
+  #LocalCommand tmux rename-window %n
+  #RemoteForward 52224 localhost:52224
 Host [server1]
   HostName [server1 ip]
   Port 22
@@ -57,6 +57,8 @@ Host [server2]
   Port 22
   User [username]
   ProxyCommand ssh -W  %h:%p server1
+  # ProxyCommand nohup ssh -t server1 "ssh user@server2"
+  # ProxyCommand ssh server1 nc -w 1000 %h %p
 EOL
 }
 
