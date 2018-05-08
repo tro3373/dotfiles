@@ -300,12 +300,12 @@ if g:plug.is_installed("lightline.vim")
     \     'active': {
     \       'left': [
     \         ['mode', 'paste'],
-    \         ['fugitive', 'gitgutter', 'filename', 'pwd'],
+    \         ['fugitive', 'pwd', 'filename', 'gitgutter'],
     \       ],
     \       'right': [
     \         ['lineinfo', 'syntastic'],
     \         ['percent'],
-    \         ['charcode', 'fileformat', 'fileencoding', 'filetype'],
+    \         ['fileformat', 'fileencoding', 'filetype'],
     \       ]
     \     },
     \     'component_function': {
