@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+def_len=8
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+has() { which ${1} >& /dev/null; }
+usage() {
+    cat <<EOF
+
+Generate password
+  Usage:
+    $command_name [option] <password-length>
+  Options
+    -h|--help : Show this usage
+    password-length : default $def_len
+
+EOF
+}
+
+output_header() {
+    local start=${1:-15}
+    printf "% ${start}s"
+    for i in $(seq 1 $len); do
+        # echo $i |tail -c +1
+        printf "${i: -1}"
+    done
+    echo
+}
+
+main() {
+    local len="$*"
+    if echo $len |grep -E "(-h|--help)" >& /dev/null; then
+        usage
+        exit
+    fi
+    if [[ -z $len || ! $len =~ [0-9]+ ]]; then
+        len=$def_len
+    fi
+
+    output_header
+
+    if has pwgen; then
+        echo "       pwgen:  $(pwgen -s $len 1)"
+    fi
+    if has expect; then
+        echo "      expect:  $(expect -l $len)"
+    fi
+    if has openssl; then
+        local numb=$(echo $len | awk '{print int($1*1.16)+1}')
+        echo "     openssl:  $(openssl rand -base64 $numb | tr -d "=+/" | head -c $len; echo)"
+    fi
+    echo "    urandom1:  $(</dev/urandom tr -dc '12345!@#$%qwertQWERTasdfgASDFGzxcvbZXCVB' | head -c$len; echo)"
+    echo "    urandom2:  $(</dev/urandom tr -dc _A-Z-a-z-0-9 | head -c$len; echo)"
+    echo "    urandom3:  $(</dev/urandom tr -dc '[:alnum:]'  | fold -w$len | head -n1)"
+    echo "        date:  $(date +%s | sha256sum | base64 | head -c $len; echo)"
+}
+main "$@"
+
