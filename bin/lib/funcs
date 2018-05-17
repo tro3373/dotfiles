@@ -207,6 +207,7 @@ del_if_exist() {
 }
 
 is_arch() { [[ "$DETECT_OS" == "arch" ]]; }
+is_arm() { uname -m |grep arm>&/dev/null; }
 is_msys() { [[ "$DETECT_OS" == "msys" ]]; }
 is_cygwin() { [[ "$DETECT_OS" == "cygwin" ]]; }
 is_mac() { [[ "$DETECT_OS" == "mac" ]]; }
@@ -215,8 +216,26 @@ is_redhat() { [[ "$DETECT_OS" == "redhat" ]]; }
 is_win() { is_msys || is_cygwin; }
 is_unix() { ! is_win; }
 
+has_local_package() {
+    local p=$1
+    if is_arch || is_msys; then
+        pacman -Qi $p >& /dev/null && return 0
+    elif is_ubuntu; then
+        dpkg -l $p >& /dev/null && return 0
+    elif is_redhat; then
+        rpm -qi $p >& /dev/null && return 0
+    else
+        return 1
+    fi
+}
 def_install() {
-    mexe $instcmd $*
+    local _pkgs=()
+    for p in $@; do
+        has $p && continue
+        has_local_package $p && continue
+        _pkgs+=($p)
+    done
+    mexe $instcmd ${_pkgs[@]}
 }
 make_work_if_needed() {
     make_dir_if_needed "$workdir"
@@ -299,7 +318,7 @@ dl_untar() {
     if [[ ! -e $to ]]; then
         mexe mkdir -p "$to"
     fi
-    if [[ $(ls $to/ |wc -l) -eq 0 ]]; then
+    if [[ $(ls $to/ 2>/dev/null|wc -l) -eq 0 ]]; then
         mexe "tar xvfpz $_fname -C \"$to\" --strip-components $strip"
     fi
 }
