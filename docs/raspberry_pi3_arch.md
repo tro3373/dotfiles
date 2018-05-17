@@ -44,12 +44,24 @@ iwconfig wlan0
 
 # static wifi setting
 #cp /etc/netctl/examples/wireless-wpa /etc/netctl/profile
-cp /etc/netctl/examples/wireless-wpa-static /etc/netctl/profile-static
-vi /etc/netctl/profile-static
+cp /etc/netctl/examples/wireless-wpa-static /etc/netctl/wlan
+vi /etc/netctl/wlan
 # test add profile
-netctl start profile-static
+netctl start wlan
 # enable add profile
-netctl enable profile-static
+netctl enable wlan
+
+# static eth setting
+cp /etc/netctl/examples/ethernet-static /etc/netctl/eth
+vi /etc/netctl/eth
+netctl start eth
+netctl enable eth
+
+
+# if not work
+#systemctl status network
+bash -c 'net link set eth0 down && netctl start profile-eth-static'
+
 reboot
 ```
 
