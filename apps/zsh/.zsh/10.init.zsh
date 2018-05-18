@@ -183,7 +183,7 @@ _initialize() {
     load_my_env
     is_vagrant && source ${DOTPATH}/bin/start_xvfb
     load_zsh ~/.works.zsh
-    [ -f ~/.secret ] && . ~/.secret
+    #[ -f ~/.secret ] && . ~/.secret
     # source zsh plugins.
     source_pkgs
 }
