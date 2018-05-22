@@ -176,7 +176,7 @@ install_redhat() {
 }
 
 install_arch() {
-    def_install gvim
+    def_install gvim lua
 }
 
 build_arch() {
