@@ -11,3 +11,11 @@ install_msys() {
     mexe make install
 }
 
+install_arch()   {
+    if ! has yaourt; then
+        echo "No anyenv exist. install it." 1>&2
+        return
+    fi
+    mexe yaourt -S --noconfirm nkf
+}
+
