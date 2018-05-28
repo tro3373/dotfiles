@@ -200,7 +200,7 @@ setup_packages() {
 setup_dots() {
     echo "==> setupping .dot .."
     [[ -e ~/.dot ]] && return
-    curl -fSsL git.io/tr3s |sh
+    curl -fSsL git.io/tr3s |bash
     cd ~/.dot/bin
     ./setup -e
 }
