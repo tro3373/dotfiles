@@ -531,3 +531,10 @@ function! RUN()
   :w|!./%;read
 endfunction
 
+function! ToCsv() abort
+  call TrimLine()
+  call SilentFExec(":%s/\t\/','/g")
+  call SilentFExec(":%s/^/'/g")
+  call SilentFExec(":%s/$/'/g")
+endfun
+command! ToCsv call ToCsv()
