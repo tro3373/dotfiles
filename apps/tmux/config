@@ -1,8 +1,9 @@
 #!/bin/bash
 
 install_ubuntu() {
-    def_install autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev
-    _install_common
+    # def_install autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev
+    # _install_common
+    install_via_os_default
 }
 
 install_redhat() {

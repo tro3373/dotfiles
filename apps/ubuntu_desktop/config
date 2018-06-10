@@ -27,9 +27,9 @@ setup_capslocks() {
 }
 
 setup_home_dir_names() {
-    if [ -e ~/Desktop ]; then
-        return
-    fi
+    # if [ -e ~/Desktop ]; then
+    #     return
+    # fi
     # 日本語ディレクトリ名を英語化
     mexe env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
 }
@@ -42,7 +42,7 @@ setup_mount_media_setting() {
 install_apps() {
     #guake
     #unity-tweak-tool
-    local apps=(google-chrome-stable numix-gtk-theme numix-icon-theme numix-icon-theme-circle gnome-tweak-tool meld rapidsvn smartmontools hardinfo xsel)
+    local apps=(google-chrome-stable gnome-tweak-tool numix-gtk-theme numix-icon-theme numix-icon-theme-circle meld rapidsvn smartmontools hardinfo xsel)
     local iapps=()
     for a in ${apps[@]}; do
         dpkg -l $a >&/dev/null && continue
