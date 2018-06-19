@@ -1,0 +1,18 @@
+#!/bin/bash
+
+gen_profiled() {
+    cat << EOF > /etc/profile.d/screenfetch.sh
+#!/bin/bash
+
+screenfetch
+EOF
+    sudo chmod 775 /etc/profile.d/screenfetch.sh
+}
+
+install_common() {
+    install_via_os_default
+}
+setting_common() {
+    gen_profiled
+}
+
