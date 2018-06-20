@@ -6,6 +6,10 @@ uninstall() {
     mexe sudo apt-get purge docker-ce
 }
 
+is_exist_docker_group() {
+    cat /etc/group |grep docker >& /dev/null
+}
+
 is_in_docker_group() {
     groups $USER |grep docker >& /dev/null
 }
@@ -60,6 +64,10 @@ get_latest_version() {
 }
 
 install_via_curl() {
+    if [[ -e /usr/local/bin/$command_name ]]; then
+        log "===> Command already exist /usr/local/bin/$command_name"
+        return
+    fi
     local m=$1
     local v="$(get_latest_version $m)"
     local url="https://github.com/docker/$m/releases/download/$v/docker-$m-$(uname -s)-$(uname -m)"
@@ -75,6 +83,8 @@ install_arch()   {
     install_via_os_default
     mexe sudo systemctl enable docker  # ログイン時にデーモン実行
     mexe sudo systemctl restart docker
+    install_via_curl machine
+    install_via_curl compose
 }
 install_msys()   { not_supported; }
 install_cygwin() { not_supported; }
@@ -87,10 +97,12 @@ install_ubuntu() {
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
 setting_arch()   {
+    if ! is_exist_docker_group; then
+        mexe sudo groupadd docker
+    fi
     if is_in_docker_group; then
         return
     fi
-    mexe sudo groupadd docker
     mexe sudo gpasswd -a $USER docker
 }
 setting_msys()   { not_supported; }
