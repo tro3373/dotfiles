@@ -56,7 +56,7 @@ bind stash D !?git stash drop %(stash)
 #set filename-width = 16
 #set id-width = 14
 #set blame-options = -C -C -C
-#set line-graphics = ascii
+set line-graphics = ascii
 #set line-number-interval = 5
 #set horizontal-scroll = 33%
 #set read-git-colors = no
