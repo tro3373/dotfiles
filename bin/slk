@@ -30,6 +30,11 @@ initialize() {
     slk_url=${slk_url:-https://hooks.slack.com/services/hoge/huga/piyo}
     botname=${botname:-"MyBot"}
     icon_emoji=${icon_emoji:-":penguin:"}
+    channel_val=
+    if [[ -n $channel ]]; then
+        channel_val=', "channel": "'$channel'"'
+    fi
+    [[ $# -eq 0 && ! -p /dev/stdin ]] && usage && exit 1
     while true; do
         [[ -z $1 ]] && break
         case "$1" in
@@ -48,6 +53,7 @@ payload={
       "username": "$botname"
     , "text": "$(cat -)"
     , "icon_emoji": "$icon_emoji"
+    $channel_val
 }
 EOF
     # , "channel": "@username"
@@ -65,8 +71,7 @@ main() {
             echo "$@"
         fi
     fi |
-        sed -z "s|\n|\\\\n|g" |
-        send
+        sed -z "s|\n|\\\\n|g" | send
 }
 main "$@"
 
