@@ -17,30 +17,51 @@ when config file exist, slack send setting loaded from config file.
       $command_name [send message] [option]
     Options
       -h|--help : Show this usage
+      -g|--genconf : generate sample conf
       -f|--file : specify send payload message
+      -c|--channel : specify channel(#hogehoge), or user(@hogehoge)
+      -u|--url : specify url
+      -n|--name : specify username(botname)
+      -i|--icon : specify icon
 EOF
 }
 
 has() { which $1 >& /dev/null; }
 add_args() { args=("${args[@]}" "$@"); }
+gen_conf() {
+    if [[ -e $script_dir/slk.conf ]]; then
+        echo "Already slk.conf exist." 1>&2
+        exit 1
+    fi
+    cat <<'EOF' >>$script_dir/slk.conf
+#!/usr/bin/env bash
+
+url=https://hooks.slack.com/services/hoge/huga/piyo
+name=MyBot
+icon=:penguin:
+channel=specify #channel_name, or @user_name
+EOF
+    echo "==> $script_dir/slk.conf generated."
+}
 initialize() {
+    [[ $# -eq 0 && ! -p /dev/stdin ]] && usage && exit 1
     if [[ -e $config ]]; then
         source $config
     fi
-    slk_url=${slk_url:-https://hooks.slack.com/services/hoge/huga/piyo}
-    botname=${botname:-"MyBot"}
-    icon_emoji=${icon_emoji:-":penguin:"}
-    channel_val=
-    if [[ -n $channel ]]; then
-        channel_val=', "channel": "'$channel'"'
-    fi
-    [[ $# -eq 0 && ! -p /dev/stdin ]] && usage && exit 1
+    url=${url:-https://hooks.slack.com/services/hoge/huga/piyo}
+    name=${name:-"MyBot"}
+    icon=${icon:-":penguin:"}
     while true; do
         [[ -z $1 ]] && break
         case "$1" in
             -h|--help) usage && exit 0  ;;
             #-f*|--file*) file=${1#*=} ;;
+            -g|--genconf) gen_conf && exit 0 ;;
             -f|--file) shift && file=$1 ;;
+            -c|--channel) shift && channel=$1 ;;
+            -u|--url) shift && url=$1 ;;
+            -n|--name) shift && name=$1 ;;
+            -i|--icon) shift && icon=$1 ;;
             *) add_args "$1"            ;;
         esac
         shift
@@ -48,11 +69,15 @@ initialize() {
     all_args="${args[@]}"
 }
 send() {
-    curl -X POST "$slk_url" -d @- <<EOF
+    local channel_val=
+    if [[ -n $channel ]]; then
+        channel_val=', "channel": "'$channel'"'
+    fi
+    curl -X POST "$url" -d @- <<EOF
 payload={
-      "username": "$botname"
+      "username": "$name"
     , "text": "$(cat -)"
-    , "icon_emoji": "$icon_emoji"
+    , "icon": "$icon"
     $channel_val
 }
 EOF
