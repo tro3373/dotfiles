@@ -77,7 +77,7 @@ send() {
 payload={
       "username": "$name"
     , "text": "$(cat -)"
-    , "icon": "$icon"
+    , "icon_emoji": "$icon"
     $channel_val
 }
 EOF
