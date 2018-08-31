@@ -157,6 +157,14 @@ setup_packages() {
     # setup samba
     setup_samba
 
+    sudo pacman -S --noconfirm screenfetch
+    cat <<EOF |sudo tee /etc/profile.d/screenfetch.sh >/dev/null
+#!/usr/bin/env bash
+
+screenfetch
+EOF
+    sudo chmod 775 /etc/profile.d/screenfetch.sh
+
     # =================GUI環境===================
     # sudo pacman -S --noconfirm xorg-xinit lightdm-gtk-greeter
     # sudo pacman -S --noconfirm xorg-xinit
