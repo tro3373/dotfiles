@@ -75,7 +75,7 @@ EOF
 
 setup_samba() {
     if ! has samba; then
-        sudo powerpill -S samba
+        sudo powerpill -S samba  --noconfirm
     fi
     if sudo test -e /etc/samba/smb.conf; then
         return
@@ -114,9 +114,9 @@ setup_samba() {
    guest only = yes
 EOF
     #sudo smbpasswd vagrant
-    sudo chmod 775 /home/vagrant
-    sudo systemctl enable smbd nmbd
-    sudo systemctl start smbd nmbd
+    sudo chmod 700 /home/vagrant
+    sudo systemctl enable smb nmb
+    sudo systemctl start smb nmb
 }
 
 
@@ -220,5 +220,6 @@ main() {
     finalize
     echo "==> Done."
     echo "===> sudo reboot"
+    # TODO logout and set -e off
 }
 main
