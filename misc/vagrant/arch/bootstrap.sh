@@ -18,7 +18,7 @@ initialize() {
     if test -f $bootstrapf; then
         return 1
     fi
-    set -e
+    #set -e
     return 0
 }
 finalize() {
@@ -92,17 +92,18 @@ setup_samba() {
 
     #workgroup = WORKGROUP
     #local master = yes
-    dns proxy = no
-
-    hosts allow = 127.0.0.0/8 192.168.33.0/24
-    host deny = all
-
-    security = user
-    map to guest = Bad User
-    guest account = vagrant
     #unix password sync = yes
 
+    interfaces = 127.0.0.0/8 eth0
+    bind interfaces only = yes
+    hosts allow = 127. 192.168.33.0/24
+    hosts deny = all
+
+    security = user
+    dns proxy = no
+    map to guest = Bad User
     create mode = 0664
+    guest account = vagrant
     directory mode = 0775
 [share]
    path = /home/vagrant
@@ -110,11 +111,13 @@ setup_samba() {
    force user = vagrant
    force group = vagrant
    public = true
-   #guest ok = yes # public の alias
+   # public の alias
+   guest ok = yes
    guest only = yes
+
 EOF
     #sudo smbpasswd vagrant
-    sudo chmod 700 /home/vagrant
+    sudo chmod 755 /home/vagrant
     sudo systemctl enable smb nmb
     sudo systemctl start smb nmb
 }
@@ -219,7 +222,7 @@ setup_login_shell() {
 }
 main() {
     ! initialize && return
-    setup_network
+    #setup_network
     setup_keyboard
     setup_lang_locale
     setup_packages
