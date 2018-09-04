@@ -86,7 +86,7 @@ main() {
     fi
     dlog "AllPath: ==> $winpath"
     dlog "Args: =====> $args"
-    local gvim_dir=vim80-kaoriya-win64
+    local gvim_dir=vim81-kaoriya-win64
     $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent $args &
 }
 main "$@"

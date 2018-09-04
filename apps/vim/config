@@ -1,6 +1,6 @@
 #!/bin/bash
 
-kaoriya_dir_name=vim80-kaoriya-win64
+kaoriya_dir_name=vim81-kaoriya-win64
 is_installed() {
     if is_arch; then
         # gvim で +clipboardを狙う
@@ -19,7 +19,7 @@ is_installed() {
 }
 
 install_msys() {
-    local type=build # build/package
+    local type=package # build/package
     if [ "$type" = "package" ]; then
         install_via_os_default
     else
@@ -201,8 +201,8 @@ setting_msys() {
     make_lnk_with_bkup "$app_dir/.gvimrc" "${WINHOME}/_gvimrc"
     make_lnk_with_bkup "$app_dir/.vim" "${WINHOME}/.vim"
     make_lnk_with_bkup "$app_dir/gvim.bat" "${WINHOME}/bin/gvim.bat"
-    local buildvim=/usr/local/src/Msys2-packages/vim/pkg/vim/usr/bin/vim.exe
-    if [ -e $buildvim ]; then
-        make_lnk_with_bkup "$buildvim" "${HOME}/bin/vim"
-    fi
+    # local buildvim=/usr/local/src/Msys2-packages/vim/pkg/vim/usr/bin/vim.exe
+    # if [ -e $buildvim ]; then
+    #     make_lnk_with_bkup "$buildvim" "${HOME}/bin/vim"
+    # fi
 }
