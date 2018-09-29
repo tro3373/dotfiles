@@ -144,10 +144,10 @@ PATH=$PATH:~/bin
 
 export PATH LANG EDITOR
 
-cd_up() {
-    cd ..
-}
-bind -x '"\C-u": cd_up'
+#cd_up() {
+#    cd ..
+#}
+#bind -x '"\C-u": cd_up'
 # .inputrcの読み込み
 [ -f ~/.inputrc ] && bind -f ~/.inputrc
 
