@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+has() { which ${1} >& /dev/null; }
+
+main() {
+    if [[ $# -ne 1 ]]; then
+        echo "specify zip file to fix it."
+        exit 1
+    fi
+    local f=$1
+    if [[ ! -e $f ]]; then
+        echo "no such file exist. $f"
+        exit 1
+    fi
+    zip -FFv $f --out fixed_$f
+    echo "done!"
+}
+main "$@"
