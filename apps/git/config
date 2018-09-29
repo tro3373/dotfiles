@@ -1,5 +1,10 @@
 #!/bin/bash
 
+install_arch()   {
+    install_via_os_default
+    def_install perl-term-readkey
+}
+
 setup_username() {
     log "@@@@@ Input Your Git user.name"
     read gitusername
