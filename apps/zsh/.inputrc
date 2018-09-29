@@ -1,5 +1,11 @@
 $if Bash
     set editing-mode vi
+    $if mode=vi
+        set keymap vi-command
+        Control-l: clear-screen
+        set keymap vi-insert
+        Control-l: clear-screen
+    $endif
     # ベル無
     set bell-style none
     # 補間時大文字小文字無視
