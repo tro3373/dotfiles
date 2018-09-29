@@ -134,7 +134,7 @@ call plug#begin('$HOME/.vim/plugged')
   " Markdown Preview 関連
   Plug 'plasticboy/vim-markdown'
   " Plug 'rcmdnk/vim-markdown'
-  Plug 'kannokanno/previm'
+  " Plug 'kannokanno/previm'
   Plug 'tyru/open-browser.vim'
 
   if g:is_windows
