@@ -73,7 +73,8 @@ send() {
     if [[ -n $channel ]]; then
         channel_val=', "channel": "'$channel'"'
     fi
-    curl -X POST "$url" -d @- <<EOF
+    # http_proxy='' HTTPS_PROXY='' curl -fSsL -X POST "$url" -d @- <<EOF>/dev/null
+    curl -fSsL -X POST "$url" -d @- <<EOF>/dev/null
 payload={
       "username": "$name"
     , "text": "$(cat -)"
@@ -96,7 +97,11 @@ main() {
             echo "$@"
         fi
     fi |
-        sed -z "s|\n|\\\\n|g" | send
+        if has perl; then
+            cat - |perl -pe 's/\n/\\n/g'
+        else
+            cat - |sed -z "s|\n|\\\\n|g"
+        fi |send
 }
 main "$@"
 
