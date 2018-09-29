@@ -30,9 +30,10 @@ setup_network() {
     if sudo grep eth1 $net_rule>/dev/null; then
         return
     fi
+    local mac=$(cat /sys/class/net/enp0s8/address)
     cat << EOF |sudo tee -a $net_rule >/dev/null
 # from enp0s8 to eth1
-SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="08:00:27:74:f7:e0", NAME="eth1"
+SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="$mac", NAME="eth1"
 EOF
     #if ! sudo test -e /etc/netctl/eth0; then
     #    return
@@ -222,7 +223,7 @@ setup_login_shell() {
 }
 main() {
     ! initialize && return
-    #setup_network
+    setup_network
     setup_keyboard
     setup_lang_locale
     setup_packages
