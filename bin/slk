@@ -98,9 +98,9 @@ main() {
         fi
     fi |
         if has perl; then
-            cat - |perl -pe 's/\n/\\n/g'
+            cat - |perl -pe 's/\n/\\n/g' |perl -pe 's/"/\\"/g'
         else
-            cat - |sed -z "s|\n|\\\\n|g"
+            cat - |sed -z "s|\n|\\\\n|g" |sed -e 's/"/\\"/g'
         fi |send
 }
 main "$@"
