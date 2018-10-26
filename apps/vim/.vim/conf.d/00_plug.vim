@@ -125,6 +125,7 @@ call plug#begin('$HOME/.vim/plugged')
   if !g:is_windows
       Plug 'vim-scripts/taglist.vim'                      " ソースコードブラウザ
   endif
+  Plug 'scrooloose/syntastic'                             " 構文解析
 
   " コードフォーマッター
   " Plug 'google/vim-maktaba'                               " GoogleCodeFormatter depends
