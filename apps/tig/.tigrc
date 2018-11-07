@@ -2,7 +2,7 @@
 # View Settings
 # ====================================
 # main viewの左端にコミットIDを表示する
-set main-view = id date:local author commit-title:graph=yes,refs=yes
+set main-view = id date:local=yes author commit-title:graph=yes,refs=yes
 # set main-view-date-local = true
 # 画面を垂直方向に分割する
 set vertical-split = false
@@ -56,8 +56,8 @@ bind stash D !?git stash drop %(stash)
 #set filename-width = 16
 #set id-width = 14
 #set blame-options = -C -C -C
-# set line-graphics = ascii
-set line-graphics = utf-8
+set line-graphics = ascii
+# set line-graphics = utf-8
 #set line-number-interval = 5
 #set horizontal-scroll = 33%
 #set read-git-colors = no
