@@ -4,10 +4,15 @@
 "######################################################################
 let mapleader = "\<Space>"
 
-" 表示上の行移動(エディタで表示されている行)であるgj,gkと、
-" 実際の行移動(エディタの表示行ではなく改行コードを意識した実際の行)であるj,kを入れ替え
-nnoremap j gj
-nnoremap k gk
+if g:plug.is_installed("accelerated-jk")
+  nmap j <Plug>(accelerated_jk_gj)
+  nmap k <Plug>(accelerated_jk_gk)
+else
+  " 表示上の行移動(エディタで表示されている行)であるgj,gkと、
+  " 実際の行移動(エディタの表示行ではなく改行コードを意識した実際の行)であるj,kを入れ替え
+  nnoremap j gj
+  nnoremap k gk
+endif
 noremap <Down> gj
 noremap <Up> gk
 nnoremap gj j

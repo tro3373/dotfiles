@@ -173,7 +173,7 @@ set number
 " ルーラを表示
 set ruler
 " カーソル行・列表示設定
-if 1
+if 0
   " カーソル行・列を常に表示
   set cursorline cursorcolumn
 else

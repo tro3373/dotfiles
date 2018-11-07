@@ -86,6 +86,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'suy/vim-ctrlp-commandline'                        " Plugins for ctrlp.vim command line history navigation
   Plug 'sgur/ctrlp-extensions.vim'                        " Plugins for ctrlp.vim cmdline : cmdline history,
                                                           " yankring : yank history, menu : extension selector menu
+  Plug 'rhysd/accelerated-jk'                             " Accelareted-jk
 
   Plug 'rking/ag.vim'                                     " SilverSearcher
   if !g:is_windows && !g:is_cygmsys2
