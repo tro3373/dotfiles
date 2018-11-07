@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd $(dirname $0); pwd)
+has() { which ${1} >& /dev/null; }
+main() {
+    cmd=$1
+    shift
+    $cmd $* 2>&1 | iconv -f cp932 -t utf-8
+}
+main "$@"
