@@ -93,11 +93,11 @@ install_msys()   { not_supported; }
 install_cygwin() { not_supported; }
 install_mac()    { not_supported; }
 install_ubuntu() {
-    # setup_capslocks
-    # setup_home_dir_names
-    # setup_default_editor
-    # setup_mount_media_setting
-    # smartctl -s on /dev/sda
+    setup_capslocks
+    setup_home_dir_names
+    setup_default_editor
+    setup_mount_media_setting
+    #smartctl -s on /dev/sda
     install_apps
     # mexe touch $maker
 }
