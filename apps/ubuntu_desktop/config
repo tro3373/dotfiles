@@ -42,8 +42,8 @@ setup_mount_media_setting() {
 install_apps() {
     #guake
     #unity-tweak-tool
-    local apps=(google-chrome-stable gnome-tweak-tool numix-gtk-theme numix-icon-theme numix-icon-theme-circle meld rapidsvn smartmontools hardinfo xsel)
-    local iapps=()
+    local apps=(google-chrome-stable gconf-editor numix-gtk-theme numix-icon-theme numix-icon-theme-circle meld rapidsvn smartmontools hardinfo xsel)
+    local iapps=(gnome-tweak-tool)
     for a in ${apps[@]}; do
         dpkg -l $a >&/dev/null && continue
         iapps+=("$a")
