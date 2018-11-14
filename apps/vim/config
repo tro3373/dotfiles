@@ -92,18 +92,11 @@ install_mac() {
 }
 
 install_ubuntu() {
-#        mexe "$instcmd --force-yes vim vim-gtk vim-athena vim-gnome"
-    mexe sudo apt-get remove -y --purge vim vim-runtime vim-gnome vim-tiny vim-common vim-gui-common
-    mexe sudo apt-get install -y liblua5.1-dev luajit \
-        libluajit-5.1 python-dev ruby ruby-dev libperl-dev \
-        mercurial libncurses5-dev libgnome2-dev libgnomeui-dev \
-        libgtk2.0-dev libatk1.0-dev libbonoboui2-dev libcairo2-dev \
-        libx11-dev libxpm-dev libxt-dev
+    # mexe sudo apt-get remove -y --purge vim vim-runtime vim-gnome vim-tiny vim-common vim-gui-common
 
-    if [[ ! -e /usr/include/lua5.1/include ]]; then
-        mexe sudo mkdir /usr/include/lua5.1/include
-    fi
-    mexe sudo ln -sf /usr/include/luajit-2.0 /usr/include/lua5.1/include
+    mexe sudo apt-get install -y git gettext libtinfo-dev build-essential libxmu-dev libgtk2.0-dev libxpm-dev \
+        libperl-dev python-dev python3-dev ruby-dev lua5.2 liblua5.2-dev autoconf automake cproto
+
     mexe cd /usr/local/src/
     if [[ ! -e /usr/local/src/vim ]]; then
         mexe sudo git clone --depth 1 https://github.com/vim/vim.git
@@ -114,28 +107,15 @@ install_ubuntu() {
         mexe cd src
     fi
     mexe sudo ./configure --with-features=huge \
-        --enable-rubyinterp \
-        --enable-largefile \
-        --disable-netbeans \
-        --enable-pythoninterp \
-        --with-python-config-dir=/usr/lib/python2.7/config-x86_64-linux-gnu \
         --enable-perlinterp \
+        --enable-pythoninterp \
+        --enable-python3interp \
+        --enable-rubyinterp \
         --enable-luainterp \
-        --with-luajit \
         --enable-gui=auto \
-        --enable-fail-if-missing \
-        --with-lua-prefix=/usr/include/lua5.1 \
-        --enable-cscope
+        --enable-fail-if-missing
     mexe sudo make
     mexe sudo make install
-    # mexe cd ..
-    # if [[ ! -e /usr/share/vim ]]; then
-    #     mexe sudo mkdir /usr/share/vim
-    # fi
-    # if [[ ! -e /usr/share/vim/vim74 ]]; then
-    #     mexe sudo mkdir /usr/share/vim/vim74
-    # fi
-    # mexe sudo cp -fr runtime/* /usr/share/vim/vim74/
 }
 
 install_redhat() {
