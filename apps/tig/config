@@ -1,5 +1,6 @@
 #!/bin/bash
 
+tig_path=jonas/tig
 install_ubuntu() {
     # build tool のインストール
     mexe "$instcmd build-essential"
@@ -10,13 +11,19 @@ install_ubuntu() {
     # ソースコード取得
     cd_work
     if [ ! -e "$script_dir/tmp/tig" ]; then
-        mexe git clone --depth 1 -b tig-2.1.1 https://github.com/jonas/tig.git
+        local v="$(get_latest_version $m)"
+        mexe git clone --depth 1 -b $v https://github.com/$tig_path.git
     fi
     mexe "cd tig"
 
     # ビルド, インストール
     mexe sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
     mexe /usr/local/bin/tig -v
+}
+
+get_latest_version() {
+    curl -fSsL https://github.com/$tig_path/releases |
+        grep "/$tig_path/releases/tag/" |head -1 |cut -d'>' -f2 |cut -d'<' -f1
 }
 
 install_redhat() {
@@ -46,3 +53,4 @@ install_redhat() {
 setting_common() {
     make_link_dot2home $app_dir
 }
+get_latest_version
