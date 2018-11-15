@@ -117,7 +117,7 @@ set formatoptions-=c
 set ts=4 sts=4 sw=4 expandtab
 if has("autocmd")
   " ファイル種別による個別設定
-  autocmd FileType vim,html,xhtml,css,javascript,yaml,ruby,coffee setlocal ts=2 sts=2 sw=2
+  autocmd FileType sh,vim,html,xhtml,css,javascript,yaml,ruby,coffee setlocal ts=2 sts=2 sw=2
 
   " ファイルを開いた時、読み込んだ時にファイルタイプを設定する
   autocmd BufNewFile,BufRead *.js setlocal ft=javascript
