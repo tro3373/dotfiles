@@ -82,7 +82,7 @@ load_config_ifexists() {
     [[ "$loadfile" == "" ]] && return 1
     [[ ! -e "$loadfile" ]] && return 1
     source "$loadfile"
-    if [[ ! -z $reg_id ]];
+    if [[ ! -z $reg_id ]]; then
         reg_ids=("${reg_ids[@]}" "$reg_id")
     fi
     return 0
