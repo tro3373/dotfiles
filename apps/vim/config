@@ -176,6 +176,9 @@ install_redhat() {
 }
 
 install_arch() {
+    if has vim; then
+      mexe sudo pacman -R vim
+    fi
     def_install gvim lua
 }
 
