@@ -538,3 +538,15 @@ function! ToCsv() abort
   call SilentFExec(":%s/$/'/g")
 endfun
 command! ToCsv call ToCsv()
+
+
+" ファイルコピー作成
+function! Copy() abort
+  let fname = input("Input FileName: ")
+  let fpath = expand("%:p:h") . "/" . fname
+  redraw
+  call SilentFExec(':w '.fpath)
+  echo "==> " . fpath . " created."
+endfun
+command! Copy call Copy()
+
