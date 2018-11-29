@@ -29,3 +29,8 @@
 *color7: #707880
 *color15: #C5C8C6
 
+!! font setting
+!!URxvt.font:     xft:Osaka-Mono-14:antialias=true,xft:Dejavu Sans Mono-9,xft:IPAGothic
+URxvt*font:     xft:Osaka\-Mono:size=14
+!!URxvt*boldFont: xft:Osaka-Mono:size=14
+! URxvt*font:     xft:sazanami-gothic:size=30
