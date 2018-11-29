@@ -30,7 +30,10 @@
 *color15: #C5C8C6
 
 !! font setting
-!!URxvt.font:     xft:Osaka-Mono-14:antialias=true,xft:Dejavu Sans Mono-9,xft:IPAGothic
-URxvt*font:     xft:Osaka\-Mono:size=14
-!!URxvt*boldFont: xft:Osaka-Mono:size=14
-! URxvt*font:     xft:sazanami-gothic:size=30
+! load/merge and query to chck.
+! xrdb -query
+! xrdb -load ~/.Xresources
+! xrdb -merge ~/.Xresources
+! URxvt*font:       xft:Osaka\\-Mono:size=14:antialias=true,xft:IPAexGothic,xft:Dejavu Sans Mono-9
+URxvt*font:       xft:Osaka\\-Mono:size=14:antialias=true
+URxvt*boldFont:   xft:Osaka\\-Mono:size=14:antialias=true
