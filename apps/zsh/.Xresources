@@ -37,3 +37,19 @@
 ! URxvt*font:       xft:Osaka\\-Mono:size=14:antialias=true,xft:IPAexGothic,xft:Dejavu Sans Mono-9
 URxvt*font:       xft:Osaka\\-Mono:size=14:antialias=true
 URxvt*boldFont:   xft:Osaka\\-Mono:size=14:antialias=true
+! URxvt.transparent: true
+! URxvt.shading:80
+! ! Included this so you know how to make your foreground not match the color of your background
+! URxvt.foreground: #eeeeee
+URxvt.perl-lib: /usr/bin/perl
+URxvt.perl-ext-common: default,keyboard-select,clipboard,url-select
+URxvt.keysym.M-Escape: perl:keyboard-select:activate
+URxvt.keysym.M-s: perl:keyboard-select:search
+URxvt.keysym.M-c:   perl:clipboard:copy
+URxvt.keysym.M-v:   perl:clipboard:paste
+URxvt.keysym.M-C-v: perl:clipboard:paste_escaped
+URxvt.keysym.M-u: perl:url-select:select_next
+! URxvt.perl-lib: /home/willowlet/.urxvt/
+! URxvt.perl-ext-common: default,x-selection
+! URxvt.keysym.M-v: perl:x-selection:paste_primary
+! URxvt.keysym.C-M-v: perl:x-selection:paste_clipboard

@@ -1,0 +1,14 @@
+rofi.modi:  window,drun,system:~/.config/rofi/rofi_system.sh
+rofi.modi:  window,drun
+rofi.sidebar-mode:  true
+rofi.hide-scrollbar: true
+rofi.kb-cancel: Escape,Control+bracketleft
+rofi.kb-mode-previous: Alt+k
+rofi.kb-mode-next: Alt+j
+rofi.theme: ~/.config/rofi/themes/Arc-Dark.rasi
+# rofi.theme: ~/.config/rofi/themes/arc-red-dark.rasi
+# rofi.theme: ~/.config/rofi/themes/onedark.rasi
+# rofi.theme: ~/.config/rofi/themes/oxide.rasi
+
+
+
