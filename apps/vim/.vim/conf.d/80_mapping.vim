@@ -338,6 +338,11 @@ if executable('fzf')
   endif
 endif
 
+if g:plug.is_installed("vim-easy-align")
+  " au FileType markdown vmap <Leader><Bslash> :EasyAlign*<Bar><Enter>
+  " Visual Select + Enter and * (select target) and | (select keyword)
+  vmap <Enter> <Plug>(EasyAlign)
+endif
 
 "=============================================
 " Grep 設定
