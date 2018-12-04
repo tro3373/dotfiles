@@ -126,7 +126,13 @@ call plug#begin('$HOME/.vim/plugged')
   if !g:is_windows
       Plug 'vim-scripts/taglist.vim'                      " ソースコードブラウザ
   endif
-  Plug 'scrooloose/syntastic'                             " 構文解析
+
+  if has('job') && has('channel') && has('timers')
+    Plug 'w0rp/ale'                                         " 構文解析(非同期)
+  else
+    Plug 'scrooloose/syntastic'                             " 構文解析
+    " Plug 'vim-syntastic/syntastic'                        " 構文解析
+  endif
 
   " コードフォーマッター
   " Plug 'google/vim-maktaba'                               " GoogleCodeFormatter depends
