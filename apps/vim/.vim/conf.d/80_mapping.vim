@@ -624,7 +624,7 @@ if g:plug.is_installed('ale')
   " 保存時チェック
   let g:ale_lint_on_save = 1
   " ファイル変更時チェック
-  let g:ale_lint_on_text_changed = 1
+  let g:ale_lint_on_text_changed = 0
   " Open時にチェック
   let g:ale_lint_on_enter = 1
   " 画面表示領域を常に表示
