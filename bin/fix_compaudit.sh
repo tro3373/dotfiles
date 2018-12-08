@@ -27,10 +27,10 @@ dirs=".zplug/autoload
 .zplug/autoload
 .zsh"
 main() {
-    # dirs=$(compaudit)
-    for f in `echo $dirs`; do
-        chmod 755 ~/$f
-    done
+  # dirs=$(compaudit)
+  for f in `echo $dirs`; do
+    chmod 755 ~/$f
+  done
 }
 main $*
 

@@ -64,25 +64,25 @@ status_code=(
 )
 
 case "$1" in
-    -h|--help)
-        echo "usage: ${0:t} [-a|--all] [0-9]+" >&2
-        echo "  check http status code. view all with -a flag" >&2
+  -h|--help)
+    echo "usage: ${0:t} [-a|--all] [0-9]+" >&2
+    echo "  check http status code. view all with -a flag" >&2
+    exit 1
+    ;;
+  ""|-a|--all)
+    for key in ${(k)status_code}
+    do
+      echo "$key => $status_code[$key]"
+    done
+    ;;
+  *)
+    for i in "$@"
+    do
+      if ! [[ $i =~ ^[0-9]+$ ]]; then
+        echo "$i: Is not integer" >&2
         exit 1
-        ;;
-    ""|-a|--all)
-        for key in ${(k)status_code}
-        do
-            echo "$key => $status_code[$key]"
-        done
-        ;;
-    *)
-        for i in "$@"
-        do
-            if ! [[ $i =~ ^[0-9]+$ ]]; then
-                echo "$i: Is not integer" >&2
-                exit 1
-            fi
-            echo ${status_code[$i]:-"(Unknown code)"}
-        done
-        ;;
+      fi
+      echo ${status_code[$i]:-"(Unknown code)"}
+    done
+    ;;
 esac

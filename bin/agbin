@@ -1,29 +1,26 @@
 #!/bin/bash
 
 root_path=${DOTPATH:-~/.dot}/bin
-has() {
-    which ${1} >/dev/null 2>&1
-    return $?
-}
+has() { command -v ${1} >& /dev/null; }
 
 usage() {
-    local cmd=$(basename $0)
-    echo "Search args word in $root_path"
-    echo "Usage .. "
-    echo "  $cmd <search_words>"
+  local cmd=$(basename $0)
+  echo "Search args word in $root_path"
+  echo "Usage .. "
+  echo "  $cmd <search_words>"
 }
 
 main() {
-    local args="$*"
-    if [[ $# -eq 0 ]]; then
-        usage
-        exit 1
-    fi
-    if has ag; then
-        ag $args $root_path
-    else
-        find $root_path -type f | xargs grep "$args" --color=auto
-    fi
+  local args="$*"
+  if [[ $# -eq 0 ]]; then
+    usage
+    exit 1
+  fi
+  if has ag; then
+    ag $args $root_path
+  else
+    find $root_path -type f | xargs grep "$args" --color=auto
+  fi
 }
 
-main $*
+main "$@"

@@ -1,46 +1,46 @@
 #!/usr/bin/env bash
 
-dotbin=$(cd $(dirname $0); pwd)
+dotbin=$(cd "$(dirname $0)"; pwd)
 
-has() { which ${1} >& /dev/null; }
+has() { command -v ${1} >& /dev/null; }
 
 interactive() {
-    local _target="$@"
-    while true; do
-        if [[ -n $_target ]] && [[ -e $dotbin/"$_target" ]]; then
-            break
-        fi
-        if [[ -n $_target ]]; then
-            local _tmp=$(ls $dotbin |grep $_target)
-            local _count=$(echo -ne "$_tmp\n" | wc -l)
-            [[ $_count -eq 1 ]] && _target=$_tmp && break;
-            ls $dotbin |grep --color=auto $_target
-        else
-            ls $dotbin --color
-        fi
-        echo
-        printf "Open=> "
-        _target=
-        read _target
-    done
-    target=$_target
+  local _target="$@"
+  while true; do
+    if [[ -n $_target ]] && [[ -e $dotbin/"$_target" ]]; then
+      break
+    fi
+    if [[ -n $_target ]]; then
+      local _tmp=$(ls $dotbin |grep $_target)
+      local _count=$(echo -ne "$_tmp\n" | wc -l)
+      [[ $_count -eq 1 ]] && _target=$_tmp && break;
+      ls $dotbin |grep --color=auto $_target
+    else
+      ls $dotbin --color
+    fi
+    echo
+    printf "Open=> "
+    _target=
+    read _target
+  done
+  target=$_target
 }
 
 main() {
-    local args="$@"
-    local target=
-    if has fzy; then
-        target=$(ls $dotbin |fzy -q "$args")
-    elif has fzf; then
-        target=$(ls $dotbin |fzf -q "$args")
-    elif has peco; then
-        target=$(ls $dotbin |peco --query "$args")
-    else
-        interactive "$@"
-    fi
-    if [[ -n $target ]]; then
-        vim $dotbin/$target
-    fi
+  local args="$@"
+  local target=
+  if has fzy; then
+    target=$(ls $dotbin |fzy -q "$args")
+  elif has fzf; then
+    target=$(ls $dotbin |fzf -q "$args")
+  elif has peco; then
+    target=$(ls $dotbin |peco --query "$args")
+  else
+    interactive "$@"
+  fi
+  if [[ -n $target ]]; then
+    vim $dotbin/$target
+  fi
 }
 main "$@"
 

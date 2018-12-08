@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-printf "%03d\n" $*
+printf "%03d\\n" "$*"
 

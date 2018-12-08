@@ -1,6 +1,6 @@
 #!/bin/bash
 
 main() {
-    rbenv install -l
+  rbenv install -l
 }
-main $*
+main "$@"

@@ -3,13 +3,13 @@
 to=$1
 from='-F"Sample Test" -f sample@example.com'
 input_to() {
-    while [[ "$to" == "" ]]; do
-        echo "Input to mail address..."
-        read to
-    done
+  while [[ "$to" == "" ]]; do
+    echo "Input to mail address..."
+    read to
+  done
 }
 main() {
-    echo "test" | sendmail -v $to $from
+  echo "test" | sendmail -v $to $from
 }
 main
 

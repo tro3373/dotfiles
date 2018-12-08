@@ -6,20 +6,20 @@ timestamp=$(date +%Y%m%d_%H%M%S)
 dst="${backup_root}/$ym"
 
 ls_bkup() {
-    ls -la $backup_root
+  ls -la $backup_root
 }
 
 main() {
-    set -eu
-    if [[ $# -eq 0 ]]; then
-        ls_bkup
-        return
-    fi
-    [ ! -e $dst ] && mkdir -p $dst
-    for f in "$@"; do
-        [[ ! -e "$f" ]] && continue
-        local fname="$(basename "$f")"
-        mv -v "$f" "$dst/${timestamp}.$fname"
-    done
+  set -eu
+  if [[ $# -eq 0 ]]; then
+    ls_bkup
+    return
+  fi
+  [ ! -e $dst ] && mkdir -p $dst
+  for f in "$@"; do
+    [[ ! -e "$f" ]] && continue
+    local fname="$(basename "$f")"
+    mv -v "$f" "$dst/${timestamp}.$fname"
+  done
 }
 main "$@"

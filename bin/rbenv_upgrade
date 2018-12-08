@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 main() {
-    cd ~/.anyenv/envs/rbenv/plugins/ruby-build
-    git pull --rebase origin master
+  cd ~/.anyenv/envs/rbenv/plugins/ruby-build
+  git pull --rebase origin master
 }
 main "$@"

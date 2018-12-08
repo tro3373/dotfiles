@@ -1,6 +1,6 @@
 #!/bin/bash
 
 main() {
-    anyenv versions
+  anyenv versions
 }
-main $*
+main "$@"

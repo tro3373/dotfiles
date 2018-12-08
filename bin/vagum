@@ -1,18 +1,15 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
 DOTPATH=${DOTPATH:-~/.dot}
-has() { which ${1} >& /dev/null; }
 
 check() {
-    if [[ ${OSTYPE} != "msys" ]]; then
-        echo "Not supported" 1>&2
-        exit 1
-    fi
+  if [[ ${OSTYPE} != "msys" ]]; then
+    echo "Not supported" 1>&2
+    exit 1
+  fi
 }
 main() {
-    check
-    cmd //c start "" $DOTPATH/misc/vagrant/arch/umount.bat
+  check
+  cmd //c start "" $DOTPATH/misc/vagrant/arch/umount.bat
 }
 main "$@"

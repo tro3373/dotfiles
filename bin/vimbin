@@ -2,20 +2,20 @@
 
 dotbin=${DOTPATH:-~/.dot}/bin
 main() {
-    local args=$*
-    local open_files=
-    for arg in $args; do
-        local tmp=$dotbin/$arg
-        if [[ -e $tmp ]]; then
-            open_files="$open_files $tmp"
-        fi
-    done
-    local no_whitespace="$(echo -e $open_files | tr -d '[:space:]')"
-    if [[ "" == "$no_whitespace" ]]; then
-        vim $dotbin
-    else
-        vim -p $open_files
+  local args=$*
+  local open_files=
+  for arg in $args; do
+    local tmp=$dotbin/$arg
+    if [[ -e $tmp ]]; then
+      open_files="$open_files $tmp"
     fi
+  done
+  local no_whitespace="$(echo -e $open_files | tr -d '[:space:]')"
+  if [[ "" == "$no_whitespace" ]]; then
+    vim $dotbin
+  else
+    vim -p $open_files
+  fi
 }
-main $*
+main "$@"
 

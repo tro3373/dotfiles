@@ -1,14 +1,15 @@
 #!/bin/bash
 
+has() { command -v ${1} >& /dev/null; }
 check(){
-    if ! which smartctl > /dev/null 2>&1; then
-        echo "No smartctl command. install it. sudo apt-get install smartmontools." 1>2&
-        exit 1
-    fi
+  if ! has smartctl; then
+    echo "No smartctl command. install it. sudo apt-get install smartmontools." 1>&2
+    exit 1
+  fi
 }
 hdd=${1:-/dev/sda}
 main() {
-    check
-    sudo smartctl -a $hdd
+  check
+  sudo smartctl -a $hdd
 }
 main

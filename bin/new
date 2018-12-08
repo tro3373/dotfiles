@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
+# script_dir=$(cd $(dirname $0); pwd)
 command_name=$(basename $0)
 
 dotbin=${DOTPATH:-~/.dot}/bin
 target=
 usage() {
-    cat <<EOF
+  cat <<EOF
 
 Create new executable shell file.
 
@@ -21,53 +21,50 @@ Create new executable shell file.
 EOF
 }
 
-has() {
-    which ${1} >/dev/null 2>&1
-    return $?
-}
+has() { command -v ${1} >& /dev/null; }
 
 set_args() {
-    for arg in "$@"; do
-        case "$arg" in
-            -h|--help)
-                usage
-                exit 0
-                ;;
-            -b|--bin)
-                # file=${arg#*=}
-                tobin=1
-                ;;
-            --hard|-l|--long)
-                hard=1
-                ;;
-            *)
-                target="$arg"
-                ;;
-        esac
-    done
+  for arg in "$@"; do
+    case "$arg" in
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      -b|--bin)
+        # file=${arg#*=}
+        tobin=1
+        ;;
+      --hard|-l|--long)
+        hard=1
+        ;;
+      *)
+        target="$arg"
+        ;;
+    esac
+  done
 }
 
 check() {
-    if [[ -z $target ]]; then
-        echo "Specify target command name." 1>&2
-        usage
-        exit 1
-    fi
+  if [[ -z $target ]]; then
+    echo "Specify target command name." 1>&2
+    usage
+    exit 1
+  fi
 }
 
 initialize() {
-    set_args "$@"
-    check
+  set_args "$@"
+  check
 }
 
 cat_template() {
-    local hard=$1
-    if [[ $hard -eq 1 ]]; then
-        cat <<'EOL'
+  local hard=$1
+  if [[ $hard -eq 1 ]]; then
+    cat <<'EOL'
 #!/usr/bin/env bash
 
 current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
+script_dir=$(cd "$(dirname $0)"; pwd)
 command_name=$(basename $0)
 args=()
 
@@ -84,7 +81,7 @@ Description for this command.
 EOF
 }
 
-has() { which $1 >& /dev/null; }
+has() { command -v ${1} >& /dev/null; }
 add_args() { args=("${args[@]}" "$@"); }
 #add_args() { args+=("$@"); }
 
@@ -92,60 +89,60 @@ initialize() {
     while true; do
         [[ -z $1 ]] && break
         case "$1" in
-            -h|--help) usage && exit 0  ;;
-            #-f*|--file*) file=${1#*=} ;;
-            #-f|--file) shift && file=$1 ;;
-            *) add_args "$1"            ;;
+          -h|--help) usage && exit 0  ;;
+          #-f*|--file*) file=${1#*=} ;;
+          #-f|--file) shift && file=$1 ;;
+          *) add_args "$1"            ;;
         esac
         shift
-    done
+      done
     all_args="${args[@]}"
-}
+  }
 
 main() {
     initialize "$@"
     for arg in "${args[@]}"; do
         echo "Arguments: $arg"
-    done
+      done
     echo $file
-}
+  }
 main "$@"
 EOL
-    else
-        cat <<'EOL'
+else
+  cat <<'EOL'
 #!/usr/bin/env bash
 
 current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
-has() { which ${1} >& /dev/null; }
+script_dir=$(cd "$(dirname $0)"; pwd)
+has() { command -v ${1} >& /dev/null; }
 
 main() {
     :
-}
+  }
 main "$@"
 EOL
-    fi
+fi
 }
 
 main(){
-    initialize "$@"
-    local out=$current_dir
-    if [[ $tobin -eq 1 ]]; then
-        out=$dotbin
-    fi
-    local target=$out/$target
-    if [[ -e $target ]]; then
-        echo "Target $target is exist." 1>&2
-        exit 1
-    fi
-    cat_template $hard > $target
-    chmod 775 $target
-    echo "==> New shell template file generated to $target."
-    echo "==> Edit it?(y/N)"
-    read yes_i_edit
-    if [[ $yes_i_edit =~ [yY] ]]; then
-        vim $target
-    fi
+  initialize "$@"
+  local out=$current_dir
+  if [[ $tobin -eq 1 ]]; then
+    out=$dotbin
+  fi
+  local target=$out/$target
+  if [[ -e $target ]]; then
+    echo "Target $target is exist." 1>&2
+    exit 1
+  fi
+  cat_template $hard > $target
+  chmod 775 $target
+  echo "==> New shell template file generated to $target."
+  echo "==> Edit it?(y/N)"
+  read yes_i_edit
+  if [[ $yes_i_edit =~ [yY] ]]; then
+    vim $target
+  fi
 }
 main "$@"
 

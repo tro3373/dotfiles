@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 main() {
-    curl ifconfig.io
+  curl ifconfig.io
 }
 
 main "$@"

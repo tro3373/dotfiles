@@ -1,40 +1,41 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
+# current_dir=$(pwd)
+# script_dir=$(cd $(dirname $0); pwd)
 
-has() {
-    which ${1} >/dev/null 2>&1
-    return $?
-}
+has() { command -v ${1} >& /dev/null; }
 
 check() {
-    if ! has jad; then
-        echo "No jad command exists." 1>&2
-        exit 1
-    fi
-    if [[ $# -ne 1 ]]; then
-        echo "Specify target jar file." 1>&2
-        exit 1
-    fi
+  if ! has jad; then
+    echo "No jad command exists." 1>&2
+    exit 1
+  fi
+  if [[ $# -ne 1 ]]; then
+    echo "Specify target jar file." 1>&2
+    exit 1
+  fi
 }
 
 _jadjar() {
-    local target_jar="$*"
-    unzip -d $target_jar.tmp $target_jar
-    pushd $target_jar.tmp
-    for f in `find . -name '*.class'`; do
-        jad -d $(dirname $f) -s java -lnc $f
+  local target_jar="$*"
+  unzip -d $target_jar.tmp $target_jar
+  pushd $target_jar.tmp
+  find . -name '*.class' |
+    while read -r f; do
+      jad -d "$(dirname $f)" -s java -lnc $f
     done
-    popd
+  # for f in $(find . -name '*.class'); do
+  #   jad -d $(dirname $f) -s java -lnc $f
+  # done
+  popd
 }
 
 main() {
-    check "$@"
-    for i in "$@"; do
-        [[ ! -e "$i" ]] && echo "No such file.($i)." 1>&2 && continue
-        _jadjar $i
-    done
+  check "$@"
+  for i in "$@"; do
+    [[ ! -e "$i" ]] && echo "No such file.($i)." 1>&2 && continue
+    _jadjar $i
+  done
 }
 
 main "$@"

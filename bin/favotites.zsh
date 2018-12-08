@@ -13,9 +13,9 @@ ARRAY=${(z)CMD}
 
 # 各要素毎に処理
 for cmd in ${ARRAY}; do
-    # インストールされていなかったら通知
-    if [ -n "`which "${cmd}" | grep 'not found'`" ]; then
-        echo "[!] '${cmd}' is not installed"
-    fi
+  # インストールされていなかったら通知
+  if [ -n "`which "${cmd}" | grep 'not found'`" ]; then
+    echo "[!] '${cmd}' is not installed"
+  fi
 done
 

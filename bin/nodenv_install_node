@@ -1,37 +1,37 @@
 #!/usr/bin/env bash
 
 version=${1:-}
-has() { which ${1} >& /dev/null; }
+has() { command -v ${1} >& /dev/null; }
 intaractive() {
-    while [[ "$input_word" == "" ]]; do
-        nodenv install -l | grep -v jxcore | grep -v iojs
-        echo
-        echo "Input install version. Now version is .. "
-        node -v
-        read input_word
-    done
-    version=$input_word
+  while [[ "$input_word" == "" ]]; do
+    nodenv install -l | grep -v jxcore | grep -v iojs
+    echo
+    echo "Input install version. Now version is .. "
+    node -v
+    read input_word
+  done
+  version=$input_word
 }
 main() {
-    if ! has anyenv; then
-        echo "No anyenv exists." 1>&2
-        exit 1
-    fi
-    if ! has nodenv; then
-        echo "Installing nodenv ..."
-        anyenv install nodenv
-    fi
-    if has node; then
-        echo "Already nodenv installed." 1>&2
-        # echo "Upgrading nodenv ..."
-        # ./rbenv_upgrade
-    fi
+  if ! has anyenv; then
+    echo "No anyenv exists." 1>&2
+    exit 1
+  fi
+  if ! has nodenv; then
+    echo "Installing nodenv ..."
+    anyenv install nodenv
+  fi
+  if has node; then
+    echo "Already nodenv installed." 1>&2
+    # echo "Upgrading nodenv ..."
+    # ./rbenv_upgrade
+  fi
 
-    if [[ -z $version ]]; then
-        intaractive
-    fi
-    nodenv install $version
-    nodenv global $version
-    node -v
+  if [[ -z $version ]]; then
+    intaractive
+  fi
+  nodenv install $version
+  nodenv global $version
+  node -v
 }
 main "$@"

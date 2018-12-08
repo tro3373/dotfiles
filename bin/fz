@@ -1,38 +1,37 @@
 #!/usr/bin/env bash
 
-dotbin=$(cd $(dirname $0); pwd)
-
-has() { which ${1} >& /dev/null; }
+# dotbin=$(cd $(dirname $0); pwd)
+has() { command -v ${1} >& /dev/null; }
 
 initialize() {
-    local _query=
-    local _option
-    _command=
-    if has fzy; then
-        _command=fzy
-        _query="-q"
+  local _query=
+  local _option
+  _command=
+  if has fzy; then
+    _command=fzy
+    _query="-q"
+  fi
+  if has peco; then
+    _command=peco
+    _query="--query"
+  fi
+  if has fzf; then
+    _command=fzf
+    _query="-q"
+    _option=""
+  fi
+  if [[ -n $_command ]]; then
+    if [[ -n "$*" ]]; then
+      _command="$_command $_option $_query $*"
     fi
-    if has peco; then
-        _command=peco
-        _query="--query"
-    fi
-    if has fzf; then
-        _command=fzf
-        _query="-q"
-        _option=""
-    fi
-    if [[ -n $_command ]]; then
-        if [[ -n "$@" ]]; then
-            _command="$_command $_option $_query $@"
-        fi
-        return
-    fi
-    echo "No fazzy command exists." 1>&2
-    exit 1
+    return
+  fi
+  echo "No fazzy command exists." 1>&2
+  exit 1
 }
 main() {
-    initialize "$@"
-    cat - | $_command
+  initialize "$@"
+  cat - | $_command
 }
 main "$@"
 

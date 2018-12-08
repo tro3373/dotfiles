@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
-has() { which ${1} >& /dev/null; }
-
 main() {
-    for i in $(seq 1 10); do
-        (time zsh -i -c exit)
-    done
+  for i in $(seq 1 10); do
+    (time zsh -i -c exit)
+  done
 }
 main "$@"

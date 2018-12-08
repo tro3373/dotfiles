@@ -5,7 +5,7 @@ script_dir=$(cd $(dirname $0); pwd)
 has() { which ${1} >& /dev/null; }
 
 main() {
-    cat <<EOF
+  cat <<EOF
 ctrl+z
 bg 1
 jobs 1

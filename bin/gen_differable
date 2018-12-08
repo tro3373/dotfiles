@@ -1,7 +1,7 @@
 #!/bin/bash
 
 current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
+# script_dir=$(cd $(dirname $0); pwd)
 target_root=${1:-"$current_dir"}
 from_commitid="$2"
 to_commitid="$3"
@@ -9,89 +9,89 @@ list_log_count=10
 output_dir=${4:-$current_dir/DiffSource}
 
 initialize() {
-    if [[ ! -e $target_root ]]; then
-        echo "No such directory $target_root" 1>&2
-        exit 1
-    fi
-    if [[ ! -e $output_dir ]]; then
-        mkdir -p $output_dir
-    fi
-    output_dir=$(cd $output_dir; pwd)
+  if [[ ! -e $target_root ]]; then
+    echo "No such directory $target_root" 1>&2
+    exit 1
+  fi
+  if [[ ! -e $output_dir ]]; then
+    mkdir -p $output_dir
+  fi
+  output_dir=$(cd $output_dir; pwd)
 }
 
 check() {
-    local files="$(git status -s)"
-    if [[ $? -ne 0 ]]; then
-        echo "Not git directory." 1>&2
-        exit 1
-    fi
-    if [[ "$files" != "" ]]; then
-        echo "Modified file exist. stash or commit it. $files" 1>&2
-        exit 1
-    fi
-    files="$(/bin/ls $output_dir 2>/dev/null)"
-    if [[ "$files" != "" ]]; then
-        echo "Output directory is exist. $output_dir" 1>&2
-        exit 1
-    fi
+  if git status -s >& /dev/null; then
+    echo "Not git directory." 1>&2
+    exit 1
+  fi
+  local files="$(git status -s)"
+  if [[ "$files" != "" ]]; then
+    echo "Modified file exist. stash or commit it. $files" 1>&2
+    exit 1
+  fi
+  files="$(/bin/ls $output_dir 2>/dev/null)"
+  if [[ "$files" != "" ]]; then
+    echo "Output directory is exist. $output_dir" 1>&2
+    exit 1
+  fi
 }
 
 get_commitid() {
-    local variable=$1
-    local message=$2
-    local selectid
-    eval selectid=\$$variable
-    if [[ "$selectid" != "" ]]; then
-        return
-    fi
-    while [[ "$selectid" == "" ]]; do
-        echo $message
-        echo
-        git log --oneline -$list_log_count
-        echo
-        read selectid
-    done
-    eval ${variable}=$selectid
+  local variable=$1
+  local message=$2
+  local selectid
+  eval selectid=\$$variable
+  if [[ "$selectid" != "" ]]; then
+    return
+  fi
+  while [[ "$selectid" == "" ]]; do
+    echo $message
+    echo
+    git log --oneline -$list_log_count
+    echo
+    read selectid
+  done
+  eval ${variable}=$selectid
 }
 
 gen_files() {
-    local commitid=$1
-    local outdir="$2"
-    local files="$3"
-    if [[ ! -e $outdir ]]; then
-        mkdir -p $outdir
-    fi
-    echo "==> Checkouting to gen $outdir commitid:$commitid ... "
-    git checkout $commitid 1>/dev/null 2>&1
-    sleep 1
-    for file in $files; do
-        echo "  $file"
-        cp -fp --parents $file $outdir
-    done
+  local commitid=$1
+  local outdir="$2"
+  local files="$3"
+  if [[ ! -e $outdir ]]; then
+    mkdir -p $outdir
+  fi
+  echo "==> Checkouting to gen $outdir commitid:$commitid ... "
+  git checkout $commitid 1>/dev/null 2>&1
+  sleep 1
+  for file in $files; do
+    echo "  $file"
+    cp -fp --parents $file $outdir
+  done
 }
 
 gen_diff() {
-    local currentbranch=$(git rev-parse --abbrev-ref HEAD)
-    local files=$(git diff $from_commitid $to_commitid --name-only)
-    gen_files $from_commitid $output_dir/01_Before "$files"
-    sleep 1
-    gen_files $to_commitid $output_dir/02_After "$files"
-    sleep 1
-    echo "==> Checkouting to current branch $currentbranch ..."
-    git checkout $currentbranch 1>/dev/null 2>&1
+  local currentbranch=$(git rev-parse --abbrev-ref HEAD)
+  local files=$(git diff $from_commitid $to_commitid --name-only)
+  gen_files $from_commitid $output_dir/01_Before "$files"
+  sleep 1
+  gen_files $to_commitid $output_dir/02_After "$files"
+  sleep 1
+  echo "==> Checkouting to current branch $currentbranch ..."
+  git checkout $currentbranch 1>/dev/null 2>&1
 }
 
 main() {
-    initialize
-    cd $target_root
-    check
-    get_commitid from_commitid "Input commit id from"
-    get_commitid to_commitid "Input commit id to"
-    echo
-    echo "==> Are you ready? from=$from_commitid to=$to_commitid (Cancel Ctrl+C)"
-    read waiting_input_enter
-    echo
-    gen_diff
-    echo "Done."
+  initialize
+  cd $target_root
+  check
+  get_commitid from_commitid "Input commit id from"
+  get_commitid to_commitid "Input commit id to"
+  echo
+  echo "==> Are you ready? from=$from_commitid to=$to_commitid (Cancel Ctrl+C)"
+  read
+  echo
+  gen_diff
+  echo "Done."
 }
 main

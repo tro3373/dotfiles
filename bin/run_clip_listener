@@ -2,8 +2,8 @@
 
 keyfile=~/.exchange.key
 if [[ ! -e $keyfile ]]; then
-    echo "No $keyfile exist." 1>&2
-    exit 1
+  echo "No $keyfile exist." 1>&2
+  exit 1
 fi
 
 key=$(cat ~/.exchange.key)

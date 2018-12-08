@@ -13,7 +13,7 @@ force=0
 args=()
 
 usage() {
-    cat <<EOF
+  cat <<EOF
 Setup my dev env.
   Usage:
       $command_name [Option] [App App...]
@@ -38,33 +38,33 @@ EOF
 add_args() { args+=("$@"); }
 
 initialize() {
-    while true; do
-        [[ -z $1 ]] && break
-        case "$1" in
-            -h|--help) usage && exit 0  ;;
-            #-f*|--file*) file=${1#*=} ;;
-            #-f|--file) shift && file=$1 ;;
-            -e|--exec) dry_run=0        ;;
-            -f|--force) force=1         ;;
-            -d|--debug) debug=1         ;;
-            *) add_args $1              ;;
-        esac
-        shift
-    done
-    if [[ ${#args[@]} -eq 0 ]]; then
-        # 指定無し時は全インストール
-        args+=(${default_apps[@]})
-    fi
-    all_args="${args[@]}"
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help) usage && exit 0  ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      -e|--exec) dry_run=0        ;;
+      -f|--force) force=1         ;;
+      -d|--debug) debug=1         ;;
+      *) add_args $1              ;;
+    esac
+    shift
+  done
+  if [[ ${#args[@]} -eq 0 ]]; then
+    # 指定無し時は全インストール
+    args+=(${default_apps[@]})
+  fi
+  all_args="${args[@]}"
 
     # 関数ロード
     source $DOT_PATH/bin/lib/funcs
 
     if is_mac; then
-        if ! has brew; then
-            suggest_install_brew
-            exit 1
-        fi
+      if ! has brew; then
+        suggest_install_brew
+        exit 1
+      fi
     fi
 
     is_32bit=0
@@ -72,44 +72,44 @@ initialize() {
     # Install command
     instcmd="sudo apt-get install -y"
     if is_mac; then
-        instcmd="brew install"
+      instcmd="brew install"
     elif is_redhat; then
-        instcmd="sudo yum install -y"
+      instcmd="sudo yum install -y"
     elif is_cygwin; then
-        instcmd="apt-cyg install"
+      instcmd="apt-cyg install"
     elif is_msys; then
-        instcmd="pacman -S --noconfirm"
+      instcmd="pacman -S --noconfirm"
     elif is_arch; then
-        if has yaourt; then
-            instcmd="yaourt -S --noconfirm"
-        else
-            instcmd="sudo pacman -S --noconfirm"
-        fi
+      if has yaourt; then
+        instcmd="yaourt -S --noconfirm"
+      else
+        instcmd="sudo pacman -S --noconfirm"
+      fi
     fi
     cd $DOT_PATH
-}
+  }
 
 make_setup_dirs() {
-    local works_home=$HOME
-    if is_msys; then
-        if [ -z $WINHOME ]; then
-            WINHOME="$(cd /c/Users/`whoami` && pwd)"
-        fi
-        works_home=$WINHOME
+  local works_home=$HOME
+  if is_msys; then
+    if [ -z $WINHOME ]; then
+      WINHOME="$(cd "/c/Users/$(whoami)" && pwd)"
     fi
-    make_dir_if_needed "$works_home/bin"
-    make_dir_if_needed "$works_home/tools"
-    make_dir_if_needed "$works_home/works/00_memos"
-    if is_msys; then
-        make_lnk_with_bkup $WINHOME $HOME/win
-        make_lnk_with_bkup $WINHOME/bin $HOME/bin
-        make_lnk_with_bkup $WINHOME/tools $HOME/tools
-        make_lnk_with_bkup $WINHOME/works $HOME/works
-    fi
+    works_home=$WINHOME
+  fi
+  make_dir_if_needed "$works_home/bin"
+  make_dir_if_needed "$works_home/tools"
+  make_dir_if_needed "$works_home/works/00_memos"
+  if is_msys; then
+    make_lnk_with_bkup $WINHOME $HOME/win
+    make_lnk_with_bkup $WINHOME/bin $HOME/bin
+    make_lnk_with_bkup $WINHOME/tools $HOME/tools
+    make_lnk_with_bkup $WINHOME/works $HOME/works
+  fi
 }
 
 suggest_install_brew() {
-    cat <<EOF
+  cat <<EOF
 ================================================
  HomeBrew is Not Installed!
   => Execute this and Install it!
@@ -125,84 +125,84 @@ EOF
 }
 
 debug_options() {
-    dlog "===================================================="
-    dlog " Execute with below args."
-    dlog "   ===> Apps: $all_args"
-    dlog "   ===> force: $force"
-    dlog "   ===> dry_run: $dry_run"
-    dlog "===================================================="
+  dlog "===================================================="
+  dlog " Execute with below args."
+  dlog "   ===> Apps: $all_args"
+  dlog "   ===> force: $force"
+  dlog "   ===> dry_run: $dry_run"
+  dlog "===================================================="
 }
 
 install_app() {
-    default_called=0
-    is_arch     && install_arch
-    is_msys     && install_msys
-    is_cygwin   && install_cygwin
-    is_mac      && install_mac
-    is_ubuntu   && install_ubuntu
-    is_redhat   && install_redhat
-    if [[ $default_called -eq 1 ]]; then
-        install_common
-    fi
+  default_called=0
+  is_arch     && install_arch
+  is_msys     && install_msys
+  is_cygwin   && install_cygwin
+  is_mac      && install_mac
+  is_ubuntu   && install_ubuntu
+  is_redhat   && install_redhat
+  if [[ $default_called -eq 1 ]]; then
+    install_common
+  fi
 }
 
 setting_app() {
-    default_called=0
-    is_arch     && setting_arch
-    is_msys     && setting_msys
-    is_cygwin   && setting_cygwin
-    is_mac      && setting_mac
-    is_ubuntu   && setting_ubuntu
-    is_redhat   && setting_redhat
-    if [[ $default_called -eq 1 ]]; then
-        setting_common
-    fi
+  default_called=0
+  is_arch     && setting_arch
+  is_msys     && setting_msys
+  is_cygwin   && setting_cygwin
+  is_mac      && setting_mac
+  is_ubuntu   && setting_ubuntu
+  is_redhat   && setting_redhat
+  if [[ $default_called -eq 1 ]]; then
+    setting_common
+  fi
 }
 
 setup_for_app() {
-    dlog "================================================"
-    log "=> For $app"
+  dlog "================================================"
+  log "=> For $app"
 
-    if [[ $force -eq 1 ]] || ! is_installed; then
-        install_app
-    fi
-    if is_dry || is_installed; then
-        setting_app
-    fi
+  if [[ $force -eq 1 ]] || ! is_installed; then
+    install_app
+  fi
+  if is_dry || is_installed; then
+    setting_app
+  fi
 }
 
 start_setup() {
-    set -eu
-    make_setup_dirs
+  set -eu
+  make_setup_dirs
 
-    for ((i = 0; i < ${#args[@]}; i++)) {
-        # ディレクトリ名＝アプリ名の前提
-        local app=${args[i]}
+  for ((i = 0; i < ${#args[@]}; i++)) {
+    # ディレクトリ名＝アプリ名の前提
+    local app=${args[i]}
 
-        app_dir=$DOT_PATH/apps/$app
-        if [[ ! -e $app_dir ]]; then
-            log "=> No such app $app"
-            continue
-        fi
-        source $DOT_PATH/bin/lib/default
-        local script_path=$app_dir/config
-        if [[ -e $script_path ]]; then
-            source $script_path
-        fi
-        setup_for_app
-    }
+    app_dir=$DOT_PATH/apps/$app
+    if [[ ! -e $app_dir ]]; then
+      log "=> No such app $app"
+      continue
+    fi
+    source $DOT_PATH/bin/lib/default
+    local script_path=$app_dir/config
+    if [[ -e $script_path ]]; then
+      source $script_path
+    fi
+    setup_for_app
+  }
 }
 
 main() {
-    initialize "$@"
-    debug_options
-    start_setup
-    if is_dry; then
-        log "===================================================="
-        log " This is Dry-run mode. :D"
-        log "===================================================="
-    fi
-    ink green "Done!";echo
+  initialize "$@"
+  debug_options
+  start_setup
+  if is_dry; then
+    log "===================================================="
+    log " This is Dry-run mode. :D"
+    log "===================================================="
+  fi
+  ink green "Done!";echo
 }
 main "$@"
 

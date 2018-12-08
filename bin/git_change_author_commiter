@@ -2,72 +2,72 @@
 
 name="$1"
 mail="$2"
-has() { which ${1} >& /dev/null; }
+has() { command -v ${1} >& /dev/null; }
 show_commit_graph() {
-    local nopager=
-    local opt=
-    if [[ $# -ne 0 ]]; then
-        nopager=--no-pager
-        opt=-10
-    fi
-    git $nopager log $opt --graph --pretty=format:'%Cred%h%Creset %C(bold blue)%an%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
+  local nopager=
+  local opt=
+  if [[ $# -ne 0 ]]; then
+    nopager=--no-pager
+    opt=-10
+  fi
+  git $nopager log $opt --graph --pretty=format:'%Cred%h%Creset %C(bold blue)%an%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
 }
 get_commit_id() {
-    local ret=
-    while true; do
-        msg="==> specify commit id to change from to HEAD"
-        if has fzf; then
-            ret=$(show_commit_graph |fzf --prompt "$msg: "|awk '{print $2}')
-        else
-            show_commit_graph 1 >&2
-            echo >&2
-            echo $msg >&2
-            read ret
-        fi
-        [[ -n $ret ]] && echo "$ret" && break
-    done
+  local ret=
+  while true; do
+    msg="==> specify commit id to change from to HEAD"
+    if has fzf; then
+      ret=$(show_commit_graph |fzf --prompt "$msg: "|awk '{print $2}')
+    else
+      show_commit_graph 1 >&2
+      echo >&2
+      echo $msg >&2
+      read ret
+    fi
+    [[ -n $ret ]] && echo "$ret" && break
+  done
 }
 inisialize() {
-    while [[ "$name" == "" ]]; do
-        printf "==> Input name to convert: "
-        read name
-        echo
-    done
-    while [[ "$mail" == "" ]]; do
-        printf "==> Input mail to convert: "
-        read mail
-        echo
-    done
-    opt=
-    while [[ -z $batch_type ]]; do
-        echo "==> Specify batch type to change."
-        echo
-        echo "       all|a: change all auther commiter"
-        echo "   specify|s: change auther commiter specify commit"
-        echo
-        read batch_type
-        case "$batch_type" in
-            all|a) opt=HEAD && return;;
-            specify|s) break;;
-            *) batch_type=;;
-        esac
-    done
+  while [[ "$name" == "" ]]; do
+    printf "==> Input name to convert: "
+    read name
+    echo
+  done
+  while [[ "$mail" == "" ]]; do
+    printf "==> Input mail to convert: "
+    read mail
+    echo
+  done
+  opt=
+  while [[ -z $batch_type ]]; do
+    echo "==> Specify batch type to change."
+    echo
+    echo "       all|a: change all auther commiter"
+    echo "   specify|s: change auther commiter specify commit"
+    echo
+    read batch_type
+    case "$batch_type" in
+      all|a) opt=HEAD && return;;
+      specify|s) break;;
+      *) batch_type=;;
+    esac
+  done
 
-    from=$(get_commit_id)
-    opt="$from..HEAD"
+  from=$(get_commit_id)
+  opt="$from..HEAD"
 }
 main() {
-    inisialize
-    echo "==> Change All commiter author to below name mail"
-    echo "  name: $name"
-    echo "  mail: $mail"
-    echo "   opt: $opt"
-    echo "==> Are you ready? type any key..."
-    echo
-    read waituserkey
-    git filter-branch -f --env-filter \
-        "GIT_AUTHOR_NAME='$name'; GIT_AUTHOR_EMAIL='$mail'; GIT_COMMITTER_NAME='$name'; GIT_COMMITTER_EMAIL='$mail';" \
-        $opt
-    # git commit --amend --author="$name <$mail>"
+  inisialize
+  echo "==> Change All commiter author to below name mail"
+  echo "  name: $name"
+  echo "  mail: $mail"
+  echo "   opt: $opt"
+  echo "==> Are you ready? type any key..."
+  echo
+  read
+  git filter-branch -f --env-filter \
+    "GIT_AUTHOR_NAME='$name'; GIT_AUTHOR_EMAIL='$mail'; GIT_COMMITTER_NAME='$name'; GIT_COMMITTER_EMAIL='$mail';" \
+    $opt
+      # git commit --amend --author="$name <$mail>"
 }
 main

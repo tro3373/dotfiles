@@ -2,51 +2,52 @@
 
 root_dir=${1:-~/works/50_src}
 _exe() {
-    cmd=$*
-    rc=1
-    result=
-    result=$($cmd 2>&1) && rc=0
-    if [[ $rc -ne 0 ]]; then
-        echo "!!Abort!! while updating $target cmd: $cmd"
-        echo "      ==> $result"
-        exit 1
-    fi
+  cmd=$*
+  rc=1
+  result=
+  result=$($cmd 2>&1) && rc=0
+  if [[ $rc -ne 0 ]]; then
+    echo "!!Abort!! while updating $target cmd: $cmd"
+    echo "      ==> $result"
+    exit 1
+  fi
 }
 _pull() {
-    target=$1
-    cd $target
-    local modified=$(git status -s)
-    local stash=0
-    local stash_msg=""
-    if [[ "$modified" != "" ]]; then
-        local shuld_stash=$(echo "$modified" | grep -v '??' | wc -l)
-        if [[ $shuld_stash -gt 0 ]]; then
-            stash=1
-            stash_msg="(with_stash)"
-            _exe git stash -q
-        fi
+  target=$1
+  cd $target
+  local modified=$(git status -s)
+  local stash=0
+  local stash_msg=""
+  if [[ "$modified" != "" ]]; then
+    local shuld_stash=$(echo "$modified" | grep -c -v '??')
+    if [[ $shuld_stash -gt 0 ]]; then
+      stash=1
+      stash_msg="(with_stash)"
+      _exe git stash -q
     fi
-    _exe git pull --rebase
-    local nochanged=$(echo "$result" | grep "up to date" | wc -l)
-    local update_msg="up-to-date"
-    if [[ $nochanged -eq 0 ]]; then
-        update_msg="pulled"
-    fi
-    if [[ $stash -eq 1 ]]; then
-        _exe git stash pop -q
-    fi
-    echo "==> Success to update ($update_msg) $stash_msg $target"
-    if [[ "$modified" != "" ]]; then
-        echo "$modified"
-    fi
-    cd - >/dev/null 2>&1
+  fi
+  _exe git pull --rebase
+  local nochanged=$(echo "$result" | grep -c "up to date")
+  local update_msg="up-to-date"
+  if [[ $nochanged -eq 0 ]]; then
+    update_msg="pulled"
+  fi
+  if [[ $stash -eq 1 ]]; then
+    _exe git stash pop -q
+  fi
+  echo "==> Success to update ($update_msg) $stash_msg $target"
+  if [[ "$modified" != "" ]]; then
+    echo "$modified"
+  fi
+  cd - >/dev/null 2>&1
 }
 main() {
-    for f in `find $root_dir -maxdepth 3 -name ".git" -type d`; do
-        dir=$(basename $(dirname $f))
-        dir=$(cd $root_dir/$dir && pwd)
-        _pull $dir
+  find $root_dir -maxdepth 3 -name ".git" -type d |
+    while read -r f; do
+      dir=$(basename "$(dirname $f)")
+      dir=$(cd $root_dir/$dir && pwd)
+      _pull $dir
     done
-    echo "Done."
+  echo "Done."
 }
-main $*
+main "$@"

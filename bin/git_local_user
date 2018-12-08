@@ -3,15 +3,15 @@
 user=$1
 mail=$2
 main() {
-    while [[ "" == "$user" ]]; do
-        echo "Input git local username"
-        read user
-    done
-    while [[ "" == "$mail" ]]; do
-        echo "Input git local usermail"
-        read mail
-    done
-    git config --local user.name $user
-    git config --local user.email $mail
+  while [[ "" == "$user" ]]; do
+    echo "Input git local username"
+    read user
+  done
+  while [[ "" == "$mail" ]]; do
+    echo "Input git local usermail"
+    read mail
+  done
+  git config --local user.name $user
+  git config --local user.email $mail
 }
-main $*
+main "$*"

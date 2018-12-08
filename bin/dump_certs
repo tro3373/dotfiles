@@ -2,30 +2,29 @@
 
 target_file="$1"
 while [[ "$target_file" == "" ]]; do
-    echo "Input cert file for dump to..."
-    read target_file
+  echo "Input cert file for dump to..."
+  read target_file
 done
 
 is_file_exists() {
-    [ -f "$1" ]
+  [ -f "$1" ]
 }
 check() {
-    if ! type openssl >/dev/null 2>&1; then
-        echo "openssl is not installed." 1>&2
-        exit 1
-    fi
-    is_file_exists $infile
-    if ! is_file_exists $target_file; then
-        echo "$target_file file not exist. " 1>&2
-        exit 1
-    fi
+  if ! type openssl >/dev/null 2>&1; then
+    echo "openssl is not installed." 1>&2
+    exit 1
+  fi
+  if ! is_file_exists $target_file; then
+    echo "$target_file file not exist. " 1>&2
+    exit 1
+  fi
 }
 _dump_certs() {
-    openssl x509 -in $target_file -noout -text
+  openssl x509 -in $target_file -noout -text
 }
 
 main() {
-    check
-    _dump_certs
+  check
+  _dump_certs
 }
 main

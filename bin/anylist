@@ -1,6 +1,6 @@
 #!/bin/bash
 
 main() {
-    anyenv install -l
+  anyenv install -l
 }
-main $*
+main "$@"

@@ -6,7 +6,7 @@ command_name=$(basename $0)
 args=()
 
 usage() {
-    cat<<EOF
+  cat<<EOF
 Show or Convert file encoding and line ending, via nkf.
   Usage:
       $command_name [option] [file1 file2 ..]
@@ -19,68 +19,68 @@ Show or Convert file encoding and line ending, via nkf.
 EOF
 }
 
-has() { which ${1} >& /dev/null; }
+has() { command -v ${1} >& /dev/null; }
 
 add_args() { args+=("$@"); }
 
 initialize() {
-    if ! has nkf; then
-        echo "No nkf exist." 1>&2
-        exit 1
-    fi
-    while true; do
-        [[ -z $1 ]] && break
-        case "$1" in
-            -h|--help)              usage && exit 0 ;;
-            -w|--win|win|dos|--dos) dos=1           ;;
-            -l|-u|--unix|unix)      unix=1          ;;
-            *)                      add_args "$1"   ;;
-        esac
-        shift
-    done
-    if [[ ${#args[@]} -eq 0 ]]; then
-        add_args "$current_dir"
-    fi
-    all_args="${args[@]}"
+  if ! has nkf; then
+    echo "No nkf exist." 1>&2
+    exit 1
+  fi
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help)              usage && exit 0 ;;
+      -w|--win|win|dos|--dos) dos=1           ;;
+      -l|-u|--unix|unix)      unix=1          ;;
+      *)                      add_args "$1"   ;;
+    esac
+    shift
+  done
+  if [[ ${#args[@]} -eq 0 ]]; then
+    add_args "$current_dir"
+  fi
+  all_args="${args[@]}"
 }
 
 show_encode() {
-    nkf --guess $line
+  nkf --guess $line
 }
 
 handle_file() {
-    while read -r line; do
-        local src_enc=$(show_encode $line)
-        if [[ $unix -eq 1 || $dos -eq 1 ]]; then
-            if [[ $unix -eq 1 ]]; then
-                # convert to utf8,lf
-                nkf -Lu -w --overwrite $line
-            else
-                # convert to shiftjis,crlf
-                nkf -Lw -s --overwrite $line
-            fi
-            local dst_enc=$(show_encode $line)
-            printf "% 40s: %s\n" "$src_enc => $dst_enc" "$line"
-        else
-            # show file encoding/line ending
-            printf "% 18s: %s\n" "$src_enc" "$line"
-        fi
-    done
+  while read -r line; do
+    local src_enc=$(show_encode $line)
+    if [[ $unix -eq 1 || $dos -eq 1 ]]; then
+      if [[ $unix -eq 1 ]]; then
+        # convert to utf8,lf
+        nkf -Lu -w --overwrite $line
+      else
+        # convert to shiftjis,crlf
+        nkf -Lw -s --overwrite $line
+      fi
+      local dst_enc=$(show_encode $line)
+      printf "% 40s: %s\n" "$src_enc => $dst_enc" "$line"
+    else
+      # show file encoding/line ending
+      printf "% 18s: %s\n" "$src_enc" "$line"
+    fi
+  done
 }
 
 handle_dir() {
-    find $1 -type f |handle_file
+  find $1 -type f |handle_file
 }
 
 main() {
-    initialize "$@"
-    for arg in "${args[@]}"; do
-        if [[ -d $arg ]]; then
-            handle_dir $arg
-        elif [[ -f $arg ]]; then
-            echo $arg |handle_file
-        fi
-    done
+  initialize "$@"
+  for arg in "${args[@]}"; do
+    if [[ -d $arg ]]; then
+      handle_dir $arg
+    elif [[ -f $arg ]]; then
+      echo $arg |handle_file
+    fi
+  done
 }
 main "$@"
 

@@ -1,26 +1,23 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
 tr3d=tro3373/dotfiles.git
 _git_url=git@github.com:$tr3d
 _http_url=https://github.com/$tr3d
-has() { which ${1} >& /dev/null; }
 main() {
-    local url=$_http_url key=https:
-    if [[ $# -eq 0 || $1 == -g ]]; then
-        url=$_git_url
-        key=git@
-    fi
-    cd ~/.dot
-    if git remote -v |grep $key >& /dev/null; then
-        return
-    fi
-    echo "==> git remote changing to $url .."
-    git remote remove origin
-    git remote add origin $url
-    git fetch
-    git branch --set-upstream-to=origin/master master
-    git remote -v
+  local url=$_http_url key=https:
+  if [[ $# -eq 0 || $1 == -g ]]; then
+    url=$_git_url
+    key=git@
+  fi
+  cd ~/.dot
+  if git remote -v |grep $key >& /dev/null; then
+    return
+  fi
+  echo "==> git remote changing to $url .."
+  git remote remove origin
+  git remote add origin $url
+  git fetch
+  git branch --set-upstream-to=origin/master master
+  git remote -v
 }
 main "$@"

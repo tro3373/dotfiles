@@ -2,11 +2,12 @@
 
 device=/dev/sdb1
 
+has() { command -v ${1} >& /dev/null; }
 main() {
-    if ! which xfs_repair > /dev/null; then
-        sudo apt-get install xfsprogs
-    fi
-    sudo xfs_repair -L $device
+  if ! has xfs_repair; then
+    sudo apt-get install xfsprogs
+  fi
+  sudo xfs_repair -L $device
 }
 main
 

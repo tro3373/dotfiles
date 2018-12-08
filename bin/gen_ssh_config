@@ -1,11 +1,11 @@
 #!/bin/bash
 
 current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
+# script_dir=$(cd $(dirname $0); pwd)
 command_name=$(basename $0)
 
 usage() {
-    cat <<EOF
+  cat <<EOF
 Generate ssh sample config for ~/.ssh/config.
   Usage:
       $command_name [option]
@@ -18,28 +18,28 @@ EOF
 }
 
 set_args() {
-    for arg in "$@"; do
-        case "$arg" in
-            -h|--help)
-                usage
-                exit 0
-                ;;
-            -g|--generate)
-                gen_file=1
-                ;;
-            *)
-                echo "No option for $arg" 1>&2
-                ;;
-        esac
-    done
+  for arg in "$@"; do
+    case "$arg" in
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      -g|--generate)
+        gen_file=1
+        ;;
+      *)
+        echo "No option for $arg" 1>&2
+        ;;
+    esac
+  done
 }
 
 initialize() {
-    set_args "$@"
+  set_args "$@"
 }
 
 cat_template() {
-    cat <<EOL
+  cat <<EOL
 Host *
   IdentityFile /path/to/your/identity/file
   ServerAliveInterval 30
@@ -64,7 +64,7 @@ EOL
 
 permission=640
 advice() {
-    cat <<EOL2
+  cat <<EOL2
 
   ==> Finaly...
     Change the config permission to $permission.
@@ -77,15 +77,15 @@ gen_config() {
     if [[ -e $target ]]; then
         echo "===> Already exists config file in $target." 1>&2
         return 1
-    fi
+      fi
     cat_template > $target && chmod $permission $target
     echo "===> Config file generated in $target."
     return 0
-}
+  }
 
 main() {
     initialize "$@"
     [[ $gen_file -ne 1 ]] && usage && cat_template && advice && exit 0
     (gen_config ~/.ssh/config || gen_config $current_dir/config) || echo "==> No generate space exists!"
-}
+  }
 main "$@"

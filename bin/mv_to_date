@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
+# script_dir=$(cd "$(dirname $0)"; pwd)
 command_name=$(basename $0)
 args=()
 dryrun=1
@@ -9,7 +9,7 @@ mode=2
 dst_root=$current_dir
 
 usage() {
-    cat <<EOF
+  cat <<EOF
 Move file date directory via use file update date attribute.
   Usage:
       $command_name [option]
@@ -22,45 +22,49 @@ Move file date directory via use file update date attribute.
 EOF
 }
 
-has() { which $1 >& /dev/null; }
+has() { command -v ${1} >& /dev/null; }
 add_args() { args=("${args[@]}" "$@"); }
 
 initialize() {
-    while true; do
-        [[ -z $1 ]] && break
-        case "$1" in
-            -h|--help) usage && exit 0  ;;
-            -1) mode=1                  ;;
-            -e|--execute) dryrun=0      ;;
-            -d|--directory) shift && dst_root=$1 ;;
-            *) add_args "$1"            ;;
-        esac
-        shift
-    done
-    all_args="${args[@]}"
-    debug="echo"
-    if [[ $dryrun -eq 0 ]]; then
-        debug=
-    fi
-    set -eu
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help) usage && exit 0  ;;
+      -1) mode=1                  ;;
+      -e|--execute) dryrun=0      ;;
+      -d|--directory) shift && dst_root=$1 ;;
+      *) add_args "$1"            ;;
+    esac
+    shift
+  done
+  # all_args="${args[@]}"
+  debug="echo"
+  if [[ $dryrun -eq 0 ]]; then
+    debug=
+  fi
+  set -eu
 }
 
 mv_file_to_date_dir() {
-    local file="$*"
-    local udt_ymd=$(date "+%Y%m%d" -r $file)
-    local udt_y=$(echo $udt_ymd | cut -c1-4)
-    local dst_dir=$dst_root/$udt_y/$udt_ymd
-    if [[ $mode -eq 1 ]]; then
-        dst_dir=$dst_root/$udt_ymd
-    fi
-    $debug mkdir -p $dst_dir
-    $debug mv $file $dst_dir
+  local file="$*"
+  local udt_ymd=$(date "+%Y%m%d" -r $file)
+  local udt_y=$(echo $udt_ymd | cut -c1-4)
+  local dst_dir=$dst_root/$udt_y/$udt_ymd
+  if [[ $mode -eq 1 ]]; then
+    dst_dir=$dst_root/$udt_ymd
+  fi
+  $debug mkdir -p $dst_dir
+  $debug mv $file $dst_dir
 }
 
 main() {
-    initialize "$@"
-    for f in $(find . -maxdepth 1 -type f -name "*\.*"); do
-        mv_file_to_date_dir "$f"
+  initialize "$@"
+  # for f in $(find . -maxdepth 1 -type f -name "*\.*"); do
+  #   mv_file_to_date_dir "$f"
+  # done
+  find . -maxdepth 1 -type f -name "*\\.*" |
+    while read -r f; do
+      mv_file_to_date_dir "$f"
     done
 }
 main "$@"

@@ -1,36 +1,36 @@
 #!/bin/bash
 
 log_dir=/var/log
-str_date="`date '+%Y%m%d.%H%M%S'`"
+str_date="$(date '+%Y%m%d.%H%M%S')"
 log_file=${log_dir}/update-ubuntu.${str_date}.log
 async=${1:-0}
 
 execute_cmd() {
-    echo "apt-get -y update && apt-get upgrade -y && apt-get dist-upgrade -y && echo && echo \"Done!\""
+  echo "apt-get -y update && apt-get upgrade -y && apt-get dist-upgrade -y && echo && echo \"Done!\""
 }
 async() {
-    nohup sh -c "$(execute_cmd)" > $log_file 2>&1 &
-    echo "tail logs?(N/y)"
-    read taillog
-    if [[ "y" == "$taillog" ]]; then
-        tail -F $log_file
-    else
-        echo "==>See logs"
-        echo "  tail -F $log_file"
-    fi
+  nohup sh -c "$(execute_cmd)" > $log_file 2>&1 &
+  echo "tail logs?(N/y)"
+  read taillog
+  if [[ "y" == "$taillog" ]]; then
+    tail -F $log_file
+  else
+    echo "==>See logs"
+    echo "  tail -F $log_file"
+  fi
 }
 sync() {
-    sh -c "$(execute_cmd)" 2>&1 |tee $log_file
+  sh -c "$(execute_cmd)" 2>&1 |tee $log_file
 }
 main() {
-    if [[ "$UID" -ne 0 ]]; then
-        echo "Permission denied" 1>&2
-        exit 1
-    fi
-    if [[ $async -eq 1 ]]; then
-        async
-    else
-        sync
-    fi
+  if [[ "$UID" -ne 0 ]]; then
+    echo "Permission denied" 1>&2
+    exit 1
+  fi
+  if [[ $async -eq 1 ]]; then
+    async
+  else
+    sync
+  fi
 }
 main

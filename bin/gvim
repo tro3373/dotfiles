@@ -5,89 +5,89 @@ use_wingit=0
 use_msys_env=1
 
 dlog() {
-    if [ $debug -eq 1 ]; then
-        echo "gvim debug: $*"
-    fi
+  if [ $debug -eq 1 ]; then
+    echo "gvim debug: $*"
+  fi
 }
 change() { cygpath -aw "$*"; }
 changes() {
-    local tmp=
-    for v in "$@"; do
-        tmp="$tmp $(change "$v")"
-    done
-    echo $tmp
+  local tmp=
+  for v in "$@"; do
+    tmp="$tmp $(change "$v")"
+  done
+  echo $tmp
 }
 winpath=
 add_winpath() {
-    local str="$*"
-    local IFS=:
-    local arr=($str)
-    unset IFS
-    local path
-    for path in "${arr[@]}"; do
-        local tmp="$(change "$path")"
-        winpath="$tmp;$winpath"
-        dlog "$path ==> $tmp"
-    done
+  local str="$*"
+  local IFS=:
+  local arr=("$str")
+  unset IFS
+  local path
+  for path in "${arr[@]}"; do
+    local tmp="$(change "$path")"
+    winpath="$tmp;$winpath"
+    dlog "$path ==> $tmp"
+  done
 }
 
 set_msys_env() {
-    # Msys path/shell ==> So Buggie...
-    # $WINHOME/AppData/Local/Temp
-    # TMP=$ORIGINAL_TMP
-    # TEMP=$ORIGINAL_TEMP
-    :
+  # Msys path/shell ==> So Buggie...
+  # $WINHOME/AppData/Local/Temp
+  # TMP=$ORIGINAL_TMP
+  # TEMP=$ORIGINAL_TEMP
+  :
 }
 
 set_win_env() {
-    # Windows path/shell
-    # $PROGRAMFILES,$LOCALAPPDATA is not working
-    add_winpath "$ORIGINAL_PATH"
+  # Windows path/shell
+  # $PROGRAMFILES,$LOCALAPPDATA is not working
+  add_winpath "$ORIGINAL_PATH"
 
-    # git setting
-    local wingit="/c/Program Files/Git/cmd"
-    if [[ $use_wingit -eq 1 && -e "$wingit" ]]; then
-        add_winpath "$wingit"
-    else
-        add_winpath "/usr/bin/" # msys git
-    fi
+  # git setting
+  local wingit="/c/Program Files/Git/cmd"
+  if [[ $use_wingit -eq 1 && -e "$wingit" ]]; then
+    add_winpath "$wingit"
+  else
+    add_winpath "/usr/bin/" # msys git
+  fi
 
-    add_winpath "/mingw64/bin" # For silver searcher ag
-    add_winpath "$WINHOME/bin" # local bin command path
+  add_winpath "/mingw64/bin" # For silver searcher ag
+  add_winpath "$WINHOME/bin" # local bin command path
 
-    # HOME="$(change "$HOME")"
-    HOME=
-    SHELL=
-    TMP="$(change "$WINHOME/AppData/Local/Temp")"
-    TEMP="$TMP"
-    LANGUAGE=ja_JP.UTF-8
-    DOTPATH="$(change "$DOTPATH")"
-    PATH="$winpath"
+  # HOME="$(change "$HOME")"
+  export HOME=
+  export SHELL=
+  export TMP="$(change "$WINHOME/AppData/Local/Temp")"
+  export TEMP="$TMP"
+  export LANGUAGE=ja_JP.UTF-8
+  export DOTPATH="$(change "$DOTPATH")"
+  export PATH="$winpath"
 }
 
 main() {
-    set -eu
-    if [[ ${OSTYPE} != "msys" ]]; then
-        gvim "$@"
-        return 0
-    fi
+  set -eu
+  if [[ ${OSTYPE} != "msys" ]]; then
+    gvim "$@"
+    return 0
+  fi
 
-    local args="$@"
-    if [ "$args" = "" ]; then
-        #args=$(change "$(pwd)")
-        args=$(pwd)
-    fi
-    args="$(changes $args)"
+  local args="$@"
+  if [ "$args" = "" ]; then
+    #args=$(change "$(pwd)")
+    args=$(pwd)
+  fi
+  args="$(changes $args)"
 
-    if [[ $use_msys_env -eq 1 ]]; then
-        set_msys_env
-    else
-        set_win_env
-    fi
-    dlog "AllPath: ==> $winpath"
-    dlog "Args: =====> $args"
-    local gvim_dir=vim81-kaoriya-win64
-    $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent $args &
+  if [[ $use_msys_env -eq 1 ]]; then
+    set_msys_env
+  else
+    set_win_env
+  fi
+  dlog "AllPath: ==> $winpath"
+  dlog "Args: =====> $args"
+  local gvim_dir=vim81-kaoriya-win64
+  $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent $args &
 }
 main "$@"
 

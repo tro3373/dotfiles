@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
-has() { which ${1} >& /dev/null; }
+# current_dir=$(pwd)
+# script_dir=$(cd $(dirname $0); pwd)
+# has() { which ${1} >& /dev/null; }
 
 main() {
-    sudo shutdown -h now
+  sudo shutdown -h now
 }
 main "$@"

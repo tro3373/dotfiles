@@ -1,43 +1,40 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
-
 gen_iv() {
-    local number=${1:-16}
-    cat /dev/urandom | tr -dc 'A-F0-9' | fold -w $number | head -n 1
+  local number=${1:-16}
+  cat < /dev/urandom | tr -dc 'A-F0-9' | fold -w $number | head -n 1
 }
 
 enc() {
-    echo "==> encoding.. $*"
-    echo "$*" | openssl $algo -e -nosalt -base64 -iv $iv -K $key -p
+  echo "==> encoding.. $*"
+  echo "$*" | openssl $algo -e -nosalt -base64 -iv $iv -K $key -p
 }
 
 dec() {
-    echo "==> decoding.. $*"
-    # echo "$*" | openssl $algo -d -base64 -iv $iv -K $key
-    echo "$*" | openssl $algo -d -base64 -K $key
+  echo "==> decoding.. $*"
+  # echo "$*" | openssl $algo -d -base64 -iv $iv -K $key
+  echo "$*" | openssl $algo -d -base64 -K $key
 }
 
 enc_dec() {
-    echo "==> encode and decoding.."
-    echo "$*" | openssl $algo -e -base64 -iv $iv -K $key | openssl $algo -d -base64 -iv $iv -K $key
+  echo "==> encode and decoding.."
+  echo "$*" | openssl $algo -e -base64 -iv $iv -K $key | openssl $algo -d -base64 -iv $iv -K $key
 }
 
 main() {
-    # key=1234567890123456
-    #  iv=1234567890ABCDEF
-    # key=1234567890123456
-    #  iv=1234567890ABCDEF
-    # iv=1234567890ABCDEF1234567890ABCDEF
-    key=12345678901234567890123456789012
-    iv=$(gen_iv 16)
-    echo "Generated iv is $iv"
-    algo=aes-256-cbc
-    target="HogePlainText"
-    enc "$target"
-    # dec "StcUgk4To85w2PtG8DMMCg=="
-    # enc_dec "$target"
+  # key=1234567890123456
+  #  iv=1234567890ABCDEF
+  # key=1234567890123456
+  #  iv=1234567890ABCDEF
+  # iv=1234567890ABCDEF1234567890ABCDEF
+  key=12345678901234567890123456789012
+  iv=$(gen_iv 16)
+  echo "Generated iv is $iv"
+  algo=aes-256-cbc
+  target="HogePlainText"
+  enc "$target"
+  # dec "StcUgk4To85w2PtG8DMMCg=="
+  # enc_dec "$target"
 }
 
 main "$@"

@@ -1,62 +1,59 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
-dotbin=${DOTPATH:-~/.dot}/bin
+# current_dir=$(pwd)
+# script_dir=$(cd $(dirname $0); pwd)
+# dotbin=${DOTPATH:-~/.dot}/bin
 
 secret=~/.secret
 search=
 
-has() {
-    which ${1} >/dev/null 2>&1
-    return $?
-}
+has() { command -v ${1} >& /dev/null; }
 check() {
-    if [[ ! -e $secret ]]; then
-        echo "No secret exists." 1>&2
-        exit 1
-    fi
+  if [[ ! -e $secret ]]; then
+    echo "No secret exists." 1>&2
+    exit 1
+  fi
 }
 initialize() {
-    check
-    if [[ $# -ne 0 ]]; then
-        search="$@"
-    fi
+  check
+  if [[ $# -ne 0 ]]; then
+    search="$*"
+  fi
 }
 
 get_pass() {
-    local result="$(cat $secret |sed -e '/^$/d' |sed -e '/^#.*$/d')"
-    local row=
-    if has fzf; then
-        row=$(echo -e "$result" |fzf)
-    elif has peco; then
-        row=$(echo -e "$result" |peco)
-    elif [[ ! -z $search ]]; then
-        row=$(echo -e "$result" |grep $search |head -1)
-    else
-        row=$(echo -e "$result" |head -1)
-    fi
-    result=${row#*=}
-    echo $result |sed -e "s/^[\'\"]//g" |sed -e "s/[\'\"]$//g"
+  local result="$(cat < $secret |sed -e '/^$/d' |sed -e '/^#.*$/d')"
+  local row=
+  if has fzf; then
+    row=$(echo -e "$result" |fzf)
+  elif has peco; then
+    row=$(echo -e "$result" |peco)
+  elif [[ ! -z $search ]]; then
+    row=$(echo -e "$result" |grep $search |head -1)
+  else
+    row=$(echo -e "$result" |head -1)
+  fi
+  result=${row#*=}
+  echo $result |sed -e "s/^[\'\"]//g" |sed -e "s/[\'\"]$//g"
 }
 
 clipboard() {
-    if [[ `uname` == "Darwin" ]]; then
-        # mac
-        echo -n "$*" |pbcopy
-    elif [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "msys" ]]; then
-        echo -n "$*" >/dev/clipboard
-    elif has xsel; then
-        echo -n "$*" | xsel --clipboard --input
-    else
-        echo -e "$*"
-    fi
+  if [[ $(uname) == "Darwin" ]]; then
+    # mac
+    echo -n "$*" |pbcopy
+  elif [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "msys" ]]; then
+    echo -n "$*" >/dev/clipboard
+  elif has xsel; then
+    echo -n "$*" | xsel --clipboard --input
+  else
+    echo -e "$*"
+  fi
 }
 
 main() {
-    initialize "$@"
-    local pass=$(get_pass)
-    clipboard $pass
+  initialize "$@"
+  local pass=$(get_pass)
+  clipboard $pass
 }
 
 main "$@"

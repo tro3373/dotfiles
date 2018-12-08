@@ -1,6 +1,6 @@
 #!/bin/bash
 
 main() {
-    unzip -Ocp932 $@
+  unzip -Ocp932 "$@"
 }
 main "$@"

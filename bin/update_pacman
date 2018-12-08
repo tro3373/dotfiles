@@ -1,7 +1,7 @@
 #!/bin/bash
 
 main() {
-    # Retry update until no update target exist.
-    pacman -Syuu
+  # Retry update until no update target exist.
+  pacman -Syuu
 }
-main $*
+main

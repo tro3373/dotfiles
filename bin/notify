@@ -4,6 +4,6 @@ summary=${1:-"Notify"}
 body=${2:-"done."}
 
 main() {
-    notify-send -i /usr/share/icons/application-default-icon.png "$summary" "$body"
+  notify-send -i /usr/share/icons/application-default-icon.png "$summary" "$body"
 }
 main
