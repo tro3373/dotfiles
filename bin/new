@@ -57,19 +57,17 @@ initialize() {
   check
 }
 
-cat_template() {
-  local hard=$1
-  if [[ $hard -eq 1 ]]; then
-    cat <<'EOL'
+cat_template_hard() {
+  cat <<'EOL'
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(cd "$(dirname $0)"; pwd)
+#current_dir=$(pwd)
+#script_dir=$(cd "$(dirname $0)"; pwd)
 command_name=$(basename $0)
 args=()
 
 usage() {
-    cat <<EOF
+  cat <<EOF
 
 Description for this command.
 
@@ -81,47 +79,56 @@ Description for this command.
 EOF
 }
 
-has() { command -v ${1} >& /dev/null; }
-add_args() { args=("${args[@]}" "$@"); }
-#add_args() { args+=("$@"); }
+#add_args() { args=("${args[@]}" "$@"); }
+add_args() { args+=("$@"); }
+#has() { command -v ${1} >& /dev/null; }
 
 initialize() {
-    while true; do
-        [[ -z $1 ]] && break
-        case "$1" in
-          -h|--help) usage && exit 0  ;;
-          #-f*|--file*) file=${1#*=} ;;
-          #-f|--file) shift && file=$1 ;;
-          *) add_args "$1"            ;;
-        esac
-        shift
-      done
-    all_args="${args[@]}"
-  }
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help) usage && exit 0  ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1"            ;;
+    esac
+    shift
+  done
+  all_args="${args[*]}"
+}
 
 main() {
-    initialize "$@"
-    for arg in "${args[@]}"; do
-        echo "Arguments: $arg"
-      done
-    echo $file
-  }
+  initialize "$@"
+  for arg in "${args[@]}"; do
+    echo "Arguments: $arg"
+  done
+  echo $file
+}
 main "$@"
 EOL
-else
-  cat <<'EOL'
+}
+
+cat_template_simple() {
+    cat <<'EOL'
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(cd "$(dirname $0)"; pwd)
-has() { command -v ${1} >& /dev/null; }
-
+#current_dir=$(pwd)
+#script_dir=$(cd "$(dirname $0)"; pwd)
+#has() { command -v ${1} >& /dev/null; }
 main() {
-    :
-  }
+  :
+}
 main "$@"
 EOL
-fi
+}
+
+cat_template() {
+  local hard=$1
+  if [[ $hard -eq 1 ]]; then
+    cat_template_simple
+  else
+    cat_template_simple
+  fi
 }
 
 main(){
