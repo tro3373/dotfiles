@@ -55,6 +55,7 @@ bindsym $mod+l focus up
 bindsym $mod+semicolon focus right
 
 # alternatively, you can use the cursor keys:
+bindsym $mod+Tab focus left
 bindsym $mod+Left focus left
 bindsym $mod+Down focus down
 bindsym $mod+Up focus up
@@ -230,3 +231,7 @@ bindsym $mod+Control+0 exec --no-startup-id dm-tool lock
 
 # default tabbed layout
 workspace_layout tabbed
+
+# default_border pixel 0
+# hide_edge_borders both
+# set_from_resource $black i3wm.color0 #000000
