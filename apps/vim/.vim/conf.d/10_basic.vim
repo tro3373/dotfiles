@@ -75,11 +75,13 @@ set ignorecase
 set smartcase
 
 " ヤンクした際にクリップボードへ配置する
+" '*' register => x window clipboard
 set clipboard=unnamed
 
 if !has("mac") && has("unix")
   let s:ostype = substitute(system("echo $OSTYPE"), '\n', '', '')
   if "msys" != s:ostype
+    " '+' register => x window clipboard
     set clipboard=unnamedplus
     vmap <C-c> :w !xsel -ib<CR><CR>
     vmap <C-y> :w !xsel -ib<CR><CR>

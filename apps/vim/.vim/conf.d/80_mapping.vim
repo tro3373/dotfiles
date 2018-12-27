@@ -30,6 +30,13 @@ inoremap <silent> kk <ESC>
 nnoremap n nzz
 nnoremap N Nzz
 nnoremap S *zz
+
+" " for us keyboard
+" nnoremap ; :
+" nnoremap : ;
+nnoremap " *zz
+" nnoremap ' :
+
 nnoremap * *zz
 nnoremap g* g*zz
 nnoremap g# g#zz
