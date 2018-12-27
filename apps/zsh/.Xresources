@@ -42,7 +42,10 @@ URxvt*boldFont:   xft:Osaka\\-Mono:size=14:antialias=true
 ! ! Included this so you know how to make your foreground not match the color of your background
 ! URxvt.foreground: #eeeeee
 URxvt.perl-lib: /usr/bin/perl
-URxvt.perl-ext-common: default,keyboard-select,clipboard,url-select
+URxvt.perl-ext-common: default,keyboard-select,clipboard,url-select,xim-onthespot
+! urxvt.perl-ext: xim-onthespot
+urxvt.inputMethod: fcitx
+urxvt.preeditType: OnTheSpot
 URxvt.keysym.M-Escape: perl:keyboard-select:activate
 URxvt.keysym.M-s: perl:keyboard-select:search
 URxvt.keysym.M-c:   perl:clipboard:copy
