@@ -14,7 +14,7 @@ install_ubuntu() {
   mexe lsmod |grep rtl8812au
 }
 install_arch() {
-  yay -S rtl8812au_8821au_linux-dkms-git
+  mexe yay -S rtl8812au_8821au_linux-dkms-git
 }
 main() {
   source $DOTPATH/bin/lib/funcs
