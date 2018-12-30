@@ -1,24 +1,31 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
-has() { which ${1} >& /dev/null; }
+# current_dir=$(pwd)
+# script_dir=$(cd "$(dirname $0)"; pwd)
+has() { command -v ${1} >& /dev/null; }
 
 install_ubuntu() {
-    # mexe sudo apt-get update
-    # def_install linux-headers-generic build-essential
-    gh https://github.com/abperiasamy/rtl8812AU_8821AU_linux.git
-    mexe make
-    mexe sudo make install
-    mexe sudo modprobe rtl8812au
-    mexe lsmod |grep rtl8812au
+  # mexe sudo apt-get update
+  # def_install linux-headers-generic build-essential
+  gh https://github.com/abperiasamy/rtl8812AU_8821AU_linux.git
+  mexe make
+  mexe sudo make install
+  mexe sudo modprobe rtl8812au
+  mexe lsmod |grep rtl8812au
+}
+install_arch() {
+  yay -S rtl8812au_8821au_linux-dkms-git
 }
 main() {
-    source $DOTPATH/bin/lib/funcs
-    tool_env
-    ! is_ubuntu && echo "Not supported" && return
+  source $DOTPATH/bin/lib/funcs
+  tool_env
+  if is_arch; then
+    install_arch
+  elif is_ubuntu; then
     install_ubuntu
+  else
+    echo "Not supported"
+  fi
 }
 
 main "$@"
-
