@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+main() {
+  sudo modprobe -r btusb
+  sudo modprobe btusb
+  sudo systemctl restart bluetooth.service
+  # If you clear HHKB reset
+  #    1. キーボードの電源を入れた状態で、Fn+Qキーを同時に押します。
+  #    2. 青いLEDが点滅したら、Fn+Z+Deleteキーを同時に押します。
+  #    3. LEDがオレンジ色に点灯ののちに、消灯（電源断）します。
+}
+main "$@"

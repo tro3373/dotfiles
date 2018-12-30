@@ -1,0 +1,331 @@
+#!/usr/bin/env bash
+
+_user=${1:-tro3373}
+bt_keyboard_device_id="00:12:A1:70:50:68"
+# keyboard_layout=jp106
+keyboard_layout=us
+
+has() { command -v ${1} >& /dev/null; }
+_install() {
+  for pkg in "$@" ; do
+    if ! type $pkg; then
+      continue
+    fi
+    sudo pacman -S $pkg
+  done
+}
+setup_user() {
+  if [[ ! -e /home/$_user ]]; then
+    useradd -m -G wheel $_user
+    echo "=> Changing user password for $_user"
+    passwd $_user
+  fi
+  if ! has sudo; then
+    pacman -S sudo
+  fi
+  echo "=> Setupping visudo.. press Enter."
+  read
+  visudo
+}
+setup_pakages() {
+  if [[ -e $HOME/.dot ]]; then
+    return
+  fi
+  echo "=> Setupping packages.."
+  #sudo pacman -Syyu
+  sudo pacman -S git curl
+  curl -fSsL git.io/tr3s |bash
+  cd $HOME/.dot/bin
+  ./setup -e
+  # apps ssh config to add gen ssh if not exist.
+
+  sudo systemctl start sshd
+  sudo systemctl enable sshd
+}
+setup_keymap() {
+  sudo mkdir -p /usr/local/share/kbd/keymaps
+  cat <<'EOF' |sudo tee /usr/local/share/kbd/keymaps/personal.map >&/dev/null
+keymaps 0-127
+keycode  58 = Control
+# keycode  29 = Caps_Lock
+# dumpkeys -l
+EOF
+  # enable manual
+  # loadkeys /usr/local/share/kbd/keymaps/personal.map
+
+  cat <<'EOF' |sudo tee /etc/profile.d/caps2ctrl.sh >&/dev/null
+#!/bin/bash
+
+sudo loadkeys /usr/local/share/kbd/keymaps/personal.map #&& echo "personal loadkeys loaded"
+EOF
+  sudo chmod 775 /etc/profile.d/caps2ctrl.sh
+}
+setup_gui() {
+  sudo pacman -S xf86-video-intel
+  sudo pacman -S xorg-server xorg-xinit
+  sudo pacman -S mesa
+# Section "InputClass"
+#   Identifier        "Keyboard Defaults"
+#   MatchIsKeyboard   "yes"
+#   Option            "XkbLayout" "jp"
+# EndSection
+  cat <<EOF |sudo tee /etc/X11/xorg.conf.d/10-keyboard.conf >&/dev/null
+Section "InputClass"
+  Identifier "system-keyboard"
+  MatchIsKeyboard "on"
+  Option "XkbLayout" "jp"
+  Option "XkbModel" "$keyboard_layout"
+  Option "XkbOptions" "ctrl:nocaps"
+EndSection
+EOF
+  # https://wiki.archlinux.jp/index.php/Libinput
+  cat <<'EOF' |sudo tee /etc/X11/xorg.conf.d/30-touchpad.conf >&/dev/null
+Section "InputClass"
+  Identifier "touchpad"
+  Driver "libinput"
+  MatchIsTouchpad "on"
+  Option "Tapping" "on"
+  Option "NaturalScrolling" "true"
+  Option "TappingButtonMap" "lrm"
+EndSection
+EOF
+  # for test
+  sudo pacman -S xorg-twm xorg-xclock xterm
+  # test
+  # startx
+  # sudo pacman -S xfce4
+  sudo pacman -S lightdm lightdm-gtk-greeter
+  sudo systemctl enable lightdm.service
+
+  # set jap
+  sudo pacman -S ttf-sazanami otf-ipafont
+  sudo pacman -S fcitx-mozc fcitx-gtk2 fcitx-gtk3 fcitx-qt4 fcitx-configtool fcitx-im
+  ## Fcitx mozc settings
+  #   1.Mozc
+  #   2.キーボード(日本語)
+  #   3.キーボード(英語)
+  ## Inline
+  #   http://inaab.hatenablog.com/entry/2017/07/28/220643
+
+  cat <<'EOF' |tee ~/.xprofile >&/dev/null
+export LANG="ja_JP.UTF-8"
+export XMODIFIERS="@im=fcitx"
+export XMODIFIER="@im=fcitx"
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export DefaultIMModule=fcitx
+EOF
+  cat <<'EOF' |tee -a ~/.works.zsh >&/dev/null
+export GTK_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+export QT_IM_MODULE=fcitx
+EOF
+
+}
+setup_font() {
+  # sudo mkdir -p /usr/local/share/fonts
+  # sudo cp ~/.dot/misc/Osaka-Mono.ttf /usr/local/share/fonts
+  sudo cp ~/.dot/misc/Osaka-Mono.ttf /usr/share/fonts
+  sudo fc-cache -fv
+}
+setup_i3() {
+  sudo pacman -S i3-wm i3status dmenu
+}
+
+setup_webkit2_greeter() {
+  # change greeter
+  # https://www.reddit.com/r/unixporn/comments/84wypv/lightdmwebkit2greeter_ricing_the_greeter/
+  # https://github.com/iamsubhranil/Rice/blob/master/lightdm-webkit2-greeter_executive.md
+  yay -S lightdm-webkit2-greeter lightdm-webkit-theme-aether
+  if [[ ! -e /etc/lightdm/lightdm.conf.org ]]; then
+    sudo cp /etc/lightdm/lightdm.conf{,.org}
+  fi
+  # setup default session to i3
+  if [[ ! -e /etc/lightdm/lightdm.conf.d ]]; then
+    sudo mkdir /etc/lightdm/lightdm.conf.d
+  fi
+  if [[ ! -e /etc/lightdm/lightdm.conf.d/50-myconfig.conf ]]; then
+    cat <<'EOF' |sudo tee /etc/lightdm/lightdm.conf.d/50-myconfig.conf >/dev/null
+[SeatDefaults]
+user-session=i3
+EOF
+  fi
+
+}
+# setup_bluetooth() {
+#   sudo pacman -S bluez bluez-utils pulseaudio-bluetooth blueman
+#   # install for bluez-utils-compat pkgbuild.
+#   sudo pacman -S archlinux-keyring
+#   # enable gpg key for bluez-utils-compat pkgbuild.
+#   gpg --recv-keys 06CA9F5D1DCF2659
+#   # hcitool deplicated from bluez, so install
+#   yay -S bluez-utils-compat
+#   sudo hciconfig hci0 up
+# }
+# pairing_auto() {
+#   local device_mac="$bt_keyboard_device_id"
+#   local hci_device_id=hci0
+#   local hci_device=$(hcitool dev |grep $hci_device_id|awk '{print $2}')
+#   if [[ -e /etc/btkbd.conf ]]; then
+#     echo "==> Already /etc/btkbd.conf exist"
+#   else
+#     cat <<EOF |sudo tee /etc/btkbd.conf >/dev/null
+# # Config file for btkbd.service
+# # change when required (e.g. keyboard hardware changes, more hci devices are connected)
+# BTKBDMAC = ''$device_mac''
+# HCIDEVICE = ''$hci_device''
+# EOF
+#   fi
+#
+#   if [[ -e /etc/systemd/system/btkbd.service ]]; then
+#     echo "==> Already /etc/systemd/system/btkbd.service exist"
+#   else
+#     cat <<EOF |sudo tee /etc/systemd/system/btkbd.service >/dev/null
+# [Unit]
+# Description=systemd Unit to automatically start a Bluetooth keyboard
+# Documentation=https://wiki.archlinux.org/index.php/Bluetooth_Keyboard
+# Requires=dbus-org.bluez.service
+# After=dbus-bluez.org.service
+# ConditionPathExists=/etc/btkbd.conf
+# ConditionPathExists=/usr/bin/hcitool
+# ConditionPathExists=/usr/bin/hciconfig
+#
+# [Service]
+# Type=oneshot
+# EnvironmentFile=/etc/btkbd.conf
+# ExecStart=
+# ExecStart=/usr/bin/hciconfig ${hci_device_id} up
+# # ignore errors on connect, spurious problems with bt? so start next command with -
+# ExecStart=-/usr/bin/hcitool cc $device_mac
+#
+# [Install]
+# WantedBy=multi-user.target
+# EOF
+#     sudo systemctl enable btkbd.service
+#   fi
+# }
+# reset_keyboard() {
+#   sudo modprobe -r btusb
+#   sudo modprobe btusb
+#   sudo hciconfig hci0 up
+#   sudo systemctl restart btkbd.service
+# }
+reset_keyboard() {
+  sudo modprobe -r btusb
+  sudo modprobe btusb
+  sudo systemctl restart bluetooth.service
+  # If you clear HHKB reset
+  #    1. キーボードの電源を入れた状態で、Fn+Qキーを同時に押します。
+  #    2. 青いLEDが点滅したら、Fn+Z+Deleteキーを同時に押します。
+  #    3. LEDがオレンジ色に点灯ののちに、消灯（電源断）します。
+}
+pairing_manual() {
+  cat <<EOF
+>DO BELLOW
+
+$ bluetoothctl
+bluetooth# agent KeyboardOnly
+bluetooth# default-agent
+bluetooth# scan on
+bluetooth# pair $bt_keyboard_device_id
+bluetooth# trust $bt_keyboard_device_id
+bluetooth# connect $bt_keyboard_device_id
+bluetooth# devices
+bluetooth# info
+bluetooth# quit
+EOF
+}
+setup_bluetooth() {
+  sudo pacman -S bluez bluez-utils
+  # for gui
+  sudo pacman -S gnome-shell
+  sudo pacman -S gnome-control-center
+  sudo pacman -S gnome-bluetooth
+
+  # view /etc/dbus-1/system.d/bluetooth.conf
+  if ! id |grep lp >/dev/null; then
+    sudo usermod -aG lp $_user
+  fi
+  if ! grep "AutoEnable=true" /etc/bluetooth/main.conf >/dev/null; then
+    echo "AutoEnable=true" >> /etc/bluetooth/main.conf
+  fi
+  reset_keyboard
+  pairing_manual
+}
+setup_ranger() {
+  # https://qiita.com/ssh0/items/3d71da415953003d47d7
+  _install ranger w3m ffmpegthumbnailer poppler
+  # if [[ ! -e ~/.config/ranger/ ]]; then
+  #   # for initial setup
+  #   ranger --copy-config=all
+  # fi
+}
+setup_wifi() {
+  pacman -S vim
+  pacman -S wpa_supplicant
+  cp /etc/netctl/examples/wireless-wpa /etc/netctl/wireless
+  vim wireless
+  ip link set wlp2s0 down
+  netctl start wireless
+  systemctl list-unit-files |grep enabled
+  systemctl enable netctl-ifplugd@wireless.service
+}
+main() {
+  set -eu
+  setup_user
+  setup_keymap
+  setup_pakages
+  setup_font
+  setup_gui
+  # disable yaourt
+#   cat <<'EOF' |sudo tee -a /etc/pacman.conf >& /dev/null
+# [archlinuxfr]
+# SigLevel = Never
+# Server = http://repo.archlinux.fr/$arch
+# EOF
+#   sudo pacman -Sy
+#   sudo pacman -S --noconfirm yaourt
+  mkdir tmp
+  cd tmp
+  git clone https://aur.archlinux.org/yay.git
+  cd yay
+  makepkg -si
+  yay -S google-chrome
+  yay -S otf-ipaexfont
+  yay -S numix-gtk-theme numix-icon-theme
+  # yay -S arc-theme
+  yay -S lightdm-gtk-greeter-settings
+  yay -S noto-fonts-cjk
+  sudo pacman -S xsel
+  sudo pacman -S xfce4-terminal
+  sudo pacman -S rxvt-unicode
+  # enable alt+v past
+  sudo pacman -S urxvt-perls
+  # X=> +* ?
+  sudo pacman -S autocutsel
+  # audio
+  sudo pacman -S pavucontrol
+  # pavucontrol
+  sudo pacman -S pulseaudio
+  pulseaudio --start
+
+  # panel backlight
+  yay -S xorg-xbacklight
+
+  # compsit manager(enable opacity)
+  sudo pacman -S compton
+  sudo pacman -S feh
+  sudo pacman -S lxappearance
+  sudo pacman -S rofi rofi-theme-selector
+
+  sudo pacman -S parcellite
+  sudo pacman -S shellcheck
+  # for touch pad enable/disable toggle
+  # yay -S xbindkeys synaptics
+
+  setup_i3
+  setup_webkit2_greeter
+  setup_bluetooth
+}
+
+main "$@"

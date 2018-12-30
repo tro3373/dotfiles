@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+hostname=${1:-my-arch}
+boot_partition=/dev/sda${2:-6}
+root_partition=/dev/sda${3:-7}
+# keyboard_layout=jp106
+keyboard_layout=us
+
+setup_in_live_cd() {
+  # enable keyboard layout
+  loadkeys $keyboard_layout
+  # check enable network
+  if ! ping -c 3 google.co.jp >/dev/null; then
+    echo "Network is not available."
+  fi
+  ## create partition 50G Linux file system on $boot_partition
+  #cfdisk
+  # create partition +512M for uefi on $boot_partition
+  # create partition +50G for / on $root_partition
+  gdisk
+  # check
+  fdisk -l
+
+  # format to vfat $boot_partition
+  mkfs.vfat -F32 $boot_partition
+  # format to ext4 $root_partition
+  mkfs.ext4 $root_partition
+
+  # mount to /mnt
+  mount $root_partition /mnt
+  mkdir /mnt/boot
+  mount $boot_partition /mnt/boot
+
+  # edit to up jap url
+  vim /etc/pacman.d/mirrorlist
+  # install base command to /mnt
+  pacstrap /mnt base base-devel
+  # gen fstab
+  genfstab -U /mnt >> /mnt/etc/fstab
+}
+
+setup_in_chroot() {
+  # chroot
+  arch-chroot /mnt
+
+  # enable zone localtime
+  ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+  # setup utc hwclock
+  hwclock --systohc --utc
+  # check
+  date
+
+  # uncomment en_US.UTF8 ja_JP.UTF8
+  sed -i -e 's/^#(en_US.UTF8)/\1/g' /etc/locale.gen
+  sed -i -e 's/^#(ja_JP.UTF8)/\1/g' /etc/locale.gen
+  # gen locale
+  locale-gen
+
+  # set locale
+  echo LANG=en_US.UTF-8 > /etc/locale.conf
+  # set keymap
+  echo KEYMAP=$keyboard_layout >> /etc/vconsole.conf
+  echo FONT=Lat2-Terminus16 >> /etc/vconsole.conf
+
+  # set hostname
+  echo $hostname > /etc/hostname
+  # set hostname in hosts
+  echo "127.0.0.1 $hostname.localdomain $hostname" >> /etc/hosts
+
+  # enable dhcpcd for networking(For Cable Network)
+  systemctl enable dhcpcd.service
+  # initramfs for mount root file system
+  mkinitcpio -p linux
+  # change root password
+  passwd
+
+  # bootctl --path=/boot install
+  # for update intel microcode .. is must?(no boot)
+  pacman -S intel-ucode
+  # reboot
+  exit
+  umount -R /mnt
+  reboot
+}
+
+main() {
+  setup_in_live_cd
+  setup_in_chroot
+}
+main "$@"
