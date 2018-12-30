@@ -37,6 +37,10 @@ nnoremap S *zz
 nnoremap " *zz
 " nnoremap ' :
 
+" ビジュアルモード選択した部分を*で検索
+vnoremap * "zy:let @/ = @z<CR>nzz
+vnoremap " "zy:let @/ = @z<CR>nzz
+
 nnoremap * *zz
 nnoremap g* g*zz
 nnoremap g# g#zz
@@ -81,8 +85,6 @@ endfunction
 vmap <silent> <expr> p <sid>Repl()
 
 
-" ビジュアルモード選択した部分を*で検索
-vnoremap * "zy:let @/ = @z<CR>nzz
 " カーソルの下の単語をヤンクした文字列で置換
 nnoremap <silent> ciy ciw<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 nnoremap <silent> cy   ce<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
