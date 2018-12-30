@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
 DOT_PATH=~/.dot
-current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
+# current_dir=$(pwd)
+# script_dir=$(cd "$(dirname $0)"; pwd)
 command_name=$(basename $0)
 #all_apps="git ctags curl tree global zsh tmux vim tig ssh ag _peco _fzf _gomi _zplug"
 #all_apps="git ctags curl tree global zsh tmux vim tig ssh nkf ag"
 default_apps=(git ctags curl tree zsh tmux vim tig ssh bc ag nkf)
-debug=0
-dry_run=1
-force=0
+export debug=0
+export dry_run=1
+export force=0
 args=()
 
 usage() {
@@ -30,7 +30,7 @@ Setup my dev env.
 Defaults Apps(No specify App mode) is ..
     ${default_apps[@]}
 Installable Apps is ..
-    $(ls $DOT_PATH/apps |tr '\n' ' ')
+    $(while read -r line; do printf "$(basename $line) "; done< <(find $DOT_PATH/apps/ -maxdepth 1 -mindepth 1 -type d))
 EOF
 }
 
@@ -53,41 +53,43 @@ initialize() {
   done
   if [[ ${#args[@]} -eq 0 ]]; then
     # 指定無し時は全インストール
-    args+=(${default_apps[@]})
+    args+=("${default_apps[@]}")
   fi
-  all_args="${args[@]}"
+  all_args="${args[*]}"
 
-    # 関数ロード
-    source $DOT_PATH/bin/lib/funcs
+  # 関数ロード
+  source $DOT_PATH/bin/lib/funcs
 
-    if is_mac; then
-      if ! has brew; then
-        suggest_install_brew
-        exit 1
-      fi
+  if is_mac; then
+    if ! has brew; then
+      suggest_install_brew
+      exit 1
     fi
+  fi
 
-    is_32bit=0
-    [[ "$DETECT_BIT" != "x86_64" ]] && is_32bit=1
-    # Install command
-    instcmd="sudo apt-get install -y"
-    if is_mac; then
-      instcmd="brew install"
-    elif is_redhat; then
-      instcmd="sudo yum install -y"
-    elif is_cygwin; then
-      instcmd="apt-cyg install"
-    elif is_msys; then
-      instcmd="pacman -S --noconfirm"
-    elif is_arch; then
-      if has yaourt; then
-        instcmd="yaourt -S --noconfirm"
-      else
-        instcmd="sudo pacman -S --noconfirm"
-      fi
+  is_32bit=0
+  [[ "$DETECT_BIT" != "x86_64" ]] && export is_32bit=1
+  # Install command
+  export instcmd="sudo apt-get install -y"
+  if is_mac; then
+    instcmd="brew install"
+  elif is_redhat; then
+    instcmd="sudo yum install -y"
+  elif is_cygwin; then
+    instcmd="apt-cyg install"
+  elif is_msys; then
+    instcmd="pacman -S --noconfirm"
+  elif is_arch; then
+    if has yay; then
+      instcmd="yay -S --noconfirm"
+    elif has yaourt; then
+      instcmd="yaourt -S --noconfirm"
+    else
+      instcmd="sudo pacman -S --noconfirm"
     fi
-    cd $DOT_PATH
-  }
+  fi
+  cd $DOT_PATH
+}
 
 make_setup_dirs() {
   local works_home=$HOME
