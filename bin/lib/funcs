@@ -1,209 +1,210 @@
 #!/bin/bash
 
 DOT_PATH=~/.dot
-DETECT_OS=$($DOT_PATH/bin/os)
-DETECT_BIT=$($DOT_PATH/bin/bit)
+export DETECT_OS=$($DOT_PATH/bin/os)
+export DETECT_BIT=$($DOT_PATH/bin/bit)
 _timestamp=$(date +%Y%m%d_%H%M%S)
 _backup_root="${DOT_PATH}/bkup/setup"
 # _log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
-_dry_run_commands=""
+export _dry_run_commands=""
 
 is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
 ink() {
-    if [ "$#" -eq 0 -o "$#" -gt 2 ]; then
-        echo "Usage: ink <color> <text>"
-        echo "Colors:"
-        echo "  black, white, red, green, yellow, blue, purple, cyan, gray"
-        return 1
-    fi
+  if [[ "$#" -eq 0 || "$#" -gt 2 ]]; then
+      echo "Usage: ink <color> <text>"
+      echo "Colors:"
+      echo "  black, white, red, green, yellow, blue, purple, cyan, gray"
+      return 1
+  fi
 
-    local open="\033["
-    local close="${open}0m"
-    local black="0;30m"
-    local red="1;31m"
-    local green="1;32m"
-    local yellow="1;33m"
-    local blue="1;34m"
-    local purple="1;35m"
-    local cyan="1;36m"
-    local gray="0;37m"
-    local white="$close"
+  local open="\033["
+  local close="${open}0m"
+  # local black="0;30m"
+  # local red="1;31m"
+  # local green="1;32m"
+  # local yellow="1;33m"
+  # local blue="1;34m"
+  # local purple="1;35m"
+  # local cyan="1;36m"
+  # local gray="0;37m"
+  # local white="$close"
 
-    local text="$1"
-    local color="$close"
+  local text="$1"
+  local color="$close"
 
-    if [ "$#" -eq 2 ]; then
-        text="$2"
-        case "$1" in
-            black | red | green | yellow | blue | purple | cyan | gray | white)
-            eval color="\$$1"
-            ;;
-        esac
-    fi
+  if [[ "$#" -eq 2 ]]; then
+      text="$2"
+      case "$1" in
+          black | red | green | yellow | blue | purple | cyan | gray | white)
+          eval color="\$$1"
+          ;;
+      esac
+  fi
 
-    printf "${open}${color}${text}${close}"
+  printf "${open}${color}${text}${close}"
 }
 log() {
-    echo -e "$*"
+  echo -e "$*"
 }
 
 dlog() {
-    if is_debug; then
-        log "$*"
-    fi
+  if is_debug; then
+    log "$*"
+  fi
 }
 
 mexe() {
-    local cmd="$*"
-    is_dry && log "   $cmd" && return
-    dlog "===> Executing: $cmd"
-    eval "$cmd" || (echo "===> Failed..... Executing $cmd" && exit 1)
+  local cmd="$*"
+  is_dry && log "   $cmd" && return
+  dlog "===> Executing: $cmd"
+  eval "$cmd" || (echo "===> Failed..... Executing $cmd" && exit 1)
 }
 
 # コマンドがインストールされているかチェックする
-has() { which $1 >& /dev/null; }
+has() { command -v ${1} >& /dev/null; }
 
 # $* が存在するかどうか判定する
 isexist() {
-    local file="$*"
-    local count=$(ls -a "$file" 2>/dev/null |wc -l|sed 's/ //g')
-    [[ $count -eq 0 ]] && return 1
-    return 0
+  local file="$*"
+  # local count=$(ls -a "$file" 2>/dev/null |wc -l|sed 's/ //g')
+  # [[ $count -eq 0 ]] && return 1
+  # return 0
+  find $file >& /dev/null
 }
 
 make_dir_if_needed() {
-    local tmp="$*"
-    if [[ ! -e "$tmp" ]]; then
-        mexe "mkdir -p \"$tmp\""
-    fi
+  local tmp="$*"
+  if [[ ! -e "$tmp" ]]; then
+    mexe "mkdir -p \"$tmp\""
+  fi
 }
 
 # $1のファイルを$2へリンクを作成する
 make_link() {
-    local from=$1
-    local to=$2
-    mexe "ln -s \"$from\" \"$to\""
+  local from=$1
+  local to=$2
+  mexe "ln -s \"$from\" \"$to\""
 }
 
 # $* のリンクを 絶対パスで表示する（readlink -f の代用（For Mac））
 # echo 結果がパスとして使用される為、log 実行時は正しく動作しない
 readlink_path() {
-    local target="$*"
-    if [ "$target" = "" ]; then
-        echo "Error!!! readlink_path Error!!!!!!!! argument is blank!!"
-        return
-    fi
-    buf="`echo $target`"
-    pre=""
-    while [ "$buf" != "" ]; do
-        pre="`echo $buf`"
-        buf="`readlink "$buf"`"
-    done
-    echo "$pre"
+  local target="$*"
+  if [ "$target" = "" ]; then
+    echo "Error!!! readlink_path Error!!!!!!!! argument is blank!!"
+    return
+  fi
+  buf="$target"
+  pre=""
+  while [ "$buf" != "" ]; do
+    pre="$buf"
+    buf="$(readlink "$buf")"
+  done
+  echo "$pre"
 }
 
 # $* ディレクトリ配下の dot file をHOMEへリンクを作成する
 make_link_dot2home() {
-    local dir="$*"
-    for file in `cd "$dir" && /bin/ls -a | grep -v ^.git$ | grep -v ^.gitignore$ | grep -v ^.gitkeep$ | egrep '^\.[^.]+'`; do
-        make_lnk_with_bkup "$dir/$file" "${HOME}/$file"
-    done
+  local dir="$*"
+  for file in $(cd "$dir" && /bin/ls -a | grep -v ^.git$ | grep -v ^.gitignore$ | grep -v ^.gitkeep$ | grep -E '^\.[^.]+'); do
+    make_lnk_with_bkup "$dir/$file" "${HOME}/$file"
+  done
 }
 
 # 同じリンクかどうか
 is_same_link() {
-    local src1=$1
-    local src2=$2
-    if [ "$src1" = "$src2" ]; then
-        return 1
-    fi
-    if [ "$src1/" = "$src2" ]; then
-        return 1
-    fi
-    if [ "$src1" = "$src2/" ]; then
-        return 1
-    fi
-    return 0
+  local src1=$1
+  local src2=$2
+  if [ "$src1" = "$src2" ]; then
+    return 1
+  fi
+  if [ "$src1/" = "$src2" ]; then
+    return 1
+  fi
+  if [ "$src1" = "$src2/" ]; then
+    return 1
+  fi
+  return 0
 }
 
 # $1のファイルを$2へリンクを作成する
 make_lnk_with_bkup() {
-    local src=$1
-    local lnk=$2
-    local need_backup=0
-    # dlog " make_lnk_with_bkup Start lnk=$lnk src=$src"
-    #if [ -e "${lnk}" ]; then
-    if isexist "${lnk}"; then
-        # dlog "   @@@@@@ exist!"
-        # ファイルタイプ(ファイル、ディレクトリ、リンク)をチェック
-        #if [ -n "`find "${lnk}" -maxdepth 0 -type l`" ]; then
-        if [ -L "${lnk}" ]; then
-            # リンク
-            # dlog "   @@@@@@ Link!"
-            local fullpath_lnk="`readlink_path "${lnk}"`"
-            local fullpath_src="`readlink_path "${src}"`"
-            # dlog "    lnk:$lnk => fullpath_lnk=$fullpath_lnk"
-            # dlog "    src:$src => fullpath_src=$fullpath_src"
-            if ! is_same_link "$fullpath_lnk" "$fullpath_src"; then
-                # 既に自分へのリンクの場合はなにもしない
-                # dlog "  => Already linked. Skip it. path=${lnk}"
-                return 0
-            else
-                # 他ファイルへのリンクなのでバックアップする
-                # dlog "  => Not match link. backup it. old link is ${fullpath_lnk} => new link is ${fullpath_src}"
-                need_backup=1
-            fi
-        elif [ -d "${lnk}" ]; then
-            # ディレクトリはバックアップする
-            # dlog "   @@@@@@ Dir!"
-            dlog "  => Directory exist. Backup it. path=$lnk"
-            need_backup=1
-        elif [ -f "${lnk}" ]; then
-            # 既存のファイルをバックアップする
-            # dlog "   @@@@@@ File!"
-            dlog "  => File exist. Backup it. path=$lnk"
-            need_backup=1
-        else
-            # dlog "   @@@@@@ little bit!"
-            # ないと思う
-            dlog "  => Little bit strange exist. path=${lnk} ... Do nothing"
-            return 0
-        fi
+  local src=$1
+  local lnk=$2
+  local need_backup=0
+  # dlog " make_lnk_with_bkup Start lnk=$lnk src=$src"
+  #if [ -e "${lnk}" ]; then
+  if isexist "${lnk}"; then
+    # dlog "   @@@@@@ exist!"
+    # ファイルタイプ(ファイル、ディレクトリ、リンク)をチェック
+    #if [ -n "`find "${lnk}" -maxdepth 0 -type l`" ]; then
+    if [ -L "${lnk}" ]; then
+      # リンク
+      # dlog "   @@@@@@ Link!"
+      local fullpath_lnk="$(readlink_path "${lnk}")"
+      local fullpath_src="$(readlink_path "${src}")"
+      # dlog "    lnk:$lnk => fullpath_lnk=$fullpath_lnk"
+      # dlog "    src:$src => fullpath_src=$fullpath_src"
+      if ! is_same_link "$fullpath_lnk" "$fullpath_src"; then
+        # 既に自分へのリンクの場合はなにもしない
+        # dlog "  => Already linked. Skip it. path=${lnk}"
+        return 0
+      else
+        # 他ファイルへのリンクなのでバックアップする
+        # dlog "  => Not match link. backup it. old link is ${fullpath_lnk} => new link is ${fullpath_src}"
+        need_backup=1
+      fi
+    elif [ -d "${lnk}" ]; then
+      # ディレクトリはバックアップする
+      # dlog "   @@@@@@ Dir!"
+      dlog "  => Directory exist. Backup it. path=$lnk"
+      need_backup=1
+    elif [ -f "${lnk}" ]; then
+      # 既存のファイルをバックアップする
+      # dlog "   @@@@@@ File!"
+      dlog "  => File exist. Backup it. path=$lnk"
+      need_backup=1
+    else
+      # dlog "   @@@@@@ little bit!"
+      # ないと思う
+      dlog "  => Little bit strange exist. path=${lnk} ... Do nothing"
+      return 0
     fi
-    # バックアップが必要ならバックアップする
-    if [ $need_backup -eq 1 ]; then
-        # dlog "   @@@@@@ Backup!"
-        backup_file "${lnk}"
-    fi
-    make_link "$src" "$lnk"
+  fi
+  # バックアップが必要ならバックアップする
+  if [ $need_backup -eq 1 ]; then
+    # dlog "   @@@@@@ Backup!"
+    backup_file "${lnk}"
+  fi
+  make_link "$src" "$lnk"
 }
 
 # $* のファイルを${_backup_root}に移動する
 backup_file() {
-    local _target="$*"
-    # バックアップ先のディレクトリがない場合は作成する
-    make_dir_if_needed "$_backup_root"
+  local _target="$*"
+  # バックアップ先のディレクトリがない場合は作成する
+  make_dir_if_needed "$_backup_root"
 
-    local _name="$(basename "$_target")"
-    # バックアップ先ディレクトリにmv
-    mexe "mv -fv \"$_target\" \"${_backup_root}/${_timestamp}_$_name\""
-    del_if_exist "$_target"
-    if [[ ! -e "$_target" ]]; then
-        dlog "===> Backuped $_target"
-    fi
+  local _name="$(basename "$_target")"
+  # バックアップ先ディレクトリにmv
+  mexe "mv -fv \"$_target\" \"${_backup_root}/${_timestamp}_$_name\""
+  del_if_exist "$_target"
+  if [[ ! -e "$_target" ]]; then
+    dlog "===> Backuped $_target"
+  fi
 }
 
 # 存在する場合のみ削除
 del_if_exist() {
-    local rm_target="$*"
-    if [ "$rm_target" = "/" ]; then
-        log "invalid rm path $rm_target"
-        return
-    fi
-    if isexist "$rm_target"; then
-        mexe "rm -rf \"$rm_target\""
-    fi
+  local rm_target="$*"
+  if [ "$rm_target" = "/" ]; then
+    log "invalid rm path $rm_target"
+    return
+  fi
+  if isexist "$rm_target"; then
+    mexe "rm -rf \"$rm_target\""
+  fi
 }
 
 is_arch() { [[ "$DETECT_OS" == "arch" ]]; }
@@ -217,132 +218,132 @@ is_win() { is_msys || is_cygwin; }
 is_unix() { ! is_win; }
 
 has_local_package() {
-    local p=$1
-    if is_arch || is_msys; then
-        pacman -Qi $p >& /dev/null && return 0
-    elif is_ubuntu; then
-        dpkg -l $p >& /dev/null && return 0
-    elif is_redhat; then
-        rpm -qi $p >& /dev/null && return 0
-    else
-        return 1
-    fi
+  local p=$1
+  if is_arch || is_msys; then
+    pacman -Qi $p >& /dev/null && return 0
+  elif is_ubuntu; then
+    dpkg -l $p >& /dev/null && return 0
+  elif is_redhat; then
+    rpm -qi $p >& /dev/null && return 0
+  else
+    return 1
+  fi
 }
 def_install() {
-    local _pkgs=()
-    for p in $@; do
-        has $p && continue
-        has_local_package $p && continue
-        _pkgs+=($p)
-    done
-    mexe $instcmd ${_pkgs[@]}
+  local _pkgs=()
+  for p in "$@"; do
+    has $p && continue
+    has_local_package $p && continue
+    _pkgs+=("$p")
+  done
+  mexe $instcmd "${_pkgs[*]}"
 }
 make_work_if_needed() {
-    make_dir_if_needed "$workdir"
+  make_dir_if_needed "$workdir"
 }
 cd_work() {
-    make_work_if_needed
-    mexe "cd \"$workdir\""
+  make_work_if_needed
+  mexe "cd \"$workdir\""
 }
 
 _gh() {
-    local dst="$1"
-    local url="$2"
-    local tag="${3:-}"
-    local _sudo=""
-    if ! is_win && [[ "$dst" == "/usr/local/src" ]]; then
-        _sudo="sudo"
-    fi
-    local repo_name="${url##*/}"
-    repo_name="${repo_name%%\.git}"
-    local _path="$dst/$repo_name"
-    if [[ -e "$_path" ]]; then
-        mexe cd $_path
-        mexe $_sudo git fetch
-    else
-        mexe $_sudo git clone --depth 1 "$url" $_path
-        mexe cd $_path
+  local dst="$1"
+  local url="$2"
+  local tag="${3:-}"
+  local _sudo=""
+  if ! is_win && [[ "$dst" == "/usr/local/src" ]]; then
+    _sudo="sudo"
+  fi
+  local repo_name="${url##*/}"
+  repo_name="${repo_name%%\.git}"
+  local _path="$dst/$repo_name"
+  if [[ -e "$_path" ]]; then
+    mexe cd $_path
+    mexe $_sudo git fetch
+  else
+    mexe $_sudo git clone --depth 1 "$url" $_path
+    mexe cd $_path
+  fi
+  if [[ -z $tag ]]; then
+    if ! is_dry; then
+      local tag=$(git tag --list |tail -1 2>/dev/null)
     fi
     if [[ -z $tag ]]; then
-        if ! is_dry; then
-            local tag=$(git tag --list |tail -1 2>/dev/null)
-        fi
-        if [[ -z $tag ]]; then
-            return
-        fi
+      return
     fi
-    if ! is_dry; then
-        local now_branch=$(git branch |grep "*" |tr -d "*" |tr -d " ")
-    fi
-    if [[ -n $now_branch && $now_branch != $tag ]]; then
-        mexe $_sudo git checkout -b $tag $tag
-    fi
+  fi
+  if ! is_dry; then
+    local now_branch=$(git branch |grep -E "\*" |tr -d "*" |tr -d " ")
+  fi
+  if [[ -n $now_branch && $now_branch != "$tag" ]]; then
+    mexe $_sudo git checkout -b $tag $tag
+  fi
 }
 gh_user_local() {
-    _gh /usr/local/src "$@"
+  _gh /usr/local/src "$@"
 }
 gh() {
-    _gh "$workdir" "$@"
+  _gh "$workdir" "$@"
 }
 dl() {
-    local _url="$1"
-    local _dst="$2"
-    if [[ -e "$_dst" ]] && [[ ! -d "$_dst" ]]; then
-        dlog "Already exists file $_dst"
-        return
-    fi
-    if [[ $# -eq 1 ]]; then
-        ! is_dry && log "===> Downloading from $_url"
-        if has curl; then
-            mexe "curl -fLO \"$_url\""
-        else
-            mexe "wget \"$_url\""
-        fi
+  local _url="$1"
+  local _dst="$2"
+  if [[ -e "$_dst" ]] && [[ ! -d "$_dst" ]]; then
+    dlog "Already exists file $_dst"
+    return
+  fi
+  if [[ $# -eq 1 ]]; then
+    ! is_dry && log "===> Downloading from $_url"
+    if has curl; then
+      mexe "curl -fLO \"$_url\""
     else
-        ! is_dry && log "===> Downloading from $_url to $_dst"
-        if has curl; then
-            mexe "curl -fL \"$_url\" -o \"$_dst\""
-        else
-            mexe "wget \"$_url\" -O \"$_dst\""
-        fi
+      mexe "wget \"$_url\""
     fi
+  else
+    ! is_dry && log "===> Downloading from $_url to $_dst"
+    if has curl; then
+      mexe "curl -fL \"$_url\" -o \"$_dst\""
+    else
+      mexe "wget \"$_url\" -O \"$_dst\""
+    fi
+  fi
 }
 dl_untar() {
-    local url="$1"
-    local _fname="${url##*/}"
-    local to="${2:-$workdir/${_fname%%.*}}"
-    local strip=${3:-1}
-    [[ -z $_fname ]] && _fname=dl.tgz
-    cd_work
-    dl "$url" $_fname
-    if [[ ! -e $to ]]; then
-        mexe mkdir -p "$to"
-    fi
-    if [[ $(ls $to/ 2>/dev/null|wc -l) -eq 0 ]]; then
-        mexe "tar xvfpz $_fname -C \"$to\" --strip-components $strip"
-    fi
+  local url="$1"
+  local _fname="${url##*/}"
+  local to="${2:-$workdir/${_fname%%.*}}"
+  local strip=${3:-1}
+  [[ -z $_fname ]] && _fname=dl.tgz
+  cd_work
+  dl "$url" $_fname
+  if [[ ! -e $to ]]; then
+    mexe mkdir -p "$to"
+  fi
+  if ! find $to >& /dev/null; then
+    mexe "tar xvfpz $_fname -C \"$to\" --strip-components $strip"
+  fi
 }
 dl_unzip () {
-    local url="$1"
-    local to="${2:-$workdir}"
-    cd_work
-    dl "$url" dl.zip
-    mexe "unzip dl.zip -d \"$to\""
+  local url="$1"
+  local to="${2:-$workdir}"
+  cd_work
+  dl "$url" dl.zip
+  mexe "unzip dl.zip -d \"$to\""
 }
 
 tool_env() {
-    set -eu
-    dry_run=0
-    debug=1
-    workdir=$script_dir/tmp
+  set -eu
+  dry_run=0
+  debug=1
+  workdir=$script_dir/tmp
 }
 
 not_supported() {
-    dlog "Not supported."
+  dlog "Not supported."
 }
 
 rm_dotpath() {
-    if [[ -e ~/.path ]]; then
-        mexe rm ~/.path
-    fi
+  if [[ -e ~/.path ]]; then
+    mexe rm ~/.path
+  fi
 }
