@@ -14,7 +14,15 @@ install_ubuntu() {
   mexe lsmod |grep rtl8812au
 }
 install_arch() {
-  mexe yay -S rtl8812au_8821au_linux-dkms-git
+  mexe sudo pacman -S linux-headers
+  mexe yay -S rtl8821au-dkms-git
+  ## If you remove driver
+  # sudo dkms remove rtl8821au/5.1.5.r74.g30fb964 && yay -R rtl8821au-dkms-git
+
+  ## Enale netctl wireless setting
+  # sudo cp /etc/netctl/examples/wireless-wpa-static /etc/netctl/wireless
+  # sudo vim /etc/netctl/wireless
+  # sudo netctl start wireless
 }
 main() {
   source $DOTPATH/bin/lib/funcs
