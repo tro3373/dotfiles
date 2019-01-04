@@ -1,12 +1,13 @@
 #!/bin/bash
 
-DOT_PATH=~/.dot
+DOT_PATH=$HOME/.dot
 export DETECT_OS=$($DOT_PATH/bin/os)
 export DETECT_BIT=$($DOT_PATH/bin/bit)
 _timestamp=$(date +%Y%m%d_%H%M%S)
 _backup_root="${DOT_PATH}/bkup/setup"
 # _log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
 export _dry_run_commands=""
+declare instcmd script_dir
 
 is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 DOT_PATH=~/.dot
-current_dir=$(pwd)
-script_dir=$(cd "$(dirname $0)"; pwd)
+export current_dir=$(pwd)
+export script_dir=$(cd "$(dirname $0)"; pwd)
 command_name=$(basename $0)
 #all_apps="git ctags curl tree global zsh tmux vim tig ssh ag _peco _fzf _gomi _zplug"
 #all_apps="git ctags curl tree global zsh tmux vim tig ssh nkf ag"
