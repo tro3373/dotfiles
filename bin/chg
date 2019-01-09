@@ -10,7 +10,7 @@ main() {
     echo "Not supported"
     return 0
   fi
-  local src=$(cat /dev/clipboard |tr -d "\"" |tr -d "\r")
+  local src=$(cat < /dev/clipboard |tr -d "\"" |tr -d "\r")
   if [[ -z $src ]]; then
     echo "clipboard is empty." 1>&2
     exit 1
