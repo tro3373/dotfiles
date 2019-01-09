@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+pre_ymd=
+pre_hms=
+pre_unixt=
+pre_group=
+pre_task=
+
+human_pass_time() {
+  local from=$1
+  local to=$2
+  local all_minute=$(echo "scale=0; ($to-$from)/60" |bc)
+  local h=$(echo "scale=0; $all_minute/60" |bc)
+  local m=$(echo "scale=0; $all_minute%60" |bc)
+  printf "%02dh%02dm" $h $m
+}
+sub() {
+  if [[ -n $pre_unixt ]]; then
+    local pass_time=$(human_pass_time $pre_unixt $unixt)
+    if [[ -n $pre_group ]]; then
+      printf "%s\t%s\t%s\t%s\t%s\\n" "$pre_ymd" "$pre_hms" "$pass_time" "$pre_group" "$pre_task"
+    fi
+  fi
+  pre_ymd=$ymd
+  pre_hms=$hms
+  pre_unixt=$unixt
+  pre_group=$group
+  pre_task=$task
+  # pre_args="$(printf "%s\t%s\t%s\t%s\t%s\\n" "$ymd" "$hms" "$unixt" "$group" "$task")"
+  # pre_group=$group
+}
+main() {
+  local f=$(find $HOME/works/00_memos/ -name "*月.md" |sort -r|fzf)
+  [[ -z $f ]] && return
+  (grep -E "^- 20" $f && date "+%Y%m%d_%H%M%S dummy") |
+    sed -e 's/^- //g' |
+    while read -r ymdhms group task; do
+      # echo "$ymdhms" "$group" "$task"
+      local ymd=${ymdhms%%_*}
+      local hms=${ymdhms##*_}
+      printf "%s\t%s\t%s\t%s\\n" "$ymd" "$hms" "$group" "$task"
+    done |
+      sort |
+      while read -r ymd hms group task; do
+        local strd=$(echo "${ymd}_${hms}" | sed -e "s/^\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)_\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)/\1\/\2\/\3 \4:\5:\6/g")
+        local unixt=$(date -d "$strd" "+%s")
+        # echo "$strd $unixt"
+        printf "%s\t%s\t%s\t%s\t%s\\n" "$ymd" "$hms" "$unixt" "$group" "$task"
+      done |
+        while read -r ymd hms unixt group task; do
+          sub "$@"
+        done
+}
+main "$@"
+
