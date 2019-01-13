@@ -37,6 +37,11 @@ nnoremap S *zz
 nnoremap " *zz
 " nnoremap ' :
 
+nnoremap <C-u> 10k
+nnoremap <C-d> 10j
+nnoremap <C-b> 20k
+nnoremap <C-f> 20j
+
 " ビジュアルモード選択した部分を*で検索
 vnoremap * "zy:let @/ = @z<CR>nzz
 vnoremap " "zy:let @/ = @z<CR>nzz
