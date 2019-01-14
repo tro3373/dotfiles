@@ -225,7 +225,7 @@ exec --no-startup-id dunst
 # volume icon
 exec --no-startup-id volumeicon
 # wallpaper?
-exec --no-startup-id "feh --bg-scale $HOME/Downloads/wallpaper.png"
+exec --no-startup-id "feh -randomize --bg-scale $HOME/Wallpapers/*"
 # lock shortcut
 bindsym $mod+Control+0 exec --no-startup-id dm-tool lock
 
@@ -235,3 +235,10 @@ workspace_layout tabbed
 # default_border pixel 0
 # hide_edge_borders both
 # set_from_resource $black i3wm.color0 #000000
+
+for_window [class="^.*"] border pixel 0
+# gaps inner 5
+# gaps outer 5
+#smart_gaps on
+#smart_borders on
+
