@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+target=/usr/bin/spotlight.sh
+main() {
+  if [[ ! -e $target ]]; then
+    echo "No such file exist. $target" 1>&2
+    exit 1
+  fi
+  if grep Wallpapers $target >& /dev/null; then
+    echo "Already setuped."
+    return
+  fi
+  # shellcheck disable=SC2016
+  sudo sed -i -e '/picture-uri/s,$,\n\tcp $path '$HOME'/Wallpapers/$(date "+%Y%m%d_%H%M%S")_$(basename $path),g' $target
+  echo "Done"
+}
+main "$@"
+
