@@ -252,6 +252,14 @@ setup_bluetooth() {
   fi
   reset_keyboard
   pairing_manual
+  # Disabling auto suspend btusb
+  # https://bbs.archlinux.org/viewtopic.php?id=236479
+  # systool -v -m btusb
+  cat <<EOF |sudo tee /etc/modprobe.d/disable_autosuspend.conf
+# Disable autosuspend for btusb to make the bluetooth keyboard work again
+options btusb enable_autosuspend=n
+EOF
+
 }
 setup_ranger() {
   # https://qiita.com/ssh0/items/3d71da415953003d47d7
