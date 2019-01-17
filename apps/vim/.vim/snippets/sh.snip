@@ -139,6 +139,9 @@ snippet readuser
 snippet readpass
     read -sp "pass: " pass
 
+snippet log
+    log() { echo "$(date "%Y-%m-%d %H:%M:%S") $*" 1>&2; }
+
 snippet install_setup_template
     install_common() { not_supported; }
     install_arch()   { not_supported; }
