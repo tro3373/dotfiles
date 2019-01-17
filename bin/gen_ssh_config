@@ -39,14 +39,14 @@ initialize() {
 }
 
 cat_template() {
-  cat <<EOL
+  cat <<'EOL'
 Host *
   IdentityFile /path/to/your/identity/file
   ServerAliveInterval 30
-  PermitLocalCommand  yes
-  ForwardX11 yes
-  ForwardX11Trusted yes
-  #LocalCommand tmux rename-window %n
+  #ForwardX11 yes
+  #ForwardX11Trusted yes
+  #PermitLocalCommand  yes
+  #LocalCommand [[ -n $TMUX ]] && tmux rename-window %n
   #RemoteForward 52224 localhost:52224
 Host [server1]
   HostName [server1 ip]
