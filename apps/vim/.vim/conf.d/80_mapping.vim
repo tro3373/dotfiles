@@ -648,9 +648,11 @@ if g:plug.is_installed('ale')
   " エラーと警告がなくなっても開いたままにするか
   let g:ale_keep_list_wildow_open = 0
 
-  " let g:ale_linters = {
-  "\   'javascript': ['eslint'],
-  "\}                                " 特定の言語のみチェック
+  let g:ale_linters = {
+  \   'javascript': ['eslint'],
+  \   'shell': ['shellcheck'],
+  \}                                " 特定の言語のみチェック
+  "\   'java': [],
   " let g:ale_sign_error = '!!'
   " let g:ale_sign_warning = '=='
 
