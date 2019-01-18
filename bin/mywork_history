@@ -6,19 +6,24 @@ pre_unixt=
 pre_group=
 pre_task=
 
-human_pass_time() {
+pass_time() {
   local from=$1
   local to=$2
   local all_minute=$(echo "scale=0; ($to-$from)/60" |bc)
+  echo $all_minute
+}
+human_pass_time() {
+  local all_minute=$1
   local h=$(echo "scale=0; $all_minute/60" |bc)
   local m=$(echo "scale=0; $all_minute%60" |bc)
   printf "%02dh%02dm" $h $m
 }
 sub() {
   if [[ -n $pre_unixt ]]; then
-    local pass_time=$(human_pass_time $pre_unixt $unixt)
     if [[ -n $pre_group ]]; then
-      printf "%s\t%s\t%s\t%s\t%s\\n" "$pre_ymd" "$pre_hms" "$pass_time" "$pre_group" "$pre_task"
+      local pass_time_m=$(pass_time $pre_unixt $unixt)
+      local human_pass_time=$(human_pass_time $pass_time_m)
+      printf "%s\t%s\t%s\t%s\t%s\t%s\\n" "$pre_ymd" "$pre_hms" "$pass_time_m" "$human_pass_time" "$pre_group" "$pre_task"
     fi
   fi
   pre_ymd=$ymd
