@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+#current_dir=$(pwd)
+#script_dir=$(cd "$(dirname $0)"; pwd)
+has() { command -v ${1} >& /dev/null; }
+not_supported() { echo "Not supported." 1>&2 && exit 1; }
+error() { echo "$*" 1>&2; }
+main() {
+  if ! os |grep arch >/dev/null; then
+    not_supported
+  fi
+  if ! has ntfs-3g; then
+    error "No ntfs-3g exist."
+    exit 1
+  fi
+  local mount_dev=${1:-/dev/sda4}
+  local mount_to=${2:-/mnt/usb}
+  if mount |grep $mount_dev >/dev/null; then
+    error "Already mounted to $mount_to"
+    exit 1
+  fi
+  if [[ ! -e $mount_to ]]; then
+    sudo mkdir -p $mount_to
+  fi
+  sudo mount -t ntfs-3g $mount_dev $mount_to && \
+    echo "$mount_dev mounted to $mount_to"
+}
+main "$@"

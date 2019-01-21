@@ -142,6 +142,12 @@ snippet readpass
 snippet log
     log() { echo "$(date "%Y-%m-%d %H:%M:%S") $*" 1>&2; }
 
+snippet error
+    error() { echo "$*" 1>&2; }
+
+snippet not_supported
+    not_supported() { echo "Not supported." 1>&2 && exit 1; }
+
 snippet install_setup_template
     install_common() { not_supported; }
     install_arch()   { not_supported; }
