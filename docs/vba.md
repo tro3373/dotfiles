@@ -271,6 +271,245 @@ Sub CopyAllH()
 End Sub
 ```
 
+## テーブル定義からSQL DDL生成(MySQL)
+```
+Public row As Integer
+Public OutBookName As String
+Public OutSheetName As String
+
+' 入力ファイル選択
+Function getInputFilePath() As String
+    Dim OpenFileName As String
+    ChDir ThisWorkbook.Path & "\"
+    OpenFileName = Application.GetOpenFilename("Microsoft Excelブック,*.xls?", MultiSelect:=False)
+    If OpenFileName = "False" Then
+        OpenFileName = ""
+    End If
+    getInputFilePath = OpenFileName
+End Function
+
+
+' シートクリア
+Sub clearOutSheet()
+    Dim tmp As Worksheet, flag As Boolean
+    For Each tmp In ThisWorkbook.Worksheets
+        If tmp.Name = OutSheetName Then
+            Application.DisplayAlerts = False
+            Sheets(OutSheetName).Delete
+            Application.DisplayAlerts = True
+            Exit For
+        End If
+    Next tmp
+    ' 新規シート作成
+    Sheets.Add after:=Worksheets(Worksheets.Count)
+    ActiveSheet.Cells.Font.Name = "Meiryo UI"
+    ActiveWindow.Zoom = 80
+    ActiveSheet.Columns(1).ColumnWidth = 100
+    ActiveSheet.Name = OutSheetName
+End Sub
+
+' セル出力
+Function output2Cell(val As String)
+    Dim wb As Workbook
+    Set wb = ThisWorkbook
+    wb.Worksheets(OutSheetName).Cells(row, 1).Value = val
+    row = row + 1
+End Function
+
+
+Sub output2Sheet()
+    row = 1
+    OutBookName = ActiveWorkbook.Name
+    OutSheetName = "SQL"
+
+    ThisWorkbook.Activate
+    Dim inputFilePath As String
+    inputFilePath = getInputFilePath
+    If Len(inputFilePath) = 0 Then
+        Exit Sub
+    End If
+
+    clearOutSheet
+
+    Dim targetWb As Workbook
+    'Application.ScreenUpdating = False
+    Set targetWb = Workbooks.Open(inputFilePath, UpdateLinks:=0, ReadOnly:=True)
+    ActiveWindow.Visible = False
+
+    Dim sht As Worksheet
+'    For Each sht In ThisWorkbook.Worksheets
+    For Each sht In targetWb.Worksheets
+        If sht.Name Like "MST*" Or sht.Name Like "TRN*" Then
+            tableName = LCase(sht.Name)
+            'tableName = LCase(sht.Cells(1, 23).Value)
+            Call output2Cell("DROP TABLE IF EXISTS `" & tableName & "`;")
+            Call output2Cell("CREATE TABLE `" & tableName & "` (")
+
+            n = sht.Range("C6").End(xlDown).row
+            pkeys = ""
+
+            ' ===============================================================
+            ' ！！！オプションキー指定！！！
+            ' ===============================================================
+            optKeys1 = sht.Cells(1, 54).Value
+            optKeys2 = sht.Cells(2, 54).Value
+            optKeys3 = sht.Cells(3, 54).Value
+            For i = 6 To n
+                ' カラム名
+                colId = sht.Cells(i, 3).Value
+                ' カラム日本語名
+                colName = Replace(sht.Cells(i, 11).Value, vbLf, "")
+                ' 型
+                colType = sht.Cells(i, 19).Value
+
+                autoIncrement = ""
+                If colId = "id" And colName = "id" Then
+                    colTypeStr = "INT"
+                    autoIncrement = " AUTO_INCREMENT"
+                ' ElseIf colType = "INT" Then → INTEGER は INT のシノニム
+                '     colTypeStr = "INTEGER"
+                ElseIf colType = "DEC" Then
+                    colTypeStr = "DECIMAL"
+                Else
+                    colTypeStr = colType
+                End If
+
+                ' カラム桁
+                colLen1 = sht.Cells(i, 23).Value
+                ' カラム少数桁
+                colLen2 = sht.Cells(i, 25).Value
+                If colTypeStr = "TEXT" Or colTypeStr = "BLOB" Then
+                    ' 桁部分を無視
+                ElseIf colLen1 <> "" And colLen2 <> "" Then
+                    colTypeStr = colTypeStr & "(" & colLen1 & "," & colLen2 & ")"
+                ElseIf colLen1 <> "" Then
+                    colTypeStr = colTypeStr & "(" & colLen1 & ")"
+                End If
+                colTypeStr = colTypeStr & autoIncrement
+
+                ' NOT NULL の指定
+                nn = sht.Cells(i, 27).Value
+                If nn <> "" Then
+                    nn = "NOT NULL"
+                End If
+
+                ' PKEY項目の収集
+                pkey = sht.Cells(i, 30).Value
+                If pkey <> "" Then
+                    If pkeys <> "" Then
+                        pkeys = pkeys & ","
+                    End If
+                    pkeys = pkeys & "`" & colId & "`"
+                End If
+
+                Call output2Cell("`" & colId & "` " & colTypeStr & " " & nn & " COMMENT '" & colName & "',")
+            Next i
+            If pkeys <> "" Then
+                tmpComma = ""
+                If optKeys1 <> "" Or optKeys2 <> "" Or optKeys3 <> "" Then
+                    tmpComma = ", "
+                End If
+                Call output2Cell("PRIMARY KEY (" & pkeys & ")" & tmpComma)
+            End If
+            If optKeys1 <> "" Then
+                Call output2Cell("" & optKeys1)
+            End If
+            If optKeys2 <> "" Then
+                Call output2Cell("" & optKeys2)
+            End If
+            If optKeys3 <> "" Then
+                Call output2Cell("" & optKeys3)
+            End If
+            Call output2Cell(") ENGINE=InnoDB DEFAULT CHARSET=utf8")
+            tableComment = sht.Cells(2, 23).Value
+            Call output2Cell("comment='" & tableComment & "';")
+            Call output2Cell("")
+        End If
+    Next
+    targetWb.Close SaveChanges:=False
+
+    ThisWorkbook.Activate
+    Sheets(OutSheetName).Activate
+    lastrow = Sheets(OutSheetName).Range("A65536").End(xlUp).row
+    Sheets(OutSheetName).Range("A1:A" & lastrow).Select
+    MsgBox "出力しました。"
+End Sub
+
+' ' ファイル生成(Depricated)
+'Sub output2SqlFile()
+'    Dim ddlFile As String
+'    ddlFile = ActiveWorkbook.Path & "\create_table.sql"
+'
+'    Open ddlFile For Output As #1
+'
+'    Dim Sheet As Worksheet
+'    For Each sht In ThisWorkbook.Worksheets
+'        If sht.Name Like "MST*" Or sht.Name Like "TRN*" Then
+'            Print #1, "DROP TABLE IF EXISTS `" & sht.Name & "`;"
+'            Print #1, "CREATE TABLE `" & sht.Name & "` ("
+'
+'            n = sht.Range("C6").End(xlDown).row
+'            pkeys = ""
+'            For i = 6 To n
+'                colId = sht.Cells(i, 3).Value
+'                colName = sht.Cells(i, 11).Value
+'
+'                colType = sht.Cells(i, 19).Value
+'
+'                If colId = "id" And colName = "id" Then
+'                    colTypeStr = "INTEGER AUTO_INCREMENT"
+'                ElseIf colType = "INT" Then
+'                    colTypeStr = "INTEGER"
+'                ElseIf colType = "DEC" Then
+'                    colTypeStr = "DECIMAL"
+'                Else
+'                    colTypeStr = colType
+'                End If
+'
+'                colLen1 = sht.Cells(i, 23).Value
+'                colLen2 = sht.Cells(i, 25).Value
+'                If colLen1 <> "" And colLen2 <> "" Then
+'                    colTypeStr = colTypeStr & "(" & colLen1 & "," & colLen2 & ")"
+'                ElseIf colLen1 <> "" Then
+'                    colTypeStr = colTypeStr & "(" & colLen1 & ")"
+'                End If
+'
+'                nn = sht.Cells(i, 27).Value
+'                If nn <> "" Then
+'                    nn = "NOT NULL"
+'                End If
+'
+'                pkey = sht.Cells(i, 30).Value
+'                If pkey <> "" Then
+'                    If pkeys <> "" Then
+'                        pkeys = pkeys & ","
+'                    End If
+'                    pkeys = pkeys & "`" & colId & "`"
+'                End If
+'
+'                Print #1, "`" & colId & "` " & colTypeStr & " " & nn & " COMMENT '" & colName & "',"
+'            Next i
+'            If pkeys <> "" Then
+'                Print #1, "PRIMARY KEY (" & pkeys & ")"
+'            End If
+'            If optKeys <> "" Then
+'                If pkeys <> "" Then
+'                    optKeys = "," & optKeys
+'                End If
+'                Print #1, optKeys
+'            End If
+'
+'            Print #1, ") ENGINE=InnoDB DEFAULT CHARSET=utf8;"
+'            Print #1, ""
+'        End If
+'    Next
+'
+'    Close #1
+'    MsgBox "create_table.sqlに書き出しました"
+'End Sub
+'
+```
+
 ## 非表示の名前リストを表示設定
 ```
 Public Sub VisibleNames()
