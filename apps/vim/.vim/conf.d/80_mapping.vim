@@ -651,6 +651,8 @@ if g:plug.is_installed('ale')
   let g:ale_linters = {
   \   'javascript': ['eslint'],
   \   'shell': ['shellcheck'],
+  \   'java': [],
+  \   'python': ['flake8'],
   \}                                " 特定の言語のみチェック
   "\   'java': [],
   " let g:ale_sign_error = '!!'
