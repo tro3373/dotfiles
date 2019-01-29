@@ -1,0 +1,15 @@
+#!/bin/bash
+
+install_common() {
+  if ! has pip; then
+    log "No pip installed"
+    return
+  fi
+  pip install flake8 hacking flake8-import-order flake8-docstrings pep8-naming flake8-double-quotes
+}
+install_msys()   { not_supported; }
+setting_common() {
+  make_lnk_with_bkup "$app_dir/flake8" "$HOME/.config/flake8"
+}
+setting_msys()   { not_supported; }
+

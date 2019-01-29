@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-
-pip install flake8 hacking flake8-import-order flake8-docstrings pep8-naming flake8-double-quotes
-
