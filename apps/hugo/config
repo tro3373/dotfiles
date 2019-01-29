@@ -1,0 +1,14 @@
+#!/bin/bash
+
+install_common() {
+  if ! has go; then
+    log "No golang installed"
+    exit 2
+  fi
+  # ソースコード取得
+  cd_work
+  mexe git clone https://github.com/spf13/hugo
+  mexe cd hugo
+  mexe go get
+}
+
