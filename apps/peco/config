@@ -1,36 +1,36 @@
 #!/bin/bash
 
 install_common() {
-    dl_untar "$(get_dl_url linux)"
-    mexe cp peco_linux_amd64/peco $HOME/bin
+  dl_untar "$(get_dl_url linux)"
+  mexe cp peco_linux_amd64/peco $HOME/bin
 }
 
 install_msys() {
-    not_supported
-    return
-    # dl_unzip "$(get_dl_url windows)"
-    # mexe cp peco_windows_amd64/peco.exe $HOME/bin
+  not_supported
+  return
+  # dl_unzip "$(get_dl_url windows)"
+  # mexe cp peco_windows_amd64/peco.exe $HOME/bin
 }
 
 install_mac() {
-    mexe sudo brew tap peco/peco
-    mexe sudo brew install peco
+  mexe sudo brew tap peco/peco
+  mexe sudo brew install peco
 }
 
 get_dl_url() {
-    local base_url=https://github.com
-    local rel_url=$(curl -fsSL $base_url/peco/peco/releases |
-        grep "a href" |
-        grep ${1}_amd64 |
-        head -1 |
-        cut -d"\"" -f2)
-    echo $base_url$rel_url
+  local base_url=https://github.com
+  local rel_url=$(curl -fsSL $base_url/peco/peco/releases |
+    grep "a href" |
+    grep ${1}_amd64 |
+    head -1 |
+    cut -d"\"" -f2)
+  echo $base_url$rel_url
 }
 
 setting_common() {
-    if [ ! -e ${HOME}/.config/peco ]; then
-        mexe "mkdir -p \"${HOME}/.config/peco\""
-    fi
-    make_lnk_with_bkup "${app_dir}/config.json" "${HOME}/.config/peco/config.json"
+  if [ ! -e ${HOME}/.config/peco ]; then
+    mexe "mkdir -p \"${HOME}/.config/peco\""
+  fi
+  make_lnk_with_bkup "$app_dir/config.json" "${HOME}/.config/peco/config.json"
 }
 

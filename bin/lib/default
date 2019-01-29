@@ -3,8 +3,8 @@
 workdir="$app_dir/tmp"
 
 install_common() {
-    dlog "====> No install setting(INSTALL) for $app"
-    install_via_os_default
+  dlog "====> No install setting(INSTALL) for $app"
+  install_via_os_default
 }
 install_arch() { default_called=1; }
 install_msys() { default_called=1; }
@@ -14,7 +14,7 @@ install_ubuntu() { default_called=1; }
 install_redhat() { default_called=1; }
 
 setting_common() {
-    dlog "====> No install setting(SETTING) for $app"
+  dlog "====> No install setting(SETTING) for $app"
 }
 setting_arch() { default_called=1; }
 setting_msys() { default_called=1; }

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 cat_aur_pac_conf() {
-    local endpoint_part='$arch'
-    is_arm && endpoint_part=arm
-    cat <<EOF
+  local endpoint_part="\$arch"
+  is_arm && endpoint_part=arm
+  cat <<EOF
 [archlinuxfr]
 SigLevel = Never
 Server = http://repo.archlinux.fr/$endpoint_part
@@ -12,24 +12,24 @@ EOF
 }
 install_common() { not_supported; }
 install_arch()   {
-    if ! cat /etc/pacman.conf |grep repo.archlinux.fr >& /dev/null; then
-        cat_aur_pac_conf |
-            if is_dry; then
-                log "==> add to /etc/pacman.conf bellow."
-                echo
-                cat -
-            else
-                cat - |sudo tee -a /etc/pacman.conf >/dev/null
-            fi
-        mexe sudo pacman -Syy
-    fi
-    def_install base-devel
-    if ! has package-query; then
-        dl_untar https://aur.archlinux.org/cgit/aur.git/snapshot/package-query.tar.gz
-        mexe cd package-query
-        mexe makepkg -si
-    fi
-    install_via_os_default
+  if ! cat < /etc/pacman.conf |grep repo.archlinux.fr >& /dev/null; then
+    cat_aur_pac_conf |
+      if is_dry; then
+        log "==> add to /etc/pacman.conf bellow."
+        echo
+        cat -
+      else
+        cat - |sudo tee -a /etc/pacman.conf >/dev/null
+      fi
+      mexe sudo pacman -Syy
+  fi
+  def_install base-devel
+  if ! has package-query; then
+    dl_untar https://aur.archlinux.org/cgit/aur.git/snapshot/package-query.tar.gz
+    mexe cd package-query
+    mexe makepkg -si
+  fi
+  install_via_os_default
 }
 install_msys()   { not_supported; }
 install_cygwin() { not_supported; }
@@ -43,20 +43,3 @@ setting_cygwin() { not_supported; }
 setting_mac()    { not_supported; }
 setting_ubuntu() { not_supported; }
 setting_redhat() { not_supported; }
-#is_installed
-#install_via_os_default
-#def_install
-#is_debug
-#is_dry
-#log
-#dlog
-#not_supported
-#make_link_dot2home
-#make_lnk_with_bkup
-#cd_work
-#make_work_if_needed
-#dl
-#dl_unzip
-#dl_untar
-#gh
-#gh_user_local

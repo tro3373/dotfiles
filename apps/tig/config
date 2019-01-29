@@ -2,55 +2,54 @@
 
 tig_path=jonas/tig
 install_ubuntu() {
-    # build tool のインストール
-    mexe "$instcmd build-essential"
-    # https://gist.github.com/raimon49/9d45d480a607fb463ffe
-    # 日本語用
-    mexe "$instcmd libncursesw5-dev"
+  # build tool のインストール
+  def_install build-essential
+  # https://gist.github.com/raimon49/9d45d480a607fb463ffe
+  # 日本語用
+  def_install libncursesw5-dev
 
-    # ソースコード取得
-    cd_work
-    if [ ! -e "$script_dir/tmp/tig" ]; then
-        local v="$(get_latest_version $m)"
-        mexe git clone --depth 1 -b $v https://github.com/$tig_path.git
-    fi
-    mexe "cd tig"
+  # ソースコード取得
+  cd_work
+  if [[ ! -e tig ]]; then
+    local v="$(get_latest_version)"
+    mexe git clone --depth 1 -b $v https://github.com/$tig_path.git
+  fi
+  mexe "cd tig"
 
-    # ビルド, インストール
-    mexe sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
-    mexe /usr/local/bin/tig -v
+  # ビルド, インストール
+  mexe sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
+  mexe /usr/local/bin/tig -v
 }
 
 get_latest_version() {
-    curl -fSsL https://github.com/$tig_path/releases |
-        grep "/$tig_path/releases/tag/" |head -1 |cut -d'>' -f2 |cut -d'<' -f1
+  curl -fSsL https://github.com/$tig_path/releases |
+    grep "/$tig_path/releases/tag/" |head -1 |cut -d'>' -f2 |cut -d'<' -f1
 }
 
 install_redhat() {
-    #targetrpm="rpmforge-release-0.5.2-2.el6.rf.x86_64"
-    #result=`rpm -qa |grep $targetrpm`
-    #if [ "$result" = "" ]; then
-    #    cmd="sudo rpm -ivh http://pkgs.repoforge.org/rpmforge-release/${targetrpm}.rpm"
-    #    mexe "$cmd"
-    #fi
-    #install_via_os_default
-    # ソースコード取得
-    cd_work
-    if [ ! -e "$workdir/tig" ]; then
-        mexe git clone --depth 1 https://github.com/jonas/tig.git
-    fi
-    mexe "cd tig"
-    # mexe git checkout tig-2.1.1
+  #targetrpm="rpmforge-release-0.5.2-2.el6.rf.x86_64"
+  #result=`rpm -qa |grep $targetrpm`
+  #if [ "$result" = "" ]; then
+  #    cmd="sudo rpm -ivh http://pkgs.repoforge.org/rpmforge-release/${targetrpm}.rpm"
+  #    mexe "$cmd"
+  #fi
+  #install_via_os_default
+  # ソースコード取得
+  cd_work
+  if [ ! -e tig ]; then
+    mexe git clone --depth 1 https://github.com/jonas/tig.git
+  fi
+  mexe "cd tig"
+  # mexe git checkout tig-2.1.1
 
-    # ビルド, インストール
-    mexe ./autogen.sh
-    mexe ./configure prefix=/usr/local
-    mexe sudo make
-    mexe sudo sudo make install
-    mexe /usr/local/bin/tig -v
+  # ビルド, インストール
+  mexe ./autogen.sh
+  mexe ./configure prefix=/usr/local
+  mexe sudo make
+  mexe sudo sudo make install
+  mexe /usr/local/bin/tig -v
 }
 
 setting_common() {
-    make_link_dot2home $app_dir
+  make_link_dot2home $app_dir
 }
-get_latest_version

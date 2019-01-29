@@ -13,10 +13,10 @@ is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
 ink() {
   if [[ "$#" -eq 0 || "$#" -gt 2 ]]; then
-      echo "Usage: ink <color> <text>"
-      echo "Colors:"
-      echo "  black, white, red, green, yellow, blue, purple, cyan, gray"
-      return 1
+    echo "Usage: ink <color> <text>"
+    echo "Colors:"
+    echo "  black, white, red, green, yellow, blue, purple, cyan, gray"
+    return 1
   fi
 
   local open="\033["
@@ -35,12 +35,12 @@ ink() {
   local color="$close"
 
   if [[ "$#" -eq 2 ]]; then
-      text="$2"
-      case "$1" in
-          black | red | green | yellow | blue | purple | cyan | gray | white)
-          eval color="\$$1"
-          ;;
-      esac
+    text="$2"
+    case "$1" in
+      black | red | green | yellow | blue | purple | cyan | gray | white)
+      eval color="\$$1"
+      ;;
+    esac
   fi
 
   printf "${open}${color}${text}${close}"

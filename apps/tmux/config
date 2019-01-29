@@ -1,71 +1,71 @@
 #!/bin/bash
 
 install_ubuntu() {
-    # def_install autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev
-    # _install_common
-    install_via_os_default
+  # def_install autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev
+  # _install_common
+  install_via_os_default
 }
 
 install_redhat() {
-    def_install libevent libeventdevel automake ncursesdevel
-    _install_common
+  def_install libevent libeventdevel automake ncursesdevel
+  _install_common
 }
 
 _install_common() {
-    gh_user_local "https://github.com/tmux/tmux.git"
-    # local target_dir=/usr/local/src/tmux
-    # if [[ -e $target_dir ]]; then
-    #     mexe cd $target_dir
-    #     mexe sudo git pull --rebase
-    # else
-    #     mexe sudo git clone https://github.com/tmux/tmux.git $target_dir
-    #     mexe cd $target_dir
-    # fi
-    # local tag=$(git tag --list | tail -1)
-    # if [[ ! -z $tag ]]; then
-    #     mexe sudo git checkout $tag
-    # fi
-    mexe sudo ./autogen.sh
-    mexe sudo ./configure --prefix=/usr/local
-    mexe sudo make
-    mexe sudo make install
+  gh_user_local "https://github.com/tmux/tmux.git"
+  # local target_dir=/usr/local/src/tmux
+  # if [[ -e $target_dir ]]; then
+  #     mexe cd $target_dir
+  #     mexe sudo git pull --rebase
+  # else
+  #     mexe sudo git clone https://github.com/tmux/tmux.git $target_dir
+  #     mexe cd $target_dir
+  # fi
+  # local tag=$(git tag --list | tail -1)
+  # if [[ ! -z $tag ]]; then
+  #     mexe sudo git checkout $tag
+  # fi
+  mexe sudo ./autogen.sh
+  mexe sudo ./configure --prefix=/usr/local
+  mexe sudo make
+  mexe sudo make install
 }
 
 install_msys() {
-    def_install tmux-git
-    # build_msys
+  def_install tmux-git
+  # build_msys
 }
 
 build_msys() {
-    def_install base-devel ncurses-devel
+  def_install base-devel ncurses-devel
 
-    dl_untar "$(get_libevent_url)" /usr/local/src/libevent 1
-    mexe cd /usr/local/src/libevent
-    mexe ./configure --prefix=/usr/local
-    mexe make
-    mexe make install
+  dl_untar "$(get_libevent_url)" /usr/local/src/libevent 1
+  mexe cd /usr/local/src/libevent
+  mexe ./configure --prefix=/usr/local
+  mexe make
+  mexe make install
 
-    dl_untar "$(get_ncurses_url)" /usr/local/src/ncurses 1
-    mexe cd /usr/local/src/ncurses
-    mexe ./configure --enable-pc-files --prefix=/usr/local --enable-pc-files --with-pkg-config-libdir=/usr/local/lib/pkgconfig --with-termlib
-    mexe make
-    mexe make install
+  dl_untar "$(get_ncurses_url)" /usr/local/src/ncurses 1
+  mexe cd /usr/local/src/ncurses
+  mexe ./configure --enable-pc-files --prefix=/usr/local --enable-pc-files --with-pkg-config-libdir=/usr/local/lib/pkgconfig --with-termlib
+  mexe make
+  mexe make install
 
-    gh_user_local "https://github.com/tmux/tmux.git"
-    mexe ./autogen.sh
-    # export LD_LIBRARY_PATH=/usr/local/lib
-    mexe LD_LIBRARY_PATH=/usr/local/lib PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --prefix=/usr/local CFLAGS='-D_GNU_SOURCE'
-    mexe make
-    mexe make install
+  gh_user_local "https://github.com/tmux/tmux.git"
+  mexe ./autogen.sh
+  # export LD_LIBRARY_PATH=/usr/local/lib
+  mexe LD_LIBRARY_PATH=/usr/local/lib PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --prefix=/usr/local CFLAGS='-D_GNU_SOURCE'
+  mexe make
+  mexe make install
 }
 get_libevent_url() {
-    curl -fSsL http://libevent.org/ |grep latest |grep href |cut -d"\"" -f4
+  curl -fSsL http://libevent.org/ |grep latest |grep href |cut -d"\"" -f4
 }
 get_ncurses_url() {
-    echo ftp://ftp.gnu.org/gnu/ncurses/ncurses-6.0.tar.gz
+  echo ftp://ftp.gnu.org/gnu/ncurses/ncurses-6.0.tar.gz
 }
 
 setting_common() {
-    make_link_dot2home $app_dir
+  make_link_dot2home $app_dir
 }
 
