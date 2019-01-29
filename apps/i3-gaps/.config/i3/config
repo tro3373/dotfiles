@@ -225,7 +225,7 @@ exec --no-startup-id dunst
 # volume icon
 exec --no-startup-id volumeicon
 # wallpaper?
-exec --no-startup-id "feh -randomize --bg-scale $HOME/Wallpapers/*"
+exec --no-startup-id feh --randomize --bg-scale $HOME/Wallpapers/*
 # lock shortcut
 bindsym $mod+Control+0 exec --no-startup-id dm-tool lock
 
