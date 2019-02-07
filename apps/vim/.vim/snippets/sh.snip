@@ -10,9 +10,11 @@ snippet devnull
 alias tonull
     &> /dev/null
 
-snippet error
-alias toerror
+snippet toerror
     1>&2
+
+snippet error
+    error() { echo "$*" 1>&2; }
 
 snippet current_dir
     current_dir=$(pwd)
@@ -141,9 +143,6 @@ snippet readpass
 
 snippet log
     log() { echo "$(date "%Y-%m-%d %H:%M:%S") $*" 1>&2; }
-
-snippet error
-    error() { echo "$*" 1>&2; }
 
 snippet not_supported
     not_supported() { echo "Not supported." 1>&2 && exit 1; }
