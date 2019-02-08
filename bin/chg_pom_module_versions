@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+# Attention
+#  target key module version tag must be at below artifactname.
+main() {
+  local key=${1:-sp2-}
+  find . -type f -name "pom.xml" |
+    while read -r f; do
+      [[ -z $f ]] && continue
+      [[ $f =~ ^#.* ]] && continue
+      echo "===> $f"
+      grep $key "$f" |
+        while read -r line; do
+          [[ -z $line ]] && continue
+          [[ $line =~ ^#.* ]] && continue
+          grep -n -A1 $line $f --color |
+            grep version |
+            while read -r row other; do
+              [[ -z $row ]] && continue
+              row=${row/-/}
+              echo $row $other >/dev/null
+              sed -i -e "$row s,\(<version>\).*\(</version>\),\11.0.0-SNAPSHOT\2,g" $f
+            done
+        done
+    done
+}
+main "$@"
