@@ -33,7 +33,7 @@ setup_pakages() {
   fi
   echo "=> Setupping packages.."
   #sudo pacman -Syyu
-  sudo pacman -S git curl
+  sudo pacman -S git curl neofetch
   curl -fSsL git.io/tr3s |bash
   cd $HOME/.dot/bin
   ./setup -e
