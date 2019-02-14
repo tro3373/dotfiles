@@ -8,9 +8,10 @@ alias       ffname
 
 snippet devnull
 alias tonull
+alias nullll
     &> /dev/null
 
-snippet toerror
+snippet error
     1>&2
 
 snippet new
@@ -18,20 +19,23 @@ snippet new
         :
     }
 
-snippet error
+snippet error_method
     error() { echo "$*" 1>&2; }
 
+snippet command_name
+    readonly command_name=$(basename $0)
+
 snippet current_dir
-    current_dir=$(pwd)
+    readonly current_dir=$(pwd)
 
 snippet script_dir
-    script_dir=$(cd "$(dirname \$0)"; pwd)
+    readonly script_dir=$(cd "$(dirname \$0)"; pwd)
 
 snippet script_real_dir
-    script_dir=$(cd "$(dirname $(readlink -f \$0))"; pwd)
+    readonly script_dir=$(cd "$(dirname $(readlink -f \$0))"; pwd)
 
 snippet dotbin
-    dotbin=${DOTPATH:-~/.dot}/bin
+    readonly dotbin=${DOTPATH:-~/.dot}/bin
 
 snippet while_read_line
     while read -r line; do
@@ -53,7 +57,7 @@ snippet add_args
     add_args() { args+=("$@"); }
 
 snippet usage
-    command_name=$(basename \$0)
+    readonly command_name=$(basename \$0)
     usage() {
         cat <<EOF
 
@@ -138,7 +142,7 @@ alias switch
     esac
 
 snippet timestamp
-    timestamp=$(date +%Y%m%d%H%M%S)
+    readonly timestamp=$(date +%Y%m%d%H%M%S)
 
 snippet readuser
     read -p  "user: " user
