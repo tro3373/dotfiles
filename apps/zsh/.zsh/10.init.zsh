@@ -102,20 +102,20 @@ gen_path_file_ifneeded() {
     if [[ -e $GENPATHF ]]; then
         return
     fi
-    add_path ${JAVA_HOME}/bin # for java
-    add_path ${M2_HOME}/bin # for maven
-    add_path /opt/bin # for docker-machine
-    add_path /usr/local/heroku/bin # for heroku
-    add_path ${HOME}/Library/Android/sdk/platform-tools # for Android Mac.
-    add_path ${HOME}/Android/Sdk/platform-tools # for Android Linux.
-    add_path ${HOME}/android-studio/bin # for android
+    # add_path ${JAVA_HOME}/bin # for java
+    # add_path ${M2_HOME}/bin # for maven
+    # add_path /opt/bin # for docker-machine
+    # add_path /usr/local/heroku/bin # for heroku
+    # add_path ${HOME}/Library/Android/sdk/platform-tools # for Android Mac.
+    # add_path ${HOME}/Android/Sdk/platform-tools # for Android Linux.
+    # add_path ${HOME}/android-studio/bin # for android
 
     # For Win.
     add_path "/mingw64/bin" # for silver searcher ag
     add_path "/c/Program Files (x86)/Google/Chrome/Application"
     add_path "/c/Program Files/Google/Chrome/Application"
-    add_path $HOME/win/tools/sublime-text-3
-    add_path $HOME/win/tools/atom/resources/app/apm/bin
+    # add_path $HOME/win/tools/sublime-text-3
+    # add_path $HOME/win/tools/atom/resources/app/apm/bin
 
     # add main env path
     add_path ${HOME}/.local/bin
@@ -130,26 +130,26 @@ gen_path_file_ifneeded() {
 }
 
 load_my_env() {
-    # --------------------------------------------------------
-    # Java
-    # --------------------------------------------------------
-    export JAVA_HOME=${HOME}/bin/java/jdk1.8.0_20
-    # --------------------------------------------------------
-    # Maven
-    # --------------------------------------------------------
-    # see http://blog.beaglesoft.net/?p=762
-    # wget http://ftp.riken.jp/net/apache/maven/maven-3/3.3.3/binaries/apache-maven-3.3.3-bin.tar.gz
-    # tar xvfpz apache-maven-3.3.3-bin.tar.gz
-    export M2_HOME=${HOME}/bin/apache-maven-3.3.3
-    # --------------------------------------------------------
-    # Gradle
-    # --------------------------------------------------------
-    local sdkmanhome="${HOME}/.sdkman"
-    local sdkmaninit="${sdkmanhome}/bin/sdkman-init.sh"
-    if [ -e $sdkmanhome ] && [ -s ${sdkmaninit} ]; then
-        export SDKMAN_DIR=$sdkmanhome
-        source ${sdkmaninit}
-    fi
+    # # --------------------------------------------------------
+    # # Java
+    # # --------------------------------------------------------
+    # export JAVA_HOME=${HOME}/bin/java/jdk1.8.0_20
+    # # --------------------------------------------------------
+    # # Maven
+    # # --------------------------------------------------------
+    # # see http://blog.beaglesoft.net/?p=762
+    # # wget http://ftp.riken.jp/net/apache/maven/maven-3/3.3.3/binaries/apache-maven-3.3.3-bin.tar.gz
+    # # tar xvfpz apache-maven-3.3.3-bin.tar.gz
+    # export M2_HOME=${HOME}/bin/apache-maven-3.3.3
+    # # --------------------------------------------------------
+    # # Gradle
+    # # --------------------------------------------------------
+    # local sdkmanhome="${HOME}/.sdkman"
+    # local sdkmaninit="${sdkmanhome}/bin/sdkman-init.sh"
+    # if [ -e $sdkmanhome ] && [ -s ${sdkmaninit} ]; then
+    #     export SDKMAN_DIR=$sdkmanhome
+    #     source ${sdkmaninit}
+    # fi
     # --------------------------------------------------------
     # For docker-machine etc.
     # --------------------------------------------------------
@@ -170,7 +170,7 @@ load_my_env() {
     #IBUS_ENABLE_SYNC_MODE=1 ibus-daemon -xrd
 
     gen_path_file_ifneeded
-    export PATH="$(cat $GENPATHF)"
+    export PATH="$(cat < $GENPATHF)"
 }
 
 is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
