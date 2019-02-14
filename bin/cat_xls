@@ -3,16 +3,17 @@
 
 """cat xls content."""
 
+import argparse
 import re
 # import os
 
 import openpyxl
 
 
-def get_xls():
-    # print(os.getcwd())
-    # print(input())
-    return '1.xlsx'
+# def get_xls():
+#     # print(os.getcwd())
+#     # print(input())
+#     return '1.xlsx'
 
 
 def get_start_row(sheet):
@@ -58,10 +59,21 @@ def for_sheet(wb, sheetname):
 
 
 def main():
-    file_path = get_xls()
-    wb = openpyxl.load_workbook(file_path)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path", help="Specify xlsx file path", type=str)
+    parser.add_argument("--list", "-l", help="Optional show sheet name only",
+                        action="store_true")
+    args = parser.parse_args()
+    # args.param
+
+    # file_path = get_xls()
+    # wb = openpyxl.load_workbook(file_path)
+    wb = openpyxl.load_workbook(args.path)
     no = 0
     for sheetname in wb.sheetnames:
+        if args.list:
+            print(sheetname)
+            continue
         no += 1
         if (no != 3):
             continue
