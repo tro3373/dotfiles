@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+main() {
+  sudo ntpdate -v ntp.nict.jp
+  sudo hwclock --systohc --utc
+}
+main "$@"
