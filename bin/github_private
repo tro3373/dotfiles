@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+dummy="echo"
+error() { echo "$*" 1>&2; }
+has() { command -v ${1} >& /dev/null; }
+check() {
+  if ! has hub; then
+    error "=> No hub command exist."
+    exit 1
+  fi
+}
+sub() {
+  error "==> $repod"
+  local reponm=$(basename $repod)
+  cd $repod
+  $dummy git remote remove origin
+  $dummy hub create -p $reponm
+  $dummy git push origin master
+}
+
+main() {
+  check
+  if [[ $1 == "-e" ]]; then
+    dummy=""
+  fi
+  local d=$(pwd)
+  find $d/ -maxdepth 1 -mindepth 1 -type d |
+    while read -r repod; do
+      [[ -z $repod ]] && continue
+      sub
+    done
+}
+main "$@"
