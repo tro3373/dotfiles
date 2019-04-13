@@ -235,6 +235,8 @@ bluetooth# devices
 bluetooth# info
 bluetooth# quit
 EOF
+
+  # bluetooth# remove $bt_keyboard_device_id
 }
 setup_bluetooth() {
   sudo pacman -S bluez bluez-utils
