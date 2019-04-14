@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+script_dir=$(cd "$(dirname $0)"; pwd)
+
+has() { command -v ${1} >& /dev/null; }
+log() { echo "$(date "%Y-%m-%d %H:%M:%S") $*" 1>&2; }
+
+install_app() {
+  has $1 && return;
+  brew install $1
+}
+install_apps() {
+  # install brew
+  if ! has brew; then
+    echo "export PATH=/usr/local/bin:\$PATH" >> ~/.bash_profile
+    sudo mkdir /usr/local/
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    source ~/.bash_profile
+    brew update
+    brew -v
+  fi
+
+  install_app git
+  install_app gnu-sed
+  install_app lua
+  install_app vim
+}
+
+install_dot_apps() {
+  $script_dir/setup -e
+}
+
+main() {
+  install_apps
+  install_dot_apps
+  # chrome
+  # google-japanese-ime
+  # item2
+  # karabiner
+  # scroll reverser
+}
+main "$@"

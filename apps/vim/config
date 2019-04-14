@@ -88,7 +88,7 @@ build_msys() {
 
 install_mac() {
     mexe $instcmd lua
-    mexe $instcmd vim --with-lua
+    mexe $instcmd vim
 }
 
 install_ubuntu() {

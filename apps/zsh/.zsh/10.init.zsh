@@ -117,6 +117,9 @@ gen_path_file_ifneeded() {
     # add_path $HOME/win/tools/sublime-text-3
     # add_path $HOME/win/tools/atom/resources/app/apm/bin
 
+    # For Mac sed
+    add_path "/usr/local/opt/gnu-sed/libexec/gnubin"
+
     # add main env path
     add_path ${HOME}/.local/bin
     add_path ${DOTPATH}/bin

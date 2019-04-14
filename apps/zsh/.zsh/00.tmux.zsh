@@ -1,6 +1,9 @@
 #
 # tmux start settings
 #
+
+has() { command -v \${1} >& /dev/null; }
+add_usr_local_bin_path() { if ! has tmux; then export PATH=/usr/local/bin:$PATH; fi }
 is_exists() { type "$1" >/dev/null 2>&1; return $?; }
 is_osx() { [[ $OSTYPE == darwin* ]]; }
 is_screen_running() { [ ! -z "$STY" ]; }
@@ -27,6 +30,7 @@ is_enabled() {
 
 tmux_automatically_attach_session() {
 
+    add_usr_local_bin_path
     ! shell_has_started_interactively && return 0
     ! is_enabled && return 0
     is_screen_running && echo "This is on screen." && return 1
