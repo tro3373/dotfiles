@@ -2,7 +2,7 @@
 
 src=$1
 dst=$2
-script_dir=$(cd $(dirname $0); pwd)
+script_dir=$(cd "$(dirname $0)"; pwd)
 mv_to() {
   local rel_p="$1"
   local _src="$src/$rel_p"
