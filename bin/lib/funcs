@@ -237,6 +237,7 @@ def_install() {
     has_local_package $p && continue
     _pkgs+=("$p")
   done
+  # shellcheck disable=SC2154
   mexe $instcmd "${_pkgs[*]}"
 }
 make_work_if_needed() {
@@ -336,6 +337,7 @@ tool_env() {
   set -eu
   dry_run=0
   debug=1
+  # shellcheck disable=SC2154
   workdir=$script_dir/tmp
 }
 

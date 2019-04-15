@@ -53,6 +53,10 @@ alias rea
 snippet has
     has() { command -v \${1} >& /dev/null; }
 
+snippet shellcheckignore
+alias ignore
+    # shellcheck disable=SC2154
+
 snippet add_args
     add_args() { args+=("$@"); }
 
