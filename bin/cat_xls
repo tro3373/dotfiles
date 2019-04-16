@@ -18,43 +18,50 @@ import openpyxl
 
 def get_start_row(sheet):
     for i in range(1, 10):
-        value = sheet.cell(row=i, column=1).value
+        value = sheet.cell(row=i, column=2).value
         if (value == "No"):
             return (i + 1)
+    return 5
 
 
 def for_sheet(wb, sheetname):
     # print(f"===> SHEET:{sheetname}")
     sheet = wb[sheetname]
     start_row = get_start_row(sheet)
+    table_name_jp = sheet.cell(row=1, column=6).value
+    table_name = sheet.cell(row=1, column=18).value
     # print(sheet['A1'].value)
+    # print(start_row)
     row = start_row
     row_max = 1000
     while True:
         row_values = ""
-        for col in range(1, 8):
+        for col in range(1, 23):
+            # print(row)
             # print(col)
-            if (col in [4, 5]):
+            if (col not in [3, 11, 15, 19, 21, 23]):
                 continue
             value = sheet.cell(row=row, column=col).value
-            if (col == 1):
-                if not value:
-                    return
-                continue
+            # print(f"{row} {col} {value}")
+            # if (col == 1):
+            #     if not value:
+            #         return
+            #     continue
             if not value:
                 value = ""
             value = re.sub("\n", "", value)
             value = re.sub("”", "\"", value)
-            if (value == "特になし" or value == "。"):
-                value = ""
+            # if (value == "特になし" or value == "。"):
+            #     value = ""
             if (row_values):
                 value = f"\t{value}"
             row_values = f"{row_values}{value}"
             # print(f"{tab}{value}", end="")
-        print(row_values)
+        if (row_values):
+            print(f"{table_name_jp}\t{table_name}\t{row_values}")
         row += 1
         if (row >= row_max):
-            print("EEEEEEEEEEEERRRRRRRRRRRRRRRRRRRRRRR!!!")
+            # print("--------------------")
             return
 
 
@@ -75,9 +82,10 @@ def main():
             print(sheetname)
             continue
         no += 1
-        if (no != 3):
+        if (no == 1):
             continue
         for_sheet(wb, sheetname)
+        # break
 
 
 if __name__ == "__main__":
