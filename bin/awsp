@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+list_profile() {
+  cat < $HOME/.aws/config |
+    grep "\[" |
+    tr -d '[' |
+    tr -d ']' |
+    sed -e 's/profile //g'
+}
+
+main() {
+  if [[ $# -eq 0 ]]; then
+    echo "> Current aws profile is AWS_PROFILE:$AWS_PROFILE"
+    echo "> Exist profile is.." 1>&2
+    list_profile
+    return
+  fi
+  local _profile=
+  if [[ $(list_profile | grep -c "$1") -eq 1 ]] ; then
+    _profile=$(list_profile | grep "$1")
+  else
+    _profile=$(list_profile | fzf -q "$1")
+  fi
+  if [[ -z $_profile ]]; then
+    echo "> Specify aws profile name. Exist profile is.." 1>&2
+    [[ ! -e $HOME/.aws/config ]] && exit 1
+    list_profile |
+      while read -r line; do
+        [[ -z $line ]] && continue
+        echo -e "  - $line" 1>&2
+      done
+    exit 1
+  fi
+  # echo "Current aws profile is AWS_PROFILE:$AWS_PROFILE"
+  echo "> Do this.." 1>&2
+  # eval "export AWS_PROFILE=$_profile"
+  echo "export AWS_PROFILE=$_profile" |tee >(clip)
+  # echo "Profile setted to AWS_PROFILE:$AWS_PROFILE"
+}
+main "$@"
+

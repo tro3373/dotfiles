@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+main() {
+  bucket=$1
+  if [[ -z $bucket ]]; then
+    echo "==> Specify bucket"
+    return
+  fi
+
+  aws s3 sync . \
+    s3://$bucket/ \
+    --include "*" \
+    --acl public-read \
+    --cache-control "max-age=3600"
+}
+main "$@"

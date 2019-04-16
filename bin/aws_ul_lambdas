@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+# script_dir=$(cd "$(dirname $0)"; pwd)
+has() { command -v ${1} >& /dev/null; }
+main() {
+  ! has aws && echo "> Install aws-cli." 1>&2 && exit 1
+  local function_name=$(basename $current_dir)
+  echo "==> uploading $function_name. (press enter to continue)"
+  read
+  local tmp=/tmp/$function_name.zip
+  [[ -e $tmp ]] && rm $tmp
+  [[ -e $current_dir/$function_name.zip ]] && rm $current_dir/$function_name.zip
+  npm install
+  zip -r $tmp ./*
+  aws lambda \
+    update-function-code \
+    --function-name $function_name \
+    --zip-file fileb://$tmp \
+    --publish
+  [[ -e $tmp ]] && rm $tmp
+}
+main "$@"
+
