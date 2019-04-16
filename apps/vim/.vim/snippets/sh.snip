@@ -23,7 +23,7 @@ snippet error_method
     error() { echo "$*" 1>&2; }
 
 snippet command_name
-    readonly command_name=$(basename $0)
+    readonly command_name=$(basename \$0)
 
 snippet current_dir
     readonly current_dir=$(pwd)
