@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
+# script_dir=$(cd "$(dirname $0)"; pwd)
 command_name=$(basename $0)
 args=()
 
@@ -41,7 +41,7 @@ initialize() {
   if [[ ${#args[@]} -eq 0 ]]; then
     add_args "$current_dir"
   fi
-  all_args="${args[@]}"
+  # all_args="${args[*]}"
 }
 
 show_encode() {
@@ -74,6 +74,8 @@ handle_dir() {
 
 main() {
   initialize "$@"
+  # if [[ -p /dev/stdin ]]; then
+  # fi
   for arg in "${args[@]}"; do
     if [[ -d $arg ]]; then
       handle_dir $arg
