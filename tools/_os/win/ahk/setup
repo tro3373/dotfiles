@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  git clone https://github.com/karakaram/alt-ime-ahk.git
+}
+main "$@"
