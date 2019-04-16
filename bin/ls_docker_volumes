@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  sudo ls -la /var/lib/docker/volumes
+}
+main "$@"
