@@ -1,13 +1,32 @@
 #!/bin/bash
 
 dry_run="--dry-run"
-if [[ "$1" == "-e" ]]; then
-  dry_run=""
-fi
+use_docker=1
+
 main() {
+
+  if [[ "$1" == "-e" ]]; then
+    dry_run=""
+  fi
+
+  if [[ $use_docker -ne 1 ]]; then
+    docker volume prune
+    return
+  fi
+
   docker run --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /var/lib/docker:/var/lib/docker \
     martin/docker-cleanup-volumes $dry_run
+  if [[ -z $dry_run ]]; then
+    return
+  fi
+
+  cat << EOF
+
+=> This is dry run mode. specify arg '-e'
+
+EOF
+
 }
-main
+main "$@"
