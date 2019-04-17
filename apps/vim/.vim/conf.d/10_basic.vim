@@ -124,6 +124,7 @@ if has("autocmd")
   " ファイルを開いた時、読み込んだ時にファイルタイプを設定する
   autocmd BufNewFile,BufRead *.js setlocal ft=javascript
   autocmd BufNewFile,BufRead *.ejs setlocal ft=html
+  autocmd BufNewFile,BufRead *.vue setlocal ft=html
   autocmd BufNewFile,BufRead *.py setlocal ft=python
   autocmd BufNewFile,BufRead *.rb setlocal ft=ruby
   autocmd BufNewFile,BufRead *.erb setlocal ft=ruby
