@@ -1,6 +1,7 @@
 # Inisialize
 export DOTPATH="$HOME/.dot"
 export GENPATHF=$HOME/.path
+export GENMANPATHF=$HOME/.manpath
 export WORKPATHF=$HOME/.work.path
 [ ${OSTYPE} = "msys" ] && export WINHOME=/c/Users/`whoami`
 
@@ -74,28 +75,45 @@ add_path() {
     export PATH="$@:$PATH"
 }
 
+add_manpath() {
+    # for .works.zsh
+    [[ -e $GENMANPATHF ]] && return
+    export MANPATH="$@:$MANPATH"
+}
+
 gen_path_file() {
     local work_path=
     if [[ -e $WORKPATHF ]]; then
         echo "==> $WORKPATHF loaded."
         work_path="$(cat $WORKPATHF)"
     fi
-    PATH="$work_path:$PATH"
+    echo "$work_path:$PATH" |
+        _uniq_path > $GENPATHF
+    echo "==> $GENPATHF generated." 1>&2
+}
+
+gen_manpath_file() {
+    echo "$MANPATH" |
+        _uniq_path > $GENMANPATHF
+    echo "==> $GENMANPATHF generated." 1>&2
+}
+
+_uniq_path() {
     local _path=
     IFS='$\n'
-    echo $PATH |tr ":" "\n" |
+    cat - |
+        tr ":" "\n" |
         while read -r p; do
             [[ -z $p ]] && continue
             [[ ! -e $p ]] && continue
-            echo "==> p: $p"
+            echo "==> p: $p" 1>&2
             if ! echo ":$_path:" |grep ":$p:" >& /dev/null; then
                 # add if not added
                 [[ -n $_path ]] && _path="$_path:"
                 _path="$_path$p"
             fi
         done
-    echo "$_path" > $GENPATHF
-    echo "==> $GENPATHF generated."
+    echo "$_path"
 }
 
 gen_path_file_ifneeded() {
@@ -118,7 +136,13 @@ gen_path_file_ifneeded() {
     # add_path $HOME/win/tools/atom/resources/app/apm/bin
 
     # For Mac sed
+    add_path "/usr/local/opt/coreutils/libexec/gnubin"
+    add_path "/usr/local/opt/findutils/libexec/gnubin"
     add_path "/usr/local/opt/gnu-sed/libexec/gnubin"
+    add_path "/usr/local/opt/gnu-tar/libexec/gnubin"
+    add_path "/usr/local/opt/grep/libexec/gnubin"
+    add_path "/usr/local/opt/gnu-indent/libexec/gnubin"
+    add_path "/usr/local/opt/gnu-which/libexec/gnubin"
 
     # add main env path
     add_path ${HOME}/.local/bin
@@ -130,6 +154,24 @@ gen_path_file_ifneeded() {
 
     # generate path file.
     gen_path_file
+}
+
+gen_manpath_file_ifneeded() {
+    if [[ -e $GENMANPATHF ]]; then
+        return
+    fi
+
+    # For Mac sed
+    add_manpath "/usr/local/opt/coreutils/libexec/gnuman"
+    add_manpath "/usr/local/opt/findutils/libexec/gnuman"
+    add_manpath "/usr/local/opt/gnu-sed/libexec/gnuman"
+    add_manpath "/usr/local/opt/gnu-tar/libexec/gnuman"
+    add_manpath "/usr/local/opt/grep/libexec/gnuman"
+    add_manpath "/usr/local/opt/gnu-indent/libexec/gnuman"
+    add_manpath "/usr/local/opt/gnu-which/libexec/gnuman"
+
+    # generate path file.
+    gen_manpath_file
 }
 
 load_my_env() {
@@ -174,6 +216,9 @@ load_my_env() {
 
     gen_path_file_ifneeded
     export PATH="$(cat < $GENPATHF)"
+
+    gen_manpath_file_ifneeded
+    export MANPATH="$(cat < $GENMANPATHF)"
 }
 
 is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
@@ -191,4 +236,3 @@ _initialize() {
     source_pkgs
 }
 _initialize
-
