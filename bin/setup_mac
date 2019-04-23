@@ -7,7 +7,7 @@ log() { echo "$(date "%Y-%m-%d %H:%M:%S") $*" 1>&2; }
 
 install_app() {
   has $1 && return;
-  brew install $1
+  brew install "$@"
 }
 install_apps() {
   # install brew
@@ -24,6 +24,24 @@ install_apps() {
   install_app gnu-sed
   install_app lua
   install_app vim
+
+  install_app binutils
+  install_app coreutils
+  install_app diffutils
+  install_app findutils
+  install_app gawk
+  install_app gnu-sed
+  install_app gnu-tar
+  # install_app gnutls
+  install_app grep
+  install_app gzip
+  # install_app wdiff
+  install_app wget
+  # install_app --with-default-names ed
+  install_app gnu-indent
+  install_app gnu-which
+  # install_app --with-readline gpg
+
 }
 
 install_dot_apps() {
@@ -38,5 +56,6 @@ main() {
   # item2
   # karabiner
   # scroll reverser
+  # change keyrepeat fast
 }
 main "$@"
