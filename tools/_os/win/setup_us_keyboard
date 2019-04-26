@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+main() {
+  cat <<EOF
+1. Check usb keyboad instance path.
+  - ControlPanel - DeviceManager - Keyboad - target usb keyboard - detail - device instance path
+2. regedit
+  - HKEY_LOCALMACHINE/SYSTEM/CurrentControlSet/Enum/HID/{Checed instance path}/Device Parameters
+  - Add DWORD below in Device Parameters
+    KeyboardSubtypeOverride 0
+    KeyboardTypeOverride 4
+3. restart windows
+EOF
+}
+main "$@"
