@@ -42,10 +42,109 @@ install_apps() {
   install_app gnu-which
   # install_app --with-readline gpg
 
+  # casc install
+  brew tap caskroom/cask
+  brew cask install google-chrome
+
 }
 
 install_dot_apps() {
   $script_dir/setup -e
+}
+
+setup_mac_settings() {
+  # https://qiita.com/soushiy/items/b56d4961d54972bc4b9e
+  # Do not create .DStore in Network drive
+  defaults write com.apple.desktopservices DSDontWriteNetworkStores true
+  # animation all off for finder
+  defaults write com.apple.finder DisableAllAnimations -boolean true; killall Finder
+  # Schroll Bound animation off
+  defaults write -g NSScrollViewRubberbanding -bool no; killall Finder
+  # Delete background black in screen shot
+  defaults write com.apple.screencapture disable-shadow -boolean true;killall SystemUIServer
+  # Automatic animation off
+  defaults write NSGlobalDomain NSAutomaticWindowAnimationsEnabled -bool NO
+  # launchpad animation off
+  defaults write com.apple.dock springboard-show-duration -float 0
+  defaults write com.apple.dock springboard-hide-duration -float 0
+  defaults write com.apple.dock springboard-page-duration -float 0
+  # smooze scrolling off
+  defaults write -g NSScrollAnimationEnabled -bool false;
+  # クイックルック表示時のアニメーション
+  defaults write -g QLPanelAnimationDuration -float 0
+  # リサイジングアニメーション
+  defaults write -g NSDocumentRevisionsWindowTransformAnimation -bool false
+  # メール送信時／返信時のアニメーション
+  defaults write com.apple.Mail DisableSendAnimations -bool true
+  defaults write com.apple.Mail DisableReplyAnimations -bool true
+  # カラムアニメーション
+  defaults write -g NSBrowserColumnAnimationSpeedMultiplier -float 0
+  # ツールチップの表示
+  defaults write -g NSInitialToolTipDelay -integer 100
+  # ダイアログの表示速度
+  defaults write -g NSWindowResizeTime 0.001
+  # アイコンをドラッグした時のアニメーション
+  defaults write com.apple.finder AnimateSnapToGrid -boolean false; killall Finder
+  # クイックルックで表示したテキストをコピペ
+  defaults write com.apple.finder QLEnableTextSelection -bool true; killall Finder
+  # Safariの表示速度、Webサイトのアイコンを非表示にする。
+  defaults write com.apple.Safari WebKitInitialTimedLayoutDelay 0.25; killall Safari
+  defaults write com.apple.Safari WebIconDatabaseEnabled -boolean false
+  # ダッシュボードを無効にしてメモリ節約と高速化。
+  defaults write com.apple.dashboard mcx-disabled -boolean true; killall Dock
+  # Dockアニメーション
+  # defaults write com.apple.dock autohide-time-modifier -float 0;killall Dock
+  defaults write com.apple.dock autohide-time-modifier -float 0.12;killall Dock
+  defaults write com.apple.dock autohide-delay -float 0;killall Dock
+  # Dockが表示される時間を0に設定
+  defaults write com.apple.dock autohide-delay -float 0;killall Dock
+  # DashboardからWidgetを削除
+  defaults write com.apple.dashboard mcx-disabled -boolean YES;killall Dock
+  # ミッションコントロールのアニメーション時間を変更
+  defaults write com.apple.dock expose-animation-duration -float 0.1;killall Dock
+  # アプリがデスクトップ間を移動する際の速度を変更
+  defaults write com.apple.dock workspaces-edge-delay -float 0.2;killall Dock
+  # ファインダーのアニメーションを削除
+  defaults write com.apple.finder AnimateInfoPanes -boolean false;killall Finder
+  # 隠しファイルを表示
+  defaults write com.apple.finder AppleShowAllFiles TRUE;killall Finder
+  # Finderのパス表示をホームフォルダを基準にする
+  defaults write com.apple.finder PathBarRootAtHome -bool yes;killall Finder
+  # Finderのウィンドウタイトルにフルパスを表示
+  defaults write com.apple.finder _FXShowPosixPathInTitle -bool true;killall Finder
+
+  defaults write com.apple.finder FXEnableSlowAnimation -bool false
+  # opening and closing windows and popovers
+  defaults write -g NSAutomaticWindowAnimationsEnabled -bool false
+  # smooth scrolling
+  defaults write -g NSScrollAnimationEnabled -bool false
+  # showing and hiding sheets, resizing preference windows, zooming windows
+  # float 0 doesn't work
+  defaults write -g NSWindowResizeTime -float 0.001
+  # opening and closing Quick Look windows
+  defaults write -g QLPanelAnimationDuration -float 0
+  # rubberband scrolling (doesn't affect web views)
+  defaults write -g NSScrollViewRubberbanding -bool false
+  # resizing windows before and after showing the version browser
+  # also disabled by NSWindowResizeTime -float 0.001
+  defaults write -g NSDocumentRevisionsWindowTransformAnimation -bool false
+  # showing a toolbar or menu bar in full screen
+  defaults write -g NSToolbarFullScreenAnimationDuration -float 0
+  # scrolling column views
+  defaults write -g NSBrowserColumnAnimationSpeedMultiplier -float 0
+  # showing the Dock
+  defaults write com.apple.dock autohide-time-modifier -float 0
+  defaults write com.apple.dock autohide-delay -float 0
+  # showing and hiding Mission Control, command+numbers
+  defaults write com.apple.dock expose-animation-duration -float 0
+  # showing and hiding Launchpad
+  defaults write com.apple.dock springboard-show-duration -float 0
+  defaults write com.apple.dock springboard-hide-duration -float 0
+
+  # # メモリの解放
+  # sudo purge
+  # # 通知センターをオフ
+  # launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist
 }
 
 main() {
