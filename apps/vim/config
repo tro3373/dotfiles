@@ -2,190 +2,193 @@
 
 kaoriya_dir_name=vim81-kaoriya-win64
 is_installed() {
-    if is_arch; then
-        # gvim で +clipboardを狙う
-        return $(has gvim)
+  if is_arch; then
+    # gvim で +clipboardを狙う
+    return "$(has gvim)"
+  fi
+  if ! is_win; then
+    # shellcheck disable=SC2154
+    return "$(has $app)"
+  fi
+  # for windows
+  if has $app; then
+    if [[ -e $WINHOME/tools/$kaoriya_dir_name ]]; then
+      return 0
     fi
-    if ! is_win; then
-        return $(has $app)
-    fi
-    # for windows
-    if has $app; then
-        if [[ -e $WINHOME/tools/$kaoriya_dir_name ]]; then
-            return 0
-        fi
-    fi
-    return 1
+  fi
+  return 1
 }
 
 install_msys() {
-    local type=package # build/package
-    if [ "$type" = "package" ]; then
-        install_via_os_default
-    else
-        build_msys
-    fi
-    if [[ ! -e $WINHOME/tools/$kaoriya_dir_name ]]; then
-        return 0
-    fi
-    install_kaoriya_msys
+  local type=package # build/package
+  if [ "$type" = "package" ]; then
+    install_via_os_default
+  else
+    build_msys
+  fi
+  if [[ ! -e $WINHOME/tools/$kaoriya_dir_name ]]; then
+    return 0
+  fi
+  install_kaoriya_msys
 }
 
 install_kaoriya_msys() {
-    dl_unzip "$(get_dl_url_win)" "$WINHOME/tools/$kaoriya_dir_name"
+  dl_unzip "$(get_dl_url_win)" "$WINHOME/tools/$kaoriya_dir_name"
 }
 
 get_dl_url_win() {
-    curl -fsSL http://vim-jp.org/redirects/koron/vim-kaoriya/latest/win64/ \
-        | grep "a href" \
-        | awk -F\" '{print $2}'
+  curl -fsSL http://vim-jp.org/redirects/koron/vim-kaoriya/latest/win64/ \
+    | grep "a href" \
+    | awk -F\" '{print $2}'
 }
 
 build_msys() {
-    # install lua.
-    dlog "===> Lua Building .."
-    mexe $instcmd ncurses-devel libcrypt-devel gettext-devel gcc make
-    if [[ ! -e /usr/local/src/lua ]]; then
-        mexe mkdir -p /usr/local/src/lua
-    fi
-    mexe cd /usr/local/src/lua
-    local lua_version=5.3.3
-    if [[ ! -e "/usr/local/src/lua/lua-$lua_version.tar.gz" ]]; then
-        mexe rm -rf /usr/local/src/lua/*
-        mexe wget http://www.lua.org/ftp/lua-$lua_version.tar.gz
-        mexe tar xvfpz ./lua-$lua_version.tar.gz
-    fi
-    mexe cd ./lua-$lua_version
-    mexe make mingw
-    mexe make install
+  # install lua.
+  dlog "===> Lua Building .."
+  # shellcheck disable=SC2154
+  mexe $instcmd ncurses-devel libcrypt-devel gettext-devel gcc make
+  if [[ ! -e /usr/local/src/lua ]]; then
+    mexe mkdir -p /usr/local/src/lua
+  fi
+  mexe cd /usr/local/src/lua
+  local lua_version=5.3.3
+  if [[ ! -e "/usr/local/src/lua/lua-$lua_version.tar.gz" ]]; then
+    mexe rm -rf /usr/local/src/lua/*
+    mexe wget http://www.lua.org/ftp/lua-$lua_version.tar.gz
+    mexe tar xvfpz ./lua-$lua_version.tar.gz
+  fi
+  mexe cd ./lua-$lua_version
+  mexe make mingw
+  mexe make install
 
-    # install vim.
-    dlog "===> Vim Building .."
-    mexe $instcmd python3 ruby
+  # install vim.
+  dlog "===> Vim Building .."
+  mexe $instcmd python3 ruby
 
-    dlog "===> Msys2 packages Cloning .."
-    local msys2packages=/usr/local/src/Msys2-packages
-    if [[ ! -e "$msys2packages/.git" ]]; then
-        mexe cd /usr/local/src
-        mexe git clone https://github.com/Alexpux/MSYS2-packages.git
-    fi
-    mexe cd /usr/local/src/MSYS2-packages
-    mexe git checkout .
-    local ver=92832fb441011827cfb93ec3208b86cecce05648
-    mexe git checkout $ver
-    mexe patch -p1 < $app_dir/vim_pkgbuild.patch
-    mexe cd vim
-    mexe makepkg
-    # upgrade error will occur
-    #mexe pacman -U --noconfirm vim*.pkg.tar.xz
-    # GuiBuild?
-    # mingw32-make -f Make_ming.mak GUI=yes ARCH=x86-64 clean
-    # mingw32-make -f Make_ming.mak GUI=yes ARCH=x86-64 FEATURES=HUGE
-    # Build
-    # mingw32-make -f Make_ming.mak GUI=no ARCH=x86-64 clean
-    # mingw32-make -f Make_ming.mak GUI=no ARCH=x86-64 FEATURES=HUGE
+  dlog "===> Msys2 packages Cloning .."
+  local msys2packages=/usr/local/src/Msys2-packages
+  if [[ ! -e "$msys2packages/.git" ]]; then
+    mexe cd /usr/local/src
+    mexe git clone https://github.com/Alexpux/MSYS2-packages.git
+  fi
+  mexe cd /usr/local/src/MSYS2-packages
+  mexe git checkout .
+  local ver=92832fb441011827cfb93ec3208b86cecce05648
+  mexe git checkout $ver
+  # shellcheck disable=SC2154
+  mexe patch -p1 < $app_dir/vim_pkgbuild.patch
+  mexe cd vim
+  mexe makepkg
+  # upgrade error will occur
+  #mexe pacman -U --noconfirm vim*.pkg.tar.xz
+  # GuiBuild?
+  # mingw32-make -f Make_ming.mak GUI=yes ARCH=x86-64 clean
+  # mingw32-make -f Make_ming.mak GUI=yes ARCH=x86-64 FEATURES=HUGE
+  # Build
+  # mingw32-make -f Make_ming.mak GUI=no ARCH=x86-64 clean
+  # mingw32-make -f Make_ming.mak GUI=no ARCH=x86-64 FEATURES=HUGE
 }
 
 install_mac() {
-    mexe $instcmd lua
-    mexe $instcmd vim
+  mexe $instcmd lua
+  mexe $instcmd vim
 }
 
 install_ubuntu() {
-    # mexe sudo apt-get remove -y --purge vim vim-runtime vim-gnome vim-tiny vim-common vim-gui-common
+  # mexe sudo apt-get remove -y --purge vim vim-runtime vim-gnome vim-tiny vim-common vim-gui-common
 
-    mexe sudo apt-get install -y git gettext libtinfo-dev build-essential libxmu-dev libgtk2.0-dev libxpm-dev \
-        libperl-dev python-dev python3-dev ruby-dev lua5.2 liblua5.2-dev autoconf automake cproto
+  mexe sudo apt-get install -y git gettext libtinfo-dev build-essential libxmu-dev libgtk2.0-dev libxpm-dev \
+    libperl-dev python-dev python3-dev ruby-dev lua5.2 liblua5.2-dev autoconf automake cproto
 
-    mexe cd /usr/local/src/
-    if [[ ! -e /usr/local/src/vim ]]; then
-        mexe sudo git clone --depth 1 https://github.com/vim/vim.git
-        mexe cd vim/src
-    else
-        mexe cd vim
-        mexe sudo git pull --rebase
-        mexe cd src
-    fi
-    mexe sudo ./configure --with-features=huge \
-        --enable-perlinterp \
-        --enable-pythoninterp \
-        --enable-python3interp \
-        --enable-rubyinterp \
-        --enable-luainterp \
-        --enable-gui=auto \
-        --enable-fail-if-missing
-    mexe sudo make
-    mexe sudo make install
+  mexe cd /usr/local/src/
+  if [[ ! -e /usr/local/src/vim ]]; then
+    mexe sudo git clone --depth 1 https://github.com/vim/vim.git
+    mexe cd vim/src
+  else
+    mexe cd vim
+    mexe sudo git pull --rebase
+    mexe cd src
+  fi
+  mexe sudo ./configure --with-features=huge \
+    --enable-perlinterp \
+    --enable-pythoninterp \
+    --enable-python3interp \
+    --enable-rubyinterp \
+    --enable-luainterp \
+    --enable-gui=auto \
+    --enable-fail-if-missing
+  mexe sudo make
+  mexe sudo make install
 }
 
 install_redhat() {
-    mexe cd /usr/local/src/
-    if [[ ! -e /usr/local/src/luajit ]]; then
-        mexe sudo git clone --depth 1 http://luajit.org/git/luajit-2.0.git luajit
-    fi
-    mexe cd luajit
-    mexe sudo make
-    mexe sudo make install
-    mexe cd ../
-    if [[ ! -e /usr/local/src/vim ]]; then
-        mexe sudo git clone --depth 1 https://github.com/vim/vim.git
-        mexe cd vim/src
-    else
-        mexe cd vim
-        mexe sudo git pull --rebase
-        mexe cd src
-    fi
-    mexe sudo yum install -y ruby ruby-devel lua lua-devel luajit luajit-devel \
-        ctags mercurial python python-devel python3 python3-devel tcl-devel perl \
-        perl-devel perl-ExtUtils-ParseXS perl-ExtUtils-XSpp perl-ExtUtils-CBuilder \
-        perl-ExtUtils-Embed ncurses-devel
-    mexe sudo ./configure --enable-multibyte \
-        --with-features=huge \
-        --enable-luainterp \
-        --enable-perlinterp \
-        --enable-pythoninterp \
-        --with-python-config-dir=/usr/lib64/python2.7/config \
-        --enable-rubyinterp \
-        --with-ruby-command=/usr/bin/ruby \
-        --enable-gui=gtk2 \
-        --enable-cscope \
-        --with-tlib=ncurses \
-        --prefix=/usr/local
-    mexe sudo make
-    mexe sudo make install
+  mexe cd /usr/local/src/
+  if [[ ! -e /usr/local/src/luajit ]]; then
+    mexe sudo git clone --depth 1 http://luajit.org/git/luajit-2.0.git luajit
+  fi
+  mexe cd luajit
+  mexe sudo make
+  mexe sudo make install
+  mexe cd ../
+  if [[ ! -e /usr/local/src/vim ]]; then
+    mexe sudo git clone --depth 1 https://github.com/vim/vim.git
+    mexe cd vim/src
+  else
+    mexe cd vim
+    mexe sudo git pull --rebase
+    mexe cd src
+  fi
+  mexe sudo yum install -y ruby ruby-devel lua lua-devel luajit luajit-devel \
+    ctags mercurial python python-devel python3 python3-devel tcl-devel perl \
+    perl-devel perl-ExtUtils-ParseXS perl-ExtUtils-XSpp perl-ExtUtils-CBuilder \
+    perl-ExtUtils-Embed ncurses-devel
+  mexe sudo ./configure --enable-multibyte \
+    --with-features=huge \
+    --enable-luainterp \
+    --enable-perlinterp \
+    --enable-pythoninterp \
+    --with-python-config-dir=/usr/lib64/python2.7/config \
+    --enable-rubyinterp \
+    --with-ruby-command=/usr/bin/ruby \
+    --enable-gui=gtk2 \
+    --enable-cscope \
+    --with-tlib=ncurses \
+    --prefix=/usr/local
+  mexe sudo make
+  mexe sudo make install
 }
 
 install_arch() {
-    if has vim; then
-      mexe sudo pacman -R vim
-    fi
-    def_install gvim lua
+  if has vim; then
+    mexe sudo pacman -R vim --noconfirm
+  fi
+  def_install gvim lua --noconfirm
 }
 
 build_arch() {
-    cd_work
-    if [[ ! -e vim ]]; then
-        mexe yaourt -G vim
-    fi
-    mexe cd vim
-    mexe "sed -i -e \"s/^pkgbase=vim/pkgbase=vim\ngroup=('modified')/g\" PKGBUILD"
-    mexe "sed -i -e \"s/with-x=no/with-x=yes/g\" PKGBUILD"
-    mexe makepkg --noconfirm -s
-    mexe sudo pacman --noconfirm -U vim-*tar.xz
+  cd_work
+  if [[ ! -e vim ]]; then
+    mexe yaourt -G vim
+  fi
+  mexe cd vim
+  mexe "sed -i -e \"s/^pkgbase=vim/pkgbase=vim\ngroup=('modified')/g\" PKGBUILD"
+  mexe "sed -i -e \"s/with-x=no/with-x=yes/g\" PKGBUILD"
+  mexe makepkg --noconfirm -s
+  mexe sudo pacman --noconfirm -U vim-*tar.xz
 }
 
 setting_common() {
-    make_link_dot2home $app_dir
+  make_link_dot2home $app_dir
 }
 
 setting_msys() {
-    setting_common
-    make_lnk_with_bkup "$app_dir/.vimrc" "${WINHOME}/_vimrc"
-    make_lnk_with_bkup "$app_dir/.gvimrc" "${WINHOME}/_gvimrc"
-    make_lnk_with_bkup "$app_dir/.vim" "${WINHOME}/.vim"
-    make_lnk_with_bkup "$app_dir/gvim.bat" "${WINHOME}/bin/gvim.bat"
-    # local buildvim=/usr/local/src/Msys2-packages/vim/pkg/vim/usr/bin/vim.exe
-    # if [ -e $buildvim ]; then
-    #     make_lnk_with_bkup "$buildvim" "${HOME}/bin/vim"
-    # fi
+  setting_common
+  make_lnk_with_bkup "$app_dir/.vimrc" "${WINHOME}/_vimrc"
+  make_lnk_with_bkup "$app_dir/.gvimrc" "${WINHOME}/_gvimrc"
+  make_lnk_with_bkup "$app_dir/.vim" "${WINHOME}/.vim"
+  make_lnk_with_bkup "$app_dir/gvim.bat" "${WINHOME}/bin/gvim.bat"
+  # local buildvim=/usr/local/src/Msys2-packages/vim/pkg/vim/usr/bin/vim.exe
+  # if [ -e $buildvim ]; then
+  #     make_lnk_with_bkup "$buildvim" "${HOME}/bin/vim"
+  # fi
 }
