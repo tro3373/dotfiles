@@ -76,7 +76,7 @@ EOF
 
 setup_samba() {
   if ! has samba; then
-    sudo powerpill -S samba  --noconfirm
+    sudo yay -S samba --noconfirm
   fi
   if sudo test -e /etc/samba/smb.conf; then
     return
@@ -123,14 +123,18 @@ EOF
   sudo systemctl start smb nmb
 }
 
+setup_yay() {
+  if has yay; then
+    return
+  fi
+  mkdir tmp
+  cd tmp
+  git clone https://aur.archlinux.org/yay.git
+  cd yay
+  makepkg -si --noconfirm
+}
 
-setup_packages() {
-  echo "==> setupping packages .."
-  # パッケージ更新が X用のパッケージが邪魔してできないので、先にアンインストール
-  sudo pacman -R --noconfirm xorg-fonts-misc xorg-font-utils xorg-server xorg-server-common xorg-bdftopcf libxfont libxfont2
-  # パッケージ更新
-  sudo pacman -Syyu --noconfirm
-  sudo pacman -S --noconfirm libxfont2
+setup_yaourt() {
   if ! has yaourt; then
     sudo pacman -S --noconfirm yaourt
   fi
@@ -140,6 +144,9 @@ setup_packages() {
   if backup /etc/pacman.d/mirrorlist; then
     sudo reflector --verbose --country 'Japan' -l 10 --sort rate --save /etc/pacman.d/mirrorlist
   fi
+  yaourt -Syua --noconfirm
+}
+steup_powerpill() {
   if ! has powerpill; then
     gpg --recv-keys --keyserver hkp://pgp.mit.edu 1D1F0DC78F173680
     yaourt -S --noconfirm powerpill  # Use powerpill instead of pacman. Bye pacman...
@@ -148,19 +155,11 @@ setup_packages() {
   if backup /etc/pacman.conf; then
     sudo sed -i -e 's/Required DatabaseOptional/PackageRequired/' /etc/pacman.conf
   fi
-
   # パッケージ更新
   sudo powerpill -Syu --noconfirm
-  yaourt -Syua --noconfirm
+}
 
-
-  # for clipboard
-  sudo powerpill -S --noconfirm xsel
-  yaourt -S --noconfirm xorg-server-xvfb
-
-  # setup samba
-  setup_samba
-
+setup_screenfetch() {
   sudo pacman -S --noconfirm screenfetch
   cat <<EOF |sudo tee /etc/profile.d/screenfetch.sh >/dev/null
 #!/usr/bin/env bash
@@ -168,6 +167,39 @@ setup_packages() {
 screenfetch
 EOF
   sudo chmod 775 /etc/profile.d/screenfetch.sh
+}
+setup_neofetch() {
+  sudo pacman -S --noconfirm neofetch
+  cat <<EOF |sudo tee /etc/profile.d/neofetch.sh >/dev/null
+#!/usr/bin/env bash
+
+neofetch
+EOF
+  sudo chmod 775 /etc/profile.d/neofetch.sh
+}
+
+
+setup_packages() {
+  echo "==> setupping packages .."
+  # パッケージ更新が X用のパッケージが邪魔してできないので、先にアンインストール
+  sudo pacman -R --noconfirm xorg-fonts-misc xorg-font-utils xorg-server xorg-server-common xorg-bdftopcf libxfont libxfont2
+  # パッケージ更新
+  sudo pacman -Syyu --noconfirm
+  sudo pacman -S --noconfirm libxfont2
+
+  # setup_yaourt
+  # setup_powerpill
+  setup_yay
+
+  # for clipboard
+  sudo yay -S --noconfirm xsel
+  sudo yay -S --noconfirm xorg-server-xvfb
+
+  # setup samba
+  setup_samba
+
+  # setup_screenfetch
+  setup_neofetch
 
   # =================GUI環境===================
   # sudo pacman -S --noconfirm xorg-xinit lightdm-gtk-greeter
@@ -224,7 +256,7 @@ setup_login_shell() {
 main() {
   ! initialize && return
   setup_network
-  setup_keyboard
+  # setup_keyboard
   setup_lang_locale
   setup_packages
   setup_login_shell

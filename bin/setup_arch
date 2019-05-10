@@ -281,6 +281,13 @@ setup_wifi() {
   systemctl list-unit-files |grep enabled
   systemctl enable netctl-ifplugd@wireless.service
 }
+setup_yay() {
+  mkdir tmp
+  cd tmp
+  git clone https://aur.archlinux.org/yay.git
+  cd yay
+  makepkg -si
+}
 main() {
   set -eu
   setup_user
@@ -296,11 +303,7 @@ main() {
 # EOF
 #   sudo pacman -Sy
 #   sudo pacman -S --noconfirm yaourt
-  mkdir tmp
-  cd tmp
-  git clone https://aur.archlinux.org/yay.git
-  cd yay
-  makepkg -si
+  setup_yay
   yay -S google-chrome
   yay -S otf-ipaexfont
   yay -S numix-gtk-theme numix-icon-theme
