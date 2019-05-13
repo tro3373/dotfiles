@@ -25,7 +25,7 @@ finalize() {
   date | sudo tee $bootstrapf >/dev/null
 }
 
-setup_network() {
+setup_eth1_rules() {
   local net_rule=/etc/udev/rules.d/66-persistent-net.rules
   if sudo grep eth1 $net_rule>/dev/null; then
     return
@@ -35,10 +35,35 @@ setup_network() {
 # from enp0s8 to eth1
 SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="$mac", NAME="eth1"
 EOF
-  #if ! sudo test -e /etc/netctl/eth0; then
-  #    return
-  #fi
-  #sudo netctl disable eth0
+
+}
+
+setup_eth1() {
+  setup_eth1_rules
+  if sudo test -e /etc/netctl/eth1; then
+    return
+  fi
+  cat <<EOF |sudo tee /etc/netctl/eth1 >/dev/null
+Connection=ethernet
+Description='A basic static ethernet connection'
+Interface=eth1
+IP=static
+Address=('192.168.33.10/24')
+EOF
+}
+
+setup_eth0() {
+  if sudo test -e /etc/netctl/eth0; then
+    sudo rm /etc/netctl/eth0
+  fi
+  if test -L /etc/systemd/system/multi-user.target.wants/netctl@eth0.service; then
+    sudo systemctl disable netctl@eth0.service
+  fi
+}
+
+setup_network() {
+  setup_eth1
+  setup_eth0
 }
 
 setup_keyboard() {
