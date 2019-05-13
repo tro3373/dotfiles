@@ -4,11 +4,13 @@ kaoriya_dir_name=vim81-kaoriya-win64
 is_installed() {
   if is_arch; then
     # gvim で +clipboardを狙う
-    return "$(has gvim)"
+    has gvim && return 0
+    return 1
   fi
   if ! is_win; then
     # shellcheck disable=SC2154
-    return "$(has $app)"
+    has $app && return 0
+    return 1
   fi
   # for windows
   if has $app; then
