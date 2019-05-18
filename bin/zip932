@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+
+command_name=$(basename $0)
+args=()
+opt_e=
+fast=0
+
+usage() {
+  cat <<EOF
+
+Create cp932 encoded zip file. for send to windows user.
+
+  Usage:
+      $command_name [option] <Directory>
+    Options
+      -h|--help : Show this usage
+      -p|--password : Specify encrypt option
+      -f|--fast : No copy to tmp directory. file broken risk exist.
+
+EOF
+}
+
+has() { command -v ${1} >& /dev/null; }
+add_args() { args+=("$@"); }
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help) usage && exit 0  ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      -p|--password) opt_e=-e     ;;
+      -f|--fast) fast=1           ;;
+      *) add_args "$1"            ;;
+    esac
+    shift
+  done
+  all_args="${args[*]}"
+
+  if [[ "$OSTYPE" == "msys" || $(uname) == "Darwin" ]]; then
+    echo "Not supported os(mac/msys2)..."
+    exit 1
+  fi
+  if ! has convmv; then
+    echo "No convmv exist. install it."
+    exit 1
+  fi
+  if ! has zip; then
+    echo "No zip exist. install it."
+    exit 1
+  fi
+}
+
+main() {
+  initialize "$@"
+  local specifyd=$all_args
+  if [[ -z $specifyd || ! -d $specifyd ]]; then
+    usage
+    echo "==> Specify archive directory."
+    exit 1
+  fi
+
+  specifyd=$(cd $specifyd && pwd)
+  echo "==> Cp932 Zipping $specifyd .."
+  local name=$(basename $specifyd)
+  local dst=$(pwd)/$name.zip
+  local targetd=$specifyd
+  readonly timestamp=$(date +%Y%m%d%H%M%S)
+  if [[ $fast -ne 1 ]]; then
+    mkdir $timestamp
+    echo "==> Copying $specifyd to $timestamp .."
+    cp -rf $specifyd $timestamp
+    targetd="$(pwd)/$timestamp/$name"
+  fi
+
+  convmv --r --notest -f utf8 -t cp932 $targetd
+  (cd "$(dirname $targetd)" && zip -r $dst $opt_e $name)
+  convmv --r --notest -f cp932 -t utf8 $targetd
+
+  if [[ -e $timestamp ]]; then
+    rm -rf $timestamp
+  fi
+}
+main "$@"
