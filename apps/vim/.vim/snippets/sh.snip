@@ -16,13 +16,19 @@ snippet error
 
 snippet new
     method() {
-        :
+      :
+    }
+
+snippet fire
+    fire() {
+      cat <<EOF
+    EOF
     }
 
 snippet mkdir_if_needed
     mkdir_if_needed() {
-        [[ -e \$1 ]] && return
-        mkdir -p \$1
+      [[ -e \$1 ]] && return
+      mkdir -p \$1
     }
 
 snippet error_method
@@ -45,15 +51,15 @@ snippet dotbin
 
 snippet while_read_line
     while read -r line; do
-        [[ -z \$line ]] && continue
-        [[ \$line =~ ^#.* ]] && continue
+      [[ -z \$line ]] && continue
+      [[ \$line =~ ^#.* ]] && continue
     done
 
 snippet readwhil
 alias rea
     while [[ "$$input_word" == "" ]]; do
-        echo "$$msg"
-        read input_word
+      echo "$$msg"
+      read input_word
     done
 
 snippet has
@@ -69,7 +75,7 @@ snippet add_args
 snippet usage
     readonly command_name=$(basename \$0)
     usage() {
-        cat <<EOF
+      cat <<EOF
 
     Description for this command.
       Usage:
@@ -82,61 +88,61 @@ snippet usage
 
 snippet isfileexists
     is_file_exists() {
-        [ -f "$${0:1}" ]
+      [ -f "$${0:1}" ]
     }
     if is_file_exists ${1:#:search_file}; then
-        echo "already exist"
+      echo "already exist"
     else
-        echo "no exist"
+      echo "no exist"
     fi
 
 snippet confirm
     confirm() {
-        message=\${1:-"Are you ready?"}
-        message="${message} (y/N)"
-        echo -e "$message"
-        read yesno
-        if [[ ! "$yesno" =~ (y|Y) ]]; then
-            echo "==> proc canceled. terminate this proc."
-            exit 1
-        fi
+      message=\${1:-"Are you ready?"}
+      message="${message} (y/N)"
+      echo -e "$message"
+      read yesno
+      if [[ ! "$yesno" =~ (y|Y) ]]; then
+        echo "==> proc canceled. terminate this proc."
+        exit 1
+      fi
     }
 
 snippet interactive1
     interactive1() {
-        local variable=$1
-        local msg=$2
-        local input_word=
-        local yesno=x
-        while [[ "$input_word" == "" ]]; do
-            echo "$msg"
-            read input_word
-        done
-        eval "$variable=$input_word"
+      local variable=$1
+      local msg=$2
+      local input_word=
+      local yesno=x
+      while [[ "$input_word" == "" ]]; do
+        echo "$msg"
+        read input_word
+      done
+      eval "$variable=$input_word"
     }
 
 snippet interactive2
     interactive2() {
-        local variable=$1
-        local msg=$2
-        local input_word=
-        local yesno=x
-        while [[ "$input_word" == "" ]]; do
-            echo "$msg"
-            read input_word
-            echo
-            while [[ ! "$yesno" =~ [yYnN]  ]]; do
-                echo "Are you ok?(y/N) input: ${input_word}"
-                read yesno
-            done
-            if [[ $yesno =~ [nN] ]]; then
-                input_word=
-                yesno=
-            else
-                break
-            fi
+      local variable=$1
+      local msg=$2
+      local input_word=
+      local yesno=x
+      while [[ "$input_word" == "" ]]; do
+        echo "$msg"
+        read input_word
+        echo
+        while [[ ! "$yesno" =~ [yYnN]  ]]; do
+          echo "Are you ok?(y/N) input: ${input_word}"
+          read yesno
         done
-        eval "$variable=$input_word"
+        if [[ $yesno =~ [nN] ]]; then
+          input_word=
+          yesno=
+        else
+          break
+        fi
+      done
+      eval "$variable=$input_word"
     }
 
 snippet shebang
@@ -147,8 +153,8 @@ alias envvvv
 snippet case
 alias switch
     case "$arg" in
-        -h|--help|--help*) ;;
-        *) ;;
+      -h|--help|--help*) ;;
+      *) ;;
     esac
 
 snippet timestamp
@@ -201,7 +207,7 @@ snippet install_setup_template
 
 snippet main
     main () {
-        :
+      :
     }
     main "$@"
 
