@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+readonly swaggerd=swagger
+region=ap-northeast-1
+mode=url
+args=()
+
+usage() {
+  cat <<EOF
+
+  List ApiGateway Settings
+
+  Usage:
+    $command_name [option]
+  Options
+    -h|--help : Show this usage
+    -u|--url : Show lambda name and url mapping. Default option.
+    -s|--swagger : Export ApiGateway Setting JSON swagger format.
+    -r|--reqmap : Show request mapping json.
+    --region <region> : use specify region. default ap-northeast-1
+
+EOF
+}
+add_args() { args+=("$@"); }
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      #-f|--file) shift && file=$1 ;;
+      -h|--help) usage && exit 0  ;;
+      -u|--url) ;;
+      -s|--swagger) mode=swagger ;;
+      -r|--reqmap) mode=reqmap ;;
+      --region) shift && region=$1 ;;
+      *) add_args "$1"            ;;
+    esac
+    shift
+  done
+  # all_args="${args[*]}"
+}
+ls_rest_apis() {
+  aws apigateway get-rest-apis |
+    # jq '.items[] | { id:.id, name: .name }'
+    jq -r '.items[] | .id+" "+.name' |
+      get_stage_name
+}
+get_stage_name() {
+  while read -r api_id api_name; do
+    [[ -z $api_id ]] && continue
+    aws apigateway get-stages --rest-api-id $api_id |
+      jq -r '.item[].stageName' |
+        if [[ $mode == "swagger" ]]; then
+          get_swagger_json
+        else
+          get_url_path
+        fi
+  done
+}
+get_swagger_json() {
+  while read -r stage; do
+    [[ -z $stage ]] && continue
+    echo "==> Getting $api_name($api_id) stage:$stage" 1>&2
+    aws apigateway \
+      get-export \
+      --parameters extensions='apigateway' \
+      --rest-api-id $api_id \
+      --stage-name $stage \
+      --export-type swagger $swaggerd/$stage.json
+  done
+}
+get_url_path() {
+  while read -r stage; do
+    [[ -z $stage ]] && continue
+    echo "==> Getting $api_name($api_id) stage:$stage" 1>&2
+    aws apigateway get-resources --rest-api-id $api_id |
+      # jq '.items[] | select(has("resourceMethods"))'
+      # jq '.items[] | select(has("resourceMethods")) | { id:.id, path:.path }'
+      # jq -r '.items[] | select(has("resourceMethods")) | .id+" "+.path'
+      # jq -r '.items[] | select(.resourceMethods.GET == {}) | .id+" "+.path'
+      jq -r '.items[] | select(has("resourceMethods")) | .id+" "+.path+" "+(if .resourceMethods.POST == {} then "POST" else "GET" end)' |
+        if [[ $mode == "reqmap" ]]; then
+          get_reqmap
+        else
+          get_lambda_urls
+        fi
+  done
+}
+get_reqmap() {
+  while read -r stage; do
+    [[ -z $stage ]] && continue
+    echo "==> Getting $api_name($api_id) stage:$stage" 1>&2
+    aws apigateway get-integration \
+      --rest-api-id $api_id \
+      --resource-id $res_id \
+      --http-method $method |
+      jq -r '.requestTemplates["application/json"]' |
+      grep ":" |
+      cut -d":" -f1 |
+      tr -d '"'
+  done
+}
+get_lambda_urls() {
+  while read -r res_id path method; do
+    [[ -z $res_id ]] && continue
+    aws apigateway get-integration \
+      --rest-api-id $api_id \
+      --resource-id $res_id \
+      --http-method $method |
+        jq -r '.uri' |
+        sed -e 's,^.*function:\(.*\)/.*$,\1,g' |
+          while read -r lambda; do
+            [[ -z $lambda ]] && continue
+            echo "https://$api_id.execute-api.$region.amazonaws.com/$stage$path $lambda"
+          done
+  done
+}
+main() {
+  initialize "$@"
+  ls_rest_apis
+  echo "Done."
+}
+main "$@"
+

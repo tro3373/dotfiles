@@ -56,6 +56,7 @@ main() {
   #   echo "$@"
   local d="$(basename "$current_dir")"
   ls_functions |fzf -q "$d" -m | get_urls | get_zips
+  # ls_functions | get_urls | get_zips
 }
 main "$@"
 
