@@ -211,6 +211,21 @@ snippet main
     }
     main "$@"
 
+snippet usaaggee
+alias helpppp
+    usage() {
+      cat <<EOF
+
+    Description for this command.
+
+      Usage:
+          $command_name [option]
+        Options
+          -h|--help : Show this usage
+
+    EOF
+    }
+
 snippet trappp
     # 0 プロセス終了時に、プロセスが自分自身に対して送出する EXIT シグナル。
     # 1 XWindow のクローズや、デーモンのリセットに使用されるハングアップシグナル。
