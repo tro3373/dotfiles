@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+remote=vag
+args=()
+pids=()
+usage() {
+  cat <<EOF
+
+  Tunneling port of vagrant client
+
+    Usage:
+      $command_name [option] <port> <port> ..
+      <port>: Specify tunneling port.
+              If different port mapping in remote and local,
+              specify ':' mapping.
+              ex) 8080:8081 means remote 8080 port forward to local 8081 port.
+    Options
+      -h|--help : Show this usage
+
+EOF
+}
+
+add_pid() { pids+=("$@"); }
+add_args() { args+=("$@"); }
+handle_args() {
+  if [[ $1 =~ ^[0-9:]+$ ]]; then
+    add_args "$1"
+    return
+  fi
+  remote="$1"
+}
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help) usage && exit 0  ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) handle_args "$1"         ;;
+    esac
+    shift
+  done
+  if [[ ${#args[*]} -eq 0 ]]; then
+    usage && exit 1
+  fi
+}
+
+tunnel() {
+  local lp=$p
+  local rp=$p
+  if echo $p |grep ":" >/dev/null; then
+    lp=${p##*:}
+    rp=${p%%:*}
+  fi
+  echo ">> Tunneling localhost:$lp <=== $remote:$rp .." 1>&2
+  ssh -L $lp:localhost:$rp $remote -N &
+  add_pid $!
+}
+
+is_exist_pid() {
+  kill -s 0 $pid >& /dev/null
+}
+
+kill_tunnel() {
+  for pid in ${pids[*]}; do
+    is_exist_pid || continue
+    echo ">> killing $pid .."
+    kill $pid
+  done
+}
+
+wait_loop() {
+  while true; do
+    sleep 1
+    local _exist=0
+    for pid in ${pids[*]}; do
+      if is_exist_pid; then
+        _exist=1
+        break
+      fi
+    done
+    [[ $_exist -eq 1 ]] && continue
+    # ps aux |grep ssh |grep localhost |awk '{print $2}'
+    echo "> Done."
+    exit
+  done
+}
+
+main() {
+  initialize "$@"
+  local ports="${args[*]}"
+  for p in $ports; do
+    tunnel
+  done
+  trap kill_tunnel 0 1 2 3 15
+  wait_loop
+}
+main "$@"
