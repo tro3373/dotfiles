@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 
-# current_dir=$(pwd)
+current_dir=$(pwd)
 script_dir=$(cd "$(dirname $0)"; pwd)
 command_name=$(basename $0)
-config=$0.conf
+config="$(basename $0).conf"
 args=()
+debug=0
 
 usage() {
   cat <<EOF
 Send message to slack
 when no argument specified, we use normal input.
 
-$0.conf is config file.
+slk.conf is config file.
 when config file exist, slack send setting loaded from config file.
   Usage:
       $command_name [send message] [option]
@@ -43,11 +44,19 @@ channel=specify #channel_name, or @user_name
 EOF
 echo "==> $script_dir/slk.conf generated."
 }
+load_config() {
+  for d in "$current_dir" "$HOME/bin" "$script_dir"; do
+    local _conf="$d/$config"
+    if [[ -e $_conf ]]; then
+      [[ $debug -eq 1 ]] && echo "==> Loading from $_conf" 1>&2
+      source $_conf
+      return
+    fi
+  done
+}
 initialize() {
   [[ $# -eq 0 && ! -p /dev/stdin ]] && usage && exit 1
-  if [[ -e $config ]]; then
-    source $config
-  fi
+  load_config
   url=${url:-https://hooks.slack.com/services/hoge/huga/piyo}
   name=${name:-"MyBot"}
   icon=${icon:-":penguin:"}
@@ -102,6 +111,5 @@ main() {
     else
       cat - |sed -z "s|\n|\\\\n|g" |sed -e 's/"/\\"/g'
     fi |send
-  }
+}
 main "$@"
-
