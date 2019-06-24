@@ -277,7 +277,7 @@ if g:plug.is_installed("ctrlp.vim")
   let g:ctrlp_root_markers        = ['Gemfile', 'pom.xml', 'build.xml'] " ルートパスと認識させるためのファイル
   let g:ctrlp_extensions          = ['mru', 'mixed', 'line', 'funky', 'quickfix', 'tag', 'dir']
   let g:ctrlp_cache_dir           = $HOME.'/.cache/ctrlp' " キャッシュディレクトリ (CtrlPを起動して F5 でキャッシュ更新)
-  let g:ctrlp_clear_cache_on_exit = 0           " キャッシュを終了時に削除しない
+  " let g:ctrlp_clear_cache_on_exit = 0           " キャッシュを終了時に削除しない
   " 無視するディレクトリ
   let g:ctrlp_custom_ignore = {
     \ 'dir':  '\v[\/]\.(git|hg|svn)$',
