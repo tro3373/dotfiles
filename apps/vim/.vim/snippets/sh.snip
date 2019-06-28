@@ -25,6 +25,11 @@ snippet fire
     EOF
     }
 
+snippet cateof
+      cat <<'EOF'
+    EOF
+
+
 snippet mkdir_if_needed
     mkdir_if_needed() {
       [[ -e \$1 ]] && return
