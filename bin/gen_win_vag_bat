@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+
+path_vagf=$HOME/Desktop/Vagrantfile
+path_up=$HOME/Desktop/up.bat
+path_down=$HOME/Desktop/down.bat
+
+check() {
+  if [[ "$OSTYPE" != "msys" ]]; then
+    echo "Not supported" 1>&2
+    exit 1
+  fi
+  if [[ -e $path_vagf ]]; then
+    echo "Already exist $path_vagf" 1>&2
+    exit 1
+  fi
+  if [[ -e $path_up ]]; then
+    echo "Already exist $path_up" 1>&2
+    exit 1
+  fi
+  if [[ -e $path_down ]]; then
+    echo "Already exist $path_down" 1>&2
+    exit 1
+  fi
+}
+
+cat_vagf() {
+  cat <<'EOF'
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/7"
+  config.vm.box_version = "1803.01"
+  config.vm.provider "virtualbox" do |vb|
+    vb.customize ["modifyvm", :id, "--memory", "4096"]
+  end
+  config.vm.provision "shell" do |s|
+    ssh_pub_key = File.readlines("#{Dir.home}/.unxh/.ssh/id_rsa.pub").first.strip
+    s.inline = <<-SHELL
+      echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys
+    SHELL
+  end
+end
+EOF
+}
+
+cat_up_bat() {
+  cat <<'EOF'
+@echo off
+setlocal
+
+set user=%username%
+
+cd C:\Users\%user%\Desktop
+vagrant up
+
+endlocal
+exit
+EOF
+}
+
+cat_down_bat() {
+  cat <<'EOF'
+@echo off
+setlocal
+
+set user=%username%
+set msys64root=C:%HOMEPATH%\AppData\Local\Msys64
+set bin=%msys64root%\usr\bin
+
+cd C:\Users\%user%\Desktop
+vagrant destroy -f
+
+%bin%\bash.exe -c "/usr/bin/sed -i -e '/:2200/d' ~/.ssh/known_hosts"
+
+endlocal
+exit
+EOF
+}
+
+main() {
+  check
+  cat_vagf > $path_vagf
+  cat_up_bat > $path_up
+  cat_down_bat > $path_down
+}
+main "$@"
