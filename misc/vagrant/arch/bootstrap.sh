@@ -211,6 +211,8 @@ setup_packages() {
   # パッケージ更新
   sudo pacman -Syyu --noconfirm
   sudo pacman -S --noconfirm libxfont2
+  # pacman cache clean
+  sudo pacman -S pacman-contrib
 
   # setup_yaourt
   # setup_powerpill
