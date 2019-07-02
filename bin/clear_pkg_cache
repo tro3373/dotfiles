@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+readonly script_dir=$(cd "$(dirname $0)"; pwd)
+has() { command -v ${1} >& /dev/null; }
+arch() {
+  if os |grep arch &> /dev/null; then
+    echo "Not supported." 1>&2
+    exit 1
+  fi
+
+  if ! has paccache; then
+    echo "Install pacman-contrib pkg." 1>&2
+    exit 1
+  fi
+
+  # キャッシュを3世代残して掃除する
+  sudo paccache -r
+  # アンインストール済みパッケージのキャッシュを削除する
+  # paccache -ruk0
+  #   u: uninstalled
+  #   k: keep num
+
+  # インストール済みパッケージのキャッシュ1代のみを残し、
+  # キャッシュを一掃する
+  # pacman -Sc
+
+  echo "> done."
+  echo ">  package directory is /var/cache/pacman/pkg"
+}
+main() {
+  arch
+}
+main "$@"
