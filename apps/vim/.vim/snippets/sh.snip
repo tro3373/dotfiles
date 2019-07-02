@@ -46,7 +46,7 @@ snippet current_dir
     readonly current_dir=$(pwd)
 
 snippet script_dir
-    readonly script_dir=$(cd "$(dirname \$0)"; pwd)
+    readonly script_dir=$(cd "$(dirname ${BASH_SOURCE:-\$0})"; pwd)
 
 snippet script_real_dir
     readonly script_dir=$(cd "$(dirname $(readlink -f \$0))"; pwd)
