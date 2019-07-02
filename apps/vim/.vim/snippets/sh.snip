@@ -172,7 +172,7 @@ snippet readpass
     read -sp "pass: " pass
 
 snippet log
-    log() { echo "$(date "%Y-%m-%d %H:%M:%S") $*" 1>&2; }
+    log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
 
 snippet not_supported
     not_supported() { echo "Not supported." 1>&2 && exit 1; }
@@ -239,3 +239,10 @@ snippet trappp
     # 9 プロセスを強制終了するためのキルシグナル。強制終了なので当然、trap はできない。
     #15 プロセスを終了させるための終了シグナル。kill コマンドはデフォルトでこのシグナルを使用する (つまり kill PID は kill -15 PID と同じ結果になる)。
     trap <command> 1 2 3 15
+
+snippet checkroot
+    check_root () {
+      [[ $UID -eq 0 ]] && return
+      echo "Permission denied." 1>&2
+      exit 1
+    }
