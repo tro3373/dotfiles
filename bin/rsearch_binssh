@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+do_remote() {
+  cat <<'EOF'
+h=$(hostname)
+sudo find {/root/,/home/} -maxdepth 2 -mindepth 2 -type d -name ".ssh" -o -name "bin" |
+  while read -r p; do
+    [[ -z $p ]] && continue
+    [[ $p =~ ^#.* ]] && continue
+    u=$(echo $p |cut -d/ -f3)
+    if [[ $p =~ /root/* ]];then
+      u=root
+    fi
+    echo "$h $p $u"
+  done
+EOF
+}
+
+main() {
+  args=
+  if [[ $# -gt 0 ]]; then
+    args="$*"
+  fi
+  if [[ -p /dev/stdin ]]; then
+    args="$args$(cat -)"
+  fi
+  [[ -z $args ]] && echo "No remote specified." 1>&2 && exit 1
+  for r in $args; do
+    ssh -tt $r < <(do_remote) #2>/dev/null
+  done
+}
+main "$@"

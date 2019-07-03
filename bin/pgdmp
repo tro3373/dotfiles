@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# readonly h=${1:-localhost}
+# readonly u=${2:-postgres}
+# readonly d=${3:-postgres}
+readonly h=${1:-storedev.cjdi3ddptz9u.ap-northeast-1.rds.amazonaws.com}
+readonly u=${2:-storedev}
+readonly d=${3:-stored_staging_document}
+
+readonly dump_sql=dump.sql
+readonly archive=dump.tgz
+
+has() { command -v ${1} >& /dev/null; }
+dump() {
+  echo "> Database Dumping .."
+  [[ -e $archive ]] && rm $archive
+  echo "> Input $u password .."
+  pg_dump -h $h -U $u -d $d > $dump_sql
+  echo "> Archiving $dump_sql .."
+  tar cvfpz $archive $dump_sql
+  rm $dump_sql
+}
+main() {
+  if ! has pg_dump; then
+    echo "No pg_dump exist." 1>&2
+    exit 1
+  fi
+  dump
+  echo "Done."
+}
+main "$@"
