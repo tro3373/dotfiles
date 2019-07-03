@@ -1,0 +1,379 @@
+#!/usr/bin/env bash
+
+set -e
+
+readonly command_name=$(basename $0)
+readonly script_dir=$(cd "$(dirname $0)"; pwd)
+# readonly users_conf=$0.users
+
+_hostname=
+dummy="echo"
+args=()
+
+usage() {
+  cat <<EOF
+
+Setup centos 7.
+
+  Usage:
+      $command_name [option] <_hostname>
+    Options
+      -h|--help : Show this usage
+      -e|--exec : Default is dry-run mode. specify e option to execute.
+
+EOF
+}
+
+is_dummy() { test -n "$dummy"; }
+has() { command -v ${1} >& /dev/null; }
+add_args() { args+=("$@"); }
+
+check() {
+  if ! is_dummy && test $UID -ne 0; then
+    echo "Permission denied. do as root." 1>&2
+    exit 1
+  fi
+  if [[ -z $_hostname ]]; then
+    echo "Specify hostname." 1>&2
+    usage
+    exit 1
+  fi
+}
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help) usage && exit 0   ;;
+      -e|--exec) dummy=            ;;
+      #-f*|--file*) file=${1#*=}   ;;
+      #-f|--file) shift && file=$1 ;;
+      # *) add_args "$1"           ;;
+      *) _hostname="$1"             ;;
+    esac
+    shift
+  done
+  check
+}
+
+backup() {
+  if [[ $# -eq 0 ]]; then
+    echo "No args specified." 1>&2
+    exit 1
+  fi
+  local src=$1
+  local dst=$1.org
+  if [[ -e $dst ]]; then
+    echo "Already backuped. $dst" 1>&2
+    return
+  fi
+  $dummy sudo cp $src $dst
+}
+
+# vagrant ALL=NOPASSWD: ALL
+cat_add_sudoers() {
+  cat <<'EOF'
+EOF
+}
+
+setup_visudo() {
+  echo "=> Setting up visudo.." 1>&2
+  local target=/etc/sudoers
+  if grep kdl $target >& /dev/null; then
+    echo "==> Already setupped" 1>&2
+    return
+  fi
+  backup $target
+  cat_add_sudoers |
+    if is_dummy; then
+      cat -
+    else
+      cat - |sudo EDITOR='tee -a' visudo &> /dev/null
+    fi
+}
+
+setup_selinux() {
+  echo "=> Setting up selinux.." 1>&2
+  local target=/etc/selinux/config
+  backup $target
+  # disable se-linux
+  $dummy sudo setenforce 0
+  $dummy sudo getenforce
+  if is_dummy; then
+    sudo sed -n -e 's,^SELINUX=enforcing,SELINUX=disabled,p' $target
+  else
+    $dummy sudo sed -i -e 's,^SELINUX=enforcing,SELINUX=disabled,' $target
+  fi
+}
+
+setup_firewalld() {
+  echo "=> Setting up firewalld.." 1>&2
+  $dummy sudo systemctl stop firewalld
+  $dummy sudo systemctl disable firewalld
+}
+
+setup_hostname() {
+  echo "=> Setting up hostname.." 1>&2
+  $dummy sudo hostnamectl set-hostname --static $_hostname
+}
+
+cat_add_hosts() {
+  cat <<'EOF'
+EOF
+}
+
+setup_hosts() {
+  local target=/etc/hosts
+  if grep SAMPLE_HOSTNAME $target >& /dev/null; then
+    echo "==> Already setupped" 1>&2
+    return
+  fi
+  cat_add_hosts |
+    if is_dummy; then
+      cat -
+    else
+      cat - |sudo tee -a $target >& /dev/null
+    fi
+}
+
+setup_sshd() {
+  echo "=> Setting up sshd.." 1>&2
+  local target=/etc/ssh/sshd_config
+  backup $target
+  if is_dummy; then
+    sudo sed -n -e 's,^#PermitRootLogin.*,PermitRootLogin no,p' $target
+      # -e 's,^#UseDNS.*,UseDNS no,p' \
+      # -e 's,^#PasswordAuthentication.*,PasswordAuthentication no,p' $target
+  else
+    $dummy sudo sed -i -e 's,^#PermitRootLogin.*,PermitRootLogin no,g' $target
+      # -e 's,^#UseDNS.*,UseDNS no,g' \
+      # -e 's,^#PasswordAuthentication.*,PasswordAuthentication no,g' $target
+  fi
+  $dummy sudo systemctl restart sshd
+}
+
+setup_swap() {
+  # $dummy sudo dd if=/dev/zero of=/swapfile bs=512M count=8
+  $dummy sudo fallocate -l 4G /swapfile
+  $dummy sudo chmod 600 /swapfile
+  $dummy sudo mkswap /swapfile
+  $dummy sudo swapon /swapfile
+  echo "/swapfile swap swap defaults 0 0" |
+    if [[ -z $dummy ]]; then
+      cat - |sudo tee -a /etc/fstab &> /dev/null
+    else
+      cat -
+    fi
+  $dummy sudo swapon --show
+  $dummy sudo free -h
+  $dummy cat /proc/sys/vm/swappiness
+}
+
+setup_localtime() {
+  echo "=> Setting up localtime.." 1>&2
+  $dummy sudo ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+}
+
+mkdirs() {
+  while read -r path owner group permission; do
+    [[ -z $path ]] && continue
+    [[ $path =~ ^#.* ]] && continue
+    if [[ ! -e $path ]]; then
+      $dummy sudo mkdir -p $path
+    fi
+    if [[ -n $owner && -n $group ]]; then
+      $dummy sudo chown $owner.$group $path
+    fi
+    if [[ -n $permission ]]; then
+      $dummy sudo chmod $permission $path
+    fi
+  done
+}
+
+# /mnt/data nobody nobody 777
+setup_dirs_ap() {
+  cat <<'EOF' |mkdirs
+EOF
+}
+setup_dirs() {
+  echo "=> Setting up dirs.." 1>&2
+  case $(hostname) in
+    SAMPLE_HOSTNAME*) setup_dirs_ap ;;
+  esac
+}
+
+cat_exports() {
+  cat <<EOF
+EOF
+}
+
+setup_exports() {
+  echo "=> Setting up exports.." 1>&2
+  local target=/etc/exports
+  if [[ -s $target ]]; then
+    echo "==> Already setupped" 1>&2
+    return
+  fi
+  cat_exports |
+    if is_dummy; then
+      cat -
+    else
+      cat - |sudo tee -a $target >& /dev/null
+    fi
+}
+
+cat_fstab() {
+  cat <<'EOF'
+EOF
+}
+
+setup_mount() {
+  echo "=> Setting up fstab and mount.." 1>&2
+  local target=/etc/fstab
+  cat_fstab |
+    if is_dummy; then
+      cat -
+    else
+      cat - |sudo tee -a $target >& /dev/null
+    fi
+  $dummy sudo mount -a
+}
+
+setup_base_packages() {
+  $dummy sudo yum update -y
+  $dummy sudo yum install -y epel-release
+  $dummy sudo yum update -y
+  $dummy sudo yum install -y lsof net-tools bind-utils \
+    zip unzip tree curl wget git vim ftp nkf \
+    the_silver_searcher jq chrony nfs-utils
+  $dummy sudo systemctl start chronyd
+  $dummy sudo systemctl enable chronyd
+}
+
+setup_additional_packages() {
+  :
+}
+
+setup_packages() {
+  echo "=> Setting up packages.." 1>&2
+  if [[ $1 -eq 0 ]]; then
+    setup_base_packages
+  else
+    setup_additional_packages
+  fi
+}
+
+
+cat_add_bashrc() {
+  cat <<'EOF'
+col() { echo 31; }
+alias ll='ls -la'
+PS1="[\t \u@\[\e[1;$(col)m\]\h\[\e[0m\] \W]\$ "
+export HISTSIZE=100000
+export HISTFILESIZE=100000
+export HISTTIMEFORMAT='%F %T ' # %F %T ==> YYYY-MM-DD HH:MM:SS
+#[ -f ~/.inputrc ] && bind -f ~/.inputrc
+umask 002
+EOF
+
+}
+
+setup_skel() {
+  echo "=> Setting up skel.." 1>&2
+  local target=/etc/skel/.bashrc
+  if grep col $target >& /dev/null; then
+    echo "==> Already setupped" 1>&2
+    return
+  fi
+  cat_add_bashrc |
+    if is_dummy; then
+      cat -
+    else
+      cat - | sudo tee -a $target &> /dev/null
+    fi
+}
+
+cat_add_rootbashrc() {
+  cat <<'EOF'
+col() { echo 31; }
+alias ll='ls -la'
+PS1="[\t \u@\[\e[1;$(col)m\]\h\[\e[0m\] \W]# "
+export HISTSIZE=100000
+export HISTFILESIZE=100000
+export HISTTIMEFORMAT='%F %T ' # %F %T ==> YYYY-MM-DD HH:MM:SS
+#[ -f ~/.inputrc ] && bind -f ~/.inputrc
+#umask 002
+EOF
+
+}
+
+setup_rootbashrc() {
+  echo "=> Setting up root .bashrc.." 1>&2
+  local target=/root/.bashrc
+  if grep col $target >& /dev/null; then
+    echo "==> Already setupped" 1>&2
+    return
+  fi
+  cat_add_rootbashrc |
+    grep -v umask |
+    if is_dummy; then
+      cat -
+    else
+      cat - | sudo tee -a $target &> /dev/null
+    fi
+}
+
+setup_users() {
+  echo "=> Setting up users.." 1>&2
+  while read -r user; do
+    [[ -z $user ]] && continue
+    [[ $user =~ ^#.* ]] && continue
+    [[ -e /home/$user ]] && echo "==> Already exists user. $user" && continue
+    $dummy sudo useradd $user
+  done < <(cat << 'EOF'
+EOF
+)
+}
+
+cat_crontab() {
+  cat <<'EOF'
+EOF
+}
+
+setup_root_crontab() {
+  echo "=> Setting crontab.." 1>&2
+  target=/var/spool/cron/root
+  if [[ -e $target ]]; then
+    echo "==> Already setupped. $target" 1>&2
+  fi
+  cat_crontab |
+    if is_dummy; then
+      cat -
+    else
+      cat - | crontab -u root -
+    fi
+}
+
+main() {
+  initialize "$@"
+  setup_localtime
+  setup_selinux
+  setup_firewalld
+  setup_hostname
+  setup_hosts
+  setup_sshd
+  # setup_swap
+  setup_skel
+  setup_rootbashrc
+  setup_packages 0
+  setup_users
+  setup_visudo
+  setup_dirs
+  setup_exports
+  setup_mount
+  setup_packages 1
+  setup_root_crontab
+  echo "=> Done! Rebooting .." 1>&2
+  $dummy sudo reboot
+}
+main "$@"
