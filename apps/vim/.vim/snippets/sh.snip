@@ -54,10 +54,11 @@ snippet script_real_dir
 snippet dotbin
     readonly dotbin=${DOTPATH:-~/.dot}/bin
 
+# http://d.hatena.ne.jp/adragoona/20130929/1380437722
 snippet while_read_line
-    while read -r line; do
-      [[ -z \$line ]] && continue
-      [[ \$line =~ ^#.* ]] && continue
+    while read -r ${1:line}; do
+      [[ -z \$$1 ]] && continue
+      [[ \$$1 =~ ^#.* ]] && continue
     done
 
 snippet readwhil
@@ -76,30 +77,6 @@ alias ignore
 
 snippet add_args
     add_args() { args+=("$@"); }
-
-snippet usage
-    readonly command_name=$(basename \$0)
-    usage() {
-      cat <<EOF
-
-    Description for this command.
-      Usage:
-          $command_name [option]
-        Options
-          -h|--help : Show this usage
-
-    EOF
-    }
-
-snippet isfileexists
-    is_file_exists() {
-      [ -f "$${0:1}" ]
-    }
-    if is_file_exists ${1:#:search_file}; then
-      echo "already exist"
-    else
-      echo "no exist"
-    fi
 
 snippet confirm
     confirm() {
@@ -216,13 +193,13 @@ snippet main
     }
     main "$@"
 
-snippet usaaggee
+alias usaaggee
 alias helpppp
+    readonly command_name=$(basename \$0)
     usage() {
       cat <<EOF
 
     Description for this command.
-
       Usage:
           $command_name [option]
         Options
@@ -246,3 +223,10 @@ snippet checkroot
       echo "Permission denied." 1>&2
       exit 1
     }
+
+snippet checkexists
+    if [[ ! -e \$1 ]]; then
+      echo "No such file exists. \$1" 1>&2
+      exit 1
+    fi
+
