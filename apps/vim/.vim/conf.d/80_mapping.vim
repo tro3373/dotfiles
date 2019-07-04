@@ -693,6 +693,15 @@ if g:plug.is_installed('ale')
 endif
 
 "=============================================
+" yapf
+"=============================================
+if g:plug.is_installed('vim-yapf')
+  let g:yapf_style = "pep8"
+  " let g:yapf_style = "google"
+  nnoremap <leader>f :call Yapf()<cr>
+endif
+
+"=============================================
 
 
 " 開いているファイルのディレクトリをエクスプローラで開く

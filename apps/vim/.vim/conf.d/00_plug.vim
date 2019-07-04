@@ -160,11 +160,12 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'Shougo/vimshell'                                  " uniteインターフェースでシェル使用できる
   " Plug 'sjl/gundo.vim'                                    " UNDO履歴を管理 http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
   " Plug 'fuenor/qfixhowm'                                  " メモプラグイン
-  Plug 'thinca/vim-quickrun'                              " 現在のファイルを実行して quickfix に表示
+  Plug 'thinca/vim-quickrun'                                " 現在のファイルを実行して quickfix に表示
   " Plug 'tpope/vim-fugitive'                               " Git wrapper so awesome
   " Plug 'junegunn/seoul256.vim'
   " Plug 'tpope/vim-fireplace', { 'for': ['clojure'] }      " 指定したファイルタイプを開いたときに読み込む
   " migemo
+  Plug 'mindriot101/vim-yapf'                               " for python
   " ================================== drop
   " Plug 'Lokaltog/vim-easymotion'                          " カーソル移動プラグイン(fコマンドが効かなくなるので無効)
   " Plug 'bling/vim-airline'

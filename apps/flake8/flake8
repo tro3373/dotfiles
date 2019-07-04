@@ -1,6 +1,12 @@
 [flake8]
-#ignore = E226,E302,E41
-ignore = D103,E501
 #max-line-length = 160
 #exclude = tests/*
 #max-complexity = 10
+#
+# D101: Missing docstring in public class
+# D102: Missing docstring in public method
+# D107: Missing docstring in __init__
+# H301: one import per line
+# E501: line too long (86 > 79 characters)
+# ignore = E226,E302,E41
+ignore = D107,D101,D102,D103,H301,E501
