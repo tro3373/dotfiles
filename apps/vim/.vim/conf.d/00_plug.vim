@@ -161,6 +161,7 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'sjl/gundo.vim'                                    " UNDO履歴を管理 http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
   " Plug 'fuenor/qfixhowm'                                  " メモプラグイン
   Plug 'thinca/vim-quickrun'                                " 現在のファイルを実行して quickfix に表示
+  Plug 'osyo-manga/shabadou.vim'                            " quick-run 用プラグイン
   " Plug 'tpope/vim-fugitive'                               " Git wrapper so awesome
   " Plug 'junegunn/seoul256.vim'
   " Plug 'tpope/vim-fireplace', { 'for': ['clojure'] }      " 指定したファイルタイプを開いたときに読み込む
