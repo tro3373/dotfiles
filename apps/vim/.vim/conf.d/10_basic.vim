@@ -248,6 +248,9 @@ endif
 set display=lastline
 " 補完メニューの高さ
 set pumheight=10
+" https://stackoverflow.com/questions/6726783/changing-default-position-of-quickfix-window-in-vim
+" For quickfix
+set splitright
 
 " 全角スペースを分かりやすく表示する
 highlight ZenkakuSpace cterm=underline ctermfg=lightmagenta guibg=lightmagenta
