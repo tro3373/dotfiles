@@ -719,8 +719,8 @@ if g:plug.is_installed('vim-quickrun')
   \       "runner" : "vimproc",
   \       "runner/vimproc/updatetime" : 40,
   \   },
-  \   "test": {
-  \       "exec" : ["make test"],
+  \   "do": {
+  \       "exec" : ["make do"],
   \   }
   \}
 endif
