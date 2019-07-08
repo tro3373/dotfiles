@@ -7,6 +7,8 @@ install_common() {
         return
     fi
     mexe anyenv install goenv
+    mexe "echo 'add_path \${GOPATH}/bin' >> ~/.works.zsh"
+    rm_dotpath
 }
 
 install_msys()   { not_supported; }
