@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+readonly script_dir=$(cd "$(dirname $0)"; pwd)
+readonly current_dir=$(pwd)
+readonly outd=$current_dir/ssl
+readonly server_conf=$current_dir/server.conf
+
+readonly key_length=2048
+readonly key_expired=3650
+
+readonly CSR_C=JP
+readonly CSR_ST=ST
+readonly CSR_L=L
+readonly CSR_O=O
+readonly CSR_OU=OU
+readonly CSR_CN=example.com
+
+gen_crt_old() {
+  # sudo openssl req -x509 -nodes -days 365 -newkey rsa:$key_length -keyout ./selfsigned.key -out ./selfsigned.crt
+  # 秘密鍵の作成
+  openssl genrsa $key_length > server.key
+  # 証明書署名要求の作成
+  # C : ２文字の国コード。日本は JP 。(1)
+  # ST : 都道府県 (2)
+  # L : 市町村 (3)
+  # O : 組織の名称 (4)
+  # OU : 組織の部局の名前 (5)
+  # CN : サーバの FQDN （6）
+  openssl req -new -key server.key \
+    -subj "/C=$CSR_C/ST=$CSR_ST/L=$CSR_L/O=$CSR_O/OU=$CSR_OU/CN=$CSR_CN" > server.csr
+  # 自分で署名して10年間有効な証明書作る
+  openssl x509 -days $key_expired -req -signkey server.key < server.csr > server.crt
+  openssl dhparam -out dhparam.pem $key_length
+}
+gen_crt() {
+  openssl req -x509 -nodes -days $key_expired -newkey rsa:$key_length -keyout server.key -out server.crt -config $server_conf
+}
+cat_server_conf() {
+  cat <<EOF
+[req]
+default_bits       = $key_length
+default_keyfile    = server.key
+distinguished_name = req_distinguished_name
+req_extensions     = req_ext
+x509_extensions    = v3_ca
+
+[req_distinguished_name]
+countryName                 = Country Name (2 letter code)
+countryName_default         = $CSR_C
+stateOrProvinceName         = State or Province Name (full name)
+stateOrProvinceName_default = $CSR_ST
+localityName                = Locality Name (eg, city)
+localityName_default        = $CSR_L
+organizationName            = Organization Name (eg, company)
+organizationName_default    = $CSR_O
+organizationalUnitName      = organizationalunit
+organizationalUnitName_default = $CSR_OU
+commonName                  = Common Name (e.g. server FQDN or YOUR name)
+commonName_default          = $CSR_CN
+commonName_max              = 64
+
+[req_ext]
+subjectAltName = @alt_names
+
+[v3_ca]
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1   = localhost
+DNS.2   = 127.0.0.1
+DNS.3   = $CSR_CN
+#DNS.4   = XXX.XXX.XXX.XXX
+EOF
+
+}
+gen_server_conf_if_needed() {
+  if [[ -e $server_conf ]]; then
+    return
+  fi
+  echo "$server_conf not exist. Generating. Press Enter. (cancel Ctrl+C)."
+  read
+  cat_server_conf > $server_conf
+}
+main() {
+  gen_server_conf_if_needed
+  if [[ -e $outd ]]; then
+    echo "$outd Already exist. Delete and Re-Generating. Press Enter. (cancel Ctrl+C)."
+    read
+    rm -r $outd
+  fi
+  mkdir -p $outd
+  cd $outd
+  gen_crt
+}
+main "$@"
