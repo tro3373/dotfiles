@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+has() { command -v ${1} >& /dev/null; }
+usage() {
+  cat <<EOF
+
+Open in vim from ag grep list with interactive select.
+
+$command_name [Ag grep word, options]
+
+EOF
+}
+main() {
+  local args="$*"
+  if [[ $# -eq 0 ]]; then
+    usage
+    exit 1
+  fi
+  if ! has ag; then
+    echo "No ag command exist." 1>&2
+    exit 1
+  fi
+  local target="$(ag $args -l . |fzf)"
+  if [[ -z $target ]]; then
+    echo "No target"
+    exit 1
+  fi
+  vim "$target"
+}
+main "$@"

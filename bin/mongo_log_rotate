@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+max=$((1024*1024*1024)) # 1G
+target_file=/var/log/mongodb/mongod.log
+
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S"): $*" 1>&2; }
+
+cat_rotate() {
+  cat <<EOF
+use admin;
+db.runCommand('logRotate', 1);
+EOF
+}
+
+do_rotate() {
+  log "Rotating Log .."
+  mongo --quiet < <(cat_rotate)
+}
+
+size() {
+  local f=$1
+  [[ ! -e $f ]] && log "No such file. $f" && return
+  wc -c < "$f"
+}
+
+main() {
+  local current_size=$(size "$target_file")
+  if [[ $current_size -lt $max ]]; then
+    log "$current_size Less than $max. Do Nothing.."
+    return
+  fi
+  log "$current_size Greater than $max."
+  do_rotate
+}
+main "$@"
