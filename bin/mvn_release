@@ -18,7 +18,7 @@ main() {
   if [[ $profile == "nop" ]]; then
     _profile=
   fi
-  # mvn -B -Dresume=false release:prepare release:perform $_profile -Darguments="-Dmaven.test.skip=true -Dmaven.javadoc.skip=true"
-  mvn -B -Dresume=false release:perform $_profile -Darguments="-Dmaven.test.skip=true"
+  mvn -B -Dresume=false release:prepare release:perform $_profile -Darguments="-Dmaven.test.skip=true -Dmaven.javadoc.skip=true"
+  # mvn -B -Dresume=false release:perform $_profile -Darguments="-Dmaven.test.skip=true"
 }
 main "$@"
