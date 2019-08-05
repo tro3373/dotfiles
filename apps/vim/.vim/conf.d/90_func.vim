@@ -314,6 +314,18 @@ function! Strip(...) abort
   end
 endfunction
 command! -nargs=? Strip call Strip(<f-args>)
+function! TrimWord(...) abort
+  let w = "'"
+  if a:0 == 1
+    w = a:1
+  end
+  call SilentFExec(':%s/^.\{-}\'.w.'//g')
+  call SilentFExec(':%s/\'.w.'.\+//g')
+  call TrimHead()
+  call Trim()
+  call TrimLine()
+endfunction
+command! -nargs=? TrimWord call TrimWord(<f-args>)
 " 改行削除
 function! OneLine() abort
   let dst = input("Replace LF to: ")
