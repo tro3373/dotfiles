@@ -2,3 +2,24 @@ snippet     coding
 alias       cod
     # -*- coding: utf-8 -*-
 
+snippet shebang
+alias envvvv
+    #!/usr/bin/env python
+    # -*- coding: utf-8 -*-
+    """sample."""
+
+snippet attrdict
+    class AttrDict(dict):
+        def __init__(self, *args, **kwargs):
+            super(AttrDict, self).__init__(*args, **kwargs)
+            self.__dict__ = self
+
+snippet print_trace
+    import traceback
+    print(traceback.format_exc())
+
+snippet if_contain
+    def if_contain(self, src, word)
+        if word in src:
+            return True
+        return False
