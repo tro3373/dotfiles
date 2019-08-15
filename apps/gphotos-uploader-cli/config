@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+install_common() {
+  if ! has go; then
+      log "No go exist. install it." 1>&2
+      return
+  fi
+  mexe go get github.com/gphotosuploader/gphotos-uploader-cli
+}
+
+cat_config() {
+  cat <<'EOF'
+{
+  SecretsBackendType: auto,
+  APIAppCredentials: {
+    ClientID:     "Put your client id.",
+    ClientSecret: "Put your client secret",
+  }
+  jobs: [
+    {
+      account: Put-Your-Gmail@gmail.com
+      sourceFolder: ~/works/gpupd
+      makeAlbums: {
+        enabled: true
+        use: folderNames
+      }
+      deleteAfterUpload: false
+      uploadVideos: true
+      includePatterns: []
+      excludePatterns: []
+    }
+  ]
+}
+EOF
+}
+
+setting_keystore() {
+  # for arch
+  mexe pass init vag-gpg
+}
+
+setting_common() {
+  local _config=$HOME/.config/gphotos-uploader-cli/config.hjson
+  if [[ -e $_config ]]; then
+    log "Already config generated in $_config"
+    return
+  fi
+  # mexe gphotos-uploader-cli init
+  if is_dry; then
+    cat_config
+  else
+    cat_config | tee $_config &> /dev/null
+  fi
+}
+
