@@ -12,4 +12,4 @@ tmp
 *.home
 
 bin/slk.conf
-
+bin/gen_gpg_keys.conf

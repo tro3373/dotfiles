@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+# @see https://qiita.com/moutend/items/5c22d6e57a74845578f6
+readonly command_name=$(basename $0)
+readonly conf_path=$0.conf
+
+usage() {
+cat <<EOF
+
+  Generate gpg keys
+
+    Usage:
+      $command_name [option]
+    Options
+      -h : Show this usage
+      -g [passphrase] : Gen config
+
+EOF
+}
+
+has() { command -v ${1} >& /dev/null; }
+cat_conf() {
+  cat <<EOF
+# Unattended GPG key generation - Using the GNU Privacy Guard
+# https://www.gnupg.org/documentation/manuals/gnupg/Unattended-GPG-key-generation.html
+Key-Type: RSA
+Key-Length: 4096
+Subkey-Type: RSA
+Subkey-Length: 4096
+# 2 years
+Expire-Date: 2y
+
+Name-Real: $name
+Name-Email: $email
+Passphrase: $pass
+
+# create kyes abouve settings
+%commit
+%echo Successfully done
+EOF
+}
+
+get_git_global_value() {
+  git config --global --get $1
+}
+
+setup_from_git_config() {
+  name=$(get_git_global_value user.name)
+  email=$(get_git_global_value user.email)
+  if [[ -z $name || -z $email ]]; then
+    echo "Setup git config global. user.name,user.email." 1>&2
+    exit 1
+  fi
+}
+
+setup_conf() {
+  if [[ -e $conf_path ]]; then
+    echo "Already setupped $conf_path"
+    return
+  fi
+  if [[ -z $pass ]]; then
+    echo "Specify passphrase." 1>&2
+    exit 1
+  fi
+  cat_conf > $conf_path
+}
+
+gen() {
+  gpg --gen-key --batch $conf_path
+}
+
+
+main() {
+  [[ $1 == -h ]] && usage && exit
+  if [[ $1 == -g ]]; then
+    pass=$2
+    setup_from_git_config
+    setup_conf
+    return
+  fi
+  if [[ ! -e $conf_path ]]; then
+    echo "No such config exist. $conf_path"
+    exit 1
+  fi
+  gen
+}
+main "$@"
