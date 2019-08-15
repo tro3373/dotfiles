@@ -2,8 +2,8 @@
 
 install_common() {
   # setup for posix system
-  if ! has goenv; then
-      echo "No goenv exist. install it." 1>&2
+  if ! has go; then
+      echo "No go exist. install it." 1>&2
       return
   fi
   mexe go get github.com/jesseduffield/lazydocker
