@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd)
+script_dir=$(cd "$(dirname $0)"; pwd)
+command_name=$(basename $0)
+config="$(basename $0).conf"
+args=()
+debug=0
+
+usage() {
+  cat <<EOF
+Send message to slack
+when no argument specified, we use normal input.
+
+slk.conf is config file.
+when config file exist, slack send setting loaded from config file.
+  Usage:
+      $command_name [send message] [option]
+    Options
+      -h|--help : Show this usage
+      -g|--genconf : generate sample conf
+      -f|--file : specify send payload message
+      -c|--channel : specify channel(#hogehoge), or user(@hogehoge)
+      -u|--url : specify url
+      -n|--name : specify username(botname)
+      -i|--icon : specify icon
+EOF
+}
+
+has() { command -v ${1} >& /dev/null; }
+add_args() { args=("${args[@]}" "$@"); }
+gen_conf() {
+  if [[ -e $script_dir/slk.conf ]]; then
+    echo "Already slk.conf exist." 1>&2
+    exit 1
+  fi
+  cat <<'EOF' >>$script_dir/slk.conf
+#!/usr/bin/env bash
+
+url=https://hooks.slack.com/services/hoge/huga/piyo
+name=MyBot
+icon=:penguin:
+channel=specify #channel_name, or @user_name
+EOF
+echo "==> $script_dir/slk.conf generated."
+}
+load_config() {
+  for d in "$current_dir" "$HOME/bin" "$script_dir"; do
+    local _conf="$d/$config"
+    if [[ -e $_conf ]]; then
+      [[ $debug -eq 1 ]] && echo "==> Loading from $_conf" 1>&2
+      source $_conf
+      return
+    fi
+  done
+}
+initialize() {
+  [[ $# -eq 0 && ! -p /dev/stdin ]] && usage && exit 1
+  load_config
+  url=${url:-https://hooks.slack.com/services/hoge/huga/piyo}
+  name=${name:-"MyBot"}
+  icon=${icon:-":penguin:"}
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help) usage && exit 0  ;;
+      #-f*|--file*) file=${1#*=} ;;
+      -g|--genconf) gen_conf && exit 0 ;;
+      -f|--file) shift && file=$1 ;;
+      -c|--channel) shift && channel=$1 ;;
+      -u|--url) shift && url=$1 ;;
+      -n|--name) shift && name=$1 ;;
+      -i|--icon) shift && icon=$1 ;;
+      *) add_args "$1"            ;;
+    esac
+    shift
+  done
+  # all_args="${args[@]}"
+}
+send() {
+  local channel_val=
+  if [[ -n $channel ]]; then
+    channel_val=', "channel": "'$channel'"'
+  fi
+  # http_proxy='' HTTPS_PROXY='' curl -fSsL -X POST "$url" -d @- <<EOF>/dev/null
+  curl -fSsL -X POST "$url" -d @- <<EOF>/dev/null
+payload={
+      "username": "$name"
+    , "text": "$(cat -)"
+    , "icon_emoji": "$icon"
+    $channel_val
+  }
+EOF
+# , "channel": "@username"
+# , "channel": "#channel_name"
+}
+
+main() {
+  initialize "$@"
+  if [[ -n $file && -f $file ]]; then
+    cat $file
+  else
+    if [[ ${#args[@]} -eq 0 ]]; then
+      cat -
+    else
+      echo "$@"
+    fi
+  fi |
+    if has perl; then
+      cat - |perl -pe 's/\n/\\n/g' |perl -pe 's/"/\\"/g'
+    else
+      cat - |sed -z "s|\n|\\\\n|g" |sed -e 's/"/\\"/g'
+    fi |send
+}
+main "$@"

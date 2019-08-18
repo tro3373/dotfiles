@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 
+# set -ex
+
 current_dir=$(pwd)
 script_dir=$(cd "$(dirname $0)"; pwd)
 command_name=$(basename $0)
 config="$(basename $0).conf"
 args=()
 debug=0
+dummy=
+message=
+upload_file=0
+upload_file_path=
+as_code=0
+should_upload_file=0
 
 usage() {
   cat <<EOF
@@ -18,15 +26,22 @@ when config file exist, slack send setting loaded from config file.
       $command_name [send message] [option]
     Options
       -h|--help : Show this usage
+      -d|--debug : Debug option
       -g|--genconf : generate sample conf
-      -f|--file : specify send payload message
+      -f|--file : send file.
       -c|--channel : specify channel(#hogehoge), or user(@hogehoge)
-      -u|--url : specify url
+      -co|--code : as code
+      -t|--token : specify token
       -n|--name : specify username(botname)
       -i|--icon : specify icon
 EOF
 }
 
+dlog() {
+  if [[ $debug -eq 1 ]]; then
+    echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2;
+  fi
+}
 has() { command -v ${1} >& /dev/null; }
 add_args() { args=("${args[@]}" "$@"); }
 gen_conf() {
@@ -37,79 +52,149 @@ gen_conf() {
   cat <<'EOF' >>$script_dir/slk.conf
 #!/usr/bin/env bash
 
-url=https://hooks.slack.com/services/hoge/huga/piyo
+# shellcheck disable=SC2034
+token=specify api token
 name=MyBot
 icon=:penguin:
 channel=specify #channel_name, or @user_name
 EOF
 echo "==> $script_dir/slk.conf generated."
 }
+
 load_config() {
   for d in "$current_dir" "$HOME/bin" "$script_dir"; do
     local _conf="$d/$config"
-    if [[ -e $_conf ]]; then
-      [[ $debug -eq 1 ]] && echo "==> Loading from $_conf" 1>&2
-      source $_conf
-      return
+    if [[ ! -e $_conf ]]; then
+      continue
     fi
+    dlog "==> Loading from $_conf"
+    source $_conf
+    return
   done
 }
+
 initialize() {
-  [[ $# -eq 0 && ! -p /dev/stdin ]] && usage && exit 1
+  token=
   load_config
-  url=${url:-https://hooks.slack.com/services/hoge/huga/piyo}
   name=${name:-"MyBot"}
   icon=${icon:-":penguin:"}
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
       -h|--help) usage && exit 0  ;;
-      #-f*|--file*) file=${1#*=} ;;
+      -d|--debug) debug=1 ;;
       -g|--genconf) gen_conf && exit 0 ;;
-      -f|--file) shift && file=$1 ;;
+      -f|--file) upload_file=1 ;;
       -c|--channel) shift && channel=$1 ;;
-      -u|--url) shift && url=$1 ;;
+      -co|--code) as_code=1 ;;
+      -t|--token) shift && token=$1 ;;
+      # -u|--url) shift && url=$1 ;;
       -n|--name) shift && name=$1 ;;
       -i|--icon) shift && icon=$1 ;;
       *) add_args "$1"            ;;
     esac
     shift
   done
-  # all_args="${args[@]}"
-}
-send() {
-  local channel_val=
-  if [[ -n $channel ]]; then
-    channel_val=', "channel": "'$channel'"'
+
+  if [[ -z $token ]]; then
+    usage
+    echo ">> Specify token." 1>&2
+    exit 1
   fi
-  # http_proxy='' HTTPS_PROXY='' curl -fSsL -X POST "$url" -d @- <<EOF>/dev/null
-  curl -fSsL -X POST "$url" -d @- <<EOF>/dev/null
-payload={
-      "username": "$name"
-    , "text": "$(cat -)"
-    , "icon_emoji": "$icon"
-    $channel_val
-  }
-EOF
-# , "channel": "@username"
-# , "channel": "#channel_name"
+
+  local _args=${args[*]}
+  local _in=$_args
+  if [[ -p /dev/stdin ]]; then
+    _in=$(cat <&0)
+  fi
+
+  if [[ -z $_in ]]; then
+    usage
+    echo ">> Specify args or stdin." 1>&2
+    exit 1
+  fi
+
+  message="$_in"
+  if [[ $upload_file -eq 1 ]]; then
+    if [[ -e $message ]]; then
+      upload_file_path=$message
+    fi
+    return
+  fi
+  if is_large_message; then
+    should_upload_file=1
+    return
+  fi
+  if [[ $as_code -eq 1 ]]; then
+    message="\`\`\`$message\`\`\`"
+  fi
+}
+
+is_large_message() {
+  local n=$(echo -e "$message" |wc -l)
+  test $n -gt 10
+}
+
+lchannel() {
+  case "${channel}" in
+    @*)
+      local _user=$(\
+        curl -s -X POST https://slack.com/api/users.list --data-urlencode "token=${token}" 2>&1 | \
+        jq -r ".members | map(select(.name == \"${channel/@/}\" or .profile.display_name == \"${channel/@/}\")) | .[0].id")
+      local _channel=$(\
+        curl -s -X POST https://slack.com/api/im.list --data-urlencode "token=${token}" 2>&1 | \
+        jq -r ".ims | map(select(.user == \"${_user}\")) | .[].id")
+
+      echo ${_channel}
+    ;;
+    *) echo ${channel} ;;
+  esac
+}
+
+send() {
+  if [[ -n $upload_file_path ]]; then
+    dlog "==> Uploading file from $upload_file_path"
+    local _filename=$(basename $upload_file_path)
+    # ${filetype:+ --form "filetype=${filetype}"} \
+    # ${title:+ --form "title=${title}"} \
+    $dummy curl -fSsL -X POST https://slack.com/api/files.upload \
+      ${channel:+ --form-string "channels=$(lchannel)"} \
+      ${upload_file_path:+ --form "file=@${upload_file_path}"} \
+      ${_filename:+ --form "filename=${_filename}"} \
+      --form "token=${token}"
+    return
+  fi
+
+  if [[ $upload_file -eq 1 || $should_upload_file -eq 1 ]]; then
+    dlog "==> Uploading as file. upload_file: $upload_file, should_upload_file: $should_upload_file"
+    # ${_filename:+ --data-urlencode "filename=${_filename}"} \
+    # ${filetype:+ --data-urlencode "filetype=${filetype}"} \
+    # ${title:+ --data-urlencode "title=${title}"} \
+    $dummy curl -fSsL -X POST https://slack.com/api/files.upload \
+      ${channel:+ --data-urlencode "channels=$(lchannel)"} \
+      ${icon:+ --data-urlencode "icon_emoji=$icon"} \
+      ${name:+ --data-urlencode "username=$name"} \
+      --data-urlencode "content=$message" \
+      --data-urlencode "token=${token}"
+    return
+  fi
+
+  dlog "==> Sending message"
+  $dummy curl -fSsL -X POST https://slack.com/api/chat.postMessage \
+    ${channel:+ --data-urlencode "channel=$(lchannel)"} \
+    ${icon:+ --data-urlencode "icon_emoji=$icon"} \
+    ${name:+ --data-urlencode "username=$name"} \
+    --data-urlencode "text=$message" \
+    --data-urlencode "token=$token"
 }
 
 main() {
   initialize "$@"
-  if [[ -n $file && -f $file ]]; then
-    cat $file
-  else
-    if [[ ${#args[@]} -eq 0 ]]; then
-      cat -
+  send |
+    if [[ $debug -eq 1 ]]; then
+      cat - | jq .
     else
-      echo "$@"
+      cat - | jq ".ok"
     fi
-  fi |
-    if has perl; then
-      cat - |perl -pe 's/\n/\\n/g' |perl -pe 's/"/\\"/g'
-    else
-      cat - |sed -z "s|\n|\\\\n|g" |sed -e 's/"/\\"/g'
-    fi |send
 }
 main "$@"
