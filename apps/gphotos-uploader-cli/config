@@ -45,6 +45,10 @@ setting_common() {
     log "Already config generated in $_config"
     return
   fi
+  local _configd=$(dirname $_config)
+  if [[ ! -e $_configd ]]; then
+    meme mkdir -p $_configd
+  fi
   # mexe gphotos-uploader-cli init
   if is_dry; then
     cat_config
