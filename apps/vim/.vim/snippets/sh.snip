@@ -151,6 +151,13 @@ snippet readpass
 snippet log
     log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
 
+snippet dlog
+    dlog() {
+      if [[ $debug -eq 1 ]]; then
+        echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2;
+      fi
+    }
+
 snippet not_supported
     not_supported() { echo "Not supported." 1>&2 && exit 1; }
 
@@ -229,4 +236,12 @@ snippet checkexists
       echo "No such file exists. \$1" 1>&2
       exit 1
     fi
+
+snippet ifstdin
+    if [[ -p /dev/stdin ]]; then
+        :
+    fi
+
+snippet stdin
+    local stdin="$(cat <&0)"
 
