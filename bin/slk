@@ -152,6 +152,8 @@ lchannel() {
 }
 
 send() {
+  export http_proxy=
+  export https_proxy=
   if [[ -n $upload_file_path ]]; then
     dlog "==> Uploading file from $upload_file_path"
     local _filename=$(basename $upload_file_path)
