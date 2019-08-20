@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+readonly profile=${1:-integration}
+readonly current_dir=$(pwd)
+
+has() { command -v ${1} >& /dev/null; }
+main() {
+  if ! has mvn; then
+    echo "No mvn command installed." 1>&2
+    exit 1
+  fi
+  local pom=$current_dir/pom.xml
+  if [[ ! -e $pom ]]; then
+    echo "No pom.xml exist." 1>&2
+    exit 1
+  fi
+  local _profile="-P$profile"
+  if [[ $profile == "nop" ]]; then
+    _profile=
+  fi
+  shift
+  mvn clean install $_profile -Dmaven.test.skip=true "$@"
+}
+main "$@"
