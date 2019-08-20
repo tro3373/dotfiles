@@ -1,4 +1,5 @@
 @echo off
-cd %HOME%\.unxh\.dot\misc\vagrant\arch
+cd %USERPROFILE%\.unxh\.dot\misc\vagrant\arch
+cd
 vagrant up
 exit
