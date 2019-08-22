@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+main() {
+  local archive=$1
+  shift
+  find "$@" -print0 |tar cvfpz $archive --null -T -
+}
+main "$@"
