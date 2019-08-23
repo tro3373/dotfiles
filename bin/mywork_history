@@ -1,10 +1,27 @@
 #!/usr/bin/env bash
 
+readonly command_name=$(basename $0)
+vtype=${1}
+
 pre_ymd=
 pre_hms=
 pre_unixt=
 pre_group=
 pre_task=
+
+usage() {
+  cat <<EOF
+
+  Show my work history
+
+    Usage:
+        $command_name [option]
+      Options
+        -h|--help : Show this usage
+        vtype: last
+
+EOF
+}
 
 pass_time() {
   local from=$1
@@ -34,8 +51,34 @@ sub() {
   # pre_args="$(printf "%s\t%s\t%s\t%s\t%s\\n" "$ymd" "$hms" "$unixt" "$group" "$task")"
   # pre_group=$group
 }
+
+show() {
+  if [[ $vtype =~ ^last.* ]]; then
+    local list=$(cat -)
+    local last_date=$(echo -e "$list" |tail -1 |awk '{print $1}')
+    echo -e "$list" |
+      grep -E "^$last_date" |
+        if [[ $vtype == "last" ]]; then
+          cat -
+        else
+          # todo
+          cat - |sort -k5
+        fi
+  else
+    cat -
+  fi
+}
+
 main() {
-  local f=$(find $HOME/works/00_memos/ -name "*月.md" |sort -r|fzf)
+  [[ $vtype =~ ^(-h|--help)$ ]] && usage && return
+  local f=$(find $HOME/works/00_memos/ -name "*月.md" |
+    sort -r|
+      if [[ $vtype =~ ^last.* ]]; then
+        cat - |head -1
+      else
+        cat - |fzf
+      fi
+  )
   [[ -z $f ]] && return
   (grep -E "^- 20" $f && date "+%Y%m%d_%H%M%S dummy") |
     sed -e 's/^- //g' |
@@ -54,7 +97,7 @@ main() {
       done |
         while read -r ymd hms unixt group task; do
           sub "$@"
-        done
+        done | show
 }
 main "$@"
 
