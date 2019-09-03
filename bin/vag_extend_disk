@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+main() {
+  sudo parted /dev/sda -- resizepart 1 -1s
+  sudo resize2fs /dev/sda1 49G
+}
+main "$@"

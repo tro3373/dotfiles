@@ -23,6 +23,9 @@ install_cygwin() { not_supported; }
 install_mac()    {
   caskinstall virtualbox
   caskinstall vagrant
+  mexe vagrant plugin install vagrant-disksize
+  log "Add Vagrantfile bellow "
+  log "   config.disksize.size = '150GB'"
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
