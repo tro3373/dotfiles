@@ -320,7 +320,8 @@ function! TrimWord(...) abort
     w = a:1
   end
   call SilentFExec(':%s/^.\{-}\'.w.'//g')
-  call SilentFExec(':%s/\'.w.'.\+//g')
+  " call SilentFExec(':%s/\'.w.'.\+//g')
+  call SilentFExec(':%s/\'.w.'.\{-}//g')
   call TrimHead()
   call Trim()
   call TrimLine()
