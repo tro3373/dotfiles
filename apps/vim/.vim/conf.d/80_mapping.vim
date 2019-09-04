@@ -319,13 +319,13 @@ if g:plug.is_installed("ctrlp.vim")
       \ 'AcceptSelection("e")': ['<Space>', '<cr>', '<2-LeftMouse>'],
       \ }
   nnoremap <Leader>p :CtrlPMRU<CR>
-  nnoremap <Leader>m :CtrlPMixed<CR>
-  nnoremap <Leader>j :CtrlPDir %:h<CR>
-  nnoremap <Leader>k :CtrlPFunky<Cr>
-  nnoremap <Leader>l :CtrlPLine<CR>
-  nnoremap <Leader>; :CtrlPYankring<CR>
-  nnoremap <Leader>: :CtrlPCmdline<CR>
-  nnoremap <Leader>@ :CtrlPBuffer<CR>
+  " nnoremap <Leader>m :CtrlPMixed<CR>
+  " nnoremap <Leader>j :CtrlPDir %:h<CR>
+  " nnoremap <Leader>k :CtrlPFunky<Cr>
+  " nnoremap <Leader>l :CtrlPLine<CR>
+  " nnoremap <Leader>; :CtrlPYankring<CR>
+  " nnoremap <Leader>: :CtrlPCmdline<CR>
+  " nnoremap <Leader>@ :CtrlPBuffer<CR>
   " nnoremap <Leader>: :CtrlPFiler<CR>
   " narrow the list down with a word under cursor
   " nnoremap <Leader>@@ :execute 'CtrlPFunky ' . expand('<cword>')<Cr>
