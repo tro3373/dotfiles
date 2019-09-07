@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+pid=
+
+usage() {
+  cat <<EOF
+
+Show java vm info
+
+  Usage:
+    $command_name [option] pid
+  Options
+    -h|--help : Show this usage
+
+EOF
+}
+
+add_args() { args+=("$@"); }
+has() { command -v ${1} >& /dev/null; }
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help) usage && exit 0  ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) pid=$1;;
+    esac
+    shift
+  done
+}
+
+main() {
+  initialize "$@"
+  if ! has jps; then
+    echo "No jps command exist." 1>&2
+    exit 1
+  fi
+  if [[ -z $pid ]]; then
+    # tomcat process detect
+    pid=$(jps |grep Bootstrap|cut -d" " -f1)
+  fi
+  if [[ -z $pid ]]; then
+    echo "No tomcat process exist. specify target pid." 1>&2
+    exit 1
+  fi
+  echo "> Dumping heap.."
+  jmap -heap $pid
+  echo "> Dumping current jstat.."
+  jstat -gcutil $pid
+  echo "> For more jstat, execute bellow.."
+  echo "  jstat -gcutil -h10 $pid 1000"
+}
+main "$@"
