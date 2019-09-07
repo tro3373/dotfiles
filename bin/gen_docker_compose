@@ -7,7 +7,9 @@ services:
   db:
     image: mongo:latest
   app:
-    build: ./src
+    image: app:1.0.0
+    build:
+      context: ./src
     container_name: app
     links:
       - db:db
