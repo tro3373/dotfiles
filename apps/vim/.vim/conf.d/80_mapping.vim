@@ -67,6 +67,8 @@ nnoremap <Leader>w :w<CR>
 nnoremap <Leader>q :q<CR>
 " Visual line
 nmap <Leader><Leader> V
+" Clip All
+nmap <Leader><Leader><Leader> ggVGy
 " Esc Esc でハイライトOFF nohlsearch
 nnoremap <Esc><Esc> :noh<CR>
 
@@ -91,7 +93,8 @@ vmap <silent> <expr> p <sid>Repl()
 
 
 " カーソルの下の単語をヤンクした文字列で置換
-nnoremap <silent> ciy ciw<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
+" nnoremap <silent> ciy ciw<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
+nnoremap <silent> ciy ciw<C-r>0<ESC>
 nnoremap <silent> cy   ce<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 vnoremap <silent> cy   c<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 
