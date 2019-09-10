@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+install_common() {
+  install_via_os_default
+}
+# setting_common() {
+#   make_lnk_with_bkup "$app_dir/hub" "$HOME/.config/hub"
+# }

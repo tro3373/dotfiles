@@ -16,6 +16,7 @@ services:
     command: 'tail -f /dev/null'
     working_dir: /works/
     volumes:
+      #- /etc/localtime:/etc/localtime
       - ./src/:/works/
     environment:
       - TZ=Asia/Tokyo
