@@ -127,8 +127,8 @@ bind status  H      ?git reset --hard HEAD
 bind generic ^      ?git reset --soft HEAD^
 
 # K で cherry-pick (default: 'C')
-bind main    K      ?git cherry-pick %(commit)
-bind diff    K      ?git cherry-pick %(commit)
+bind main    P      ?git cherry-pick %(commit)
+bind diff    P      ?git cherry-pick %(commit)
 
 # Alt-k で cherry-pick -n (--no-commit)
 bind main    <Esc>k ?git cherry-pick -n %(commit)
