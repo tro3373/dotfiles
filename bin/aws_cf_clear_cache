@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+main() {
+  local dist_id=$(
+    aws cloudfront list-distributions |
+      jq -r '.DistributionList.Items[0].Id'
+  )
+  if [[ -z $dist_id ]]; then
+    echo "> No distribution exist." 1>&2
+    exit 1
+  fi
+  aws cloudfront create-invalidation --distribution-id $dist_id --paths '/*'
+}
+main "$@"
