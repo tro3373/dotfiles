@@ -21,25 +21,166 @@ set ignore-space = all
 
 # ====================================
 # Bind Settings
+# @see https://qiita.com/sfus/items/063797a1dd8fdc7d032f
 # ====================================
-# Copy commit id
-bind generic 0 !@sh -c "echo %(commit) | ~/.dot/bin/clip"
-# Copy commit title to clipboard:
-bind generic 9 !@sh -c "git show -s --format=%s %(commit) | ~/.dot/bin/clip"
 # デフォルトの !git gcを無効化して文頭、文末移動にする
 bind generic g move-first-line
 bind generic G move-last-line
+
 # hunk 検索のバック
-bind generic ` :?^@@
-# amend
-bind generic + !git commit --amend
-# rebase
-bind main B !git rebase -i %(commit)
-# checkout
-bind main O ?git checkout %(commit)
+# bind generic ? :?^@@
+# # amend
+# bind generic + ?git commit --amend
+# # rebase
+# bind main B ?git rebase -i %(commit)
+# # checkout
+# bind main O ?git checkout %(commit)
+# # checkout
+# bind refs O ?git checkout %(commit)
 # stash
-bind stash A !?git stash apply %(stash)
-bind stash D !?git stash drop %(stash)
+# bind stash A ?git stash apply %(stash)
+
+# L で reflog
+bind generic L      !sh -c "git reflog --pretty=raw | tig --pretty=raw"
+# _ で指定 reflog 番号にリセット
+bind generic _      ?git reset --hard HEAD@{"%(prompt Enter HEAD@{} number: )"}
+
+# . で HEAD との diff
+bind main    .      !sh -c "git diff %(commit) | tig"
+bind diff    .      !sh -c "git diff %(commit) | tig"
+bind refs    .      !sh -c "git diff %(branch) | tig"
+
+# Alt-. で指定 commit ID との diff
+bind main    <Esc>. ?sh -c "git diff %(commit)..%(prompt Enter commit ID: ) | tig"
+bind diff    <Esc>. ?sh -c "git diff %(commit)..%(prompt Enter commit ID: ) | tig"
+bind refs    <Esc>. ?sh -c "git diff %(branch)..%(prompt Enter branch name: ) | tig"
+
+# C で commit (refs での C は checkout, main での C は cherry-pick だが上書きする)
+bind generic C      !git commit
+bind refs    C      !git commit
+bind main    C      !git commit
+
+
+# S で stash save
+bind generic S      ?git stash save "%(prompt Enter stash comment: )"
+# Y で stash pop
+bind diff    Y      ?git stash pop %(stash)
+bind stash   Y      ?git stash pop %(stash)
+# Alt-y で stash apply
+bind diff    <Esc>y ?git stash apply %(stash)
+bind stash   <Esc>y ?git stash apply %(stash)
+
+
+# Alt-c で commit --allow-empty
+bind generic <Esc>c !git commit --allow-empty
+# + で commit --amend
+bind generic +      !git commit --amend --allow-empty
+
+
+## 以下、Shift付きでブランチ指定、Alt付きでコミットID指定のコマンド
+# = で checkout
+bind main    =      ?git checkout %(branch)
+bind refs    =      ?git checkout %(branch)
+bind main    <Esc>= ?git checkout %(commit)
+# - で直前のブランチに戻る (checkout -)
+bind generic -      ?git checkout -
+
+# T で tag
+bind main    T ?git tag "%(prompt Enter tag name: )" %(commit)
+bind refs    T ?git tag "%(prompt Enter tag name: )" %(branch)
+
+# B でブランチを作成してそのブランチに移動 (checkout -b)
+bind main    B      ?git checkout -b "%(prompt Enter branch name: )" %(branch)
+bind refs    B      ?git checkout -b "%(prompt Enter branch name: )" %(branch)
+bind main    <Esc>b ?git checkout -b "%(prompt Enter branch name: )" %(commit)
+
+# M で merge
+bind main    M      ?git merge %(branch)
+bind diff    M      ?git merge %(branch)
+bind refs    M      ?git merge %(branch)
+bind main    <Esc>m ?git merge %(commit)
+bind diff    <Esc>m ?git merge %(commit)
+
+# R で rebase
+bind main    R      ?git rebase %(branch)
+bind diff    R      ?git rebase %(branch)
+bind refs    R      ?git rebase %(branch)
+bind main    <Esc>r ?git rebase %(commit)
+bind diff    <Esc>r ?git rebase %(commit)
+
+# I で rebase -i
+bind main    I      ?git rebase -i %(branch)
+bind diff    I      ?git rebase -i %(branch)
+bind refs    I      ?git rebase -i %(branch)
+bind main    <Esc>i ?git rebase -i %(commit)
+bind diff    <Esc>i ?git rebase -i %(commit)
+
+# ! で revert
+bind main    !      ?git revert %(commit)
+# H で reset --hard
+bind main    H      ?git reset --hard %(commit)
+bind diff    H      ?git reset --hard %(commit)
+bind refs    H      ?git reset --hard %(branch)
+# H で reset --hard HEAD (status-view)
+bind status  H      ?git reset --hard HEAD
+# ^ で reset --soft
+bind generic ^      ?git reset --soft HEAD^
+
+# K で cherry-pick (default: 'C')
+bind main    K      ?git cherry-pick %(commit)
+bind diff    K      ?git cherry-pick %(commit)
+
+# Alt-k で cherry-pick -n (--no-commit)
+bind main    <Esc>k ?git cherry-pick -n %(commit)
+bind diff    <Esc>k ?git cherry-pick -n %(commit)
+
+# D でブランチを削除 (マージ済みブランチのみ. 強制削除(branch -D) は `!`) (refs-view)
+bind refs    D      ?git branch -d %(branch)
+# D でトラッキングされていないファイルを削除 (status-view)
+bind status  D      ?git clean -d -f -- %(file)
+# D で stash を削除 (`!` と同じ) (stash-view)
+bind stash   D      ?git stash drop %(stash)
+# D でファイルを削除 (tree-view)
+bind tree    D      ?git rm %(file)
+
+# x でトラッキングされていないファイルをすべて削除
+bind main    x      ?git clean -d -f
+bind status  x      ?git clean -d -f
+# x でマージ済みローカルブランチをすべて削除 (master/develop 除く)
+bind refs    x      ?sh -c "git branch --merged | grep -vE '^\\*|master$|develop$' | xargs -I % git branch -d %"
+
+# ` でファイルパスをクリップボードにコピー (Mac用)
+bind stage   `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
+bind status  `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
+bind tree    `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
+bind blob    `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
+
+# Copy commit id
+bind generic 0      @sh -c "echo %(commit) | ~/.dot/bin/clip"
+# Copy commit title to clipboard:
+bind generic 9      @sh -c "git show -s --format=%s %(commit) | ~/.dot/bin/clip"
+
+
+# hub
+# ; で GitHub の該当コミットを開く ※要 hub インストール
+bind main    ;      @hub browse -- commit/%(commit)
+bind blame   ;      @hub browse -- commit/%(commit)
+bind diff    ;      @hub browse -- commit/%(commit)
+
+# ; で GitHub の該当ページを開く
+bind tree    ;      @hub browse -- blob/%(branch)/%(file)
+bind blob    ;      @hub browse -- blob/%(branch)/%(file)
+bind grep    ;      @hub browse -- blob/%(branch)/%(file)
+
+# Alt-; で GitHub の指定ブランチの該当ページを開く
+bind tree    <Esc>; @hub browse -- blob/"%(prompt Enter branch name: )"/%(file)
+bind blob    <Esc>; @hub browse -- blob/"%(prompt Enter branch name: )"/%(file)
+bind grep    <Esc>; @hub browse -- blob/"%(prompt Enter branch name: )"/%(file)
+
+# w で GitHub の該当ブランチの Pull Request 作成ページを開く ※要 hub インストール
+bind main    w      @hub browse -- compare/%(branch)?expand=1
+bind diff    w      @hub browse -- compare/%(branch)?expand=1
+bind refs    w      @hub browse -- compare/%(branch)?expand=1
 
 #bind generic F none
 #bind generic F !git fetch
