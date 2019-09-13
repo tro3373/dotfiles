@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-readonly profile=${1:-production}
 readonly current_dir=$(pwd)
 
 has() { command -v ${1} >& /dev/null; }
@@ -9,16 +8,17 @@ main() {
     echo "No mvn command installed." 1>&2
     exit 1
   fi
-  local pom=$current_dir/pom.xml
+  local pom=${1:-$current_dir/pom.xml}
   if [[ ! -e $pom ]]; then
     echo "No pom.xml exist." 1>&2
     exit 1
   fi
+  local profile=${2:-production}
   local _profile="-P$profile"
   if [[ $profile == "nop" ]]; then
     _profile=
   fi
-  mvn -B -Dresume=false release:prepare release:perform $_profile -Darguments="-Dmaven.test.skip=true -Dmaven.javadoc.skip=true"
+  mvn -B -Dresume=false release:prepare release:perform $_profile -Darguments="-Dmaven.test.skip=true -Dmaven.javadoc.skip=true" -f $pom
   # mvn -B -Dresume=false release:perform $_profile -Darguments="-Dmaven.test.skip=true"
 }
 main "$@"
