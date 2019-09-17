@@ -139,6 +139,15 @@ alias switch
       *) ;;
     esac
 
+snippet tounixtime
+    local unixtime=$(date +%s%3N --date "2019-09-01 00:00")
+
+snippet unixtime
+    local unixtime=$(date +%s)
+
+snippet unixtime3n
+    local unixtime=$(date +%s%3N)
+
 snippet timestamp
     readonly timestamp=$(date +%Y%m%d%H%M%S)
 
