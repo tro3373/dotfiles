@@ -24,6 +24,7 @@ setup_email() {
     fi
 }
 setting_common() {
+    # shellcheck disable=SC2154
     make_link_dot2home $app_dir
     local usrn=0
     local mail=0
@@ -32,7 +33,7 @@ setting_common() {
         [[ -z $line ]] && continue
         [[ $line =~ ^#.* ]] && continue
 
-        local key=$(echo "$line" |sed -e 's,^.\+global ,,g' -e 's, .\+,,g')
+        local key=$(echo "$line" |sed -e 's,^.\+global ,,g' -e 's,--add ,,g' -e 's, .\+,,g')
         # echo "$(printf "% -20s" $key) ==> $line"
         if echo -e "$list" |grep "$key=" >& /dev/null; then
             # already configed.
@@ -67,6 +68,7 @@ git config --global color.ui auto
 git config --global push.default simple
 git config --global http.sslverify false
 git config --global core.preloadindex true
+git config --global --add merge.ff false
 git config --global core.fscache true
 git config --global core.filemode true
 git config --global alias.co checkout
