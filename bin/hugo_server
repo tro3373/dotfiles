@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
+base_url=192.168.33.10
 main() {
-    hugo && hugo server --watch -D --bind="0.0.0.0"
+  if [[ $1 == "-l" ]]; then
+    base_url=localhost
+  fi
+  hugo && hugo server --watch -D --bind="0.0.0.0" -b "http://$base_url:1313"
 }
 main

@@ -9,6 +9,6 @@ install_common() {
   cd_work
   mexe git clone https://github.com/spf13/hugo
   mexe cd hugo
-  mexe go get
+  mexe go install --tags extended
 }
 
