@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 
-# readonly h=${1:-localhost}
-# readonly u=${2:-postgres}
-# readonly d=${3:-postgres}
-readonly h=${1:-storedev.cjdi3ddptz9u.ap-northeast-1.rds.amazonaws.com}
-readonly u=${2:-storedev}
-readonly d=${3:-stored_staging_document}
+readonly h=${1:-localhost}
+readonly u=${2:-postgres}
+readonly d=${3:-postgres}
 
 readonly dump_sql=dump.sql
 readonly archive=dump.tgz

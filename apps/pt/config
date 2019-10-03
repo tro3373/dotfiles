@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
 install_common() {
-    if ! has go; then
-        log "golang not installed."
-        return
-    fi
-    mexe go get -v -u github.com/monochromegane/the_platinum_searcher/...
+  if ! has go; then
+    log "golang not installed."
+    return
+  fi
+  mexe go get -v -u github.com/monochromegane/the_platinum_searcher/...
 }
 
 setting_common() {
-    make_link_dot2home $app_dir
+  # shellcheck disable=SC2154
+  make_link_dot2home $app_dir
 }
 
