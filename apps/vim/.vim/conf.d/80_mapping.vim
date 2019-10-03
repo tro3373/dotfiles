@@ -729,6 +729,12 @@ if g:plug.is_installed('vim-quickrun')
 endif
 
 "=============================================
+" hashivim/vim-terraform
+"=============================================
+if g:plug.is_installed('hashivim/vim-terraform')
+  let g:terraform_fmt_on_save = 1
+endif
+"=============================================
 
 
 " 開いているファイルのディレクトリをエクスプローラで開く
