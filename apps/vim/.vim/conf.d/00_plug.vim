@@ -138,7 +138,8 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'google/vim-maktaba'                               " GoogleCodeFormatter depends
   " Plug 'google/vim-codefmt'                               " GoogleCodeFormatter
   " Plug 'google/vim-glaive'                                " GoogleCodeFormatter depends
-  Plug 'hashivim/vim-terraform'                             " Terraform formatter
+  Plug 'hashivim/vim-terraform'                             " Terraform syntax
+  Plug 'posva/vim-vue'                                      " vue syntax
 
   " Markdown Preview 関連
   Plug 'plasticboy/vim-markdown'
