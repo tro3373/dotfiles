@@ -47,7 +47,7 @@ initialize() {
   done
   file=${file:-id_rsa}
   email_opt=
-  [[ -n $email ]] && email_opt="-C \"$email\""
+  [[ -n $email ]] && email_opt="-C $email"
   # all_args="${args[@]}"
 }
 
@@ -89,7 +89,7 @@ main() {
   if [[ $rm_pass -eq 1 ]]; then
     rm_pass_phrase $file
   else
-    ssh-keygen -t rsa -b 4096 -f $file $email_opt #-m pem
+    ssh-keygen -t rsa -b 4096 -f $file $email_opt -m pem
   fi
 }
 main "$@"
