@@ -165,6 +165,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'thinca/vim-quickrun'                                " 現在のファイルを実行して quickfix に表示
   Plug 'osyo-manga/shabadou.vim'                            " quick-run 用プラグイン
   " Plug 'tpope/vim-fugitive'                               " Git wrapper so awesome
+  Plug 'iberianpig/tig-explorer.vim'
   " Plug 'junegunn/seoul256.vim'
   " Plug 'tpope/vim-fireplace', { 'for': ['clojure'] }      " 指定したファイルタイプを開いたときに読み込む
   " migemo
