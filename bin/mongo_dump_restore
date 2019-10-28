@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+readonly current_dir=$(pwd)
+readonly backup_dir=$current_dir/backup
+command_name=$(basename $0)
+args=()
+
+usage() {
+  cat <<EOF
+
+Dump or Restore mongodb table.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help     : Show this usage
+      -d            : specify database
+      -t|-c         : specify collection
+      -r            : Optional. Restore (default is dump)
+
+EOF
+}
+
+#add_args() { args=("${args[@]}" "$@"); }
+add_args() { args+=("$@"); }
+#has() { command -v ${1} >& /dev/null; }
+
+check() {
+  if ! has mongodump; then
+    echo "No mongodump command exist" 1>&2
+    exit 1
+  fi
+  if ! has mongorestore; then
+    echo "No mongorestore command exist" 1>&2
+    exit 1
+  fi
+  if [[ -e $backup_dir ]]; then
+    echo "Already exist dir $backup_dir" 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help) usage && exit 0  ;;
+      #-f*|--file*) file=${1#*=} ;;
+      # -f|--file) shift && file=$1 ;;
+      -d) shift && database=$1 ;;
+      -t|-c) shift && collection=$1 ;;
+      -r) restore=1 ;;
+      *) add_args "$1"            ;;
+    esac
+    shift
+  done
+  check
+}
+
+dump() {
+  mongodump -d $database -c $collection -o $backup_dir
+}
+
+restore() {
+  mongorestore -d $database -c $collection -o $backup_dir/$collection.bson
+}
+
+main() {
+  initialize "$@"
+  if [[ $restore -eq 1 ]]; then
+    dump
+  else
+    restore
+  fi
+}
+main "$@"
+
