@@ -81,6 +81,9 @@ EOF
 add_args() { args+=("$@"); }
 #has() { command -v ${1} >& /dev/null; }
 
+check() {
+  :
+}
 initialize() {
   while true; do
     [[ -z $1 ]] && break
@@ -92,7 +95,8 @@ initialize() {
     esac
     shift
   done
-  all_args="${args[*]}"
+  check
+  # all_args="${args[*]}"
 }
 
 main() {
@@ -100,7 +104,7 @@ main() {
   for arg in "${args[@]}"; do
     echo "Arguments: $arg"
   done
-  echo $file
+  # echo $file
 }
 main "$@"
 EOL
@@ -118,9 +122,8 @@ EOL
 }
 
 cat_template() {
-  local hard=$1
   if [[ $hard -eq 1 ]]; then
-    cat_template_simple
+    cat_template_hard
   else
     cat_template_simple
   fi
@@ -137,7 +140,7 @@ main(){
     echo "Target $target is exist." 1>&2
     exit 1
   fi
-  cat_template $hard > $target
+  cat_template > $target
   chmod 775 $target
   echo "==> New shell template file generated to $target."
   echo "==> Edit it?(y/N)"
