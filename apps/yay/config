@@ -3,10 +3,11 @@
 install_common() { not_supported; }
 install_arch()   {
   cd_work
-  mexe git clone https://aur.archlinux.org/yay.git
-  if ! is_dry; then
-    cd yay
+  if [[ -e yay ]]; then
+    mexe rm -rf yay
   fi
+  mexe git clone https://aur.archlinux.org/yay.git
+  mexe cd yay
   mexe makepkg -si
 }
 install_msys()   { not_supported; }
