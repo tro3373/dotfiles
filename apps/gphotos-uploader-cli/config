@@ -2,8 +2,8 @@
 
 install_common() {
   if ! has go; then
-      log "No go exist. install it." 1>&2
-      return
+    log "No go exist. install it." 1>&2
+    return
   fi
   mexe go get github.com/gphotosuploader/gphotos-uploader-cli
 }

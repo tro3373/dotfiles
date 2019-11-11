@@ -1,38 +1,40 @@
 #!/bin/bash
 
 install_mac() {
-    mexe brew install global --with-exuberant-ctags --with-pygments
+  mexe brew install global --with-exuberant-ctags --with-pygments
 }
 
 install_ubuntu() {
-    mexe "$instcmd python-pip exuberant-ctags ncurses-dev"
-    mexe sudo pip install Pygments
-    download_global_src_and_build
-    mexe cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc
-    mexe "sed -ri -e 's/^(\t:tc=native:)/\1tc=pygments:/g' ~/.globalrc"
+  # shellcheck disable=SC2154
+  mexe "$instcmd python-pip exuberant-ctags ncurses-dev"
+  mexe sudo pip install Pygments
+  download_global_src_and_build
+  mexe cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc
+  mexe "sed -ri -e 's/^(\t:tc=native:)/\1tc=pygments:/g' ~/.globalrc"
 }
 
 get_global_src_url() {
-    local dlpage="https://www.gnu.org/software/global/download.html"
-    local url="`curl -s $dlpage | grep -E "global-.+\.tar\.gz" | awk -F"'" '{print $2}'`"
-    echo $url
+  local dlpage="https://www.gnu.org/software/global/download.html"
+  local url="$(curl -s $dlpage | grep -E "global-.+\.tar\.gz" | awk -F"'" '{print $2}')"
+  echo $url
 }
 
 download_global_src_and_build() {
-    # http://qiita.com/yoshizow/items/9cc0236ac0249e0638ff
-    # ソースコード取得
-    cd_work
-    if [[ ! -e "$workdir/global.tar.gz" ]]; then
-        local dlurl=$(get_global_src_url)
-        mexe curl -sS -o global.tar.gz $dlurl
-    fi
-    if [[ ! -e "$workdir/global" ]]; then
-        mexe mkdir -p $workdir/global
-        mexe tar xvfpz $workdir/global.tar.gz -C $workdir/global
-    fi
-    mexe cd $workdir/global/global*
-    mexe ./configure --prefix=/usr/local
-    mexe make
-    mexe sudo make install
+  # http://qiita.com/yoshizow/items/9cc0236ac0249e0638ff
+  # ソースコード取得
+  cd_work
+  # shellcheck disable=SC2154
+  if [[ ! -e "$workdir/global.tar.gz" ]]; then
+    local dlurl=$(get_global_src_url)
+    mexe curl -sS -o global.tar.gz $dlurl
+  fi
+  if [[ ! -e "$workdir/global" ]]; then
+    mexe mkdir -p $workdir/global
+    mexe tar xvfpz $workdir/global.tar.gz -C $workdir/global
+  fi
+  mexe cd $workdir/global/global*
+  mexe ./configure --prefix=/usr/local
+  mexe make
+  mexe sudo make install
 }
 

@@ -1,65 +1,65 @@
 #!/bin/bash
 
 install_arch()   {
-    install_via_os_default
-    def_install perl-term-readkey
+  install_via_os_default
+  def_install perl-term-readkey
 }
 
 setup_username() {
-    log "@@@@@ Input Your Git user.name"
-    read gitusername
-    if [ ! "$gitusername" = "" ]; then
-        mexe git config --global user.name "$gitusername"
-    else
-        log "  => Do Nothing for git user.name"
-    fi
+  log "@@@@@ Input Your Git user.name"
+  read gitusername
+  if [ ! "$gitusername" = "" ]; then
+    mexe git config --global user.name "$gitusername"
+  else
+    log "  => Do Nothing for git user.name"
+  fi
 }
 setup_email() {
-    log "@@@@@ Input Your Git user.email"
-    read gituseremail
-    if [ ! "$gituseremail" = "" ]; then
-        mexe git config --global user.email "$gituseremail"
-    else
-        log "  => Do Nothing for git user.email"
-    fi
+  log "@@@@@ Input Your Git user.email"
+  read gituseremail
+  if [ ! "$gituseremail" = "" ]; then
+    mexe git config --global user.email "$gituseremail"
+  else
+    log "  => Do Nothing for git user.email"
+  fi
 }
 setting_common() {
-    # shellcheck disable=SC2154
-    make_link_dot2home $app_dir
-    local usrn=0
-    local mail=0
-    local list="$(git config --list --global 2>/dev/null)"
-    while read -r line; do
-        [[ -z $line ]] && continue
-        [[ $line =~ ^#.* ]] && continue
+  # shellcheck disable=SC2154
+  make_link_dot2home $app_dir
+  local usrn=0
+  local mail=0
+  local list="$(git config --list --global 2>/dev/null)"
+  while read -r line; do
+    [[ -z $line ]] && continue
+    [[ $line =~ ^#.* ]] && continue
 
-        local key=$(echo "$line" |sed -e 's,^.\+global ,,g' -e 's,--add ,,g' -e 's, .\+,,g')
-        # echo "$(printf "% -20s" $key) ==> $line"
-        if echo -e "$list" |grep "$key=" >& /dev/null; then
-            # already configed.
-            continue
-        fi
+    local key=$(echo "$line" |sed -e 's,^.\+global ,,g' -e 's,--add ,,g' -e 's, .\+,,g')
+    # echo "$(printf "% -20s" $key) ==> $line"
+    if echo -e "$list" |grep "$key=" >& /dev/null; then
+      # already configed.
+      continue
+    fi
 
-        case "$key" in
-            user.name)
-                is_dry && mexe "$line" && continue
-                usrn=1
-                ;;
-            user.email)
-                is_dry && mexe "$line" && continue
-                mail=1
-                ;;
-            core.filemode)
-                local filemode=true
-                is_msys && filemode=false
-                mexe git config --global core.filemode $filemode
-                ;;
-            *)
-                mexe "$line"
-                ;;
-        esac
+    case "$key" in
+      user.name)
+        is_dry && mexe "$line" && continue
+        usrn=1
+        ;;
+      user.email)
+        is_dry && mexe "$line" && continue
+        mail=1
+        ;;
+      core.filemode)
+        local filemode=true
+        is_msys && filemode=false
+        mexe git config --global core.filemode $filemode
+        ;;
+      *)
+        mexe "$line"
+        ;;
+    esac
 
-    done <<'EOF'
+  done <<'EOF'
 git config --global user.name sample_username
 git config --global user.email sample_email@domain.com
 git config --global core.editor "vim -c 'set fenc=utf-8'"
@@ -86,9 +86,9 @@ git config --global init.templatedir '~/.git_template'
 git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'
 git config --global commit.template ~/.gitmessage
 EOF
-    [[ $usrn -eq 1 ]] && setup_username
-    [[ $mail -eq 1 ]] && setup_email
-    :
+[[ $usrn -eq 1 ]] && setup_username
+[[ $mail -eq 1 ]] && setup_email
+:
 }
 
 # setting_common() {
@@ -189,8 +189,8 @@ EOF
 # }
 
 is_exists_setting() {
-    echo -e "$1" |grep "$2=" >/dev/null 2>&1
-    return $?
+  echo -e "$1" |grep "$2=" >/dev/null 2>&1
+  return $?
 }
 
 # get_gitsettingcnt() {
@@ -248,50 +248,50 @@ is_exists_setting() {
 #                 fi
 #                 ;;
 #             user.email)
-#                 is_dry && mexe "$line" && continue
-#                 log "@@@@@ Input Your Git user.email"
-#                 read gituseremail
-#                 if [ ! "$gituseremail" = "" ]; then
-#                     mexe git config --global user.email "$gituseremail"
-#                 else
-#                     log "  => Do Nothing for git user.email"
-#                 fi
-#                 ;;
+  #                 is_dry && mexe "$line" && continue
+  #                 log "@@@@@ Input Your Git user.email"
+  #                 read gituseremail
+  #                 if [ ! "$gituseremail" = "" ]; then
+  #                     mexe git config --global user.email "$gituseremail"
+  #                 else
+  #                     log "  => Do Nothing for git user.email"
+  #                 fi
+  #                 ;;
 #             core.filemode)
-#                 local filemode=true
-#                 is_msys && filemode=false
-#                 mexe git config --global core.filemode $filemode
-#             *)
-#                 mexe "$line"
-#                 ;;
-#         esac
-#
-#         echo "$(printf "% -20s" $key) ==> $line"
-#     done <<'EOF'
-# git config --global user.name sample_username
-# git config --global user.email sample_email@domain.com
-# git config --global core.editor "vim -c 'set fenc=utf-8'"
-# git config --global core.quotepath false
-# git config --global color.ui auto
-# git config --global push.default simple
-# git config --global http.sslVerify false
-# git config --global core.preloadindex true
-# git config --global core.fscache true
-# git config --global core.filemode true
-# git config --global alias.co checkout
-# git config --global alias.cm commit
-# git config --global alias.st status
-# git config --global alias.br branch
-# git config --global alias.lgo "log --oneline"
-# git config --global alias.lg "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
-# git config --global alias.lga "log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
-# git config --global alias.tar "archive --format=tar HEAD -o"
-# git config --global alias.tgz "archive --format=tgz HEAD -o"
-# git config --global alias.zip "archive --format=zip HEAD -o"
-# git config --global alias.or orphan
-# git config --global init.templatedir '~/.git_template'
-# git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'
-# git config --global commit.template ~/.gitmessage
-# EOF
-# }
-# main
+  #                 local filemode=true
+  #                 is_msys && filemode=false
+  #                 mexe git config --global core.filemode $filemode
+  #             *)
+  #                 mexe "$line"
+  #                 ;;
+  #         esac
+  #
+  #         echo "$(printf "% -20s" $key) ==> $line"
+  #     done <<'EOF'
+  # git config --global user.name sample_username
+  # git config --global user.email sample_email@domain.com
+  # git config --global core.editor "vim -c 'set fenc=utf-8'"
+  # git config --global core.quotepath false
+  # git config --global color.ui auto
+  # git config --global push.default simple
+  # git config --global http.sslVerify false
+  # git config --global core.preloadindex true
+  # git config --global core.fscache true
+  # git config --global core.filemode true
+  # git config --global alias.co checkout
+  # git config --global alias.cm commit
+  # git config --global alias.st status
+  # git config --global alias.br branch
+  # git config --global alias.lgo "log --oneline"
+  # git config --global alias.lg "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+  # git config --global alias.lga "log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative"
+  # git config --global alias.tar "archive --format=tar HEAD -o"
+  # git config --global alias.tgz "archive --format=tgz HEAD -o"
+  # git config --global alias.zip "archive --format=zip HEAD -o"
+  # git config --global alias.or orphan
+  # git config --global init.templatedir '~/.git_template'
+  # git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'
+  # git config --global commit.template ~/.gitmessage
+  # EOF
+  # }
+  # main

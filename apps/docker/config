@@ -3,116 +3,116 @@
 min_ub_release=16.04
 
 uninstall() {
-    mexe sudo apt-get purge docker-ce
+  mexe sudo apt-get purge docker-ce
 }
 
 is_exist_docker_group() {
-    cat /etc/group |grep docker >& /dev/null
+  cat < /etc/group |grep docker >& /dev/null
 }
 
 is_in_docker_group() {
-    groups $USER |grep docker >& /dev/null
+  groups $USER |grep docker >& /dev/null
 }
 
 mod_user() {
-    log "===> add $USER to docker group... "
-    # ユーザーを docker グループに追加
-    mexe sudo usermod -aG docker $USER
+  log "===> add $USER to docker group... "
+  # ユーザーを docker グループに追加
+  mexe sudo usermod -aG docker $USER
 }
 
 get_dist_version() {
-    local version="$(cat /etc/lsb-release |grep RELEASE)"
-    version=${version##*=}
-    echo $version
+  local version="$(cat < /etc/lsb-release |grep RELEASE)"
+  version=${version##*=}
+  echo $version
 }
 
 is_supported_ub_release() {
-    local version=$(get_dist_version)
-    local res=$(echo "$version > $min_ub_release" | bc)
-    if [[ $res -eq 1 ]]; then
-        # using distribution is higher than min_ub_release.
-        # should use package.
-        return 0
-    else
-        # you can install docker from repository.
-        return 1
-    fi
+  local version=$(get_dist_version)
+  local res=$(echo "$version > $min_ub_release" | bc)
+  if [[ $res -eq 1 ]]; then
+    # using distribution is higher than min_ub_release.
+    # should use package.
+    return 0
+  else
+    # you can install docker from repository.
+    return 1
+  fi
 }
 
 install_docker_via_repository() {
-    if ! is_supported_ub_release; then
-        not_supported
-        return
-    fi
-    # @see https://docs.docker.com/engine/installation/linux/ubuntu/#install-docker
-    # Install packages to allow apt to use a repository over HTTPS:
-    mexe sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-    # Add Docker’s official GPG key:
-    mexe 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -'
-    # verify
-    mexe sudo apt-key fingerprint 0EBFCD88
-    local use_version_name=$(lsb_release -cs)
-    mexe sudo add-apt-repository "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu ${use_version_name} stable\""
-    mexe sudo apt-get -y update
-    mexe sudo apt-get -y install docker-ce
-    mexe sudo docker run hello-world
+  if ! is_supported_ub_release; then
+    not_supported
+    return
+  fi
+  # @see https://docs.docker.com/engine/installation/linux/ubuntu/#install-docker
+  # Install packages to allow apt to use a repository over HTTPS:
+  mexe sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+  # Add Docker’s official GPG key:
+  mexe 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -'
+  # verify
+  mexe sudo apt-key fingerprint 0EBFCD88
+  local use_version_name=$(lsb_release -cs)
+  mexe sudo add-apt-repository "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu ${use_version_name} stable\""
+  mexe sudo apt-get -y update
+  mexe sudo apt-get -y install docker-ce
+  mexe sudo docker run hello-world
 }
 
 get_latest_version() {
-    local p=${1:-compose}
-    curl -fSsL https://github.com/docker/$p/releases |grep "/docker/$p/releases/tag/" |head -1 |cut -d'>' -f2 |cut -d'<' -f1
+  local p=${1:-compose}
+  curl -fSsL https://github.com/docker/$p/releases |grep "/docker/$p/releases/tag/" |head -1 |cut -d'>' -f2 |cut -d'<' -f1
 }
 
 install_via_curl() {
-    if [[ -e /usr/local/bin/$command_name ]]; then
-        log "===> Command already exist /usr/local/bin/$command_name"
-        return
-    fi
-    local m=$1
-    local v="$(get_latest_version $m)"
-    local url="https://github.com/docker/$m/releases/download/$v/docker-$m-$(uname -s)-$(uname -m)"
-    local command_name="docker-$m"
-    log "===> Installing... $command_name"
-    mexe "sudo curl -L $url -o /tmp/$command_name"
-    mexe sudo install /tmp/$command_name /usr/local/bin/$command_name
-    mexe $command_name --version
+  if [[ -e /usr/local/bin/$command_name ]]; then
+    log "===> Command already exist /usr/local/bin/$command_name"
+    return
+  fi
+  local m=$1
+  local v="$(get_latest_version $m)"
+  local url="https://github.com/docker/$m/releases/download/$v/docker-$m-$(uname -s)-$(uname -m)"
+  local command_name="docker-$m"
+  log "===> Installing... $command_name"
+  mexe "sudo curl -L $url -o /tmp/$command_name"
+  mexe sudo install /tmp/$command_name /usr/local/bin/$command_name
+  mexe $command_name --version
 }
 
 install_common() { not_supported; }
 install_arch()   {
-    install_via_os_default
-    mexe sudo systemctl enable docker  # ログイン時にデーモン実行
-    mexe sudo systemctl restart docker
-    install_via_curl machine
-    install_via_curl compose
+  install_via_os_default
+  mexe sudo systemctl enable docker  # ログイン時にデーモン実行
+  mexe sudo systemctl restart docker
+  install_via_curl machine
+  install_via_curl compose
 }
 install_msys()   { not_supported; }
 install_cygwin() { not_supported; }
 install_mac()    { not_supported; }
 install_ubuntu() {
-    install_docker_via_repository
-    install_via_curl machine
-    install_via_curl compose
+  install_docker_via_repository
+  install_via_curl machine
+  install_via_curl compose
 }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
 setting_arch()   {
-    if ! is_exist_docker_group; then
-        mexe sudo groupadd docker
-    fi
-    if is_in_docker_group; then
-        return
-    fi
-    mexe sudo gpasswd -a $USER docker
+  if ! is_exist_docker_group; then
+    mexe sudo groupadd docker
+  fi
+  if is_in_docker_group; then
+    return
+  fi
+  mexe sudo gpasswd -a $USER docker
 }
 setting_msys()   { not_supported; }
 setting_cygwin() { not_supported; }
 setting_mac()    { not_supported; }
 setting_ubuntu() {
-    if is_in_docker_group; then
-        return
-    fi
-    mod_user
+  if is_in_docker_group; then
+    return
+  fi
+  mod_user
 }
 setting_redhat() { not_supported; }
 

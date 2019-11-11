@@ -9,6 +9,7 @@ install_common() {
 }
 install_msys()   { not_supported; }
 setting_common() {
+  # shellcheck disable=SC2154
   make_lnk_with_bkup "$app_dir/flake8" "$HOME/.config/flake8"
 }
 setting_msys()   { not_supported; }

@@ -1,27 +1,27 @@
 #!/bin/bash
 
 install_msys() {
-    not_supported
+  not_supported
 }
 install_cygwin() {
-    not_supported
+  not_supported
 }
 install_arch() {
-    # install_via_os_default
-    _install_common
+  # install_via_os_default
+  _install_common
 }
 install_ubuntu() {
-    _install_common
+  _install_common
 }
 install_redhat() {
-    _install_common
+  _install_common
 }
 install_mac() {
-    _install_common
+  _install_common
 }
 
 _install_common() {
-    mexe git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-    mexe ~/.fzf/install
+  mexe git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+  mexe ~/.fzf/install
 }
 

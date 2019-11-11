@@ -1,31 +1,32 @@
 #!/usr/bin/env bash
 
 install_common() {
-    gh_user_local "https://github.com/jhawthorn/fzy.git"
-    mexe make
-    mexe sudo make install
+  gh_user_local "https://github.com/jhawthorn/fzy.git"
+  mexe make
+  mexe sudo make install
 }
 
 install_arch() {
-    install_via_os_default
+  install_via_os_default
 }
 
 install_msys() {
-    not_supported
-    return
-    msys_build
+  not_supported
+  return
+  msys_build
 }
 
 msys_build_ng() {
-    cd_work
-    def_install mingw-w64-i686-toolchain
-    local v=$(get_latest_version)
-    if [[ -z $v ]]; then
-        echo "Failed to get latest version for fzy" 1>&2
-        exit 1
-    fi
-    if ! is_dry && [[ ! -e PKGBUILD ]]; then
-        mexe cat <<EOF>PKGBUILD
+  cd_work
+  def_install mingw-w64-i686-toolchain
+  local v=$(get_latest_version)
+  if [[ -z $v ]]; then
+    echo "Failed to get latest version for fzy" 1>&2
+    exit 1
+  fi
+  if ! is_dry && [[ ! -e PKGBUILD ]]; then
+    # shellcheck disable=SC2154
+    mexe cat <<EOF>PKGBUILD
 pkgname=fzy
 pkgver=$v
 pkgrel=1
@@ -52,14 +53,14 @@ package() {
 }
 
 EOF
-    fi
-    mexe makepkg-mingw -f
-    mexe pacman -U --noconfirm fzy-$v-1-x86_64.pkg.tar.xz
+  fi
+  mexe makepkg-mingw -f
+  mexe pacman -U --noconfirm fzy-$v-1-x86_64.pkg.tar.xz
 }
 
 msys_build() {
-    cd_work
-    cat <<'EOF'>PKGBUILD
+  cd_work
+  cat <<'EOF'>PKGBUILD
 # Maintainer: Erich Gubler <erichdongubler@gmail.com>
 
 pkgname=fzy
@@ -83,11 +84,11 @@ package() {
   install -Dm644 LICENSE "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
 }
 EOF
-    mexe makepkg
-    mexe pacman -U "${package-name}*.pkg.tar.xz"
+mexe makepkg
+mexe pacman -U "${package-name}*.pkg.tar.xz"
 }
 
 get_latest_version() {
-    curl -fSsL https://github.com/jhawthorn/fzy/releases |grep tar.gz |head -1 |cut -d"\"" -f2 |sed -e 's|.*/||g' -e 's|.tar.gz||g'
+  curl -fSsL https://github.com/jhawthorn/fzy/releases |grep tar.gz |head -1 |cut -d"\"" -f2 |sed -e 's|.*/||g' -e 's|.tar.gz||g'
 }
 

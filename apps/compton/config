@@ -7,7 +7,7 @@ install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
 setting_arch()   {
-    make_lnk_with_bkup "$app_dir/.config/compton" "$HOME/.config/compton"
+  make_lnk_with_bkup "$app_dir/.config/compton" "$HOME/.config/compton"
 }
 setting_msys()   { not_supported; }
 setting_cygwin() { not_supported; }
