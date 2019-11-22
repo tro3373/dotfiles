@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
+readonly cred=$HOME/.aws/credentials
 list_profile() {
-  cat < $HOME/.aws/config |
+  cat < $cred |
     grep "\[" |
     tr -d '[' |
     tr -d ']' |
@@ -9,12 +10,12 @@ list_profile() {
 }
 
 main() {
-  if [[ $# -eq 0 ]]; then
-    echo "> Current aws profile is AWS_PROFILE:$AWS_PROFILE"
-    echo "> Exist profile is.." 1>&2
-    list_profile
-    return
-  fi
+  # if [[ $# -eq 0 ]]; then
+  #   echo "> Current aws profile is AWS_PROFILE:$AWS_PROFILE" 1>&2
+  #   echo "> Exist profile is.." 1>&2
+  #   list_profile 1>&2
+  #   return
+  # fi
   local _profile=
   if [[ $(list_profile | grep -c "$1") -eq 1 ]] ; then
     _profile=$(list_profile | grep "$1")
@@ -23,19 +24,20 @@ main() {
   fi
   if [[ -z $_profile ]]; then
     echo "> Specify aws profile name. Exist profile is.." 1>&2
-    [[ ! -e $HOME/.aws/config ]] && exit 1
+    [[ ! -e $cred ]] && exit 1
     list_profile |
       while read -r line; do
         [[ -z $line ]] && continue
-        echo -e "  - $line" 1>&2
+        echo -e " - $line" 1>&2
       done
     exit 1
   fi
   # echo "Current aws profile is AWS_PROFILE:$AWS_PROFILE"
   echo "> Do this.." 1>&2
   # eval "export AWS_PROFILE=$_profile"
-  echo "export AWS_PROFILE=$_profile" |tee >(clip)
+  echo "export AWS_PROFILE=$_profile; export AWS_DEFAULT_PROFILE=$_profile" |
+    tee >(clip)
   # echo "Profile setted to AWS_PROFILE:$AWS_PROFILE"
 }
 main "$@"
-
+# list_profile
