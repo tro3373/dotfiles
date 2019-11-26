@@ -8,7 +8,7 @@ args=()
 is_all=0
 clone=0
 usage() {
-    cat <<EOF
+  cat <<EOF
 Description for this command.
   Usage:
       $command_name [option]
@@ -31,26 +31,26 @@ has() { command -v ${1} >& /dev/null; }
 add_args() { args+=("$@"); }
 
 initialize() {
-    while true; do
-        [[ -z $1 ]] && break
-        case "$1" in
-            -h|--help)  usage && exit 0 ;;
-            -r|--rev)   shift && rev=$1 ;;
-            -r*|--rev*) rev=${1#*=}     ;;
-            -a|--all)   is_all=1        ;;
-            *)          add_args "$1"   ;;
-        esac
-        shift
-    done
-    if ! has svn; then
-        echo "No svn command exists. please install it" 1>&2
-        exit 1
-    fi
-    if [[ ${#args[@]} -eq 0 ]]; then
-        echo "Specify url .." 1>&2
-        exit 1
-    fi
-    all_args="${args[*]}"
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help)  usage && exit 0 ;;
+      -r|--rev)   shift && rev=$1 ;;
+      -r*|--rev*) rev=${1#*=}     ;;
+      -a|--all)   is_all=1        ;;
+      *)          add_args "$1"   ;;
+    esac
+    shift
+  done
+  if ! has svn; then
+    echo "No svn command exists. please install it" 1>&2
+    exit 1
+  fi
+  if [[ ${#args[@]} -eq 0 ]]; then
+    echo "Specify url .." 1>&2
+    exit 1
+  fi
+  all_args="${args[*]}"
 }
 
 # get_latest_rev() {
@@ -77,8 +77,8 @@ initialize() {
 # }
 
 contain_trunk_url() {
-    local url="$1"
-    echo $url |grep "/trunk" >& /dev/null
+  local url="$1"
+  echo $url |grep "/trunk" >& /dev/null
 }
 
 # git svn fetch -r 1000:HEAD means "fetch all revisions starting at rev 1000 up to the current HEAD".
@@ -87,43 +87,43 @@ contain_trunk_url() {
 # git svn fetch -r 1000 means "fetch revision 1000 only."
 # -s: -s is for --stdlayout which presumes the svn recommended layout for tags, trunk, and branches.
 do_clone() {
-    local url="$1"
-    local dst="${2:-repo}"
-    # set -eu
+  local url="$1"
+  local dst="${2:-repo}"
+  # set -eu
 
-    local rev_option=
-    local s_option="-s"
-    # no specify -s option when url contain 'trunk'
-    contain_trunk_url "$url" && s_option=
-    if [[ $is_all -eq 1 ]]; then
-        if [[ -n $rev ]]; then
-            rev_option="-r0:$rev"
-        fi
-    else
-        if [[ -z $rev ]]; then
-            rev=HEAD
-        fi
-        rev_option="-r$rev"
+  local rev_option=
+  local s_option="-s"
+  # no specify -s option when url contain 'trunk'
+  contain_trunk_url "$url" && s_option=
+  if [[ $is_all -eq 1 ]]; then
+    if [[ -n $rev ]]; then
+      rev_option="-r0:$rev"
     fi
-    if [[ $clone -eq 1 ]]; then
-        echo "==> git svn cloning to dir:$dst url:$url opt:$rev_option sopt:$s_option .."
-        git svn clone --prefix=svn/ $s_option $rev_option "$url" "$dst"
-        cd $dst
-        git reset
-        git checkout .
-    else
-        echo "==> git svn initializing to dir:$dst url:$url opt:$rev_option sopt:$s_option .."
-        git svn init --prefix=svn/ $s_option "$url" "$dst"
-        cd $dst
-        echo "==> git svn fetching $rev_option to dir:$dst .."
-        git svn fetch $rev_option
+  else
+    if [[ -z $rev ]]; then
+      rev=HEAD
     fi
-    echo "==> Done."
+    rev_option="-r$rev"
+  fi
+  if [[ $clone -eq 1 ]]; then
+    echo "==> git svn cloning to dir:$dst url:$url opt:$rev_option sopt:$s_option .."
+    git svn clone --prefix=svn/ $s_option $rev_option "$url" "$dst"
+    cd $dst
+    git reset
+    git checkout .
+  else
+    echo "==> git svn initializing to dir:$dst url:$url opt:$rev_option sopt:$s_option .."
+    git svn init --prefix=svn/ $s_option "$url" "$dst"
+    cd $dst
+    echo "==> git svn fetching $rev_option to dir:$dst .."
+    git svn fetch $rev_option
+  fi
+  echo "==> Done."
 }
 
 main() {
-    initialize "$@"
-    do_clone $all_args
+  initialize "$@"
+  do_clone $all_args
 }
 main "$@"
 
