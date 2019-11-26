@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+profile=default
+dummy="echo"
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -e) dummy= ;;
+      *) profile="$arg" ;;
+    esac
+  done
+}
+
+delete_lambdas() {
+  aws --profile $profile \
+    lambda list-functions |
+    jq -r '.Functions[].FunctionName' |
+    # grep -v 'keyword' |
+    while read -r lambda_name; do
+      [[ -z $lambda_name ]] && continue
+      [[ $lambda_name =~ ^#.* ]] && continue
+        echo ">> Deleting $lambda_name"
+        $dummy aws --profile $profile \
+          lambda delete-function --function-name "$lambda_name"
+    done
+}
+
+main() {
+  initialize "$@"
+  delete_lambdas
+  echo "Done"
+}
+main "$@"

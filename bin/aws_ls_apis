@@ -3,8 +3,8 @@
 readonly command_name=$(basename $0)
 readonly swaggerd=swagger
 region=ap-northeast-1
+profile=default
 mode=url
-args=()
 
 usage() {
   cat <<EOF
@@ -22,33 +22,37 @@ usage() {
 
 EOF
 }
-add_args() { args+=("$@"); }
+
 initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
+      -e) dummy= ;;
       #-f|--file) shift && file=$1 ;;
       -h|--help) usage && exit 0  ;;
       -u|--url) ;;
       -s|--swagger) mode=swagger ;;
       -r|--reqmap) mode=reqmap ;;
       --region) shift && region=$1 ;;
-      *) add_args "$1"            ;;
+      *) profile="$arg" ;;
     esac
     shift
   done
-  # all_args="${args[*]}"
 }
+
 ls_rest_apis() {
-  aws apigateway get-rest-apis |
+  aws --profile $profile \
+    apigateway get-rest-apis |
     # jq '.items[] | { id:.id, name: .name }'
     jq -r '.items[] | .id+" "+.name' |
       get_stage_name
 }
+
 get_stage_name() {
   while read -r api_id api_name; do
     [[ -z $api_id ]] && continue
-    aws apigateway get-stages --rest-api-id $api_id |
+    aws --profile $profile \
+      apigateway get-stages --rest-api-id $api_id |
       jq -r '.item[].stageName' |
         if [[ $mode == "swagger" ]]; then
           get_swagger_json
@@ -61,8 +65,8 @@ get_swagger_json() {
   while read -r stage; do
     [[ -z $stage ]] && continue
     echo "==> Getting $api_name($api_id) stage:$stage" 1>&2
-    aws apigateway \
-      get-export \
+    aws --profile $profile \
+      apigateway get-export \
       --parameters extensions='apigateway' \
       --rest-api-id $api_id \
       --stage-name $stage \
@@ -73,7 +77,8 @@ get_url_path() {
   while read -r stage; do
     [[ -z $stage ]] && continue
     echo "==> Getting $api_name($api_id) stage:$stage" 1>&2
-    aws apigateway get-resources --rest-api-id $api_id |
+    aws --profile $profile \
+      apigateway get-resources --rest-api-id $api_id |
       # jq '.items[] | select(has("resourceMethods"))'
       # jq '.items[] | select(has("resourceMethods")) | { id:.id, path:.path }'
       # jq -r '.items[] | select(has("resourceMethods")) | .id+" "+.path'
@@ -90,7 +95,8 @@ get_reqmap() {
   while read -r stage; do
     [[ -z $stage ]] && continue
     echo "==> Getting $api_name($api_id) stage:$stage" 1>&2
-    aws apigateway get-integration \
+    aws --profile $profile \
+      apigateway get-integration \
       --rest-api-id $api_id \
       --resource-id $res_id \
       --http-method $method |
@@ -103,7 +109,8 @@ get_reqmap() {
 get_lambda_urls() {
   while read -r res_id path method; do
     [[ -z $res_id ]] && continue
-    aws apigateway get-integration \
+    aws --profile $profile \
+      apigateway get-integration \
       --rest-api-id $api_id \
       --resource-id $res_id \
       --http-method $method |
@@ -116,6 +123,9 @@ get_lambda_urls() {
   done
 }
 main() {
+  ##################################################
+  # Only GET/POST Api Only?
+  ##################################################
   initialize "$@"
   ls_rest_apis
   echo "Done."

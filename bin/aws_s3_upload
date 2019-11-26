@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+profile=default
+bucket=
+dummy="echo"
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -e) dummy= ;;
+      -b) bucket="$arg" ;;
+      *) profile="$arg" ;;
+    esac
+  done
+  [[ -z $bucket ]] && echo "Specify bucket -b option." 1>&2 && exit 1
+}
+
+upload_s3() {
+  echo "=> Uploading syncing $bucket .." 1>&2
+  $dummy aws --profile $profile \
+    s3 sync . s3://$bucket
+    # --include "*" \
+    # --delete \
+    # --acl public-read \
+    # --cache-control "max-age=3600"
+}
+
+main() {
+  initialize "$@"
+  upload_s3
+  echo "Done"
+}
+main "$@"

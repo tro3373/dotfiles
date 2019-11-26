@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
 
+readonly script_dir=$(cd "$(dirname ${BASH_SOURCE:-$0})"; pwd)
 readonly current_dir=$(pwd)
 dst_root=$current_dir/downloaded_functions
+profile=default
+func=
+dummy="echo"
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -e) dummy= ;;
+      -f|-l) func="$arg" ;;
+      *) profile="$arg" ;;
+    esac
+  done
+}
+
 ls_functions() {
-  aws lambda list-functions --query 'Functions[].FunctionName' |
-    tr -d '"' |
-    tr -d ',' |
-    tr -d '[' |
-    tr -d ']' |
-    tr -d '	' |
-    tr -d ' ' |
-    sed -e '/^$/d' |
-    sort -u
+  $script_dir/aws_lambda_ls -e $profile
 }
 get_urls() {
   while read -r fname; do
@@ -19,7 +26,7 @@ get_urls() {
     [[ $fname =~ ^#.* ]] && continue
     # [[ ! -e $fname ]] && mkdir -p $fname
     printf "=> For $fname Lambda Function: Getting urls .. " 1>&2
-    local url=$(aws lambda get-function --function-name $fname --query 'Code.Location')
+    local url=$(aws --profile $profile lambda get-function --function-name $fname --query 'Code.Location')
     [[ -z $url ]] && echo "=> Abort" 1>&2 && exit 1
     printf "✔\n" 1>&2
     echo "$fname $url"
@@ -33,30 +40,39 @@ get_zips() {
     local dstd=$dst_root/$fname
     [[ ! -e $dstd ]] && mkdir -p $dstd
     printf "==> Downloading $fname .. " 1>&2
-    curl -fSsL -o $dstd/$fname.zip $url #|| echo "==> Failed to download $fname." 1>&2 && continue
+    $dummy curl -fSsL -o $dstd/$fname.zip $url #|| echo "==> Failed to download $fname." 1>&2 && continue
     printf "✔\n" 1>&2
     printf "==> Unzipping $fname .. " 1>&2
-    unzip -q -d $dstd $dstd/$fname.zip
+    $dummy unzip -q -d $dstd $dstd/$fname.zip
     printf "✔\n" 1>&2
     printf "==> Deleting $dstd/$fname.zip .. " 1>&2
-    rm $dstd/$fname.zip
+    $dummy rm $dstd/$fname.zip
     printf "✔\n" 1>&2
 
     local node_modules=$dstd/node_modules
     [[ ! -e $node_modules ]] && continue
     printf "==> Deleting $node_modules .. " 1>&2
-    rm -rf $node_modules
+    $dummy rm -rf $node_modules
     printf "✔\n" 1>&2
   done
 }
-main() {
-  # if [[ $# -eq 0 ]]; then
-  #   ls_functions
-  # else
-  #   echo "$@"
+
+download_lambdas() {
   local d="$(basename "$current_dir")"
-  ls_functions |fzf -q "$d" -m | get_urls | get_zips
-  # ls_functions | get_urls | get_zips
+  ls_functions |
+    if [[ -a $func ]]; then
+      cat - | fzf -q "$d" -m
+    else
+      cat -
+    fi |
+      get_urls |
+      get_zips
+}
+
+main() {
+  initialize "$@"
+  download_lambdas
+  echo "Done"
 }
 main "$@"
 

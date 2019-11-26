@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+readonly dstd=backup_$(date +%Y%m%d_%H%M%S)
+profile=default
+bucket=
+dummy="echo"
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -e) dummy= ;;
+      -b) bucket="$arg" ;;
+      *) profile="$arg" ;;
+    esac
+  done
+  [[ -z $bucket ]] && echo "Specify bucket -b option." 1>&2 && exit 1
+}
+
+backup_s3() {
+  echo "=> Backuping syncing $bucket $dstd.." 1>&2
+  [[ ! -e $dstd ]] && mkdir -p $dstd
+  $dummy aws --profile $profile \
+    s3 sync s3://$bucket $dstd
+}
+
+main() {
+  initialize "$@"
+  backup_s3
+  echo "Done"
+}
+main "$@"

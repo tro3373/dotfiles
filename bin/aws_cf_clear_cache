@@ -1,14 +1,34 @@
 #!/usr/bin/env bash
 
-main() {
+profile=default
+dummy="echo"
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -e) dummy= ;;
+      *) profile="$arg" ;;
+    esac
+  done
+}
+
+clear_cache() {
   local dist_id=$(
-    aws cloudfront list-distributions |
+    aws --profile $profile \
+      cloudfront list-distributions |
       jq -r '.DistributionList.Items[0].Id'
   )
   if [[ -z $dist_id ]]; then
     echo "> No distribution exist." 1>&2
     exit 1
   fi
-  aws cloudfront create-invalidation --distribution-id $dist_id --paths '/*'
+  $dummy aws --profile $profile \
+    cloudfront create-invalidation --distribution-id $dist_id --paths '/*'
+}
+
+main() {
+  initialize "$@"
+  clear_cache
+  echo "Done"
 }
 main "$@"

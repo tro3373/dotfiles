@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+profile=default
+dummy="echo"
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -e) dummy= ;;
+      *) profile="$arg" ;;
+    esac
+  done
+}
+
+delete_apigws() {
+  aws --profile $profile \
+    apigateway get-rest-apis |
+      jq -r '.items[] | .id+" "+.name' |
+      # grep -v 'keyword' |
+      while read -r api_id name; do
+        [[ -z $api_id ]] && continue
+        [[ $api_id =~ ^#.* ]] && continue
+          echo ">> Deleting $name"
+          $dummy aws --profile $profile \
+            apigateway delete-rest-api --rest-api-id "$api_id"
+          echo ">> Deleteted $name. sleep 60... (for aws restrict...)"
+          [[ -z $dummy ]] && sleep 60
+      done
+}
+
+main() {
+  initialize "$@"
+  delete_apigws
+  echo "Done"
+}
+main "$@"

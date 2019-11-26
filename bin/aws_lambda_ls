@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+profile=default
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      *) profile="$arg" ;;
+    esac
+  done
+}
+
+ls_lambdas() {
+  aws --profile $profile \
+    lambda list-functions --query 'Functions[].FunctionName' "$@" |
+    tr -d '"' |
+    tr -d ',' |
+    tr -d '[' |
+    tr -d ']' |
+    tr -d '	' |
+    tr -d ' ' |
+    sed -e '/^$/d' |
+    sort -u #| tee ls_lambdas.log
+}
+main() {
+  initialize "$@"
+  ls_lambdas
+  echo "Done"
+}
+main "$@"

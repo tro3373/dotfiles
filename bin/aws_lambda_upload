@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+readonly current_dir=$(pwd)
+profile=default
+bucket=
+dummy="echo"
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -e) dummy= ;;
+      *) profile="$arg" ;;
+    esac
+  done
+}
+
+upload_lambda() {
+  local function_name=$(basename $current_dir)
+  echo "==> uploading $function_name. (press enter to continue)"
+  read
+  local tmp=/tmp/$function_name.zip
+  [[ -e $tmp ]] && $dummy rm $tmp
+  [[ -e $current_dir/$function_name.zip ]] && $dummy rm $current_dir/$function_name.zip
+  # $dummy npm install
+  $dummy zip -r $tmp ./*
+  $dummy aws --profile $profile \
+    lambda update-function-code \
+    --function-name $function_name \
+    --zip-file fileb://$tmp \
+    --publish
+  [[ -e $tmp ]] && $dummy rm $tmp
+}
+
+main() {
+  initialize "$@"
+  upload_lambda
+  echo "Done"
+}
+main "$@"
+
