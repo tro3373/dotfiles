@@ -254,3 +254,21 @@ snippet ifstdin
 snippet stdin
     local stdin="$(cat <&0)"
 
+snippet forarg
+    for arg in "$@"; do
+      case "$arg" in
+        -h|--help) usage && exit 0 ;;
+        *) target="$arg" ;;
+      esac
+    done
+
+snippet dummyset
+    readonly dummy="echo"
+    initialize() {
+      for arg in "$@"; do
+        case "$arg" in
+          -e) dummy= ;;
+        esac
+      done
+    }
+    initialize "$@"
