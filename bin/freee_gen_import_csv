@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+readonly timestamp=$(date +%Y%m%d%H%M%S)
+readonly dst=${timestamp}_gened.csv
+readonly current_dir=$(pwd)
+deals=
+
+initialize() {
+  deals=$1
+  if [[ -z $deals ]]; then
+    deals=$current_dir/deals.csv
+  fi
+  if [[ ! -e $deals ]]; then
+    echo "No deals exist. deals=$deals" 1>&2
+    exit 1
+  fi
+}
+
+header() {
+  cat <<EOF
+収支区分,管理番号,発生日,決済期日,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,決済日,決済口座,決済金額
+EOF
+}
+
+gen() {
+  header
+  cat < $deals |
+    nkf -Lu -w |
+    tail -n +2 |
+    while IFS=, read -r c01 c02 c03 c04 c05 c06 c07 c08 c09 c10 c11 c12 c13 c14 c15 c16 c17; do
+      [[ $c08 =~ ^-.* ]] && c10=-$c10
+      c16= #登録銀行口座情報削除
+      [[ -n $c17 ]] && c16=事業主借
+      echo "$c01,$c02,$c03,$c04,$c05,$c06,$c07,$c08,$c09,$c10,$c11,$c12,$c13,$c14,$c15,$c16,$c17"
+    done
+}
+
+main() {
+  initialize "$@"
+  gen |tee $dst
+}
+main "$@"
