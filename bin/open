@@ -4,7 +4,8 @@ current_dir=$(pwd)
 
 main() {
   local arg=${1:-$current_dir}
-  local _open=open
+  # local _open=open
+  local _open=$(type -a open |grep -v $0 |cut -d' ' -f3)
   case "${OSTYPE}" in
     linux*)     _open=xdg-open ;;
     cygwin*)    _open=cygstart ;;
