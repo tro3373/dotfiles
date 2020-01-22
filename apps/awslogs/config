@@ -1,0 +1,15 @@
+#!/bin/bash
+
+install_common() {
+  if ! has pip; then
+    log "No pip installed"
+    return
+  fi
+  mexe sudo pip install awslogs
+}
+install_msys()   { not_supported; }
+setting_common() {
+  :
+}
+setting_msys()   { not_supported; }
+
