@@ -71,6 +71,11 @@ nmap <Leader><Leader> V
 nmap <Leader><Leader><Leader> ggVGy
 " Esc Esc でハイライトOFF nohlsearch
 nnoremap <Esc><Esc> :noh<CR>
+" インサートモードを抜けたときIME Off
+" inoremap <silent> <ESC> <ESC>:set iminsert=0<CR>
+" ビジュアル選択後のインデント調整で２回目以降もビジュアル選択を残す設定
+vnoremap < <gv
+vnoremap > >gv
 
 " /検索時の / 入力補完
 cnoremap <expr> / (getcmdtype() == '/') ? '\/' : '/'
