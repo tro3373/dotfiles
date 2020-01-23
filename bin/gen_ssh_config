@@ -43,22 +43,55 @@ cat_template() {
 Host *
   IdentityFile /path/to/your/identity/file
   ServerAliveInterval 30
-  #ForwardX11 yes
-  #ForwardX11Trusted yes
-  #PermitLocalCommand  yes
-  #LocalCommand [[ -n $TMUX ]] && tmux rename-window %n
-  #RemoteForward 52224 localhost:52224
-Host [server1]
-  HostName [server1 ip]
+  GSSAPIAuthentication no
+  ForwardX11 yes
+  ForwardX11Trusted yes
+  PermitLocalCommand  yes
+  LocalCommand [[ -n $TMUX ]] && tmux rename-window %n
+  # Use master connection(faster)
+  ControlMaster auto
+  ControlPath ~/.ssh/mux-%r@%h:%p
+  ControlPersist 10
+Host springboard
+  HostName XXX.XXX.XXX.XXX
   Port 22
-  User [username]
-Host [server2]
-  HostName [server2 ip]
+  User username
+  # No check known host
+  CheckHostIP no
+Host aliasname
+  HostName XXX.XXX.XXX.XXX
   Port 22
-  User [username]
-  ProxyCommand ssh -W  %h:%p server1
-  # ProxyCommand nohup ssh -t server1 "ssh user@server2"
-  # ProxyCommand ssh server1 nc -w 1000 %h %p
+  User username
+  ProxyCommand ssh -W  %h:%p springboard
+  # ProxyCommand nohup ssh -t springboard "ssh username@server2"
+  # ProxyCommand ssh springboard nc -w 1000 %h %p
+Host proxyserver
+  HostName XXX.XXX.XXX.XXX
+  Port 22
+  User username
+  # SOCKS PROXY
+  #   same with: ssh -D 10080 username@proxyserver
+  DynamicForward 10080
+Host dbserver
+  HostName XXX.XXX.XXX.XXX
+  Port 22
+  User username
+  # Local Forward(same with `ssh -L 15432:rds.postgres.jp:5432 ...`)
+  LocalForward 15432 rds.postgres.jp:5432
+  # see https://unix.stackexchange.com/questions/424183/what-is-the-ssh-config-corresponding-option-for-ssh-n
+  RequestTTY no
+  RemoteCommand cat
+Host remote_devserver
+  HostName XXX.XXX.XXX.XXX
+  Port 22
+  User username
+  # Remote Forward(same with `ssh -R 25900:localhost:5900 ...`)
+  RemoteForward 25900 localhost:5900
+# http://bit.ly/1MD3d24
+Host */*
+  ProxyCommand ssh -W "$(basename "%h")":%p "$(dirname "%h")"
+Host *+*
+  ProxyCommand ssh -W "$(sed -E 's/.*\+//'<<<"%h")":%p "$(sed -E 's/\+[^\+]*//'<<<"%h")"
 EOL
 }
 
