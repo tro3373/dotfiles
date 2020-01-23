@@ -27,6 +27,7 @@ setup_guest() {
   echo "==> checking guest authorized_keys .."
   local grep_key="$(cat < ~/.ssh/id_rsa.pub |cut -c-50)"
   echo "===> grep_key: $grep_key"
+  # shellcheck disable=SC2029
   if ssh vag "test -e ~/.ssh/authorized_keys && grep \"$grep_key\" ~/.ssh/authorized_keys" >& /dev/null; then
     echo "===> Already setupped to .ssh/authorized_keys in guest."
     return
