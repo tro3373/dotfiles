@@ -5,3 +5,4 @@ scoop install git
 scoop bucket add extras
 scoop bucket add versions
 scoop install vscode
+scoop install gitkraken
