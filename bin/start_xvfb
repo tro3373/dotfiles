@@ -11,7 +11,7 @@ main() {
     Xvfb -screen 0 320x240x8 > /dev/null 2>&1 &
     sleep 0.5
   fi
-  if ! pgrep -f VBoxClient >& /dev/null; then
+  if ! pgrep -alf VBoxClient >& /dev/null; then
     echo "==> Starting VBoxClient .."
     VBoxClient --clipboard
   fi
