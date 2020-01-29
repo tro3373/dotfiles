@@ -16,7 +16,11 @@ case "${OSTYPE}" in
         alias tmux='tmux -2'                            # Ubuntu12.04で256を使用するため
         alias git='nocorrect git'                       # Ubuntuで_gitと誤解されるため
         if [[ -e /etc/arch-release ]]; then
-            alias y=yaourt
+            if has yay; then
+                alias y=yay
+            elif has yaourt; then
+                alias y=yaourt
+            fi
             if has powerpill; then
                 alias p='sudo powerpill'
             else
