@@ -221,7 +221,8 @@ load_my_env() {
     export MANPATH="$(cat < $GENMANPATHF)"
 }
 
-is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
+# is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
+is_vagrant() { hostname |grep .vagrant |grep -v grep >& /dev/null; }
 
 _initialize() {
     zcompile_ifneeded ~/.zshrc
@@ -229,7 +230,12 @@ _initialize() {
         zcompile_ifneeded $z
     done
     load_my_env
-    is_vagrant && source ${DOTPATH}/bin/start_xvfb
+    # is_vagrant && source ${DOTPATH}/bin/start_xvfb
+    if is_vagrant; then
+        ${DOTPATH}/bin/start_xvfb
+    else
+        ${DOTPATH}/bin/start_clipper
+    fi
     load_zsh ~/.works.zsh
     #[ -f ~/.secret ] && . ~/.secret
     # source zsh plugins.
