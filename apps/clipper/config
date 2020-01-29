@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+install_common() {
+  if ! has go; then
+    log "golang not installed."
+    return
+  fi
+
+  mexe go get -v -u github.com/wincent/clipper
+}
+
+setting_common() {
+  # shellcheck disable=SC2154
+  make_link_dot2home $app_dir
+}
+
