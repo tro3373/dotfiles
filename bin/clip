@@ -21,6 +21,8 @@ EOF
 
 has() { command -v ${1} >& /dev/null; }
 
+is_clipperable() { has nc && has clipper && pgrep -alf clipper >& /dev/null; }
+
 initialize() {
   if [[ $# -eq 1 && $1 =~ ^(-h|--help)$ ]]; then
     usage
@@ -30,6 +32,7 @@ initialize() {
     usage
     exit 0
   fi
+  is_clipperable && return
   case "${OSTYPE}" in
     msys*)
       ;;
@@ -57,17 +60,21 @@ _clip() {
     clip_val="$clip_val$(cat -)"
   fi
   echo -n -e "$clip_val" |
-    case "${OSTYPE}" in
-      msys*)
-        cat - >/dev/clipboard
-        ;;
-      darwin*)
-        pbcopy
-        ;;
-      *)
-        xsel -bi
-        ;;
-    esac
+    if is_clipperable; then
+      cat - |nc localhost 8377
+    else
+      case "${OSTYPE}" in
+        msys*)
+          cat - >/dev/clipboard
+          ;;
+        darwin*)
+          pbcopy
+          ;;
+        *)
+          xsel -bi
+          ;;
+      esac
+    fi
 }
 
 main() {
