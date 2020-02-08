@@ -232,7 +232,7 @@ _initialize() {
     load_my_env
     # is_vagrant && source ${DOTPATH}/bin/start_xvfb
     if is_vagrant; then
-        ${DOTPATH}/bin/start_xvfb
+       source ${DOTPATH}/bin/start_xvfb
     else
         ${DOTPATH}/bin/start_clipper
     fi
