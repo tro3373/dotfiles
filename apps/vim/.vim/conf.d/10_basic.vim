@@ -145,6 +145,9 @@ if has("autocmd")
   " autocmd BufNewFile,BufRead *.js set tags+=;$HOME/.javascript.ctags;
 endif
 
+" vim -p で開ける最大タブ数
+set tabpagemax=20
+
 " コマンド補完機能
 set wildmenu
 " zsh like な補完に
