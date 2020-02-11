@@ -32,6 +32,7 @@ setup_pakages() {
     return
   fi
   echo "=> Setupping packages.."
+  sudo pacman-key --populate archlinux
   #sudo pacman -Syyu
   sudo pacman -S git curl neofetch
   curl -fSsL git.io/tr3s |bash
