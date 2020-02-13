@@ -3,6 +3,7 @@
 install_msys() {
     install_via_os_default
     # GNU系コマンド集のインストール（gdircolors 用）
+    # shellcheck disable=SC2154
     mexe $instcmd coreutils
 }
 
@@ -27,6 +28,7 @@ setting_common() {
     # https://github.com/seebi/dircolors-solarized
     # ソースコード取得
     make_work_if_needed
+    # shellcheck disable=SC2154
     if [ ! -e "$workdir/dircolors-solarized" ]; then
         mexe git clone --depth 1 https://github.com/seebi/dircolors-solarized.git $workdir/dircolors-solarized
     fi
@@ -52,6 +54,7 @@ setting_common() {
     fi
 
     # その他ドットファイルリンク作成
+    # shellcheck disable=SC2154
     make_link_dot2home $app_dir
     if is_msys; then
         # その他ドットファイルリンク作成
