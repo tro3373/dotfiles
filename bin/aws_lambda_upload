@@ -2,7 +2,6 @@
 
 readonly current_dir=$(pwd)
 profile=default
-bucket=
 dummy="echo"
 
 initialize() {

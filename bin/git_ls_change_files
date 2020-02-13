@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+unique=0
+author=
+mine=0
+args=()
+
+usage() {
+  cat <<EOF
+
+List changed files from commit id of specified directory.
+
+  Usage:
+      $command_name <commitidopt> <directory>
+    Options
+      -h|--help : Show this usage
+      -a|--author : specify author
+      -m|--mine : my changes
+
+EOF
+}
+
+add_args() { args+=("$@"); }
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h|--help) usage && exit 0  ;;
+      -a|--author) author=$1 ;;
+      -u|--unique) unique=1 ;;
+      -m|--mine) mine=1 ;;
+      *) add_args "$1"            ;;
+    esac
+    shift
+  done
+  setup_author_if_needed
+}
+
+setup_author_if_needed() {
+  [[ -n $author ]] && return
+  [[ $mine -ne 1 ]] && return
+  author=$(git config --global --get user.name)
+}
+
+ls_change_files() {
+  local c=$1
+  local d=${2:-.}
+  local _author=
+  if [[ -n $author ]]; then
+    _author="--author $author"
+  fi
+  local _cmd="git log $c --name-only --oneline $_author $d"
+  if [[ $unique -ne 1 ]]; then
+    echo ">>> $_cmd"
+    $_cmd
+  else
+    $_cmd |
+      while read -r line; do
+        [[ -z $line ]] && continue
+        [[ $line =~ ^#.* ]] && continue
+        # commit hash 7character
+        [[ $line =~ ^.......\ .* ]] && continue
+        echo $line
+      done |sort -u
+  fi
+}
+
+main() {
+  initialize "$@"
+  ls_change_files "${args[@]}"
+}
+main "$@"

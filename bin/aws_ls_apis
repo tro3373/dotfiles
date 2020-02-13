@@ -27,14 +27,14 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-      -e) dummy= ;;
+      # -e) dummy= ;;
       #-f|--file) shift && file=$1 ;;
       -h|--help) usage && exit 0  ;;
       -u|--url) ;;
       -s|--swagger) mode=swagger ;;
       -r|--reqmap) mode=reqmap ;;
       --region) shift && region=$1 ;;
-      *) profile="$arg" ;;
+      *) profile="$1" ;;
     esac
     shift
   done

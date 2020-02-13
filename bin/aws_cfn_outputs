@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+region=ap-northeast-1
+profile=${AWS_PROFILE:-default}
+stack_name=
+dummy="echo"
+
+usage() {
+  cat <<EOF
+
+  List Cfn OutPuts
+
+  Usage:
+    $command_name [option]
+  Options
+    -h|--help : Show this usage
+    -u|--url : Show lambda name and url mapping. Default option.
+    -s|--swagger : Export ApiGateway Setting JSON swagger format.
+    -r|--reqmap : Show request mapping json.
+    --region <region> : use specify region. default ap-northeast-1
+
+EOF
+}
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -h|--help) usage && exit 0  ;;
+      -e) dummy= ;;
+      -r) region="$arg" ;;
+      -p) profile="$arg" ;;
+      *) stack_name="$arg" ;;
+    esac
+  done
+  [[ -z $stack_name ]] && echo "Specify stack name." 1>&2 && exit 1
+}
+
+output_cfn() {
+  $dummy aws --profile $profile cloudformation --region $region describe-stacks --stack-name $stack_name |
+    jq -r '.Stacks[].Outputs[] | .OutputKey+"	"+.OutputValue'
+}
+
+main() {
+  initialize "$@"
+  output_cfn
+  echo "Done"
+}
+main "$@"

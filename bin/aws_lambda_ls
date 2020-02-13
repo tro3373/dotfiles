@@ -11,8 +11,9 @@ initialize() {
 }
 
 ls_lambdas() {
+  # lambda list-functions --query 'Functions[].FunctionName' "$@" |
   aws --profile $profile \
-    lambda list-functions --query 'Functions[].FunctionName' "$@" |
+    lambda list-functions --query 'Functions[].FunctionName' |
     tr -d '"' |
     tr -d ',' |
     tr -d '[' |
