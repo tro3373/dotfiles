@@ -37,7 +37,7 @@ install_mac() {
 }
 
 install_msys() {
-  def_install tmux-git
+  def_install tmux
   # build_msys
 }
 
