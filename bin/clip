@@ -71,7 +71,11 @@ _clip() {
           pbcopy
           ;;
         *)
-          xsel -bi
+          local _display=${DISPLAY:-:0}
+          xsel -bi --display $_display
+          # cat - |
+          #   tee -a $0.log |
+          #   xsel -bi --display $_display
           ;;
       esac
     fi
