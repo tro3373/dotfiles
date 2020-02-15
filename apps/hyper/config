@@ -9,13 +9,16 @@ install_mac()    {
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
-setting_common() { not_supported; }
-setting_arch()   { not_supported; }
-setting_msys()   { not_supported; }
-setting_cygwin() { not_supported; }
-setting_mac()    { not_supported; }
-setting_ubuntu() { not_supported; }
-setting_redhat() { not_supported; }
+setting_common() {
+  # shellcheck disable=SC2154
+  make_link_dot2home $app_dir
+}
+# setting_arch()   { not_supported; }
+# setting_msys()   { not_supported; }
+# setting_cygwin() { not_supported; }
+# setting_mac()    { not_supported; }
+# setting_ubuntu() { not_supported; }
+# setting_redhat() { not_supported; }
 #is_installed
 #install_via_os_default
 #def_install
