@@ -55,7 +55,7 @@ tunnel() {
     rp=${p%%:*}
   fi
   echo ">> Tunneling localhost:$lp <=== $remote:$rp .." 1>&2
-  ssh -L $lp:localhost:$rp $remote -N &
+  ssh -g -L $lp:localhost:$rp $remote -N &
   add_pid $!
 }
 
