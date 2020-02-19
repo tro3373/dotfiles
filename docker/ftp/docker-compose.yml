@@ -1,0 +1,28 @@
+version: '3.7'
+services:
+  ftpd:
+    image: stilliard/pure-ftpd
+    container_name: ftpd
+    restart: always
+    environment:
+      PUBLICHOST: 192.168.33.10
+      FTP_USER_NAME: ftp_user
+      FTP_USER_PASS: pass
+      FTP_USER_HOME: /home/ftp_user
+    ports:
+      - 0.0.0.0:21:21
+      - 0.0.0.0:30000-30009:30000-30009
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./volume_ftp:/home/ftp_user
+  sftpd:
+    image: atmoz/sftp
+    container_name: sftpd
+    restart: always
+    ports:
+      - "2222:22"
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./volume_sftp:/home/sftp_user/upload
+    command: sftp_user:pass:1001
+
