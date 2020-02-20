@@ -8,8 +8,18 @@ images=`docker images | awk '/^<none>/ { print $$3 }'`
 
 default: up
 start: up
-up:
+up: init_dirs
 	docker-compose up -d && docker-compose logs
+
+init_dirs:
+	@if [ ! -e ./volume_ftp ] ; then \
+		mkdir ./volume_ftp; \
+		chmod 777 ./volume_ftp; \
+	fi; \
+	if [ ! -e ./volume_sftp ] ; then \
+		mkdir ./volume_sftp; \
+		chmod 777 ./volume_sftp; \
+	fi;
 
 stop: down
 down:
