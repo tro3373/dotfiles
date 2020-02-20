@@ -273,5 +273,22 @@ snippet dummyset
     }
     initialize "$@"
 
+
+snippet initialize
+    initialize() {
+      while true; do
+        [[ -z \$1 ]] && break
+        case "\$1" in
+          -h|--help) usage && exit 0  ;;
+          #-f*|--file*) file=${1#*=} ;;
+          #-f|--file) shift && file=\$1 ;;
+          *) add_args "\$1"            ;;
+        esac
+        shift
+      done
+      check
+      # all_args="${args[*]}"
+    }
+
 snippet reado
     readonly
