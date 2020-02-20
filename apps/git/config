@@ -64,13 +64,14 @@ git config --global user.name sample_username
 git config --global user.email sample_email@domain.com
 git config --global core.editor "vim -c 'set fenc=utf-8'"
 git config --global core.quotepath false
-git config --global color.ui auto
-git config --global push.default simple
-git config --global http.sslverify false
 git config --global core.preloadindex true
-git config --global --add merge.ff false
 git config --global core.fscache true
 git config --global core.filemode true
+git config --global color.ui auto
+git config --global http.sslverify false
+git config --global push.default simple
+git config --global --add merge.ff false
+git config --global rebase.autostash true
 git config --global alias.co checkout
 git config --global alias.cm commit
 git config --global alias.st status
