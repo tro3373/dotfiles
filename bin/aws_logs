@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+profile=${AWS_PROFILE:-default}
+group=
+filter="START"
+sta=
+end=
+
+has() { command -v ${1} >& /dev/null; }
+initialize() {
+  if ! has awslogs; then
+    echo "No awslogs command exists." 1>&2
+    exit 1
+  fi
+
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -p) shift && profile="$1" ;;
+      -f) shift && filter="$1" ;;
+      -s) shift && sta="$1" ;;
+      -e) shift && end="$1" ;;
+      *) group="$1" ;;
+    esac
+    shift
+  done
+
+  if [[ -z $group ]]; then
+    echo "Specify loggroup" 1>&2
+    exit 1
+  fi
+  if [[ -z $sta ]]; then
+    sta=$(date -d "-9 hour -1 min" "+%Y/%m/%d %H:%M")
+  fi
+  if [[ -z $end ]]; then
+    end=$(date -d "-9 hour" "+%Y/%m/%d %H:%M")
+  fi
+}
+
+main() {
+  initialize "$@"
+  # sta/end is GMT
+  awslogs get $group \
+    -s "$sta" \
+    -e "$end" \
+    -f "\"$filter\"" \
+    --profile $profile
+  echo "Done"
+}
+main "$@"
