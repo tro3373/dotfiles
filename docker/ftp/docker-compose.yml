@@ -23,6 +23,6 @@ services:
       - "2222:22"
     volumes:
       - /etc/localtime:/etc/localtime
-      - ./volume_sftp:/home/sftp_user/upload
+      - ./volume_sftp:/home/sftp_user
     command: sftp_user:pass:1001
 
