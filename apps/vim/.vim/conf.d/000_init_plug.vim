@@ -1,10 +1,8 @@
-"######################################################################
-"   plug.vim
-"           プラグイン設定ファイル
-"           vim-plug を使用してプラグインを管理する
-"           @see https://github.com/junegunn/vim-plug
-"######################################################################
-
+" " Windows の場合は必要なパスを追加しておく
+" if has('win32')
+"   let $PATH='c:\dev\vim;c:\msys64\mingw64\bin;c:\msys64\usr\bin;'
+"  \ .'c:\Program Files\Java\jdk1.8.0_221\bin;'.$PATH
+" endif
 let g:is_windows = has('win16') || has('win32') || has('win64')
 let g:is_cygmsys2 = has('win32unix') " Msys2 is true
 let g:is_mac = !g:is_windows && !g:is_cygmsys2
@@ -13,7 +11,7 @@ let g:is_mac = !g:is_windows && !g:is_cygmsys2
       \     system('uname') =~? '^darwin'))
 let g:is_linux = !g:is_windows && !g:is_cygmsys2 && !g:is_mac && has('unix')
 if g:is_windows
-  " Exchange path separator.
+  " Windows でもパスの区切り文字を / にする
   set shellslash
 endif
 
@@ -26,6 +24,8 @@ if has('vim_starting')
   end
 endif
 
+" プラグインの読み込み
+" let g:plug_shallow = 0
 call plug#begin('$HOME/.vim/plugged')
   " vim-plug
   Plug 'junegunn/vim-plug',
@@ -162,6 +162,8 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'Shougo/vimshell'                                  " uniteインターフェースでシェル使用できる
   " Plug 'sjl/gundo.vim'                                    " UNDO履歴を管理 http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
   " Plug 'fuenor/qfixhowm'                                  " メモプラグイン
+  Plug 'thinca/vim-ambicmd'                                 " 長いコマンド名を個別の設定なしで入力するためのプラグイン
+  " Plug 'thinca/vim-openbuf'
   Plug 'thinca/vim-quickrun'                                " 現在のファイルを実行して quickfix に表示
   Plug 'osyo-manga/shabadou.vim'                            " quick-run 用プラグイン
   " Plug 'tpope/vim-fugitive'                               " Git wrapper so awesome

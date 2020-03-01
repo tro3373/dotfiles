@@ -1,3 +1,7 @@
+if !g:plug.is_installed("neocomplete.vim")
+  finish
+endif
+
 "Note: This option must set it in .vimrc(_vimrc).  NOT IN .gvimrc(_gvimrc)!
 " Disable AutoComplPop.
 let g:acp_enableAtStartup = 0
