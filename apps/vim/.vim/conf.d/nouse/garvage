@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+readonly current_dir=$(pwd)
+
+main() {
+  find ../*vim -type f |
+    sort |
+    while read -r f; do
+      [[ -z $f ]] && continue
+      [[ $f =~ ^#.* ]] && continue
+      local fnm=$(basename $f)
+      [[ $fnm =~ ^(0|1).* ]] && continue
+      local plugnm=$(echo $fnm |sed -e 's,^....,,g' -e 's,.vim$,,g')
+      [[ $plugnm =~ (grep|ctags) ]] && continue
+      # echo "> $plugnm"
+      if grep "/$plugnm'" ../000_init_plug.vim |
+        sed -e 's,".*,,g' |
+        grep Plug >& /dev/null; then
+        continue
+      fi
+      echo ">> Deleting $f .."
+      mv $f $current_dir/
+    done
+}
+main "$@"
