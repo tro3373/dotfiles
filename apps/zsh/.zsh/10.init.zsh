@@ -134,6 +134,7 @@ gen_path_file_ifneeded() {
     add_path "/c/Program Files/Google/Chrome/Application"
     # add_path $HOME/win/tools/sublime-text-3
     # add_path $HOME/win/tools/atom/resources/app/apm/bin
+    add_path "${HOME}/win/scoop/shims" # scoop
 
     # For Mac sed
     add_path "/usr/local/opt/coreutils/libexec/gnubin"
