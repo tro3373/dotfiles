@@ -1,5 +1,5 @@
 " " ${HOME}/.vim/conf.d/ 以下にある *.vim(分割された設定ファイル) を全て適用
-" set runtimepath+=$HOME/.vim/
+set runtimepath+=$HOME/.vim/
 " runtime! conf.d/*.vim
 
 " MacVim付属のgvimrcで、独自のmacvimと名付けられたカラースキームを勝手に読むのを防ぐ
