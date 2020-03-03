@@ -31,7 +31,9 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'junegunn/vim-plug',
         \ {'dir': '$HOME/.vim/plugged/vim-plug/autoload'}
 
+  " =================================================================
   " View
+  " =================================================================
   " color-scheme
   Plug 'romainl/Apprentice'
   " Plug 'morhetz/gruvbox'
@@ -45,14 +47,13 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'vim-scripts/twilight'
   " Plug 'jeetsukumaran/vim-nefertiti'
 
-  Plug 'ujihisa/unite-colorscheme'                        " カラースキーム変更
-
+  Plug 'itchyny/lightline.vim'                            " status-line
   Plug 'nathanaelkane/vim-indent-guides'                  " indent guide
+  Plug 'airblade/vim-gitgutter'                           " Shows a git diff in the gutter!!!!!
 
-  " status-line
-  Plug 'itchyny/lightline.vim'
-  
-
+  " =================================================================
+  " Feature/Funcs Base
+  " =================================================================
   " Unite関連
   function! BuildVimproc(info) abort
     " info is a dictionary with 3 fields
@@ -92,6 +93,27 @@ call plug#begin('$HOME/.vim/plugged')
                                                           " yankring : yank history, menu : extension selector menu
 
 
+  Plug 'banyan/recognize_charcode.vim'                    " 文字コード判定
+  Plug 'vim-scripts/sudo.vim'                             " sudo
+
+  " =================================================================
+  " Feature/Funcs Operation
+  " =================================================================
+  Plug 'thinca/vim-quickrun'                              " 現在のファイルを実行して quickfix に表示
+  Plug 'osyo-manga/shabadou.vim'                          " quick-run 用プラグイン
+
+  Plug 'kana/vim-submode'                                 " vim-submode(キーマップ plugin)
+  Plug 'rhysd/accelerated-jk'                             " Accelareted-jk
+  Plug 'terryma/vim-expand-region'                        " visually select increasingly larger regions of text via `v`
+  Plug 'iberianpig/tig-explorer.vim'                      " vimからtig
+
+  Plug 'thinca/vim-ambicmd'                               " 長いコマンド名を個別の設定なしで入力するためのプラグイン
+  " Plug 'terryma/vim-multiple-cursors'                     " MultiCursor
+  Plug 'ujihisa/unite-colorscheme'                        " カラースキーム変更
+
+  " =================================================================
+  " Feature/Funcs Search/Finds/Analyze
+  " =================================================================
   Plug 'rking/ag.vim'                                     " SilverSearcher
   if !g:is_windows && !g:is_cygmsys2
       Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
@@ -99,33 +121,6 @@ call plug#begin('$HOME/.vim/plugged')
       Plug 'junegunn/fzf.vim'
   endif
   Plug 'rhysd/clever-f.vim'                               " f検索
-  " Plug 'terryma/vim-multiple-cursors'                     " MultiCursor
-
-  Plug 'terryma/vim-expand-region'                        " visually select increasingly larger regions of text
-
-
-  Plug 'vim-scripts/sudo.vim'                             " sudo
-  Plug 'banyan/recognize_charcode.vim'                    " 文字コード判定
-
-  Plug 'airblade/vim-gitgutter'                           " Shows a git diff in the gutter!!!!!
-
-  Plug 'kana/vim-submode'                                 " vim-submode(キーマップ plugin)
-  Plug 'rhysd/accelerated-jk'                             " Accelareted-jk
-
-  Plug 'Shougo/neosnippet'                                " Ctrl+k でスニペットを用意
-  Plug 'Shougo/neosnippet-snippets'                       " 基本スニペット for neosnippet
-  Plug 'honza/vim-snippets'                               " snipMate UltiSnip Snippets
-  " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
-
-  " Plug 'Shougo/neocomplcache.vim'                         " 補完候補を自動でポップアップ(old)
-  Plug 'Shougo/neocomplete.vim'                           " Next generation completion framework after neocomplcache
-
-  Plug 'tyru/caw.vim'                                     " コメントアウトプラグイン <Leader>+c
-  Plug 'tpope/vim-surround'                               " 囲文字入力アシスト
-  " Plug 'kana/vim-smartchr'                                " = 等の便利入力
-  Plug 'kana/vim-smartinput'                              " () 等の入力補完
-  Plug 'vim-scripts/Align'                                " CSV,TSV整形
-  Plug 'junegunn/vim-easy-align'                          " Align text
 
   " ソース解析
   Plug 'Shougo/unite-outline'                             " 関数一覧とかを表示
@@ -149,12 +144,29 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'editorconfig/editorconfig-vim'                      " Official editorconfig
   " Plug 'sgur/vim-editorconfig'                              " Not Official editorconfig(less depends)
 
-  Plug 'iberianpig/tig-explorer.vim'                        " vimからtig
-  Plug 'thinca/vim-quickrun'                                " 現在のファイルを実行して quickfix に表示
-  Plug 'osyo-manga/shabadou.vim'                            " quick-run 用プラグイン
 
-  Plug 'thinca/vim-ambicmd'                                 " 長いコマンド名を個別の設定なしで入力するためのプラグイン
+  " =================================================================
+  " Feature/Funcs Edit
+  " =================================================================
+  Plug 'Shougo/neosnippet'                                " Ctrl+k でスニペットを用意
+  Plug 'Shougo/neosnippet-snippets'                       " 基本スニペット for neosnippet
+  Plug 'honza/vim-snippets'                               " snipMate UltiSnip Snippets
+  " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
 
+  " Plug 'Shougo/neocomplcache.vim'                         " 補完候補を自動でポップアップ(old)
+  Plug 'Shougo/neocomplete.vim'                           " Next generation completion framework after neocomplcache
+
+  " Plug 'kana/vim-smartchr'                                " = 等の便利入力
+  Plug 'kana/vim-smartinput'                              " () 等の入力補完
+  Plug 'tyru/caw.vim'                                     " コメントアウトプラグイン <Leader>+c
+  Plug 'tpope/vim-surround'                               " 囲文字入力アシスト
+  Plug 'vim-scripts/Align'                                " CSV,TSV整形
+  Plug 'junegunn/vim-easy-align'                          " Align text
+
+
+  " =================================================================
+  " Langs or Others
+  " =================================================================
   Plug 'hashivim/vim-terraform'                             " Terraform syntax
   Plug 'posva/vim-vue'                                      " vue syntax
   Plug 'mindriot101/vim-yapf'                               " for python
@@ -172,6 +184,7 @@ call plug#begin('$HOME/.vim/plugged')
       Plug 'mattn/startmenu-vim'
   endif
 
+  " ================================== memo
   " Plug 'othree/html5.vim'                                 " For erb tab indent
   " Plug 'vim-scripts/nginx.vim'                            " Nginx Syntax
   " Plug 'mattn/learn-vimscript.git'                        " Learn VimScript (:help learn-vimscript)
