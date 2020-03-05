@@ -52,6 +52,24 @@ sub() {
   # pre_group=$group
 }
 
+summary() {
+  [[ -z $lines ]] && return
+  local pre_group=
+  local sum_val=0
+  # shellcheck disable=SC2034
+  (echo -e "$lines" && echo -e "DUMMY\tDUMMY\tDUMMY\tDUMMY\tDUMMY\tDUMMY") |
+    while read -r ymd hms time htime group task; do
+      if [[ $pre_group != "$group" ]]; then
+        if [[ -n $pre_group ]]; then
+          echo -e "$pre_group\t$sum_val\t$(human_pass_time $sum_val)"
+        fi
+        sum_val=0
+      fi
+      sum_val=$((sum_val+time))
+      pre_group=$group
+    done
+}
+
 show() {
   if [[ $vtype =~ ^last.* ]]; then
     local list=$(cat -)
@@ -61,8 +79,8 @@ show() {
         if [[ $vtype == "last" ]]; then
           cat -
         else
-          # todo
-          cat - |sort -k5
+          local lines=$(cat - |sort -k5)
+          summary
         fi
   else
     cat -
