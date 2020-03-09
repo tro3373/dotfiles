@@ -74,6 +74,7 @@ show() {
   if [[ $vtype =~ ^last.* ]]; then
     local list=$(cat -)
     local last_date=$(echo -e "$list" |tail -1 |awk '{print $1}')
+    echo ">> $last_date" 1>&2
     echo -e "$list" |
       grep -E "^$last_date" |
         if [[ $vtype == "last" ]]; then
@@ -98,6 +99,9 @@ main() {
       fi
   )
   [[ -z $f ]] && return
+  if [[ $vtype =~ ^last.* && -a $f ]]; then
+    echo "> $f" 1>&2
+  fi
   (grep -E "^- 20" $f && date "+%Y%m%d_%H%M%S dummy") |
     sed -e 's/^- //g' |
     while read -r ymdhms group task; do
