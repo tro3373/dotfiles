@@ -18,6 +18,12 @@ check() {
 
 _jadjar() {
   local target_jar="$*"
+  if [[ $target_jar =~ ^.*\.class$ ]]; then
+    local f=$target_jar
+    jad -d "$(dirname $f)" -s java -lnc $f
+    return
+  fi
+
   unzip -d $target_jar.tmp $target_jar
   pushd $target_jar.tmp
   find . -name '*.class' |
