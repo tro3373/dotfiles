@@ -11,7 +11,7 @@ main() {
       local fnm=$(basename $f)
       [[ $fnm =~ ^(0|1).* ]] && continue
       local plugnm=$(echo $fnm |sed -e 's,^....,,g' -e 's,.vim$,,g')
-      [[ $plugnm =~ (grep|ctags) ]] && continue
+      [[ $plugnm =~ (searcher|ctags) ]] && continue
       # echo "> $plugnm"
       if grep "/$plugnm'" ../000_init_plug.vim |
         sed -e 's,".*,,g' |
