@@ -130,7 +130,8 @@ call plug#begin('$HOME/.vim/plugged')
   endif
 
   if has('job') && has('channel') && has('timers')
-    Plug 'w0rp/ale'                                         " 構文解析(非同期)
+    " Plug 'w0rp/ale'                                         " 構文解析(非同期)
+    Plug 'dense-analysis/ale'                               " 構文解析(非同期)
   else
     Plug 'scrooloose/syntastic'                             " 構文解析
     " Plug 'vim-syntastic/syntastic'                        " 構文解析
