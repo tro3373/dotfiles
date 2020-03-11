@@ -168,6 +168,18 @@ call plug#begin('$HOME/.vim/plugged')
   " =================================================================
   " Langs or Others
   " =================================================================
+  " Vim LSP!
+  " @see https://mattn.kaoriya.net/?page=3
+  Plug 'prabirshrestha/async.vim'
+  Plug 'prabirshrestha/asyncomplete.vim'
+  Plug 'prabirshrestha/asyncomplete-lsp.vim'
+  Plug 'prabirshrestha/vim-lsp'                             " Vim Language Server Protocol
+  Plug 'mattn/vim-lsp-settings'                             " use `:LspInstallServer`
+  Plug 'mattn/vim-lsp-icons'
+  Plug 'hrsh7th/vim-vsnip'                                  " 穴あき形式補完候補用？
+  Plug 'hrsh7th/vim-vsnip-integ'
+
+
   Plug 'hashivim/vim-terraform'                             " Terraform syntax
   Plug 'posva/vim-vue'                                      " vue syntax
   Plug 'mindriot101/vim-yapf'                               " for python
