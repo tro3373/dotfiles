@@ -77,6 +77,7 @@ let g:ale_fixers['markdown']   = ['prettier']
 let g:ale_fixers['vue']        = ['prettier', 'trim_whitespace', 'remove_trailing_lines']
 let g:ale_fixers['java']       = ['google_java_format', 'trim_whitespace', 'remove_trailing_lines']
 
+" let g:ale_fix_on_save_ignore = ['sh', 'javascript']
 
 
 " Ctrl k+j でエラー間移動
