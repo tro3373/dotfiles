@@ -12,8 +12,8 @@ let g:ale_open_list = 1
 " エラーと警告がなくなっても開いたままにするか
 let g:ale_keep_list_wildow_open = 0
 " シンボル変更
-" let g:ale_sign_error = '!!'
-" let g:ale_sign_warning = '=='
+let g:ale_sign_error = '!!'
+let g:ale_sign_warning = '=='
 " ハイライト無効
 highlight clear ALEErrorSign
 highlight clear ALEWarningSign
@@ -28,7 +28,6 @@ let g:ale_lint_on_enter = 1
 let g:ale_fix_on_save = 1
 " ローカルの設定ファイルを考慮する
 let g:ale_javascript_prettier_use_local_config = 1
-
 
 " Ignore shellcheck error
 let g:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162'

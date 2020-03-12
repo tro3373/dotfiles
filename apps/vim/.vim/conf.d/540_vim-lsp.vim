@@ -26,3 +26,12 @@ let g:asyncomplete_auto_popup = 1           " 自動で入力補完ポップア�
 let g:asyncomplete_auto_completeopt = 0     " 自動で入力補完ポップアップを表示
 let g:asyncomplete_popup_delay = 200        " ポップアップ表示ディレイ
 let g:lsp_text_edit_enabled = 1             " textEdit を有効(LSP の仕様)
+
+" language server を指定
+" let g:lsp_settings_filetype_javascript = ['eslint-language-server']
+
+inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+inoremap <expr> <cr>    pumvisible() ? "\<C-y>" : "\<cr>"
+
+imap <c-space> <Plug>(asyncomplete_force_refresh)
