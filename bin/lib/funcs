@@ -37,7 +37,7 @@ ink() {
   if [[ "$#" -eq 2 ]]; then
     text="$2"
     case "$1" in
-      black | red | green | yellow | blue | purple | cyan | gray | white)
+    black | red | green | yellow | blue | purple | cyan | gray | white)
       eval color="\$$1"
       ;;
     esac
@@ -63,7 +63,7 @@ mexe() {
 }
 
 # コマンドがインストールされているかチェックする
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 
 # $* が存在するかどうか判定する
 isexist() {
@@ -71,7 +71,7 @@ isexist() {
   # local count=$(ls -a "$file" 2>/dev/null |wc -l|sed 's/ //g')
   # [[ $count -eq 0 ]] && return 1
   # return 0
-  find $file >& /dev/null
+  find $file >&/dev/null
 }
 
 make_dir_if_needed() {
@@ -209,7 +209,7 @@ del_if_exist() {
 }
 
 is_arch() { [[ "$DETECT_OS" == "arch" ]]; }
-is_arm() { uname -m |grep arm>&/dev/null; }
+is_arm() { uname -m | grep arm >&/dev/null; }
 is_msys() { [[ "$DETECT_OS" == "msys" ]]; }
 is_cygwin() { [[ "$DETECT_OS" == "cygwin" ]]; }
 is_mac() { [[ "$DETECT_OS" == "mac" ]]; }
@@ -221,11 +221,11 @@ is_unix() { ! is_win; }
 has_local_package() {
   local p=$1
   if is_arch || is_msys; then
-    pacman -Qi $p >& /dev/null && return 0
+    pacman -Qi $p >&/dev/null && return 0
   elif is_ubuntu; then
-    dpkg -l $p >& /dev/null && return 0
+    dpkg -l $p >&/dev/null && return 0
   elif is_redhat; then
-    rpm -qi $p >& /dev/null && return 0
+    rpm -qi $p >&/dev/null && return 0
   else
     return 1
   fi
@@ -268,14 +268,14 @@ _gh() {
   fi
   if [[ -z $tag ]]; then
     if ! is_dry; then
-      local tag=$(git tag --list |tail -1 2>/dev/null)
+      local tag=$(git tag --list | tail -1 2>/dev/null)
     fi
     if [[ -z $tag ]]; then
       return
     fi
   fi
   if ! is_dry; then
-    local now_branch=$(git branch |grep -E "\*" |tr -d "*" |tr -d " ")
+    local now_branch=$(git branch | grep -E "\*" | tr -d "*" | tr -d " ")
   fi
   if [[ -n $now_branch && $now_branch != "$tag" ]]; then
     mexe $_sudo git checkout -b $tag $tag
@@ -321,16 +321,17 @@ dl_untar() {
   if [[ ! -e $to ]]; then
     mexe mkdir -p "$to"
   fi
-  if ! find $to >& /dev/null; then
+  if ! find $to >&/dev/null; then
     mexe "tar xvfpz $_fname -C \"$to\" --strip-components $strip"
   fi
 }
-dl_unzip () {
+dl_unzip() {
   local url="$1"
   local to="${2:-$workdir}"
   cd_work
   dl "$url" dl.zip
   mexe "unzip dl.zip -d \"$to\""
+  log "==> Unzipped"
 }
 
 tool_env() {
