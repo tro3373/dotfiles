@@ -26,13 +26,14 @@ EOF
 pass_time() {
   local from=$1
   local to=$2
-  local all_minute=$(echo "scale=0; ($to-$from)/60" |bc)
+  local all_minute=$(echo "scale=0; ($to-$from)/60" | bc)
   echo $all_minute
 }
 human_pass_time() {
   local all_minute=$1
-  local h=$(echo "scale=0; $all_minute/60" |bc)
-  local m=$(echo "scale=0; $all_minute%60" |bc)
+  local h=$(echo "scale=0; $all_minute/60" | bc)
+  local m=$(echo "scale=0; $all_minute%60" | bc)
+  # echo "$h $m" 1>&2
   printf "%02dh%02dm" $h $m
 }
 sub() {
@@ -40,6 +41,7 @@ sub() {
     if [[ -n $pre_group ]]; then
       local pass_time_m=$(pass_time $pre_unixt $unixt)
       local human_pass_time=$(human_pass_time $pass_time_m)
+      # echo "$pre_unixt $unixt $pass_time_m $human_pass_time" 1>&2
       printf "%s\t%s\t%s\t%s\t%s\t%s\\n" "$pre_ymd" "$pre_hms" "$pass_time_m" "$human_pass_time" "$pre_group" "$pre_task"
     fi
   fi
@@ -65,7 +67,7 @@ summary() {
         fi
         sum_val=0
       fi
-      sum_val=$((sum_val+time))
+      sum_val=$((sum_val + time))
       pre_group=$group
     done
 }
@@ -73,16 +75,16 @@ summary() {
 show() {
   if [[ $vtype =~ ^last.* ]]; then
     local list=$(cat -)
-    local last_date=$(echo -e "$list" |tail -1 |awk '{print $1}')
+    local last_date=$(echo -e "$list" | tail -1 | awk '{print $1}')
     echo ">> $last_date" 1>&2
     echo -e "$list" |
       grep -E "^$last_date" |
-        if [[ $vtype == "last" ]]; then
-          cat -
-        else
-          local lines=$(cat - |sort -k5)
-          summary
-        fi
+      if [[ $vtype == "last" ]]; then
+        cat -
+      else
+        local lines=$(cat - | sort -k5)
+        summary
+      fi
   else
     cat -
   fi
@@ -90,16 +92,17 @@ show() {
 
 main() {
   [[ $vtype =~ ^(-h|--help)$ ]] && usage && return
-  local f=$(find $HOME/works/00_memos/ -name "*月.md" |
-    sort -r|
+  local f=$(
+    find $HOME/works/00_memos/ -name "*月.md" |
+      sort -r |
       if [[ $vtype =~ ^last.* ]]; then
-        cat - |head -1
+        cat - | head -1
       else
-        cat - |fzf
+        cat - | fzf
       fi
   )
   [[ -z $f ]] && return
-  if [[ $vtype =~ ^last.* && -a $f ]]; then
+  if [[ $vtype =~ ^last.* && -e $f ]]; then
     echo "> $f" 1>&2
   fi
   (grep -E "^- 20" $f && date "+%Y%m%d_%H%M%S dummy") |
@@ -110,16 +113,15 @@ main() {
       local hms=${ymdhms##*_}
       printf "%s\t%s\t%s\t%s\\n" "$ymd" "$hms" "$group" "$task"
     done |
-      sort |
-      while read -r ymd hms group task; do
-        local strd=$(echo "${ymd}_${hms}" | sed -e "s/^\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)_\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)/\1\/\2\/\3 \4:\5:\6/g")
-        local unixt=$(date -d "$strd" "+%s")
-        # echo "$strd $unixt"
-        printf "%s\t%s\t%s\t%s\t%s\\n" "$ymd" "$hms" "$unixt" "$group" "$task"
-      done |
-        while read -r ymd hms unixt group task; do
-          sub "$@"
-        done | show
+    sort |
+    while read -r ymd hms group task; do
+      local strd=$(echo "${ymd}_${hms}" | sed -e "s/^\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)_\([0-9]\{2\}\)\([0-9]\{2\}\)\([0-9]\{2\}\)/\1\/\2\/\3 \4:\5:\6/g")
+      local unixt=$(date -d "$strd" "+%s")
+      # echo "$strd $unixt"
+      printf "%s\t%s\t%s\t%s\t%s\\n" "$ymd" "$hms" "$unixt" "$group" "$task"
+    done |
+    while read -r ymd hms unixt group task; do
+      sub "$@"
+    done | show
 }
 main "$@"
-
