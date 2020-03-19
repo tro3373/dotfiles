@@ -26,23 +26,24 @@ EOF
 pass_time() {
   local from=$1
   local to=$2
-  local all_minute=$(echo "scale=0; ($to-$from)/60" | bc)
-  echo $all_minute
+  local all_second=$(echo "scale=0; ($to-$from)" | bc)
+  echo $all_second
 }
 human_pass_time() {
-  local all_minute=$1
-  local h=$(echo "scale=0; $all_minute/60" | bc)
-  local m=$(echo "scale=0; $all_minute%60" | bc)
+  local all_second=$1
+  local h=$(echo "scale=0; $all_second/60/60" | bc)
+  local m=$(echo "scale=0; ($all_second/60)%60" | bc)
+  local s=$(echo "scale=0; $all_second%60" | bc)
   # echo "$h $m" 1>&2
-  printf "%02dh%02dm" $h $m
+  printf "%02dh%02dm%02ds" $h $m $s
 }
 sub() {
   if [[ -n $pre_unixt ]]; then
     if [[ -n $pre_group ]]; then
-      local pass_time_m=$(pass_time $pre_unixt $unixt)
-      local human_pass_time=$(human_pass_time $pass_time_m)
-      # echo "$pre_unixt $unixt $pass_time_m $human_pass_time" 1>&2
-      printf "%s\t%s\t%s\t%s\t%s\t%s\\n" "$pre_ymd" "$pre_hms" "$pass_time_m" "$human_pass_time" "$pre_group" "$pre_task"
+      local pass_time_s=$(pass_time $pre_unixt $unixt)
+      local human_pass_time=$(human_pass_time $pass_time_s)
+      # echo "$pre_unixt $unixt $pass_time_s $human_pass_time" 1>&2
+      printf "%s\t%s\t%s\t%s\t%s\t%s\\n" "$pre_ymd" "$pre_hms" "$pass_time_s" "$human_pass_time" "$pre_group" "$pre_task"
     fi
   fi
   pre_ymd=$ymd
