@@ -3,7 +3,7 @@
 install_common() {
   install_via_os_default
 }
-install_arch()   { not_supported; }
+# install_arch()   { not_supported; }
 install_msys()   { not_supported; }
 install_cygwin() { not_supported; }
 install_mac()    { not_supported; }
