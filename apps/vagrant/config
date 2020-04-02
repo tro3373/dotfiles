@@ -18,18 +18,26 @@ caskinstall() {
 }
 install_common() { not_supported; }
 install_arch()   { not_supported; }
-install_msys()   { not_supported; }
+install_msys()   {
+  mexe scoop install vagrant
+}
 install_cygwin() { not_supported; }
 install_mac()    {
   caskinstall virtualbox
   caskinstall vagrant
-  mexe vagrant plugin install vagrant-disksize
-  log "Add Vagrantfile bellow "
-  log "   config.disksize.size = '150GB'"
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
-setting_common() { not_supported; }
+setting_common() {
+  # check & upgrade virtualbox guest-tools auto
+  mexe vagrant plugin install vagrant-vbguest
+  mexe vagrant plugin install vagrant-disksize
+  log "Add Vagrantfile bellow "
+  log "   config.disksize.size = '150GB'"
+  mexe vagrant plugin install vagrant-winnfsd
+  log "Add Vagrantfile bellow "
+  log "   config.vm.synced_folder \".\", \"/var/www/src\", type: \"nfs\""
+}
 setting_arch()   { not_supported; }
 setting_msys()   { not_supported; }
 setting_cygwin() { not_supported; }
