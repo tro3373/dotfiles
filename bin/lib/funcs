@@ -233,8 +233,10 @@ has_local_package() {
 def_install() {
   local _pkgs=()
   for p in "$@"; do
-    has $p && continue
-    has_local_package $p && continue
+    if [[ $force -ne 1 ]]; then
+      has $p && continue
+      has_local_package $p && continue
+    fi
     _pkgs+=("$p")
   done
   # shellcheck disable=SC2154
