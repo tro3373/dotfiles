@@ -25,8 +25,8 @@ scoop install googlechrome
 #(TODO) scoop install googlejapaneseinput
 scoop install firefox
 
-scoop bucket add iyokan-jp https://github.com/tetradice/scoop-iyokan-jp
-scoop install sakura-editor
+#(TODO) #scoop bucket add iyokan-jp https://github.com/tetradice/scoop-iyokan-jp
+#scoop install sakura-editor
 
 scoop install vscode
 scoop install winmerge
@@ -35,7 +35,9 @@ scoop install mpc-hc
 # scoop install gitkraken
 scoop install tortoisesvn
 #(TODO) scoop install virtualbox
-#(TODO) scoop install vagrant
+scoop install vagrant
+scoop install slack
+scoop install autohotkey
 
 scoop bucket add java
 scoop install openjdk
