@@ -1,6 +1,6 @@
 #!/bin/bash
 
-kaoriya_dir_name=vim81-kaoriya-win64
+kaoriya_dir_name=vim82-kaoriya-win64
 is_installed() {
   if is_arch; then
     # gvim で +clipboardを狙う
