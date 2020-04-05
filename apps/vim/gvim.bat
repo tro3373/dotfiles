@@ -3,7 +3,7 @@ set args=%*
 if "%1" == "" (
     set args=%cd%
 )
-set gvim_dir=vim81-kaoriya-win64
+set gvim_dir=vim82-kaoriya-win64
 set path=C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;
 rem GitGutter Not work
 rem set path=%HOMEPATH%\AppData\Local\Msys64\usr\bin;%path%

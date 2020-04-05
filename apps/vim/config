@@ -28,7 +28,7 @@ install_msys() {
   else
     build_msys
   fi
-  if [[ ! -e $WINHOME/tools/$kaoriya_dir_name ]]; then
+  if [[ -e $WINHOME/tools/$kaoriya_dir_name ]]; then
     return 0
   fi
   install_kaoriya_msys
