@@ -174,7 +174,7 @@ setup_for_app() {
 }
 
 start_setup() {
-  set -eu
+  set -e
   make_setup_dirs
 
   for ((i = 0; i < ${#args[@]}; i++)) {
@@ -207,4 +207,3 @@ main() {
   ink green "Done!";echo
 }
 main "$@"
-
