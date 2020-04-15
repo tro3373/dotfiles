@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+readonly dst_rootd=$(
+  cd $HOME/works/src
+  pwd
+)
+readonly src_rootd=$(
+  cd $HOME/src
+  pwd
+)
+
+dummy="echo"
+reverse=0
+ls_syncfiles=0
+src=
+dst=
+excludes=(".git" "node_modules")
+
+usage() {
+  cat <<EOF
+
+  Sync vagrant share directory command.
+    src_rootd: $src_rootd
+    dst_rootd: $dst_rootd
+
+  Usage:
+    $command_name [option]
+
+  Options
+     -h : Show this usage
+     -e : Excute sync. (default is dry run mode)
+          sync $src_rootd to $dst_rootd
+     -r : Reverse sync. (default is guest to host)
+          sync $dst_rootd to $src_rootd
+     -l : List sync file via rsync dry-run mode
+    -ex pattern : exclude pattern
+
+EOF
+}
+
+add_excludes() { excludes+=("$@"); }
+
+ink() {
+  if [[ "$#" -eq 0 || "$#" -gt 2 ]]; then
+    echo "Usage: ink <color> <text>"
+    echo "Colors:"
+    echo "  black, white, red, green, yellow, blue, purple, cyan, gray"
+    return 1
+  fi
+
+  local open="\033["
+  local close="${open}0m"
+  export black="0;30m"
+  export red="1;31m"
+  export green="1;32m"
+  export yellow="1;33m"
+  export blue="1;34m"
+  export purple="1;35m"
+  export cyan="1;36m"
+  export gray="0;37m"
+  export white="$close"
+
+  local text="$1"
+  local color="$close"
+
+  if [[ "$#" -eq 2 ]]; then
+    text="$2"
+    case "$1" in
+    black | red | green | yellow | blue | purple | cyan | gray | white)
+      eval color="\$$1"
+      ;;
+    esac
+  fi
+
+  printf "${open}${color}${text}${close}\n"
+}
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+    -h | --help) usage && exit 0 ;;
+    -e) dummy= ;;
+    -r) reverse=1 ;;
+    -l) ls_syncfiles=1 ;;
+    -ex) shift && add_excludes "$1" ;;
+    esac
+    shift
+  done
+
+  src=$(get_git_root)
+  if [[ -z $src || ! -e $src ]]; then
+    echo "Not in git repository." 1>&2
+    exit 1
+  fi
+
+  local _rel=$(echo $src | sed -e "s,$src_rootd,,g")
+  dst=$dst_rootd$_rel
+  [[ ! -e $dst ]] && $dummy mkdir -p $dst
+}
+
+_sync() {
+  if [[ $reverse -eq 1 ]]; then
+    local tmp=$src
+    src=$dst
+    dst=$tmp
+  fi
+  # -a: -rlptgoD --no-H --no-A --no-X
+  # -v: --verbose         動作内容を表示する
+  # -q: --quiet           動作中のメッセージを抑制する
+  # -n: --dry-run         試験モード。実際には動作せず、動作内容だけ表示する（「-v」や「--stats」を一緒に指定する）
+  #     --stats           ファイル数や転送サイズを表示する
+  #     --list-only       コピーする代わりにファイルのリストを作成する
+  # -I  --ignore-times    サイズとタイムスタンプが同じファイルも処理する
+  #     --size-only       サイズが同じファイルは処理しない
+  # -c: --checksum        更新日とサイズではなく、チェックサムで変更の有無をチェックする
+  #     --daemon          デーモンとして動作（「--daemon --help」でデーモン時に使用できるオプションが確認できる）
+  # -r: --recursive       ディレクトリを再帰的に処理する
+  # -l: --links           シンボリックリンクをシンボリックリンクのままコピーする
+  # -p: --perms           パーミッションを保持する
+  # -t: --times           タイムスタンプを保持する
+  # -g: --group           所有グループをそのまま保持する
+  # -o: --owner           所有者をそのまま保持する（自分以外の所有者を保持するにはroot権限が必要）
+  # -D:                   デバイスファイルや特殊ファイルを保持する（「--devices --specials」相当）
+  #     --devices         デバイスファイルを保持する（root権限が必要）
+  #     --specials        特殊ファイルを保持する
+  # -z: --compress        転送中のデータを圧縮する
+  # -u: --update          同期先のファイルの方が新しい場合はスキップする
+  local _cmd="rsync -rtuzzv --size-only --no-H --no-A --no-X --delete"
+  if [[ $ls_syncfiles -eq 1 ]]; then
+    dummy=
+    _cmd="$_cmd -n"
+  fi
+  _cmd="$dummy $_cmd"
+  for _ex in "${excludes[@]}"; do
+    _cmd="$_cmd --exclude \"$_ex\""
+  done
+  _cmd="$_cmd $src/ $dst/"
+  [[ -z $dummy ]] && ink cyan "Excute: $_cmd"
+  eval "$_cmd"
+}
+
+main() {
+  initialize "$@"
+  _sync
+}
+main "$@"
