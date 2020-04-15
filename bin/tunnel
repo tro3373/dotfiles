@@ -35,22 +35,23 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-      -h|--help) usage && exit 0  ;;
-      #-f*|--file*) file=${1#*=} ;;
-      #-f|--file) shift && file=$1 ;;
-      *) handle_args "$1"         ;;
+    -h | --help) usage && exit 0 ;;
+    #-f*|--file*) file=${1#*=} ;;
+    #-f|--file) shift && file=$1 ;;
+    *) handle_args "$1" ;;
     esac
     shift
   done
   if [[ ${#args[*]} -eq 0 ]]; then
-    usage && exit 1
+    # usage && exit 1
+    add_args 27017
   fi
 }
 
 tunnel() {
   local lp=$p
   local rp=$p
-  if echo $p |grep ":" >/dev/null; then
+  if echo $p | grep ":" >/dev/null; then
     lp=${p##*:}
     rp=${p%%:*}
   fi
@@ -60,7 +61,7 @@ tunnel() {
 }
 
 is_exist_pid() {
-  kill -s 0 $pid >& /dev/null
+  kill -s 0 $pid >&/dev/null
 }
 
 kill_tunnel() {
