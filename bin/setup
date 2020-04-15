@@ -107,6 +107,7 @@ make_setup_dirs() {
     make_lnk_with_bkup $WINHOME/bin $HOME/bin
     make_lnk_with_bkup $WINHOME/tools $HOME/tools
     make_lnk_with_bkup $WINHOME/works $HOME/works
+    make_lnk_with_bkup $WINHOME/Downloads $HOME/Downloads
   fi
 }
 
