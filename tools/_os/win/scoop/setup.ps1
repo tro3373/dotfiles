@@ -41,6 +41,7 @@ scoop install autohotkey
 
 scoop bucket add java
 scoop install openjdk
+scoop install adopt8-hotspot
 
 
 # scoop cache rm *
