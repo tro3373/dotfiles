@@ -15,7 +15,7 @@ reverse=0
 ls_syncfiles=0
 src=
 dst=
-excludes=(".git" "node_modules")
+excludes=(".git" "node_modules" ".tmp" "bower_components")
 
 usage() {
   cat <<EOF
