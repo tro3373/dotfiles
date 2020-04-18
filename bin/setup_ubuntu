@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
-script_dir=$(cd "$(dirname $0)"; pwd)
+script_dir=$(
+  cd "$(dirname $0)"
+  pwd
+)
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 log() { echo "$(date "%Y-%m-%d %H:%M:%S") $*" 1>&2; }
 
 setup_dconf() {
@@ -47,12 +50,11 @@ apt_update_if_needed() {
     log "=> Adding apt-key For Google Chrome .."
     wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
     log "=> Adding sources.list.d/google-chrome.list For Google Chrome .."
-    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" |sudo tee -a /etc/apt/sources.list.d/google-chrome.list >& /dev/null
+    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/google-chrome.list >&/dev/null
     _update=1
   fi
   # Numix Icon theme
-  # if ! ls /etc/apt/sources.list.d |grep numix >& /dev/null; then
-  if ! find /etc/apt/sources.list.d/ -maxdepth 1 -mindepth 1 -type f -name "*numix*" >& /dev/null; then
+  if ! find /etc/apt/sources.list.d/numix-*list -type f >&/dev/null; then
     log "=> Adding repository ppa For Numix Icon .."
     sudo apt-add-repository -y ppa:numix/ppa
     _update=1
@@ -81,7 +83,8 @@ install_apps() {
     [[ $line =~ ^#.* ]] && continue
     dpkg -l $line >&/dev/null && continue
     apps+=("$line")
-  done < <(cat <<EOF
+  done < <(
+    cat <<EOF
 google-chrome-stable
 gconf-editor
 numix-gtk-theme
@@ -95,7 +98,7 @@ xsel
 #guake
 #unity-tweak-tool
 EOF
-)
+  )
 
   if [[ ${#apps[@]} -eq 0 ]]; then
     return
@@ -112,7 +115,7 @@ setup_default_editor() {
   if ! has vim; then
     sudo apt-get install vim
   fi
-  if sudo update-alternatives --get-selections |grep -E "^editor" |grep vim >&/dev/null; then
+  if sudo update-alternatives --get-selections | grep -E "^editor" | grep vim >&/dev/null; then
     return
   fi
   # visudo エディタをvimに設定
@@ -124,6 +127,7 @@ enable_samartctl_sda() {
 }
 
 main() {
+  set -e
   setup_capslocks
   setup_home_dir_names
   setup_default_editor
