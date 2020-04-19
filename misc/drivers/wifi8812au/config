@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(cd "$(dirname $0)"; pwd)
-has() { command -v ${1} >& /dev/null; }
+# current_dir=$(pwd)
+# script_dir=$(cd "$(dirname $0)"; pwd)
+has() { command -v ${1} >&/dev/null; }
 
 install_ubuntu() {
   # mexe sudo apt-get update
   # def_install linux-headers-generic build-essential
-  gh https://github.com/abperiasamy/rtl8812AU_8821AU_linux.git
+  cd_work
+  git clone https://github.com/abperiasamy/rtl8812AU_8821AU_linux.git
+  cd rtl8812AU_8821AU_linux
+  git co -b hoge 72594b5
   mexe make
   mexe sudo make install
   mexe sudo modprobe rtl8812au
-  mexe lsmod |grep rtl8812au
+  mexe lsmod | grep rtl8812au
 }
 install_arch() {
   mexe sudo pacman -S linux-headers
