@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
-# current_dir=$(pwd)
-# script_dir=$(cd "$(dirname $0)"; pwd)
+# shellcheck disable=SC2034
+current_dir=$(pwd)
+script_dir=$(
+  cd "$(dirname $0)"
+  pwd
+)
 has() { command -v ${1} >&/dev/null; }
 
 install_ubuntu() {
@@ -10,7 +14,7 @@ install_ubuntu() {
   cd_work
   git clone https://github.com/abperiasamy/rtl8812AU_8821AU_linux.git
   cd rtl8812AU_8821AU_linux
-  git co -b hoge 72594b5
+  git checkout -b tmp 72594b5
   mexe make
   mexe sudo make install
   mexe sudo modprobe rtl8812au
