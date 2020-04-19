@@ -9,16 +9,44 @@ script_dir=$(
 has() { command -v ${1} >&/dev/null; }
 
 install_ubuntu() {
-  # mexe sudo apt-get update
-  # def_install linux-headers-generic build-essential
-  cd_work
-  git clone https://github.com/abperiasamy/rtl8812AU_8821AU_linux.git
-  cd rtl8812AU_8821AU_linux
-  git checkout -b tmp 72594b5
-  mexe make
-  mexe sudo make install
-  mexe sudo modprobe rtl8812au
-  mexe lsmod | grep rtl8812au
+  if true; then
+    # mexe sudo apt-get update
+    # def_install linux-headers-generic build-essential
+    cd_work
+    git clone https://github.com/abperiasamy/rtl8812AU_8821AU_linux.git
+    cd rtl8812AU_8821AU_linux
+    git checkout -b tmp 72594b5
+    mexe make
+    mexe sudo make install
+    mexe sudo modprobe rtl8812au
+    mexe lsmod | grep rtl8812au
+  else
+    DRV_NAME=rtl8812AU
+    DRV_VERSION=4.3.20
+    # DRV_VERSION=5.6.4
+
+    if [[ $1 == "-r" ]]; then
+      mexe sudo dkms uninstall -m ${DRV_NAME} -v ${DRV_VERSION}
+      mexe sudo dkms status
+      return
+    fi
+
+    if !has dkms; then
+      def_install dkms
+    fi
+    local srcd=/usr/src/${DRV_NAME}-${DRV_VERSION}
+
+    if [[ ! -e $srcd ]]; then
+      mexe sudo git clone https://github.com/diederikdehaas/rtl8812AU $srcd
+    fi
+
+    mexe cd /usr/src/${DRV_NAME}-${DRV_VERSION}
+    mexe sudo git checkout -b driver-${DRV_VERSION} origin/driver-${DRV_VERSION}
+    mexe sudo dkms add -m ${DRV_NAME} -v ${DRV_VERSION}
+    mexe sudo dkms build -m ${DRV_NAME} -v ${DRV_VERSION}
+    mexe sudo dkms install -m ${DRV_NAME} -v ${DRV_VERSION}
+    mexe sudo dkms status
+  fi
 }
 install_arch() {
   mexe sudo pacman -S linux-headers
@@ -34,10 +62,11 @@ install_arch() {
 main() {
   source $DOTPATH/bin/lib/funcs
   tool_env
+  set +u
   if is_arch; then
     install_arch
   elif is_ubuntu; then
-    install_ubuntu
+    install_ubuntu "$@"
   else
     echo "Not supported"
   fi
