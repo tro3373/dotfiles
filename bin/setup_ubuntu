@@ -53,12 +53,12 @@ apt_update_if_needed() {
     echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee -a /etc/apt/sources.list.d/google-chrome.list >&/dev/null
     _update=1
   fi
-  # Numix Icon theme
-  if ! find /etc/apt/sources.list.d/numix-*list -type f >&/dev/null; then
-    log "=> Adding repository ppa For Numix Icon .."
-    sudo apt-add-repository -y ppa:numix/ppa
-    _update=1
-  fi
+  ## Numix Icon theme
+  #if ! find /etc/apt/sources.list.d/numix-*list -type f >&/dev/null; then
+  #  log "=> Adding repository ppa For Numix Icon .."
+  #  sudo apt-add-repository -y ppa:numix/ppa
+  #  _update=1
+  #fi
 
   # y-ppa-manager for fix GPG keys errors.
   #sudo add-apt-repository -y ppa:webupd8team/y-ppa-manager
@@ -85,16 +85,17 @@ install_apps() {
     apps+=("$line")
   done < <(
     cat <<EOF
+mozc-utils-gui
+xsel
+smartmontools
+hardinfo
 google-chrome-stable
 gconf-editor
 numix-gtk-theme
 numix-icon-theme
 numix-icon-theme-circle
 meld
-rapidsvn
-smartmontools
-hardinfo
-xsel
+#rapidsvn
 #guake
 #unity-tweak-tool
 EOF
