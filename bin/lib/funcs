@@ -223,7 +223,7 @@ has_local_package() {
   if is_arch || is_msys; then
     pacman -Qi $p >&/dev/null && return 0
   elif is_ubuntu; then
-    dpkg -l $p >&/dev/null && return 0
+    dpkg -l $p |grep -E '^ii' >&/dev/null && return 0
   elif is_redhat; then
     rpm -qi $p >&/dev/null && return 0
   else
