@@ -35,7 +35,7 @@ main() {
   # echo "Current aws profile is AWS_PROFILE:$AWS_PROFILE"
   echo "> Do this.." 1>&2
   # eval "export AWS_PROFILE=$_profile"
-  echo "export AWS_PROFILE=$_profile; export AWS_DEFAULT_PROFILE=$_profile" |
+  echo "export AWS_SDK_LOAD_CONFIG=1; export AWS_PROFILE=$_profile; export AWS_DEFAULT_PROFILE=$_profile" |
     tee >(clip)
   # echo "Profile setted to AWS_PROFILE:$AWS_PROFILE"
 }
