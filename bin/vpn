@@ -12,6 +12,8 @@ main() {
   ! has docker && echo "No docker exists." 1>&2 && exit 1
   test $# -eq 0 && echo "No execute command exists." 1>&2 && exit 1
 
+  # TODO see https://github.com/br0ziliy/ultimate-docker-openvpn-ssh
+
   docker run -it --rm \
     -v $script_dir/vpn_endpoint:/usr/local/bin/vpn_endpoint \
     -v $HOME/.ssh:/root/ssh \
