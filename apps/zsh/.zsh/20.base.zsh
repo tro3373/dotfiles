@@ -248,4 +248,3 @@ esac
 # --------------------------------------------------------
 #zshpowerline=${HOME}/.local/lib/python2.7/site-packages/powerline/bindings/zsh/powerline.zsh
 #[ -f ${zshpowerline} ] && source ${zshpowerline}
-
