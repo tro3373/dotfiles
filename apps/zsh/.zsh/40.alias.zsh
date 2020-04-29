@@ -130,6 +130,9 @@ function ssh() {
   fi
 }
 
+alias tmux_a='tmux set-option -g prefix C-a'
+alias tmux_b='tmux set-option -g prefix C-b'
+
 ## --------------------------------------------------------
 ## gtags (Pygments)
 ## --------------------------------------------------------
