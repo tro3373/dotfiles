@@ -1,20 +1,44 @@
+#!/usr/bin/env bash
+
+settings_d_msys="${WINHOME}/AppData/Roaming/Code/User"
+settings_d_mac="${HOME}/Library/Application Support/Code/User"
+settings_d_ubuntu="$HOME/.config/Code/User"
+
+is_installed() {
+  if is_msys; then
+    test -e "$settings_d_msys"
+  elif is_mac; then
+    test -e "$settings_d_mac"
+  elif is_ubuntu; then
+    test -e "$settings_d_ubuntu"
+  else
+    # shellcheck disable=SC2154
+    has $app
+  fi
+}
 install_common() { not_supported; }
-install_arch()   { not_supported; }
-install_msys()   { not_supported; }
+install_arch() { not_supported; }
+install_msys() { not_supported; }
 install_cygwin() { not_supported; }
-install_mac()    { not_supported; }
+install_mac() { not_supported; }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
-setting_arch()   { not_supported; }
-setting_msys()   {
-  make_lnk_with_bkup "$app_dir/settings.json" "${WINHOME}/AppData/Roaming/Code/User/settings.json"
+setting_arch() { not_supported; }
+setting_msys() {
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/settings.json" "$settings_d_msys/settings.json"
 }
 setting_cygwin() { not_supported; }
-setting_mac()    { not_supported; }
-setting_ubuntu() { not_supported; }
+setting_mac() {
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/settings.json" "$settings_d_mac/settings.json"
+}
+setting_ubuntu() {
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/settings.json" "$settings_d_ubuntu/settings.json"
+}
 setting_redhat() { not_supported; }
-#is_installed
 #install_via_os_default
 #def_install
 #is_debug
