@@ -224,7 +224,7 @@ load_my_env() {
 }
 
 # is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
-is_vagrant() { hostname | grep .vagrant | grep -v grep >&/dev/null; }
+is_vagrant() { hostname | grep .vagrant >&/dev/null; }
 
 _initialize() {
   zcompile_ifneeded ~/.zshrc
