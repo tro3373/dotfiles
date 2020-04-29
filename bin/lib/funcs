@@ -71,7 +71,7 @@ isexist() {
   # local count=$(ls -a "$file" 2>/dev/null |wc -l|sed 's/ //g')
   # [[ $count -eq 0 ]] && return 1
   # return 0
-  find $file >&/dev/null
+  find "$file" >&/dev/null
 }
 
 make_dir_if_needed() {
