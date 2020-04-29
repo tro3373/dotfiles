@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# shellcheck disable=SC2034
+# shellcheck disable=SC2154
 workdir="$app_dir/tmp"
 
 install_common() {
@@ -27,4 +29,3 @@ is_installed() { has $app; }
 install_via_os_default() { def_install $app; }
 
 setconfig() { :; }
-
