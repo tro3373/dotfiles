@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
+is_msys() { [[ "$OSTYPE" == "msys" ]]; }
 is_vagrant() { hostname | grep .vagrant >&/dev/null; }
 is_tmux_runnning() { [[ -n "$TMUX" ]]; }
 is_vaging() { pgrep -f 'ssh vag' >&/dev/null; }
 is_dogging() { pgrep -f 'tmux_dog' >&/dev/null; }
 change_tmux_key() {
+  echo "==> Change tmux prefix to $1"
   tmux set-option -g prefix C-$1
 }
 dogging() {
@@ -19,6 +21,10 @@ dogging() {
 }
 main() {
   ! is_tmux_runnning && return
+  if is_msys; then
+    change_tmux_key b
+    return
+  fi
   is_vagrant && return
   is_dogging && return
   echo "==> Starting tmux_dog .."
