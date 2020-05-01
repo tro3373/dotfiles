@@ -26,19 +26,52 @@ install_redhat() { not_supported; }
 setting_common() { not_supported; }
 setting_arch() { not_supported; }
 setting_msys() {
-  # shellcheck disable=SC2154
-  make_lnk_with_bkup "$app_dir/settings.json" "$settings_d_msys/settings.json"
+  _ln_jsons "$settings_d_msys"
 }
 setting_cygwin() { not_supported; }
 setting_mac() {
-  # shellcheck disable=SC2154
-  make_lnk_with_bkup "$app_dir/settings.json" "$settings_d_mac/settings.json"
+  _ln_jsons "$settings_d_mac"
+  _add_code_path "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
 }
 setting_ubuntu() {
-  # shellcheck disable=SC2154
-  make_lnk_with_bkup "$app_dir/settings.json" "$settings_d_ubuntu/settings.json"
+  _ln_jsons "$settings_d_ubuntu"
 }
 setting_redhat() { not_supported; }
+_add_code_path() {
+  local _code_bin="$*"
+  local _target=$HOME/.works.zsh
+  if grep "$_code_bin" $_target >&/dev/null; then
+    return
+  fi
+  log "==> Adding to $_target.."
+  echo "add_path '$_code_bin'" |
+    if is_dry; then
+      cat -
+    else
+      cat - | tee -a $_target
+    fi
+  del_if_exist $HOME/.path
+  _add_packages
+}
+_add_packages() {
+  if is_dry; then
+    log "==> vscode packages is.."
+    # shellcheck disable=SC2154
+    while read -r p; do
+      [[ -z $p ]] && continue
+      [[ $p =~ ^#.* ]] && continue
+      echo "  - $p"
+    done <$app_dir/extensions
+  fi
+  log "==> vscode installing packages.."
+  export PATH="$_code_bin:$PATH"
+  mexe $app_dir/gen_extensions 1
+}
+_ln_jsons() {
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/settings.json" "$1/settings.json"
+  make_lnk_with_bkup "$app_dir/keybindings.json" "$1/keybindings.json"
+}
 #install_via_os_default
 #def_install
 #is_debug

@@ -1,0 +1,42 @@
+[
+    {
+        "key": "s p",
+        "command": "workbench.action.previousEditor",
+        "when": "editorFocus && vim.mode == 'Normal'"
+    },
+    {
+        "key": "s n",
+        "command": "workbench.action.nextEditor",
+        "when": "editorFocus && vim.mode == 'Normal'"
+    },
+    {// notwork
+        "key": "space+q",
+        "command": "workbench.action.closeWindow",
+        "when": "editorFocus && vim.mode == 'Normal'"
+    },
+    {// notwork
+        "key": "ctrl+v",
+        "command": "editorScroll",
+        "args": {
+            "to": "down",
+            "by": "page",
+            "revealCursor": true
+        },
+        "when": "editorFocus && vim.mode == 'Normal'"
+    },
+    {// notwork
+        "key": "s t",
+        "command": "explorer.newFile",
+        "when": "editorFocus && vim.mode == 'Normal'"
+    },
+    {
+        "key": "ctrl+d",
+        "command": "-extension.vim_ctrl+d",
+        "when": "editorTextFocus && vim.active && !inDebugRepl"
+    },
+    {
+        "key": "ctrl+d",
+        "command": "-extension.vim_ctrl+d",
+        "when": "editorTextFocus && vim.active && !inDebugRepl"
+    },
+]

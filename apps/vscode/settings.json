@@ -1,6 +1,42 @@
 {
-    "editor.fontFamily": "Osaka-Mono,Consolas, 'Courier New', monospace",
-    "editor.fontSize": 18,
     "workbench.colorTheme": "Apprentice",
-    "workbench.iconTheme": "vscode-icons"
+    "workbench.iconTheme": "vscode-icons",
+    "editor.fontFamily": "Osaka-Mono, Cica-Regular, 'Ricty Diminished Discord', 'Ricty Diminished', 'Myrica M', Consolas, 'Courier New', monospace",
+    "editor.fontSize": 18,
+    "editor.lineHeight": 20,
+    "editor.wordWrap": "on",
+    "editor.cursorStyle": "block",
+    "editor.fontLigatures": null,
+    "editor.insertSpaces": true,
+    "terminal.integrated.fontSize": 18,
+    "terminal.integrated.copyOnSelection": true,
+    "files.trimFinalNewlines": false,
+    "files.trimTrailingWhitespace": true,
+    "files.autoGuessEncoding": true,
+    "bookmarks.treeview.visible": true,
+    "vim.useSystemClipboard":true,
+    "vim.cmdLineInitialColon": true,
+    "vim.hlsearch": true,
+    "vim.ignorecase": true,
+    "vim.visualstar": true,
+    "vim.useCtrlKeys": true,
+    "vim.handleKeys": {
+       "<C-d>": true
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true,
+        "**/.svn/**":true,
+    },
+    "scm.alwaysShowProviders": true,
+    "search.exclude": {
+        "**/bower_components": true,
+        "**/vendor": true,
+        "**/env": true,
+        "tags":true,
+        "**/.svn": true,
+        "**/.git": true,
+        "**/.DS_Store": true
+    },
 }

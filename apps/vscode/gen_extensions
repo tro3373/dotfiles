@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 
+readonly script_dir=$(
+  cd "$(dirname ${BASH_SOURCE:-$0})"
+  pwd
+)
+
 main() {
   if [[ $# -eq 0 ]]; then
-    code --list-extensions > extensions
+    code --list-extensions >$script_dir/extensions
     return
   fi
-  cat < extensions |
+  cat <$script_dir/extensions |
     while read -r line; do
-     code --install-extension $line
+      code --install-extension $line
     done
 }
 main "$@"
