@@ -1,27 +1,91 @@
 #!/usr/bin/env bash
 
-readonly current_dir=$(pwd)
+# readonly current_dir=$(pwd)
 readonly script_dir=$(
   cd "$(dirname ${BASH_SOURCE:-$0})"
   pwd
 )
+readonly command_name=$(basename $0)
 readonly conf=$HOME/.vpn
+server=0
+
 has() { command -v ${1} >&/dev/null; }
-main() {
+
+# args=()
+usage() {
+  cat <<EOF
+
+  Run vpn connection via openconnect.
+
+  Usage:
+    $command_name [option]
+  Options
+    -h|--help   : Show this usage
+    -g|--gen    : Generate config file to $conf
+    -s|--server : Run vpn ssh server in docker(default use local openconnect command)
+
+EOF
+}
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+    -h | --help) usage && exit 0 ;;
+    -g | --gen) gen_conf && exit 0 ;;
+    -s | --server) server=1 ;;
+    esac
+    shift
+  done
+  check
+}
+
+check() {
   ! test -e $conf && echo "No conf exists. path=$conf" 1>&2 && exit 1
-  ! has docker && echo "No docker exists." 1>&2 && exit 1
-  test $# -eq 0 && echo "No execute command exists." 1>&2 && exit 1
+  if [[ $server -eq 1 ]]; then
+    ! has docker && echo "No docker exists." 1>&2 && exit 1
+  else
+    ! has openconnect && echo "No openconnect exists." 1>&2 && exit 1
+  fi
+}
 
-  # TODO see https://github.com/br0ziliy/ultimate-docker-openvpn-ssh
+gen_conf() {
+  test -e $conf && echo "Already conf exists. path=$conf" 1>&2 && exit 1
+  cat <<EOF >$conf
+vpn_srv=example.com
+vpn_usr=example_user
+vpn_pwd=example_pwd
+vpn_opt="--no-cert-check"
+EOF
+  echo "Generated to $conf. edit it."
+}
 
-  docker run -it --rm \
-    -v $script_dir/vpn_endpoint:/usr/local/bin/vpn_endpoint \
-    -v $HOME/.ssh:/root/ssh \
-    -v $conf:/root/.vpn \
-    -v $current_dir:$current_dir \
-    -w $current_dir \
-    --privileged \
-    ornew/vsh-cisco \
-    /usr/local/bin/vpn_endpoint "$@"
+run_server() {
+  # --entrypoint '' \
+  # /bin/bash
+  vpn_opt="--no-cert-check" # docker version opt notwork. so orverride it
+  docker run -it --rm --privileged \
+    -p 127.0.0.1:22222:22 \
+    -e SSH_PUB="$(cat <$HOME/.ssh/id_rsa.pub)" \
+    -e SERVER="$vpn_srv" \
+    -e OPTIONS="-u $vpn_usr $vpn_opt" \
+    -e PASSWORD="$vpn_pwd" \
+    jasimpson/openconnect-openssh
+}
+
+run_local() {
+  # --passwd-on-stdin \
+  echo "$vpn_pwd" |
+    sudo openconnect -u $vpn_usr $vpn_opt $vpn_srv
+}
+
+main() {
+  initialize "$@"
+  source $conf
+  if [[ $server -eq 1 ]]; then
+    run_server
+    return
+  fi
+  run_local
 }
 main "$@"
