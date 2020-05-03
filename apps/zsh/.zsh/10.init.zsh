@@ -238,7 +238,7 @@ _initialize() {
   else
     ${DOTPATH}/bin/start_clipper
   fi
-  ${DOTPATH}/bin/tmux_dog
+  # ${DOTPATH}/bin/tmux_dog
   load_zsh ~/.works.zsh
   #[ -f ~/.secret ] && . ~/.secret
   # source zsh plugins.

@@ -125,7 +125,9 @@ function ssh() {
     command ssh $@
   else
     local window_name=$(tmux display -p '#{window_name}')
+    [[ $@ == vag ]] && tmux_dog
     command ssh $@
+    [[ $@ == vag ]] && tmux_dog -r
     tmux rename-window $window_name
   fi
 }
