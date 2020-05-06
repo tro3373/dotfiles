@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+_user_repo=yuru7/HackGen
+# shellcheck disable=SC2154
+is_installed() { test -e $workdir; }
+gh_dl_url() {
+  local user_repo=$1
+  local gh_prefix=https://github.com
+  local _url=$(curl -fSsL $gh_prefix/$user_repo/releases |
+    grep 'a href' | grep 'releases/download' |
+    head -1 |
+    sed -e 's,^.*href=",,g' |
+    cut -d'"' -f1)
+  echo $gh_prefix/$_url
+}
+
+install_common() {
+  local url=$(gh_dl_url $_user_repo)
+  dl_unzip $url
+}
+install_arch() { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+setting_common() { not_supported; }
+setting_arch() { not_supported; }
+setting_msys() { not_supported; }
+setting_cygwin() { not_supported; }
+setting_mac() { not_supported; }
+setting_ubuntu() { not_supported; }
+setting_redhat() { not_supported; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#gh
+#gh_user_local
+# install_common
