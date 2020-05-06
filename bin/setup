@@ -2,7 +2,10 @@
 
 DOT_PATH=~/.dot
 export current_dir=$(pwd)
-export script_dir=$(cd "$(dirname $0)"; pwd)
+export script_dir=$(
+  cd "$(dirname $0)"
+  pwd
+)
 command_name=$(basename $0)
 #all_apps="git ctags curl tree global zsh tmux vim tig ssh ag _peco _fzf _gomi _zplug"
 #all_apps="git ctags curl tree global zsh tmux vim tig ssh nkf ag"
@@ -30,7 +33,7 @@ Setup my dev env.
 Defaults Apps(No specify App mode) is ..
     ${default_apps[@]}
 Installable Apps is ..
-    $(while read -r line; do printf "$(basename $line) "; done< <(find $DOT_PATH/apps/ -maxdepth 1 -mindepth 1 -type d))
+    $(while read -r line; do printf "$(basename $line) "; done < <(find $DOT_PATH/apps/ -maxdepth 1 -mindepth 1 -type d))
 EOF
 }
 
@@ -41,13 +44,13 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-      -h|--help) usage && exit 0  ;;
-      #-f*|--file*) file=${1#*=} ;;
-      #-f|--file) shift && file=$1 ;;
-      -e|--exec) dry_run=0        ;;
-      -f|--force) force=1         ;;
-      -d|--debug) debug=1         ;;
-      *) add_args $1              ;;
+    -h | --help) usage && exit 0 ;;
+    #-f*|--file*) file=${1#*=} ;;
+    #-f|--file) shift && file=$1 ;;
+    -e | --exec) dry_run=0 ;;
+    -f | --force) force=1 ;;
+    -d | --debug) debug=1 ;;
+    *) add_args $1 ;;
     esac
     shift
   done
@@ -138,12 +141,12 @@ debug_options() {
 
 install_app() {
   default_called=0
-  is_arch     && install_arch
-  is_msys     && install_msys
-  is_cygwin   && install_cygwin
-  is_mac      && install_mac
-  is_ubuntu   && install_ubuntu
-  is_redhat   && install_redhat
+  is_arch && install_arch
+  is_msys && install_msys
+  is_cygwin && install_cygwin
+  is_mac && install_mac
+  is_ubuntu && install_ubuntu
+  is_redhat && install_redhat
   if [[ $default_called -eq 1 ]]; then
     install_common
   fi
@@ -151,12 +154,12 @@ install_app() {
 
 setting_app() {
   default_called=0
-  is_arch     && setting_arch
-  is_msys     && setting_msys
-  is_cygwin   && setting_cygwin
-  is_mac      && setting_mac
-  is_ubuntu   && setting_ubuntu
-  is_redhat   && setting_redhat
+  is_arch && setting_arch
+  is_msys && setting_msys
+  is_cygwin && setting_cygwin
+  is_mac && setting_mac
+  is_ubuntu && setting_ubuntu
+  is_redhat && setting_redhat
   if [[ $default_called -eq 1 ]]; then
     setting_common
   fi
@@ -178,7 +181,7 @@ start_setup() {
   set -e
   make_setup_dirs
 
-  for ((i = 0; i < ${#args[@]}; i++)) {
+  for ((i = 0; i < ${#args[@]}; i++)); do
     # ディレクトリ名＝アプリ名の前提
     local app=${args[i]}
 
@@ -193,7 +196,7 @@ start_setup() {
       source $script_path
     fi
     setup_for_app
-  }
+  done
 }
 
 main() {
@@ -205,6 +208,7 @@ main() {
     log " This is Dry-run mode. :D"
     log "===================================================="
   fi
-  ink green "Done!";echo
+  ink green "Done!"
+  echo
 }
 main "$@"
