@@ -17,7 +17,7 @@
       "base16-tomorrow-dark-theme"
     ]
   editor:
-    fontFamily: "Osaka-Mono"
+    fontFamily: "HackGen Console"
     fontSize: 24
     invisibles:
       cr: " "

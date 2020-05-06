@@ -14,15 +14,37 @@ gh_dl_url() {
   echo $gh_prefix/$_url
 }
 
-install_common() {
+find_font() {
+  find $workdir/ -type f -name 'HackGenConsole-Regular.ttf'
+}
+
+_dl_fonts() {
   local url=$(gh_dl_url $_user_repo)
   dl_unzip $url
 }
-install_arch() { not_supported; }
-install_msys() { not_supported; }
+
+install_common() { not_supported; }
+_install_common() {
+  _dl_fonts
+  local _path=$(find_font)
+  local _installd=$1
+  mexe sudo cp $_path $_installd
+}
+install_arch() {
+  _install_common /usr/share/fonts
+}
+install_msys() {
+  _dl_fonts
+  local _path=$(find_font)
+  mexe open $_path
+}
 install_cygwin() { not_supported; }
-install_mac() { not_supported; }
-install_ubuntu() { not_supported; }
+install_mac() {
+  _install_common /Library/Fonts/
+}
+install_ubuntu() {
+  _install_common /usr/local/share/fonts
+}
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
 setting_arch() { not_supported; }
