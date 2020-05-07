@@ -21,13 +21,13 @@ source ~/.vim/conf.d/100_colorscheme.vim
 
 " 使用するフォントと大きさ
 if (has("win64") || has("win32"))
-    set guifont="HackGen Console":h13
-    set guifontwide="HackGen Console":h13
+    set guifont=HackGen\ Console:h13
+    set guifontwide=HackGen\ Console:h13
 else
     " set guifont=Ricty\ Discord\ for\ Powerline\ 10
     " set guifontwide=Ricty\ Discord\ for\ Powerline\ 10
-    set guifont="HackGen Console"\ 13
-    set guifontwide="HackGen Console"\ 13
+    set guifont=HackGen\ Console\ 13
+    set guifontwide=HackGen\ Console\ 13
 endif
 
 "if (has("win64") || has("win32"))
