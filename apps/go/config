@@ -6,7 +6,11 @@ install_common() {
     echo "No goenv exist. install it." 1>&2
     return
   fi
-  local version=1.12.7
+  local version=$(goenv install -l | grep -v beta | tail -1)
+  if [[ -z $version ]]; then
+    log "No version exist"
+    exit 1
+  fi
   mexe goenv install $version
   mexe goenv global $version
   mexe goenv rehash
@@ -21,14 +25,14 @@ install_cygwin() {
 }
 
 setting_common() {
-  if grep "GOPATH" ~/.works.zsh >& /dev/null; then
+  if grep "GOPATH" ~/.works.zsh >&/dev/null; then
     return
   fi
-  make_dir_if_needed $HOME/go/lib/go
-  mexe "echo 'export GOPATH=\$HOME/go' >> ~/.works.zsh"
-  mexe "echo 'export GOROOT=\$GOPATH/lib/go' >> ~/.works.zsh"
-  mexe "echo 'export GOBIN=\$GOPATH/bin' >> ~/.works.zsh"
-  mexe "echo 'add_path \$GOBIN' >> ~/.works.zsh"
+  # make_dir_if_needed $HOME/go/lib/go
+  # mexe "echo 'export GOROOT=\$GOPATH/lib/go' >> ~/.works.zsh"
+  # mexe "echo 'export GOBIN=\$GOPATH/bin' >> ~/.works.zsh"
+  # mexe "echo 'add_path \$GOBIN' >> ~/.works.zsh"
+  # mexe "echo 'export GOPATH=\$HOME/go' >> ~/.works.zsh"
+  mexe "echo 'add_path \$GOPATH/bin' >> ~/.works.zsh"
   rm_dotpath
 }
-
