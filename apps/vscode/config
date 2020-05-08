@@ -27,6 +27,7 @@ setting_common() { not_supported; }
 setting_arch() { not_supported; }
 setting_msys() {
   _ln_jsons "$settings_d_msys"
+  _add_packages
 }
 setting_cygwin() { not_supported; }
 setting_mac() {
