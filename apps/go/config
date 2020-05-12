@@ -25,7 +25,7 @@ install_cygwin() {
 }
 
 setting_common() {
-  if grep "GOPATH" ~/.works.zsh >&/dev/null; then
+  if grep "/go/" ~/.works.zsh >&/dev/null; then
     return
   fi
   # make_dir_if_needed $HOME/go/lib/go
@@ -33,6 +33,7 @@ setting_common() {
   # mexe "echo 'export GOBIN=\$GOPATH/bin' >> ~/.works.zsh"
   # mexe "echo 'add_path \$GOBIN' >> ~/.works.zsh"
   # mexe "echo 'export GOPATH=\$HOME/go' >> ~/.works.zsh"
-  mexe "echo 'add_path \$GOPATH/bin' >> ~/.works.zsh"
+  # mexe "echo 'add_path \$GOPATH/bin' >> ~/.works.zsh"
+  mexe "echo 'add_path $GOPATH/bin' >> ~/.works.zsh"
   rm_dotpath
 }
