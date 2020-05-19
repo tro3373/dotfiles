@@ -7,6 +7,7 @@ test コマンドのオプションの意味
 -p	名前付きパイプであれば真
 -t	端末にてオープンされていれば真
 ```
+
 ## プロセス置換
 
 ```
@@ -19,9 +20,8 @@ command1 | tee >(command2) | command3
 command 2> >(awk '{print "[ERROR]", $0}')
 ```
 
-
-
 ## 標準入力
+
 ```
 diff <(cat file1) <(cat file1 |grep hogehoge)
 
@@ -33,8 +33,9 @@ command <<< $VAR1
 
 ## 基本
 
-$? ==> 直前のコマンドの実行結果
-$$ ==> シェル自身のプロセスID
+\$? ==> 直前のコマンドの実行結果
+
+$$
 $! ==> シェルが最後に起動したバックグラウンドプロセスのプロセスID
 !$ ==> 前回実行コマンドの最後の引数を取得
 
@@ -268,3 +269,4 @@ trap finally EXIT
 echo 'start' > $tmpfile/file1
 cat $tmpfile/file1
 ```
+$$
