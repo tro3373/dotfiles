@@ -2,15 +2,16 @@
 
 main() {
   local args=()
-  for f in "$@" ; do
+  for f in "$@"; do
     [[ -d "$f" ]] && continue
     [[ ! -e "$f" ]] && continue
     args+=("$f")
   done
   while read -r f; do
-    # f=$(echo $f |sed -e 's,\*,,g')
-    f=${f/\*/}
-    # echo -e "$f" 1>&2
+    # https://superuser.com/questions/380772/removing-ansi-color-codes-from-text-stream
+    f=$(echo -ne "$f" | sed -e 's,\*,,g' -e 's/\x1b\[[0-9;]*[a-zA-Z]//g')
+    # f=${f/\*/}
+    # echo $f 1>&2
     [[ -d "$f" ]] && continue
     [[ ! -e "$f" ]] && continue
     args+=("$f")
@@ -24,10 +25,9 @@ main() {
     echo "==> Edit!! ${args[*]}" 1>&2
     $HOME/.dot/bin/gvim "${args[@]}"
   else
-    echo vim -p "${args[@]}" |tee >(clip)
+    echo vim -p "${args[@]}" | tee >(clip)
     sleep 0.1
     # stty sane
   fi
 }
 main "$@"
-
