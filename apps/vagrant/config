@@ -30,7 +30,7 @@ install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() {
   # check & upgrade virtualbox guest-tools auto
-  mexe vagrant plugin install vagrant-vbguest
+  # mexe vagrant plugin install vagrant-vbguest
   mexe vagrant plugin install vagrant-disksize
   log "Add Vagrantfile bellow "
   log "   config.disksize.size = '150GB'"
