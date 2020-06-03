@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+
+readonly project=project_sample
+readonly service_account=sls_deploy_sa_sample
+readonly key_file=~/.gcloud/keyfile.json
+readonly roles="roles/deploymentmanager.editor roles/storage.admin roles/logging.admin roles/cloudfunctions.developer"
+readonly create_sls_repo=sls_gcf_sample
+
+dummy="echo"
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+    -e) dummy= ;;
+    esac
+  done
+}
+
+has() { command -v ${1} >&/dev/null; }
+
+ls_storage() {
+  # show google storage bucket list
+  $dummy gsutil ls
+}
+
+show_account() {
+  # config exist in ~/.config/gcloud
+  $dummy ls -la ~/.config/gcloud
+
+  $dummy gcloud config configurations list
+  # NAME     IS_ACTIVE  ACCOUNT                      PROJECT         COMPUTE_DEFAULT_ZONE  COMPUTE_DEFAULT_REGION
+  # default  True       hoge@gmail.com  <project_name>  us-central1-f         us-central1
+
+  $dummy gcloud config list
+  # [compute]
+  # region = us-central1
+  # zone = us-central1-f
+  # [core]
+  # account = hoge@gmail.com
+  # disable_usage_reporting = True
+  # project = <project_name>
+  #
+  # Your active configuration is: [default]
+
+  # show auth list
+  $dummy gcloud auth list
+}
+add_account() {
+  $dummy gcloud config configurations create other_project # --no-activate
+}
+switch_account() {
+  $dummy gcloud config configurations activate other_project
+}
+
+show_services() {
+  $dummy gcloud services list
+  #   NAME                                      TITLE
+  # analytics.googleapis.com                  Google Analytics API
+  # analyticsreporting.googleapis.com         Analytics Reporting API
+  # appengine.googleapis.com                  App Engine Admin API
+  # bigquery.googleapis.com                   BigQuery API
+  # bigquery.googleapis.com                   BigQuery API
+  # bigquerystorage.googleapis.com            BigQuery Storage API
+  # cloudapis.googleapis.com                  Google Cloud APIs
+  # clouddebugger.googleapis.com              Cloud Debugger API
+  # cloudfunctions.googleapis.com             Cloud Functions API
+  # cloudmonitoring.googleapis.com            Cloud Monitoring API
+  # cloudtrace.googleapis.com                 Cloud Trace API
+  # compute.googleapis.com                    Compute Engine API
+  # computescanning.googleapis.com            Compute Scanning API
+  # container.googleapis.com                  Kubernetes Engine API
+  # containeranalysis.googleapis.com          Container Analysis API
+  # containerregistry.googleapis.com          Container Registry API
+  # dataflow.googleapis.com                   Dataflow API
+  # dataproc-control.googleapis.com           Cloud Dataproc Control API
+  # dataproc.googleapis.com                   Cloud Dataproc API
+  # datastore.googleapis.com                  Cloud Datastore API
+  # deploymentmanager.googleapis.com          Cloud Deployment Manager V2 API
+  # directions-backend.googleapis.com         Directions API
+  # distance-matrix-backend.googleapis.com    Distance Matrix API
+  # dns.googleapis.com                        Cloud DNS API
+  # elevation-backend.googleapis.com          Maps Elevation API
+  # firebase.googleapis.com                   Firebase Management API
+  # firebasedynamiclinks.googleapis.com       Firebase Dynamic Links API
+  # firebaseinstallations.googleapis.com      Firebase Installations API
+  # firebaseremoteconfig.googleapis.com       Firebase Remote Config API
+  # firebaserules.googleapis.com              Firebase Rules API
+  # firestore.googleapis.com                  Cloud Firestore API
+  # geocoding-backend.googleapis.com          Geocoding API
+  # googlecloudmessaging.googleapis.com       Cloud Messaging
+  # iap.googleapis.com                        Cloud Identity-Aware Proxy API
+  # identitytoolkit.googleapis.com            Identity Toolkit API
+  # logging.googleapis.com                    Cloud Logging API
+  # maps-backend.googleapis.com               Maps JavaScript API
+  # maps-embed-backend.googleapis.com         Maps Embed API
+  # mobilecrashreporting.googleapis.com       Mobile Crash Reporting API
+  # monitoring.googleapis.com                 Cloud Monitoring API
+  # osconfig.googleapis.com                   Cloud OS Config API
+  # oslogin.googleapis.com                    Cloud OS Login API
+  # places-backend.googleapis.com             Places API
+  # placesandroid.googleapis.com              Places SDK for Android
+  # placesios.googleapis.com                  Places SDK for iOS
+  # plus.googleapis.com                       Google+ API
+  # pubsub.googleapis.com                     Cloud Pub/Sub API
+  # replicapool.googleapis.com                Compute Engine Instance Group Manager API
+  # replicapoolupdater.googleapis.com         Compute Engine Instance Group Updater API
+  # resourceviews.googleapis.com              Compute Engine Instance Groups API
+  # securetoken.googleapis.com                Token Service API
+  # servicemanagement.googleapis.com          Service Management API
+  # source.googleapis.com                     Legacy Cloud Source Repositories API
+  # sql-component.googleapis.com              Cloud SQL
+  # stackdriver.googleapis.com                Stackdriver API
+  # stackdriverprovisioning.googleapis.com    Stackdriver Provisioning Service
+  # static-maps-backend.googleapis.com        Maps Static API
+  # storage-api.googleapis.com                Google Cloud Storage JSON API
+  # storage-component.googleapis.com          Cloud Storage
+  # street-view-image-backend.googleapis.com  Street View Static API
+  # tagmanager.googleapis.com                 Tag Manager API
+  # testing.googleapis.com                    Cloud Testing API
+  # translate.googleapis.com                  Cloud Translation API
+  # vision.googleapis.com                     Cloud Vision API
+}
+
+enable_services() {
+  $dummy gcloud services enable deploymentmanager.googleapis.com cloudfunctions.googleapis.com storage-component.googleapis.com logging.googleapis.com
+}
+
+create_service_account() {
+  # SA(Service Account) 作成
+  $dummy gcloud iam service-accounts create $service_account --display-name "Cloud Functions deployment account for Serverless Framework"
+
+  # SAにロールを割り当て
+  for role in $roles; do
+    $dummy gcloud projects add-iam-policy-binding $project \
+      --member=serviceAccount:$service_account@$project.iam.gserviceaccount.com \
+      --role=${role}
+  done
+
+  # サービスアカウントの認証情報取得
+  $dummy gcloud iam service-accounts keys create $key_file --iam-account $service_account@$project.iam.gserviceaccount.com
+}
+
+create_sls_template() {
+  $dummy sls create --template google-nodejs --path $create_sls_repo
+  $dummy cd $create_sls_repo
+  $dummy npm install --save serverless-google-cloudfunctions
+}
+
+setup_gcloud() {
+  if has gcloud; then
+    return
+  fi
+  $dummy sudo yay -S google-cloud-sdk
+}
+
+setup_gcloud_config() {
+  if [[ -e ~/.config/gcloud ]]; then
+    return
+  fi
+  # MEMO: Access url in sp gmail account, and clip token and paste to terminal
+  $dummy gcloud init --console-only
+}
+
+main() {
+  initialize "$@"
+  setup_gcloud
+  setup_gcloud_config
+  # # sample: https://yomon.hatenablog.com/entry/2019/12/gcf_serverless_fw_deploy
+  enable_services
+  create_service_account
+  create_sls_template
+}
+main "$@"
