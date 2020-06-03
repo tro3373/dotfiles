@@ -124,7 +124,7 @@ call plug#begin('$HOME/.vim/plugged')
 
   " ソース解析
   Plug 'Shougo/unite-outline'                             " 関数一覧とかを表示
-  Plug 'vim-scripts/gtags.vim'                            " GNU Global
+  " Plug 'vim-scripts/gtags.vim'                            " GNU Global
   if !g:is_windows
       Plug 'vim-scripts/taglist.vim'                      " ソースコードブラウザ
   endif
