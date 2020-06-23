@@ -155,7 +155,14 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
 
   " Plug 'Shougo/neocomplcache.vim'                         " 補完候補を自動でポップアップ(old)
-  Plug 'Shougo/neocomplete.vim'                           " Next generation completion framework after neocomplcache
+  " Plug 'Shougo/neocomplete.vim'                           " Next generation completion framework after neocomplcache
+  " if has('nvim')
+  "   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+  " else
+  "   Plug 'Shougo/deoplete.nvim'
+  "   Plug 'roxma/nvim-yarp'
+  "   Plug 'roxma/vim-hug-neovim-rpc', { 'do': 'pip install pynvim' }
+  " endif
 
   " Plug 'kana/vim-smartchr'                                " = 等の便利入力
   Plug 'kana/vim-smartinput'                              " () 等の入力補完
@@ -173,6 +180,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'prabirshrestha/async.vim'
   Plug 'prabirshrestha/asyncomplete.vim'
   Plug 'prabirshrestha/asyncomplete-lsp.vim'
+  Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
   Plug 'prabirshrestha/vim-lsp'                             " Vim Language Server Protocol
   Plug 'mattn/vim-lsp-settings'                             " use `:LspInstallServer`
   Plug 'mattn/vim-lsp-icons'

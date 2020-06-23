@@ -32,6 +32,19 @@ let g:asyncomplete_auto_popup = 1           " 自動で入力補完ポップア�
 let g:asyncomplete_auto_completeopt = 0     " 自動で入力補完ポップアップを表示
 let g:asyncomplete_popup_delay = 200        " ポップアップ表示ディレイ
 let g:lsp_text_edit_enabled = 1             " textEdit を有効(LSP の仕様)
+
+let g:asyncomplete_log_file = expand('$HOME/.vim/asyncomplete.log')
+" let g:lsp_virtual_text_enabled = 0
+call asyncomplete#register_source(asyncomplete#sources#neosnippet#get_source_options({
+    \ 'name': 'neosnippet',
+    \ 'whitelist': ['*'],
+    \ 'completor': function('asyncomplete#sources#neosnippet#completor'),
+    \ }))
+
+imap <C-k>     <Plug>(neosnippet_expand_or_jump)
+smap <C-k>     <Plug>(neosnippet_expand_or_jump)
+xmap <C-k>     <Plug>(neosnippet_expand_target)
+
 " menuone:対象が1件しかなくても常に補完ウィンドウを表示
 " noinsert:補完ウィンドウを表示時に挿入しない
 set completeopt=menuone,noinsert

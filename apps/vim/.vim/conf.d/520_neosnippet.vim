@@ -32,5 +32,23 @@ let g:neosnippet#snippets_directory = '~/.vim/snippets,~/.vim/plugged/vim-snippe
 
 " For snippet_complete marker.
 if has('conceal')
-  set conceallevel=2 concealcursor=i
+  " --------------------------------------------------------
+  " https://yuzuemon.hatenablog.com/entry/2015/01/15/035759
+  " Json等のダブルクォーテーションの見た目をなくすなど
+  " - concealcursor: カーソル行のテキストを Conceal表示するモードをセットする
+  "   - n ノーマルモード
+  "   - v ビジュアルモード
+  "   - i 挿入モード
+  "   - c コマンドライン編集
+  " - conceallevel: レベル設定
+  "   - 0 通常通り表示(デフォルト)
+  "   - 1 conceal対象のテキストは代理文字(初期設定はスペース)に置換される
+  "   - 2 conceal対象のテキストは非表示になる
+  "   - 3 conceal対象のテキストは完全に非表示
+  " --------------------------------------------------------
+  " neosnippet に記載されている設定
+  " >    set conceallevel=2 concealcursor=niv
+  " >    set conceallevel=2 concealcursor=i
+  " 以下の方が動作的には好ましいので変更してみる
+  set conceallevel=1 concealcursor=
 endif
