@@ -162,8 +162,28 @@ alias tmux_b='tmux set-option -g prefix C-b'
 #
 function cd_up() {
   cd ../
-  zle reset-prompt
+  zle reset-prompt # redraw prompt
 }
-zle -N cd_up
+zle -N cd_up              # redist `cd_up` as widget
 bindkey '^f' vi-kill-line # デフォルトのキーバインド(^U)を変更
 bindkey '^u' cd_up
+
+function ls_src() {
+  if command -v ghq >&/dev/null; then
+    ghq list --full-path
+  else
+    find $HOME/src/ -maxdepth 1 -mindepth 1 -type d
+  fi
+}
+function cd_src() {
+  # LBUFFER: 現在のカーソル位置よりも左のバッファ
+  # RBUFFER: 現在のカーソル位置を含む右のバッファ
+  local src=$(ls_src | fzf --query "$LBUFFER")
+  if [ -n "$src" ]; then
+    BUFFER="cd $src"
+    zle accept-line # execute buffer string
+  fi
+  zle -R -c # refresh
+}
+zle -N cd_src
+bindkey '^]' cd_src
