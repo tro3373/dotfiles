@@ -1,7 +1,7 @@
 .netrwhist
 conf.d/home.vim
 conf.d/work.vim
-_viminfo
+_vimin*
 
 undo/*
 bundle/*
