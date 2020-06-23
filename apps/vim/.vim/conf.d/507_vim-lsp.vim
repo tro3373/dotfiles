@@ -30,7 +30,7 @@ let g:lsp_diagnostics_echo_cursor = 1       " enable echo under cursor when in n
 " let g:lsp_signs_hint = {'text': 'h', 'icon': '/path/to/some/other/icon'}
 let g:asyncomplete_auto_popup = 1           " 自動で入力補完ポップアップを表示
 let g:asyncomplete_auto_completeopt = 0     " 自動で入力補完ポップアップを表示
-let g:asyncomplete_popup_delay = 200        " ポップアップ表示ディレイ
+" let g:asyncomplete_popup_delay = 200        " ポップアップ表示ディレイ(default: 30)
 let g:lsp_text_edit_enabled = 1             " textEdit を有効(LSP の仕様)
 
 let g:asyncomplete_log_file = expand('$HOME/.vim/asyncomplete.log')
