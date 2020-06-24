@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
 # current_dir=$(pwd)
-script_dir=$(cd "$(dirname $0)"; pwd)
+script_dir=$(
+  cd "$(dirname $0)"
+  pwd
+)
 command_name=$(basename $0)
 
 reg_ids=()
@@ -22,7 +25,7 @@ Google Cloud Messaging test tool for Android.
 EOF
 }
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 
 add_args() {
   args=("${args[@]}" "$@")
@@ -31,23 +34,23 @@ add_args() {
 set_args() {
   for arg in "$@"; do
     case "$arg" in
-      -h|--help)
-        usage
-        exit 0
-        ;;
-      -r*|--rid*)
-        local rid=${arg#*=}
-        reg_ids=("${reg_ids[@]}" "$rid")
-        ;;
-      -k*|--key*)
-        api_key=${arg#*=}
-        ;;
-      -c*|--config*)
-        config_file="${arg#*=}"
-        ;;
-      *)
-        add_args "$arg"
-        ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -r* | --rid*)
+      local rid=${arg#*=}
+      reg_ids=("${reg_ids[@]}" "$rid")
+      ;;
+    -k* | --key*)
+      api_key=${arg#*=}
+      ;;
+    -c* | --config*)
+      config_file="${arg#*=}"
+      ;;
+    *)
+      add_args "$arg"
+      ;;
     esac
   done
 }
@@ -89,10 +92,10 @@ load_config() {
   if [[ -z $config_file ]]; then
     config_file=~/.secret
   fi
-  load_config_ifexists "$config_file" \
-    || load_config_ifexists "$script_dir/$config_file" \
-    || load_config_ifexists "$HOME/$config_file"
-  }
+  load_config_ifexists "$config_file" ||
+    load_config_ifexists "$script_dir/$config_file" ||
+    load_config_ifexists "$HOME/$config_file"
+}
 
 load_message_ifexists() {
   local loadfile="$*"
@@ -108,11 +111,11 @@ load_message() {
     message="{\"message\":\"Hello\"}"
     return
   fi
-  load_message_ifexists "$message" \
-    || load_message_ifexists "$script_dir/$message" \
-    || load_message_ifexists "$script_dir/$message.json" \
-    || load_message_ifexists "$script_dir/json/$message.json"
-  }
+  load_message_ifexists "$message" ||
+    load_message_ifexists "$script_dir/$message" ||
+    load_message_ifexists "$script_dir/$message.json" ||
+    load_message_ifexists "$script_dir/json/$message.json"
+}
 
 send_gcm() {
   local regids=
@@ -130,7 +133,7 @@ send_gcm() {
     --header Content-Type:"application/json" \
     https://android.googleapis.com/gcm/send \
     -d "{\"registration_ids\":[$regids],\"data\": $message}"
-  }
+}
 main() {
   initialize "$@"
   load_config
@@ -139,4 +142,3 @@ main() {
   send_gcm
 }
 main "$@"
-
