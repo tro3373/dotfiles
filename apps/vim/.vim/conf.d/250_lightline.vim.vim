@@ -83,7 +83,7 @@ function! MyFiletype()
 endfunction
 
 function! MyFileencoding()
-  return winwidth('.') > 70 ? (strlen(&fenc) ? &fenc : &enc) : ''
+  return winwidth('.') > 70 ? (strlen(&fenc) ? &fenc : &enc).(&bomb?'(BOM)':'') : ''
 endfunction
 
 function! MyMode()
