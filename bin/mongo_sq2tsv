@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+readonly current_dir=$(pwd)
+
+searchf() {
+  local paths=("$@" $current_dir/mongo.log /var/log/mongodb/mongo.log)
+  for path in "${paths[@]}"; do
+    [[ -e $path ]] && echo $path && break
+  done
+}
+
+fire() {
+  if [[ -p /dev/stdin ]]; then
+    cat -
+    return
+  fi
+  if [[ -z $f || ! -e $f ]]; then
+    echo "No such file exist. $f"
+    exit 1
+  fi
+  cat <$f
+}
+
+main() {
+  f=$(searchf "$@")
+  echo -e 'ms\tdate\tquery'
+  fire |
+    grep -E 'ms$' |
+    # grep -A1 '743782ms' |
+    # grep '2020-06-17T01:03:41.579+0900' |
+    # head -1 |
+    # 2020-06-16T18:45:54.219+0900
+    # 1234567891234567891234567890
+    # sed -e 's/^\(2.*\) \(.*ms\)/\2\t\1/g' |
+    # sed -e 's/^\([0-9.-+:T]{30}\)\(.*(query|command):.*\) \(.*ms\)/\1@\2@\3/g' |
+    # sed -e 's/^\(.\{28\}\).*    /\1@\2/g' |
+    # sed -e 's/^.*\(query:\|command:\).*/\1/g' |
+    # sed -e 's/^\(.\{28\}\).*\(\(query:\|command:\).*\) \(.*ms\)/\4\t\1\t\2/g' |
+    # sed -e 's/^\(.\{28\}\).* \(.*\) \(\(query:\|command:\).*\) \(.*ms\)/\5\t\2\t\1\t\3/g' |
+    # sed -e 's/^\(.\{28\}\)(.* \(query\|command\) )\(.*\) \(\(query:\|command:\).*\) \(.*ms\)/\1/g' |
+    # sed -e 's/^\(.\{28\}\).* \(query\|command\) \(.*\) \(\(query:\|command:\).*\) \(.*ms\)/\2/g' |
+    sed -e 's/^\(.\{28\}\).* \(query\|command\|getmore\|update\) \(.*\) \(.*\)ms/\4\t\1\t\3/g' |
+    # sed -e 's/^\(.\{28\}\)(.*\( query \| command \).*/\1/g' |
+    # sed -e 's/^\(.\{28\}\).* \(query\|command\) .*/\1/g' |
+    # sed -e 's/^\(.\{28\}\).* \(.*\) \(\(query:\|command:\).*\) \(.*ms\)/\5\t\2\t\1\t\3/g' |
+    # while read -r line; do
+    #   [[ -z $line ]] && continue
+    #   [[ $line =~ ^#.* ]] && continue
+    #   echo $line
+    #   # local timestamp=$(echo $line | cut -d' ' -f1)
+    #   # local ms=$(echo $line | sed -e 's/^.* \(.*ms\)/\1/g')
+    #   # local table=$(echo $line | sed -e 's/^\(.* \(query\|command\) \)//g' | cut -d' ' -f1)
+    #   # local q=$(echo $line | sed -e 's/^.*\(query\|command\): //g' -e 's/^\(.*\) .*ms/\1/g')
+    #   # echo -e "$ms\t$table\t$timestamp\t$q"
+    # done |
+    sort -n -r
+}
+main "$@"
