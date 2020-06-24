@@ -160,6 +160,8 @@ bind generic 0      @sh -c "echo %(commit) | ~/.dot/bin/clip"
 # Copy commit title to clipboard:
 bind generic 9      @sh -c "git show -s --format=%s %(commit) | ~/.dot/bin/clip"
 
+# Open the version in vim
+bind diff    O      !bash -c "git show %(commit):%(file) | ~/.dot/bin/tovim >&/dev/null"
 
 # hub
 # ; で GitHub の該当コミットを開く ※要 hub インストール
@@ -221,7 +223,7 @@ set line-graphics = ascii
 #set wrap-lines = no
 #set focus-child = yes
 #set show-line-numbers = yes
-# 
+#
 ## Color Settings
 #color default white black
 #color cursor default magenta
