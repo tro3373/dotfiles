@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+readonly timestamp=$(date +%Y%m%d_%H%M%S)
+
+ls_diff_files() {
+  git status -s |
+    sed -e 's,^.* ,,g'
+}
+
+main() {
+  if ! get_git_root >&/dev/null; then
+    echo "Not in git repository." 1>&2
+    exit 1
+  fi
+  local cnt=$(ls_diff_files | wc -l)
+  [[ $cnt -eq 0 ]] && echo "No changes exist." && return
+  local dst=backup_$timestamp.tgz
+  ls_diff_files |
+    xargs tar cvfpz $dst >&/dev/null
+  echo "done. exported to $dst"
+}
+main "$@"

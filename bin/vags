@@ -100,12 +100,7 @@ initialize() {
   [[ ! -e $dst ]] && $dummy mkdir -p $dst
 }
 
-_sync() {
-  if [[ $reverse -eq 1 ]]; then
-    local tmp=$src
-    src=$dst
-    dst=$tmp
-  fi
+_rsync() {
   # -a: -rlptgoD --no-H --no-A --no-X
   # -v: --verbose         動作内容を表示する
   # -q: --quiet           動作中のメッセージを抑制する
@@ -127,7 +122,8 @@ _sync() {
   #     --specials        特殊ファイルを保持する
   # -z: --compress        転送中のデータを圧縮する
   # -u: --update          同期先のファイルの方が新しい場合はスキップする
-  local _cmd="rsync -rtuzzv --size-only --no-H --no-A --no-X --delete"
+  # local _cmd="rsync -rtuzzv --size-only --no-H --no-A --no-X --delete"
+  local _cmd="rsync -rtuzzv --no-H --no-A --no-X --delete"
   if [[ $ls_syncfiles -eq 1 ]]; then
     dummy=
     _cmd="$_cmd -n"
@@ -139,6 +135,44 @@ _sync() {
   _cmd="$_cmd $src/ $dst/"
   [[ -z $dummy ]] && ink cyan "Excute: $_cmd"
   eval "$_cmd"
+}
+
+_manual_sync() {
+  cd $src
+  if [[ $ls_syncfiles -eq 1 ]]; then
+    git ls-files
+    return
+  fi
+  git ls-files |
+    while read -r _path; do
+      [[ -z $_path ]] && continue
+      [[ $_path =~ ^#.* ]] && continue
+      $dummy cp --parent -t $dst/ -rf
+    done
+}
+
+_manual_sync2() {
+  cd $src
+  git status -s |
+    while read -r _s _path; do
+      [[ -z $_s ]] && continue
+      [[ $_s =~ ^#.* ]] && continue
+      [[ $_s == D ]] && $dummy rm $dst/$_path && continue
+      local _dst=$dst/$_path
+      local _dstd=$(dirname $_dst)
+      [[ ! -e $_dstd ]] && $dummy mkdir -p $_dstd
+      $dummy cp -rf $src/$_path $_dst
+    done
+}
+
+_sync() {
+  if [[ $reverse -eq 1 ]]; then
+    local tmp=$src
+    src=$dst
+    dst=$tmp
+  fi
+  # _rsync
+  _manual_sync2
 }
 
 main() {
