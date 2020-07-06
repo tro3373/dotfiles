@@ -50,6 +50,11 @@ xmap <C-k>     <Plug>(neosnippet_expand_target)
 set completeopt=menuone,noinsert
 " set completeopt+=preview
 
+" https://note.com/yasukotelin/n/na87dc604e042
+" 補完表示時のEnterで改行をしない TODO Not worked
+" inoremap <expr><CR> pumvisible() ? "<C-y>" : "<CR>"
+
+
 " language server を指定
 " let g:lsp_settings_filetype_javascript = ['eslint-language-server']
 " let g:lsp_settings = {
