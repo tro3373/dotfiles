@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+install_common() { not_supported; }
+install_arch() { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() {
+  local _ver=$(lsb_release -r -s)
+  if $_ver != 16.04; then
+    log "$_ver is not supported."
+    return
+  fi
+  # @see http://sicklylife.hatenablog.com/entry/2017/02/06/211159
+  # For Japanize zip file Under ubuntu 16.04
+  mexe "wget -q https://www.ubuntulinux.jp/ubuntu-ja-archive-keyring.gpg -O- | sudo apt-key add -"
+  mexe "wget -q https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -O- | sudo apt-key add -"
+  mexe sudo wget https://www.ubuntulinux.jp/sources.list.d/xenial.list -O /etc/apt/sources.list.d/ubuntu-ja.list
+  mexe sudo apt update
+  mexe sudo apt upgrade
+  mexe sudo apt install ubuntu-defaults-ja p7zip-full
+  mexe sudo add-apt-repository ppa:sicklylife/ppa
+  mexe sudo apt update
+  mexe sudo apt upgrade
+}
+install_redhat() { not_supported; }
+setting_common() { not_supported; }
+setting_arch() { not_supported; }
+setting_msys() { not_supported; }
+setting_cygwin() { not_supported; }
+setting_mac() { not_supported; }
+setting_ubuntu() { not_supported; }
+setting_redhat() { not_supported; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#gh
+#gh_user_local
