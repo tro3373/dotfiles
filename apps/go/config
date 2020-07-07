@@ -28,24 +28,12 @@ install_cygwin() {
 }
 
 setting_common() {
-  local version=$(_go_latest)
-  if [[ -z $version ]]; then
-    log "No version exist"
-    exit 1
-  fi
-  if grep "/go/$version" ~/.works.zsh >&/dev/null; then
+  local _gobin=$HOME/go/bin
+  make_dir_if_needed $_gobin
+  if grep "GOPATH" ~/.works.zsh >&/dev/null; then
     return
   fi
-  # make_dir_if_needed $HOME/go/lib/go
-  # mexe "echo 'export GOROOT=\$GOPATH/lib/go' >> ~/.works.zsh"
-  # mexe "echo 'export GOBIN=\$GOPATH/bin' >> ~/.works.zsh"
-  # mexe "echo 'add_path \$GOBIN' >> ~/.works.zsh"
-  # mexe "echo 'export GOPATH=\$HOME/go' >> ~/.works.zsh"
-  # mexe "echo 'add_path \$GOPATH/bin' >> ~/.works.zsh"
-  local _gobin=$GOPATH/bin
-  if [[ ! -e $_gobin ]]; then
-    mexe mkdir -p $_gobin
-  fi
-  mexe "echo 'add_path $GOPATH/bin' >> ~/.works.zsh"
+  mexe "echo 'export GOPATH=\$HOME/go' >> ~/.works.zsh"
+  mexe "echo 'add_path \$GOPATH/bin' >> ~/.works.zsh"
   rm_dotpath
 }
