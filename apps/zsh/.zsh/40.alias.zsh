@@ -171,7 +171,7 @@ bindkey '^u' cd_up
 function ls_src() {
   if command -v ghq >&/dev/null; then
     # ghq list --full-path
-    ghq list
+    ghq list 2>/dev/null
   else
     find $HOME/src/ -maxdepth 1 -mindepth 1 -type d
   fi
@@ -188,7 +188,7 @@ function cd_src() {
       fzf --query "$LBUFFER" --preview "ls -laF $(ghq root)/{}"
   )
   if [ -n "$src" ]; then
-    BUFFER="cd $src"
+    BUFFER="cd $(ghq root)/$src"
     zle accept-line # execute buffer string
   fi
   zle -R -c # refresh
