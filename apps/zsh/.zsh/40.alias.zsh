@@ -170,15 +170,23 @@ bindkey '^u' cd_up
 
 function ls_src() {
   if command -v ghq >&/dev/null; then
-    ghq list --full-path
+    # ghq list --full-path
+    ghq list
   else
     find $HOME/src/ -maxdepth 1 -mindepth 1 -type d
   fi
 }
 function cd_src() {
+  if ! has fzf; then
+    echo 'Not supported(No fzf command exist)'
+    return
+  fi
   # LBUFFER: 現在のカーソル位置よりも左のバッファ
   # RBUFFER: 現在のカーソル位置を含む右のバッファ
-  local src=$(ls_src | fzf --query "$LBUFFER")
+  local src=$(
+    ls_src |
+      fzf --query "$LBUFFER" --preview "ls -laF $(ghq root)/{}"
+  )
   if [ -n "$src" ]; then
     BUFFER="cd $src"
     zle accept-line # execute buffer string
