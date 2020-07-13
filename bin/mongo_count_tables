@@ -4,7 +4,13 @@ host=localhost
 port=27017
 collection_group=${1:-example}
 table=${2:-tableName}
+readonly command_name=$(basename $0)
+readonly script_dir=$(
+  cd "$(dirname ${BASH_SOURCE:-$0})"
+  pwd
+)
 readonly timestamp=$(date +%Y%m%d_%H%M%S)
+readonly logf=$script_dir/logs/$command_name.$timestamp.log
 
 q() {
   local _optdb=
@@ -28,4 +34,4 @@ main() {
     done
 }
 
-main "$@" | tee -a logs/$(basename $0).$timestamp.log
+main "$@" | tee -a $logf
