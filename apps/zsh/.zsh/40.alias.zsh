@@ -168,13 +168,13 @@ zle -N cd_up              # redist `cd_up` as widget
 bindkey '^f' vi-kill-line # デフォルトのキーバインド(^U)を変更
 bindkey '^u' cd_up
 
-function ls_src() {
+function _find_src_root() {
   if command -v ghq >&/dev/null; then
-    # ghq list --full-path
-    ghq list 2>/dev/null
+    ghq list --full-path 2>/dev/null
   else
     find $HOME/src/ -maxdepth 1 -mindepth 1 -type d
   fi
+  find $HOME/go/src -type d -name '.git' 2>/dev/null | xargs dirname
 }
 function cd_src() {
   if ! has fzf; then
@@ -184,11 +184,11 @@ function cd_src() {
   # LBUFFER: 現在のカーソル位置よりも左のバッファ
   # RBUFFER: 現在のカーソル位置を含む右のバッファ
   local src=$(
-    ls_src |
-      fzf --query "$LBUFFER" --preview "ls -laF $(ghq root)/{}"
+    _find_src_root |
+      fzf --query "$LBUFFER" --preview "ls -laF {}"
   )
   if [ -n "$src" ]; then
-    BUFFER="cd $(ghq root)/$src"
+    BUFFER="cd $src"
     zle accept-line # execute buffer string
   fi
   zle -R -c # refresh
