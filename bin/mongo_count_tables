@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+host=localhost
+port=27017
+collection_group=${1:-example}
+table=${2:-tableName}
+readonly timestamp=$(date +%Y%m%d_%H%M%S)
+
+q() {
+  local _optdb=
+  [[ -n $db ]] && _optdb=/$db
+  cat - | mongo --quiet $host:$port$_optdb
+}
+
+fire() {
+  echo 'show dbs' |
+    q |
+    grep $collection_group
+}
+
+main() {
+  fire |
+    while read -r db size; do
+      [[ -z $db ]] && continue
+      [[ $db =~ ^#.* ]] && continue
+      local cnt=$(echo "db.$table.count()" | q)
+      echo -e "$db\t$table\t$cnt"
+    done
+}
+
+main "$@" | tee -a logs/$(basename $0).$timestamp.log
