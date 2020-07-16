@@ -106,6 +106,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'rhysd/accelerated-jk'                             " Accelareted-jk
   Plug 'terryma/vim-expand-region'                        " visually select increasingly larger regions of text via `v`
   Plug 'iberianpig/tig-explorer.vim'                      " vimからtig
+  " Plug 'iberianpig/ranger-explorer.vim'                   " vimからranger
 
   Plug 'thinca/vim-ambicmd'                               " 長いコマンド名を個別の設定なしで入力するためのプラグイン
   " Plug 'terryma/vim-multiple-cursors'                     " MultiCursor
