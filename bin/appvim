@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+readonly dotapps=${DOTPATH:-~/.dot}/apps
+
+main() {
+  local q=
+  if [[ $# -ne 0 ]]; then
+    q="--query $1"
+  fi
+  local paths=$(find $dotapps/*/config | fzf $q -m --preview "cat {}")
+  [[ -z $paths ]] && exit 1
+  vim -p $paths
+}
+main "$@"
