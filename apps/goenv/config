@@ -7,18 +7,20 @@ install_common() {
     return
   fi
   mexe anyenv install goenv
-  mexe "echo 'add_path \${GOPATH}/bin' >> ~/.works.zsh"
-  rm_dotpath
 }
 
-install_msys()   { not_supported; }
+install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 
-setting_common() { not_supported; }
-setting_arch()   { not_supported; }
-setting_msys()   { not_supported; }
+setting_common() {
+  mexe "echo 'add_path \${GOPATH}/bin' >> ~/.works.zsh"
+  # see https://ksoichiro.blogspot.com/2020/01/ghqpeco.html
+  mexe "echo 'export GOENV_DISABLE_GOPATH=1' >> ~/.works.zsh"
+  rm_dotpath
+}
+setting_arch() { not_supported; }
+setting_msys() { not_supported; }
 setting_cygwin() { not_supported; }
-setting_mac()    { not_supported; }
+setting_mac() { not_supported; }
 setting_ubuntu() { not_supported; }
 setting_redhat() { not_supported; }
-
