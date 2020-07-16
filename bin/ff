@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+readonly _FF_OPT_F=${_FF_OPT_F:-f}
+readonly ignored=(.git node_modules bower_components)
+main() {
+  local cmd=(find)
+  for i in "${ignored[@]}"; do
+    # cmd+=("-not \\( -type d -name $i -prune \\)")
+    # cmd+=("-not \\( -type d -name $i \\)")
+    # cmd+=("\\( ! -type d ! -name $i \\)")
+    # cmd+=("\\( -not -type d -not -name $i \\)")
+    # cmd+=("-name $i -prune")
+    cmd+=("\\( -type d -name $i -prune \\) -o")
+  done
+  cmd+=("-type $_FF_OPT_F")
+  cmd+=("! -name '.'")
+  if [[ $# -ne 0 ]]; then
+    cmd+=("-name '*${*}*'")
+  fi
+  cmd+=("-print")
+  # cmd+=("-ls")
+  # echo -e "${cmd[@]}"
+  eval "${cmd[@]}"
+}
+main "$@"
