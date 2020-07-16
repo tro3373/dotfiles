@@ -169,16 +169,17 @@ bindkey '^f' vi-kill-line # デフォルトのキーバインド(^U)を変更
 bindkey '^u' cd_up
 
 function _find_src_root() {
-  if command -v ghq >&/dev/null; then
-    ghq list --full-path 2>/dev/null
-  else
-    find $HOME/src/ -maxdepth 1 -mindepth 1 -type d
-  fi
-  find $HOME/go/src -type d -name '.git' 2>/dev/null | xargs dirname
+  # find $HOME/src/ -maxdepth 1 -mindepth 1 -type d
+  # find $HOME/go/src -type d -name '.git' 2>/dev/null | xargs dirname
+  ghq list --full-path 2>/dev/null | tac
 }
 function cd_src() {
   if ! has fzf; then
-    echo 'Not supported(No fzf command exist)'
+    echo 'Not supported(No fzf command exist)' 1>&2
+    return
+  fi
+  if ! has ghq; then
+    echo 'Not supported(No ghq command exist)' 1>&2
     return
   fi
   # LBUFFER: 現在のカーソル位置よりも左のバッファ

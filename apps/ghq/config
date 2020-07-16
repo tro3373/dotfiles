@@ -11,7 +11,10 @@ install_common() {
 cat_add_config() {
   cat <<EOF
 [ghq]
-	root = $HOME/src
+; primary is last setting
+	root = ~/src
+	root = ~/go/src
+	root = ~/ghq
 EOF
 }
 
