@@ -178,15 +178,21 @@ call plug#begin('$HOME/.vim/plugged')
   " =================================================================
   " Vim LSP!
   " @see https://mattn.kaoriya.net/?page=3
-  Plug 'prabirshrestha/async.vim'
-  Plug 'prabirshrestha/asyncomplete.vim'
-  Plug 'prabirshrestha/asyncomplete-lsp.vim'
-  Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
   Plug 'prabirshrestha/vim-lsp'                             " Vim Language Server Protocol
   Plug 'mattn/vim-lsp-settings'                             " use `:LspInstallServer`
   Plug 'mattn/vim-lsp-icons'
   Plug 'hrsh7th/vim-vsnip'                                  " 穴あき形式補完候補用？
   Plug 'hrsh7th/vim-vsnip-integ'
+  Plug 'prabirshrestha/async.vim'
+  Plug 'prabirshrestha/asyncomplete.vim'
+  Plug 'prabirshrestha/asyncomplete-lsp.vim'
+  Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
+  " Plug 'prabirshrestha/asyncomplete-buffer.vim'
+  " Plug 'prabirshrestha/asyncomplete-file.vim'
+  " Plug 'Shougo/neco-syntax'
+  " Plug 'prabirshrestha/asyncomplete-necosyntax.vim'
+  " Plug 'Shougo/neco-vim'
+  " Plug 'prabirshrestha/asyncomplete-necovim.vim'            " for neco-vim
 
 
   Plug 'hashivim/vim-terraform'                             " Terraform syntax

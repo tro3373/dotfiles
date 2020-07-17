@@ -2,10 +2,6 @@ if !g:plug.is_installed("vim-lsp")
   finish
 endif
 
-" if empty(globpath(&rtp, 'autoload/lsp.vim'))
-"   finish
-" endif
-
 function! s:on_lsp_buffer_enabled() abort
   setlocal omnifunc=lsp#complete
   setlocal signcolumn=yes
@@ -13,7 +9,6 @@ function! s:on_lsp_buffer_enabled() abort
   " nmap <buffer> <C-]> <plug>(lsp-definition)
   nmap <buffer> <C-]> :tab split<cr>:LspDefinition<cr>
   nmap <buffer> <f2> <plug>(lsp-rename)
-  inoremap <expr> <cr> pumvisible() ? "\<c-y>\<cr>" : "\<cr>"
 endfunction
 
 augroup lsp_install
@@ -24,35 +19,74 @@ command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('~/lsp.log')
 
 let g:lsp_diagnostics_enabled = 1           " ファイルの変更に伴いリアルタイムにエラー表示
 let g:lsp_diagnostics_echo_cursor = 1       " enable echo under cursor when in normal mode
+let g:lsp_text_edit_enabled = 1             " textEdit を有効(LSP の仕様)
+" let g:lsp_virtual_text_enabled = 0
 " let g:lsp_signs_enabled = 1
 " let g:lsp_signs_error = {'text': '✗'}
 " let g:lsp_signs_warning = {'text': '‼', 'icon': '/path/to/some/icon'}
 " let g:lsp_signs_hint = {'text': 'h', 'icon': '/path/to/some/other/icon'}
-let g:asyncomplete_auto_popup = 1           " 自動で入力補完ポップアップを表示
-let g:asyncomplete_auto_completeopt = 0     " 自動で入力補完ポップアップを表示
-" let g:asyncomplete_popup_delay = 200        " ポップアップ表示ディレイ(default: 30)
-let g:lsp_text_edit_enabled = 1             " textEdit を有効(LSP の仕様)
 
 let g:asyncomplete_log_file = expand('$HOME/.vim/asyncomplete.log')
-" let g:lsp_virtual_text_enabled = 0
-call asyncomplete#register_source(asyncomplete#sources#neosnippet#get_source_options({
-    \ 'name': 'neosnippet',
-    \ 'whitelist': ['*'],
-    \ 'completor': function('asyncomplete#sources#neosnippet#completor'),
-    \ }))
+" let g:asyncomplete_popup_delay = 200        " ポップアップ表示ディレイ(default: 30)
+let g:asyncomplete_auto_popup = 1           " 自動で入力補完ポップアップを表示
 
-imap <C-k>     <Plug>(neosnippet_expand_or_jump)
-smap <C-k>     <Plug>(neosnippet_expand_or_jump)
-xmap <C-k>     <Plug>(neosnippet_expand_target)
-
+" To enable preview window
+" allow modifying the completeopt variable, or it will be overridden all the time
+let g:asyncomplete_auto_completeopt = 0     " 自動で入力補完ポップアップを表示
 " menuone:対象が1件しかなくても常に補完ウィンドウを表示
 " noinsert:補完ウィンドウを表示時に挿入しない
-set completeopt=menuone,noinsert
+" noselect:メニューからマッチを {訳注:自動では} 選択せず、ユーザーに自分で選ぶことを強制する。
+" preview:現在選択されている候補についての付加的な情報をプレビューウィンドウに表示する。
+" set completeopt=menuone,noinsert
 " set completeopt+=preview
+" set completeopt=menuone,noinsert,noselect,preview
+set completeopt=menuone,noinsert,noselect
 
-" https://note.com/yasukotelin/n/na87dc604e042
-" 補完表示時のEnterで改行をしない TODO Not worked
-" inoremap <expr><CR> pumvisible() ? "<C-y>" : "<CR>"
+
+" 補完表示時のEnterで改行をしない
+inoremap <expr> <cr> pumvisible() ? "\<c-y>" : "\<cr>"
+inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+" imap <c-space> <Plug>(asyncomplete_force_refresh)
+
+
+" " 動作が重くなるのを回避するのにファイルタイプを指定して、asyncompleteを有効にする場合
+" " see https://qiita.com/hokorobi/items/b4be36253262373fbefc
+" let g:asyncomplete_enable_for_all = 0
+" autocmd vimrc FileType autohotkey,autoit,cfg,git,go,groovy,java,javascript,python,snippet,toml,vim,vb,xsl call asyncomplete#enable_for_buffer()
+
+
+" completor の登録
+" au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#neosnippet#get_source_options({
+"    \ 'name': 'neosnippet',
+"    \ 'whitelist': ['*'],
+"    \ 'priority': 5,
+"    \ 'completor': function('asyncomplete#sources#neosnippet#completor'),
+"    \ }))
+" au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#buffer#get_source_options({
+"      \ 'name': 'buffer',
+"      \ 'priority': 11,
+"      \ 'whitelist': ['*'],
+"      \ 'completor': function('asyncomplete#sources#buffer#completor'),
+"      \ }))
+" au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
+"      \ 'name': 'file',
+"      \ 'priority': 12,
+"      \ 'whitelist': ['*'],
+"      \ 'completor': function('asyncomplete#sources#file#completor'),
+"      \ }))
+" au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#necosyntax#get_source_options({
+"      \ 'name': 'necosyntax',
+"      \ 'priority': 9,
+"      \ 'whitelist': ['*'],
+"      \ 'completor': function('asyncomplete#sources#necosyntax#completor'),
+"      \ }))
+" au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#necovim#get_source_options({
+"      \ 'name': 'necovim',
+"      \ 'whitelist': ['vim'],
+"      \ 'priority': 10,
+"      \ 'completor': function('asyncomplete#sources#necovim#completor'),
+"      \ }))
 
 
 " language server を指定
@@ -67,9 +101,3 @@ set completeopt=menuone,noinsert
 "\   },
 "\}
 
-inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
-inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
-" 補完表示時のEnterで改行をしない
-inoremap <expr> <cr>    pumvisible() ? "\<C-y>" : "\<cr>"
-
-imap <c-space> <Plug>(asyncomplete_force_refresh)
