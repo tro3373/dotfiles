@@ -19,6 +19,9 @@ let g:quickrun_config = {
 \       "runner" : "vimproc",
 \       "runner/vimproc/updatetime" : 40,
 \   },
+\   "make": {
+\       "exec" : ["make"],
+\   },
 \   "do": {
 \       "exec" : ["make do"],
 \   }
