@@ -475,6 +475,7 @@ command!
 
 " テスト用関数
 function! TestScript() abort
+  Debug hoge
   echo "pwd:".getcwd()
   echo "uname:".system("uname")
   echo "OSTYPE:".system("echo $OSTYPE")
@@ -576,3 +577,11 @@ function! Yank2Remote()
   let s:ret = system(call(function('printf'), s:params))
 endfunction
 nnoremap <silent> ,y :call Yank2Remote()<CR>
+
+command! -nargs=*
+\   Debug
+\   try
+\|      echom <q-args> ":" string(<args>)
+\|  catch
+\|      echom <q-args>
+\|  endtry
