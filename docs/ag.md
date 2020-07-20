@@ -32,10 +32,12 @@
 ```
 
 ## Install For Windows
+
 - [The Silver Searcher windows port](http://blog.kowalczyk.info/software/the-silver-searcher-for-windows.html)
 - [ag.zip](https://kjkpub.s3.amazonaws.com/software/the_silver_searcher/rel/0.29.1-1641/ag.zip)
 
 ### Install For msys2
+
 ```sh
 pacman -S mingw-w64-x86_64-ag
 ```
@@ -129,6 +131,7 @@ For a list of supported file types run:
 ```
 
 ## list file type
+
 `ag --list-file-types`
 
 ```bash
@@ -385,4 +388,3 @@ The following file types are supported:
   --yaml
       .yaml  .yml
 ```
-

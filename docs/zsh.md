@@ -10,4 +10,3 @@ ${0:a:h}    ==> /Users/username/script
 ${0:a:h:h}  ==> /Users/username
 ${0:a:h:t}  ==> script
 ```
-

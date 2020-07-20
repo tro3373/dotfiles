@@ -197,9 +197,6 @@ cmap <F4> <C-R>=strftime("%Y%m%d_%H%M%S")<CR>
 imap <F4> <C-R>=strftime("%Y%m%d_%H%M%S")<CR>
 
 
-
-
-
 " 画面分割(縦分割)
 nnoremap ss :<C-u>sp<CR>
 " 画面分割(横分割)
