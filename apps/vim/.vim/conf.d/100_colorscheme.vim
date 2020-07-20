@@ -1,6 +1,16 @@
 if 0      " カラーテーマ設定
 elseif g:plug.is_installed("Apprentice") " cool
   colorscheme apprentice
+  function! MyHighlights() abort
+    " highlight Comment ctermfg=245
+    " highlight NonText ctermbg=17
+    " Ignore term ansi colors settings because nocolor bug occur
+    unlet! g:terminal_ansi_colors
+  endfunction
+  augroup MyColors
+    autocmd!
+    autocmd ColorScheme * call MyHighlights()
+  augroup END
 elseif g:plug.is_installed("vim-hybrid") " cool
   " ==> hybrid
   set background=dark
@@ -38,3 +48,4 @@ elseif g:plug.is_installed("molokai") " ng
   " ==> Molokai
   colorscheme molokai
 endif
+
