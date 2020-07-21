@@ -77,6 +77,7 @@ EOF
 
 main() {
   initialize "$@"
+  local configs=()
   for arg in "${args[@]}"; do
     local app_path=$dotpath/apps/$arg
     if [[ -e $app_path ]]; then
@@ -84,8 +85,17 @@ main() {
       continue
     fi
     mkdir -p $app_path
-    gen_config $app_path/config
+    local path=$app_path/config
+    gen_config $path
+    configs+=("$path")
     echo "===> Generated $app_path/config"
   done
+
+  echo "==> Edit it?(y/N)"
+  read yes_i_edit
+  if [[ $yes_i_edit =~ [nN] ]]; then
+    return
+  fi
+  vim -p "${configs[@]}"
 }
 main "$@"

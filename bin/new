@@ -21,25 +21,25 @@ Create new executable shell file.
 EOF
 }
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 
 set_args() {
   for arg in "$@"; do
     case "$arg" in
-      -h|--help)
-        usage
-        exit 0
-        ;;
-      -b|--bin)
-        # file=${arg#*=}
-        tobin=1
-        ;;
-      --hard|-l|--long)
-        hard=1
-        ;;
-      *)
-        target="$arg"
-        ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -b | --bin)
+      # file=${arg#*=}
+      tobin=1
+      ;;
+    --hard | -l | --long)
+      hard=1
+      ;;
+    *)
+      target="$arg"
+      ;;
     esac
   done
 }
@@ -111,7 +111,7 @@ EOL
 }
 
 cat_template_simple() {
-    cat <<'EOL'
+  cat <<'EOL'
 #!/usr/bin/env bash
 
 main() {
@@ -129,7 +129,7 @@ cat_template() {
   fi
 }
 
-main(){
+main() {
   initialize "$@"
   local out=$current_dir
   if [[ $tobin -eq 1 ]]; then
@@ -140,14 +140,14 @@ main(){
     echo "Target $target is exist." 1>&2
     exit 1
   fi
-  cat_template > $target
+  cat_template >$target
   chmod 775 $target
   echo "==> New shell template file generated to $target."
   echo "==> Edit it?(y/N)"
   read yes_i_edit
-  if [[ $yes_i_edit =~ [yY] ]]; then
-    vim $target
+  if [[ $yes_i_edit =~ [nN] ]]; then
+    return
   fi
+  vim $target
 }
 main "$@"
-

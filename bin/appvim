@@ -7,7 +7,7 @@ main() {
   if [[ $# -ne 0 ]]; then
     q="--query $1"
   fi
-  local paths=$(find $dotapps/*/config | fzf $q -m --preview "cat {}")
+  local paths=$(find $dotapps/*/config -type f -print0 | xargs -0 ls -t | fzf $q -m --preview "cat {}")
   [[ -z $paths ]] && exit 1
   vim -p $paths
 }
