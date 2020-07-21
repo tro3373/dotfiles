@@ -2,7 +2,7 @@
 
 install_common() { not_supported; }
 install_arch() {
-  install_via_os_default
+  def_install neovim
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
@@ -10,9 +10,13 @@ install_mac() { not_supported; }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() {
-  if [[ -e $HOME/.vimrc ]]; then
-    make_lnk_with_bkup "$HOME/.vimrc" "${HOME}/.config/nvim/init.vim"
+  local src=$HOME/.vimrc
+  local dst=${HOME}/.config/nvim/init.vim
+  local dstd=$(dirname $dst)
+  if [[ ! -e $dstd ]]; then
+    mexe mkdir -p $dstd
   fi
+  make_lnk_with_bkup "$src" "$dst"
 }
 setting_msys() { not_supported; }
 setting_cygwin() { not_supported; }
