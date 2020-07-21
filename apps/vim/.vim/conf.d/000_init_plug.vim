@@ -50,6 +50,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'itchyny/lightline.vim'                            " status-line
   Plug 'nathanaelkane/vim-indent-guides'                  " indent guide
   Plug 'airblade/vim-gitgutter'                           " Shows a git diff in the gutter!!!!!
+  Plug 'tpope/vim-fugitive'                               " Git wrapper so awesome
 
   " =================================================================
   " Filer
@@ -118,6 +119,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'thinca/vim-ambicmd'                               " 長いコマンド名を個別の設定なしで入力するためのプラグイン
   " Plug 'terryma/vim-multiple-cursors'                     " MultiCursor
   Plug 'ujihisa/unite-colorscheme'                        " カラースキーム変更
+  Plug 't9md/vim-quickhl'                                 " quick highlight
 
   " =================================================================
   " Feature/Funcs Search/Finds/Analyze
@@ -171,9 +173,11 @@ call plug#begin('$HOME/.vim/plugged')
   "   Plug 'roxma/nvim-yarp'
   "   Plug 'roxma/vim-hug-neovim-rpc', { 'do': 'pip install pynvim' }
   " endif
+  Plug 'mattn/sonictemplate-vim'
 
   " Plug 'kana/vim-smartchr'                                " = 等の便利入力
   Plug 'kana/vim-smartinput'                              " () 等の入力補完
+  " Plug 'mattn/vim-lexiv'                                " () 等の入力補完
   Plug 'tyru/caw.vim'                                     " コメントアウトプラグイン <Leader>+c
   Plug 'tpope/vim-surround'                               " 囲文字入力アシスト
   Plug 'vim-scripts/Align'                                " CSV,TSV整形
@@ -230,7 +234,6 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'sjl/gundo.vim'                                    " UNDO履歴を管理 http://qiita.com/kinef/items/ddbccdacaf9507d9dd24
   " Plug 'fuenor/qfixhowm'                                  " メモプラグイン
   " Plug 'thinca/vim-openbuf'
-  " Plug 'tpope/vim-fugitive'                               " Git wrapper so awesome
   " Plug 'junegunn/seoul256.vim'
   " Plug 'tpope/vim-fireplace', { 'for': ['clojure'] }      " 指定したファイルタイプを開いたときに読み込む
   " migemo

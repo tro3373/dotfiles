@@ -53,13 +53,11 @@ noremap gf gF
 noremap gF gf
 
 
-" Visual line
-nmap <Leader><Leader> V
 " 貼り付けたテキストを選択
 noremap gV `[v`]
 
 " Clip All
-nmap <Leader><Leader><Leader> ggVGy
+nmap <Leader>a ggVGy
 " Esc Esc でハイライトOFF nohlsearch
 nnoremap <Esc><Esc> :noh<CR>
 " インサートモードを抜けたときIME Off
