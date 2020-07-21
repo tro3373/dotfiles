@@ -9,11 +9,18 @@ function! s:on_lsp_buffer_enabled() abort
   " nmap <buffer> <C-]> <plug>(lsp-definition)
   nmap <buffer> <C-]> :tab split<cr>:LspDefinition<cr>
   nmap <buffer> <f2> <plug>(lsp-rename)
+  nmap <buffer> <C-n> <plug>(lsp-next-error)
+  nmap <buffer> <C-p> <plug>(lsp-previouse-error)
+  " Auto Import
+  autocmd BufWritePre <buffer> call execute('LspCodeActionSync source.organizeImports')
 endfunction
 
 augroup lsp_install
   au!
   autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
+  " https://qiita.com/kitagry/items/216c2cf0066ff046d200
+  " Auto Format
+  " autocmd BufWritePre <buffer> LspDocumentFormatSync
 augroup END
 command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('~/lsp.log')
 

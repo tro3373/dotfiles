@@ -2,7 +2,8 @@ if !g:plug.is_installed("ctrlp.vim")
   finish
 endif
 
-let g:ctrlp_map='<c-p>'
+" let g:ctrlp_map='<c-p>'
+let g:ctrlp_map='<Leader>o'
 let g:ctrlp_cmd = 'CtrlPMRU'
 
 " let g:ctrlp_max_height          = 90          " CtrlPのウィンドウ最大高さ(match_windowに統合)
@@ -73,7 +74,7 @@ nnoremap <Leader>p :CtrlPMRU<CR>
 " narrow the list down with a word under cursor
 " nnoremap <Leader>@@ :execute 'CtrlPFunky ' . expand('<cword>')<Cr>
 " カーソル配下の文字で CtrlP 検索
-map <Leader>o <C-P><C-\>w
-map <F3> <C-P><C-\>w
+" map <Leader>o <C-P><C-\>w
+" map <F3> <C-P><C-\>w
 nnoremap st <Nop>
 nnoremap st :<C-u>tabnew<CR>:CtrlPMRU<CR>
