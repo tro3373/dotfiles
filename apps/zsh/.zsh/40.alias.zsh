@@ -79,7 +79,7 @@ alias history="history -i"
 # --------------------------------------------------------
 # ag 設定
 # --------------------------------------------------------
-if type ag >/dev/null 2>&1; then
+if has ag; then
   if [ "${OSTYPE}" = "msys" ]; then
     # . が最後につかないと固まるので暫定
     org_ag=$(which ag)
@@ -95,7 +95,7 @@ if type ag >/dev/null 2>&1; then
   # --------------------------------------------------------
   # fzf 設定
   # --------------------------------------------------------
-  if type fzf >/dev/null 2>&1; then
+  if has fzf; then
     # Setting ag as the default source for fzf
     export FZF_DEFAULT_COMMAND='ag --hidden -g ""'
     # To apply the command to CTRL-T as well
@@ -103,7 +103,7 @@ if type ag >/dev/null 2>&1; then
   fi
 fi
 
-if type pt >/dev/null 2>&1; then
+if has pt; then
   if [ "${OSTYPE}" = "msys" ]; then
     # . が最後につかないと固まるので暫定
     org_pt=$(which pt)
