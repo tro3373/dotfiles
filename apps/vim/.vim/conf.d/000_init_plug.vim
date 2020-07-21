@@ -52,6 +52,15 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'airblade/vim-gitgutter'                           " Shows a git diff in the gutter!!!!!
 
   " =================================================================
+  " Filer
+  " =================================================================
+  " Plug 'mattn/ctrlp-filer'                                " Plugins for ctrlp.vim Filer (After start, Ctrl+D will not work bug occure.)
+  " Plug 'Shougo/vimfiler'                                  " :VimFiler
+  Plug 'cocopon/vaffle.vim'                               " SimpleFiler nouse
+  " Plug 'scrooloose/nerdtree', {
+  "   \ 'on':  ['NERDTreeToggle'] }                         " NERDTree tree view コマンド実行時に読み込む
+
+  " =================================================================
   " Feature/Funcs Base
   " =================================================================
   " Unite関連
@@ -77,7 +86,6 @@ call plug#begin('$HOME/.vim/plugged')
   endfunction
   Plug 'Shougo/vimproc.vim',
       \ { 'do': function('BuildVimproc') }
-  " Plug 'Shougo/vimfiler'                                  " :VimFiler
   Plug 'Shougo/unite.vim'                                 " ユーザインタフェース統合
   Plug 'Shougo/neomru.vim'                                " 最近使用したファイルの一覧管理
 
@@ -86,7 +94,6 @@ call plug#begin('$HOME/.vim/plugged')
   " if !g:is_windows
   "   Plug 'nixprime/cpsm' , {'do': './install.sh' }        " Plugins for ctrlp.vim A CtrlP matcher, specialized for paths.
   " endif
-  " Plug 'mattn/ctrlp-filer'                                " Plugins for ctrlp.vim Filer (After start, Ctrl+D will not work bug occure.)
   Plug 'vim-scripts/ctrlp-funky'                          " Plugins for ctrlp.vim Jump to a function
   Plug 'suy/vim-ctrlp-commandline'                        " Plugins for ctrlp.vim command line history navigation
   Plug 'sgur/ctrlp-extensions.vim'                        " Plugins for ctrlp.vim cmdline : cmdline history,
@@ -233,9 +240,6 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'powerline/powerline',
   "     \ {'rtp': 'powerline/bindings/vim/'}
   " Plug 'glidenote/memolist.vim'                           " simple memo plugin for Vim. No use
-  " Plug 'cocopon/vaffle.vim'                               " SimpleFiler nouse
-  " Plug 'scrooloose/nerdtree', {
-  "   \ 'on':  ['NERDTreeToggle'] }                         " NERDTree tree view コマンド実行時に読み込む
   " Plug 'cohama/agit.vim'                                  " gitk-like repository viewer ex) type :Agit
   " Plug 'vim-scripts/gitignore'                            " Vim plugin that add the entries in a .gitignore file to 'wildignore'
 call plug#end()
