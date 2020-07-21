@@ -18,7 +18,8 @@ endif
 " ```
 
 " nnoremap sv :<C-u>vs<CR>
-nnoremap <Leader>s :TigStatus<CR>
+" nnoremap <Leader>s :TigStatus<CR>
+nnoremap <Leader>s :TigOpenProjectRootDir<CR>
 nnoremap <Leader>t :TigOpenCurrentFile<CR>
 
 
