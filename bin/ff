@@ -2,7 +2,10 @@
 
 readonly _FF_OPT_F=${_FF_OPT_F:-f}
 readonly ignored=(.git node_modules bower_components)
-main() {
+
+has() { command -v ${1} >&/dev/null; }
+
+_ff() {
   local cmd=(find)
   for i in "${ignored[@]}"; do
     # cmd+=("-not \\( -type d -name $i -prune \\)")
@@ -21,5 +24,15 @@ main() {
   # cmd+=("-ls")
   # echo -e "${cmd[@]}"
   eval "${cmd[@]}"
+}
+
+main() {
+  if [[ $_FF_OPT_F != f ]]; then
+    _ff
+    return
+  fi
+  has pt && pt -g "" --nocolor && return
+  has ag && ag -g "" --nocolor && return
+  _ff
 }
 main "$@"

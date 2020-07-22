@@ -1,5 +1,23 @@
 # bash chips
 
+## pipe vim
+
+```
+# vimで編集後、 stty sane しないと表示が崩れる
+find . -name '*.java' -type f |xargs vim
+
+# こういう場合は以下で実行する
+find . -name '*.java' -type f |xargs -o vim
+find . -name '*.java' -type f -exec vim {}+
+# または pipeを受け取るshell内では以下のように標準入力を明示する
+vim $@ </dev/tty
+```
+
+## pipe while は信用できない
+
+- main func 内で直の while ループ内で配列に追加すると問題なく追加できるが、
+  pipe を一段でもかますと追加できない
+
 ## test コマンド
 
 ```

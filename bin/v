@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+has() { command -v ${1} >&/dev/null; }
+fire() {
+  if [[ -p /dev/stdin ]]; then
+    # https://superuser.com/questions/380772/removing-ansi-color-codes-from-text-stream
+    cat - | sed -e 's,\*,,g' -e 's/\x1b\[[0-9;]*[a-zA-Z]//g'
+  else
+    ff
+  fi
+}
+
+main() {
+  ! has fzf && echo "No fzf exist" 1>&2 && exit 1
+  local files=$(
+    fire |
+      fzf -m --preview 'head -100 {}' |
+      while read -r f; do
+        [[ -z $f ]] && continue
+        [[ $f =~ ^#.* ]] && continue
+        [[ ! -e $f ]] && continue
+        echo "$f"
+      done
+  )
+  vim -p $files </dev/tty
+
+  # if [[ ! -p /dev/stdin && $# -eq 0 ]]; then
+  #   ff |
+  #     local files=$(ff | fzf -m --preview 'head -100 {}')
+  #   [[ -z $files ]] && return
+  #   # echo vim -p ${files[@]}
+  #   vim -p ${files[@]}
+  #   return
+  # fi
+  #
+  # if [[ $# -ne 0 ]]; then
+  #   for f in "$@"; do
+  #     [[ -d "$f" ]] && continue
+  #     [[ ! -e "$f" ]] && continue
+  #     args+=("$f")
+  #   done
+  #   vim -p ${args[@]}
+  #   return
+  # fi
+  #
+  # cat - |
+  #   while read -r f; do
+  #     # https://superuser.com/questions/380772/removing-ansi-color-codes-from-text-stream
+  #     f=$(echo -ne "$f" | sed -e 's,\*,,g' -e 's/\x1b\[[0-9;]*[a-zA-Z]//g')
+  #     # f=${f/\*/}
+  #     # echo $f 1>&2
+  #     [[ -d "$f" ]] && continue
+  #     [[ ! -e "$f" ]] && continue
+  #     args+=("$f")
+  #   done
+  # local _count=${#args[@]}
+  # if [[ $_count -eq 0 ]]; then
+  #   echo "==> No target to edit." 1>&2
+  #   return
+  # fi
+  # vim -p ${args[@]}
+  # # if [[ ${OSTYPE} == "msys" ]]; then
+  # #   echo "==> Edit!! ${args[*]}" 1>&2
+  # #   $HOME/.dot/bin/gvim "${args[@]}"
+  # # else
+  # #   echo vim -p "${args[@]}" | tee >(clip)
+  # #   sleep 0.1
+  # #   # stty sane
+  # # fi
+}
+main "$@"
