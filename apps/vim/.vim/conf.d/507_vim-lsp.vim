@@ -64,12 +64,12 @@ inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 
 
 " completor の登録
-" au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#neosnippet#get_source_options({
-"    \ 'name': 'neosnippet',
-"    \ 'whitelist': ['*'],
-"    \ 'priority': 5,
-"    \ 'completor': function('asyncomplete#sources#neosnippet#completor'),
-"    \ }))
+au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#neosnippet#get_source_options({
+   \ 'name': 'neosnippet',
+   \ 'whitelist': ['*'],
+   \ 'priority': 5,
+   \ 'completor': function('asyncomplete#sources#neosnippet#completor'),
+   \ }))
 " au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#buffer#get_source_options({
 "      \ 'name': 'buffer',
 "      \ 'priority': 11,
