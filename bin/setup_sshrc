@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+has() { command -v ${1} >&/dev/null; }
+
+cat_rc() {
+  cat <<'EOL'
+ip=$(echo $SSH_CONNECTION | cut -d " " -f 1)
+
+logger -t ssh-wrapper $USER login from $ip
+
+host=$(hostname)
+dt=$(date)
+sendmail_bin=/usr/bin/msmtp
+sendmail_to=hoge@gmail.com
+sendmail_from=fuga@gmail.com
+subject="[$host][ssh] User $USER just logged in from $ip"
+body="Are you all right?
+ip   ==> $ip
+date ==> $dt
+user ==> $USER
+host ==> $host
+"
+
+cat <<EOF | $sendmail_bin -a default -t
+To: $sendmail_to
+Subject: $subject
+From: $sendmail_from
+
+$(echo "$body")
+EOF
+EOL
+}
+
+main() {
+  if ! has msmtp; then
+    echo "No msmtp command exist." 1>&2
+    exit 1
+  fi
+  local target=$HOME/.ssh/rc
+  if [[ -e $target ]]; then
+    echo "Already exists $target" 1>&2
+    exit 1
+  fi
+  cat_rc >$target
+  chmod 600 $target
+  echo "Done. rc file setupped $target"
+}
+main "$@"
