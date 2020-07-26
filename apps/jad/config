@@ -1,11 +1,31 @@
 #!/usr/bin/env bash
 
-install_common() { not_supported; }
-install_arch()   {
+_jad_win_url=https://varaneckas.com/jad/jad158g.win.zip
+_jad_mac_url=https://varaneckas.com/jad/jad158g.mac.intel.zip
+# _jad_lin_url=https://varaneckas.com/jad/jad158e.linux.intel.zip
+_jad_lin_url=https://varaneckas.com/jad/jad158e.linux.static.zip
+
+_install_common() {
+  local url=$1
+  dl_unzip $url
+  for f in jad jad.exe; do
+    [[ ! -e $f ]] && continue
+    mexe mv -v $f $HOME/bin
+  done
+}
+install_arch() {
   install_via_os_default
 }
-install_msys()   { not_supported; }
+install_msys() {
+  _install_common $_jad_win_url
+}
 install_cygwin() { not_supported; }
-install_mac()    { not_supported; }
-install_ubuntu() { not_supported; }
-install_redhat() { not_supported; }
+install_mac() {
+  _install_common $_jad_mac_url
+}
+install_ubuntu() {
+  _install_common $_jad_lin_url
+}
+install_redhat() {
+  _install_common $_jad_lin_url
+}
