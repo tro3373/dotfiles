@@ -90,6 +90,7 @@ main() {
     configs+=("$path")
     echo "===> Generated $app_path/config"
   done
+  [[ -z "${configs[@]}" ]] && return
 
   echo "==> Edit it?(y/N)"
   read yes_i_edit
