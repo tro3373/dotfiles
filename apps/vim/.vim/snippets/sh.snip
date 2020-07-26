@@ -14,6 +14,10 @@ alias nullll
 snippet error
     1>&2
 
+snippet echoerror
+    echo "${1}" 1>&2
+    exit 1
+
 snippet new
     method() {
       :
