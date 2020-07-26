@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+local _android_sdk_root_mac=$HOME/Library/Android/sdk
+is_installed() {
+  false
+}
+install_common() { not_supported; }
+install_arch() { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() {
+  not_supported
+}
+install_ubuntu() {
+  not_supported
+
+  # # Install java
+  # mexe sudo add-apt-repository ppa:webupd8team/java
+  # mexe sudo apt-get update
+  # mexe sudo apt-get install oracle-java8-installer
+  #
+  # # sudo apt-get install android-tools-adb
+  # exe sudo apt-get install libc6-i386 libncurses5:i386 libstdc++6:i386
+  #
+  # # Install android studio build libs
+  # mexe sudo apt-get install lib32stdc++6
+  # mexe sudo apt-get install lib32z1
+}
+install_redhat() { not_supported; }
+setting_common() { not_supported; }
+setting_arch() { not_supported; }
+setting_msys() { not_supported; }
+setting_cygwin() { not_supported; }
+setting_mac() { not_supported; }
+setting_ubuntu() { not_supported; }
+setting_redhat() { not_supported; }
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#gh
+#gh_user_local

@@ -1,3 +1,8 @@
+#!/bin/bash
+
+rules=/etc/udev/rules.d/51-android.rules
+cat_rules() {
+  cat <<'EOF'
 # adb protocol on passion (Nexus One)
 SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e12", MODE="0600", OWNER="paul"
 # fastboot protocol on passion (Nexus One)
@@ -41,4 +46,34 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="0fce", ATTR{idProduct}=="0198", MODE="0600", 
 SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="d00d", MODE="0600", OWNER="TOBEFILLED"
 # adb protocol on angler (Nexus 6P)
 SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee7", MODE="0600", OWNER="paul"
+EOF
+}
 
+dummy="echo"
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+    -e) dummy= ;;
+    esac
+  done
+}
+
+main() {
+  if [[ -e $rules ]]; then
+    echo "Already exist rules. " 1>&2
+    exit 1
+  fi
+  initialize "$@"
+
+  cat_rules |
+    if [[ -z $dummy ]]; then
+      cat - | sudo tee -a $rules >&/dev/null
+    else
+      cat -
+      echo
+      echo ">> above rules will be setted to $rules"
+    fi
+  $dummy sudo service udev restart
+  echo done
+}
+main "$@"
