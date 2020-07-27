@@ -1,0 +1,24 @@
+snippet     timenowww
+alias       nowww
+  now := time.Now().Format("20060102_030405")
+
+snippet     errorwrapf
+alias       wraperror
+  err = fmt.Errorf("Failed %s, %w", message, err)
+
+snippet     lognewww
+  log.New(os.Stderr, "", log.LstdFlags)
+
+
+snippet     ifstringer
+  if v, ok := ${1:interface}.(fmt.Stringer); ok {
+    ${2}
+  }
+
+
+snippet     reflect_isnil_or_pointer
+  rv := reflect.ValueOf(${1})
+  if rv.Kind() == reflect.Ptr || rv.IsNil() {
+    ${2}
+  }
+
