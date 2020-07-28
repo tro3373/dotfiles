@@ -164,27 +164,26 @@ autoload -Uz colors
 colors
 case ${UID} in
 0)
-    PROMPT="%{${fg[red]}%}$(echo ${HOST%%.*} | tr '[a-z]' '[A-Z]') %B%{${fg[red]}%}%/#%{${reset_color}%}%b "
-    PROMPT2="%B%{${fg[red]}%}%_#%{${reset_color}%}%b "
-    SPROMPT="%B%{${fg[red]}%}%r is correct? [n,y,a,e]:%{${reset_color}%}%b "
-    ;;
+  PROMPT="%{${fg[red]}%}$(echo ${HOST%%.*} | tr '[a-z]' '[A-Z]') %B%{${fg[red]}%}%/#%{${reset_color}%}%b "
+  PROMPT2="%B%{${fg[red]}%}%_#%{${reset_color}%}%b "
+  SPROMPT="%B%{${fg[red]}%}%r is correct? [n,y,a,e]:%{${reset_color}%}%b "
+  ;;
 *)
-    #PROMPT="%{${fg[cyan]}%}%/$%{${reset_color}%} "
-    #PROMPT2="%{${fg[red]}%}%_%%%{${reset_color}%} "
-    #SPROMPT="%{${fg[red]}%}%r is correct? [n,y,a,e]:%{${reset_color}%} "
-    # ???
-    #PROMPT=$'%{\e[38;5;030m%}%m%(!.#.$)%{\e[m%} '
-    # cyan
-    #PROMPT=$'%{\e[38;5;030m%}%/$%{\e[m%} '
-    PROMPT=$'%{\e[38;5;%(?.012.013)m%}%* %/>%{\e[m%} '
-    PROMPT2=$'%{\e[38;5;%(?.012.013)m%}%_> %{\e[m%} '
-    SPROMPT="%{${fg[red]}%}%r is correct? [n,y,a,e]:%{${reset_color}%} "
-    [ -n "${REMOTEHOST}${SSH_CONNECTION}" ] &&
-        #PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*} | tr '[a-z]' '[A-Z]') ${PROMPT}"
-        PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*}) ${PROMPT}"
-    ;;
+  #PROMPT="%{${fg[cyan]}%}%/$%{${reset_color}%} "
+  #PROMPT2="%{${fg[red]}%}%_%%%{${reset_color}%} "
+  #SPROMPT="%{${fg[red]}%}%r is correct? [n,y,a,e]:%{${reset_color}%} "
+  # ???
+  #PROMPT=$'%{\e[38;5;030m%}%m%(!.#.$)%{\e[m%} '
+  # cyan
+  #PROMPT=$'%{\e[38;5;030m%}%/$%{\e[m%} '
+  PROMPT=$'%{\e[38;5;%(?.012.013)m%}%* %/>%{\e[m%} '
+  PROMPT2=$'%{\e[38;5;%(?.012.013)m%}%_> %{\e[m%} '
+  SPROMPT="%{${fg[red]}%}%r is correct? [n,y,a,e]:%{${reset_color}%} "
+  [ -n "${REMOTEHOST}${SSH_CONNECTION}" ] &&
+      #PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*} | tr '[a-z]' '[A-Z]') ${PROMPT}"
+      PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*}) ${PROMPT}"
+  ;;
 esac
-
 
 ## ターミナル
 case "${TERM}" in
