@@ -1,9 +1,0 @@
-#!/bin/bash
-
-echo "==>list queue"
-echo   postqueue -p
-echo "==>delete all queue"
-echo   sudo postsuper -d ALL deferred
-echo "==>delete queue"
-echo   sudo postsuper -d \<queue-id\>
-
