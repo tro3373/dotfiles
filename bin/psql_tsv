@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+readonly pgpassf=$HOME/.pgpass
+readonly current_dir=$(pwd)
+readonly outf=$current_dir/output.tsv
+dummy="echo"
+args=()
+
+usage() {
+  cat <<EOF
+
+Execute sql and export tsv for postgresql.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+      -g|--gen  : generate .pgpass sample
+      -e        : Execute sql (default is echo excute command)
+
+EOF
+}
+
+add_args() { args+=("$@"); }
+check() {
+  if [[ ! -e $pgpassf ]]; then
+    echo "No $pgpassf exits." 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+    -h | --help) usage && exit 0 ;;
+    -g | --gen) gen_pgpass_sample && exit 0 ;;
+    -e) dummy= ;;
+    *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+}
+cat_pgpass_sample() {
+  cat <<'EOF'
+localhost:5432:database:username:password
+EOF
+}
+gen_pgpass_sample() {
+  [[ -e $pgpassf ]] && echo "Already $pgpassf exists." 1>&2 && exit 1
+  cat_pgpass_sample >$pgpassf
+  chmod 600 $pgpassf
+  echo "generated sample to $pgpassf"
+}
+main() {
+  initialize "$@"
+  local _args="${args[@]}"
+  local _stdin=
+  if [[ -p /dev/stdin ]]; then
+    _stdin="$(cat -)"
+  fi
+
+  local _sql="$_stdin"
+  [[ -z $_sql ]] && _sql="$_args"
+  if [[ -z $_sql ]]; then
+    echo "Specify sql or sql file" 1>&2
+    exit 1
+  fi
+  # echo "_args=$_args"
+  # echo "_stdin=$_stdin"
+  cat <$pgpassf |
+    head -1 |
+    tr : ' ' |
+    while read -r _h _p _d _u _p; do
+      [[ -z $_h ]] && continue
+      [[ $_h =~ ^#.* ]] && continue
+      local _opt=-c
+      [[ -f "$_sql" ]] && _opt=-f
+      local _cmd="psql -h $_h -U $_u $_d -A -F'	' $_opt '$_sql'"
+      echo "> Executing: $_cmd"
+      $dummy eval "$_cmd" |
+        if [[ -z $dummy ]]; then
+          cat - | tee -a $outf >&/dev/null
+        else
+          cat -
+        fi
+    done
+}
+main "$@"
