@@ -25,7 +25,7 @@ autoload -Uz compinit; compinit -u
 #autoload -Uz modify-current-argument
 #autoload -Uz smart-insert-last-word
 #autoload -Uz terminfo
-#autoload -Uz vcs_info
+autoload -Uz vcs_info
 #autoload -Uz zcalc
 #autoload -Uz zmv
 autoload     run-help-git
@@ -182,6 +182,14 @@ case ${UID} in
   [ -n "${REMOTEHOST}${SSH_CONNECTION}" ] &&
       #PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*} | tr '[a-z]' '[A-Z]') ${PROMPT}"
       PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*}) ${PROMPT}"
+  setopt prompt_subst
+  zstyle ':vcs_info:git:*' check-for-changes true
+  zstyle ':vcs_info:git:*' stagedstr "%F{yellow}!"
+  zstyle ':vcs_info:git:*' unstagedstr "%F{red}+"
+  zstyle ':vcs_info:*' formats "%F{green}%c%u[%b]%f"
+  zstyle ':vcs_info:*' actionformats '[%b|%a]'
+  precmd () { vcs_info }
+  RPROMPT=$RPROMPT'${vcs_info_msg_0_}'
   ;;
 esac
 
