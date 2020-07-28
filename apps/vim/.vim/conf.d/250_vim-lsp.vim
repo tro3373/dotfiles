@@ -51,7 +51,7 @@ set completeopt=menuone,noinsert,noselect
 
 
 " 補完表示時のEnterで改行をしない
-inoremap <expr> <cr> pumvisible() ? "\<c-y>" : "\<cr>"
+" inoremap <expr> <cr> pumvisible() ? "\<c-y>" : "\<cr>"
 inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
 inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 " imap <c-space> <Plug>(asyncomplete_force_refresh)
