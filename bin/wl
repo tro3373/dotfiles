@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-dst=$HOME/win/AppData/Local/Microsoft/WindowsApps/
+# dst=$HOME/win/AppData/Local/Microsoft/WindowsApps/
+dst="$HOME/win/AppData/Roaming/Microsoft/Windows/Start Menu/Programs"
 main() {
   if [[ ${OSTYPE} != "msys" ]]; then
     echo "Not supported"
@@ -11,7 +12,7 @@ main() {
     echo "specify exists path $src" 1>&2
     exit 1
   fi
-  ln -s $src $dst
+  ln -s "$src" "$dst"
   echo "Done. src:$src linked to dst:$dst"
 }
 main "$@"
