@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+dst=$HOME/win/AppData/Local/Microsoft/WindowsApps/
+main() {
+  if [[ ${OSTYPE} != "msys" ]]; then
+    echo "Not supported"
+    exit 1
+  fi
+  local src="$*"
+  if [[ -z $src || ! -e $src ]]; then
+    echo "specify exists path $src" 1>&2
+    exit 1
+  fi
+  ln -s $src $dst
+  echo "Done. src:$src linked to dst:$dst"
+}
+main "$@"
