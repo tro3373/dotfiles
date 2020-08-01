@@ -244,11 +244,27 @@ snippet checkroot
       exit 1
     }
 
+snippet ifempty
+    if [[ -z \$1 ]]; then
+      echo "Specify args" 1>&2
+      exit 1
+    fi
+
 snippet checkexists
+alias   ifnotexists
     if [[ ! -e \$1 ]]; then
       echo "No such file exists. \$1" 1>&2
       exit 1
     fi
+
+snippet checkexists_fn
+alias   ifnotexists_fn
+    exit_if_not_exist() {
+      if [[ ! -e \$1 ]]; then
+        echo "No such file exists. \$1" 1>&2
+        exit 1
+      fi
+    }
 
 snippet ifstdin
     if [[ -p /dev/stdin ]]; then
