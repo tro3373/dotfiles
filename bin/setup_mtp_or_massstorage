@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+command_name=$(basename $0)
+dummy="echo"
+args=()
+mtp=0
+usage() {
+  cat <<EOF
+
+Set ubuntu mtp or mass storage
+
+  Usage:
+  $command_name [option]
+  Options
+  -h|--help : Show this usage
+  -m|--mtp  : default is mass storage
+
+EOF
+}
+add_args() { args+=("$@"); }
+check() {
+  local _os=$(os)
+  if [[ $_os != ubuntu ]]; then
+    echo "Not supported." 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+    -h | --help) usage && exit 0 ;;
+    -e) dummy= ;;
+    -m | --mtp) mtp=1 ;;
+    #-f*|--file*) file=${1#*=} ;;
+    #-f|--file) shift && file=$1 ;;
+    *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+  set -eu
+}
+
+setup_mtp() {
+  $dummy sudo apt-get install -y libmtp-common mtp-tools libmtp-dev libmtp-runtime libmtp9
+  $dummy sudo sed -i -e "s/#user_allow_other/user_allow_other/g" /etc/fuse.conf
+  $dummy sudo sh -c "echo 'ATTR{idVendor}==\"054c\", ATTR{idProduct}==\"0994\", SYMLINK+=\"libmtp-%k\", ENV{ID_MTP_DEVICE}=\"1\", ENV{ID_MEDIA_PLAYER}=\"1\"' > /lib/udev/rules.d/69-mtp.rules"
+  $dummy sudo service udev restart
+}
+
+setup_masstorage() {
+  $dummy sudo apt-get install -y exfat-fuse exfat-utils
+}
+
+main() {
+  initialize "$@"
+  if [[ $mtp -eq 1 ]]; then
+    setup_mtp
+  else
+    setup_masstorage
+  fi
+}
+main "$@"
