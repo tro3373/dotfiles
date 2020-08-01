@@ -1,0 +1,95 @@
+#!/bin/bash
+
+command_name=$(basename $0)
+dummy="echo"
+args=()
+readonly msmtprc=$HOME/.msmtprc
+gmail_account=
+gmail_passwd=
+
+usage() {
+  cat <<EOF
+
+Generate msmtprc to $msmtprc
+
+Usage:
+  $command_name [option]
+Options
+  -h|--help : Show this usage
+  -m|--mail : specify gmail
+  -p|--pass : specify gmail passwd
+
+EOF
+}
+
+add_args() { args+=("$@"); }
+
+check() {
+  exit_if_exist $msmtprc
+}
+
+exit_if_exist() {
+  if [[ -e $1 ]]; then
+    echo "Already exists $1" 1>&2
+    exit 1
+  fi
+  if [[ -z $gmail_account ]]; then
+    echo "Specify gmail account" 1>&2
+    exit 1
+  fi
+  if [[ -z $gmail_passwd ]]; then
+    echo "Specify gmail passwd" 1>&2
+    exit 1
+  fi
+}
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+    -h | --help) usage && exit 0 ;;
+    -e) dummy= ;;
+    #-f*|--file*) file=${1#*=} ;;
+    -m | --mail) shift && gmail_account=$1 ;;
+    -p | --pass) shift && gmail_passwd=$1 ;;
+    *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+}
+
+cat_conf() {
+  cat <<EOL
+defaults
+auth on
+tls on
+tls_certcheck off
+
+logfile ~/.msmtp.log
+aliases ~/.aliases
+
+account gmail
+user $gmail_account
+password $gmail_passwd
+from $gmail_account
+host smtp.gmail.com
+port 587
+
+account default : gmail
+EOL
+}
+
+main() {
+  initialize "$@"
+  cat_conf |
+    if [[ -z $dummy ]]; then
+      cat - |
+        tee -a $msmtprc
+    else
+      cat -
+    fi
+  $dummy chmod 600 $msmtprc
+  echo "Done. $msmtprc generated"
+}
+main "$@"
