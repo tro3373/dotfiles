@@ -22,3 +22,57 @@ snippet     reflect_isnil_or_pointer
     ${2}
   }
 
+
+snippet context_with_cancel
+  ctx,  cancel  :=  context.WithCancel(context.Background())
+  defer cancel()
+
+snippet context_with_timeout
+  ctx, cancel := context.WithTimeout(context.Background(), Timeout)
+  defer cancel()
+
+snippet cancelcontext
+  package  main
+  import (
+    "fmt"
+    "sync"
+    "context"
+  )
+  var wg sync.WaitGroup
+  func main() {
+    //  キャンセルするためのContextを生成
+    ctx,  cancel  :=  context.WithCancel(context.Background())
+    queue  :=  make(chan  string)
+    for i  :=  0; i <  2; i++ {
+      wg.Add(1)
+      go  fetchURL(ctx,  queue)
+    }
+    queue  <-  "https://www.example.com"
+    queue  <-  "https://www.example.net"
+    queue  <-  "https://www.example.net/foo"
+    queue  <-  "https://www.example.net/bar"
+    cancel()   //  ctxを終了させる
+    wg.Wait()  //  すべてのgoroutineが終了するのを待つ
+  }
+  func fetchURL(ctx  context.Context,  queue  chan  string) {
+    for {
+      select {
+      case  <-ctx.Done():
+        fmt.Println("worker  exit")
+        wg.Done()
+        return
+      case  url  :=  <-queue:
+        //  URL取得処理
+      }
+    }
+  }
+
+snippet fetchurl
+  func fetchURL(queue  chan  string,  done  chan  bool) {
+    for url :=  range  queue {
+      // url取得処理
+    }
+    fmt.Pritln("worker  exit")
+    done <- true
+  }
+
