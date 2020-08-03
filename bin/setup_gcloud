@@ -1,22 +1,35 @@
 #!/usr/bin/env bash
 
-readonly project=project_sample
-readonly service_account=sls_deploy_sa_sample
-readonly key_file=~/.gcloud/keyfile.json
-readonly roles="roles/deploymentmanager.editor roles/storage.admin roles/logging.admin roles/cloudfunctions.developer"
-readonly create_sls_repo=sls_gcf_sample
-
 dummy="echo"
+setup_sls=0
+gen_app_cred=0
+
+has() { command -v ${1} >&/dev/null; }
 
 initialize() {
   for arg in "$@"; do
     case "$arg" in
     -e) dummy= ;;
+    sls) setup_sls=1 ;;
+    appcred) gen_app_cred=1 ;;
     esac
   done
 }
 
-has() { command -v ${1} >&/dev/null; }
+setup_gcloud() {
+  if has gcloud; then
+    return
+  fi
+  $dummy sudo yay -S google-cloud-sdk
+}
+
+setup_gcloud_config() {
+  if [[ -e ~/.config/gcloud ]]; then
+    return
+  fi
+  # MEMO: Access url in sp gmail account, and clip token and paste to terminal
+  $dummy gcloud init --console-only
+}
 
 ls_storage() {
   # show google storage bucket list
@@ -122,12 +135,12 @@ show_services() {
 }
 
 enable_services() {
-  $dummy gcloud services enable deploymentmanager.googleapis.com cloudfunctions.googleapis.com storage-component.googleapis.com logging.googleapis.com
+  $dummy gcloud services enable $enable_services_list
 }
 
 create_service_account() {
   # SA(Service Account) 作成
-  $dummy gcloud iam service-accounts create $service_account --display-name "Cloud Functions deployment account for Serverless Framework"
+  $dummy gcloud iam service-accounts create $service_account --display-name "$service_account_display"
 
   # SAにロールを割り当て
   for role in $roles; do
@@ -135,7 +148,9 @@ create_service_account() {
       --member=serviceAccount:$service_account@$project.iam.gserviceaccount.com \
       --role=${role}
   done
+}
 
+create_service_account_cred() {
   # サービスアカウントの認証情報取得
   $dummy gcloud iam service-accounts keys create $key_file --iam-account $service_account@$project.iam.gserviceaccount.com
 }
@@ -146,35 +161,39 @@ create_sls_template() {
   $dummy npm install --save serverless-google-cloudfunctions
 }
 
-setup_gcloud() {
-  if has gcloud; then
-    return
-  fi
-  $dummy sudo yay -S google-cloud-sdk
-}
+setup_sls() {
+  # sample: https://yomon.hatenablog.com/entry/2019/12/gcf_serverless_fw_deploy
+  local enable_services_list="deploymentmanager.googleapis.com cloudfunctions.googleapis.com storage-component.googleapis.com logging.googleapis.com"
+  enable_services
 
-setup_gcloud_config() {
-  if [[ -e ~/.config/gcloud ]]; then
-    return
-  fi
-  # MEMO: Access url in sp gmail account, and clip token and paste to terminal
-  $dummy gcloud init --console-only
+  local service_account=sls_deploy_sa_sample
+  local service_account_display="Cloud Functions deployment account for Serverless Framework"
+  local project=project_sample
+  local roles="roles/deploymentmanager.editor roles/storage.admin roles/logging.admin roles/cloudfunctions.developer"
+  create_service_account
+
+  local key_file=~/.gcloud/cred_${service_account}.json
+  create_service_account_cred
+
+  local create_sls_repo=sls_gcf_sample
+  create_sls_template
 }
 
 # https://medium.com/google-cloud-jp/gcp-%E3%81%A8-oauth2-91476f2b3d7f
 setup_application_default_credentials() {
   # cred save to ~/.config/gcloud/application_default_credentials.json
-  gcloud auth application-default login --no-launch-browser
+  $dummy gcloud auth application-default login --no-launch-browser
 }
 
 main() {
   initialize "$@"
   setup_gcloud
   setup_gcloud_config
-  # # sample: https://yomon.hatenablog.com/entry/2019/12/gcf_serverless_fw_deploy
-  enable_services
-  create_service_account
-  # create_sls_template
-  # setup_application_default_credentials
+  if [[ $setup_sls -eq 1 ]]; then
+    setup_sls
+  fi
+  if [[ $gen_app_cred -eq 1 ]]; then
+    setup_application_default_credentials
+  fi
 }
 main "$@"
