@@ -161,6 +161,12 @@ setup_gcloud_config() {
   $dummy gcloud init --console-only
 }
 
+# https://medium.com/google-cloud-jp/gcp-%E3%81%A8-oauth2-91476f2b3d7f
+setup_application_default_credentials() {
+  # cred save to ~/.config/gcloud/application_default_credentials.json
+  gcloud auth application-default login --no-launch-browser
+}
+
 main() {
   initialize "$@"
   setup_gcloud
@@ -168,6 +174,7 @@ main() {
   # # sample: https://yomon.hatenablog.com/entry/2019/12/gcf_serverless_fw_deploy
   enable_services
   create_service_account
-  create_sls_template
+  # create_sls_template
+  # setup_application_default_credentials
 }
 main "$@"
