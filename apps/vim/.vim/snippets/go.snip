@@ -81,3 +81,12 @@ snippet     randam_int
 
 snippet     randam_sleep
   time.Sleep(time.Duration(rand.Intn(2000)) * time.Millisecond)
+
+
+snippet     select_channel
+  select {
+  case res := <-c1:
+      fmt.Println(res)
+  case <-time.After(1 * time.Second):
+      fmt.Println("timeout 1")
+  }
