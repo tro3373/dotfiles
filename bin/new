@@ -63,6 +63,7 @@ cat_template_hard() {
 
 command_name=$(basename $0)
 args=()
+dummy="echo"
 
 usage() {
   cat <<EOF
@@ -89,6 +90,7 @@ initialize() {
     [[ -z $1 ]] && break
     case "$1" in
       -h|--help) usage && exit 0  ;;
+      -e) dummy= ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
       *) add_args "$1"            ;;
