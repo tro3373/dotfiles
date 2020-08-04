@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+command_name=$(basename $0)
+args=()
+dummy="echo"
+project=
+service_account=
+
+usage() {
+  cat <<EOF
+
+list gcp sa roles
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help     : Show this usage
+      -e            : default is dummy mode
+      -p|--project  : specify project
+      -s|--sa       : specify service account
+
+EOF
+}
+
+has() { command -v ${1} >&/dev/null; }
+add_args() { args+=("$@"); }
+check() {
+  if ! has gcloud; then
+    echo "no gcloud command exists" 1>&2
+    exit 1
+  fi
+  if [[ -z $project ]]; then
+    echo "Specify project" 1>&2
+    exit 1
+  fi
+  if [[ -z $service_account ]]; then
+    echo "Specify service_account" 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+    -h | --help) usage && exit 0 ;;
+    -p | --project) shift && project=$1 ;;
+    -s | --sa) shift && service_account=$1 ;;
+    -e) dummy= ;;
+    *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+}
+
+main() {
+  initialize "$@"
+  $dummy gcloud projects get-iam-policy $project \
+    --flatten="bindings[].members" \
+    --format='table(bindings.role)' \
+    --filter="bindings.members:$service_account@$project.iam.gserviceaccount.com"
+}
+main "$@"
