@@ -51,7 +51,7 @@ set completeopt=menuone,noinsert,noselect
 
 
 " 補完表示時のEnterで改行をしない
-" inoremap <expr> <cr> pumvisible() ? "\<c-y>" : "\<cr>"
+" inoremap <expr> <cr> pumvisible() ? "\<c-y>\<cr>" : "\<cr>"
 inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
 inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 " imap <c-space> <Plug>(asyncomplete_force_refresh)
@@ -76,12 +76,12 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
 "      \ 'whitelist': ['*'],
 "      \ 'completor': function('asyncomplete#sources#buffer#completor'),
 "      \ }))
-" au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
-"      \ 'name': 'file',
-"      \ 'priority': 12,
-"      \ 'whitelist': ['*'],
-"      \ 'completor': function('asyncomplete#sources#file#completor'),
-"      \ }))
+au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
+     \ 'name': 'file',
+     \ 'priority': 12,
+     \ 'whitelist': ['*'],
+     \ 'completor': function('asyncomplete#sources#file#completor'),
+     \ }))
 " au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#necosyntax#get_source_options({
 "      \ 'name': 'necosyntax',
 "      \ 'priority': 9,

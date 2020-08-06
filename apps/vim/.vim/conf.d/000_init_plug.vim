@@ -199,7 +199,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'prabirshrestha/asyncomplete-lsp.vim'
   Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
   " Plug 'prabirshrestha/asyncomplete-buffer.vim'
-  " Plug 'prabirshrestha/asyncomplete-file.vim'
+  Plug 'prabirshrestha/asyncomplete-file.vim'
   " Plug 'Shougo/neco-syntax'
   " Plug 'prabirshrestha/asyncomplete-necosyntax.vim'
   " Plug 'Shougo/neco-vim'
