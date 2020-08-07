@@ -17,7 +17,7 @@ source $VIMRUNTIME/menu.vim
 set guioptions -=T
 set viminfo+=n~/.vim/_viminfo
 
-source ~/.vim/conf.d/100_colorscheme.vim
+source ~/.vim/conf.d/200_colorscheme.vim
 
 " 使用するフォントと大きさ
 if (has("win64") || has("win32"))
