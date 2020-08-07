@@ -1,42 +1,56 @@
 {
-    "workbench.colorTheme": "Apprentice",
-    "workbench.iconTheme": "vscode-icons",
-    "editor.fontFamily": "'HackGen Console', Osaka-Mono, Cica-Regular, 'Ricty Diminished Discord', 'Ricty Diminished', 'Myrica M', Consolas, 'Courier New', monospace",
-    "editor.fontSize": 18,
-    "editor.lineHeight": 20,
-    "editor.wordWrap": "on",
-    "editor.cursorStyle": "block",
-    "editor.fontLigatures": null,
-    "editor.insertSpaces": true,
-    "terminal.integrated.fontSize": 18,
-    "terminal.integrated.copyOnSelection": true,
-    "files.trimFinalNewlines": false,
-    "files.trimTrailingWhitespace": true,
-    "files.autoGuessEncoding": true,
-    "bookmarks.treeview.visible": true,
-    "vim.useSystemClipboard":true,
-    "vim.cmdLineInitialColon": true,
-    "vim.hlsearch": true,
-    "vim.ignorecase": true,
-    "vim.visualstar": true,
-    "vim.useCtrlKeys": true,
-    "vim.handleKeys": {
-       "<C-d>": true
-    },
-    "files.watcherExclude": {
-        "**/.git/objects/**": true,
-        "**/.git/subtree-cache/**": true,
-        "**/node_modules/*/**": true,
-        "**/.svn/**":true,
-    },
-    "scm.alwaysShowProviders": true,
-    "search.exclude": {
-        "**/bower_components": true,
-        "**/vendor": true,
-        "**/env": true,
-        "tags":true,
-        "**/.svn": true,
-        "**/.git": true,
-        "**/.DS_Store": true
-    },
+  "workbench.colorTheme": "Apprentice",
+  "workbench.iconTheme": "vscode-icons",
+  "editor.fontFamily": "'HackGen Console', Osaka-Mono, Cica-Regular, 'Ricty Diminished Discord', 'Ricty Diminished', 'Myrica M', Consolas, 'Courier New', monospace",
+  "editor.fontSize": 18,
+  "editor.lineHeight": 20,
+  "editor.wordWrap": "on",
+  "editor.cursorStyle": "block",
+  "editor.fontLigatures": false,
+  "editor.insertSpaces": true,
+  "editor.formatOnSave": true,
+  // "editor.codeActionsOnSave": {
+  //   "source.fixAll": true,
+  //   "source.fixAll.eslint": false
+  // },
+  // "eslint.autoFixOnSave": true,
+  // "tslint.autoFixOnSave": true,
+  // "prettier.eslintIntegration": true,
+  // "prettier.tslintIntegration": true,
+  // "prettier.singleQuote": true,
+  // "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // "[javascript]": {
+  //   "editor.defaultFormatter": "esbenp.prettier-vscode"
+  // }
+  "terminal.integrated.fontSize": 18,
+  "terminal.integrated.copyOnSelection": true,
+  "files.trimFinalNewlines": false,
+  "files.trimTrailingWhitespace": true,
+  "files.autoGuessEncoding": true,
+  "bookmarks.treeview.visible": true,
+  "vim.useSystemClipboard": true,
+  "vim.cmdLineInitialColon": true,
+  "vim.hlsearch": true,
+  "vim.ignorecase": true,
+  "vim.visualstar": true,
+  "vim.useCtrlKeys": true,
+  "vim.handleKeys": {
+    "<C-d>": true
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/*/**": true,
+    "**/.svn/**": true
+  },
+  "scm.alwaysShowProviders": true,
+  "search.exclude": {
+    "**/bower_components": true,
+    "**/vendor": true,
+    "**/env": true,
+    "tags": true,
+    "**/.svn": true,
+    "**/.git": true,
+    "**/.DS_Store": true
+  }
 }
