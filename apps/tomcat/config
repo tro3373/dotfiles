@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+readonly _tomcat_url=http://ftp.riken.jp/net/apache/tomcat/tomcat-8/v8.0.38/bin/apache-tomcat-8.0.38.tar.gz
+readonly _tomcat_tar_prefix=apache-tomcat-8*
+readonly _tomcat_setup_d=$HOME/tools/tomcat
+install_common() {
+  if [[ ! -e $_tomcat_setup_d ]]; then
+    mexe mkdir -p $_tomcat_setup_d
+  fi
+  mexe cd $_tomcat_setup_d
+  mexe wget $_tomcat_url
+  mexe tar xvfpz $_tomcat_tar_prefix
+  mexe cd $_tomcat_tar_prefix
+  mexe chmod +x bin/*.sh
+}
+# install_arch()   { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+# install_mac()    { not_supported; }
+# install_ubuntu() { not_supported; }
+# install_redhat() { not_supported; }
+setting_common() { not_supported; }
+setting_arch() { not_supported; }
+setting_msys() { not_supported; }
+setting_cygwin() { not_supported; }
+setting_mac() { not_supported; }
+setting_ubuntu() { not_supported; }
+setting_redhat() { not_supported; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#gh
+#gh_user_local
