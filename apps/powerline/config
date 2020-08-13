@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+install_common() {
+  if ! has pyenv; then
+    log "No pyenv command exists."
+    return
+  fi
+
+  _powerline_py_ver=2.7.10
+  if python --version | grep $_powerline_py_ver >&/dev/null; then
+    echo "install python $_powerline_py_ver"
+    return
+  fi
+
+  # see anyenv setting...
+  #   http://qiita.com/luckypool/items/f1e756e9d3e9786ad9ea
+  #   https://github.com/riywo/anyenv
+  # see powerline setting...
+  #   http://qiita.com/qurage/items/4edda8559cc4c98758ee
+  if is_mac; then
+    if ! test_cmd xcode-select; then
+      mexe xcode-select --install
+    fi
+    mexe brew install readline
+    brew link readline
+  elif is_ubuntu; then
+    mexe sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev
+  elif is_redhat; then
+    mexe sudo yum install -y gcc gcc-c++ make git openssl-devel bzip2-devel zlib-devel readline-devel sqlite-devel
+  elif is_cygwin; then
+    mexe apt-cyg install patch
+  fi
+
+  # pip install powerline
+  if [ ! -e ~/.local/lib/python2.7/site-packages/powerline ]; then
+    mexe $cmd_pip install --user git+git://github.com/powerline/powerline
+  fi
+
+  # powerline settings
+  if [ ! -e ~/.config/powerline ]; then
+    mexe mkdir -p ~/.config/powerline
+    mexe cp -R ~/.local/lib/python2.7/site-packages/powerline/config_files/* ~/.config/powerline/
+    make_lnk_with_bkup $app_dir/default.json ~/.config/powerline/themes/tmux/default.json
+    make_lnk_with_bkup $app_dir/powerline.json ~/.config/powerline/themes/powerline.json
+  fi
+}
+# install_arch()   { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+# install_mac()    { not_supported; }
+# install_ubuntu() { not_supported; }
+# install_redhat() { not_supported; }
+setting_common() { not_supported; }
+setting_arch() { not_supported; }
+setting_msys() { not_supported; }
+setting_cygwin() { not_supported; }
+setting_mac() { not_supported; }
+setting_ubuntu() { not_supported; }
+setting_redhat() { not_supported; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#gh
+#gh_user_local
