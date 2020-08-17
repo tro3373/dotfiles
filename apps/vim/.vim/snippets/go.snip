@@ -90,3 +90,18 @@ snippet     select_channel
   case <-time.After(1 * time.Second):
       fmt.Println("timeout 1")
   }
+
+snippet     new_error
+  errors.New(fmt.Sprintf("Error: %s", "${1}"))
+
+snippet     new_error_fmt
+  fmt.Errorf("Error: %s", "${1}")
+
+# http://engineerspirit.com/2017/01/22/post-637/
+snippet stringgg
+abbr    add struct string func
+options word
+  func ${1:#:(s S)} String() string {
+    return fmt.Sprintf("${2}")
+  }
+
