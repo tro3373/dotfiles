@@ -23,6 +23,8 @@ augroup lsp_install
   " autocmd BufWritePre <buffer> LspDocumentFormatSync
 augroup END
 command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('~/lsp.log')
+let g:lsp_log_verbose=1
+let g:lsp_log_file = expand('~/lsp.log')
 
 let g:lsp_diagnostics_enabled = 1           " ファイルの変更に伴いリアルタイムにエラー表示
 let g:lsp_diagnostics_echo_cursor = 1       " enable echo under cursor when in normal mode
