@@ -97,7 +97,15 @@ vmap <silent> <expr> p <sid>Repl()
 
 " カーソルの下の単語をヤンクした文字列で置換
 " nnoremap <silent> ciy ciw<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
-nnoremap <silent> ciy ciw<C-r>0<ESC>
+" nnoremap <silent> ciy ciw<C-r>0<ESC>
+function! s:ReplacePaste()
+  let s:buf = @+
+  " execute ":normal ciw".s:buf
+  " echo "==> s:buf: (".s:buf.")"
+  " return "\<ESC>"
+  return "ciw".s:buf."\<ESC>"
+endfunction
+nnoremap <silent> <expr> ciy <sid>ReplacePaste()
 nnoremap <silent> cy   ce<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 vnoremap <silent> cy   c<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 
