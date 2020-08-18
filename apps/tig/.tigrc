@@ -157,6 +157,7 @@ bind blob    `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
 
 # Copy commit id
 bind generic 0      @sh -c "echo %(commit) | ~/.dot/bin/clip"
+bind refs    0      @sh -c "echo %(branch) | ~/.dot/bin/clip"
 # Copy commit title to clipboard:
 bind generic 9      @sh -c "git show -s --format=%s %(commit) | ~/.dot/bin/clip"
 
