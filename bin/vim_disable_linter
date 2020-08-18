@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 
+readonly current_dir=$(pwd)
+readonly env_f=$current_dir/.envrc
+readonly env_key=VIM_DISABLE_LINTER
+cat_settings() {
+  echo "export $env_key=1"
+}
+
+has_env() { [[ -e $env_f ]]; }
+has_key() { has_env && grep $env_key $env_f >&/dev/null; }
+
 main() {
-  echo 'export VIM_DISABLE_LINTER=1' | clip
+  has_key && echo "already setted." 1>&2 && exit 1
+  cat_settings | tee -a $env_f | clip
 }
 main "$@"

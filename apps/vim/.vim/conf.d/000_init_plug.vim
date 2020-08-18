@@ -170,7 +170,7 @@ call plug#begin('$HOME/.vim/plugged')
   " =================================================================
   " Code Edit
   " =================================================================
-  if empty($VIM_DISABLE_LINTER)
+  if empty($VIM_DISABLE_LINTER) || (!empty($VIM_DISABLE_LINTER) && $VIM_DISABLE_LINTER != 1)
     " Code Formatter
     " Plug 'google/vim-maktaba'                               " GoogleCodeFormatter depends
     " Plug 'google/vim-codefmt'                               " GoogleCodeFormatter
