@@ -139,23 +139,6 @@ call plug#begin('$HOME/.vim/plugged')
       Plug 'vim-scripts/taglist.vim'                      " ソースコードブラウザ
   endif
 
-  if has('job') && has('channel') && has('timers')
-    " Plug 'w0rp/ale'                                         " 構文解析(非同期)
-    Plug 'dense-analysis/ale'                               " 構文解析(非同期)
-  else
-    Plug 'scrooloose/syntastic'                             " 構文解析
-    " Plug 'vim-syntastic/syntastic'                        " 構文解析
-  endif
-
-  " コードフォーマッター
-  " Plug 'google/vim-maktaba'                               " GoogleCodeFormatter depends
-  " Plug 'google/vim-codefmt'                               " GoogleCodeFormatter
-  " Plug 'google/vim-glaive'                                " GoogleCodeFormatter depends
-
-  Plug 'editorconfig/editorconfig-vim'                      " Official editorconfig
-  " Plug 'sgur/vim-editorconfig'                              " Not Official editorconfig(less depends)
-
-
   " =================================================================
   " Feature/Funcs Edit
   " =================================================================
@@ -185,27 +168,46 @@ call plug#begin('$HOME/.vim/plugged')
 
 
   " =================================================================
+  " Code Edit
+  " =================================================================
+  if empty($VIM_DISABLE_LINTER)
+    " Code Formatter
+    " Plug 'google/vim-maktaba'                               " GoogleCodeFormatter depends
+    " Plug 'google/vim-codefmt'                               " GoogleCodeFormatter
+    " Plug 'google/vim-glaive'                                " GoogleCodeFormatter depends
+    " Plug 'sgur/vim-editorconfig'                              " Not Official editorconfig(less depends)
+    Plug 'editorconfig/editorconfig-vim'                      " Official editorconfig
+
+    if has('job') && has('channel') && has('timers')
+      " Plug 'w0rp/ale'                                         " 構文解析(非同期)
+      Plug 'dense-analysis/ale'                               " 構文解析(非同期)
+    else
+      Plug 'scrooloose/syntastic'                             " 構文解析
+      " Plug 'vim-syntastic/syntastic'                        " 構文解析
+    endif
+
+    " Vim LSP!
+    " @see https://mattn.kaoriya.net/?page=3
+    Plug 'prabirshrestha/vim-lsp'                             " Vim Language Server Protocol
+    Plug 'mattn/vim-lsp-settings'                             " use `:LspInstallServer`
+    Plug 'mattn/vim-lsp-icons'
+    Plug 'hrsh7th/vim-vsnip'                                  " 穴あき形式補完候補用？
+    Plug 'hrsh7th/vim-vsnip-integ'
+    Plug 'prabirshrestha/async.vim'
+    Plug 'prabirshrestha/asyncomplete.vim'
+    Plug 'prabirshrestha/asyncomplete-lsp.vim'
+    Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
+    " Plug 'prabirshrestha/asyncomplete-buffer.vim'
+    Plug 'prabirshrestha/asyncomplete-file.vim'
+    " Plug 'Shougo/neco-syntax'
+    " Plug 'prabirshrestha/asyncomplete-necosyntax.vim'
+    " Plug 'Shougo/neco-vim'
+    " Plug 'prabirshrestha/asyncomplete-necovim.vim'            " for neco-vim
+  endif
+
+  " =================================================================
   " Langs or Others
   " =================================================================
-  " Vim LSP!
-  " @see https://mattn.kaoriya.net/?page=3
-  Plug 'prabirshrestha/vim-lsp'                             " Vim Language Server Protocol
-  Plug 'mattn/vim-lsp-settings'                             " use `:LspInstallServer`
-  Plug 'mattn/vim-lsp-icons'
-  Plug 'hrsh7th/vim-vsnip'                                  " 穴あき形式補完候補用？
-  Plug 'hrsh7th/vim-vsnip-integ'
-  Plug 'prabirshrestha/async.vim'
-  Plug 'prabirshrestha/asyncomplete.vim'
-  Plug 'prabirshrestha/asyncomplete-lsp.vim'
-  Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
-  " Plug 'prabirshrestha/asyncomplete-buffer.vim'
-  Plug 'prabirshrestha/asyncomplete-file.vim'
-  " Plug 'Shougo/neco-syntax'
-  " Plug 'prabirshrestha/asyncomplete-necosyntax.vim'
-  " Plug 'Shougo/neco-vim'
-  " Plug 'prabirshrestha/asyncomplete-necovim.vim'            " for neco-vim
-
-
   Plug 'hashivim/vim-terraform'                             " Terraform syntax
   Plug 'posva/vim-vue'                                      " vue syntax
   Plug 'mindriot101/vim-yapf'                               " for python
