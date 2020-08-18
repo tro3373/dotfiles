@@ -193,7 +193,7 @@ call plug#begin('$HOME/.vim/plugged')
     Plug 'mattn/vim-lsp-icons'
     Plug 'hrsh7th/vim-vsnip'                                  " 穴あき形式補完候補用？
     Plug 'hrsh7th/vim-vsnip-integ'
-    Plug 'prabirshrestha/async.vim'
+    Plug 'prabirshrestha/async.vim'                           " NoNeeded?
     Plug 'prabirshrestha/asyncomplete.vim'
     Plug 'prabirshrestha/asyncomplete-lsp.vim'
     Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
