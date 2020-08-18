@@ -22,7 +22,7 @@ setting_common() {
       cat - | tee -a $_workzsh
     fi
 }
-setting_arch() { not_supported; }
+# setting_arch() { not_supported; }
 setting_msys() { not_supported; }
 setting_cygwin() { not_supported; }
 setting_mac() { not_supported; }
