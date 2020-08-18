@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  echo 'export VIM_DISABLE_LINTER=1' | clip
+}
+main "$@"
