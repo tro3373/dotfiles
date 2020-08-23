@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+main() {
+  cat <<EOF
+  Do below...
+    cd $src_dir
+  ==>Set Up the SSL Certificate
+    ./letsencrypt-auto certonly --standalone -d www.example.com -d example.com --debug
+  ==>Crontab
+    sudo crontab -e
+    # Add below..
+    # Sample1
+    30 2 * * 1 cd $src_dir && ./letsencrypt-auto certonly --standalone -d www.example.com -d example.com --debug
+    # Sample2
+    00 05 01 * * $src_dir/letsencrypt-auto renew --force-renew && /bin/systemctl reload httpd
+    # Sample3
+    00 05 01 * * service apache2 stop && $src_dir/letsencrypt-auto renew --force-renew && service apache2 start
+EOF
+}
+main "$@"
