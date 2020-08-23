@@ -12,7 +12,7 @@ usage() {
 List changed files from commit id of specified directory.
 
   Usage:
-      $command_name <commitidopt> <directory>
+      $command_name <commit_id_opt> <directory>
     Options
       -h|--help : Show this usage
       -a|--author : specify author
@@ -27,11 +27,11 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-      -h|--help) usage && exit 0  ;;
-      -a|--author) author=$1 ;;
-      -u|--unique) unique=1 ;;
-      -m|--mine) mine=1 ;;
-      *) add_args "$1"            ;;
+    -h | --help) usage && exit 0 ;;
+    -a | --author) author=$1 ;;
+    -u | --unique) unique=1 ;;
+    -m | --mine) mine=1 ;;
+    *) add_args "$1" ;;
     esac
     shift
   done
@@ -63,7 +63,7 @@ ls_change_files() {
         # commit hash 7character
         [[ $line =~ ^.......\ .* ]] && continue
         echo $line
-      done |sort -u
+      done | sort -u
   fi
 }
 
