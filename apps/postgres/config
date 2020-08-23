@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+is_installed() { has psql; }
+install_common() { not_supported; }
+install_arch() { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() {
+
+  mexe brew install postgresql
+  # データベースの初期化 (文字コードはUTF-8)
+  #  initdb /usr/local/var/postgres -E utf8
+
+  mexe curl -o fixBrewLionPostgresql.sh http://nextmarvel.net/blog/downloads/fixBrewLionPostgres.sh
+  mexe chmod 755 fixBrewLionPostgresql.sh
+  mexe ./fixBrewLionPostgresql.sh
+
+  ME=$(whoami)
+  mexe sudo -u $ME psql postgres -f setup_init.sql
+
+  # PostgreSQLサーバの起動(参考)
+  #  postgres -D /usr/local/var/postgres
+
+}
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+setting_common() { not_supported; }
+setting_arch() { not_supported; }
+setting_msys() { not_supported; }
+setting_cygwin() { not_supported; }
+setting_mac() { not_supported; }
+setting_ubuntu() { not_supported; }
+setting_redhat() { not_supported; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#gh
+#gh_user_local
