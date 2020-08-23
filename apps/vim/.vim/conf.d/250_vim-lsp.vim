@@ -26,14 +26,24 @@ command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('$HOME/.vim/
 " let g:lsp_log_verbose=1
 " let g:lsp_log_file = expand('~/lsp.log')
 
-let g:lsp_diagnostics_enabled = 1           " ファイルの変更に伴いリアルタイムにエラー表示
-let g:lsp_diagnostics_echo_cursor = 1       " enable echo under cursor when in normal mode
-let g:lsp_text_edit_enabled = 1             " textEdit を有効(LSP の仕様)
-" let g:lsp_virtual_text_enabled = 0
 " let g:lsp_signs_enabled = 1
 " let g:lsp_signs_error = {'text': '✗'}
 " let g:lsp_signs_warning = {'text': '‼', 'icon': '/path/to/some/icon'}
 " let g:lsp_signs_hint = {'text': 'h', 'icon': '/path/to/some/other/icon'}
+
+let g:lsp_diagnostics_enabled = 1           " ファイルの変更に伴いリアルタイムにエラー表示
+let g:lsp_diagnostics_echo_cursor = 1       " enable echo under cursor when in normal mode
+let g:lsp_diagnostics_echo_delay = 500      " diagnostics の表示ディレイ設定
+let g:lsp_diagnostics_float_cursor = 1      " enable echo floating cursor when in normal mode
+let g:lsp_diagnostics_float_delay = 500     " diagnostics の表示ディレイ設定
+
+let g:lsp_text_edit_enabled = 1             " textEdit を有効(LS がバグってるなら無効に)
+let g:lsp_virtual_text_enabled = 0
+let g:lsp_fold_enabled = 0                  " 折り畳み無効
+let g:lsp_signature_help_enabled = 1        " シグニチャヘルプ(重い場合は無効に)
+let g:lsp_completion_resolve_timeout = 0    " 補完候補情報の問い合わせをブロックしない(Ctrl+n,pでガタつく場合に設定)
+let g:lsp_anync_completion = 0              " 補完候補の問い合わせをブロックしない(重い場合に設定)
+
 
 let g:asyncomplete_log_file = expand('$HOME/.vim/asyncomplete.log')
 " let g:asyncomplete_popup_delay = 200        " ポップアップ表示ディレイ(default: 30)
@@ -96,7 +106,6 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
 "      \ 'priority': 10,
 "      \ 'completor': function('asyncomplete#sources#necovim#completor'),
 "      \ }))
-
 
 " language server を指定
 " let g:lsp_settings_filetype_javascript = ['eslint-language-server']
