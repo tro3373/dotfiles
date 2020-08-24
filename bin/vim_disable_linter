@@ -7,11 +7,14 @@ cat_settings() {
   echo "export $env_key=1"
 }
 
+has() { command -v ${1} >& /dev/null; }
 has_env() { [[ -e $env_f ]]; }
 has_key() { has_env && grep $env_key $env_f >&/dev/null; }
 
 main() {
+  ! has direnv && echo "No direnv command exists" 1>&2 && exit 1
   has_key && echo "already setted." 1>&2 && exit 1
-  cat_settings | tee -a $env_f | clip
+  cat_settings | tee -a $env_f >&/dev/null
+  direnv allow
 }
 main "$@"
