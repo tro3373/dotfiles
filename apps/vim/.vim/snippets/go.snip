@@ -105,3 +105,16 @@ options word
     return fmt.Sprintf("${2}")
   }
 
+snippet jsonstructtt
+  type ${1} struct {
+      // json:<マッピングするJSONオブジェクトのフィールド名>,<オプション> という形式で記述します
+      // omitempty   0値(空文字、0、nil等)であればフィールドを出力しない   0値であれば無視される                                            json:"field,omitempty"
+      // -           出力しない                                            無視される                                                       json:"-"
+      // string      出力時に Quote される                                 Quoteされていても型に合わせて変換する。Quoteされてないとエラー   json:"field,string"
+      ${2} string \`json:"${3},string"\`
+  }
+
+snippet fmtprintfff
+  // https://qiita.com/rock619/items/14eb2b32f189514b5c3c
+  fmt.Printf("%#+v", ${1})
+
