@@ -34,7 +34,8 @@ command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('$HOME/.vim/
 let g:lsp_diagnostics_enabled = 1           " ファイルの変更に伴いリアルタイムにエラー表示
 let g:lsp_diagnostics_echo_cursor = 1       " enable echo under cursor when in normal mode
 let g:lsp_diagnostics_echo_delay = 500      " diagnostics の表示ディレイ設定
-let g:lsp_diagnostics_float_cursor = 1      " enable echo floating cursor when in normal mode
+" (WARN) indent-guid and float setting enable will be error!
+let g:lsp_diagnostics_float_cursor = 0      " enable echo floating cursor when in normal mode
 let g:lsp_diagnostics_float_delay = 500     " diagnostics の表示ディレイ設定
 
 let g:lsp_text_edit_enabled = 1             " textEdit を有効(LS がバグってるなら無効に)
