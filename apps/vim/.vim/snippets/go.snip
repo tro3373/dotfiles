@@ -118,3 +118,15 @@ snippet fmtprintfff
   // https://qiita.com/rock619/items/14eb2b32f189514b5c3c
   fmt.Printf("%#+v", ${1})
 
+snippet openfileee
+  file, err := os.OpenFile(${1}, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+  if err != nil {
+    return fmt.Errorf("Failed to OpenFile %s, %w", $1, err)
+  }
+  defer file.Close()
+
+snippet funcnewww
+  func New${1}() *$1 {
+    return &$1{}
+  }
+
