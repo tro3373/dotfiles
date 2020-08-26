@@ -7,7 +7,12 @@ function! s:on_lsp_buffer_enabled() abort
   setlocal signcolumn=yes
   " nmap <buffer> gd <plug>(lsp-definition)
   " nmap <buffer> <C-]> <plug>(lsp-definition)
-  nmap <buffer> <C-]> :tab split<cr>:LspDefinition<cr>
+  " nmap <buffer> <C-]> :tab split<cr>:LspDefinition<cr>
+  " nmap <buffer> <C-]> :tab LspDefinition
+  " nmap <buffer> <C-]> :leftabove LspDefinition
+  " nmap <buffer> <C-]> :rightbelow vertical LspDefinition
+  " nmap <buffer> <C-]> :tab LspDefinition
+  nmap <buffer> <C-]> LspDefinition
   nmap <buffer> <f2> <plug>(lsp-rename)
   nmap <buffer> <C-n> <plug>(lsp-next-error)
   nmap <buffer> <C-p> <plug>(lsp-previouse-error)
@@ -64,7 +69,7 @@ set completeopt=menuone,noinsert,noselect
 
 
 " 補完表示時のEnterで改行をしない
-" inoremap <expr> <cr> pumvisible() ? "\<c-y>\<cr>" : "\<cr>"
+inoremap <expr> <cr> pumvisible() ? "\<c-y>\<cr>" : "\<cr>"
 inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
 inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 " imap <c-space> <Plug>(asyncomplete_force_refresh)
