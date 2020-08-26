@@ -28,11 +28,11 @@ _ff() {
 
 main() {
   if [[ $_FF_OPT_F != f ]]; then
-    _ff
+    _ff "$@"
     return
   fi
-  has pt && pt -g "" --nocolor && return
-  has ag && ag -g "" --nocolor && return
-  _ff
+  has pt && pt -g "${*}" --nocolor && return
+  has ag && ag -g "${*}" --nocolor && return
+  _ff "$@"
 }
 main "$@"
