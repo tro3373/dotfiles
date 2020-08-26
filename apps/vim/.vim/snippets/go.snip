@@ -1,3 +1,6 @@
+snippet     timeformattt
+  "20060102_150405"
+
 snippet     timenowww
 alias       nowww
   now := time.Now().Format("20060102_150405")
@@ -129,4 +132,14 @@ snippet funcnewww
   func New${1}() *$1 {
     return &$1{}
   }
+
+snippet custom_prefix_writerrr
+  type customWriter struct {
+    io.Writer
+    timeFormat string
+  }
+  func (w customWriter) Write(b []byte) (n int, err error) {
+    return w.Writer.Write(append([]byte(time.Now().Format(w.timeFormat)), b...))
+  }
+  logger := log.New(&customWriter{os.Stderr, "2006/01/02 15:04:05"}, ${1:prefix}, 0)
 
