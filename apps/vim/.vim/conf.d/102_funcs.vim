@@ -98,6 +98,10 @@ function! CopyFullPath()
   call CopyComm()
 endfunction
 function! CopyFileName()
+  let @*=expand('%:t')
+  call CopyComm()
+endfunction
+function! CopyFileNameNoExt()
   let @*=expand('%:t:r')
   call CopyComm()
 endfunction

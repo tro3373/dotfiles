@@ -24,5 +24,8 @@ let g:quickrun_config = {
 \   },
 \   "do": {
 \       "exec" : ["make do"],
+\   },
+\   "node": {
+\       "exec" : ["node " . expand('%:p')],
 \   }
 \}
