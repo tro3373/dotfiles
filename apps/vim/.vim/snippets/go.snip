@@ -143,3 +143,7 @@ snippet custom_prefix_writerrr
   }
   logger := log.New(&customWriter{os.Stderr, "2006/01/02 15:04:05"}, ${1:prefix}, 0)
 
+snippet strconvitoaaa
+alias   itoaaa
+  strconv.Itoa(${1})
+
