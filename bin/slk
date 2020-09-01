@@ -3,7 +3,10 @@
 # set -ex
 
 current_dir=$(pwd)
-script_dir=$(cd "$(dirname $0)"; pwd)
+script_dir=$(
+  cd "$(dirname $0)"
+  pwd
+)
 command_name=$(basename $0)
 config="$(basename $0).conf"
 args=()
@@ -39,10 +42,10 @@ EOF
 
 dlog() {
   if [[ $debug -eq 1 ]]; then
-    echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2;
+    echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2
   fi
 }
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 add_args() { args=("${args[@]}" "$@"); }
 gen_conf() {
   if [[ -e $script_dir/slk.conf ]]; then
@@ -58,7 +61,7 @@ name=MyBot
 icon=:penguin:
 channel=specify #channel_name, or @user_name
 EOF
-echo "==> $script_dir/slk.conf generated."
+  echo "==> $script_dir/slk.conf generated."
 }
 
 load_config() {
@@ -81,17 +84,17 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-      -h|--help) usage && exit 0  ;;
-      -d|--debug) debug=1 ;;
-      -g|--genconf) gen_conf && exit 0 ;;
-      -f|--file) upload_file=1 ;;
-      -c|--channel) shift && channel=$1 ;;
-      -co|--code) as_code=1 ;;
-      -t|--token) shift && token=$1 ;;
-      # -u|--url) shift && url=$1 ;;
-      -n|--name) shift && name=$1 ;;
-      -i|--icon) shift && icon=$1 ;;
-      *) add_args "$1"            ;;
+    -h | --help) usage && exit 0 ;;
+    -d | --debug) debug=1 ;;
+    -g | --genconf) gen_conf && exit 0 ;;
+    -f | --file) upload_file=1 ;;
+    -c | --channel) shift && channel=$1 ;;
+    -co | --code) as_code=1 ;;
+    -t | --token) shift && token=$1 ;;
+    # -u|--url) shift && url=$1 ;;
+    -n | --name) shift && name=$1 ;;
+    -i | --icon) shift && icon=$1 ;;
+    *) add_args "$1" ;;
     esac
     shift
   done
@@ -126,31 +129,34 @@ initialize() {
     return
   fi
   if [[ $as_code -eq 1 ]]; then
-    message="\`\`\`$message\`\`\`"
+    # message="\`\`\`$message\`\`\`"
+    : TODO
   fi
 }
 
 is_large_message() {
-  local n=$(echo -e "$message" |wc -l)
+  local n=$(echo -e "$message" | wc -l)
   test $n -gt 10
 }
 
 lchannel() {
   case "${channel}" in
-    @*)
-      local _user=$(\
-        curl -s -X POST https://slack.com/api/users.list --data-urlencode "token=${token}" 2>&1 |
-        jq -r ".members | map(select(.name == \"${channel/@/}\" or .profile.display_name == \"${channel/@/}\")) | .[0].id")
-      local _channel=$(\
-        curl -s -X POST https://slack.com/api/im.list --data-urlencode "token=${token}" 2>&1 |
-        jq -r ".ims | map(select(.user == \"${_user}\")) | .[].id")
-      if [[ -z $_channel ]]; then
-        echo $_user
-        return
-      fi
-      echo ${_channel}
+  @*)
+    local _user=$(
+      curl -s -X POST https://slack.com/api/users.list --data-urlencode "token=${token}" 2>&1 |
+        jq -r ".members | map(select(.name == \"${channel/@/}\" or .profile.display_name == \"${channel/@/}\")) | .[0].id"
+    )
+    local _channel=$(
+      curl -s -X POST https://slack.com/api/im.list --data-urlencode "token=${token}" 2>&1 |
+        jq -r ".ims | map(select(.user == \"${_user}\")) | .[].id"
+    )
+    if [[ -z $_channel ]]; then
+      echo $_user
+      return
+    fi
+    echo ${_channel}
     ;;
-    *) echo ${channel} ;;
+  *) echo ${channel} ;;
   esac
 }
 
@@ -175,22 +181,24 @@ send() {
     # ${_filename:+ --data-urlencode "filename=${_filename}"} \
     # ${filetype:+ --data-urlencode "filetype=${filetype}"} \
     # ${title:+ --data-urlencode "title=${title}"} \
-    $dummy curl -fSsL -X POST https://slack.com/api/files.upload \
-      ${channel:+ --data-urlencode "channels=$(lchannel)"} \
-      ${icon:+ --data-urlencode "icon_emoji=$icon"} \
-      ${name:+ --data-urlencode "username=$name"} \
-      --data-urlencode "content=$message" \
-      --data-urlencode "token=${token}"
+    echo -e "$message" |
+      $dummy curl -fSsL -X POST https://slack.com/api/files.upload \
+        ${channel:+ --data-urlencode "channels=$(lchannel)"} \
+        ${icon:+ --data-urlencode "icon_emoji=$icon"} \
+        ${name:+ --data-urlencode "username=$name"} \
+        --data-urlencode "token=${token}" \
+        --data-urlencode content@-
     return
   fi
 
   dlog "==> Sending message"
-  $dummy curl -fSsL -X POST https://slack.com/api/chat.postMessage \
-    ${channel:+ --data-urlencode "channel=$(lchannel)"} \
-    ${icon:+ --data-urlencode "icon_emoji=$icon"} \
-    ${name:+ --data-urlencode "username=$name"} \
-    --data-urlencode "text=$message" \
-    --data-urlencode "token=$token"
+  echo -e "$message" |
+    $dummy curl -fSsL -X POST https://slack.com/api/chat.postMessage \
+      ${channel:+ --data-urlencode "channel=$(lchannel)"} \
+      ${icon:+ --data-urlencode "icon_emoji=$icon"} \
+      ${name:+ --data-urlencode "username=$name"} \
+      --data-urlencode "token=$token" \
+      --data-urlencode text@-
 }
 
 main() {
