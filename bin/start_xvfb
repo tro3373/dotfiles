@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 is_executable() { has Xvfb && has VBoxClient; }
 main() {
   ! is_executable && return
@@ -8,13 +8,13 @@ main() {
   if [[ ! -f /tmp/.X0-lock ]]; then
     echo "==> Starting Xvfb .."
     # Xvfb -screen 0 320x240x8 >& /dev/null &
-    nohup Xvfb -screen 0 320x240x8 >& /dev/null &
+    nohup Xvfb -screen 0 320x240x8 >&/dev/null &
     sleep 0.5
   fi
-  if ! pgrep -af 'VBoxClient --clipboard' >& /dev/null; then
+  if ! pgrep -af 'VBoxClient --clipboard' >&/dev/null; then
     echo "==> Starting VBoxClient .."
     # VBoxClient --clipboard
-    nohup VBoxClient --clipboard >& /dev/null &
+    nohup VBoxClient --clipboard >&/dev/null &
   fi
 }
 main
