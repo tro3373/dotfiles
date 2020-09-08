@@ -70,5 +70,9 @@ main() {
   else
     bkup_files
   fi
+  [[ -z $dummy ]] && return
+  echo
+  echo "> This is dummy mode. specify -e option"
+  echo
 }
 main "$@"

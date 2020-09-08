@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+main() {
+  local stdin=
+  if [[ -p /dev/stdin ]]; then
+    stdin="$(cat <&0)"
+  fi
+  (echo -e "$stdin" && echo -e "$@") |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      [[ ! -e $line ]] && continue
+      echo "$line: $(date +%Y%m%d_%H%M%S -r $line)"
+    done
+}
+main "$@"
