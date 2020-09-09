@@ -9,7 +9,7 @@ alias       ffname
 snippet devnull
 alias tonull
 alias nullll
-    &> /dev/null
+    &>/dev/null
 
 snippet error
     1>&2
@@ -19,8 +19,8 @@ snippet echoerror
     exit 1
 
 snippet new
-    method() {
-      :
+    ${1}() {
+      ${2}
     }
 
 snippet fire
@@ -234,7 +234,7 @@ snippet trappp
     # 3 Ctrl+\ を押したときに発生するクイットシグナル。
     # 9 プロセスを強制終了するためのキルシグナル。強制終了なので当然、trap はできない。
     #15 プロセスを終了させるための終了シグナル。kill コマンドはデフォルトでこのシグナルを使用する (つまり kill PID は kill -15 PID と同じ結果になる)。
-    trap <command> 1 2 3 15
+    trap ${1} 0 1 2 3 15
 
 snippet checkroot
     check_root () {
@@ -271,7 +271,10 @@ snippet ifstdin
     fi
 
 snippet stdin
-    local stdin="$(cat <&0)"
+    local stdin=
+    if [[ -p /dev/stdin ]]; then
+      stdin="$(cat <&0)"
+    fi
 
 snippet forarg
     for arg in "$@"; do
@@ -355,41 +358,41 @@ snippet initializzzz
     }
     main "$@"
 
-snippet innnnk
-    ink() {
-      if [[ "$#" -eq 0 || "$#" -gt 2 ]]; then
-        echo "Usage: ink <color> <text>"
-        echo "Colors:"
-        echo "  black, white, red, green, yellow, blue, purple, cyan, gray"
-        return 1
-      fi
+snippet innnk
+  ink() {
+    local stdin=
+    if [[ -p /dev/stdin ]]; then
+      stdin="$(cat <&0)"
+      [[ -n $stdin ]] && stdin="$stdin\n"
+    fi
+    if [[ $# -eq 0 && -z $stdin ]]; then
+      return
+    fi
 
-      local open="\033["
-      local close="${open}0m"
-      export black="0;30m"
-      export red="1;31m"
-      export green="1;32m"
-      export yellow="1;33m"
-      export blue="1;34m"
-      export purple="1;35m"
-      export cyan="1;36m"
-      export gray="0;37m"
-      export white="$close"
+    local open="\033["
+    local close="${open}0m"
+    export black="0;30m"
+    export red="1;31m"
+    export green="1;32m"
+    export yellow="1;33m"
+    export blue="1;34m"
+    export purple="1;35m"
+    export cyan="1;36m"
+    export gray="0;37m"
+    export white="$close"
 
-      local text="\$1"
-      local color="$close"
+    local text="$stdin$@"
+    local color="$close"
 
-      if [[ "$#" -eq 2 ]]; then
-        text="\$2"
-        case "\$1" in
-        black | red | green | yellow | blue | purple | cyan | gray | white)
-          eval color="\\$\$1"
-          ;;
-        esac
-      fi
+    case \$1 in
+    black | red | green | yellow | blue | purple | cyan | gray | white)
+      eval color="\\$\$1"
+      text="$stdin${@:2}"
+      ;;
+    esac
 
-      printf "${open}${color}${text}${close}\n"
-    }
+    printf "${open}${color}${text}${close}\n" 1>&2
+  }
 
 snippet exe
     exe() {
@@ -406,3 +409,6 @@ snippet iffff
     ${2}
   fi
 
+snippet afterarggg
+  # substring after second args
+  local after_args=${@:2}
