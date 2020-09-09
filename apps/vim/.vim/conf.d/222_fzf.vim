@@ -13,9 +13,12 @@ endif
 " vnoremap ,l y:FZF -q <C-R>"<CR>
 " nnoremap ,j :FZF -q <C-R><C-W>
 " vnoremap ,j y:FZF -q <C-R>"
-function! MyFZFQ() abort
+
+function! MyFZFQ(q) abort
   let l:d = GetGitRoot()
-  echo l:d
-  exe(":FZF " . l:d)
+  " echo l:d
+  " exe(":FZF " . l:d)
+  :call fzf#vim#files(l:d, {'options': ['--query=' . a:q, '--layout=reverse', '--info=inline', '--preview', 'cat {}']})
 endfunction
-nnoremap <Leader>l <ESC>:call MyFZFQ()<ENTER>
+nnoremap <Leader>l <ESC>:call MyFZFQ('')<ENTER>
+nnoremap <Leader>k <ESC>:call MyFZFQ(expand('<cword>'))<ENTER>
