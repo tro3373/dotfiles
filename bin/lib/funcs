@@ -12,11 +12,12 @@ export _dry_run_commands=""
 is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
 ink() {
-  if [[ "$#" -eq 0 || "$#" -gt 2 ]]; then
-    echo "Usage: ink <color> <text>"
-    echo "Colors:"
-    echo "  black, white, red, green, yellow, blue, purple, cyan, gray"
-    return 1
+  local stdin=
+  if [[ -p /dev/stdin ]]; then
+    stdin="$(cat <&0)"
+  fi
+  if [[ $# -eq 0 && -z $stdin ]]; then
+    return
   fi
 
   local open="\033["
@@ -31,19 +32,17 @@ ink() {
   export gray="0;37m"
   export white="$close"
 
-  local text="$1"
+  local text="$stdin$@"
   local color="$close"
 
-  if [[ "$#" -eq 2 ]]; then
-    text="$2"
-    case "$1" in
-    black | red | green | yellow | blue | purple | cyan | gray | white)
-      eval color="\$$1"
-      ;;
-    esac
-  fi
+  case $1 in
+  black | red | green | yellow | blue | purple | cyan | gray | white)
+    eval color="\$$1"
+    text="$stdin${@:2}"
+    ;;
+  esac
 
-  printf "${open}${color}${text}${close}"
+  printf "${open}${color}${text}${close}\n" 1>&2
 }
 log() {
   echo -e "$*"

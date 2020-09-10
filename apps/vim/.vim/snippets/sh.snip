@@ -363,7 +363,6 @@ snippet innnk
     local stdin=
     if [[ -p /dev/stdin ]]; then
       stdin="$(cat <&0)"
-      [[ -n $stdin ]] && stdin="$stdin\n"
     fi
     if [[ $# -eq 0 && -z $stdin ]]; then
       return
