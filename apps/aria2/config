@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    has aria2c
+  has aria2c
 }
 
 install_redhat() {
-    def_install epel-release
-    def_install aria2
+  def_install epel-release
+  def_install aria2
 }
-install_msys()   { not_supported; }
+install_msys() { not_supported; }
 install_cygwin() { not_supported; }
-
