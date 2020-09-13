@@ -40,20 +40,28 @@ initialize() {
 
 not_supported() { echo "Not supported." 1>&2 && exit 1; }
 update_arch() {
-  sudo pacman -Syuu --noconfirm "${args[@]}"
+  $dummy sudo pacman -Syuu --noconfirm "${args[@]}"
 }
 update_ubuntu() {
-  sudo apt-get -y update "${args[@]}"
-  sudo apt-get upgrade -y
-  sudo apt-get dist-upgrade -y
+  $dummy sudo apt-get -y update "${args[@]}"
+  $dummy sudo apt-get upgrade -y
+  $dummy sudo apt-get dist-upgrade -y
 }
 update_msys() {
-  scoop update
-  local list="${args[@]}"
+  $dummy scoop update
+  local list="${args[*]}"
   if [[ -z $list ]]; then
     list=$(scoop list | grep -E '^ .*' | grep -v vagrant | awk '{print $1}' | tr '\n' ' ')
   fi
-  scoop update "$list"
+  $dummy scoop update "$list"
+}
+update_mac() {
+  # no needed. brew upgrade execute brew update too
+  # $dummy brew update
+  echo "brew upgrading.."
+  $dummy brew upgrade
+  echo "brew doctoring.."
+  $dummy brew doctor
 }
 main() {
   initialize "$@"
@@ -63,6 +71,7 @@ main() {
   arch) update_arch ;;
   ubuntu) update_ubuntu ;;
   msys) update_msys ;;
+  mac) update_mac ;;
   *) not_supported ;;
   esac
   ink yellow "Done!"
