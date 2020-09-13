@@ -1,81 +1,81 @@
 #!/bin/bash
 
 install_msys() {
-    install_via_os_default
-    # GNU系コマンド集のインストール（gdircolors 用）
-    # shellcheck disable=SC2154
-    mexe $instcmd coreutils
+  install_via_os_default
+  # GNU系コマンド集のインストール（gdircolors 用）
+  # shellcheck disable=SC2154
+  mexe $instcmd coreutils
 }
 
 install_ubuntu() {
-    install_via_os_default
-    ## for .zplug
-    #mexe $instcmd gawk
+  install_via_os_default
+  ## for .zplug
+  #mexe $instcmd gawk
 }
 
 setting_common() {
-    # .works.zsh
-    [ ! -e ~/.works.zsh ] && mexe touch ~/.works.zsh && mexe chmod 755 ~/.works.zsh
+  # .works.zsh
+  [ ! -e ~/.works.zsh ] && mexe touch ~/.works.zsh && mexe chmod 755 ~/.works.zsh
 
-    ## ZPlug
-    #local zplug_home=~/.zplug
-    #if [ ! -d $zplug_home ] && [ ! -L $zplug_home ]; then
-    #    mexe git clone --depth 1 https://github.com/zplug/zplug $zplug_home
-    #fi
+  ## ZPlug
+  #local zplug_home=~/.zplug
+  #if [ ! -d $zplug_home ] && [ ! -L $zplug_home ]; then
+  #    mexe git clone --depth 1 https://github.com/zplug/zplug $zplug_home
+  #fi
 
-    # LS_COLORS 設定
-    # http://qiita.com/yuyuchu3333/items/84fa4e051c3325098be3
-    # https://github.com/seebi/dircolors-solarized
-    # ソースコード取得
-    make_work_if_needed
-    # shellcheck disable=SC2154
-    if [ ! -e "$workdir/dircolors-solarized" ]; then
-        mexe git clone --depth 1 https://github.com/seebi/dircolors-solarized.git $workdir/dircolors-solarized
-    fi
-    local setcolortheme
-    # setcolortheme=dircolors.256dark
-    setcolortheme=dircolors.ansi-dark
-    # setcolortheme=dircolors.ansi-light
-    # setcolortheme=dircolors.ansi-universal
-    if [ -e "${workdir}/dircolors-solarized/${setcolortheme}" ]; then
-        make_lnk_with_bkup "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
-    fi
+  # LS_COLORS 設定
+  # http://qiita.com/yuyuchu3333/items/84fa4e051c3325098be3
+  # https://github.com/seebi/dircolors-solarized
+  # ソースコード取得
+  make_work_if_needed
+  # shellcheck disable=SC2154
+  if [ ! -e "$workdir/dircolors-solarized" ]; then
+    mexe git clone --depth 1 https://github.com/seebi/dircolors-solarized.git $workdir/dircolors-solarized
+  fi
+  local setcolortheme
+  # setcolortheme=dircolors.256dark
+  setcolortheme=dircolors.ansi-dark
+  # setcolortheme=dircolors.ansi-light
+  # setcolortheme=dircolors.ansi-universal
+  if [ -e "${workdir}/dircolors-solarized/${setcolortheme}" ]; then
+    make_lnk_with_bkup "${workdir}/dircolors-solarized/${setcolortheme}" "${HOME}/.dircolors"
+  fi
 
-    if [ ! -e "$workdir/tomorrow-theme" ]; then
-        mexe git clone --depth 1 https://github.com/chriskempson/tomorrow-theme.git $workdir/tomorrow-theme
-        mexe $workdir/tomorrow-theme/Gnome-Terminal/setup-theme.sh
-    fi
+  if [ ! -e "$workdir/tomorrow-theme" ]; then
+    mexe git clone --depth 1 https://github.com/chriskempson/tomorrow-theme.git $workdir/tomorrow-theme
+    mexe $workdir/tomorrow-theme/Gnome-Terminal/setup-theme.sh
+  fi
 
-    if is_mac && [ ! -e "$workdir/solarized.git" ]; then
-        mexe git clone --depth 1 https://github.com/tomislav/osx-terminal.app-colors-solarized $workdir/solarized.git
-    fi
-    if is_msys && [ ! -e "$workdir/mintty-colors-solarized" ]; then
-        mexe git clone --depth 1 https://github.com/mavnn/mintty-colors-solarized.git $workdir/mintty-colors-solarized
-    fi
+  if is_mac && [ ! -e "$workdir/solarized.git" ]; then
+    mexe git clone --depth 1 https://github.com/tomislav/osx-terminal.app-colors-solarized $workdir/solarized.git
+  fi
+  if is_msys && [ ! -e "$workdir/mintty-colors-solarized" ]; then
+    mexe git clone --depth 1 https://github.com/mavnn/mintty-colors-solarized.git $workdir/mintty-colors-solarized
+  fi
 
+  # その他ドットファイルリンク作成
+  # shellcheck disable=SC2154
+  make_link_dot2home $app_dir
+  if is_msys; then
     # その他ドットファイルリンク作成
-    # shellcheck disable=SC2154
-    make_link_dot2home $app_dir
-    if is_msys; then
-        # その他ドットファイルリンク作成
-        make_link_dot2home $app_dir/win
-    fi
+    make_link_dot2home $app_dir/win
+  fi
 }
 
 gen_zshrc_for_msys2() {
-    # gen_zshrc_for_msys2 \
-    #     .zsh/00.base.zsh \
-    #     .zsh/10.path.zsh \
-    #     .zsh/20.alias.zsh \
-    #     .zsh/30.funcs.zsh \
-    #     .zsh/50.ssh-agent.zsh \
-    #     .zsh/60.tmux.zsh
-    local outfile=~/.zshrc
-    if [[ -e $outfile ]]; then
-        backup_file $outfile
-    fi
-    for file in "$@"; do
-        mexe "cat $app_dir/$file >> $outfile"
-    done
-    mexe "echo '[ -f ~/.works.zsh ] && source ~/.works.zsh' >> $outfile"
+  # gen_zshrc_for_msys2 \
+  #     .zsh/00.base.zsh \
+  #     .zsh/10.path.zsh \
+  #     .zsh/20.alias.zsh \
+  #     .zsh/30.funcs.zsh \
+  #     .zsh/50.ssh-agent.zsh \
+  #     .zsh/60.tmux.zsh
+  local outfile=~/.zshrc
+  if [[ -e $outfile ]]; then
+    backup_file $outfile
+  fi
+  for file in "$@"; do
+    mexe "cat $app_dir/$file >> $outfile"
+  done
+  mexe "echo '[ -f ~/.works.zsh ] && source ~/.works.zsh' >> $outfile"
 }
