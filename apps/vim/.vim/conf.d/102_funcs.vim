@@ -557,7 +557,8 @@ command! ToCsv call ToCsv()
 
 " ファイルコピー作成
 function! Copy() abort
-  let fname = input("Input FileName: ")
+  let def_fname=expand('%:t') . ".copy"
+  let fname = input("Input FileName: ", def_fname)
   let fpath = expand("%:p:h") . "/" . fname
   redraw
   call SilentFExec(':w '.fpath)
