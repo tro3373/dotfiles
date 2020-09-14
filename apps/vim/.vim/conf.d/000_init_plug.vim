@@ -212,6 +212,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'posva/vim-vue'                                      " vue syntax
   Plug 'mindriot101/vim-yapf'                               " for python
   Plug 'cohama/vim-smartinput-endwise'                      " for ruby (end 補完)
+  Plug 'digitaltoad/vim-pug'                                " pug
 
   " Markdown Preview 関連
   Plug 'plasticboy/vim-markdown'
