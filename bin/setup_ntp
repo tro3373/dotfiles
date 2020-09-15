@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+not_supported() { echo "Not supported." 1>&2 && exit 1; }
+main() {
+  local _os=$(os)
+  [[ $_os != arch ]] && not_supported
+  sudo timedatectl set-ntp true
+  timedatectl status
+}
+main "$@"
