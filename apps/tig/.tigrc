@@ -126,6 +126,10 @@ bind status  H      ?git reset --hard HEAD
 # ^ で reset --soft
 bind generic ^      ?git reset --soft HEAD^
 
+# checkout ours/theirs settings
+bind status  O      ?git checkout --ours %(file)
+bind status  T      ?git checkout --theirs %(file)
+
 # K で cherry-pick (default: 'C')
 bind main    P      ?git cherry-pick %(commit)
 bind diff    P      ?git cherry-pick %(commit)
