@@ -42,7 +42,9 @@ set splitright
 " ターミナル時でもマウスを使えるようにする
 set mouse=a
 set guioptions+=a
-set ttymouse=xterm2
+if !has('nvim')
+  set ttymouse=xterm2
+endif
 " ビープ音を鳴らさない
 set vb t_vb=
 " C-vの矩形選択で行末より後ろもカーソルを置ける
@@ -68,7 +70,11 @@ set ignorecase
 " 検索時に大文字を含んでいたら大/小を区別
 set smartcase
 " ~/.vim/_viminfo を viminfo ファイルとして指定
-set viminfo+=n~/.vim/_viminfo
+if has('nvim')
+  set viminfo+=n~/.vim/_nviminfo
+else
+  set viminfo+=n~/.vim/_viminfo
+endif
 
 
 " ヤンクした際にクリップボードへ配置する
