@@ -28,8 +28,8 @@ augroup lsp_install
   " autocmd BufWritePre <buffer> LspDocumentFormatSync
 augroup END
 command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('$HOME/.vim/lsp.log')
-" let g:lsp_log_verbose=1
-" let g:lsp_log_file = expand('~/lsp.log')
+let g:lsp_log_verbose=1
+let g:lsp_log_file = expand('$HOME/.vim/lsp.log')
 
 " let g:lsp_signs_enabled = 1
 " let g:lsp_signs_error = {'text': '✗'}
