@@ -92,17 +92,11 @@ if has ag; then
     alias ag='ag -S'
   fi
   alias agh='ag --hidden'
-  # --------------------------------------------------------
-  # fzf 設定
-  # --------------------------------------------------------
-  if has fzf; then
-    # Setting ag as the default source for fzf
-    export FZF_DEFAULT_COMMAND='ag --hidden -g ""'
-    # To apply the command to CTRL-T as well
-    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-  fi
 fi
 
+# --------------------------------------------------------
+# pt 設定
+# --------------------------------------------------------
 if has pt; then
   if [ "${OSTYPE}" = "msys" ]; then
     # . が最後につかないと固まるので暫定
@@ -116,6 +110,35 @@ if has pt; then
     alias pt='pt -S'
   fi
   alias pth='pt --hidden'
+fi
+
+# --------------------------------------------------------
+# rg 設定
+# --------------------------------------------------------
+if has rg; then
+  # alias rgf='rg --files |rg'
+  function rgf() {
+    local args="$@"
+    rg --files | rg "$args"
+  }
+fi
+
+# --------------------------------------------------------
+# fzf 設定
+# --------------------------------------------------------
+if has fzf; then
+  # Setting ag as the default source for fzf
+  if has rg; then
+    export FZF_DEFAULT_COMMAND='rg --files --hidden --follow --glob "!.git/*"'
+  elif has pt; then
+    export FZF_DEFAULT_COMMAND='pt --hidden -g ""'
+  elif has ag; then
+    export FZF_DEFAULT_COMMAND='ag --hidden -g ""'
+  fi
+  if [[ -n $FZF_DEFAULT_COMMAND ]]; then
+    # To apply the command to CTRL-T as well
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  fi
 fi
 
 # http://qiita.com/yuku_t/items/4ffaa516914e7426419a

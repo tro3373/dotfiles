@@ -31,6 +31,7 @@ main() {
     _ff "$@"
     return
   fi
+  has rg && rg --files --color never && return
   has pt && pt -g "${*}" --nocolor && return
   has ag && ag -g "${*}" --nocolor && return
   _ff "$@"
