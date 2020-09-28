@@ -21,7 +21,7 @@ check() {
   exit 1
 }
 get_prj_name() {
-  basename $(get_git_root)
+  basename "$(get_git_root)"
 }
 bkup_files() {
   local hash=$(git rev-parse --short HEAD)
