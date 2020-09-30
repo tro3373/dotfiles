@@ -116,10 +116,10 @@ fi
 # rg 設定
 # --------------------------------------------------------
 if has rg; then
-  # alias rgf='rg --files |rg'
+  alias rg='rg -S'
   function rgf() {
     local args="$@"
-    rg --files | rg "$args"
+    rg --files | rg -S "$args"
   }
 fi
 
