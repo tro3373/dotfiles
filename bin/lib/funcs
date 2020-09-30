@@ -239,6 +239,7 @@ def_install() {
     fi
     _pkgs+=("$p")
   done
+  [[ ${#_pkgs[@]} -eq 0 ]] && return
   # shellcheck disable=SC2154
   mexe $instcmd "${_pkgs[*]}"
 }
