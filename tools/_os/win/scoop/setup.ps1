@@ -24,6 +24,7 @@ concfg import harmonic-dark
 scoop install googlechrome
 scoop install firefox
 
+scoop install windows-terminal
 scoop install vscode
 scoop install winscp
 scoop install sumatrapdf
