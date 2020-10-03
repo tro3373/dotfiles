@@ -10,7 +10,7 @@ iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
 
 
 scoop install git
-#scoop install 7zip
+scoop install 7zip
 scoop bucket add extras
 scoop bucket add versions
 
@@ -22,15 +22,11 @@ scoop install concfg
 concfg import harmonic-dark
 
 scoop install googlechrome
-#(TODO) scoop install googlejapaneseinput
 scoop install firefox
 
-#(TODO) #scoop bucket add iyokan-jp https://github.com/tetradice/scoop-iyokan-jp
-#scoop install sakura-editor
-
 scoop install vscode
-scoop install winmerge
 scoop install winscp
+scoop install sumatrapdf
 scoop install mpc-hc
 # scoop install gitkraken
 scoop install tortoisesvn
@@ -39,10 +35,16 @@ scoop install vagrant
 scoop install slack
 scoop install autohotkey
 
+scoop bucket add iyokan-jp https://github.com/tetradice/scoop-iyokan-jp
+scoop install sakura-editor
+scoop install winmerge-jp
+
+scoop bucket add nonportable
+scoop install google-japanese-input-np
+
 scoop bucket add java
 scoop install openjdk
 scoop install adopt8-hotspot
-
 
 # scoop cache rm *
 scoop list
