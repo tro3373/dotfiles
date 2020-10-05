@@ -55,7 +55,7 @@ let g:ale_linters['shell'] = ['shellcheck']
 let g:ale_linters['java'] = []
 let g:ale_linters['python'] = ['flake8']
 let g:ale_linters['go'] = ['gometalinter', 'gobuild']
-
+let g:ale_linters['vue'] = ['eslint']
 
 let g:ale_fixers = {}
 let g:ale_fixers['javascript'] = ['prettier-eslint', 'prettier', 'eslint', 'trim_whitespace', 'remove_trailing_lines']
@@ -73,11 +73,13 @@ let g:ale_fixers['sh']         = ['shfmt', 'trim_whitespace', 'remove_trailing_l
 let g:ale_fixers['go']         = ['gofmt', 'goimports', 'trim_whitespace', 'remove_trailing_lines']
 let g:ale_fixers['markdown']   = ['prettier']
 " let g:ale_fixers['markdown'] = [{buffer, lines -> {'command': 'textlint -c ~/.config/textlintrc -o /dev/null --fix --no-color --quiet %t', 'read_temporary_file': 1}}]
-let g:ale_fixers['vue']        = ['prettier', 'trim_whitespace', 'remove_trailing_lines']
+" let g:ale_fixers['vue']        = ['prettier', 'trim_whitespace', 'remove_trailing_lines']
+let g:ale_fixers['vue']        = ['eslint', 'trim_whitespace', 'remove_trailing_lines']
 let g:ale_fixers['java']       = ['google_java_format', 'trim_whitespace', 'remove_trailing_lines']
 
 " let g:ale_fix_on_save_ignore = ['sh', 'javascript']
 " let g:ale_fix_on_save_ignore = ['markdown', 'javascript']
+" let g:ale_fix_on_save_ignore = ['vue']
 
 
 " Ctrl k+j でエラー間移動
