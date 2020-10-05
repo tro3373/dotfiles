@@ -6,7 +6,11 @@ is_installed() {
       return 0
     fi
   fi
-  return 1
+  if has vagrant; then
+    return 0
+  else
+    return 1
+  fi
 }
 hascask() { brew cask list |grep $1 >& /dev/null; }
 caskinstall() {
