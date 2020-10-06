@@ -12,6 +12,8 @@ exit /b 0
   dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
   set /P read="Download and install https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi and Press Key..."
   wsl --set-default-version 2
+  wsl --list --verbose
+  rem wsl --set-version Ubuntu-20.04 2
 exit /b 0
 
 :disable

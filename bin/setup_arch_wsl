@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+readonly base_url=http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/iso/latest/
+readonly dstd=$HOME/win/wsl
+
+latest_url() {
+  local fname=$(curl -fSsL $base_url |
+    grep href |
+    grep --color 'tar.gz"' |
+    sed -e 's,^.*href=",,g' -e 's,".*,,g'
+  )
+  echo "$base_url/$fname"
+}
+
+main() {
+  if [[ -e $dstd ]]; then
+    echo "Already exist $dstd." 1>&2
+    exit 1
+  fi
+  local tmp=$dstd/tmp
+  mkdir -p $tmp
+  cd $tmp
+  local url=$(latest_url)
+  echo "> Downloading to $tmp from $url.." 1>&2
+  curl -LO $url
+  sudo tar -xzf *.tar.gz
+  cd root.x86_64
+  sudo tar -czvf ArchLinux.tar.gz .
+  # TODO execute in cmd
+  # wsl --import ArchLinux %USERPROFILE%\wsl\ArchLinux %USERPROFILE%\wsl\tmp\ArchLinux.tar.gz
+  # wsl -d ArchLinux
+  # pacman-key –init
+  # pacman-key –populate archlinux
+}
+main "$@"
