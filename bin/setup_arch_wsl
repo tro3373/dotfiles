@@ -29,7 +29,7 @@ main() {
   # TODO execute in cmd
   # wsl --import ArchLinux %USERPROFILE%\wsl\ArchLinux %USERPROFILE%\wsl\tmp\ArchLinux.tar.gz
   # wsl -d ArchLinux
-  # pacman-key –init
-  # pacman-key –populate archlinux
+  # pacman-key --init
+  # pacman-key --populate archlinux
 }
 main "$@"
