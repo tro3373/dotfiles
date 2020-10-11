@@ -3,13 +3,32 @@
 readonly base_url=http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/iso/latest/
 readonly dstd=$HOME/win/wsl
 
-latest_url() {
+dl_extract_iso() {
+  local url=$(get_arch_iso_url_latest)
+  echo "> Downloading to $tmp from $url.." 1>&2
+  curl -LO $url
+  sudo tar -xzf *.tar.gz
+  cd root.x86_64
+  local tgz=ArchLinux.tar.gz
+  sudo tar -czvf $tgz .
+  echo "$(pwd)/$tgz"
+}
+
+get_arch_iso_url_latest() {
   local fname=$(curl -fSsL $base_url |
     grep href |
     grep --color 'tar.gz"' |
     sed -e 's,^.*href=",,g' -e 's,".*,,g'
   )
   echo "$base_url/$fname"
+}
+
+import_arch_image() {
+  local path="$*"
+  # TODO execute in cmd
+  return
+  wsl --import ArchLinux '%USERPROFILE%\wsl\ArchLinux %USERPROFILE%\wsl\tmp\ArchLinux.tar.gz'
+  wsl -d ArchLinux
 }
 
 setup_arch() {
@@ -22,10 +41,6 @@ Server = http://mirrors.cat.net/archlinux/$repo/os/$arch
 Server = http://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
 ###########################
 EOF
-  while read -r line; do
-    [[ -z $line ]] && continue
-    [[ $line =~ ^#.* ]] && continue
-  done
   pacman-key --init
   pacman-key --populate archlinux
   pacman -Syuu
@@ -36,7 +51,17 @@ EOF
   # gen locale
   locale-gen
   echo LANG=en_US.UTF-8 > /etc/locale.conf
+  echo 'arch' > /etc/hostname
+  # TODO cp from setup_arch
+  # setup_user "archuser"
+  # TODO visudo change oneliner from ..
 
+
+  # fast pacman install
+  pacman -S aria2
+  sed -i -e 's,^#Color,Color\nILoveCandy,g' /etc/pacman.conf
+  # TODO
+  echo 'XferCommand = /usr/bin/aria2c --allow-overwrite=true --continue=true --file-allocation=none --log-level=error --max-tries=2 --max-connection-per-server=2 --max-file-not-found=5 --min-split-size=5M --no-conf --remote-time=true --summary-interval=60 --timeout=5 --dir=/ --out %o %u'
 
 }
 
@@ -48,15 +73,9 @@ main() {
   local tmp=$dstd/tmp
   mkdir -p $tmp
   cd $tmp
-  local url=$(latest_url)
-  echo "> Downloading to $tmp from $url.." 1>&2
-  curl -LO $url
-  sudo tar -xzf *.tar.gz
-  cd root.x86_64
-  sudo tar -czvf ArchLinux.tar.gz .
-  # TODO execute in cmd
-  # wsl --import ArchLinux %USERPROFILE%\wsl\ArchLinux %USERPROFILE%\wsl\tmp\ArchLinux.tar.gz
-  # wsl -d ArchLinux
-  # setup_arch
+  local f=$(dl_extract_iso)
+  import_arch_image "$f"
+  # TODO execute in wsl
+  setup_arch
 }
 main "$@"
