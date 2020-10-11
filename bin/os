@@ -1,5 +1,8 @@
 #!/bin/bash
 
+is_wsl() { [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]]; }
+
+# TODO indent
 check_os() {
   local result=
   if   [[ -e /etc/debian_version ]] ||
@@ -65,11 +68,14 @@ handle_args() {
     case "$os" in
       cygwin|msys) result=true ;;
     esac
-  elif [[ "$opt" == "linux" ]]; then
+    is_wsl && result=true
+  elif [[ "$opt" == "linux" ]]; then # TODO to unix
     case "$os" in
       cygwin|msys|mac) ;;
       *) result=true ;;
     esac
+  elif [[ "$opt" == "wsl" ]]; then
+    is_wsl && result=true
   fi
   echo ${result}
 }
