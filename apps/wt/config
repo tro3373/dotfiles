@@ -9,7 +9,11 @@ install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
 setting_arch()   { not_supported; }
-setting_msys()   { not_supported; }
+setting_msys()   {
+  local dst="${WINHOME}/AppData/Local/Microsoft/Windows Terminal/settings.json"
+  # local dst="${WINHOME}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"
+  make_lnk_with_bkup "$app_dir/settings.json" "${dst}"
+}
 setting_cygwin() { not_supported; }
 setting_mac()    { not_supported; }
 setting_ubuntu() { not_supported; }
@@ -31,4 +35,3 @@ setting_redhat() { not_supported; }
 #dl_untar
 #gh
 #gh_user_local
-
