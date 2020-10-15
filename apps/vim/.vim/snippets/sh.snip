@@ -294,6 +294,7 @@ snippet dummyset
       done
     }
     initialize "$@"
+    [[ -n $dummy ]] && echo "This is dummy mode. specify -e option." 1>&2
 
 
 snippet initialize
@@ -380,13 +381,13 @@ snippet innnk
     export gray="0;37m"
     export white="$close"
 
-    local text="$stdin$@"
+    local text="$stdin$*"
     local color="$close"
 
     case \$1 in
     black | red | green | yellow | blue | purple | cyan | gray | white)
       eval color="\\$\$1"
-      text="$stdin${@:2}"
+      text="$stdin${*:2}"
       ;;
     esac
 
