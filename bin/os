@@ -5,60 +5,60 @@ is_wsl() { [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]]; }
 # TODO indent
 check_os() {
   local result=
-  if   [[ -e /etc/debian_version ]] ||
+  if [[ -e /etc/debian_version ]] ||
     [[ -e /etc/debian_release ]]; then
-      # Check Ubuntu or Debian
-      if [[ -e /etc/lsb-release ]]; then
-        # Ubuntu
-        result="ubuntu"
-      else
-        # Debian
-        result="debian"
-      fi
-    elif [[ -e /etc/fedora-release ]]; then
-      # Fedra
-      result="fedora"
-    elif [[ -e /etc/redhat-release ]]; then
-      if [ -e /etc/oracle-release ]; then
-        # Oracle Linux
-        result="oracle"
-      else
-        # Red Hat Enterprise Linux
-        result="redhat"
-      fi
-    elif [ -e /etc/arch-release ]; then
-      # Arch Linux
-      result="arch"
-    elif [[ -e /etc/turbolinux-release ]]; then
-      # Turbolinux
-      result="turbol"
-    elif [[ -e /etc/SuSE-release ]]; then
-      # SuSE Linux
-      result="suse"
-    elif [[ -e /etc/mandriva-release ]]; then
-      # Mandriva Linux
-      result="mandriva"
-    elif [[ -e /etc/vine-release ]]; then
-      # Vine Linux
-      result="vine"
-    elif [[ -e /etc/gentoo-release ]]; then
-      # Gentoo Linux
-      result="gentoo"
-    elif [[ $(uname) == "Darwin" ]]; then
-      # mac
-      result="mac"
-    elif [[ "$OSTYPE" == "cygwin" ]]; then
-      # mac
-      result="cygwin"
-    elif [[ "$OSTYPE" == "msys" ]]; then
-      # mac
-      result="msys"
+    # Check Ubuntu or Debian
+    if [[ -e /etc/lsb-release ]]; then
+      # Ubuntu
+      result="ubuntu"
     else
-      # Other
-      result="Unkown distribution"
+      # Debian
+      result="debian"
     fi
-    echo "$result"
-  }
+  elif [[ -e /etc/fedora-release ]]; then
+    # Fedra
+    result="fedora"
+  elif [[ -e /etc/redhat-release ]]; then
+    if [ -e /etc/oracle-release ]; then
+      # Oracle Linux
+      result="oracle"
+    else
+      # Red Hat Enterprise Linux
+      result="redhat"
+    fi
+  elif [ -e /etc/arch-release ]; then
+    # Arch Linux
+    result="arch"
+  elif [[ -e /etc/turbolinux-release ]]; then
+    # Turbolinux
+    result="turbol"
+  elif [[ -e /etc/SuSE-release ]]; then
+    # SuSE Linux
+    result="suse"
+  elif [[ -e /etc/mandriva-release ]]; then
+    # Mandriva Linux
+    result="mandriva"
+  elif [[ -e /etc/vine-release ]]; then
+    # Vine Linux
+    result="vine"
+  elif [[ -e /etc/gentoo-release ]]; then
+    # Gentoo Linux
+    result="gentoo"
+  elif [[ $(uname) == "Darwin" ]]; then
+    # mac
+    result="mac"
+  elif [[ "$OSTYPE" == "cygwin" ]]; then
+    # mac
+    result="cygwin"
+  elif [[ "$OSTYPE" == "msys" ]]; then
+    # mac
+    result="msys"
+  else
+    # Other
+    result="Unkown distribution"
+  fi
+  echo "$result"
+}
 
 handle_args() {
   local os=$1
@@ -66,18 +66,19 @@ handle_args() {
   local result=false
   if [[ "$opt" == "win" ]]; then
     case "$os" in
-      cygwin|msys) result=true ;;
+    cygwin | msys) result=true ;;
     esac
     is_wsl && result=true
   elif [[ "$opt" == "linux" ]]; then # TODO to unix
     case "$os" in
-      cygwin|msys|mac) ;;
-      *) result=true ;;
+    cygwin | msys | mac) ;;
+    *) result=true ;;
     esac
   elif [[ "$opt" == "wsl" ]]; then
     is_wsl && result=true
   fi
-  echo ${result}
+  [[ $result == true ]] && exit 0
+  exit 1
 }
 
 # Get Linux distribution name
@@ -88,9 +89,10 @@ main() {
   fi
   local os="$(check_os)"
   local result="$os"
-  if [[ $# -ne 0 ]]; then
-    local result="$(handle_args "$os" "$@")"
+  if [[ $# -eq 0 ]]; then
+    echo ${result}
+    return
   fi
-  echo ${result}
+  handle_args "$os" "$@"
 }
 main "$@"

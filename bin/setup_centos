@@ -3,8 +3,6 @@
 set -e
 
 readonly command_name=$(basename $0)
-readonly script_dir=$(cd "$(dirname $0)"; pwd)
-# readonly users_conf=$0.users
 
 _hostname=
 dummy="echo"
