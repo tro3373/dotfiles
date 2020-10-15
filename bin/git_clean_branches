@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+exclude_branches='develop|master'
+dummy="echo"
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+    -e) dummy= ;;
+    esac
+  done
+}
+exe() {
+  [[ -z $dummy ]] && echo "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+  ink yellow "> Executing: $*"
+  [[ -z $dummy ]] && echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+  if [[ -z $dummy ]]; then
+    eval "$*"
+  fi
+}
+clean_local() {
+  git branch --merged |
+    grep -v -E "$exclude_branches" |
+    while read -r branch; do
+      [[ -z $branch ]] && continue
+      [[ $branch =~ ^#.* ]] && continue
+      exe git branch -d $branch
+    done
+}
+clean_local_remote() {
+  exe git fetch --prune
+}
+main() {
+  initialize "$@"
+  clean_local
+  clean_local_remote
+  [[ -n $dummy ]] && echo "This is dummy mode. specify -e option." 1>&2
+}
+main "$@"
