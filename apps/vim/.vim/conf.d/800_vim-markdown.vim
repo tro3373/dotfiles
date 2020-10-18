@@ -12,3 +12,5 @@ let g:vim_markdown_conceal = 1
 " 折りたたみ設定
 let g:vim_markdown_folding_disabled=1
 
+let g:previm_open_cmd = 'chrome'
+
