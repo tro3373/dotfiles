@@ -69,7 +69,8 @@ handle_file() {
 }
 
 handle_dir() {
-  find $1 -type f | handle_file
+  # find $1 -type f | handle_file
+  ff | handle_file
 }
 
 fire() {
