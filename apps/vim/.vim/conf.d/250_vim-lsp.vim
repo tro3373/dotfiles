@@ -1,4 +1,4 @@
-if !g:plug.is_installed("vim-lsp")
+if !g:plug.is_installed("vim-lsp") || g:is_windows
   finish
 endif
 
