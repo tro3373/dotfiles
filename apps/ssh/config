@@ -6,6 +6,7 @@ install_common() {
 
 setting_common() {
   # exchange.key setting
+  # shellcheck disable=SC2154
   make_lnk_with_bkup $app_dir/.exchange.key ~/.exchange.key
 
   # .ssh directory setting
@@ -35,19 +36,19 @@ change_to_right_permission() {
   done
 }
 
-link_to_dot() {
-    ssh_inner=$app_dir/.ssh
-    ssh_outer=${HOME}/.ssh
-
-    if [ ! -e $ssh_inner ]; then
-        mexe mkdir -p $ssh_inner
-        mexe chmod 755 $ssh_inner
-    fi
-
-    local inner_count=$(ls $ssh_inner/ |wc -l)
-    local outer_count=$(ls $ssh_outer/ |wc -l)
-    if [ $inner_count -eq 0 ] && [ $outer_count -ne 0 ]; then
-        mexe mv $ssh_outer/* $ssh_inner/
-    fi
-    make_lnk_with_bkup $ssh_inner $ssh_outer
-}
+# link_to_dot() {
+#   ssh_inner=$app_dir/.ssh
+#   ssh_outer=${HOME}/.ssh
+#
+#   if [ ! -e $ssh_inner ]; then
+#     mexe mkdir -p $ssh_inner
+#     mexe chmod 755 $ssh_inner
+#   fi
+#
+#   local inner_count=$(ls $ssh_inner/ | wc -l)
+#   local outer_count=$(ls $ssh_outer/ | wc -l)
+#   if [ $inner_count -eq 0 ] && [ $outer_count -ne 0 ]; then
+#     mexe mv $ssh_outer/* $ssh_inner/
+#   fi
+#   make_lnk_with_bkup $ssh_inner $ssh_outer
+# }
