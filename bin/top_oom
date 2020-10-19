@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  dstat --top-oom
+}
+main "$@"

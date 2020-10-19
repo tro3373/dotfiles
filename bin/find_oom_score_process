@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+main() {
+  for dir in /proc/[0-9]*; do
+    [[ "$(cat $dir/oom_score_adj 2>/dev/null)" == 0 ]] && continue
+    [[ ! -e $dir/oom_score_adj || ! -e $dir/comm ]] && continue
+    echo "$(cat $dir/comm) : $(cat $dir/oom_score_adj)"
+  done | sort | uniq
+}
+main "$@"
