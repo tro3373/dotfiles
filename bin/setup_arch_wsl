@@ -33,7 +33,7 @@ import_arch_image() {
 }
 
 setup_arch() {
-  cat <<'EOF' >>/etc/pacmand./mirrorlist
+  cat <<'EOF' >>/etc/pacman.d/mirrorlist
 ###########################
 ## Japan
 Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
@@ -44,7 +44,7 @@ Server = http://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
 EOF
   pacman-key --init
   pacman-key --populate archlinux
-  pacman -Syuu
+  pacman -Syuu --noconfirm
   pacman -S base base-devel git vim wget grep sed which unzip gzip reflector --noconfirm
 
   # uncomment en_US.UTF8 ja_JP.UTF8
@@ -55,7 +55,7 @@ EOF
   echo 'arch' >/etc/hostname
 
   # fast pacman install
-  pacman -S aria2
+  pacman -S aria2 --noconfirm
 
   local settings_aria2c='XferCommand = /usr/bin/aria2c --allow-overwrite=true --continue=true --file-allocation=none --log-level=error --max-tries=2 --max-connection-per-server=2 --max-file-not-found=5 --min-split-size=5M --no-conf --remote-time=true --summary-interval=60 --timeout=5 --dir=/ --out %o %u'
   sed -i \
@@ -64,14 +64,14 @@ EOF
     /etc/pacman.conf
 
   sudo pacman -Syyuu --noconfirm
-  sudo pacman -S net-tools inetutils
+  sudo pacman -S net-tools inetutils --noconfirm
 
   # TODO cp from setup_arch
   # setup_user archuser
   # TODO visudo change oneliner from ..
 
   # login as archuser
-  su -u archuser
+  su - archuser
   curl -fSsL git.io/tr3s | bash
   # todo hackgen add mkdir /usr/share/fonts
   # todo setup ssh to openssh
