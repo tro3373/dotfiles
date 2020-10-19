@@ -28,7 +28,7 @@ import_arch_image() {
   # local path="$*"
   # TODO execute in cmd
   return
-  # wsl --import ArchLinux '%USERPROFILE%\wsl\ArchLinux %USERPROFILE%\wsl\tmp\ArchLinux.tar.gz'
+  # wsl --import ArchLinux %USERPROFILE%\wsl\ArchLinux %USERPROFILE%\wsl\tmp\ArchLinux.tar.gz
   # wsl -d ArchLinux
 }
 
