@@ -8,12 +8,8 @@ echo_if_valid() {
   [[ ! -e $f ]] && return
   echo "$f"
 }
-fire_args() {
-  for f in "$@"; do
-    echo "$f"
-  done
-}
-fire_stdin_or_noarg() {
+
+fire() {
   if [[ -p /dev/stdin ]]; then
     # https://superuser.com/questions/380772/removing-ansi-color-codes-from-text-stream
     cat - |
@@ -25,14 +21,15 @@ fire_stdin_or_noarg() {
     ff
   fi
 }
+
 fire_files() {
-  if [[ ! -p /dev/stdin && $# -ne 0 ]]; then
-    fire_args "$@"
-  else
-    fire_stdin_or_noarg |
-      fzf -m --preview 'head -100 {}'
+  local query="$*"
+  if [[ -n $query ]]; then
+    query="-q $query"
   fi
+  fire | fzf -m $query --preview 'head -100 {}'
 }
+
 main() {
   ! has fzf && echo "No fzf exist" 1>&2 && exit 1
   local files=$(fire_files "$@")
