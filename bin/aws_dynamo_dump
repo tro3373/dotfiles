@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+has() { command -v ${1} >&/dev/null; }
+scan() {
+  aws dynamodb scan \
+    --table-name ${table} \
+    --region ap-northeast-1 \
+    --output json
+  # --query "Items[*].[id.N,name.S]" \
+  # aws dynamodb scan \
+  #   --table-name ${table} \
+  #   --output json |
+}
+
+main() {
+  local table=$1
+  [[ -z $table ]] && echo "specify table name" 1>&2 && exit 1
+  test -n $to_csv && ! has jq && echo "No jq command exist." 1>&2 && exit 1
+  local to_csv=$2
+  scan |
+    if [[ -n $to_csv ]]; then
+      cat - | jq -r '.[] | @csv' >./${table}.csv
+    else
+      cat - >$table.json
+    fi
+}
+main "$@"
