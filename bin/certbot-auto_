@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 main() {
+  local src_dir=/path/to/the/src/dir
   cat <<EOF
   Do below...
     cd $src_dir
