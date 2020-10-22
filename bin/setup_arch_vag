@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 bootstrapf=/etc/bootstrapped
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 
 backup() {
   local ret=1
@@ -27,11 +27,11 @@ finalize() {
 
 setup_eth1_rules() {
   local net_rule=/etc/udev/rules.d/66-persistent-net.rules
-  if sudo grep eth1 $net_rule>/dev/null; then
+  if sudo grep eth1 $net_rule >/dev/null; then
     return
   fi
   local mac=$(cat /sys/class/net/enp0s8/address)
-  cat << EOF |sudo tee -a $net_rule >/dev/null
+  cat <<EOF | sudo tee -a $net_rule >/dev/null
 # from enp0s8 to eth1
 SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="$mac", NAME="eth1"
 EOF
@@ -43,7 +43,7 @@ setup_eth1() {
   if sudo test -e /etc/netctl/eth1; then
     return
   fi
-  cat <<EOF |sudo tee /etc/netctl/eth1 >/dev/null
+  cat <<EOF | sudo tee /etc/netctl/eth1 >/dev/null
 Connection=ethernet
 Description='A basic static ethernet connection'
 Interface=eth1
@@ -69,7 +69,7 @@ setup_network() {
 setup_keyboard() {
   echo "==> setupping keyboard .."
   local val=jp106
-  if localectl |grep "Keymap" |grep $val >/dev/null; then
+  if localectl | grep "Keymap" | grep $val >/dev/null; then
     return
   fi
   sudo localectl set-keymap $val
@@ -77,11 +77,11 @@ setup_keyboard() {
 setup_lang_locale() {
   echo "==> setupping lang locale .."
   local val="Asia/Tokyo"
-  if ! timedatectl |grep "Time zone" |grep "$val" >/dev/null; then
-    sudo timedatectl set-timezone Asia/Tokyo  # タイムゾーン設定
+  if ! timedatectl | grep "Time zone" | grep "$val" >/dev/null; then
+    sudo timedatectl set-timezone Asia/Tokyo # タイムゾーン設定
   fi
   if backup /etc/locale.conf; then
-    cat << 'EOF' | sudo tee /etc/locale.conf >/dev/null
+    cat <<'EOF' | sudo tee /etc/locale.conf >/dev/null
 LANG=en_US.UTF8
 LC_NUMERIC=en_US.UTF8
 LC_TIME=en_US.UTF8
@@ -91,7 +91,7 @@ LC_MEASUREMENT=en_US.UTF8
 EOF
   fi
   if backup /etc/locale.gen; then
-    cat << EOF | sudo tee /etc/locale.gen >/dev/null
+    cat <<EOF | sudo tee /etc/locale.gen >/dev/null
 en_US.UTF-8 UTF-8
 ja_JP.UTF-8 UTF-8
 EOF
@@ -107,7 +107,7 @@ setup_samba() {
     return
   fi
   sudo wget "https://git.samba.org/samba.git/?p=samba.git;a=blob_plain;f=examples/smb.conf.default;hb=HEAD" -O /etc/samba/smb.conf.org
-  cat << EOF |sudo tee -a /etc/samba/smb.conf >/dev/null
+  cat <<EOF | sudo tee -a /etc/samba/smb.conf >/dev/null
 [global]
     # TBD ファイルを使用
     passdb backend = tdbsam
@@ -174,7 +174,7 @@ setup_yaourt() {
 steup_powerpill() {
   if ! has powerpill; then
     gpg --recv-keys --keyserver hkp://pgp.mit.edu 1D1F0DC78F173680
-    yaourt -S --noconfirm powerpill  # Use powerpill instead of pacman. Bye pacman...
+    yaourt -S --noconfirm powerpill # Use powerpill instead of pacman. Bye pacman...
   fi
   ### =================powerpill SigLevel書き換え===================
   if backup /etc/pacman.conf; then
@@ -186,7 +186,7 @@ steup_powerpill() {
 
 setup_screenfetch() {
   sudo pacman -S --noconfirm screenfetch
-  cat <<EOF |sudo tee /etc/profile.d/screenfetch.sh >/dev/null
+  cat <<EOF | sudo tee /etc/profile.d/screenfetch.sh >/dev/null
 #!/usr/bin/env bash
 
 screenfetch
@@ -195,7 +195,7 @@ EOF
 }
 setup_neofetch() {
   sudo pacman -S --noconfirm neofetch
-  cat <<EOF |sudo tee /etc/profile.d/neofetch.sh >/dev/null
+  cat <<EOF | sudo tee /etc/profile.d/neofetch.sh >/dev/null
 #!/usr/bin/env bash
 
 neofetch
@@ -203,11 +203,37 @@ EOF
   sudo chmod 775 /etc/profile.d/neofetch.sh
 }
 
-
 setup_packages() {
   echo "==> setupping packages .."
-  # パッケージ更新が X用のパッケージが邪魔してできないので、先にアンインストール
-  sudo pacman -R --noconfirm xorg-fonts-misc xorg-font-utils xorg-server xorg-server-common xorg-bdftopcf libxfont libxfont2
+  # # パッケージ更新が X用のパッケージが邪魔してできないので、先にアンインストール
+  # sudo pacman -R --noconfirm xorg-fonts-misc xorg-font-utils xorg-server xorg-server-common xorg-bdftopcf libxfont libxfont2
+
+  if false; then
+    ## see https://dev.to/mattdark/signature-is-unknown-trust-arch-linux-on-vbox-3452
+    sudo rm -r /etc/pacman.d/gnupg
+    sudo pacman -Sy gnupg archlinux-keyring manjaro-keyring
+    sudo pacman-key --init
+    sudo pacman-key --populate archlinux manjaro
+    sudo pacman-key --refresh-keys
+    sudo pacman -Sc # delete all packages that not installed
+  else
+    ## error occur. see https://bbs.archlinux.org/viewtopic.php?id=253809
+    ## execute below in windows..
+    # bcdedit /set hypervisorlaunchtype off
+
+    sudo rm -r /etc/pacman.d/gnupg
+    sudo pacman-key --init
+    sudo pacman-key --populate archlinux
+    sudo pacman -Sy gnupg --noconfirm
+    sudo pacman -Sy archlinux-keyring --noconfirm
+    sudo pacman-key --refresh-keys
+    ## Error but ok
+    # gpg: refreshing 120 keys from hkps://hkps.pool.sks-keyservers.net
+    # gpg: keyserver refresh failed: General error
+    # ==> ERROR: A specified local key could not be updated from a keyserver.
+    sudo pacman -Sc # delete all packages that not installed
+  fi
+
   # パッケージ更新
   sudo pacman -Syyu --noconfirm
   sudo pacman -S --noconfirm libxfont2
@@ -271,7 +297,7 @@ setup_packages() {
 setup_dots() {
   echo "==> setupping .dot .."
   [[ -e ~/.dot ]] && return
-  curl -fSsL git.io/tr3s |bash
+  curl -fSsL git.io/tr3s | bash
   cd ~/.dot/bin
   ./setup -e
 }
