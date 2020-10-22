@@ -17,6 +17,7 @@ Options
 EOF
 }
 
+has() { command -v ${1} >&/dev/null; }
 add_args() { args+=("$@"); }
 
 check() {
@@ -40,6 +41,10 @@ initialize() {
 
 not_supported() { echo "Not supported." 1>&2 && exit 1; }
 update_arch() {
+  if has yay; then
+    $dummy yay -Syu --noconfirm "${args[@]}"
+    return
+  fi
   $dummy sudo pacman -Syu --noconfirm "${args[@]}"
 }
 update_ubuntu() {
