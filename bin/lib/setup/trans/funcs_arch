@@ -3,16 +3,45 @@
 # keyboard_layout=jp106
 keyboard_layout=us
 
-backup() {
-  local ret=1
-  for f in "$@"; do
-    sudo test ! -e $f && continue
-    local dst=$f.org
-    sudo test -e $dst && continue
-    sudo cp -rf $f $dst
-    ret=0
-  done
-  return $ret
+setup_vag_network() {
+  setup_vag_eth1
+  setup_vag_eth0
+}
+
+setup_vag_eth0() {
+  if sudo test -e /etc/netctl/eth0; then
+    mexe sudo rm /etc/netctl/eth0
+  fi
+  if test -L /etc/systemd/system/multi-user.target.wants/netctl@eth0.service; then
+    mexe sudo systemctl disable netctl@eth0.service
+  fi
+}
+
+setup_vag_eth1_rules() {
+  local net_rule=/etc/udev/rules.d/66-persistent-net.rules
+  if sudo grep eth1 $net_rule >/dev/null; then
+    return
+  fi
+  local mac=$(cat /sys/class/net/enp0s8/address)
+  cat <<EOF | sudo_tee -a $net_rule
+# from enp0s8 to eth1
+SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="$mac", NAME="eth1"
+EOF
+
+}
+
+setup_vag_eth1() {
+  setup_vag_eth1_rules
+  if sudo test -e /etc/netctl/eth1; then
+    return
+  fi
+  cat <<EOF | sudo_tee /etc/netctl/eth1
+Connection=ethernet
+Description='A basic static ethernet connection'
+Interface=eth1
+IP=static
+Address=('192.168.33.10/24')
+EOF
 }
 
 setup_keyboard() {
@@ -21,6 +50,147 @@ setup_keyboard() {
     return
   fi
   mexe sudo localectl set-keymap $keyboard_layout
+}
+
+setup_timezone() {
+  log "==> setupping timezone .."
+  local val="Asia/Tokyo"
+  if timedatectl | grep "Time zone" | grep "$val" >/dev/null; then
+    return
+  fi
+  mexe sudo timedatectl set-timezone $val # タイムゾーン設定
+}
+
+setup_locale() {
+  log "==> setupping locale .."
+  backup /etc/locale.gen
+  backup /etc/locale.conf
+
+  cat <<'EOF' | sudo_tee /etc/locale.conf
+LANG=en_US.UTF8
+LC_NUMERIC=en_US.UTF8
+LC_TIME=en_US.UTF8
+LC_MONETARY=en_US.UTF8
+LC_PAPER=en_US.UTF8
+LC_MEASUREMENT=en_US.UTF8
+EOF
+
+  cat <<'EOF' | sudo_tee /etc/locale.gen
+en_US.UTF-8 UTF-8
+ja_JP.UTF-8 UTF-8
+EOF
+  mexe sudo locale-gen
+}
+
+update_pacman_millerlist() {
+  backup /etc/pacman.d/mirrorlist
+  cat <<'EOF' | sudo_tee /etc/pacman.d/mirrorlist
+###########################
+## Japan
+Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
+Server = http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
+Server = http://mirrors.cat.net/archlinux/$repo/os/$arch
+Server = http://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
+###########################
+EOF
+}
+
+refresh_pacman_keys() {
+  if [[ $1 == with_manjaro ]]; then
+    ## see https://dev.to/mattdark/signature-is-unknown-trust-arch-linux-on-vbox-3452
+    mexe sudo rm -r /etc/pacman.d/gnupg
+    mexe sudo pacman -Sy gnupg archlinux-keyring manjaro-keyring
+    mexe sudo pacman-key --init
+    mexe sudo pacman-key --populate archlinux manjaro
+    mexe sudo pacman-key --refresh-keys
+    mexe sudo pacman -Sc # delete all packages that not installed
+    return
+  fi
+  ## error occur. see https://bbs.archlinux.org/viewtopic.php?id=253809
+  ## execute below in windows..
+  # bcdedit /set hypervisorlaunchtype off
+
+  mexe sudo rm -r /etc/pacman.d/gnupg
+  mexe sudo pacman-key --init
+  mexe sudo pacman-key --populate archlinux
+  mexe sudo pacman -Sy gnupg --noconfirm
+  mexe sudo pacman -Sy archlinux-keyring --noconfirm
+  mexe sudo pacman-key --refresh-keys
+  ## Error but ok
+  # gpg: refreshing 120 keys from hkps://hkps.pool.sks-keyservers.net
+  # gpg: keyserver refresh failed: General error
+  # ==> ERROR: A specified local key could not be updated from a keyserver.
+  mexe sudo pacman -Sc # delete all packages that not installed
+}
+
+improve_pacman() {
+  backup /etc/pacman.conf
+
+  # fast pacman install
+  mexe pacman -S aria2 --noconfirm
+  local settings_aria2c='XferCommand = /usr/bin/aria2c --allow-overwrite=true --continue=true --file-allocation=none --log-level=error --max-tries=2 --max-connection-per-server=2 --max-file-not-found=5 --min-split-size=5M --no-conf --remote-time=true --summary-interval=60 --timeout=5 --dir=/ --out %o %u'
+  mexe sed -i \
+    -e 's,^#Color,Color\nILoveCandy,g' \
+    -e "s,^\(#XferCommand.*wget.*\),\1\n$settings_aria2c,g" \
+    /etc/pacman.conf
+}
+
+setup_vag_samba() {
+  if ! has samba; then
+    def_install samba
+  fi
+  if sudo test -e /etc/samba/smb.conf; then
+    return
+  fi
+  if ! sudo test -e /etc/samba/smb.conf.org; then
+    mexe sudo wget "https://git.samba.org/samba.git/?p=samba.git;a=blob_plain;f=examples/smb.conf.default;hb=HEAD" -O /etc/samba/smb.conf.org
+  fi
+  cat <<EOF | sudo_tee -a /etc/samba/smb.conf
+[global]
+    # TBD ファイルを使用
+    passdb backend = tdbsam
+    # アーカイブ属性と実行属性を相互変換しない
+    map archive = no
+    unix charset = UTF-8
+    dos charset = CP932
+
+    #workgroup = WORKGROUP
+    #local master = yes
+    #unix password sync = yes
+
+    interfaces = 127.0.0.0/8 eth0
+    bind interfaces only = yes
+    hosts allow = 127. 192.168.33.0/24
+    hosts deny = all
+
+    security = user
+    dns proxy = no
+    map to guest = Bad User
+    create mode = 0664
+    guest account = vagrant
+    directory mode = 0775
+[share]
+   path = /home/vagrant
+   writeable = true
+   force user = vagrant
+   force group = vagrant
+   public = true
+   # public の alias
+   guest ok = yes
+   guest only = yes
+
+EOF
+  #sudo smbpasswd vagrant
+  mexe sudo chmod 755 /home/vagrant
+  mexe sudo systemctl enable smb nmb
+  mexe sudo systemctl start smb nmb
+}
+
+setup_login_shell() {
+  local _user=$1
+  echo "==> setupping login shell for $_user .."
+  ! has zsh && return
+  mexe sudo chsh $_user -s /usr/bin/zsh
 }
 
 [[ $0 != "${BASH_SOURCE[0]}" ]] && return 0

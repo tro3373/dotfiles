@@ -163,6 +163,18 @@ make_lnk_with_bkup() {
   make_link "$src" "$lnk"
 }
 
+backup() {
+  local ret=1
+  for f in "$@"; do
+    sudo test ! -e $f && continue
+    local dst=$f.org
+    sudo test -e $dst && continue
+    mexe sudo cp -rf $f $dst
+    ret=0
+  done
+  return $ret
+}
+
 # $* のファイルを${_backup_root}に移動する
 backup_file() {
   local _target="$*"
@@ -322,4 +334,41 @@ rm_dotpath() {
   if [[ -e ~/.path ]]; then
     mexe rm ~/.path
   fi
+}
+
+find_trans() {
+  local trans_dir=$script_dir/lib/setup/trans
+  if [[ $1 == -l ]]; then
+    find $trans_dir/ -maxdepth 1 -mindepth 1 -type f -exec basename {} \; |
+      grep -v -E "^funcs.*"
+    return
+  fi
+  for arg in "$@"; do
+    local _path=$trans_dir/$arg
+    [[ ! -e $_path ]] && continue
+    echo "$_path"
+    break
+  done
+}
+
+sudo_tee() {
+  if is_dry; then
+    cat -
+  else
+    cat - | sudo tee "$@" >/dev/null
+  fi
+}
+
+pre_setup() {
+  dlog "=> No pre_setup defined."
+}
+
+post_setup() {
+  dlog "=> No post_setup defined."
+}
+
+load_update_arg_apps() {
+  dlog "=> No load_update_arg_apps defined."
+  # shellcheck disable=SC2034
+  args=()
 }

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-export DOT_PATH=$HOME/.dot
 readonly command_name=$(basename $0)
 readonly script_dir=$(
   cd "$(dirname $0)"
@@ -10,8 +9,14 @@ readonly apps_dir=$(
   cd "$script_dir/../apps"
   pwd
 )
+# 関数ロード
+source $script_dir/lib/setup/funcs
+export PATH=$script_dir:$PATH
+export DETECT_OS=$(os)
+export DOT_PATH=$HOME/.dot
+
 default_apps_min=(git ssh tig curl bc tree tmux zsh vim ag ctags)
-default_apps=("${default_apps_min[@]}" fzf neofetch anyenv go pt rg nkf mmv gomi ghq shellcheck shfmt htop hub hackgen)
+default_apps=("${default_apps_min[@]}" fzf neofetch anyenv go pt rg nkf mmv gomi ghq shellcheck shfmt htop hub)
 
 # Dynamic Variables
 export debug=0
@@ -41,6 +46,8 @@ Installable Apps is ..
 $(installable_apps | usage_format)
 Default Apps is..
 $(for arg in "${default_apps[@]}"; do echo $arg; done | usage_format)
+Trans Setup is..
+$(find_trans -l | usage_format)
 EOF
 }
 
@@ -81,20 +88,22 @@ initialize() {
     shift
   done
 
+  tran_srouce=$(find_trans "${args[@]}")
+  if [[ -n $tran_srouce ]]; then
+    source $tran_srouce
+    load_update_arg_apps
+  fi
+
   if [[ ${#args[@]} -eq 0 ]]; then
     args+=("${default_apps[@]}")
   fi
-  all_args="${args[*]}"
 
-  # 関数ロード
-  export PATH=$script_dir:$PATH
-  source $script_dir/lib/setup/funcs
-  export DETECT_OS=$(os)
+  all_args="${args[*]}"
 
   handle_view_if_needed
 
   if is_mac; then
-    if ! has brew && ! echo "${all_args[*]}" | grep brew >&/dev/null; then
+    if ! has brew && ! echo "$all_args" | grep brew >&/dev/null; then
       args=(brew "${args[@]}")
     fi
   fi
@@ -225,9 +234,7 @@ setup_for_app() {
   fi
 }
 
-start_setup() {
-  set -e
-  cd $DOT_PATH
+main_setup() {
   make_setup_dirs
 
   for ((i = 0; i < ${#args[@]}; i++)); do
@@ -246,6 +253,14 @@ start_setup() {
     fi
     setup_for_app
   done
+}
+
+start_setup() {
+  set -e
+  cd $DOT_PATH
+  pre_setup
+  main_setup
+  post_setup
 }
 
 main() {
