@@ -15,7 +15,7 @@ gh_dl_url() {
 }
 
 find_font() {
-  find $workdir/ -type f -name 'HackGenConsole-Regular.ttf'
+  mexe find $workdir/ -type f -name 'HackGenConsole-Regular.ttf'
 }
 
 _dl_fonts() {
