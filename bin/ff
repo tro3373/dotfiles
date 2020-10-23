@@ -26,14 +26,23 @@ _ff() {
   eval "${cmd[@]}"
 }
 
+rgf() {
+  rg --files |
+    if [[ $# -eq 0 ]]; then
+      cat -
+    else
+      cat - | rg -S "$@"
+    fi
+}
+
 main() {
   if [[ $_FF_OPT_F != f ]]; then
     _ff "$@"
     return
   fi
-  has rg && rg --files --color never && return
-  has pt && pt -g "${*}" --nocolor && return
-  has ag && ag -g "${*}" --nocolor && return
+  has rg && rgf "${@}" && return
+  has pt && pt -g "${@}" --nocolor && return
+  has ag && ag -g "${@}" --nocolor && return
   _ff "$@"
 }
 main "$@"
