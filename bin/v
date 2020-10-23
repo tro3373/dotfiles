@@ -27,7 +27,7 @@ fire_files() {
   if [[ -n $query ]]; then
     query="-q $query"
   fi
-  fire | fzf -m $query --preview 'head -100 {}'
+  fire | fzf -m $query --preview 'head -100 {}' --select-1 --exit-0
 }
 
 main() {
