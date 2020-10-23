@@ -412,3 +412,6 @@ snippet iffff
 snippet afterarggg
   # substring after second args
   local after_args=${@:2}
+
+snippet module
+  [[ \${0} != "${BASH_SOURCE[0]}" ]] && return 0

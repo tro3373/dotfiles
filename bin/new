@@ -101,6 +101,7 @@ initialize() {
   # all_args="${args[*]}"
 }
 
+[[ $0 != "${BASH_SOURCE[0]}" ]] && return 0
 main() {
   initialize "$@"
   for arg in "${args[@]}"; do
