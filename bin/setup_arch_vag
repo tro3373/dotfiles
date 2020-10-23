@@ -1,19 +1,12 @@
 #!/usr/bin/env bash
 
+readonly script_dir=$(
+  cd "$(dirname ${BASH_SOURCE:-$0})"
+  pwd
+)
 bootstrapf=/etc/bootstrapped
-has() { command -v ${1} >&/dev/null; }
+# has() { command -v ${1} >&/dev/null; }
 
-backup() {
-  local ret=1
-  for f in "$@"; do
-    sudo test ! -e $f && continue
-    local dst=$f.org
-    sudo test -e $dst && continue
-    sudo cp -rf $f $dst
-    ret=0
-  done
-  return $ret
-}
 initialize() {
   if test -f $bootstrapf; then
     return 1
@@ -66,14 +59,6 @@ setup_network() {
   setup_eth0
 }
 
-setup_keyboard() {
-  echo "==> setupping keyboard .."
-  local val=jp106
-  if localectl | grep "Keymap" | grep $val >/dev/null; then
-    return
-  fi
-  sudo localectl set-keymap $val
-}
 setup_lang_locale() {
   echo "==> setupping lang locale .."
   local val="Asia/Tokyo"
@@ -307,16 +292,24 @@ setup_login_shell() {
   sudo chsh vagrant -s /usr/bin/zsh
 }
 main() {
+  source ./lib/setup_funcs
+  source ./lib/arch/funcs
+  tool_env
+
+  set -eu
+  dry_run=0
+  debug=1
+
   ! initialize && return
-  setup_network
-  # setup_keyboard
-  setup_lang_locale
-  setup_packages
-  setup_login_shell
-  setup_dots
-  finalize
-  echo "==> Done."
-  echo "===> sudo reboot"
-  # TODO logout and set -e off
+  # setup_network
+  # # setup_keyboard
+  # setup_lang_locale
+  # setup_packages
+  # setup_login_shell
+  # setup_dots
+  # finalize
+  # echo "==> Done."
+  # echo "===> sudo reboot"
+  # # TODO logout and set -e off
 }
 main

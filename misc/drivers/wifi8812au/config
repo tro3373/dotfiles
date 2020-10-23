@@ -60,7 +60,7 @@ install_arch() {
   # sudo netctl start wireless
 }
 main() {
-  source $DOTPATH/bin/lib/setup_funcs
+  source $DOTPATH/bin/lib/setup/funcs
   tool_env
   set +u
   if is_arch; then

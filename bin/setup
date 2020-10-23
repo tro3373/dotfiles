@@ -13,8 +13,7 @@ readonly apps_dir=$(
 default_apps_min=(git ssh tig curl bc tree tmux zsh vim ag ctags)
 default_apps=("${default_apps_min[@]}" fzf neofetch anyenv go pt rg nkf mmv gomi ghq shellcheck shfmt htop hub hackgen)
 
-# Dynami Variables
-# TODO delete `export`
+# Dynamic Variables
 export debug=0
 export dry_run=1
 export force=0
@@ -89,7 +88,7 @@ initialize() {
 
   # 関数ロード
   export PATH=$script_dir:$PATH
-  source $script_dir/lib/setup_funcs
+  source $script_dir/lib/setup/funcs
   export DETECT_OS=$(os)
 
   handle_view_if_needed
@@ -240,7 +239,7 @@ start_setup() {
       log "=> No such app $app"
       continue
     fi
-    source $script_dir/lib/setup_default
+    source $script_dir/lib/setup/default
     local script_path=$app_dir/config
     if [[ -e $script_path ]]; then
       source $script_path

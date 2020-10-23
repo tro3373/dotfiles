@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# keyboard_layout=jp106
+keyboard_layout=us
+
+backup() {
+  local ret=1
+  for f in "$@"; do
+    sudo test ! -e $f && continue
+    local dst=$f.org
+    sudo test -e $dst && continue
+    sudo cp -rf $f $dst
+    ret=0
+  done
+  return $ret
+}
+
+setup_keyboard() {
+  log "==> setupping keyboard .."
+  if localectl | grep "Keymap" | grep $keyboard_layout >/dev/null; then
+    return
+  fi
+  mexe sudo localectl set-keymap $keyboard_layout
+}
+
+[[ $0 != "${BASH_SOURCE[0]}" ]] && return 0
+_test() {
+  :
+}
+_test "$@"
