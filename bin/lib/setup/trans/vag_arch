@@ -30,7 +30,6 @@ pre_setup() {
 }
 
 load_update_arg_apps() {
-  log "=> updating apps."
   # shellcheck disable=SC2034
   args=(
     "${default_apps[@]}"
@@ -40,7 +39,6 @@ load_update_arg_apps() {
 }
 
 post_setup() {
-  log "=> post setting up"
   def_install xsel xorg-server-xvfb # for clipboard
   def_install libxfont2
   def_install pacman-contrib # pacman cache clean

@@ -90,6 +90,7 @@ initialize() {
 
   tran_srouce=$(find_trans "${args[@]}")
   if [[ -n $tran_srouce ]]; then
+    ilog "=> tran settings"
     source $tran_srouce
     load_update_arg_apps
   fi
@@ -177,9 +178,9 @@ show_dummy_warn_if_needed() {
   if ! is_dry; then
     return
   fi
-  log "===================================================="
-  log " This is Dry-run mode. :D"
-  log "===================================================="
+  ilog "===================================================="
+  ilog " This is Dry-run mode. :D"
+  ilog "===================================================="
 }
 
 install_app() {
@@ -219,7 +220,7 @@ not_supported() {
 
 setup_for_app() {
   dlog "================================================"
-  log "=> For $app"
+  ilog "=> For $app"
 
   not_supported=0
   if [[ $force -eq 1 ]] || ! is_installed; then
@@ -258,8 +259,11 @@ main_setup() {
 start_setup() {
   set -e
   cd $DOT_PATH
+  ilog "> Prev"
   pre_setup
+  ilog "> Main"
   main_setup
+  ilog "> Post"
   post_setup
 }
 

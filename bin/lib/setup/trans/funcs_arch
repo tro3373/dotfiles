@@ -63,6 +63,9 @@ setup_timezone() {
 
 setup_locale() {
   log "==> setupping locale .."
+  if sudo grep "en_US.UTF-8 UTF-8" /etc/locale.gen >&/dev/null && sudo grep "LANG=en_US.UTF8" /etc/locale.conf >&/dev/null; then
+    return
+  fi
   backup /etc/locale.gen
   backup /etc/locale.conf
 
@@ -83,6 +86,10 @@ EOF
 }
 
 update_pacman_millerlist() {
+  log "==> setupping pacman millerlist .."
+  if sudo grep "ftp.tsukuba.wide.ad.jp" /etc/pacman.d/mirrorlist >&/dev/null; then
+    return
+  fi
   backup /etc/pacman.d/mirrorlist
   cat <<'EOF' | sudo_tee /etc/pacman.d/mirrorlist
 ###########################
@@ -124,14 +131,19 @@ refresh_pacman_keys() {
 }
 
 improve_pacman() {
-  backup /etc/pacman.conf
+  log "==> improving pacman conf .."
+  if sudo grep aria2 /etc/pacman.conf >&/dev/null; then
+    return
+  fi
 
+  backup /etc/pacman.conf
   # fast pacman install
-  mexe pacman -S aria2 --noconfirm
+  mexe sudo pacman -S aria2 --noconfirm
   local settings_aria2c='XferCommand = /usr/bin/aria2c --allow-overwrite=true --continue=true --file-allocation=none --log-level=error --max-tries=2 --max-connection-per-server=2 --max-file-not-found=5 --min-split-size=5M --no-conf --remote-time=true --summary-interval=60 --timeout=5 --dir=/ --out %o %u'
-  mexe sed -i \
-    -e 's,^#Color,Color\nILoveCandy,g' \
-    -e "s,^\(#XferCommand.*wget.*\),\1\n$settings_aria2c,g" \
+  mexe sudo sed -i \
+    -e 's,^#Color,Color,g' \
+    -e 's,^Color,Color\nILoveCandy,g' \
+    -e "s,^\(HoldPkg.*\),\1\n$settings_aria2c,g" \
     /etc/pacman.conf
 }
 
@@ -188,8 +200,11 @@ EOF
 
 setup_login_shell() {
   local _user=$1
-  echo "==> setupping login shell for $_user .."
+  log "==> setupping login shell for $_user .."
   ! has zsh && return
+  if cat </etc/passwd | grep $_user | grep zsh >&/dev/null; then
+    return
+  fi
   mexe sudo chsh $_user -s /usr/bin/zsh
 }
 
