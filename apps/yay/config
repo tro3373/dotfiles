@@ -1,24 +1,24 @@
 #!/bin/bash
 
 install_common() { not_supported; }
-install_arch()   {
+install_arch() {
   cd_work
   if [[ -e yay ]]; then
     mexe rm -rf yay
   fi
   mexe git clone https://aur.archlinux.org/yay.git
   mexe cd yay
-  mexe makepkg -si
+  mexe makepkg -si --noconfirm
 }
-install_msys()   { not_supported; }
+install_msys() { not_supported; }
 install_cygwin() { not_supported; }
-install_mac()    { not_supported; }
+install_mac() { not_supported; }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
-setting_arch()   { not_supported; }
-setting_msys()   { not_supported; }
+setting_arch() { not_supported; }
+setting_msys() { not_supported; }
 setting_cygwin() { not_supported; }
-setting_mac()    { not_supported; }
+setting_mac() { not_supported; }
 setting_ubuntu() { not_supported; }
 setting_redhat() { not_supported; }
