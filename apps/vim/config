@@ -48,7 +48,7 @@ build_msys() {
   # install lua.
   dlog "===> Lua Building .."
   # shellcheck disable=SC2154
-  mexe $instcmd ncurses-devel libcrypt-devel gettext-devel gcc make
+  mexe $def_install_cmd ncurses-devel libcrypt-devel gettext-devel gcc make
   if [[ ! -e /usr/local/src/lua ]]; then
     mexe mkdir -p /usr/local/src/lua
   fi
@@ -65,7 +65,7 @@ build_msys() {
 
   # install vim.
   dlog "===> Vim Building .."
-  mexe $instcmd python3 ruby
+  mexe $def_install_cmd python3 ruby
 
   dlog "===> Msys2 packages Cloning .."
   local msys2packages=/usr/local/src/Msys2-packages
@@ -92,8 +92,8 @@ build_msys() {
 }
 
 install_mac() {
-  mexe $instcmd lua
-  mexe $instcmd vim
+  mexe $def_install_cmd lua
+  mexe $def_install_cmd vim
 }
 
 install_ubuntu() {

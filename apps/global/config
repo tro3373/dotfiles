@@ -6,7 +6,7 @@ install_mac() {
 
 install_ubuntu() {
   # shellcheck disable=SC2154
-  mexe "$instcmd python-pip exuberant-ctags ncurses-dev"
+  mexe "$def_install_cmd python-pip exuberant-ctags ncurses-dev"
   mexe sudo pip install Pygments
   download_global_src_and_build
   mexe cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc

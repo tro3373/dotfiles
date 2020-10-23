@@ -1,76 +1,53 @@
 #!/bin/bash
 
-DOT_PATH=$HOME/.dot
-export DETECT_OS=$($DOT_PATH/bin/os)
-export DETECT_BIT=$($DOT_PATH/bin/bit)
 _timestamp=$(date +%Y%m%d_%H%M%S)
 _backup_root="${DOT_PATH}/bkup/setup"
-# _log_file="${DOT_PATH}"/bkup/$_timestamp.setup.log
-export _dry_run_commands=""
-#declare instcmd script_dir
 
 is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
-ink() {
-  local stdin=
-  if [[ -p /dev/stdin ]]; then
-    stdin="$(cat <&0)"
-  fi
-  if [[ $# -eq 0 && -z $stdin ]]; then
-    return
-  fi
+log() { echo -e "$*" | ink cyan; }
+dlog() { if is_debug; then log "$*"; fi; }
+has() { command -v ${1} >&/dev/null; }
+# TODO change func name
+isexist() { find "$*" >&/dev/null; }
 
-  local open="\033["
-  local close="${open}0m"
-  export black="0;30m"
-  export red="1;31m"
-  export green="1;32m"
-  export yellow="1;33m"
-  export blue="1;34m"
-  export purple="1;35m"
-  export cyan="1;36m"
-  export gray="0;37m"
-  export white="$close"
+is_arch() { [[ "$DETECT_OS" == "arch" ]]; }
+is_arm() { uname -m | grep arm >&/dev/null; }
+is_msys() { [[ "$DETECT_OS" == "msys" ]]; }
+is_cygwin() { [[ "$DETECT_OS" == "cygwin" ]]; }
+is_mac() { [[ "$DETECT_OS" == "mac" ]]; }
+is_ubuntu() { [[ "$DETECT_OS" == "ubuntu" ]]; }
+is_redhat() { [[ "$DETECT_OS" == "redhat" ]]; }
+is_win() { is_msys || is_cygwin; }
+is_unix() { ! is_win; }
 
-  local text="$stdin$@"
-  local color="$close"
-
-  case $1 in
-  black | red | green | yellow | blue | purple | cyan | gray | white)
-    eval color="\$$1"
-    text="$stdin${@:2}"
-    ;;
-  esac
-
-  printf "${open}${color}${text}${close}\n" 1>&2
-}
-log() {
-  echo -e "$*"
-}
-
-dlog() {
-  if is_debug; then
-    log "$*"
+set_default_install_command() {
+  export def_install_cmd="sudo apt-get install -y"
+  if is_mac; then
+    def_install_cmd="brew install"
+  elif is_redhat; then
+    def_install_cmd="sudo yum install -y"
+  elif is_cygwin; then
+    def_install_cmd="apt-cyg install"
+  elif is_msys; then
+    def_install_cmd="pacman -S --noconfirm"
+  elif is_arch; then
+    if has yay; then
+      def_install_cmd="yay -S --noconfirm"
+    elif has yaourt; then
+      def_install_cmd="yaourt -S --noconfirm"
+    else
+      def_install_cmd="sudo pacman -S --noconfirm"
+    fi
   fi
 }
+set_default_install_command
 
 mexe() {
   local cmd="$*"
   is_dry && log "   $cmd" && return
   dlog "===> Executing: $cmd"
   eval "$cmd" || (echo "===> Failed..... Executing $cmd" && exit 1)
-}
-
-# コマンドがインストールされているかチェックする
-has() { command -v ${1} >&/dev/null; }
-
-# $* が存在するかどうか判定する
-isexist() {
-  local file="$*"
-  # local count=$(ls -a "$file" 2>/dev/null |wc -l|sed 's/ //g')
-  # [[ $count -eq 0 ]] && return 1
-  # return 0
-  find "$file" >&/dev/null
 }
 
 make_dir_if_needed() {
@@ -107,7 +84,13 @@ readlink_path() {
 # $* ディレクトリ配下の dot file をHOMEへリンクを作成する
 make_link_dot2home() {
   local dir="$*"
-  for file in $(cd "$dir" && /bin/ls -a | grep -v ^.git$ | grep -v ^.gitignore$ | grep -v ^.gitkeep$ | grep -E '^\.[^.]+'); do
+  for file in $(
+    find $dir -maxdepth 1 -mindepth 1 -name "\.*" -exec basename {} \; |
+      grep -v "^.git$" |
+      grep -v "^.gitignore$" |
+      grep -v "^.gitkeep$" |
+      grep -E '^\.[^.]+'
+  ); do
     make_lnk_with_bkup "$dir/$file" "${HOME}/$file"
   done
 }
@@ -207,16 +190,6 @@ del_if_exist() {
   fi
 }
 
-is_arch() { [[ "$DETECT_OS" == "arch" ]]; }
-is_arm() { uname -m | grep arm >&/dev/null; }
-is_msys() { [[ "$DETECT_OS" == "msys" ]]; }
-is_cygwin() { [[ "$DETECT_OS" == "cygwin" ]]; }
-is_mac() { [[ "$DETECT_OS" == "mac" ]]; }
-is_ubuntu() { [[ "$DETECT_OS" == "ubuntu" ]]; }
-is_redhat() { [[ "$DETECT_OS" == "redhat" ]]; }
-is_win() { is_msys || is_cygwin; }
-is_unix() { ! is_win; }
-
 has_local_package() {
   local p=$1
   if is_arch || is_msys; then
@@ -241,7 +214,7 @@ def_install() {
   done
   [[ ${#_pkgs[@]} -eq 0 ]] && return
   # shellcheck disable=SC2154
-  mexe $instcmd "${_pkgs[*]}"
+  mexe $def_install_cmd "${_pkgs[*]}"
 }
 make_work_if_needed() {
   make_dir_if_needed "$workdir"
@@ -343,10 +316,6 @@ tool_env() {
   debug=1
   # shellcheck disable=SC2154
   workdir=$script_dir/tmp
-}
-
-not_supported() {
-  dlog "Not supported."
 }
 
 rm_dotpath() {

@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 
-DOT_PATH=~/.dot
-export current_dir=$(pwd)
-export script_dir=$(
+export DOT_PATH=$HOME/.dot
+readonly command_name=$(basename $0)
+readonly script_dir=$(
   cd "$(dirname $0)"
   pwd
 )
-command_name=$(basename $0)
-#all_apps="git ctags curl tree global zsh tmux vim tig ssh ag _peco _fzf _gomi _zplug"
-#all_apps="git ctags curl tree global zsh tmux vim tig ssh nkf ag"
-default_apps=(git curl tree zsh tmux vim tig ssh bc ag nkf hackgen shellcheck)
+readonly apps_dir=$(
+  cd "$script_dir/../apps"
+  pwd
+)
+default_apps_min=(git ssh tig curl bc tree tmux zsh vim ag ctags)
+default_apps=("${default_apps_min[@]}" fzf neofetch anyenv go pt rg nkf mmv gomi ghq shellcheck shfmt htop hub hackgen)
+
+# Dynami Variables
+# TODO delete `export`
 export debug=0
 export dry_run=1
 export force=0
@@ -24,21 +29,41 @@ Setup my dev env.
     Options
       -h|--help
         Show this usage
+      -d|--debug
+        whith debug option
       -e|--exec
         execute install/setup process.
       -f|--force
         install process will be executed forcibly if already installed, and also setup process will be executed.
-      -d|--debug
-        whith debug option
+      -v|--view
+        vim edit apps config
 
-Defaults Apps(No specify App mode) is ..
-    ${default_apps[@]}
 Installable Apps is ..
-    $(while read -r line; do printf "$(basename $line) "; done < <(find $DOT_PATH/apps/ -maxdepth 1 -mindepth 1 -type d))
+$(installable_apps | usage_format)
+Default Apps is..
+$(for arg in "${default_apps[@]}"; do echo $arg; done | usage_format)
 EOF
 }
 
-#add_args() { args=("${args[@]}" "$@"); }
+installable_apps() {
+  find $apps_dir/ -maxdepth 1 -mindepth 1 -type d -exec basename {} \;
+}
+
+usage_format() {
+  local _start=1
+  local _line=
+  cat - |
+    while read -r _app_name; do
+      local _space=" "
+      [[ $_start -eq 1 ]] && _space="  " && _start=0
+      printf "$_space$_app_name"
+      _line="$_line$_space$_app_name"
+      _n=$(echo -n "$_line" | wc -c)
+      [[ $_n -lt 100 ]] && continue
+      printf '\n' && _line= && _start=1
+    done
+}
+
 add_args() { args+=("$@"); }
 
 initialize() {
@@ -56,49 +81,42 @@ initialize() {
     esac
     shift
   done
+
   if [[ ${#args[@]} -eq 0 ]]; then
-    # 指定無し時は全インストール
     args+=("${default_apps[@]}")
   fi
   all_args="${args[*]}"
-  if [[ $view -eq 1 ]]; then
-    local _config=${args[0]}
-    vim $DOT_PATH/apps/$_config/config
-    exit
-  fi
 
   # 関数ロード
-  source $DOT_PATH/bin/lib/funcs
+  export PATH=$script_dir:$PATH
+  source $script_dir/lib/setup_funcs
+  export DETECT_OS=$(os)
+
+  handle_view_if_needed
 
   if is_mac; then
-    if ! has brew; then
-      suggest_install_brew
-      exit 1
+    if ! has brew && ! echo "${all_args[*]}" | grep brew >&/dev/null; then
+      args=(brew "${args[@]}")
     fi
   fi
+}
 
-  is_32bit=0
-  [[ "$DETECT_BIT" != "x86_64" ]] && export is_32bit=1
-  # Install command
-  export instcmd="sudo apt-get install -y"
-  if is_mac; then
-    instcmd="brew install"
-  elif is_redhat; then
-    instcmd="sudo yum install -y"
-  elif is_cygwin; then
-    instcmd="apt-cyg install"
-  elif is_msys; then
-    instcmd="pacman -S --noconfirm"
-  elif is_arch; then
-    if has yay; then
-      instcmd="yay -S --noconfirm"
-    elif has yaourt; then
-      instcmd="yaourt -S --noconfirm"
+handle_view_if_needed() {
+  if [[ $view -ne 1 ]]; then
+    return
+  fi
+  local filter_keys=
+  if [[ ${#args[@]} -ne 0 ]]; then
+    filter_keys="($(echo -n "${args[@]}" | tr ' ' '|'))"
+  fi
+
+  installable_apps |
+    if [[ -z $filter_keys ]]; then
+      cat -
     else
-      instcmd="sudo pacman -S --noconfirm"
-    fi
-  fi
-  cd $DOT_PATH
+      cat - | grep -E "$filter_keys"
+    fi | xargs -n 1 -I{} echo $apps_dir/{}/config | v
+  exit 0
 }
 
 make_setup_dirs() {
@@ -112,31 +130,31 @@ make_setup_dirs() {
   make_dir_if_needed "$works_home/bin"
   make_dir_if_needed "$works_home/tools"
   make_dir_if_needed "$works_home/works/00_memos"
-  if is_msys; then
-    make_lnk_with_bkup $WINHOME $HOME/win
-    make_lnk_with_bkup $WINHOME/bin $HOME/bin
-    make_lnk_with_bkup $WINHOME/tools $HOME/tools
-    make_lnk_with_bkup $WINHOME/works $HOME/works
-    make_lnk_with_bkup $WINHOME/Downloads $HOME/Downloads
+  if ! is_msys; then
+    return
   fi
+  make_lnk_with_bkup $WINHOME $HOME/win
+  make_lnk_with_bkup $WINHOME/bin $HOME/bin
+  make_lnk_with_bkup $WINHOME/tools $HOME/tools
+  make_lnk_with_bkup $WINHOME/works $HOME/works
+  make_lnk_with_bkup $WINHOME/Downloads $HOME/Downloads
 }
 
-suggest_install_brew() {
-  cat <<EOF
-================================================
- HomeBrew is Not Installed!
-  => Execute this and Install it!
-
-  echo "export PATH=/usr/local/bin:\$PATH" >> ~/.bash_profile
-  sudo mkdir /usr/local/
-  /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-  source ~/.bash_profile
-  brew update
-  brew -v
-
-EOF
-}
-
+# suggest_install_brew() {
+#   cat <<'EOF'
+# ================================================
+#  HomeBrew is Not Installed!
+#   => You need to install brew first.
+#     echo "export PATH=/usr/local/bin:\$PATH" >> ~/.bash_profile
+#     sudo mkdir /usr/local/
+#     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+#     source ~/.bash_profile
+#     brew update
+#     brew -v
+#
+# EOF
+# }
+#
 debug_options() {
   dlog "===================================================="
   dlog " Execute with below args."
@@ -145,6 +163,15 @@ debug_options() {
   dlog "   ===> dry_run: $dry_run"
   dlog "   ===> view: $view"
   dlog "===================================================="
+}
+
+show_dummy_warn_if_needed() {
+  if ! is_dry; then
+    return
+  fi
+  log "===================================================="
+  log " This is Dry-run mode. :D"
+  log "===================================================="
 }
 
 install_app() {
@@ -173,32 +200,47 @@ setting_app() {
   fi
 }
 
+not_supported() {
+  local _message="==> No setting exist."
+  if [[ $for_setting -ne 1 ]]; then
+    _message="==> Not supported."
+    not_supported=1
+  fi
+  log "$_message"
+}
+
 setup_for_app() {
   dlog "================================================"
   log "=> For $app"
 
+  not_supported=0
   if [[ $force -eq 1 ]] || ! is_installed; then
+    for_setting=0
     install_app
   fi
-  if is_dry || is_installed; then
-    setting_app
+  if [[ $not_supported -ne 1 ]]; then
+    if is_dry || is_installed; then
+      for_setting=1
+      setting_app
+    fi
   fi
 }
 
 start_setup() {
   set -e
+  cd $DOT_PATH
   make_setup_dirs
 
   for ((i = 0; i < ${#args[@]}; i++)); do
     # ディレクトリ名＝アプリ名の前提
     local app=${args[i]}
 
-    app_dir=$DOT_PATH/apps/$app
+    app_dir=$apps_dir/$app
     if [[ ! -e $app_dir ]]; then
       log "=> No such app $app"
       continue
     fi
-    source $DOT_PATH/bin/lib/default
+    source $script_dir/lib/setup_default
     local script_path=$app_dir/config
     if [[ -e $script_path ]]; then
       source $script_path
@@ -211,11 +253,7 @@ main() {
   initialize "$@"
   debug_options
   start_setup
-  if is_dry; then
-    log "===================================================="
-    log " This is Dry-run mode. :D"
-    log "===================================================="
-  fi
+  show_dummy_warn_if_needed
   ink green "Done!"
   echo
 }

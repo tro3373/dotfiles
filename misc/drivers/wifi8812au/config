@@ -31,7 +31,7 @@ install_ubuntu() {
       return
     fi
 
-    if !has dkms; then
+    if ! has dkms; then
       def_install dkms
     fi
     local srcd=/usr/src/${DRV_NAME}-${DRV_VERSION}
@@ -60,7 +60,7 @@ install_arch() {
   # sudo netctl start wireless
 }
 main() {
-  source $DOTPATH/bin/lib/funcs
+  source $DOTPATH/bin/lib/setup_funcs
   tool_env
   set +u
   if is_arch; then
