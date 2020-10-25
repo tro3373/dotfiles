@@ -132,7 +132,7 @@ refresh_pacman_keys() {
   local specify_keyserver=pool.sks-keyservers.net
   local local_gpg_settings=~/.gnupg/gpg.conf
   if [[ ! -e $local_gpg_settings ]]; then
-    mexe mkdir -p $local_gpg_settings
+    mexe mkdir -p "$(dirname $local_gpg_settings)"
     mexe cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
     echo "keyserver $specify_keyserver" |
       if is_dry; then
