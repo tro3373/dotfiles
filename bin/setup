@@ -10,10 +10,10 @@ readonly apps_dir=$(
   pwd
 )
 # 関数ロード
-source $script_dir/lib/setup/funcs
+export DOT_PATH=$HOME/.dot
 export PATH=$script_dir:$PATH
 export DETECT_OS=$(os)
-export DOT_PATH=$HOME/.dot
+source $script_dir/lib/setup/funcs
 
 default_apps_min=(git ssh tig curl bc tree tmux zsh vim ag ctags)
 default_apps=("${default_apps_min[@]}" fzf neofetch anyenv go pt rg nkf mmv gomi ghq shellcheck shfmt htop hub)

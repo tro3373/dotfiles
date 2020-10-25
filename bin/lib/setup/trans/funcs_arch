@@ -122,12 +122,26 @@ refresh_pacman_keys() {
   mexe sudo pacman-key --populate archlinux
   mexe sudo pacman -Sy gnupg --noconfirm
   mexe sudo pacman -Sy archlinux-keyring --noconfirm
-  mexe sudo pacman-key --refresh-keys
-  ## Error but ok
-  # gpg: refreshing 120 keys from hkps://hkps.pool.sks-keyservers.net
-  # gpg: keyserver refresh failed: General error
-  # ==> ERROR: A specified local key could not be updated from a keyserver.
-  mexe sudo pacman -Sc # delete all packages that not installed
+  # mexe sudo pacman-key --refresh-keys
+  # ==> Error(see https://bbs.archlinux.org/viewtopic.php?id=257441)
+  #     gpg: refreshing 120 keys from hkps://hkps.pool.sks-keyservers.net
+  #     gpg: keyserver refresh failed: General error
+  #     ==> ERROR: A specified local key could not be updated from a keyserver.
+  # permanently append
+  local specify_keyserver=pool.sks-keyservers.net
+  local local_gpg_settings=~/.gnupg/gpg.conf
+  if [[ ! -e $local_gpg_settings ]]; then
+    mexe mkdir -p $local_gpg_settings
+    mexe cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
+    echo "keyserver $specify_keyserver" |
+      if is_dry; then
+        cat -
+      else
+        cat - | tee -a $local_gpg_settings
+      fi
+  fi
+  mexe sudo pacman-key --refresh-keys --keyserver $specify_keyserver
+  mexe sudo pacman -Sc --noconfirm # delete all packages that not installed
 }
 
 improve_pacman() {
@@ -140,11 +154,11 @@ improve_pacman() {
   # fast pacman install
   mexe sudo pacman -S aria2 --noconfirm
   local settings_aria2c='XferCommand = /usr/bin/aria2c --allow-overwrite=true --continue=true --file-allocation=none --log-level=error --max-tries=2 --max-connection-per-server=2 --max-file-not-found=5 --min-split-size=5M --no-conf --remote-time=true --summary-interval=60 --timeout=5 --dir=/ --out %o %u'
-  mexe sudo sed -i \
-    -e 's,^#Color,Color,g' \
-    -e 's,^Color,Color\nILoveCandy,g' \
-    -e "s,^\(HoldPkg.*\),\1\n$settings_aria2c,g" \
-    /etc/pacman.conf
+  mexe 'sudo sed -i -e "s,^\(HoldPkg.*\),\1\n'$settings_aria2c',g" /etc/pacman.conf'
+  mexe 'sudo sed -i -e "s,^#Color,Color,g" /etc/pacman.conf'
+  if ! grep -E '^ILoveCandy' /etc/pacman.conf >&/dev/null; then
+    mexe 'sudo sed -i -e "s,^Color,Color\nILoveCandy,g" /etc/pacman.conf'
+  fi
 }
 
 setup_vag_samba() {
@@ -155,7 +169,7 @@ setup_vag_samba() {
     return
   fi
   if ! sudo test -e /etc/samba/smb.conf.org; then
-    mexe sudo wget "https://git.samba.org/samba.git/?p=samba.git;a=blob_plain;f=examples/smb.conf.default;hb=HEAD" -O /etc/samba/smb.conf.org
+    mexe 'sudo wget -O /etc/samba/smb.conf.org "https://git.samba.org/samba.git/?p=samba.git;a=blob_plain;f=examples/smb.conf.default;hb=HEAD"'
   fi
   cat <<EOF | sudo_tee -a /etc/samba/smb.conf
 [global]
