@@ -22,6 +22,7 @@ setup_vag_eth1_rules() {
   if sudo grep eth1 $net_rule >/dev/null; then
     return
   fi
+  backup $net_rule
   local mac=$(cat /sys/class/net/enp0s8/address)
   cat <<EOF | sudo_tee -a $net_rule
 # from enp0s8 to eth1
@@ -184,7 +185,7 @@ setup_vag_samba() {
     #local master = yes
     #unix password sync = yes
 
-    interfaces = 127.0.0.0/8 eth0
+    interfaces = 127.0.0.0/8 eth1
     bind interfaces only = yes
     hosts allow = 127. 192.168.33.0/24
     hosts deny = all

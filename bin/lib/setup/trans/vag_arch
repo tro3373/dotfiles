@@ -21,7 +21,6 @@ setup_vag_packages() {
 
 pre_setup() {
   log "=> pre setting up"
-  # setup_network
   # setup_keyboard
 
   setup_timezone
@@ -43,9 +42,10 @@ post_setup() {
   def_install libxfont2
   def_install pacman-contrib # pacman cache clean
 
+  setup_login_shell vagrant
   # setup samba
   setup_vag_samba
-  setup_login_shell vagrant
+  setup_vag_network
   log "===> reboot maybe needed."
 
   # =================GUI環境===================
