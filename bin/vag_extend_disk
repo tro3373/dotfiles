@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 
 main() {
-  sudo parted /dev/sda -- resizepart 1 -1s
+  # https://wiki.archlinux.jp/index.php/Parted
+  # parted v4.2 現在、resizepart を使うには #インタラクティブモード でなければなりません
+  # sudo parted /dev/sda -- resizepart 1 -1s
+  local max=$(sudo parted /dev/sda -- print | grep /dev/sda | cut -d: -f2)
+  echo ">> You need to execute parted interactive."
+  echo ">> Please exec 'resizepart 1 $max' in parted. Press Enter to start parted <"
+  read _
+  sudo parted /dev/sda
+  echo ">> and executing resize2fs. Press Enter to start resize2fs <"
+  read _
   sudo resize2fs /dev/sda1 49G
 }
 main "$@"
