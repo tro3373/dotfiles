@@ -6,12 +6,13 @@ bootstrapped() { test -f $bootstrapped_path; }
 finalize() { date | sudo tee $bootstrapped_path >/dev/null; }
 
 setup_dot() {
-  echo "==> setupping .dot .."
+  echo "==> Setting up .dot .."
   if [[ ! -e ~/.dot ]]; then
     curl -fSsL git.io/tr3s | bash
   fi
-  cd ~/.dot/bin
-  ./setup -e vag_arch
+  echo "===> Done. Please execute 'setup -e vag_arch' manualy."
+  # cd ~/.dot/bin
+  # ./setup -e vag_arch
 }
 
 main() {

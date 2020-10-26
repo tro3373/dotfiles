@@ -57,17 +57,25 @@ EOF
   mexe sudo systemctl start smb nmb
 }
 
+# disable_vag_netctl_eth0() {
+#   local delay_shell=/tmp/todo.sh
+#   echo 'sleep 2' >>$delay_shell
+#   if sudo test -e /etc/netctl/eth0; then
+#     # mexe sudo rm /etc/netctl/eth0
+#     echo 'sudo rm /etc/netctl/eth0' >>$delay_shell
+#   fi
+#   if test -L /etc/systemd/system/multi-user.target.wants/netctl@eth0.service; then
+#     echo 'sudo systemctl disable netctl@eth0.service' >>$delay_shell
+#   fi
+#   mexe "nohup sh $delay_shell &"
+# }
 disable_vag_netctl_eth0() {
-  local delay_shell=/tmp/todo.sh
-  echo 'sleep 2' >>$delay_shell
   if sudo test -e /etc/netctl/eth0; then
-    # mexe sudo rm /etc/netctl/eth0
-    echo 'sudo rm /etc/netctl/eth0' >>$delay_shell
+    mexe sudo rm /etc/netctl/eth0
   fi
   if test -L /etc/systemd/system/multi-user.target.wants/netctl@eth0.service; then
-    echo 'sudo systemctl disable netctl@eth0.service' >>$delay_shell
+    mexe sudo systemctl disable netctl@eth0.service
   fi
-  mexe "nohup sh $delay_shell &"
 }
 
 enable_vag_netctl_eth1() {
