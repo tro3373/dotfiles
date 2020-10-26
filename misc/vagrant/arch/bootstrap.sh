@@ -15,6 +15,7 @@ setup_dot() {
 }
 
 main() {
+  set -e
   bootstrapped && return
   setup_dot
   finalize
