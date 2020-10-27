@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+has() { command -v ${1} >&/dev/null; }
+
+fire() {
+  ghq list -p
+}
+
+main() {
+  fire |
+    while read -r repo_root; do
+      [[ -z $repo_root ]] && continue
+      [[ $repo_root =~ ^#.* ]] && continue
+      [[ ! -e $repo_root ]] && continue
+      local remote_url=$(cd $repo_root && git config --get remote.origin.url)
+      [[ -z $remote_url ]] && continue
+      local repo_status=$(cd $repo_root && git status --porcelain)
+      local _status="✔"
+      local _color=white
+      [[ -n $repo_status ]] && _status="✘" && _color=red
+      echo -e "$_status\t$repo_root\t$remote_url" | ink $_color
+    done
+}
+main "$@"
