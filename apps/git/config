@@ -90,8 +90,12 @@ git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/ap
 git config --global commit.template ~/.gitmessage
 EOF
   if [[ -t 1 ]]; then
-    [[ $usrn -eq 1 ]] && setup_username
-    [[ $mail -eq 1 ]] && setup_email
+    if [[ $usrn -eq 1 ]]; then
+      setup_username
+    fi
+    if [[ $mail -eq 1 ]]; then
+      setup_email
+    fi
   fi
 }
 
