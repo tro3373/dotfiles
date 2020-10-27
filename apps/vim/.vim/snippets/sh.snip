@@ -234,7 +234,7 @@ snippet trappp
     # 3 Ctrl+\ を押したときに発生するクイットシグナル。
     # 9 プロセスを強制終了するためのキルシグナル。強制終了なので当然、trap はできない。
     #15 プロセスを終了させるための終了シグナル。kill コマンドはデフォルトでこのシグナルを使用する (つまり kill PID は kill -15 PID と同じ結果になる)。
-    trap ${1} 0 1 2 3 15
+    trap ${1:end} 0 1 2 3 15
 
 snippet checkroot
     check_root () {
