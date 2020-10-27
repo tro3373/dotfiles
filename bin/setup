@@ -18,14 +18,6 @@ source $script_dir/lib/setup/funcs
 default_apps_min=(git ssh tig curl bc tree tmux zsh vim ag ctags)
 default_apps=("${default_apps_min[@]}" fzf neofetch anyenv go pt rg nkf mmv gomi ghq shellcheck shfmt htop hub)
 
-# Dynamic Variables
-export debug=0
-export dry_run=1
-export tran=0
-export force=0
-export view=0
-args=()
-
 usage() {
   cat <<EOF
 Setup my dev env.
@@ -71,23 +63,8 @@ usage_format() {
     done
 }
 
-add_args() { args+=("$@"); }
-
 initialize() {
-  while true; do
-    [[ -z $1 ]] && break
-    case "$1" in
-    -h | --help) usage && exit 0 ;;
-    #-f*|--file*) file=${1#*=} ;;
-    #-f|--file) shift && file=$1 ;;
-    -e | --exec) dry_run=0 ;;
-    -v | --view) view=1 ;;
-    -f | --force) force=1 ;;
-    -d | --debug) debug=1 ;;
-    *) add_args $1 ;;
-    esac
-    shift
-  done
+  initialize_args "$@"
 
   tran_srouce=$(find_trans "${args[@]}")
   if [[ -n $tran_srouce ]]; then
@@ -113,6 +90,7 @@ initialize() {
 }
 
 handle_view_if_needed() {
+  # shellcheck disable=SC2154
   if [[ $view -ne 1 ]]; then
     return
   fi
@@ -170,7 +148,9 @@ debug_options() {
   dlog "===================================================="
   dlog " Execute with below args."
   dlog "   ===> Apps: $all_args"
+  # shellcheck disable=SC2154
   dlog "   ===> force: $force"
+  # shellcheck disable=SC2154
   dlog "   ===> dry_run: $dry_run"
   dlog "   ===> view: $view"
   dlog "===================================================="

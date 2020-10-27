@@ -1,8 +1,17 @@
 #!/bin/bash
 
+# Dynamic Variables
+export debug=0
+export dry_run=1
+export tran=0
+export force=0
+export view=0
+args=()
+
 _timestamp=$(date +%Y%m%d_%H%M%S)
 _backup_root="${DOT_PATH}/bkup/setup"
 
+add_args() { args+=("$@"); }
 is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
 log() { echo -e "$*" | ink cyan; }
@@ -21,6 +30,23 @@ is_ubuntu() { [[ "$DETECT_OS" == "ubuntu" ]]; }
 is_redhat() { [[ "$DETECT_OS" == "redhat" ]]; }
 is_win() { is_msys || is_cygwin; }
 is_unix() { ! is_win; }
+
+initialize_args() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+    -h | --help) usage && exit 0 ;;
+    #-f*|--file*) file=${1#*=} ;;
+    #-f|--file) shift && file=$1 ;;
+    -e | --exec) dry_run=0 ;;
+    -v | --view) view=1 ;;
+    -f | --force) force=1 ;;
+    -d | --debug) debug=1 ;;
+    *) add_args $1 ;;
+    esac
+    shift
+  done
+}
 
 set_default_install_command() {
   export def_install_cmd="sudo apt-get install -y"
