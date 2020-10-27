@@ -49,6 +49,9 @@ msys*)
   ;;
 esac
 
+if has exa; then
+  alias ls="exa"
+fi
 alias l="ls -lFh"
 alias ll="ls -laFh"
 alias lla="ls -laFh"

@@ -137,6 +137,8 @@ load_update_arg_apps() {
     "${default_apps[@]}"
     neofetch
     yay
+    exa
+    bat
   )
 }
 
