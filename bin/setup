@@ -21,6 +21,7 @@ default_apps=("${default_apps_min[@]}" fzf neofetch anyenv go pt rg nkf mmv gomi
 # Dynamic Variables
 export debug=0
 export dry_run=1
+export tran=0
 export force=0
 export view=0
 args=()
@@ -91,6 +92,7 @@ initialize() {
   tran_srouce=$(find_trans "${args[@]}")
   if [[ -n $tran_srouce ]]; then
     ilog "=> tran settings"
+    tran=1
     source $tran_srouce
     load_update_arg_apps
   fi
@@ -220,7 +222,7 @@ not_supported() {
 
 setup_for_app() {
   dlog "================================================"
-  ilog "=> For $app"
+  ilog "=> $app"
 
   not_supported=0
   if [[ $force -eq 1 ]] || ! is_installed; then
@@ -259,12 +261,16 @@ main_setup() {
 start_setup() {
   set -e
   cd $DOT_PATH
-  ilog "> Prev"
-  pre_setup
-  ilog "> Main"
+  if [[ $tran -eq 1 ]]; then
+    ilog "> Prev Setup"
+    pre_setup
+  fi
+  ilog "> Main Setup"
   main_setup
-  ilog "> Post"
-  post_setup
+  if [[ $tran -eq 1 ]]; then
+    ilog "> Post Setup"
+    post_setup
+  fi
 }
 
 main() {
