@@ -10,6 +10,12 @@ check() {
 }
 main() {
   check
-  cmd //c start "" $DOTPATH/misc/vagrant/arch/mount.bat
+  # cmd //c start "" $DOTPATH/misc/vagrant/arch/mount.bat
+  cat <<'EOF' | exec_bat
+echo off
+rem net use p: \\192.168.33.10\share vagrant /user:vagrant
+net use p: \\192.168.33.10\share
+exit
+EOF
 }
 main "$@"

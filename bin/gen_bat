@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+readonly timestamp=$(date +%Y%m%d%H%M%S)
+has() { command -v ${1} >&/dev/null; }
+main() {
+  if ! has nkf; then
+    echo "No nkf exist" 1>&2
+    exit 1
+  fi
+  if [[ ! -p /dev/stdin ]]; then
+    echo "Specify stdin to gen contents" 1>&2
+    exit 1
+  fi
+  local dst="$*"
+  if [[ -z $dst ]]; then
+    dst=/tmp/gen_bat.${timestamp}.bat
+  fi
+  cat - | nkf -Lw -s >>$dst
+  echo "$dst"
+}
+main "$@"

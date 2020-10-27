@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+bat=
+success=0
+
+has() { command -v ${1} >&/dev/null; }
+end() {
+  if [[ ! -e $bat || $success -ne 1 ]]; then
+    return
+  fi
+  rm -rfv $bat
+}
+
+main() {
+  if ! os win; then
+    echo "Not supported os" 1>&2
+    exit 1
+  fi
+  if ! has cmd; then
+    echo "No cmd command exist" 1>&2
+    exit 1
+  fi
+  if [[ ! -p /dev/stdin ]]; then
+    echo "Specify stdin to execute" 1>&2
+    exit 1
+  fi
+
+  set -e
+  bat=$(cat - | gen_bat)
+  # 0 プロセス終了時に、プロセスが自分自身に対して送出する EXIT シグナル。
+  # 1 XWindow のクローズや、デーモンのリセットに使用されるハングアップシグナル。
+  # 2 Ctrl+C や Del キーを押したときに発生する割り込みシグナル。
+  # 3 Ctrl+\ を押したときに発生するクイットシグナル。
+  # 9 プロセスを強制終了するためのキルシグナル。強制終了なので当然、trap はできない。
+  #15 プロセスを終了させるための終了シグナル。kill コマンドはデフォルトでこのシグナルを使用する (つまり kill PID は kill -15 PID と同じ結果になる)。
+  trap end 0 1 2 3 15
+  cmd //c start "" $bat
+  success=1
+}
+main "$@"

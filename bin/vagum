@@ -10,6 +10,13 @@ check() {
 }
 main() {
   check
-  cmd //c start "" $DOTPATH/misc/vagrant/arch/umount.bat
+  # cmd //c start "" $DOTPATH/misc/vagrant/arch/umount.bat
+  cat <<'EOF' | exec_bat
+echo off
+net use p: /delete /yes
+rem net use * /delete /yes
+rem net use /persistent:no
+exit
+EOF
 }
 main "$@"
