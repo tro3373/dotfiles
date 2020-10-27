@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+readonly bootstrapped_path=/etc/bootstrapped
+
+_bootstrapped() { test -f $bootstrapped_path; }
+_finalize() { date | sudo tee $bootstrapped_path >/dev/null; }
+
+setup_packages() {
+  cp /etc/pacman.d/mirrorlist{,.org}
+  cat <<'EOF' >/etc/pacman.d/mirrorlist
+###########################
+## Japan
+Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
+Server = http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
+Server = http://mirrors.cat.net/archlinux/$repo/os/$arch
+Server = http://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
+###########################
+EOF
+  pacman-key --init
+  pacman-key --populate archlinux
+  pacman -Sy gnupg --noconfirm
+  pacman -Sy archlinux-keyring --noconfirm
+  local specify_keyserver=pool.sks-keyservers.net
+  local local_gpg_settings=~/.gnupg/gpg.conf
+  if [[ ! -e $local_gpg_settings ]]; then
+    mkdir -p "$(dirname $local_gpg_settings)"
+    cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
+    echo "keyserver $specify_keyserver" >>$local_gpg_settings
+  fi
+  pacman-key --refresh-keys --keyserver $specify_keyserver
+  pacman -Syyu --noconfirm
+  pacman -S base base-devel git curl vim wget grep sed which unzip gzip --noconfirm
+  pacman -Sc --noconfirm # delete all packages that not installed
+}
+
+_setup_user() {
+  setup_user archuser
+  # su - archuser
+  # TODO is this work?
+  curl -fSsL git.io/tr3s | sudo -u archuser bash
+}
+
+_setup_dot() {
+  echo "==> Setting up .dot .."
+  if [[ ! -e ~/.dot ]]; then
+    curl -fSsL git.io/tr3s | bash
+  fi
+  echo "===> Done. Please execute 'setup -e wsl_arch' manualy."
+  # cd ~/.dot/bin
+  # ./setup -e wsl_arch
+}
+
+main() {
+  set -e
+  _bootstrapped && return
+  _setup_user
+  _setup_dot
+  _finalize
+}
+main "$@"

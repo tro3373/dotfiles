@@ -69,9 +69,14 @@ handle_args() {
     cygwin | msys) result=true ;;
     esac
     is_wsl && result=true
-  elif [[ "$opt" == "linux" ]]; then # TODO to unix
+  elif [[ "$opt" == "linux" ]]; then
     case "$os" in
     cygwin | msys | mac) ;;
+    *) result=true ;;
+    esac
+  elif [[ "$opt" == "unix" ]]; then
+    case "$os" in
+    cygwin | msys) ;;
     *) result=true ;;
     esac
   elif [[ "$opt" == "wsl" ]]; then

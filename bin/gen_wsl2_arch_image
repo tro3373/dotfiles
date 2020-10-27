@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+readonly current_dir=$(pwd)
+readonly arch_iso_latest_url=http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/iso/latest/
+readonly script_dir=$(
+  cd "$(dirname ${BASH_SOURCE:-$0})"
+  pwd
+)
+readonly tgz=ArchLinux.tar.gz
+
+gen_arch_tgz() {
+  local tmp_d=$(mktemp -d)
+  cd $tmp_d
+  local url=$(get_arch_iso_url_latest)
+  echo "> Downloading to $tmp_d from $url.." 1>&2
+  curl -LO $url
+  sudo tar -xzfp ./*.tar.gz
+  cd root.x86_64
+  sudo tar -czfp $tgz .
+  sudo mv -f $tgz $current_dir/
+  echo "$current_dir/$tgz"
+}
+
+get_arch_iso_url_latest() {
+  local fname=$(
+    curl -fSsL $arch_iso_latest_url |
+      grep href |
+      grep --color 'tar.gz"' |
+      sed -e 's,^.*href=",,g' -e 's,".*,,g'
+  )
+  echo "$arch_iso_latest_url/$fname"
+}
+
+gen_import_bat() {
+  cat <<EOF | gen_bat $current_dir/import_wsl_arch_image.bat
+wsl --import ArchLinux %USERPROFILE%\wsl\ArchLinux $tgz
+wsl -d ArchLinux
+EOF
+}
+
+main() {
+  if ! os unix; then
+    echo "Not supported." 1>&2
+    exit 1
+  fi
+  source $script_dir/lib/setup/funcs
+  set -e
+  local import_image_path=$(gen_arch_tgz)
+  local import_bat_path=$(gen_import_bat)
+  echo "==>  $import_image_path gened."
+  echo "==>  $import_bat_path gened."
+  echo "Done!"
+}
+main "$@"

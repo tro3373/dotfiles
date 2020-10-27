@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+readonly _script_dir=$(
+  cd "$(dirname ${BASH_SOURCE:-$0})"
+  pwd
+)
+source $_script_dir/funcs_arch
+
+pre_setup() {
+  log "=> pre setting up"
+
+  setup_hostname archlinux.wsl2
+  setup_timezone
+  setup_locale
+  improve_pacman
+}
+
+load_update_arg_apps() {
+  # shellcheck disable=SC2034
+  args=(
+    "${default_apps[@]}"
+    neofetch
+    yay
+    exa
+    bat
+  )
+}
+
+post_setup() {
+  def_install xsel xorg-server-xvfb # for clipboard
+  def_install libxfont2
+  def_install pacman-contrib # pacman cache clean
+  def_install reflector
+  def_install net-tools
+  def_install inetutils
+  def_install ssh
+
+  setup_login_shell archuser
+  log "===> reboot maybe needed."
+}

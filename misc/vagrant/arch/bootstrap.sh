@@ -2,10 +2,10 @@
 
 readonly bootstrapped_path=/etc/bootstrapped
 
-bootstrapped() { test -f $bootstrapped_path; }
-finalize() { date | sudo tee $bootstrapped_path >/dev/null; }
+_bootstrapped() { test -f $bootstrapped_path; }
+_finalize() { date | sudo tee $bootstrapped_path >/dev/null; }
 
-setup_dot() {
+_setup_dot() {
   echo "==> Setting up .dot .."
   if [[ ! -e ~/.dot ]]; then
     curl -fSsL git.io/tr3s | bash
@@ -17,8 +17,8 @@ setup_dot() {
 
 main() {
   set -e
-  bootstrapped && return
-  setup_dot
-  finalize
+  _bootstrapped && return
+  _setup_dot
+  _finalize
 }
 main "$@"

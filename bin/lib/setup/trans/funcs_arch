@@ -44,6 +44,23 @@ EOF
   mexe sudo locale-gen
 }
 
+setup_packages() {
+  log "==> setupping packages .."
+  # # パッケージ更新が X用のパッケージが邪魔してできないので、先にアンインストール
+  # sudo pacman -R --noconfirm xorg-fonts-misc xorg-font-utils xorg-server xorg-server-common xorg-bdftopcf libxfont libxfont2
+
+  update_pacman_millerlist
+  refresh_pacman_keys "$@"
+  improve_pacman
+
+  # パッケージ更新
+  mexe sudo pacman -Syyu --noconfirm
+}
+
+setup_hostname() {
+  echo "$*" >/etc/hostname
+}
+
 update_pacman_millerlist() {
   log "==> setupping pacman millerlist .."
   if sudo grep "ftp.tsukuba.wide.ad.jp" /etc/pacman.d/mirrorlist >&/dev/null; then
@@ -118,6 +135,22 @@ improve_pacman() {
   if ! grep -E '^ILoveCandy' /etc/pacman.conf >&/dev/null; then
     mexe 'sudo sed -i -e "s,^Color,Color\nILoveCandy,g" /etc/pacman.conf'
   fi
+}
+
+setup_user() {
+  local _user=$1
+  if [[ ! -e /home/$_user ]]; then
+    mexe useradd -m -G wheel $_user
+    echo "=> Changing user password for $_user"
+    mexe passwd $_user
+  fi
+  if ! has sudo; then
+    mexe pacman -S sudo --noconfirm
+  fi
+  # TODO auto gen
+  echo "=> Setupping visudo.. press Enter."
+  read
+  EDITOR=vim visudo
 }
 
 setup_login_shell() {

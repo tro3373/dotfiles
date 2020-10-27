@@ -109,26 +109,13 @@ SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="$mac", NAME="eth1"
 EOF
 }
 
-setup_vag_packages() {
-  echo "==> setupping packages .."
-  # # パッケージ更新が X用のパッケージが邪魔してできないので、先にアンインストール
-  # sudo pacman -R --noconfirm xorg-fonts-misc xorg-font-utils xorg-server xorg-server-common xorg-bdftopcf libxfont libxfont2
-
-  update_pacman_millerlist
-  refresh_pacman_keys
-  improve_pacman
-
-  # パッケージ更新
-  mexe sudo pacman -Syyu --noconfirm
-}
-
 pre_setup() {
   log "=> pre setting up"
   # setup_keyboard
 
   setup_timezone
   setup_locale
-  setup_vag_packages
+  setup_packages
 }
 
 load_update_arg_apps() {
@@ -148,7 +135,7 @@ post_setup() {
   def_install pacman-contrib # pacman cache clean
 
   setup_login_shell vagrant
-  setup samba
+  # setup samba
   enable_vag_netctl_eth1
   disable_vag_netctl_eth0
   setup_vag_samba
