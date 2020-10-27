@@ -6,7 +6,9 @@ install_arch() {
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
-install_mac() { not_supported; }
+install_mac() {
+  def_install neovim
+}
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() {
@@ -20,7 +22,6 @@ setting_common() {
 }
 setting_msys() { not_supported; }
 setting_cygwin() { not_supported; }
-setting_mac() { not_supported; }
 setting_ubuntu() { not_supported; }
 setting_redhat() { not_supported; }
 #is_installed
