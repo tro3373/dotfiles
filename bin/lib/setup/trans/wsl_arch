@@ -15,26 +15,9 @@ pre_setup() {
   improve_pacman
 }
 
-load_update_arg_apps() {
-  # shellcheck disable=SC2034
-  args=(
-    "${default_apps[@]}"
-    neofetch
-    yay
-    exa
-    bat
-  )
-}
+# load_update_arg_apps() {}
 
 post_setup() {
-  def_install xsel xorg-server-xvfb # for clipboard
-  def_install libxfont2
-  def_install pacman-contrib # pacman cache clean
-  def_install reflector
-  def_install net-tools
-  def_install inetutils
-  def_install ssh
-
   setup_login_shell archuser
   log "===> reboot maybe needed."
 }

@@ -9,14 +9,7 @@ readonly apps_dir=$(
   cd "$script_dir/../apps"
   pwd
 )
-# 関数ロード
-export DOT_PATH=$HOME/.dot
-export PATH=$script_dir:$PATH
-export DETECT_OS=$(os)
 source $script_dir/lib/setup/funcs
-
-default_apps_min=(git ssh tig curl bc tree tmux zsh vim ag ctags)
-default_apps=("${default_apps_min[@]}" fzf neofetch anyenv go pt rg nkf mmv gomi ghq shellcheck shfmt htop hub)
 
 usage() {
   cat <<EOF
@@ -38,7 +31,7 @@ Setup my dev env.
 Installable Apps is ..
 $(installable_apps | usage_format)
 Default Apps is..
-$(for arg in "${default_apps[@]}"; do echo $arg; done | usage_format)
+$(for arg in $(default_apps); do echo $arg; done | usage_format)
 Trans Setup is..
 $(find_trans -l | usage_format)
 EOF
@@ -75,7 +68,7 @@ initialize() {
   fi
 
   if [[ ${#args[@]} -eq 0 ]]; then
-    args+=("${default_apps[@]}")
+    args+=("$(default_apps)")
   fi
 
   all_args="${args[*]}"

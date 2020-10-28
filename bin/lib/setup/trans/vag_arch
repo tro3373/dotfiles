@@ -6,6 +6,66 @@ readonly _script_dir=$(
 )
 source $_script_dir/funcs_arch
 
+pre_setup() {
+  log "=> pre setting up"
+  # setup_keyboard
+
+  setup_timezone
+  setup_locale
+  setup_packages
+}
+
+# load_update_arg_apps() {}
+
+post_setup() {
+  setup_login_shell vagrant
+  # setup samba
+  enable_vag_netctl_eth1
+  disable_vag_netctl_eth0
+  setup_vag_samba
+  log "===> reboot maybe needed."
+
+  # =================GUI環境===================
+  # sudo pacman -S --noconfirm xorg-xinit lightdm-gtk-greeter
+  # sudo pacman -S --noconfirm xorg-xinit
+  # sudo pacman -S --noconfirm lightdm-gtk-greeter
+  # yes 'all' | sudo pacman -S --noconfirm xfce4 lightdm
+  # sudo pacman -S --noconfirm xfce4 lightdm
+  # sudo pacman -S --noconfirm xfce4
+  # sudo systemctl enable lightdm.service
+  # ## /etc/systemd/system/default.targetのリンクをmulti-user.targetからgraphical.targetに変える
+  # sudo systemctl set-default graphical.target
+  ## =================フォントとインプットメソッドのインストール===================
+  # yaourt -S --noconfirm otf-takao
+  # yes 'all' | sudo pacman -S --noconfirm fcitx-im fcitx-configtool fcitx-mozc
+  # sudo pacman -S --noconfirm fcitx-im fcitx-configtool fcitx-mozc
+  # sudo cat << 'EOF' > ${HOME}/.xprofile
+  # export GTK_IM_MODULE=fcitx
+  # export QT_IM_MODULE=fcitx
+  # export XMODIFIERS=”@im=fcitx”
+  # EOF
+  # ## =================自動ログイン===================
+  # sudo cat /etc/lightdm/lightdm.conf |
+  #    sudo sed -e 's/#autologin-user=/autologin-user=vagrant/' |
+  #        sudo tee /etc/lightdm/lightdm.conf
+  # sudo groupadd -r autologin
+  # sudo gpasswd -a vagrant autologin
+  # ↑一回目のログインはユーザー名とパスワード(どちらもvagrnat)打たないといけない
+  # =====================dockerセットアップ==========================
+  #sudo pacman -S --noconfirm docker  # dockerインストール
+  #sudo systemctl enable docker  # ログイン時にデーモン実行
+  #sudo groupadd docker  # sudoなしで使えるようにする設定
+  #sudo gpasswd -a vagrant docker  # sudoなしで使えるようにする設定
+  #sudo systemctl restart docker
+  # =================その他好きなもの===================
+  # yaourt -S --noconfirm man-pages-ja-git  # 日本語man
+  # sudo pacman -S --noconfirm fzf  # Simplistic interactive filtering tool
+  # sudo pacman -S --noconfirm thefuck  # Corrects your previous console command
+  # sudo pacman -S --noconfirm atool  # Managing file archives of various types
+  # yaourt -S --noconfirm gitflow-avh-git  # git-flow tools
+  # sudo pacman -S --noconfirm python-pygments pygmentize  # Python syntax highlighter
+}
+
 setup_vag_samba() {
   if ! has samba; then
     def_install samba
@@ -107,77 +167,4 @@ gen_vag_eth1_rules() {
 # from enp0s8 to eth1
 SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="$mac", NAME="eth1"
 EOF
-}
-
-pre_setup() {
-  log "=> pre setting up"
-  # setup_keyboard
-
-  setup_timezone
-  setup_locale
-  setup_packages
-}
-
-load_update_arg_apps() {
-  # shellcheck disable=SC2034
-  args=(
-    "${default_apps[@]}"
-    neofetch
-    yay
-    exa
-    bat
-  )
-}
-
-post_setup() {
-  def_install xsel xorg-server-xvfb # for clipboard
-  def_install libxfont2
-  def_install pacman-contrib # pacman cache clean
-
-  setup_login_shell vagrant
-  # setup samba
-  enable_vag_netctl_eth1
-  disable_vag_netctl_eth0
-  setup_vag_samba
-  log "===> reboot maybe needed."
-
-  # =================GUI環境===================
-  # sudo pacman -S --noconfirm xorg-xinit lightdm-gtk-greeter
-  # sudo pacman -S --noconfirm xorg-xinit
-  # sudo pacman -S --noconfirm lightdm-gtk-greeter
-  # yes 'all' | sudo pacman -S --noconfirm xfce4 lightdm
-  # sudo pacman -S --noconfirm xfce4 lightdm
-  # sudo pacman -S --noconfirm xfce4
-  # sudo systemctl enable lightdm.service
-  # ## /etc/systemd/system/default.targetのリンクをmulti-user.targetからgraphical.targetに変える
-  # sudo systemctl set-default graphical.target
-  ## =================フォントとインプットメソッドのインストール===================
-  # yaourt -S --noconfirm otf-takao
-  # yes 'all' | sudo pacman -S --noconfirm fcitx-im fcitx-configtool fcitx-mozc
-  # sudo pacman -S --noconfirm fcitx-im fcitx-configtool fcitx-mozc
-  # sudo cat << 'EOF' > ${HOME}/.xprofile
-  # export GTK_IM_MODULE=fcitx
-  # export QT_IM_MODULE=fcitx
-  # export XMODIFIERS=”@im=fcitx”
-  # EOF
-  # ## =================自動ログイン===================
-  # sudo cat /etc/lightdm/lightdm.conf |
-  #    sudo sed -e 's/#autologin-user=/autologin-user=vagrant/' |
-  #        sudo tee /etc/lightdm/lightdm.conf
-  # sudo groupadd -r autologin
-  # sudo gpasswd -a vagrant autologin
-  # ↑一回目のログインはユーザー名とパスワード(どちらもvagrnat)打たないといけない
-  # =====================dockerセットアップ==========================
-  #sudo pacman -S --noconfirm docker  # dockerインストール
-  #sudo systemctl enable docker  # ログイン時にデーモン実行
-  #sudo groupadd docker  # sudoなしで使えるようにする設定
-  #sudo gpasswd -a vagrant docker  # sudoなしで使えるようにする設定
-  #sudo systemctl restart docker
-  # =================その他好きなもの===================
-  # yaourt -S --noconfirm man-pages-ja-git  # 日本語man
-  # sudo pacman -S --noconfirm fzf  # Simplistic interactive filtering tool
-  # sudo pacman -S --noconfirm thefuck  # Corrects your previous console command
-  # sudo pacman -S --noconfirm atool  # Managing file archives of various types
-  # yaourt -S --noconfirm gitflow-avh-git  # git-flow tools
-  # sudo pacman -S --noconfirm python-pygments pygmentize  # Python syntax highlighter
 }

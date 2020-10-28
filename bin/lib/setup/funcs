@@ -1,5 +1,27 @@
 #!/bin/bash
 
+export DOT_PATH=$HOME/.dot
+readonly _timestamp=$(date +%Y%m%d_%H%M%S)
+readonly _backup_root="${DOT_PATH}/bkup/setup"
+
+readonly _core_apps_min=(
+  git ssh tig curl bc tree tmux zsh vim ag ctags
+)
+readonly _core_apps=(
+  "${_core_apps_min[@]}"
+  fzf neofetch anyenv go pt rg nvim nkf mmv gomi ghq shellcheck shfmt htop hub
+  exa bat
+)
+readonly _additional_arch=(
+  yay
+  pacman-contrib # pacman cache clean
+  reflector
+  net-tools
+  inetutils
+  xsel xorg-server-xvfb # for clipboard
+  libxfont2
+)
+
 # Dynamic Variables
 export debug=0
 export dry_run=1
@@ -7,9 +29,7 @@ export tran=0
 export force=0
 export view=0
 args=()
-
-_timestamp=$(date +%Y%m%d_%H%M%S)
-_backup_root="${DOT_PATH}/bkup/setup"
+_funcs_initialized=0
 
 add_args() { args+=("$@"); }
 is_debug() { [[ $debug -eq 1 ]]; }
@@ -68,7 +88,6 @@ set_default_install_command() {
     fi
   fi
 }
-set_default_install_command
 
 mexe() {
   local cmd="$*"
@@ -385,6 +404,15 @@ sudo_tee() {
   fi
 }
 
+default_apps() {
+  local _apps=()
+  _apps+=("${_core_apps[@]}")
+  if is_vag; then
+    _apps+=("${_additional_arch[@]}")
+  fi
+  echo "${_apps[@]}"
+}
+
 pre_setup() {
   dlog "=> No pre_setup defined."
 }
@@ -398,3 +426,24 @@ load_update_arg_apps() {
   # shellcheck disable=SC2034
   args=()
 }
+
+init_funcs() {
+  [[ $_funcs_initialized -eq 1 ]] && return
+  # 関数ロード
+  local _com_script_dir=$DOT_PATH/bin
+  if ! echo ":$PATH:" | grep ":$_com_script_dir:" >&/dev/null; then
+    export PATH=$_com_script_dir:$PATH
+  fi
+  export DETECT_OS=$(os)
+  set_default_install_command
+  _funcs_initialized=1
+}
+init_funcs
+
+[[ ${0} != "${BASH_SOURCE[0]}" ]] && return 0
+_test() {
+  # default_apps
+  args+=("$(default_apps)")
+  echo "${args[@]}"
+}
+_test "$@"
