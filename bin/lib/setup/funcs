@@ -383,7 +383,7 @@ find_trans() {
   local trans_dir=$script_dir/lib/setup/trans
   if [[ $1 == -l ]]; then
     find $trans_dir/ -maxdepth 1 -mindepth 1 -type f -exec basename {} \; |
-      grep -v -E "^funcs.*"
+      grep -v -E "^funcs.*" # noneeded
     return
   fi
   for arg in "$@"; do
