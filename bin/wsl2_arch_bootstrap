@@ -29,7 +29,7 @@ EOF
   fi
   pacman-key --refresh-keys --keyserver $specify_keyserver
   pacman -Syyu --noconfirm
-  pacman -S base base-devel git curl vim wget grep sed which unzip gzip --noconfirm
+  pacman -S base base-devel git curl vim wget grep sed which unzip gzip sudo --noconfirm
   pacman -Sc --noconfirm # delete all packages that not installed
 }
 
