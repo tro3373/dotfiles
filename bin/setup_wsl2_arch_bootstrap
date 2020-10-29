@@ -1,22 +1,9 @@
 #!/usr/bin/env bash
 
-# readonly command_name=$(basename $0)
 readonly bootstrapped_path=/etc/bootstrapped
-readonly script_dir=$(
-  cd "$(dirname ${BASH_SOURCE:-$0})"
-  pwd
-)
-source $script_dir/lib/setup/funcs
 
-usage() {
-  cat <<EOF
-bootstrap shell for arch in wsl2
-EOF
-}
 _bootstrapped() { test -f $bootstrapped_path; }
-_finalize() {
-  date | cat_tee $bootstrapped_path
-}
+_finalize() { date | sudo tee $bootstrapped_path >/dev/null; }
 
 setup_packages() {
   cp /etc/pacman.d/mirrorlist{,.org}
@@ -55,7 +42,9 @@ _setup_user() {
 
 _setup_dot() {
   echo "==> Setting up .dot .."
-  clone_dot
+  if [[ ! -e ~/.dot ]]; then
+    curl -fSsL git.io/tr3s | bash
+  fi
   echo "===> Done. Please execute 'setup -e wsl_arch' manualy."
   # cd ~/.dot/bin
   # ./setup -e wsl_arch
