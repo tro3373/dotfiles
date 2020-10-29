@@ -15,7 +15,7 @@ main() {
     sed -ri -e 's/bash/zsh/g' $msys_shell
   fi
   if ! grep "SHELL=" $profile >/dev/null; then
-    sed -ri -e 's,^(.*profile_d zsh),\1\n  SHELL='$(command -v zsh)',g' $profile
+    sed -ri -e "s,^(.*profile_d zsh),\1\n  SHELL=$(command -v zsh),g" $profile
   fi
   if grep "rem set MSYS=win" $msys_shell >/dev/null; then
     sed -ri -e 's/rem set MSYS=win/set MSYS=win/g' $msys_shell
@@ -23,4 +23,3 @@ main() {
 }
 
 main "$@"
-
