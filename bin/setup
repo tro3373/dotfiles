@@ -68,7 +68,8 @@ initialize() {
   fi
 
   if [[ ${#args[@]} -eq 0 ]]; then
-    args+=("$(default_apps)")
+    # args+=("$(default_apps)")
+    read -a args < <(default_apps)
   fi
 
   all_args="${args[*]}"

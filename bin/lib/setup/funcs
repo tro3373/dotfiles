@@ -493,7 +493,12 @@ init_funcs
 [[ ${0} != "${BASH_SOURCE[0]}" ]] && return 0
 _test() {
   # default_apps
-  args+=("$(default_apps)")
+  # default_apps |mapfile args
+  # args+=($(default_apps))
+  read -a args < <(default_apps)
+  for arg in "${args[@]}"; do
+    echo "$arg"
+  done
   echo "${args[@]}"
 }
 _test "$@"
