@@ -34,8 +34,8 @@ _funcs_initialized=0
 add_args() { args+=("$@"); }
 is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
-log() { echo -e "$*" | ink cyan; }
-ilog() { echo -e "$*" | ink green; }
+log() { echo -e "$*" | ink cyan 1>&2; }
+ilog() { echo -e "$*" | ink green 1>&2; }
 dlog() { if is_debug; then log "$*"; fi; }
 has() { command -v ${1} >&/dev/null; }
 # TODO change func name
@@ -50,6 +50,15 @@ is_ubuntu() { [[ "$DETECT_OS" == "ubuntu" ]]; }
 is_redhat() { [[ "$DETECT_OS" == "redhat" ]]; }
 is_win() { is_msys || is_cygwin; }
 is_unix() { ! is_win; }
+
+usage() {
+  # shellcheck disable=SC2154
+  if [[ -n $command_name ]]; then
+    echo "$command_name command"
+    return
+  fi
+  echo "This is funcs usage. overwrite usage method."
+}
 
 initialize_args() {
   while true; do
@@ -394,6 +403,16 @@ find_trans() {
   done
 }
 
+cat_tee() {
+  if is_dry; then
+    log "===> tee $*"
+    cat -
+    log "------------------------------------"
+  else
+    cat - | tee "$@" >/dev/null
+  fi
+}
+
 sudo_tee() {
   if is_dry; then
     log "===> sudo tee $*"
@@ -403,6 +422,24 @@ sudo_tee() {
     cat - | sudo tee "$@" >/dev/null
   fi
 }
+
+cat_bash() {
+  if is_dry; then
+    log "===> bash $*"
+    cat -
+    log "------------------------------------"
+  else
+    cat - | bash "$@" >/dev/null
+  fi
+}
+
+clone_dot() {
+  if [[ -e $DOT_PATH ]]; then
+    return
+  fi
+  curl -fSsL git.io/tr3s | cat_bash ""
+}
+
 
 default_apps() {
   local _apps=()
@@ -425,6 +462,19 @@ load_update_arg_apps() {
   dlog "=> No load_update_arg_apps defined."
   # shellcheck disable=SC2034
   args=()
+}
+
+not_supported() {
+  log "=> Not supported"
+}
+
+show_dummy_warn_if_needed() {
+  if ! is_dry; then
+    return
+  fi
+  ilog "===================================================="
+  ilog " This is Dry-run mode. :D"
+  ilog "===================================================="
 }
 
 init_funcs() {

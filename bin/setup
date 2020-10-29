@@ -149,15 +149,6 @@ debug_options() {
   dlog "===================================================="
 }
 
-show_dummy_warn_if_needed() {
-  if ! is_dry; then
-    return
-  fi
-  ilog "===================================================="
-  ilog " This is Dry-run mode. :D"
-  ilog "===================================================="
-}
-
 install_app() {
   default_called=0
   is_arch && install_arch
