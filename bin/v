@@ -33,7 +33,7 @@ fire_files() {
 main() {
   ! has fzf && echo "No fzf exist" 1>&2 && exit 1
   local files=$(fire_files "$@")
-  nvim -p $files </dev/tty
-  # vim -p $files </dev/tty
+  # nvim -p $files </dev/tty
+  vim -p $files </dev/tty
 }
 main "$@"
