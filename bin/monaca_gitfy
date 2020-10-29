@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+readonly _repo=${1}
+readonly _user=${2:-user}
+readonly _mail=${3:-$_user@example.com}
+readonly _project_root=/project
+
+improve_git_config() {
+  local dst=$_project_root/.git/config
+  cat <<EOF | tee $dst >&/dev/null
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+	editor = vim -c 'set fenc=utf-8'
+	quotepath = false
+	preloadindex = true
+	fscache = true
+	filemode = true
+[color]
+	ui = auto
+[http]
+	sslverify = false
+[push]
+	default = simple
+[merge]
+	ff = false
+[rebase]
+	autostash = true
+[alias]
+	co = checkout
+	cm = commit
+	st = status
+	br = branch
+	lgo = log --oneline
+	lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+	lga = log --graph --all --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+	tar = archive --format=tar HEAD -o
+	tgz = archive --format=tgz HEAD -o
+	zip = archive --format=zip HEAD -o
+	or = orphan
+	ignore = "!gi() { curl -L -s https://www.gitignore.io/api/\$@ ;}; gi"
+	sw = switch
+	rs = restore
+[user]
+	name = $_user
+	email = $_mail
+EOF
+}
+
+git_config_improved() {
+  local c=$(grep -c -E '^(\[user\]|	name|	email)' $_project_root/.git/config)
+  test $c -eq 3
+}
+
+log() {
+  if [[ -e $_project_root/.git ]]; then
+    cat - | tee -a $_project_root/.git/___backup.log
+  else
+    cat -
+  fi
+}
+
+gitfy() {
+  echo ">> Git remote adding $_repo"
+  git remote add origin $_repo
+  echo ">> Backupping working sources.."
+  local bkupd=$_project_root/.git/___backup
+  mkdir -p $bkupd
+  find . -maxdepth 1 -mindepth 1 ! -name "\.git" -print0 |
+    xargs -0 mv -vt $bkupd/
+  echo ">> Git fetching.."
+  git fetch
+  echo ">> Git checkouting master.."
+  git checkout -b master origin/master
+  echo ">> Removing cloned node_modules.."
+  rm -rf node_modules
+  mv $bkupd/node_modules .
+  cd $bkupd/
+  echo ">> Restoring backupped sources.."
+  find . -maxdepth 1 -mindepth 1 -print0 |
+    xargs -0 cp -rfv -t $_project_root &&
+    rm -rf $bkupd
+  echo ">> Done!"
+}
+
+main() {
+  set -e
+  cd $_project_root
+  if [[ ! -e .git ]]; then
+    git init
+    improve_git_config
+  fi
+  if ! git_config_improved; then
+    echo "Not improved config. already gitfy?" 1>&2
+    exit 1
+  fi
+  local remote=$(git config --get remote.origin.url)
+  if [[ -n $remote ]]; then
+    echo "Already setupped." 1>&2
+    exit 0
+  fi
+  if [[ -z $_repo ]]; then
+    echo "Specify git url and user and <optional:email>" 1>&2
+    exit 1
+  fi
+  gitfy | log
+}
+main "$@"
