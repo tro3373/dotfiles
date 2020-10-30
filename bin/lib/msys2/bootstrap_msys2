@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+main() {
+  pacman -Syyu pacman --noconfirm
+  pacman -S --noconfirm \
+    base-devel msys2-devel mingw-w64-i686-toolchain mingw-w64-x86_64-toolchain \
+    man zsh vim git winpty svn wget sed diffutils tar zip unzip patch bc \
+    mingw-w64-x86_64-ag
+  sed -ri -e 's,^.*(profile_d zsh),  \1\n  SHELL=/bin/zsh,g' /etc/profile
+  sed -ri \
+    -e 's/bash/zsh/g' \
+    -e 's/rem set MSYS=win/set MSYS=win/g' \
+    /msys2_shell.cmd
+  curl -fSsL git.io/tr3s | bash
+}
+main "$@"
