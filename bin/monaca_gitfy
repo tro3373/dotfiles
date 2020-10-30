@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+readonly command_name=$(basename $0)
 readonly _repo=${1}
 readonly _user=${2:-user}
 readonly _mail=${3:-$_user@example.com}
@@ -87,6 +88,13 @@ gitfy() {
 
 main() {
   set -e
+  if [[ -z $_repo ]]; then
+    cat <<EOF 1>&2
+Specify git url and user and <optional:email>
+ex) $command_name <git_url> <user_name> [<email>]
+EOF
+    exit 1
+  fi
   cd $_project_root
   if [[ ! -e .git ]]; then
     git init
@@ -100,10 +108,6 @@ main() {
   if [[ -n $remote ]]; then
     echo "Already setupped." 1>&2
     exit 0
-  fi
-  if [[ -z $_repo ]]; then
-    echo "Specify git url and user and <optional:email>" 1>&2
-    exit 1
   fi
   gitfy | log
 }
