@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 
 # keyboard_layout=jp106
-keyboard_layout=us
+readonly keyboard_layout=us
+readonly _additional_arch=(
+  pacman-contrib # pacman cache clean
+  reflector
+  net-tools
+  inetutils
+  xsel xorg-server-xvfb # for clipboard
+  libxfont2
+)
 
 setup_keyboard() {
   log "==> setupping keyboard .."
@@ -55,6 +63,10 @@ setup_packages() {
 
   # パッケージ更新
   mexe sudo pacman -Syyu --noconfirm
+}
+
+setup_additional_pacakges() {
+  def_install "${_additional_arch[@]}"
 }
 
 setup_hostname() {

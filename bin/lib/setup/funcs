@@ -12,16 +12,9 @@ readonly _core_apps=(
   fzf neofetch anyenv go pt rg nvim nkf mmv gomi ghq shellcheck shfmt htop hub
   exa bat
 )
-readonly _additional_arch=(
+readonly _core_apps_additional_arch=(
   yay
-  pacman-contrib # pacman cache clean
-  reflector
-  net-tools
-  inetutils
-  xsel xorg-server-xvfb # for clipboard
-  libxfont2
 )
-
 # Dynamic Variables
 export debug=0
 export dry_run=1
@@ -440,12 +433,11 @@ clone_dot() {
   curl -fSsL git.io/tr3s | cat_bash ""
 }
 
-
 default_apps() {
   local _apps=()
   _apps+=("${_core_apps[@]}")
   if is_arch; then
-    _apps+=("${_additional_arch[@]}")
+    _apps+=("${_core_apps_additional_arch[@]}")
   fi
   echo "${_apps[@]}"
 }

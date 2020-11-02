@@ -13,6 +13,7 @@ pre_setup() {
   setup_timezone
   setup_locale
   setup_packages
+  setup_additional_pacakges
 }
 
 # load_update_arg_apps() {}
