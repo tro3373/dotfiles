@@ -48,10 +48,11 @@ Host *
   ForwardX11Trusted yes
   PermitLocalCommand  yes
   LocalCommand [[ -n $TMUX ]] && tmux rename-window %n
-  # Use master connection(faster)
-  ControlMaster auto
-  ControlPath ~/.ssh/mux-%r@%h:%p
-  ControlPersist 10
+  # disable because tunnel to vag not work
+  ## Use master connection(faster)
+  #ControlMaster auto
+  #ControlPath ~/.ssh/mux-%r@%h:%p
+  #ControlPersist 10
 Host springboard
   HostName XXX.XXX.XXX.XXX
   Port 22
