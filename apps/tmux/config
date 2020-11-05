@@ -12,7 +12,7 @@ install_redhat() {
 }
 
 _install_common() {
-  gh_user_local "https://github.com/tmux/tmux.git"
+  github_user_local "https://github.com/tmux/tmux.git"
   # local target_dir=/usr/local/src/tmux
   # if [[ -e $target_dir ]]; then
   #     mexe cd $target_dir
@@ -56,7 +56,7 @@ build_msys() {
   mexe make
   mexe make install
 
-  gh_user_local "https://github.com/tmux/tmux.git"
+  github_user_local "https://github.com/tmux/tmux.git"
   mexe ./autogen.sh
   # export LD_LIBRARY_PATH=/usr/local/lib
   mexe LD_LIBRARY_PATH=/usr/local/lib PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --prefix=/usr/local CFLAGS='-D_GNU_SOURCE'

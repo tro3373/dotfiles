@@ -35,5 +35,5 @@ setting_common() {
 #dl
 #dl_unzip
 #dl_untar
-#gh
-#gh_user_local
+#github
+#github_user_local
