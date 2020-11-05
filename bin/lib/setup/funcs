@@ -281,7 +281,7 @@ cd_work() {
   mexe "cd \"$workdir\""
 }
 
-_gh() {
+_github() {
   local dst="$1"
   local url="$2"
   local tag="${3:-}"
@@ -314,11 +314,11 @@ _gh() {
     mexe $_sudo git checkout -b $tag $tag
   fi
 }
-gh_user_local() {
-  _gh /usr/local/src "$@"
+github_user_local() {
+  _github /usr/local/src "$@"
 }
-gh() {
-  _gh "$workdir" "$@"
+github() {
+  _github "$workdir" "$@"
 }
 dl() {
   local _url="$1"
