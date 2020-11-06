@@ -16,6 +16,9 @@ install_mac() {
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() {
+  if grep 'gh ' ~/.works.zsh >&/dev/null; then
+    return
+  fi
   mexe "echo 'eval \"\$(gh completion -s zsh)\"' >> ~/.works.zsh"
 }
 # setting_arch() { not_supported; }
