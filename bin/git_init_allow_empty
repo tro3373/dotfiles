@@ -2,6 +2,6 @@
 
 main() {
   git init
-  git commit --allow-empty -m "first commit"
+  git commit --allow-empty -m "Initial empty commit"
 }
 main
