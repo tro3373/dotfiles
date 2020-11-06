@@ -2,7 +2,11 @@
 
 install_common() { not_supported; }
 install_arch() {
-  install_via_os_default
+  if ! has snap; then
+    log "No snap command exist. install snap first." 1>&2
+    return
+  fi
+  mexe sudo snap install gh --edge
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
