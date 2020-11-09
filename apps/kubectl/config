@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+install_common() {
+  cd_work
+  local _v=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
+  mexe "curl -LO 'https://storage.googleapis.com/kubernetes-release/release/$_v/bin/linux/amd64/kubectl'"
+  mexe chmod +x ./kubectl
+  mexe sudo mv ./kubectl /usr/local/bin/kubectl
+  mexe kubectl version --client
+}
+# install_arch()   { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() {
+  mexe 'sudo apt-get update && sudo apt-get install -y apt-transport-https gnupg2 curl'
+  mexe 'curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -'
+  mexe 'echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list'
+  mexe sudo apt-get update
+  mexe sudo apt-get install -y kubectl
+}
+cat_rh_kube_repo() {
+  cat <<EOF
+  [kubernetes]
+  name=Kubernetes
+  baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+  enabled=1
+  gpgcheck=1
+  repo_gpgcheck=1
+  gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOF
+}
+install_redhat() {
+  cat_rh_kube_repo | sudo_tee /etc/yum.repos.d/kubernetes.repo
+  mexe yum install -y kubectl
+}
+setting_common() { not_supported; }
+setting_arch() { not_supported; }
+setting_msys() { not_supported; }
+setting_cygwin() { not_supported; }
+setting_mac() { not_supported; }
+setting_ubuntu() { not_supported; }
+setting_redhat() { not_supported; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
