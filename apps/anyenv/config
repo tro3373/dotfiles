@@ -1,52 +1,53 @@
 #!/usr/bin/env bash
 
 is_installed() {
-    test -d ~/.anyenv/
+  test -d ~/.anyenv/
 }
 
-install_msys()   { not_supported; }
+install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_common() {
-    mexe "git clone https://github.com/riywo/anyenv ~/.anyenv"
+  mexe "git clone https://github.com/riywo/anyenv ~/.anyenv"
 }
 
 setting_common() {
-    if grep "anyenv init" ~/.works.zsh >& /dev/null; then
-        return
-    fi
-    mexe "echo 'add_path \${HOME}/.anyenv/bin' >> ~/.works.zsh"
-    mexe "echo 'eval \"\$(anyenv init -)\"' >> ~/.works.zsh"
-    rm_dotpath
+  if grep "anyenv_init" ~/.works.zsh >&/dev/null; then
+    return
+  fi
+  mexe "echo 'add_path \${HOME}/.anyenv/bin' >> ~/.works.zsh"
+  # mexe "echo 'eval \"\$(anyenv init -)\"' >> ~/.works.zsh"
+  mexe "echo 'eval \"\$(\${HOME}/.dot/bin/anyenv_init)\"' >> ~/.works.zsh"
+  rm_dotpath
 
-    #exec $SHELL -l
-    # for D in $(bin/ls $HOME/.anyenv/envs/); do
-    #     add_path $HOME/.anyenv/envs/$D/shims
-    # done
-#    if [[ -e ~/.path ]]; then
-#        # ~/.anyenv/bin へ path を通す必要がある
-#        mexe rm ~/.path
-#    fi
+  #exec $SHELL -l
+  # for D in $(bin/ls $HOME/.anyenv/envs/); do
+  #     add_path $HOME/.anyenv/envs/$D/shims
+  # done
+  #    if [[ -e ~/.path ]]; then
+  #        # ~/.anyenv/bin へ path を通す必要がある
+  #        mexe rm ~/.path
+  #    fi
 
-    ## --------------------------------------------------------
-    ## rbenv
-    ## --------------------------------------------------------
-    #if [ -e ${HOME}/.rbenv ]; then
-    #    export PATH="$HOME/.rbenv/bin:$PATH"
-    #    eval "$(rbenv init -)"
-    #fi
-    ## --------------------------------------------------------
-    ## nvm
-    ## --------------------------------------------------------
-    #if [ -e ${HOME}/.nvm ]; then
-    #    . ${HOME}/.nvm/nvm.sh
-    #    nvm use v0.10.38
-    #fi
-    ## --------------------------------------------------------
-    ## Python
-    ## --------------------------------------------------------
-    #if [ "`which virtualenvwrapper.sh >/dev/null 2>&1; echo $?`" = "0" ]; then
-    #    export WORKON_HOME=$HOME/.virtualenvs
-    #    export PROJECT_HOME=$HOME/Devel
-    #    source virtualenvwrapper.sh
-    #fi
+  ## --------------------------------------------------------
+  ## rbenv
+  ## --------------------------------------------------------
+  #if [ -e ${HOME}/.rbenv ]; then
+  #    export PATH="$HOME/.rbenv/bin:$PATH"
+  #    eval "$(rbenv init -)"
+  #fi
+  ## --------------------------------------------------------
+  ## nvm
+  ## --------------------------------------------------------
+  #if [ -e ${HOME}/.nvm ]; then
+  #    . ${HOME}/.nvm/nvm.sh
+  #    nvm use v0.10.38
+  #fi
+  ## --------------------------------------------------------
+  ## Python
+  ## --------------------------------------------------------
+  #if [ "`which virtualenvwrapper.sh >/dev/null 2>&1; echo $?`" = "0" ]; then
+  #    export WORKON_HOME=$HOME/.virtualenvs
+  #    export PROJECT_HOME=$HOME/Devel
+  #    source virtualenvwrapper.sh
+  #fi
 }
