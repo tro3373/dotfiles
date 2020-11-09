@@ -70,6 +70,7 @@ setting_redhat() { not_supported; }
 #dl_untar
 #github
 #github_user_local
+#sudo_tee
 
 EOF
   chmod 755 $file
