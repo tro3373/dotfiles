@@ -42,3 +42,5 @@ let g:loaded_2html_plugin       = 1
 
 " 各種設定の読み込み
 call map(sort(split(globpath(&runtimepath, 'conf.d/*.vim'))), {->[execute('exec "so" v:val')]})
+" [高速化対応](https://zenn.dev/mattn/articles/565c4ec71f461cbbf5c9?s=09)
+" runtime! conf.d/*.vim
