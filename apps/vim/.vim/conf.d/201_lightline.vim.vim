@@ -1,6 +1,7 @@
-if !g:plug.is_installed("lightline.vim")
-  finish
-endif
+UsePlugin 'lightline.vim'
+"if !g:plug.is_installed("lightline.vim")
+"  finish
+"endif
 
 "   solarized/seoul256/jellybeans
 " let g:lightline = {

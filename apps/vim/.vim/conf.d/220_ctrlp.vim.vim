@@ -1,6 +1,6 @@
-if !g:plug.is_installed("ctrlp.vim")
-  finish
-endif
+"if !g:plug.is_installed("ctrlp.vim")
+"  finish
+"endif
 
 " let g:ctrlp_map='<c-p>'
 let g:ctrlp_map='<Leader>o'

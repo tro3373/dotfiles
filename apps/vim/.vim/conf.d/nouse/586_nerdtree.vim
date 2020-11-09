@@ -1,6 +1,7 @@
-if !g:plug.is_installed("nerdtree")
-  finish
-endif
+UsePlugin 'nerdtree'
+"if !g:plug.is_installed("nerdtree")
+"  finish
+"endif
 
 "=============================================
 " NERDTree 設定

@@ -1,6 +1,7 @@
-if !g:plug.is_installed("ag.vim")
-  finish
-endif
+UsePlugin 'ag.vim'
+"if !g:plug.is_installed("ag.vim")
+"  finish
+"endif
 
 " カーソル位置の単語を ag 検索
 nnoremap <Leader>g :Ag <C-R><C-W><CR>

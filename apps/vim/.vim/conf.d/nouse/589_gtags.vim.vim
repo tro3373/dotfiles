@@ -1,6 +1,7 @@
-if !g:plug.is_installed("gtags.vim")
-  finish
-endif
+UsePlugin 'gtags.vim'
+"if !g:plug.is_installed("gtags.vim")
+"  finish
+"endif
 
 " カーソル位置の単語を Gtags で検索
 nnoremap <C-j> :GtagsCursor<Enter>

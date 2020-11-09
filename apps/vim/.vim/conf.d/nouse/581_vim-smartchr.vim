@@ -1,6 +1,7 @@
-if !g:plug.is_installed("vim-smartchr")
-  finish
-endif
+UsePlugin 'vim-smartchr'
+"if !g:plug.is_installed("vim-smartchr")
+"  finish
+"endif
 
 "=============================================
 " smartchr 設定

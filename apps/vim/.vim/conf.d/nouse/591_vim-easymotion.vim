@@ -1,6 +1,7 @@
-if !g:plug.is_installed("vim-easymotion")
-  finish
-endif
+UsePlugin 'vim-easymotion'
+"if !g:plug.is_installed("vim-easymotion")
+"  finish
+"endif
 
 "=============================================
 " Lokaltog/        vim-easymotion

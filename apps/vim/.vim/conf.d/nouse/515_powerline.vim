@@ -1,6 +1,7 @@
-if !g:plug.is_installed("powerline")
-  finish
-endif
+UsePlugin 'powerline'
+"if !g:plug.is_installed("powerline")
+"  finish
+"endif
 
 let g:Powerline_symbols = 'fancy'
 " let g:Powerline_symbols = 'compatible'

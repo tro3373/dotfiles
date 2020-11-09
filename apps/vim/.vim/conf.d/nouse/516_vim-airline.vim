@@ -1,6 +1,7 @@
-if !g:plug.is_installed("vim-airline")
-  finish
-endif
+UsePlugin 'vim-airline'
+"if !g:plug.is_installed("vim-airline")
+"  finish
+"endif
 
 "" Powerline font を使用する
 let g:airline_powerline_fonts = 1

@@ -2,9 +2,10 @@ if !executable('fzf')
   finish
 endif
 
-if !g:plug.is_installed("fzf.vim")
-  finish
-endif
+UsePlugin 'fzf.vim'
+"if !g:plug.is_installed("fzf.vim")
+"  finish
+"endif
 
 " option に関しては、以下が詳しい
 "   https://github.com/junegunn/fzf/wiki

@@ -1,6 +1,7 @@
-if !g:plug.is_installed('vim-yapf')
-  finish
-endif
+UsePlugin 'vim-yapf'
+"if !g:plug.is_installed('vim-yapf')
+"  finish
+"endif
 
 "=============================================
 " yapf

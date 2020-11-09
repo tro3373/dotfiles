@@ -1,6 +1,7 @@
-if !g:plug.is_installed("tig-explorer.vim")
-  finish
-endif
+UsePlugin 'tig-explorer.vim'
+"if !g:plug.is_installed("tig-explorer.vim")
+"  finish
+"endif
 
 " Following commands are available on tig launched from tig-explorer
 " ```

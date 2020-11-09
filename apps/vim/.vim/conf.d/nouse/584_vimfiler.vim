@@ -1,6 +1,7 @@
-if !g:plug.is_installed("vimfiler")
-  finish
-endif
+UsePlugin 'vimfiler'
+"if !g:plug.is_installed("vimfiler")
+"  finish
+"endif
 
 " VimFiler
 let g:vimfiler_as_default_explorer = 1

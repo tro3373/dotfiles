@@ -1,6 +1,7 @@
-if !g:plug.is_installed("neosnippet")
-  finish
-endif
+UsePlugin 'neosnippet'
+"if !g:plug.is_installed("neosnippet")
+"  finish
+"endif
 
 "=============================================
 " neosnippet 設定

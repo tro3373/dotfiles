@@ -1,6 +1,7 @@
-if !g:plug.is_installed('vim-terraform')
-  finish
-endif
+UsePlugin 'vim-terraform'
+"if !g:plug.is_installed('vim-terraform')
+"  finish
+"endif
 
 "=============================================
 " hashivim/vim-terraform

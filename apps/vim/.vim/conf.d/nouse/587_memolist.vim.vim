@@ -1,6 +1,7 @@
-if !g:plug.is_installed('memolist.vim')
-  finish
-endif
+UsePlugin 'memolist.vim'
+"if !g:plug.is_installed('memolist.vim')
+"  finish
+"endif
 
 "=============================================
 " Memolist

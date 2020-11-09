@@ -1,6 +1,7 @@
-if !g:plug.is_installed("caw.vim")
-  finish
-endif
+UsePlugin 'caw.vim'
+"if !g:plug.is_installed("caw.vim")
+"  finish
+"endif
 
 "=============================================
 " caw 設定(コメントアウト トグル)

@@ -1,6 +1,7 @@
-if !g:plug.is_installed("vim-gitgutter")
-  finish
-endif
+UsePlugin 'vim-gitgutter'
+"if !g:plug.is_installed("vim-gitgutter")
+"  finish
+"endif
 
 " let g:gitgutter_git_executable = "PATH=/usr/bin winpty git"
 let g:gitgutter_map_keys = 0  " Not use gitgutter keymap

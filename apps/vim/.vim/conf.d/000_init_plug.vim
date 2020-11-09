@@ -258,10 +258,15 @@ call plug#end()
 " Glaive codefmt google_java_executable="java -jar /path/to/google-java-format-VERSION-all-deps.jar"
 
 " VimPlug plugin install 判定関数
-let g:plug = {
-    \ "plugs": get(g:, 'plugs', {})
-    \ }
-function! g:plug.is_installed(name)
-  return has_key(self.plugs, a:name) ? isdirectory(self.plugs[a:name].dir) : 0
+" let g:plug = {
+"  \ "plugs": get(g:, 'plugs', {})
+"  \ }
+" function! g:plug.is_installed(name)
+"   return has_key(self.plugs, a:name) ? isdirectory(self.plugs[a:name].dir) : 0
+" endfunction
+let s:plugs = get(s:, 'plugs', get(g:, 'plugs', {}))
+function! FindPlugin(name) abort
+  return has_key(s:plugs, a:name) ? isdirectory(s:plugs[a:name].dir) : 0
 endfunction
+command! -nargs=1 UsePlugin if !FindPlugin(<args>) | finish | endif
 

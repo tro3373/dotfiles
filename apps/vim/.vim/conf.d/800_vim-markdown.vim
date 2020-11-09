@@ -1,6 +1,7 @@
-if !g:plug.is_installed("vim-markdown")
-  finish
-endif
+UsePlugin 'vim-markdown'
+"if !g:plug.is_installed("vim-markdown")
+"  finish
+"endif
 
 "=============================================
 " Markdown Preview Syntax etc

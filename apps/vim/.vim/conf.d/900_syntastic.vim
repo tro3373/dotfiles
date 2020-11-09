@@ -1,6 +1,7 @@
-if !g:plug.is_installed('syntastic')
-  finish
-endif
+UsePlugin 'syntastic'
+"if !g:plug.is_installed('syntastic')
+"  finish
+"endif
 
 "=============================================
 " syntastic

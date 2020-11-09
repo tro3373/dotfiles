@@ -1,6 +1,7 @@
-if !g:plug.is_installed('vim-quickrun')
-  finish
-endif
+UsePlugin 'vim-quickrun'
+"if !g:plug.is_installed('vim-quickrun')
+"  finish
+"endif
 
 "=============================================
 " vim-quickrun

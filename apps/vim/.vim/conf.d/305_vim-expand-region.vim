@@ -1,6 +1,7 @@
-if !g:plug.is_installed("vim-expand-region")
-  finish
-endif
+UsePlugin 'vim-expand-region'
+"if !g:plug.is_installed("vim-expand-region")
+"  finish
+"endif
 
 "=============================================
 " Expand Region

@@ -1,7 +1,8 @@
 " Indent Guide Settings
-if !g:plug.is_installed("vim-indent-guides")
-  finish
-endif
+UsePlugin 'vim-indent-guides'
+"if !g:plug.is_installed("vim-indent-guides")
+"  finish
+"endif
 
 " =================================================================================
 " (WARN) Error when reload vimrcs settings. (g:indent_guides_enable_on_vim_startup)

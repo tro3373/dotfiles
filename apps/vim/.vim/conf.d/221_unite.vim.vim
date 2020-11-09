@@ -1,6 +1,7 @@
-if !g:plug.is_installed("unite")
-  finish
-endif
+UsePlugin 'unite'
+"if !g:plug.is_installed("unite")
+"  finish
+"endif
 
 "=============================================
 " Unite 設定

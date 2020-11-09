@@ -1,6 +1,7 @@
-if !g:plug.is_installed('ale')
-  finish
-endif
+UsePlugin 'ale'
+"if !g:plug.is_installed('ale')
+"  finish
+"endif
 
 "=============================================
 " ale

@@ -1,7 +1,8 @@
 " Indent Guide Settings
-if !g:plug.is_installed("sonictemplate-vim")
-  finish
-endif
+UsePlugin 'sonictemplate-vim'
+"if !g:plug.is_installed("sonictemplate-vim")
+"  finish
+"endif
 
 let g:sonictemplate_vim_template_dir = expand('~/.vim/sonictemplate')
 

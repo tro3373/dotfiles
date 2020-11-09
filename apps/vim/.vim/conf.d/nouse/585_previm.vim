@@ -1,10 +1,12 @@
-if !g:plug.is_installed("previm")
-  finish
-endif
+UsePlugin 'previm'
+"if !g:plug.is_installed("previm")
+"  finish
+"endif
 
-if !g:plug.is_installed("open-browser.vim")
-  finish
-endif
+UsePlugin 'open-browser.vim'
+" if !g:plug.is_installed("open-browser.vim")
+"   finish
+" endif
 
 "=============================================
 " previm
