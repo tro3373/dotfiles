@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+dummy="echo"
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+    -e) dummy= ;;
+    esac
+  done
+}
+exe() {
+  [[ -z $dummy ]] && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+  printf "> Executing: $*" | ink yellow
+  [[ -z $dummy ]] && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+  if [[ -n $dummy ]]; then
+    return
+  fi
+  eval "$*"
+}
+start() {
+  exe minikube start --driver=virtualbox
+}
+
+main() {
+  initialize "$@"
+  start
+  [[ -n $dummy ]] && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+}
+main "$@"
