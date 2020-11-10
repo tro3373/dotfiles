@@ -17,13 +17,40 @@ exe() {
   fi
   eval "$*"
 }
-start() {
+start_minikube() {
   exe minikube start --driver=virtualbox
+}
+create_hello_minikube() {
+  exe kubectl create deployment hello-minikube --image=k8s.gcr.io/echoserver:1.10
+  exe kubectl expose deployment hello-minikube --type=NodePort --port=8080
+}
+status_hello_minikube() {
+  exe kubectl get pod
+  exe minikube service hello-minikube --url
+}
+delete_hello_minikube() {
+  exe kubectl delete services hello-minikube
+  exe kubectl delete deployment hello-minikube
+}
+stop_minikube() {
+  exe minikube stop
+}
+delete_minikube() {
+  exe minikube delete
+}
+dashboard() {
+  exe minikube dashboard
 }
 
 main() {
   initialize "$@"
-  start
+  start_minikube
+  create_hello_minikube
+  status_hello_minikube
+  dashboard
+  delete_hello_minikube
+  stop_minikube
+  delete_minikube
   [[ -n $dummy ]] && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
 }
 main "$@"
