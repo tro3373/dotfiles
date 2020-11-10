@@ -396,14 +396,25 @@ snippet innnk
   }
 
 snippet exe
-    exe() {
-      [[ -z $dummy ]] && echo "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
-      ink yellow "> Executing: $*"
-      [[ -z $dummy ]] && echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-      if [[ -z $dummy ]]; then
-        eval "$*"
-      fi
-    }
+  dummy="echo"
+  initialize() {
+    for arg in "$@"; do
+      case "$arg" in
+      -e) dummy= ;;
+      esac
+    done
+  }
+  exe() {
+    [[ -z $dummy ]] && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    printf "> Executing: $*" | ink yellow
+    [[ -z $dummy ]] && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    if [[ -n $dummy ]]; then
+      return
+    fi
+    eval "$*"
+  }
+  initialize "$@"
+  [[ -n $dummy ]] && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
 
 snippet iffff
   if [[ -e ${1} ]]; then
