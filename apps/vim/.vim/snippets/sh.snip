@@ -286,16 +286,16 @@ snippet forarg
     done
 
 snippet dummyset
-    dummy="echo"
-    initialize() {
-      for arg in "$@"; do
-        case "$arg" in
-          -e) dummy= ;;
-        esac
-      done
-    }
-    initialize "$@"
-    [[ -n $dummy ]] && echo "This is dummy mode. specify -e option." 1>&2
+  dummy="echo"
+  initialize() {
+    for arg in "$@"; do
+      case "$arg" in
+        -e) dummy= ;;
+      esac
+    done
+  }
+  initialize "$@"
+  [[ -n $dummy ]] && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
 
 
 snippet initialize
