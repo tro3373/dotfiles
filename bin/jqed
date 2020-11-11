@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+main() {
+  ff json |
+    while read -r _path; do
+      [[ -z $_path ]] && continue
+      [[ $_path =~ ^#.* ]] && continue
+      [[ -e $_path.jqed ]] && echo ">> $_path.jqed already exist" 1>&2 && continue
+      echo "> $_path"
+      cat <$_path | jq . >$_path.jqed
+      [[ $# -eq 0 || $1 != "-o" ]] && continue
+      mv -f $_path.jqed $_path
+    done
+}
+main "$@"
