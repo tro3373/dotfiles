@@ -1,18 +1,25 @@
 #!/usr/bin/env bash
 
+readonly current_dir=$(pwd)
 readonly timestamp=$(date +%Y%m%d%H%M%S)
 dummy="echo"
 restore=0
+archive=0
 
 initialize() {
   for arg in "$@"; do
     case "$arg" in
     -e) dummy= ;;
     -r) restore=1 ;;
+    -a) archive=1 ;;
     esac
   done
 }
 check() {
+  if [[ $restore -eq 1 && $archive -eq 1 ]]; then
+    echo "Invalid args. restore and archive option cannot set both." 1>&2
+    exit 1
+  fi
   local result=$(git rev-parse --is-inside-work-tree 2>/dev/null)
   if [[ $result == true ]]; then
     return
@@ -23,6 +30,18 @@ check() {
 get_prj_name() {
   basename "$(get_git_root)"
 }
+find_mod_files() {
+  git status -s |
+    grep -E -v '^ D ' |
+    cut -c4-
+}
+archive_files() {
+  local dst=$current_dir/backup_$timestamp.tgz
+  find_mod_files |
+    xargs $dummy tar cvfpz $dst >&/dev/null
+  echo "Done! tgy saved to $dst"
+  [[ -z $dummy ]] && echo $dst | clip
+}
 bkup_files() {
   local hash=$(git rev-parse --short HEAD)
   # local tmpd=$(mktemp -d)
@@ -31,9 +50,7 @@ bkup_files() {
   local mod_files_d=$tmpd/mod_files
   $dummy mkdir -p $mod_files_d
   git status -s 2>&1 | tee $status
-  git status -s |
-    grep -E -v '^ D ' |
-    cut -c4- |
+  find_mod_files |
     while read -r rel_path; do
       [[ -z $rel_path ]] && continue
       [[ $rel_path =~ ^#.* ]] && continue
@@ -68,6 +85,8 @@ main() {
 
   if [[ $restore -eq 1 ]]; then
     restore_files
+  elif [[ $archive -eq 1 ]]; then
+    archive_files
   else
     bkup_files
   fi
