@@ -30,10 +30,9 @@ setting_cygwin() { not_supported; }
 setting_mac() {
   setting_common
   if [[ -e /Applications/Xcode.app ]]; then
-    # TODO
-    #mexe sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
-    #mexe sudo xcodebuild -runFirstLaunch
-    #mexe sudo xcodebuild -license
+    mexe sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+    mexe sudo xcodebuild -runFirstLaunch
+    mexe sudo xcodebuild -license
   fi
 }
 # setting_ubuntu() { not_supported; }
