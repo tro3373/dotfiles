@@ -1,7 +1,7 @@
 #!/bin/bash
 
 root_path=${DOTPATH:-~/.dot}/bin
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 
 usage() {
   local cmd=$(basename $0)
@@ -19,7 +19,7 @@ main() {
   if has ag; then
     ag $args $root_path
   else
-    find $root_path -type f | xargs grep "$args" --color=auto
+    find $root_path -type f -print0 | xargs -0 grep "$args" --color=auto
   fi
 }
 

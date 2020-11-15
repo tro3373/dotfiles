@@ -2,6 +2,6 @@
 
 main() {
   DOTPATH=${DOTPATH:-~/.dot}
-  /bin/ls --color $DOTPATH/bin
+  ls --color $DOTPATH/bin
 }
 main
