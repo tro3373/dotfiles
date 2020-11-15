@@ -3,21 +3,23 @@
 current_dir=$(pwd)
 
 main() {
-  local arg=${1:-$current_dir}
+  local args="$*"
+  if [[ $# -eq 0 ]]; then
+    args=$current_dir
+  fi
   # local _open=open
-  local _open=$(type -a open |grep -v $0 |cut -d' ' -f3)
+  local _open=$(type -a open | grep -v $0 | head -1 | cut -d' ' -f3)
   case "${OSTYPE}" in
-    linux*)     _open=xdg-open ;;
-    cygwin*)    _open=cygstart ;;
-    msys*)
-      _open=explorer
-      ;;
+  linux*) _open=xdg-open ;;
+  cygwin*) _open=cygstart ;;
+  msys*)
+    _open=explorer
+    ;;
   esac
   if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-    arg="$(cygpath -aw $arg)"
+    args="$(cygpath -aw $args)"
   fi
-  echo "==> open $arg"
-  $_open "$arg" &> /dev/null
+  echo "==> open $args"
+  $_open "$args" &>/dev/null
 }
 main "$@"
-
