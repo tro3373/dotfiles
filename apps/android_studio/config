@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 
-local _android_sdk_root_mac=$HOME/Library/Android/sdk
 is_installed() {
   false
 }
 install_common() { not_supported; }
 install_arch() { not_supported; }
-install_msys() { not_supported; }
+# install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() {
-  not_supported
+  mexe open 'https://developer.android.com/studio'
 }
 install_ubuntu() {
   not_supported
@@ -31,7 +30,12 @@ setting_common() { not_supported; }
 setting_arch() { not_supported; }
 setting_msys() { not_supported; }
 setting_cygwin() { not_supported; }
-setting_mac() { not_supported; }
+setting_mac() {
+  if grep Android/sdk/platform-tools ~/.works.zsh >&/dev/null; then
+    return
+  fi
+  mexe "echo 'add_path \$HOME/Library/Android/sdk/platform-tools' >> ~/.works.zsh"
+}
 setting_ubuntu() { not_supported; }
 setting_redhat() { not_supported; }
 #install_via_os_default
@@ -50,3 +54,15 @@ setting_redhat() { not_supported; }
 #dl_untar
 #github
 #github_user_local
+
+uninstall_mac() {
+  mexe 'rm -Rf /Applications/Android\ Studio.app'
+  mexe 'rm -Rf ~/Library/Preferences/AndroidStudio*'
+  mexe 'rm ~/Library/Preferences/com.google.android.studio.plist'
+  mexe 'rm -Rf ~/Library/Application\ Support/AndroidStudio*'
+  mexe 'rm -Rf ~/Library/Logs/AndroidStudio*'
+  mexe 'rm -Rf ~/Library/Caches/AndroidStudio*'
+  mexe 'rm -Rf ~/.gradle'
+  mexe 'rm -Rf ~/.android'
+  mexe 'rm -Rf ~/Library/Android*'
+}
