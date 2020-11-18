@@ -431,3 +431,14 @@ alias   test
     :
   }
   _test "$@"
+
+snippet iffirstargisd
+alias   secondafterarg
+  local args=("$@")
+  local arg1=\$1
+  local rel_path=
+  if [[ -d $arg1 ]]; then
+    cd $arg1
+    rel_path=${arg1%/}
+    args=("${@:2}")
+  fi
