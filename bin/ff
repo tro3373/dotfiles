@@ -5,7 +5,7 @@ readonly ignored=(.git node_modules bower_components)
 
 has() { command -v ${1} >&/dev/null; }
 
-_ff() {
+findf() {
   local cmd=(find)
   for i in "${ignored[@]}"; do
     # cmd+=("-not \\( -type d -name $i -prune \\)")
@@ -35,14 +35,34 @@ rgf() {
     fi
 }
 
-main() {
+_ff() {
   if [[ $_FF_OPT_F != f ]]; then
-    _ff "$@"
+    findf "$@"
     return
   fi
-  has rg && rgf "${@}" && return
-  has pt && pt -g "${@}" --nocolor && return
-  has ag && ag -g "${@}" --nocolor && return
-  _ff "$@"
+  has rg && rgf "$@" && return
+  has pt && pt -g "$@" --nocolor && return
+  has ag && ag -g "$@" --nocolor && return
+  findf "$@"
+}
+
+main() {
+  local args=("$@")
+  local arg1=$1
+  local rel_path=
+  if [[ -d $arg1 ]]; then
+    # if fist argument is exist directory,
+    # we execute command in the directory.
+    cd $arg1
+    rel_path=${arg1%/}
+    args=("${@:2}")
+  fi
+  _ff "${args[@]}" |
+    sed -e 's,^./,,g' |
+    if [[ -z $rel_path ]]; then
+      cat -
+    else
+      cat - | sed -e "s,^,$rel_path/,g"
+    fi
 }
 main "$@"
