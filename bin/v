@@ -9,25 +9,41 @@ echo_if_valid() {
   echo "$f"
 }
 
+fire_stdin() {
+  # https://superuser.com/questions/380772/removing-ansi-color-codes-from-text-stream
+  cat - |
+    sed -e 's,\*,,g' -e 's/\x1b\[[0-9;]*[a-zA-Z]//g' |
+    while read -r f; do
+      echo_if_valid
+    done
+}
+
 fire() {
   if [[ -p /dev/stdin ]]; then
-    # https://superuser.com/questions/380772/removing-ansi-color-codes-from-text-stream
-    cat - |
-      sed -e 's,\*,,g' -e 's/\x1b\[[0-9;]*[a-zA-Z]//g' |
-      while read -r f; do
-        echo_if_valid
-      done
+    fire_stdin
   else
-    ff
+    ff "$@"
   fi
 }
 
 fire_files() {
   local query="$*"
+  local fire_ff_arg=
+  if [[ ! -p /dev/stdin ]]; then
+    local directoryable=$1
+    if [[ -d $directoryable ]]; then
+      # MEMO: we should ignore first arg from query, because
+      # first arg that existing directory is special for ff commmand(@see ff command)
+      query="${*:2}"
+      fire_ff_arg=$directoryable
+    fi
+  fi
+
   if [[ -n $query ]]; then
     query="-q $query"
   fi
-  fire | fzf -m $query --preview 'head -100 {}' --select-1 --exit-0
+
+  fire "$fire_ff_arg" | fzf -m $query --preview 'head -100 {}' --select-1 --exit-0
 }
 
 main() {
