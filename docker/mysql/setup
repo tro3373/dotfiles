@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+DB_NAME=${DB_NAME:-dev}
+DB_USER=${DB_USER:-dbuser}
+DB_PASS=${DB_PASS:-dbpass}
+
+main() {
+  mysql -u root --password=secret <<EOF
+/*
+*/
+CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_PASS';
+CREATE DATABASE IF NOT EXISTS $DB_NAME DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+GRANT ALL PRIVILEGES ON *.* TO $DB_USER@'%';
+select user,host from mysql.user;
+SHOW GRANTS FOR $DB_USER@'%';
+EOF
+}
+main "$@"
