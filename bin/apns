@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+main() {
+  bundle_id=$1
+  pem_path=$2
+  token=$3
+
+  if [[ -z $bundle_id || -z $pem_path || -z $token ]]; then
+    echo "Invalid params. bundle_id:$bundle_id pem_path:$pem_path token:$token" 1>&2
+    exit 1
+  fi
+
+  url="https://api.development.push.apple.com/3/device/"
+  if [[ $ENV == prod ]]; then
+    url="https://api.push.apple.com/3/device/"
+  fi
+
+  pushData='{"aps": {"alert": "push test"}}'
+  curl -v \
+    -d "$pushData" \
+    -H "apns-priority: 10" \
+    -H "apns-expiration: 0" \
+    -H "apns-topic: ${bundle_id}" \
+    --http2 \
+    --cert ${pem_path} \
+    ${url}${token}
+}
+main "$@"
