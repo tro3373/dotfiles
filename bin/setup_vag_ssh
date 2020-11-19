@@ -6,17 +6,23 @@ setup_host() {
     echo "===> No .ssh/config exist."
     return
   fi
-  if grep vagrant ~/.ssh/config >& /dev/null; then
+  if grep vagrant ~/.ssh/config >&/dev/null; then
     echo "===> Already setupped .ssh/config"
     return
   fi
-  cat << EOL >> ~/.ssh/config
+  cat <<EOL >>~/.ssh/config
 Host vag
-  HostName localhost
+  ForwardX11 yes
+  ForwardX11Trusted yes
+  GSSAPIAuthentication no
+  HostName 127.0.0.1
   Port 2222
   User vagrant
+  # For chrome proxy browsing
+  # https://qiita.com/iredic/items/47b5c8c573bfea51be14
+  DynamicForward localhost:5963
 EOL
-echo "===> vag config setupped  to .ssh/config."
+  echo "===> vag config setupped  to .ssh/config."
 }
 setup_guest() {
   echo "==> setupping Guest .."
@@ -25,16 +31,16 @@ setup_guest() {
     return
   fi
   echo "==> checking guest authorized_keys .."
-  local grep_key="$(cat < ~/.ssh/id_rsa.pub |cut -c-50)"
+  local grep_key="$(cat <~/.ssh/id_rsa.pub | cut -c-50)"
   echo "===> grep_key: $grep_key"
   # shellcheck disable=SC2029
-  if ssh vag "test -e ~/.ssh/authorized_keys && grep \"$grep_key\" ~/.ssh/authorized_keys" >& /dev/null; then
+  if ssh vag "test -e ~/.ssh/authorized_keys && grep \"$grep_key\" ~/.ssh/authorized_keys" >&/dev/null; then
     echo "===> Already setupped to .ssh/authorized_keys in guest."
     return
   fi
   echo "===> not setupped guest authorized_keys yet."
   echo "==> setupping guest authorized_keys .."
-  cat < ~/.ssh/id_rsa.pub |ssh vag "cat - |tee -a ~/.ssh/authorized_keys " >/dev/null
+  cat <~/.ssh/id_rsa.pub | ssh vag "cat - |tee -a ~/.ssh/authorized_keys " >/dev/null
   echo "===> guest authorized_keys setupped."
 }
 main() {
