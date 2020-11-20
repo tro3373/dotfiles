@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-readonly script_dir=$(cd "$(dirname $0)"; pwd)
 readonly current_dir=$(pwd)
 readonly outd=$current_dir/ssl
 readonly server_conf=$current_dir/server.conf
@@ -18,7 +17,7 @@ readonly CSR_CN=example.com
 gen_crt_old() {
   # sudo openssl req -x509 -nodes -days 365 -newkey rsa:$key_length -keyout ./selfsigned.key -out ./selfsigned.crt
   # 秘密鍵の作成
-  openssl genrsa $key_length > server.key
+  openssl genrsa $key_length >server.key
   # 証明書署名要求の作成
   # C : ２文字の国コード。日本は JP 。(1)
   # ST : 都道府県 (2)
@@ -27,9 +26,9 @@ gen_crt_old() {
   # OU : 組織の部局の名前 (5)
   # CN : サーバの FQDN （6）
   openssl req -new -key server.key \
-    -subj "/C=$CSR_C/ST=$CSR_ST/L=$CSR_L/O=$CSR_O/OU=$CSR_OU/CN=$CSR_CN" > server.csr
+    -subj "/C=$CSR_C/ST=$CSR_ST/L=$CSR_L/O=$CSR_O/OU=$CSR_OU/CN=$CSR_CN" >server.csr
   # 自分で署名して10年間有効な証明書作る
-  openssl x509 -days $key_expired -req -signkey server.key < server.csr > server.crt
+  openssl x509 -days $key_expired -req -signkey server.key <server.csr >server.crt
   openssl dhparam -out dhparam.pem $key_length
 }
 gen_crt() {
@@ -79,7 +78,7 @@ gen_server_conf_if_needed() {
   fi
   echo "$server_conf not exist. Generating. Press Enter. (cancel Ctrl+C)."
   read
-  cat_server_conf > $server_conf
+  cat_server_conf >$server_conf
 }
 main() {
   gen_server_conf_if_needed
