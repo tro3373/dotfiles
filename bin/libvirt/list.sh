@@ -1,6 +1,6 @@
 #!/bin/bash
 
 main() {
-    sudo virsh list --all
+  sudo virsh list --all
 }
 main

@@ -17,7 +17,10 @@
 #
 
 # Load common domain setting.
-script_dir=$(cd $(dirname $0); pwd)
+script_dir=$(
+  cd $(dirname $0)
+  pwd
+)
 
 # constant variables
 work_dir=$script_dir/tmp
@@ -29,131 +32,130 @@ dst_domain=$1
 dst_ip=$2
 
 confirm() {
-    local msg="$1"
-    local answer=
-    echo "$msg"
-    read answer
-    if [[ "$answer" =~ [yY] ]]; then
-        return 0
-    fi
-    return 1
+  local msg="$1"
+  local answer=
+  echo "$msg"
+  read answer
+  if [[ $answer =~ [yY] ]]; then
+    return 0
+  fi
+  return 1
 }
 
 initialize() {
-    set -eu
-    # original guest 起動チェック
-    if sudo virsh list | grep $src_domain > /dev/null 2>&1; then
-        echo "!!!Warning!!! Guest $src_domain is running."
-        if ! confirm "Are you ready?(y/n)"; then
-            echo "Do nothing."
-            exit 1
-        fi
+  set -eu
+  # original guest 起動チェック
+  if sudo virsh list | grep $src_domain >/dev/null 2>&1; then
+    echo "!!!Warning!!! Guest $src_domain is running."
+    if ! confirm "Are you ready?(y/n)"; then
+      echo "Do nothing."
+      exit 1
     fi
-    # clean tmp dir
-    if [ -e $work_dir ]; then
-        echo " ==> Warning tmp($work_dir) exists. Deleting..."
-        rm -rf $work_dir
-    fi
-    mkdir -p $work_dir
+  fi
+  # clean tmp dir
+  if [ -e $work_dir ]; then
+    echo " ==> Warning tmp($work_dir) exists. Deleting..."
+    rm -rf $work_dir
+  fi
+  mkdir -p $work_dir
 }
 
 interactive() {
-    local input_confirm=$1
-    local variable=$2
-    local msg="$3"
-    local input_word= answer=
-    while [[ "" == "$answer" ]]; do
-        while [[ "$input_word" == "" ]]; do
-            echo "$msg"
-            read input_word
-        done
-        [ $input_confirm -ne 1 ] && break
-        if confirm " \"$input_word\" is inputed. Are you ready?(y/n)"; then
-            break
-        fi
-        input_word=
-        answer=
+  local input_confirm=$1
+  local variable=$2
+  local msg="$3"
+  local input_word= answer=
+  while [[ "" == "$answer" ]]; do
+    while [[ $input_word == "" ]]; do
+      echo "$msg"
+      read input_word
     done
-    eval "$variable=$input_word"
+    [ $input_confirm -ne 1 ] && break
+    if confirm " \"$input_word\" is inputed. Are you ready?(y/n)"; then
+      break
+    fi
+    input_word=
+    answer=
+  done
+  eval "$variable=$input_word"
 }
 
 clone_guest() {
-    while [[ "" == "$dst_domain" || "" == "$dst_ip" ]]; do
-        # New Guest Hostname
-        interactive 1 dst_domain "Input New Guest Domain Name(Hostname)"
-        # New Guest IP Address
-        interactive 1 dst_ip "Input New Guest IP Address"
-        echo
-        echo "New Guest Domain(Hostname) is $dst_domain"
-        echo "New Guest IP Address is $dst_ip"
-        echo
-        if confirm "Are you ready?(y/n)"; then
-            break
-        fi
-        dst_domain=
-        dst_ip=
-    done
-    echo "===> Cloning $dst_domain from $src_domain ..."
-    sudo virt-clone --original $src_domain --name $dst_domain --file $images_dir/$dst_domain.qcow2
+  while [[ "" == "$dst_domain" || "" == "$dst_ip" ]]; do
+    # New Guest Hostname
+    interactive 1 dst_domain "Input New Guest Domain Name(Hostname)"
+    # New Guest IP Address
+    interactive 1 dst_ip "Input New Guest IP Address"
+    echo
+    echo "New Guest Domain(Hostname) is $dst_domain"
+    echo "New Guest IP Address is $dst_ip"
+    echo
+    if confirm "Are you ready?(y/n)"; then
+      break
+    fi
+    dst_domain=
+    dst_ip=
+  done
+  echo "===> Cloning $dst_domain from $src_domain ..."
+  sudo virt-clone --original $src_domain --name $dst_domain --file $images_dir/$dst_domain.qcow2
 }
 
 # common proc for virt-copy-in/virt-cat
 mod_comm() {
-    local domain path file dir
-    domain=$1
-    path="$2"
-    sedcmd="$3"
-    file=$(basename $path)
-    dir=$(dirname $path)
-    echo "  => Exporting $path from $domain ..."
-    sudo virt-cat -d $domain $path > $work_dir/$file
-    echo "  => Converting $file ..."
-    sudo sed -r -i -e "$sedcmd" $work_dir/$file
-    echo "  => Importing $file into $domain ..."
-    sudo virt-copy-in -d $domain $work_dir/$file $dir
+  local domain path file dir
+  domain=$1
+  path="$2"
+  sedcmd="$3"
+  file=$(basename $path)
+  dir=$(dirname $path)
+  echo "  => Exporting $path from $domain ..."
+  sudo virt-cat -d $domain $path >$work_dir/$file
+  echo "  => Converting $file ..."
+  sudo sed -r -i -e "$sedcmd" $work_dir/$file
+  echo "  => Importing $file into $domain ..."
+  sudo virt-copy-in -d $domain $work_dir/$file $dir
 }
 
 mod_hosts() {
-    echo "===> Generating hosts ..."
-    # !!!WARNING!!! We assume always same host name and domain name.
-    mod_comm "$dst_domain" "/etc/hosts" "s/$src_domain/$dst_domain/g"
+  echo "===> Generating hosts ..."
+  # !!!WARNING!!! We assume always same host name and domain name.
+  mod_comm "$dst_domain" "/etc/hosts" "s/$src_domain/$dst_domain/g"
 }
 
 mod_hostname() {
-    echo "===> Generating hostname ..."
-    # !!!WARNING!!! We assume always same host name and domain name.
-    sh -c "echo $dst_domain > $work_dir/hostname"
-    echo "  => importing hostname into $dst_domain ..."
-    sudo virt-copy-in -d $dst_domain $work_dir/hostname /etc/
+  echo "===> Generating hostname ..."
+  # !!!WARNING!!! We assume always same host name and domain name.
+  sh -c "echo $dst_domain > $work_dir/hostname"
+  echo "  => importing hostname into $dst_domain ..."
+  sudo virt-copy-in -d $dst_domain $work_dir/hostname /etc/
 }
 
 mod_70persistent() {
-    echo "===> Generating 70-persistent-net.rules ..."
-    # !!!WARNING!!! We assume always same host name and domain name.
-    src_mac=$(sudo virsh domiflist $src_domain |grep br0 |awk '{print $5}')
-    dst_mac=$(sudo virsh domiflist $dst_domain |grep br0 |awk '{print $5}')
-    mod_comm "$dst_domain" "/etc/udev/rules.d/70-persistent-net.rules" "s/$src_mac/$dst_mac/g"
+  echo "===> Generating 70-persistent-net.rules ..."
+  # !!!WARNING!!! We assume always same host name and domain name.
+  src_mac=$(sudo virsh domiflist $src_domain | grep br0 | awk '{print $5}')
+  dst_mac=$(sudo virsh domiflist $dst_domain | grep br0 | awk '{print $5}')
+  mod_comm "$dst_domain" "/etc/udev/rules.d/70-persistent-net.rules" "s/$src_mac/$dst_mac/g"
 }
 
 mod_network() {
-    echo "===> Generating network/interfaces ..."
-    # !!!WARNING!!! We assume Ubuntu and static ip address.
-    mod_comm "$dst_domain" "/etc/network/interfaces" "s/address.*/address $dst_ip/g"
+  echo "===> Generating network/interfaces ..."
+  # !!!WARNING!!! We assume Ubuntu and static ip address.
+  mod_comm "$dst_domain" "/etc/network/interfaces" "s/address.*/address $dst_ip/g"
 }
 
 mod_guest() {
-    mod_hosts
-    mod_hostname
-    mod_70persistent
-    mod_network
+  mod_hosts
+  mod_hostname
+  mod_70persistent
+  mod_network
 }
 
 main() {
-    initialize
-    clone_guest
-    mod_guest
-    echo
-    echo "Done!!!"
+  initialize
+  clone_guest
+  mod_guest
+  echo
+  echo "Done!!!"
 }
 main
-
