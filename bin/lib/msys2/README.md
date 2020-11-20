@@ -14,7 +14,7 @@
 ## 2. bootstrap msys2
 
 ```
-./bootstrap_msys2
+./bootstrap_arch
 ```
 
 ## 3. setup
