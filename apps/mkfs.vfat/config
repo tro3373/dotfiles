@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+is_installed() {
+  if is_mac; then
+    test -e /usr/local/Cellar/dosfstools/*/sbin/mkfs.vfat
+  else
+    has mkfs.vfat
+  fi
+}
 install_common() { not_supported; }
 install_arch() { not_supported; }
 install_msys() { not_supported; }
