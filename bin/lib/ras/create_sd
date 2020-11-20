@@ -7,7 +7,7 @@ readonly script_dir=$(
   pwd
 )
 # TODO modify this device id.
-device_prefix=/dev/sdX
+target_device_id=/dev/disk2
 source $script_dir/../setup/funcs
 
 usage() {
@@ -25,7 +25,7 @@ check() {
     exit 1
   fi
   has_check fdisk
-  has_check mkdfs.vfat
+  has_check $mkdfs_vfat
   has_check $mkfs_ext4
   has_check bsdtar
   root_check
@@ -34,7 +34,11 @@ check() {
 main() {
   set -e
   local mkfs_ext4=mkfs.ext4
-  is_mac && mkfs_ext4=/usr/local/opt/e2fsprogs/sbin/mkfs.ext4
+  local mkdfs_vfat=mkdfs.vfat
+  if is_mac; then
+    mkfs_ext4=/usr/local/opt/e2fsprogs/sbin/mkfs.ext4
+    mkdfs_vfat=$(find /usr/local/Cellar/dosfstools/*/sbin/mkfs.vfat)
+  fi
   initialize_args "$@"
   check
 
@@ -44,23 +48,34 @@ main() {
     url=$url_ras3
   fi
 
-  mexe fdisk ${device_prefix}
-  # # At the fdisk prompt, delete old partitions and create a new one:
-  # - Type o. This will clear out any partitions on the drive.
-  # - Type p to list partitions. There should be no partitions left.
-  # - Type n, then p for primary, 1 for the first partition on the drive, press ENTER to accept the default first sector, then type +200M for the last sector.
-  # - Type t, then c to set the first partition to type W95 FAT32 (LBA).
-  # - Type n, then p for primary, 2 for the second partition on the drive, and then press ENTER twice to accept the default first and last sector.
-  # - Write the partition table and exit by typing w.
-  mexe mkfs.vfat ${device_prefix}1
-  mexe mkdir boot
-  mexe mount ${device_prefix}1 boot
+  if is_mac; then
+    diskutil list
+    mexe diskutil unMountDisk ${target_device_id}
+    # format sd
+    local disk_label=RPI
+    mexe sudo diskutil eraseDisk MS-DOS $disk_label ${target_device_id}
+    mexe sudo diskutil partitionDisk /dev/disk2 2 MBRFormat boot 200M JournaledHFS+ root
+  else
+    fdisk -l
+    mexe fdisk ${target_device_id}
+    # # At the fdisk prompt, delete old partitions and create a new one:
+    # - Type o. This will clear out any partitions on the drive.
+    # - Type p to list partitions. There should be no partitions left.
+    # - Type n, then p for primary, 1 for the first partition on the drive, press ENTER to accept the default first sector, then type +200M for the last sector.
+    # - Type t, then c to set the first partition to type W95 FAT32 (LBA).
+    # - Type n, then p for primary, 2 for the second partition on the drive, and then press ENTER twice to accept the default first and last sector.
+    # - Write the partition table and exit by typing w.
+  fi
 
-  mexe $mkfs_ext4 ${device_prefix}2
+  mexe mkfs.vfat ${target_device_id}1
+  mexe mkdir boot
+  mexe mount ${target_device_id}1 boot
+
+  mexe $mkfs_ext4 ${target_device_id}2
   mexe mkdir root
-  mexe mount ${device_prefix}2 root
+  mexe mount ${target_device_id}2 root
   mexe curl -fLO $url
-  local fnm=${url##.*/}
+  local fnm=${url##*/}
   mexe bsdtar -xpf $fnm -C root
   mexe sync
 
