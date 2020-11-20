@@ -460,6 +460,23 @@ not_supported() {
   log "=> Not supported"
 }
 
+has_check() {
+  local _pkg="$*"
+  if has "$_pkg"; then
+    return
+  fi
+  log "No $_pkg command exist."
+  exit 1
+}
+
+root_check() {
+  if [[ $UID -eq 0 ]]; then
+    return
+  fi
+  log "execute as root."
+  exit 1
+}
+
 show_dummy_warn_if_needed() {
   if ! is_dry; then
     return

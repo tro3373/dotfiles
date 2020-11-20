@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# root/root
+# alarm/alarm
+
 readonly bootstrapped_path=/etc/bootstrapped
 
 _bootstrapped() { test -f $bootstrapped_path; }
@@ -17,20 +20,21 @@ Server = http://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
 ###########################
 EOF
   pacman-key --init
-  pacman-key --populate archlinux
-  pacman -Sy gnupg --noconfirm
-  pacman -Sy archlinux-keyring --noconfirm
-  local specify_keyserver=pool.sks-keyservers.net
-  local local_gpg_settings=~/.gnupg/gpg.conf
-  if [[ ! -e $local_gpg_settings ]]; then
-    mkdir -p "$(dirname $local_gpg_settings)"
-    cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
-    echo "keyserver $specify_keyserver" >>$local_gpg_settings
-  fi
-  pacman-key --refresh-keys --keyserver $specify_keyserver
-  pacman -Syyu --noconfirm
-  pacman -S base base-devel git curl vim wget grep sed which unzip gzip sudo --noconfirm
-  pacman -Sc --noconfirm # delete all packages that not installed
+  pacman-key --populate archlinuxarm
+
+  # pacman -Sy gnupg --noconfirm
+  # pacman -Sy archlinux-keyring --noconfirm
+  # local specify_keyserver=pool.sks-keyservers.net
+  # local local_gpg_settings=~/.gnupg/gpg.conf
+  # if [[ ! -e $local_gpg_settings ]]; then
+  #   mkdir -p "$(dirname $local_gpg_settings)"
+  #   cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
+  #   echo "keyserver $specify_keyserver" >>$local_gpg_settings
+  # fi
+  # pacman-key --refresh-keys --keyserver $specify_keyserver
+  # pacman -Syyu --noconfirm
+  # pacman -S base base-devel git curl vim wget grep sed which unzip gzip sudo --noconfirm
+  # pacman -Sc --noconfirm # delete all packages that not installed
 }
 
 setup_user() {
@@ -70,8 +74,8 @@ main() {
   set -e
   _bootstrapped && return
   setup_packages
-  _setup_user
-  _setup_dot
-  _finalize
+  # _setup_user
+  # _setup_dot
+  # _finalize
 }
 main "$@"
