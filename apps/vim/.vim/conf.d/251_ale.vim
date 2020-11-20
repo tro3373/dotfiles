@@ -41,8 +41,8 @@ let g:ale_echo_msg_warning_str = 'W'
 " let g:ale_echo_msg_format = '[%linter%] [%severity%] %code: %%s'
 let g:ale_echo_msg_format = '[%linter%] %code: %%s'
 
-" shfmt option but shfmt see .editorconfig, so we comment out this option
-" let g:ale_sh_shfmt_options = '-i 2 -ci -bn -s'
+" shfmt see .editorconfig?(not working... so specify option)
+let g:ale_sh_shfmt_options = '-i 2 -ci -s'
 
 
 " let g:ale_linters = {
