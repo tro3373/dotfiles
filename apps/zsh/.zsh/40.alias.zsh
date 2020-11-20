@@ -144,6 +144,10 @@ if has fzf; then
   fi
 fi
 
+# if has shfmt; then
+#   alias shfmt="shfmt -i 2 -ci -bn -s"
+# fi
+
 # http://qiita.com/yuku_t/items/4ffaa516914e7426419a
 function ssh() {
   TERM=xterm
