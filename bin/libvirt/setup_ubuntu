@@ -4,7 +4,7 @@ script_dir=$(
   cd $(dirname $0)
   pwd
 )
-source $script_dir/comm_load_create_setting.sh
+source $script_dir/comm_load_create_setting
 guest_name=original
 
 main() {

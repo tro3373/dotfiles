@@ -4,4 +4,4 @@ script_dir=$(
   cd $(dirname $0)
   pwd
 )
-$script_dir/comm_cmd.sh $0
+$script_dir/comm_cmd $0

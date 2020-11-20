@@ -5,7 +5,7 @@ script_dir=$(
   pwd
 )
 domain_setting_file=$script_dir/.domain
-$script_dir/comm_load_create_setting.sh
+$script_dir/comm_load_create_setting
 if [[ -f $domain_setting_file ]]; then
   echo "Domain Setting Exist."
   echo

@@ -5,4 +5,4 @@ script_dir=$(
   pwd
 )
 rm $script_dir/.domain
-$script_dir/comm_load_create_setting.sh
+$script_dir/comm_load_create_setting

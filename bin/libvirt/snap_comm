@@ -4,7 +4,7 @@ script_dir=$(
   cd $(dirname $0)
   pwd
 )
-source $script_dir/comm_load_create_setting.sh
+source $script_dir/comm_load_create_setting
 
 delrestore=$1
 snap_id="$2"
@@ -12,7 +12,7 @@ cmd="Delete"
 [[ $delrestore =~ -a ]] && cmd="Restore"
 
 list_snap() {
-  $script_dir/snap_list.sh
+  $script_dir/snap_list
 }
 input_snap_name() {
   snap_id=
