@@ -84,8 +84,8 @@ EOF
 
 main() {
   check
-  cat_vagf > $path_vagf
-  cat_up_bat > $path_up
-  cat_down_bat > $path_down
+  cat_vagf | gen $path_vagf
+  cat_up_bat | gen $path_up
+  cat_down_bat | gen $path_down
 }
 main "$@"

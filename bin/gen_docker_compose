@@ -72,18 +72,8 @@ clean_container:
 EOF
 }
 
-check_exist() {
-  if [[ ! -e $1 ]]; then
-    return
-  fi
-  echo "$1 already exists." 1>&2
-  exit 1
-}
-
 main() {
-  check_exist ./docker-compose.yml
-  check_exist ./Makefile
-  cat_compose >./docker-compose.yml
-  cat_makefile >./Makefile
+  cat_compose | gen ./docker-compose.yml
+  cat_makefile | gen ./Makefile
 }
 main "$@"

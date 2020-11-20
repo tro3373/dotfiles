@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+error() { echo "$*" 1>&2; }
+
+main() {
+  if [[ ! -p /dev/stdin ]]; then
+    error "No stdin."
+    exit 1
+  fi
+  if [[ $# -eq 0 ]]; then
+    error "Specify dst file path."
+    exit 1
+  fi
+  local dst="$*"
+  if [[ -e "$dst" ]]; then
+    error "Already exists dst file. $dst"
+    exit 1
+  fi
+  cat - >$dst
+  echo "Done. $dst generated."
+}
+main "$@"
