@@ -1,17 +1,20 @@
 #!/bin/bash
 
-script_dir=$(cd "$(dirname $0)"; pwd)
+script_dir=$(
+  cd "$(dirname $0)"
+  pwd
+)
 
 forwardto=${1:-}
 forward_file=${2:-$script_dir/.forward}
 
-if [[ "$#" -eq 0 ]]; then
+if [[ $# -eq 0 ]]; then
   cat <<EOF
 Specify mail address
   Usage:
     $(basename $0) <mail_address> [filename]
 EOF
-exit 1
+  exit 1
 fi
 
 if [[ -z $forwardto ]]; then
@@ -27,7 +30,7 @@ check() {
 main() {
   check $forward_file
   echo "===> generating $forward_file ..."
-  echo '\myaccount,'$forwardto > $forward_file
+  echo '\myaccount,'$forwardto >$forward_file
   echo "===> changing permissions $forward_file ..."
   chmod 600 $forward_file
   echo "===> done."

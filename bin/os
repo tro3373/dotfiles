@@ -47,10 +47,10 @@ check_os() {
   elif [[ $(uname) == "Darwin" ]]; then
     # mac
     result="mac"
-  elif [[ "$OSTYPE" == "cygwin" ]]; then
+  elif [[ $OSTYPE == "cygwin" ]]; then
     # mac
     result="cygwin"
-  elif [[ "$OSTYPE" == "msys" ]]; then
+  elif [[ $OSTYPE == "msys" ]]; then
     # mac
     result="msys"
   else
@@ -64,22 +64,22 @@ handle_args() {
   local os=$1
   local opt=$2
   local result=false
-  if [[ "$opt" == "win" ]]; then
+  if [[ $opt == "win" ]]; then
     case "$os" in
-    cygwin | msys) result=true ;;
+      cygwin | msys) result=true ;;
     esac
     is_wsl && result=true
-  elif [[ "$opt" == "linux" ]]; then
+  elif [[ $opt == "linux" ]]; then
     case "$os" in
-    cygwin | msys | mac) ;;
-    *) result=true ;;
+      cygwin | msys | mac) ;;
+      *) result=true ;;
     esac
-  elif [[ "$opt" == "unix" ]]; then
+  elif [[ $opt == "unix" ]]; then
     case "$os" in
-    cygwin | msys) ;;
-    *) result=true ;;
+      cygwin | msys) ;;
+      *) result=true ;;
     esac
-  elif [[ "$opt" == "wsl" ]]; then
+  elif [[ $opt == "wsl" ]]; then
     is_wsl && result=true
   fi
   [[ $result == true ]] && exit 0
@@ -88,7 +88,7 @@ handle_args() {
 
 # Get Linux distribution name
 main() {
-  if [[ $# -eq 1 ]] && [[ "$1" == "-v" ]]; then
+  if [[ $# -eq 1 ]] && [[ $1 == "-v" ]]; then
     cat /etc/issue
     return
   fi

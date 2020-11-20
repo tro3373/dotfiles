@@ -6,4 +6,3 @@ if ! type wireshark >/dev/null 2>&1; then
 fi
 export LIBOVERLAY_SCROLLBAR=0
 wireshark
-

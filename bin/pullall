@@ -18,7 +18,7 @@ _pull() {
   local modified=$(git status -s)
   local stash=0
   local stash_msg=""
-  if [[ "$modified" != "" ]]; then
+  if [[ $modified != "" ]]; then
     local shuld_stash=$(echo "$modified" | grep -c -v '??')
     if [[ $shuld_stash -gt 0 ]]; then
       stash=1
@@ -36,7 +36,7 @@ _pull() {
     _exe git stash pop -q
   fi
   echo "==> Success to update ($update_msg) $stash_msg $target"
-  if [[ "$modified" != "" ]]; then
+  if [[ $modified != "" ]]; then
     echo "$modified"
   fi
   cd - >/dev/null 2>&1

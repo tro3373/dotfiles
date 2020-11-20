@@ -31,9 +31,9 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-    -h | --help) usage && exit 0 ;;
-    -g | --gen) gen_conf && exit 0 ;;
-    -s | --server) server=1 ;;
+      -h | --help) usage && exit 0 ;;
+      -g | --gen) gen_conf && exit 0 ;;
+      -s | --server) server=1 ;;
     esac
     shift
   done

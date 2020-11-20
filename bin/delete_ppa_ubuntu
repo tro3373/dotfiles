@@ -1,12 +1,12 @@
 #!/bin/bash
 
 ppa=${1:-}
-while [[ "$ppa" == "" ]]; do
+while [[ $ppa == "" ]]; do
   echo "Input ppa(ex. ppa:shantzu/clipt)."
   read ppa
 done
 main() {
-  if [[ "$UID" -ne 0 ]]; then
+  if [[ $UID -ne 0 ]]; then
     echo "Permission denied" 1>&2
     exit 1
   fi

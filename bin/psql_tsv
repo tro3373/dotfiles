@@ -33,10 +33,10 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-    -h | --help) usage && exit 0 ;;
-    -g | --gen) gen_pgpass_sample && exit 0 ;;
-    -e) dummy= ;;
-    *) add_args "$1" ;;
+      -h | --help) usage && exit 0 ;;
+      -g | --gen) gen_pgpass_sample && exit 0 ;;
+      -e) dummy= ;;
+      *) add_args "$1" ;;
     esac
     shift
   done
@@ -76,7 +76,7 @@ main() {
       [[ -z $_h ]] && continue
       [[ $_h =~ ^#.* ]] && continue
       local _opt=-c
-      [[ -f "$_sql" ]] && _opt=-f
+      [[ -f $_sql ]] && _opt=-f
       local _cmd="psql -h $_h -U $_u $_d -A -F'	' $_opt '$_sql'"
       echo "> Executing: $_cmd"
       $dummy eval "$_cmd" |

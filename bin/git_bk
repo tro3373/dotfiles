@@ -9,9 +9,9 @@ archive=0
 initialize() {
   for arg in "$@"; do
     case "$arg" in
-    -e) dummy= ;;
-    -r) restore=1 ;;
-    -a) archive=1 ;;
+      -e) dummy= ;;
+      -r) restore=1 ;;
+      -a) archive=1 ;;
     esac
   done
 }

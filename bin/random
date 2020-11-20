@@ -15,12 +15,12 @@ Generate Specify num Rondom string.
 EOF
 }
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 
 set_args() {
   for arg in "$@"; do
     case "$arg" in
-      -h|--help)
+      -h | --help)
         usage
         exit 0
         ;;
@@ -39,7 +39,6 @@ main() {
   initialize "$@"
   # tr -dc: delete character? exclude specify character.
   # fold -w: width: word length
-  cat < /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w $number | head -n 1
+  cat </dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w $number | head -n 1
 }
 main "$@"
-

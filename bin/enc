@@ -31,10 +31,10 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-    -h | --help) usage && exit 0 ;;
-    -w | --win | win | dos | --dos) dos=1 ;;
-    -l | -u | --unix | unix) unix=1 ;;
-    *) add_args "$1" ;;
+      -h | --help) usage && exit 0 ;;
+      -w | --win | win | dos | --dos) dos=1 ;;
+      -l | -u | --unix | unix) unix=1 ;;
+      *) add_args "$1" ;;
     esac
     shift
   done

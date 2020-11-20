@@ -19,7 +19,7 @@ main() {
           echo "=====> git show $prev"
           git --no-pager show $prev
         fi
-        prev=$(echo $line |cut -d" " -f2)
+        prev=$(echo $line | cut -d" " -f2)
         echo '========================================='
       fi
       echo "$line"

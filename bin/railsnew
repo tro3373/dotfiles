@@ -14,7 +14,7 @@ usage() {
   echo "    -h|--help|                 : show this usage."
 }
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 
 check() {
   local invalid=0
@@ -27,7 +27,7 @@ check() {
   if ! has ruby; then
     invalid=1
   fi
-  if ! bundle --help>/dev/null 2>&1; then
+  if ! bundle --help >/dev/null 2>&1; then
     echo "No bundle exist. install it."
     invalid=1
   fi
@@ -37,7 +37,7 @@ check() {
   fi
 }
 
-main(){
+main() {
   local args=$*
   local regx='^-p$|^--postgres$|^--postgresql$'
   local helpregx='^-h$|^--help$'

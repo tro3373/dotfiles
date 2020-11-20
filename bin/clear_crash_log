@@ -20,7 +20,7 @@ main() {
     ls_crash_logs
     echo "Delete crash logs? (y/N)"
     read crashdelete
-    if [[ "$crashdelete" == "y" ]]; then
+    if [[ $crashdelete == "y" ]]; then
       echo "Dellete crash files!!"
       delete_crash_log
       ls_crash_logs

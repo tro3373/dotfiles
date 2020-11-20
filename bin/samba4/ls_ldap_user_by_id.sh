@@ -1,6 +1,9 @@
 #!/bin/bash
 
-script_path=$(cd $(dirname $0); pwd)
+script_path=$(
+  cd $(dirname $0)
+  pwd
+)
 source $script_path/smb4_common.sh
 
 check_samba
@@ -10,4 +13,3 @@ intaractive_set_user_name
 
 # 指定ユーザ情報を表示する
 sudo /usr/local/samba/bin/wbinfo -n $user_name
-

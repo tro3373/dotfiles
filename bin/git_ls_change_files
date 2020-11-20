@@ -27,11 +27,11 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-    -h | --help) usage && exit 0 ;;
-    -a | --author) author=$1 ;;
-    -u | --unique) unique=1 ;;
-    -m | --mine) mine=1 ;;
-    *) add_args "$1" ;;
+      -h | --help) usage && exit 0 ;;
+      -a | --author) author=$1 ;;
+      -u | --unique) unique=1 ;;
+      -m | --mine) mine=1 ;;
+      *) add_args "$1" ;;
     esac
     shift
   done

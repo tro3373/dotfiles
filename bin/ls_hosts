@@ -2,7 +2,7 @@
 
 main() {
   [[ ! -e /etc/hosts ]] && echo "Not supported" 1>&2 && exit 1
-  cat < /etc/hosts |
+  cat </etc/hosts |
     if [[ $# -ne 0 ]]; then
       cat - | grep "$*"
     else
@@ -11,4 +11,3 @@ main() {
 }
 
 main "$@"
-

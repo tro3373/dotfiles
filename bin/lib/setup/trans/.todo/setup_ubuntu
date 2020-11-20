@@ -12,7 +12,7 @@ setup_dconf() {
   local k="$1"
   local v="$2"
   local tmp=$(dconf read "$k")
-  if [[ "$tmp" == "$v" ]]; then
+  if [[ $tmp == "$v" ]]; then
     log "==> Already dconf setuped. key=$k value=$v"
     return
   fi

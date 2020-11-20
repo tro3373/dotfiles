@@ -22,18 +22,18 @@ Move file date directory via use file update date attribute.
 EOF
 }
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 add_args() { args=("${args[@]}" "$@"); }
 
 initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-      -h|--help) usage && exit 0  ;;
-      -1) mode=1                  ;;
-      -e|--execute) dryrun=0      ;;
-      -d|--directory) shift && dst_root=$1 ;;
-      *) add_args "$1"            ;;
+      -h | --help) usage && exit 0 ;;
+      -1) mode=1 ;;
+      -e | --execute) dryrun=0 ;;
+      -d | --directory) shift && dst_root=$1 ;;
+      *) add_args "$1" ;;
     esac
     shift
   done
@@ -62,10 +62,9 @@ main() {
   # for f in $(find . -maxdepth 1 -type f -name "*\.*"); do
   #   mv_file_to_date_dir "$f"
   # done
-  find . -maxdepth 1 -type f -name "*\\.*" |
+  find . -maxdepth 1 -type f -name '*\.*' |
     while read -r f; do
       mv_file_to_date_dir "$f"
     done
 }
 main "$@"
-

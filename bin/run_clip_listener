@@ -8,4 +8,3 @@ fi
 
 key=$(cat ~/.exchange.key)
 clipboard_text_listener.pl -encoding utf8 -key $key -verbose 2
-

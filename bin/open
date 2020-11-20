@@ -10,13 +10,13 @@ main() {
   # local _open=open
   local _open=$(type -a open | grep -v $0 | head -1 | cut -d' ' -f3)
   case "${OSTYPE}" in
-  linux*) _open=xdg-open ;;
-  cygwin*) _open=cygstart ;;
-  msys*)
-    _open=explorer
-    ;;
+    linux*) _open=xdg-open ;;
+    cygwin*) _open=cygstart ;;
+    msys*)
+      _open=explorer
+      ;;
   esac
-  if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+  if [[ $OSTYPE == "msys" || $OSTYPE == "cygwin" ]]; then
     args="$(cygpath -aw $args)"
   fi
   echo "==> open $args"

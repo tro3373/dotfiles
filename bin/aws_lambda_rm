@@ -20,9 +20,9 @@ delete_lambdas() {
     while read -r lambda_name; do
       [[ -z $lambda_name ]] && continue
       [[ $lambda_name =~ ^#.* ]] && continue
-        echo ">> Deleting $lambda_name"
-        $dummy aws --profile $profile \
-          lambda delete-function --function-name "$lambda_name"
+      echo ">> Deleting $lambda_name"
+      $dummy aws --profile $profile \
+        lambda delete-function --function-name "$lambda_name"
     done
 }
 

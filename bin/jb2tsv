@@ -5,7 +5,7 @@ current_dir=$(pwd)
 script_name=$(basename $0)
 
 # tsv_format="%s\t\t\t\t\t\t\t\t\t%s\t\t\t\t%s\t\t\t\t\t\t%s"
-tsv_format="%s\\t\\t\\t\\t\\t\\t\\t\\t\\t%s\\t\\t\\t\\t%s\\t\\t\\t\\t\\t\\t%s"
+tsv_format='%s\t\t\t\t\t\t\t\t\t%s\t\t\t\t%s\t\t\t\t\t\t%s'
 is_out_file=0
 
 command_name=$(basename $0)
@@ -22,15 +22,15 @@ JavaBean to tsv
 EOF
 }
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 add_args() { args=("${args[@]}" "$@"); }
-trim() { echo "$*" |sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'; }
-type_to_ja(){
+trim() { echo "$*" | sed 's/^[[:blank:]]*//;s/[[:blank:]]*$//'; }
+type_to_ja() {
   case "$*" in
-    String)         echo "文字列";;
-    String\[\])     echo "配列（文字列）";;
-    int|Integer)    echo "数値";;
-    Date)           echo "日時";;
+    String) echo "文字列" ;;
+    String\[\]) echo "配列（文字列）" ;;
+    int | Integer) echo "数値" ;;
+    Date) echo "日時" ;;
     *) ;;
   esac
 }
@@ -49,7 +49,7 @@ for_file() {
     return
   fi
   if [[ $is_out_file -eq 1 ]]; then
-    local out_file=$out_dir_root/"$(echo $file |sed -e 's|^[./]\+||g')".tsv
+    local out_file=$out_dir_root/"$(echo $file | sed -e 's|^[./]\+||g')".tsv
     [[ -e $out_file ]] && rm $out_file
     mkdir -p "$(dirname $out_file)" && touch $out_file
     echo "=> $file to $out_file"
@@ -58,29 +58,29 @@ for_file() {
   fi
 
   # 抽出開始行特定：クラス開始位置 `class`
-  local start=$(($(grep --line-number " class " $file |cut -d":" -f1)+1))
+  local start=$(($(grep --line-number " class " $file | cut -d":" -f1) + 1))
   # 抽出終了行特定：メソッド開始位置 `(){`
-  local end=$(($(cat $file |sed -e "s/ //g" |grep --line-number "(){" |head -1|cut -d":" -f1)-1))
+  local end=$(($(cat $file | sed -e "s/ //g" | grep --line-number "(){" | head -1 | cut -d":" -f1) - 1))
   # 指定行間を抽出& `*/` `--` `**` を削除
-  for line in $(sed ''$start','$end'!d' $file |grep -v "\*/" |grep -v "\-\-" |grep -v "\*\*"); do
+  for line in $(sed ''$start','$end'!d' $file | grep -v "\*/" | grep -v "\-\-" | grep -v "\*\*"); do
     local tmp=$(trim "$line")
     case "$tmp" in
       '*'*)
         # フィールド日本語名
-        f_name_ja=$(echo $tmp |tr -d ' *')
+        f_name_ja=$(echo $tmp | tr -d ' *')
         ;;
       @*)
         # アノテーションより属性値取得
-        if [[ "$tmp" == "@NotEmpty" ]] || [[ "$tmp" == "@NotNull" ]]; then
+        if [[ $tmp == "@NotEmpty" ]] || [[ $tmp == "@NotNull" ]]; then
           f_type_rq="○"
         else
-          fa_size=$(echo $tmp |cut -d"=" -f2 |tr -d " )")
+          fa_size=$(echo $tmp | cut -d"=" -f2 | tr -d " )")
         fi
         ;;
       private*)
         # フィールド名、フィールドタイプ
-        f_name=$(echo $tmp |tr -d ';'|awk '{print $3}')
-        f_type_ja=$(type_to_ja "$(echo $tmp |awk '{print $2}')")
+        f_name=$(echo $tmp | tr -d ';' | awk '{print $3}')
+        f_type_ja=$(type_to_ja "$(echo $tmp | awk '{print $2}')")
 
         f_type_dsp=$f_type_ja
         [[ -n $fa_size ]] && f_type_dsp="$f_type_dsp($fa_size)"
@@ -89,7 +89,7 @@ for_file() {
         local out_line="$(printf "$tsv_format" "$f_name_ja" "$f_name" "$f_type_dsp" "$f_type_rq")\n"
         clip_message="$clip_message$out_line\n"
         if [[ $is_out_file -eq 1 ]]; then
-          echo -ne "$out_line" |tee -a $out_file
+          echo -ne "$out_line" | tee -a $out_file
         else
           echo -ne "$out_line"
         fi
@@ -110,7 +110,7 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-      -h|--help) usage && exit 0  ;;
+      -h | --help) usage && exit 0 ;;
       #-f*|--file*) file=${1#*=} ;;
       -o)
         is_out_file=1
@@ -118,7 +118,7 @@ initialize() {
         [[ -z $_dir ]] && _dir=$current_dir
         out_dir_root=$_dir/${script_name}.out
         ;;
-      *) add_args "$1"            ;;
+      *) add_args "$1" ;;
     esac
     shift
   done
@@ -129,15 +129,14 @@ main() {
   initialize "$@"
   IFS=$'\n'
   for f in "${args[@]}"; do
-    [[ ! -e "$f" ]] && continue;
+    [[ ! -e $f ]] && continue
     [[ -f $f ]] && for_file "$f"
     [[ -d $f ]] && for_dir "$f"
   done
   if [[ $is_out_file -ne 1 ]]; then
-    #echo -ne "$clip_message" 
+    #echo -ne "$clip_message"
     #echo -ne "$clip_message\n" >/dev/clipboard
     :
   fi
 }
 main "$@"
-

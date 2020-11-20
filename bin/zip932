@@ -20,25 +20,25 @@ Create cp932 encoded zip file. for send to windows user.
 EOF
 }
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 add_args() { args+=("$@"); }
 
 initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-      -h|--help) usage && exit 0  ;;
+      -h | --help) usage && exit 0 ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
-      -p|--password) opt_e=-e     ;;
-      -f|--fast) fast=1           ;;
-      *) add_args "$1"            ;;
+      -p | --password) opt_e=-e ;;
+      -f | --fast) fast=1 ;;
+      *) add_args "$1" ;;
     esac
     shift
   done
   all_args="${args[*]}"
 
-  if [[ "$OSTYPE" == "msys" || $(uname) == "Darwin" ]]; then
+  if [[ $OSTYPE == "msys" || $(uname) == "Darwin" ]]; then
     echo "Not supported os(mac/msys2)..."
     exit 1
   fi

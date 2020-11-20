@@ -12,18 +12,20 @@ if [ $# -ne 1 ]; then
 fi
 #
 IFS=$'\n'
-for s4g in `wbinfo -g`                         # samba4 既存チェック
-do
-s4gm=$(echo $s4g|grep -wxci $1)
+for s4g in $(# samba4 既存チェック
+  wbinfo -g
+); do
+  s4gm=$(echo $s4g | grep -wxci $1)
   if [ $s4gm -ne 0 ]; then
     echo "already registered(samba4): $1"
     exit 1
   fi
 done
 #
-for hostg in `cat /etc/group|cut -d":" -f1`    # /etc/group 既存チェック
-do
-hostg_m=$(echo $hostg|grep -wxci $1)
+for hostg in $(# /etc/group 既存チェック
+  cat /etc/group | cut -d":" -f1
+); do
+  hostg_m=$(echo $hostg | grep -wxci $1)
   if [ $hostg_m -ne 0 ]; then
     echo "already registered(host): $1"
     exit 1
@@ -31,21 +33,20 @@ hostg_m=$(echo $hostg|grep -wxci $1)
 done
 #
 echo "Creating s4 posix group "$1
-samba-tool group add $1                        # samba4に登録
+samba-tool group add $1 # samba4に登録
 if [ $? -ne 0 ]; then
-   echo "error";
-   exit 1
+  echo "error"
+  exit 1
 fi
 #
 strgid=$(wbinfo --group-info=$1)
-gid=$(echo $strgid | cut -d ":" -f 3)          # posixGroupの追加とxidNumberをgidnumberにするldifファイルを作成
+gid=$(echo $strgid | cut -d ":" -f 3) # posixGroupの追加とxidNumberをgidnumberにするldifファイルを作成
 echo "dn: cn=$1,cn=Users,dc=$dc1,dc=$dc2
 changetype: modify
 add:objectclass
 objectclass: posixGroup
 -
 add: gidnumber
-gidnumber: $gid" > /tmp/$1
+gidnumber: $gid" >/tmp/$1
 ldbmodify --url=$samba/private/sam.ldb -b dc=$dc1,dc=$dc2 /tmp/$1
 rm /tmp/$1
-

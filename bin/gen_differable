@@ -16,21 +16,24 @@ initialize() {
   if [[ ! -e $output_dir ]]; then
     mkdir -p $output_dir
   fi
-  output_dir=$(cd $output_dir; pwd)
+  output_dir=$(
+    cd $output_dir
+    pwd
+  )
 }
 
 check() {
-  if git status -s >& /dev/null; then
+  if git status -s >&/dev/null; then
     echo "Not git directory." 1>&2
     exit 1
   fi
   local files="$(git status -s)"
-  if [[ "$files" != "" ]]; then
+  if [[ $files != "" ]]; then
     echo "Modified file exist. stash or commit it. $files" 1>&2
     exit 1
   fi
   files="$(/bin/ls $output_dir 2>/dev/null)"
-  if [[ "$files" != "" ]]; then
+  if [[ $files != "" ]]; then
     echo "Output directory is exist. $output_dir" 1>&2
     exit 1
   fi
@@ -41,10 +44,10 @@ get_commitid() {
   local message=$2
   local selectid
   eval selectid=\$$variable
-  if [[ "$selectid" != "" ]]; then
+  if [[ $selectid != "" ]]; then
     return
   fi
-  while [[ "$selectid" == "" ]]; do
+  while [[ $selectid == "" ]]; do
     echo $message
     echo
     git log --oneline -$list_log_count

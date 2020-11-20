@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-readonly script_dir=$(cd "$(dirname ${BASH_SOURCE:-$0})"; pwd)
+readonly script_dir=$(
+  cd "$(dirname ${BASH_SOURCE:-$0})"
+  pwd
+)
 readonly current_dir=$(pwd)
 dst_root=$current_dir/downloaded_functions
 profile=default
@@ -11,7 +14,7 @@ initialize() {
   for arg in "$@"; do
     case "$arg" in
       -e) dummy= ;;
-      -f|-l) func="$arg" ;;
+      -f | -l) func="$arg" ;;
       *) profile="$arg" ;;
     esac
   done
@@ -36,7 +39,7 @@ get_zips() {
   while read -r fname url; do
     [[ -z $fname ]] && continue
     [[ $fname =~ ^#.* ]] && continue
-    url=$(echo -e $url |tr -d '"')
+    url=$(echo -e $url | tr -d '"')
     local dstd=$dst_root/$fname
     [[ ! -e $dstd ]] && mkdir -p $dstd
     printf "==> Downloading $fname .. " 1>&2
@@ -60,13 +63,13 @@ get_zips() {
 download_lambdas() {
   local d="$(basename "$current_dir")"
   ls_functions |
-    if [[ -a $func ]]; then
+    if [[ -e $func ]]; then
       cat - | fzf -q "$d" -m
     else
       cat -
     fi |
-      get_urls |
-      get_zips
+    get_urls |
+    get_zips
 }
 
 main() {
@@ -75,4 +78,3 @@ main() {
   echo "Done"
 }
 main "$@"
-

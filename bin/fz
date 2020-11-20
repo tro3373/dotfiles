@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # dotbin=$(cd $(dirname $0); pwd)
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 
 initialize() {
   local _query=
@@ -21,7 +21,7 @@ initialize() {
     _option=""
   fi
   if [[ -n $_command ]]; then
-    if [[ -n "$*" ]]; then
+    if [[ -n $* ]]; then
       _command="$_command $_option $_query $*"
     fi
     return
@@ -34,4 +34,3 @@ main() {
   cat - | $_command
 }
 main "$@"
-

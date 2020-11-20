@@ -51,7 +51,7 @@ setup_conf() {
     echo "Already setuped. $conf_path" 1>&2
     exit 1
   fi
-  cat_rc > $conf_path
+  cat_rc >$conf_path
 }
 
 usage() {
@@ -80,4 +80,3 @@ main() {
   usage
 }
 main "$@"
-

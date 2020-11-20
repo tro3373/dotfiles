@@ -53,7 +53,7 @@ dummy="echo"
 initialize() {
   for arg in "$@"; do
     case "$arg" in
-    -e) dummy= ;;
+      -e) dummy= ;;
     esac
   done
 }

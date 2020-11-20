@@ -10,7 +10,7 @@ main() {
     key=git@
   fi
   cd ~/.dot
-  if git remote -v |grep $key >& /dev/null; then
+  if git remote -v | grep $key >&/dev/null; then
     return
   fi
   echo "==> git remote changing to $url .."

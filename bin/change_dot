@@ -2,12 +2,15 @@
 
 src=$1
 dst=$2
-script_dir=$(cd "$(dirname $0)"; pwd)
+script_dir=$(
+  cd "$(dirname $0)"
+  pwd
+)
 mv_to() {
   local rel_p="$1"
   local _src="$src/$rel_p"
   local _dst="$dst/$rel_p"
-  if [[ ! -e "$_src" ]]; then
+  if [[ ! -e $_src ]]; then
     echo "  ==> No exist mv target [$_src]"
     return
   fi
@@ -26,4 +29,3 @@ main() {
   mv_to apps/ssh/.ssh
 }
 main $src $dst
-

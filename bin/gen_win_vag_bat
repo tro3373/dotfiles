@@ -5,7 +5,7 @@ path_up=$HOME/Desktop/up.bat
 path_down=$HOME/Desktop/down.bat
 
 check() {
-  if [[ "$OSTYPE" != "msys" ]]; then
+  if [[ $OSTYPE != "msys" ]]; then
     echo "Not supported" 1>&2
     exit 1
   fi

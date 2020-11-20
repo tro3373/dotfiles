@@ -47,12 +47,12 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-    -h | --help) usage && exit 0 ;;
-    -e) dummy= ;;
-    #-f*|--file*) file=${1#*=} ;;
-    -m | --mail) shift && gmail_account=$1 ;;
-    -p | --pass) shift && gmail_passwd=$1 ;;
-    *) add_args "$1" ;;
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      #-f*|--file*) file=${1#*=} ;;
+      -m | --mail) shift && gmail_account=$1 ;;
+      -p | --pass) shift && gmail_passwd=$1 ;;
+      *) add_args "$1" ;;
     esac
     shift
   done

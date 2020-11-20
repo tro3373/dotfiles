@@ -1,7 +1,7 @@
 #!/bin/bash
 
 target_file="$1"
-while [[ "$target_file" == "" ]]; do
+while [[ $target_file == "" ]]; do
   echo "Input cert file for dump to..."
   read target_file
 done

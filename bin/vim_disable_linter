@@ -7,7 +7,7 @@ cat_settings() {
   echo "export $env_key=1"
 }
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 has_env() { [[ -e $env_f ]]; }
 has_key() { has_env && grep $env_key $env_f >&/dev/null; }
 

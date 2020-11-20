@@ -2,13 +2,13 @@
 
 DOT_PATH=$HOME/.dot
 export DETECT_OS=$($DOT_PATH/bin/os)
-is_arch() { [[ "$DETECT_OS" == "arch" ]]; }
+is_arch() { [[ $DETECT_OS == "arch" ]]; }
 #current_dir=$(pwd)
 #script_dir=$(cd "$(dirname $0)"; pwd)
 #has() { command -v ${1} >& /dev/null; }
 mod_bluetooth_service_start_option() {
   local f="/etc/systemd/system/dbus-org.bluez.service"
-  if grep -E '^ExecStart.*tooth$' $f > /dev/null; then
+  if grep -E '^ExecStart.*tooth$' $f >/dev/null; then
     sudo sed -i -e '/^ExecStart.*th$/s/^\(ExecStart.*\)$/\1 -d/g' $f
   fi
 }

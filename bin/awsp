@@ -2,7 +2,7 @@
 
 readonly cred=$HOME/.aws/credentials
 list_profile() {
-  cat < $cred |
+  cat <$cred |
     grep "\[" |
     tr -d '[' |
     tr -d ']' |
@@ -17,7 +17,7 @@ main() {
   #   return
   # fi
   local _profile=
-  if [[ $(list_profile | grep -c "$1") -eq 1 ]] ; then
+  if [[ $(list_profile | grep -c "$1") -eq 1 ]]; then
     _profile=$(list_profile | grep "$1")
   else
     _profile=$(list_profile | fzf -q "$1")

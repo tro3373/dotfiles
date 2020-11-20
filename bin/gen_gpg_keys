@@ -5,7 +5,7 @@ readonly command_name=$(basename $0)
 readonly conf_path=$0.conf
 
 usage() {
-cat <<EOF
+  cat <<EOF
 
   Generate gpg keys
 
@@ -18,7 +18,7 @@ cat <<EOF
 EOF
 }
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 cat_conf() {
   cat <<EOF
 # Unattended GPG key generation - Using the GNU Privacy Guard
@@ -62,13 +62,12 @@ setup_conf() {
     echo "Specify passphrase." 1>&2
     exit 1
   fi
-  cat_conf > $conf_path
+  cat_conf >$conf_path
 }
 
 gen() {
   gpg --gen-key --batch $conf_path
 }
-
 
 main() {
   [[ $1 == -h ]] && usage && exit

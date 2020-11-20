@@ -26,7 +26,7 @@ Description for this command.
 EOF
 }
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 # add_args() { args=("${args[@]}" "$@"); }
 add_args() { args+=("$@"); }
 
@@ -34,11 +34,11 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-      -h|--help)  usage && exit 0 ;;
-      -r|--rev)   shift && rev=$1 ;;
-      -r*|--rev*) rev=${1#*=}     ;;
-      -a|--all)   is_all=1        ;;
-      *)          add_args "$1"   ;;
+      -h | --help) usage && exit 0 ;;
+      -r | --rev) shift && rev=$1 ;;
+      -r* | --rev*) rev=${1#*=} ;;
+      -a | --all) is_all=1 ;;
+      *) add_args "$1" ;;
     esac
     shift
   done
@@ -78,7 +78,7 @@ initialize() {
 
 contain_trunk_url() {
   local url="$1"
-  echo $url |grep "/trunk" >& /dev/null
+  echo $url | grep "/trunk" >&/dev/null
 }
 
 # git svn fetch -r 1000:HEAD means "fetch all revisions starting at rev 1000 up to the current HEAD".
@@ -126,4 +126,3 @@ main() {
   do_clone $all_args
 }
 main "$@"
-

@@ -5,7 +5,7 @@ readonly cred_path=$HOME/.aws/credentials
 _check() {
   local env=$1
   local _key="\[$env\]"
-  if ! grep "$_key" $cred_path >& /dev/null; then
+  if ! grep "$_key" $cred_path >&/dev/null; then
     echo "No such env $env exist" 1>&2
     exit 1
   fi
@@ -23,7 +23,7 @@ _env() {
 
 main() {
   if [[ ! -e init.tf ]]; then
-    echo 'provider "aws" {}' > init.tf
+    echo 'provider "aws" {}' >init.tf
     terraform init
   fi
   local env=default

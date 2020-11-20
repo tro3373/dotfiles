@@ -19,13 +19,13 @@ initialize() {
   [[ $# -eq 0 ]] && usage && exit 0
   for arg in "$@"; do
     case "$arg" in
-    -h | --help)
-      usage
-      exit 0
-      ;;
-    *)
-      add_args "$arg"
-      ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      *)
+        add_args "$arg"
+        ;;
     esac
   done
   check

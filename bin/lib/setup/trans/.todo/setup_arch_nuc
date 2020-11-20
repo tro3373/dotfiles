@@ -5,108 +5,108 @@ _username=base
 
 # http://archlinux-blogger.blogspot.jp/2016/03/arch-linux-uefi-gpt-xfs.html
 create_bootable_usb() {
-    if [[ $UID -ne 0 ]]; then
-        echo "Permission denied" 1>&2
-        exit 1
-    fi
-    if ! ls archlinux*iso >& /dev/null; then
-        curl -fSsLO https://jpn.mirror.pkgbuild.com/iso/2018.05.01/archlinux-2018.05.01-x86_64.iso
-    fi
-    if ! fdisk -l |grep /dev/sdb >& /dev/null; then
-        echo "You have not usb-stick?" 1>&2
-    fi
-    echo "==> do as root below."
-    echo 'dd if=archlinux*iso of=/dev/sdb bs=4M iflag=fullblock oflag=sync'
+  if [[ $UID -ne 0 ]]; then
+    echo "Permission denied" 1>&2
+    exit 1
+  fi
+  if ! ls archlinux*iso >&/dev/null; then
+    curl -fSsLO https://jpn.mirror.pkgbuild.com/iso/2018.05.01/archlinux-2018.05.01-x86_64.iso
+  fi
+  if ! fdisk -l | grep /dev/sdb >&/dev/null; then
+    echo "You have not usb-stick?" 1>&2
+  fi
+  echo "==> do as root below."
+  echo 'dd if=archlinux*iso of=/dev/sdb bs=4M iflag=fullblock oflag=sync'
 }
 setup_arch_via_usb_stick() {
-    # insert usb-stick
-    # boot bios menu
-    # bios setting(UEFI boot)
-    # boot via usb-stick
-    if ! ls ls /sys/firmware/ |grep efi >& /dev/null; then
-        echo "your system not efi booting." 1>&2
-        exit 1
-    fi
-    loadkeys jp106
-    if ping -c3 google.com; then
-        echo "network is enabled."
-    fi
+  # insert usb-stick
+  # boot bios menu
+  # bios setting(UEFI boot)
+  # boot via usb-stick
+  if ! ls ls /sys/firmware/ | grep efi >&/dev/null; then
+    echo "your system not efi booting." 1>&2
+    exit 1
+  fi
+  loadkeys jp106
+  if ping -c3 google.com; then
+    echo "network is enabled."
+  fi
 
-    echo "==> Erasing all system"
-    sgdisk --zap-all /dev/sda
-    reboot
-    echo "==> Partitioining .."
-    gdisk /dev/sda
-    # n Enter Enter +512M ef00
-    # n Enter Enter Enter Enter
-    # w y
-    echo "==> Formatting .."
-    mkfs.fat -F32 /dev/sda1
-    mkfs.xfs -m crc=1 /dev/sda2
+  echo "==> Erasing all system"
+  sgdisk --zap-all /dev/sda
+  reboot
+  echo "==> Partitioining .."
+  gdisk /dev/sda
+  # n Enter Enter +512M ef00
+  # n Enter Enter Enter Enter
+  # w y
+  echo "==> Formatting .."
+  mkfs.fat -F32 /dev/sda1
+  mkfs.xfs -m crc=1 /dev/sda2
 
-    echo "==> Installing .."
-    mount /dev/sda2 /mnt
-    mkdir /mnt/boot
-    mount /dev/sda1 /mnt/boot
-    echo "==> Move nearest mirror to top"
-    grep -E "(ftp.jaist.ac.jp|tsukuba)" /etc/pacman.d/mirrorlist >/tmp/jpmiller
-    mv /etc/pacman.d/mirrorlist{,.bk}
-    cat /tmp/jpmiller /etc/pacman.d/mirrorlist.bk >/etc/pacman.d/mirrorlist
-    echo "==> Installing base base-devel"
-    pacstrap /mnt base base-devel
-    echo "==> Generating fstab"
-    genfstab -U -p /mnt >> /mnt/etc/fstab
+  echo "==> Installing .."
+  mount /dev/sda2 /mnt
+  mkdir /mnt/boot
+  mount /dev/sda1 /mnt/boot
+  echo "==> Move nearest mirror to top"
+  grep -E "(ftp.jaist.ac.jp|tsukuba)" /etc/pacman.d/mirrorlist >/tmp/jpmiller
+  mv /etc/pacman.d/mirrorlist{,.bk}
+  cat /tmp/jpmiller /etc/pacman.d/mirrorlist.bk >/etc/pacman.d/mirrorlist
+  echo "==> Installing base base-devel"
+  pacstrap /mnt base base-devel
+  echo "==> Generating fstab"
+  genfstab -U -p /mnt >>/mnt/etc/fstab
 
-    echo "==> Chrooting /mnt"
-    arch-chroot /mnt /bin/bash
+  echo "==> Chrooting /mnt"
+  arch-chroot /mnt /bin/bash
 
-    sed -i -e '/^#en_US.UTF-8/s/#//"' -e '/^#ja_JP.UTF-8/s/#//"' /etc/locale.gen
-    locale-gen
-    echo LANG=en_US.UTF-8 > /etc/locale.conf
-    export LANG=en_US.UTF-8
-    loadkeys jp106
-    echo KEYMAP=jp106 > /etc/vconsole.conf
-    ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
-    hwclock --systohc --utc
-    echo $_hostname > /etc/hostname
-    cat <<EOF >>/etc/hosts
+  sed -i -e '/^#en_US.UTF-8/s/#//"' -e '/^#ja_JP.UTF-8/s/#//"' /etc/locale.gen
+  locale-gen
+  echo LANG=en_US.UTF-8 >/etc/locale.conf
+  export LANG=en_US.UTF-8
+  loadkeys jp106
+  echo KEYMAP=jp106 >/etc/vconsole.conf
+  ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+  hwclock --systohc --utc
+  echo $_hostname >/etc/hostname
+  cat <<EOF >>/etc/hosts
 127.0.0.1 localhost.localdomain localhost $_hostname
 ::1  localhost.localdomain localhost $_hostname
 EOF
-    systemctl enable dhcpcd.service
+  systemctl enable dhcpcd.service
 
-    echo "Setting new password .."
-    passwd
-    pacman -Syy
-    pacman -S intel-ucode
-    pacman -S dosfstools efibootmgr
-    pacman -S grub
-    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=arch_grub --recheck
+  echo "Setting new password .."
+  passwd
+  pacman -Syy
+  pacman -S intel-ucode
+  pacman -S dosfstools efibootmgr
+  pacman -S grub
+  grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=arch_grub --recheck
 
-    mkdir /boot/EFI/boot
-    cp /boot/EFI/arch_grub/grubx64.efi /boot/EFI/boot/bootx64.efi
-    grub-mkconfig -o /boot/grub/grub.cfg
-    exit
-    umount -R /mnt
-    reboot
+  mkdir /boot/EFI/boot
+  cp /boot/EFI/arch_grub/grubx64.efi /boot/EFI/boot/bootx64.efi
+  grub-mkconfig -o /boot/grub/grub.cfg
+  exit
+  umount -R /mnt
+  reboot
 }
 
 setup_arch() {
-    cp /etc/netctl/example/ethernet-static /etc/netctl/eno1-static
-    vi /etc/netctl/eno1-static
-    # donot forget add /24 Address
-    systemctl stop dhcpcd.service
-    systemctl disable dhcpcd.service
-    systemctl start netctl.service
-    systemctl enable netctl.service
-    systemctl start netctl@eno1-static
-    systemctl enable netctl@eno1-static
-    reboot
-    pacman -S openssh
-    useradd -m -g users -G wheel -s /bin/bash $_username
+  cp /etc/netctl/example/ethernet-static /etc/netctl/eno1-static
+  vi /etc/netctl/eno1-static
+  # donot forget add /24 Address
+  systemctl stop dhcpcd.service
+  systemctl disable dhcpcd.service
+  systemctl start netctl.service
+  systemctl enable netctl.service
+  systemctl start netctl@eno1-static
+  systemctl enable netctl@eno1-static
+  reboot
+  pacman -S openssh
+  useradd -m -g users -G wheel -s /bin/bash $_username
 }
 
-main () {
-    :
+main() {
+  :
 }
 main "$@"

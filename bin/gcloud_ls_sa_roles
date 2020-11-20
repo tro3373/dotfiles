@@ -42,11 +42,11 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-    -h | --help) usage && exit 0 ;;
-    -p | --project) shift && project=$1 ;;
-    -s | --sa) shift && service_account=$1 ;;
-    -e) dummy= ;;
-    *) add_args "$1" ;;
+      -h | --help) usage && exit 0 ;;
+      -p | --project) shift && project=$1 ;;
+      -s | --sa) shift && service_account=$1 ;;
+      -e) dummy= ;;
+      *) add_args "$1" ;;
     esac
     shift
   done

@@ -19,10 +19,10 @@ upload_s3() {
   echo "=> Uploading syncing $bucket .." 1>&2
   $dummy aws --profile $profile \
     s3 sync . s3://$bucket
-    # --include "*" \
-    # --delete \
-    # --acl public-read \
-    # --cache-control "max-age=3600"
+  # --include "*" \
+  # --delete \
+  # --acl public-read \
+  # --cache-control "max-age=3600"
 }
 
 main() {

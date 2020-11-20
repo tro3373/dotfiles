@@ -3,12 +3,12 @@
 # usage: fzf-tmux [-u|-d [HEIGHT[%]]] [-l|-r [WIDTH[%]]] [--] [FZF OPTIONS]
 
 fail() {
-  >&2 echo "$1"
+  echo >&2 "$1"
   exit 2
 }
 
-fzf="$(command -v fzf 2> /dev/null)" || fzf="$(dirname "$0")/fzf"
-[[ -x "$fzf" ]] || fail 'fzf executable not found'
+fzf="$(command -v fzf 2>/dev/null)" || fzf="$(dirname "$0")/fzf"
+[[ -x $fzf ]] || fail 'fzf executable not found'
 
 args=()
 opt=""
@@ -16,11 +16,11 @@ skip=""
 swap=""
 close=""
 term=""
-[[ -n "$LINES" ]] && lines=$LINES || lines=$(tput lines)
-[[ -n "$COLUMNS" ]] && columns=$COLUMNS || columns=$(tput cols)
+[[ -n $LINES ]] && lines=$LINES || lines=$(tput lines)
+[[ -n $COLUMNS ]] && columns=$COLUMNS || columns=$(tput cols)
 
 help() {
-  >&2 echo 'usage: fzf-tmux [-u|-d [HEIGHT[%]]] [-l|-r [WIDTH[%]]] [--] [FZF OPTIONS]
+  echo >&2 'usage: fzf-tmux [-u|-d [HEIGHT[%]]] [-l|-r [WIDTH[%]]] [--] [FZF OPTIONS]
 
   Layout
     -u [HEIGHT[%]]  Split above (up)
@@ -36,7 +36,7 @@ help() {
 while [[ $# -gt 0 ]]; do
   arg="$1"
   shift
-  [[ -z "$skip" ]] && case "$arg" in
+  [[ -z $skip ]] && case "$arg" in
     -)
       term=1
       ;;
@@ -47,17 +47,17 @@ while [[ $# -gt 0 ]]; do
       echo "fzf-tmux (with fzf $("$fzf" --version))"
       exit
       ;;
-    -w*|-h*|-d*|-u*|-r*|-l*)
-      if [[ "$arg" =~ ^.[lrw] ]]; then
+    -w* | -h* | -d* | -u* | -r* | -l*)
+      if [[ $arg =~ ^.[lrw] ]]; then
         opt="-h"
-        if [[ "$arg" =~ ^.l ]]; then
+        if [[ $arg =~ ^.l ]]; then
           opt="$opt -d"
           swap="; swap-pane -D ; select-pane -L"
           close="; tmux swap-pane -D"
         fi
       else
         opt=""
-        if [[ "$arg" =~ ^.u ]]; then
+        if [[ $arg =~ ^.u ]]; then
           opt="$opt -d"
           swap="; swap-pane -D ; select-pane -U"
           close="; tmux swap-pane -D"
@@ -66,7 +66,7 @@ while [[ $# -gt 0 ]]; do
       if [[ ${#arg} -gt 2 ]]; then
         size="${arg:2}"
       else
-        if [[ "$1" =~ ^[0-9]+%?$ ]]; then
+        if [[ $1 =~ ^[0-9]+%?$ ]]; then
           size="$1"
           shift
         else
@@ -74,21 +74,21 @@ while [[ $# -gt 0 ]]; do
         fi
       fi
 
-      if [[ "$size" =~ %$ ]]; then
-        size=${size:0:((${#size}-1))}
-        if [[ -n "$swap" ]]; then
-          opt="$opt -p $(( 100 - size ))"
+      if [[ $size =~ %$ ]]; then
+        size=${size:0:${#size}-1}
+        if [[ -n $swap ]]; then
+          opt="$opt -p $((100 - size))"
         else
           opt="$opt -p $size"
         fi
       else
-        if [[ -n "$swap" ]]; then
-          if [[ "$arg" =~ ^.l ]]; then
+        if [[ -n $swap ]]; then
+          if [[ $arg =~ ^.l ]]; then
             max=$columns
           else
             max=$lines
           fi
-          size=$(( max - size ))
+          size=$((max - size))
           [[ $size -lt 0 ]] && size=0
           opt="$opt -l $size"
         else
@@ -106,10 +106,10 @@ while [[ $# -gt 0 ]]; do
       args+=("$arg")
       ;;
   esac
-  [[ -n "$skip" ]] && args+=("$arg")
+  [[ -n $skip ]] && args+=("$arg")
 done
 
-if [[ -z "$TMUX" || "$opt" =~ ^-h && "$columns" -le 40 || ! "$opt" =~ ^-h && "$lines" -le 15 ]]; then
+if [[ -z $TMUX || $opt =~ ^-h && $columns -le 40 || ! $opt =~ ^-h && $lines -le 15 ]]; then
   "$fzf" "${args[@]}"
   exit $?
 fi
@@ -134,7 +134,7 @@ cleanup() {
   rm -f $argsf $fifo1 $fifo2 $fifo3
 
   # Remove temp window if we were zoomed
-  if [[ -n "$zoomed" ]]; then
+  if [[ -n $zoomed ]]; then
     tmux swap-pane -t $original_window \; \
       select-window -t $original_window \; \
       kill-window -t $tmp_window \; \
@@ -144,8 +144,8 @@ cleanup() {
 trap cleanup EXIT SIGINT SIGTERM
 
 envs="env TERM=$TERM "
-[[ -n "$FZF_DEFAULT_OPTS"    ]] && envs="$envs FZF_DEFAULT_OPTS=$(printf %q "$FZF_DEFAULT_OPTS")"
-[[ -n "$FZF_DEFAULT_COMMAND" ]] && envs="$envs FZF_DEFAULT_COMMAND=$(printf %q "$FZF_DEFAULT_COMMAND")"
+[[ -n $FZF_DEFAULT_OPTS ]] && envs="$envs FZF_DEFAULT_OPTS=$(printf %q "$FZF_DEFAULT_OPTS")"
+[[ -n $FZF_DEFAULT_COMMAND ]] && envs="$envs FZF_DEFAULT_COMMAND=$(printf %q "$FZF_DEFAULT_COMMAND")"
 
 mkfifo -m o+w $fifo2
 mkfifo -m o+w $fifo3
@@ -160,21 +160,16 @@ for arg in "${args[@]}"; do
   opts="$opts \"$arg\""
 done
 
-if [[ -n "$term" ]] || [[ -t 0 ]]; then
-  cat <<< "\"$fzf\" $opts > $fifo2; echo \$? > $fifo3 $close" > $argsf
-  TMUX=$(echo $TMUX | cut -d , -f 1,2) tmux set-window-option synchronize-panes off \;\
-    set-window-option remain-on-exit off \;\
-    split-window $opt "cd $(printf %q "$PWD");$envs bash $argsf" $swap \
-    > /dev/null 2>&1
+if [[ -n $term ]] || [[ -t 0 ]]; then
+  cat <<<"\"$fzf\" $opts > $fifo2; echo \$? > $fifo3 $close" >$argsf
+  TMUX=$(echo $TMUX | cut -d , -f 1,2) tmux set-window-option synchronize-panes off \; set-window-option remain-on-exit off \; split-window $opt "cd $(printf %q "$PWD");$envs bash $argsf" $swap \
+    >/dev/null 2>&1
 else
   mkfifo $fifo1
-  cat <<< "\"$fzf\" $opts < $fifo1 > $fifo2; echo \$? > $fifo3 $close" > $argsf
-  TMUX=$(echo $TMUX | cut -d , -f 1,2) tmux set-window-option synchronize-panes off \;\
-    set-window-option remain-on-exit off \;\
-    split-window $opt "$envs bash $argsf" $swap \
-    > /dev/null 2>&1
-  cat <&0 > $fifo1 &
+  cat <<<"\"$fzf\" $opts < $fifo1 > $fifo2; echo \$? > $fifo3 $close" >$argsf
+  TMUX=$(echo $TMUX | cut -d , -f 1,2) tmux set-window-option synchronize-panes off \; set-window-option remain-on-exit off \; split-window $opt "$envs bash $argsf" $swap \
+    >/dev/null 2>&1
+  cat <&0 >$fifo1 &
 fi
 cat $fifo2
 exit "$(cat $fifo3)"
-

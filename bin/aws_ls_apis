@@ -29,10 +29,10 @@ initialize() {
     case "$1" in
       # -e) dummy= ;;
       #-f|--file) shift && file=$1 ;;
-      -h|--help) usage && exit 0  ;;
-      -u|--url) ;;
-      -s|--swagger) mode=swagger ;;
-      -r|--reqmap) mode=reqmap ;;
+      -h | --help) usage && exit 0 ;;
+      -u | --url) ;;
+      -s | --swagger) mode=swagger ;;
+      -r | --reqmap) mode=reqmap ;;
       --region) shift && region=$1 ;;
       *) profile="$1" ;;
     esac
@@ -45,7 +45,7 @@ ls_rest_apis() {
     apigateway get-rest-apis |
     # jq '.items[] | { id:.id, name: .name }'
     jq -r '.items[] | .id+" "+.name' |
-      get_stage_name
+    get_stage_name
 }
 
 get_stage_name() {
@@ -54,11 +54,11 @@ get_stage_name() {
     aws --profile $profile \
       apigateway get-stages --rest-api-id $api_id |
       jq -r '.item[].stageName' |
-        if [[ $mode == "swagger" ]]; then
-          get_swagger_json
-        else
-          get_url_path
-        fi
+      if [[ $mode == "swagger" ]]; then
+        get_swagger_json
+      else
+        get_url_path
+      fi
   done
 }
 get_swagger_json() {
@@ -84,11 +84,11 @@ get_url_path() {
       # jq -r '.items[] | select(has("resourceMethods")) | .id+" "+.path'
       # jq -r '.items[] | select(.resourceMethods.GET == {}) | .id+" "+.path'
       jq -r '.items[] | select(has("resourceMethods")) | .id+" "+.path+" "+(if .resourceMethods.POST == {} then "POST" else "GET" end)' |
-        if [[ $mode == "reqmap" ]]; then
-          get_reqmap
-        else
-          get_lambda_urls
-        fi
+      if [[ $mode == "reqmap" ]]; then
+        get_reqmap
+      else
+        get_lambda_urls
+      fi
   done
 }
 get_reqmap() {
@@ -114,12 +114,12 @@ get_lambda_urls() {
       --rest-api-id $api_id \
       --resource-id $res_id \
       --http-method $method |
-        jq -r '.uri' |
-        sed -e 's,^.*function:\(.*\)/.*$,\1,g' |
-          while read -r lambda; do
-            [[ -z $lambda ]] && continue
-            echo "https://$api_id.execute-api.$region.amazonaws.com/$stage$path $lambda"
-          done
+      jq -r '.uri' |
+      sed -e 's,^.*function:\(.*\)/.*$,\1,g' |
+      while read -r lambda; do
+        [[ -z $lambda ]] && continue
+        echo "https://$api_id.execute-api.$region.amazonaws.com/$stage$path $lambda"
+      done
   done
 }
 main() {
@@ -131,4 +131,3 @@ main() {
   echo "Done."
 }
 main "$@"
-

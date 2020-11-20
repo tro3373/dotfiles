@@ -29,15 +29,15 @@ set_args() {
   [[ $# -eq 0 ]] && usage && exit 0
   for arg in "$@"; do
     case "$arg" in
-      -h|--help)
+      -h | --help)
         usage
         exit 0
         ;;
-      -s|--status)
+      -s | --status)
         show_status
         exit 0
         ;;
-      -r|-c|--cancel)
+      -r | -c | --cancel)
         cancel=1
         ;;
       *)
@@ -84,4 +84,3 @@ main() {
   fi
 }
 main "$@"
-

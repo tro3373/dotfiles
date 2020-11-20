@@ -4,9 +4,9 @@ GITIO_URL=https://git.io
 url="$1"
 code="$2"
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 main() {
-  if [ -z "$url" ] ; then
+  if [ -z "$url" ]; then
     cat <<EOF
 Usage:
   $0 url [code]
@@ -17,12 +17,12 @@ EOF
     echo "No curl exist. install it."
     exit 1
   fi
-  if [ -n "$code" ] && grep -E '[^a-zA-Z0-9_-]' <<<"$code" >/dev/null 2>&1 ; then
+  if [ -n "$code" ] && grep -E '[^a-zA-Z0-9_-]' <<<"$code" >/dev/null 2>&1; then
     echo "code is only alpha-numeric and _ and -."
     exit 1
   fi
   local code_msg="{will be Random}"
-  if [ -n "$code" ] ; then
+  if [ -n "$code" ]; then
     local code_msg="$code"
   fi
   echo "---"
@@ -31,7 +31,7 @@ EOF
   echo
   echo "Are you Ready?(Cancel: Ctrl+c)"
   read
-  if [ -z "$code" ] ; then
+  if [ -z "$code" ]; then
     curl -i $GITIO_URL -F "url=$url"
   else
     curl -i $GITIO_URL -F "url=$url" -F "code=$code"

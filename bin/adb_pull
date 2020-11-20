@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
 current_dir=$(pwd)
-script_dir=$(cd $(dirname $0); pwd)
+script_dir=$(
+  cd $(dirname $0)
+  pwd
+)
 command_name=$(basename $0)
 
 package_name=
@@ -22,7 +25,7 @@ Pull file (databas file and so on) from connected android device for developing 
 EOF
 }
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 
 add_args() {
   args=("${args[@]}" "$@")
@@ -31,14 +34,14 @@ add_args() {
 set_args() {
   for arg in "$@"; do
     case "$arg" in
-      -h|--help)
+      -h | --help)
         usage
         exit 0
         ;;
-      -p*|--package*)
+      -p* | --package*)
         package_name=${arg#*=} # Delete until '='
         ;;
-      -f*|--file*)
+      -f* | --file*)
         pull_file=${arg#*=}
         ;;
       *)
@@ -80,7 +83,7 @@ check_args() {
   if [[ -z $pull_file ]]; then
     echo "No pull file specified." 1>&2
     usage
-    if [[ ! -z $package_name ]] && [[ $device_connected -eq 1 ]]; then
+    if [[ -n $package_name ]] && [[ $device_connected -eq 1 ]]; then
       local tmp="adb shell run-as $package_name ls -la"
       echo "==> $tmp"
       $tmp
@@ -97,7 +100,6 @@ check() {
 main() {
   initialize "$@"
   check
-  adb exec-out run-as $package_name cat $pull_file > file
+  adb exec-out run-as $package_name cat $pull_file >file
 }
 main "$@"
-

@@ -46,7 +46,7 @@ set_win_env() {
 
   # git setting
   local wingit="/c/Program Files/Git/cmd"
-  if [[ $use_wingit -eq 1 && -e "$wingit" ]]; then
+  if [[ $use_wingit -eq 1 && -e $wingit ]]; then
     add_winpath "$wingit"
   else
     add_winpath "/usr/bin/" # msys git
@@ -90,4 +90,3 @@ main() {
   $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent $args &
 }
 main "$@"
-

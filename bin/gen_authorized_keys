@@ -9,7 +9,7 @@ confirm() {
   message="${message} (y/N)"
   echo -e "$message"
   read yesno
-  if [[ ! "$yesno" =~ (y|Y) ]]; then
+  if [[ ! $yesno =~ (y|Y) ]]; then
     echo "==> proc canceled. terminate this proc."
     exit 1
   fi

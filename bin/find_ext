@@ -11,12 +11,10 @@ list=$(find ${target_dir} -name ".git" -prune -o -type f -print)
 # not = !
 # list=`find ${target_dir} -type f ! -perm 755`
 
-for file in $list
-do
+for file in $list; do
   filename=$(basename $file)
   ext=${filename##*.}
   ext_list=("${ext_list[@]}" "${ext}") # bash array
 done
 
 echo "${ext_list[@]}" | tr ' ' '\n' | sort | uniq -c | sort -n
-

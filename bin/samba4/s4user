@@ -13,47 +13,45 @@ if [ $# -ne 3 ]; then
 fi
 #
 IFS=$'\n'
-for s4n in `wbinfo -u`
-do
-  s4n_m=$(echo $s4n|grep -wxci $1)                     # samba4AD  ユーザ名チェック
+for s4n in $(wbinfo -u); do
+  s4n_m=$(echo $s4n | grep -wxci $1) # samba4AD  ユーザ名チェック
   if [ $s4n_m -ne 0 ]; then
-     echo "already registered user(samaba4): $1"
-     exit 1
+    echo "already registered user(samaba4): $1"
+    exit 1
   fi
-  s4uid=$(wbinfo -i $s4n|cut -d":" -f3|grep -wxci $2)  # samba4AD  uidチェック
+  s4uid=$(wbinfo -i $s4n | cut -d":" -f3 | grep -wxci $2) # samba4AD  uidチェック
   if [ $s4uid -ne 0 ]; then
-     echo "already registered uid(samba4): $2"
-     exit 1
+    echo "already registered uid(samba4): $2"
+    exit 1
   fi
 done
 #
-for hostn in `cat /etc/passwd`
-do
-  hostn_m=$(echo $hostn|cut -d":" -f1|grep -wxci $1)   # /etc/passwd ユーザ名チェック
+for hostn in $(cat /etc/passwd); do
+  hostn_m=$(echo $hostn | cut -d":" -f1 | grep -wxci $1) # /etc/passwd ユーザ名チェック
   if [ $hostn_m -ne 0 ]; then
-     echo "already used user(/etc/passwd): $1"
-     exit 1
+    echo "already used user(/etc/passwd): $1"
+    exit 1
   fi
-  hostnid_m=$(echo $hostn|cut -d":" -f3|grep -wxci $2) # /etc/passwd uidチェック
+  hostnid_m=$(echo $hostn | cut -d":" -f3 | grep -wxci $2) # /etc/passwd uidチェック
   if [ $hostnid_m -ne 0 ]; then
-     echo "already used uid(/etc/passwd): $2"
-     exit 1
+    echo "already used uid(/etc/passwd): $2"
+    exit 1
   fi
 done
 #
-strgid=$(wbinfo --group-info=$3)                       # samba4AD グループ取得
-if [ $? -ne 0 ]; then                                  # グループが存在していればOK
-   echo "no such found group name in samaba4AD: $3";
-   exit 1
+strgid=$(wbinfo --group-info=$3) # samba4AD グループ取得
+if [ $? -ne 0 ]; then            # グループが存在していればOK
+  echo "no such found group name in samaba4AD: $3"
+  exit 1
 fi
 #------------------------------------------------------#
 #
 echo "Creating s4 posix user "$1
 echo "Please enter password for "$1
-samba-tool user add $1 --uid-number=$2                 # ユーザ登録
-if [ $? -ne 0 ]; then                                  # ユーザ名、UIDが不適切なら落ちる
-   echo "ERR";
-   exit 1
+samba-tool user add $1 --uid-number=$2 # ユーザ登録
+if [ $? -ne 0 ]; then                  # ユーザ名、UIDが不適切なら落ちる
+  echo "ERR"
+  exit 1
 fi
 sleep 2
 #
@@ -67,7 +65,7 @@ gid=$(echo $strgid | cut -d ":" -f 3)
 # get the group from the sid
 strsid=$(wbinfo --gid-to-sid=$gid)
 primarygid=$(echo $strsid | cut -d "-" -f 8)
-strwg=$(echo $struid | cut -d "\\" -f 1)
+strwg=$(echo $struid | cut -d '\' -f 1)
 #
 # add the posix attributes to the user
 echo "dn: CN=$1,CN=Users,DC=$dc1,DC=$dc2
@@ -82,38 +80,38 @@ add:unixhomedirectory
 unixhomedirectory: /home/$strwg/$1
 -
 add: loginshell
-loginshell: /bin/bash" > /tmp/$1
+loginshell: /bin/bash" >/tmp/$1
 ldbmodify --url=$samba/private/sam.ldb -b dc=$dc1,dc=$dc2 /tmp/$1
-if [ $? -ne 0 ]; then                                  #チェック
-   echo "ERR";
-   exit 1
+if [ $? -ne 0 ]; then #チェック
+  echo "ERR"
+  exit 1
 fi
 #
-samba-tool group addmembers $3 $1                      # グループにユーザを登録
-if [ $? -ne 0 ]; then                                  #チェック
-   echo "ERR";
-   exit 1
+samba-tool group addmembers $3 $1 # グループにユーザを登録
+if [ $? -ne 0 ]; then             #チェック
+  echo "ERR"
+  exit 1
 fi
 #
 # set the user to the posix group
 echo "dn: CN=$1,CN=Users,DC=$dc1,DC=$dc2
 changetype: modify
 replace: primarygroupid
-primarygroupid: $primarygid" > /tmp/$1
+primarygroupid: $primarygid" >/tmp/$1
 #
 echo "sleeping. . ."
 sleep 5
 ldbmodify --url=$samba/private/sam.ldb -b dc=$dc1,dc=$dc2 /tmp/$1
-if [ $? -ne 0 ]; then                                  #チェック
-   echo "ERR";
-   exit 1
+if [ $? -ne 0 ]; then #チェック
+  echo "ERR"
+  exit 1
 fi
 #
-mkdir -p /home/$strwg/$1                               # ホームディレクトリ作成
-cp /etc/skel/.[A-z]* /home/$strwg/$1                   # /etc/skelもコピー
+mkdir -p /home/$strwg/$1             # ホームディレクトリ作成
+cp /etc/skel/.[A-z]* /home/$strwg/$1 # /etc/skelもコピー
 chown -R $1:$3 /home/$strwg/$1
 rm /tmp/$1
-hostname=$(hostname -s)                                # samaba4ADがストレージサイトになるが...
+hostname=$(hostname -s) # samaba4ADがストレージサイトになるが...
 #
 echo "dn: CN=$1,CN=Users,DC=$dc1,DC=$dc2
 changetype: modify
@@ -127,12 +125,12 @@ add: homeDrive
 homeDrive: Z:
 -
 add: homeDirectory
-homeDirectory: \\\\$hostname\\home\\$1" > /tmp/$1
+homeDirectory: \\\\$hostname\\home\\$1" >/tmp/$1
 #
 echo "sleeping. . ."
 sleep 5
 ldbmodify --url=$samba/private/sam.ldb -b dc=$dc1,dc=$dc2 /tmp/$1
-echo "New user: "  $1 "POSIX-ified as follows:"
+echo "New user: " $1 "POSIX-ified as follows:"
 echo "uid " $uid
 echo "gid " $gid
 echo "primaryGroupID " $primarygid " :$2"
@@ -143,4 +141,3 @@ db=$samba/private/sam.ldb
 ldbsearch --url=$db cn=$1 | grep \\\\$hostname
 ldbsearch --url=$db cn=$1 | grep homeDrive
 rm /tmp/$1
-

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-max=$((1024*1024*1024)) # 1G
+max=$((1024 * 1024 * 1024)) # 1G
 target_file=/var/log/mongodb/mongod.log
 
 log() { echo "$(date +"%Y-%m-%d %H:%M:%S"): $*" 1>&2; }
@@ -20,7 +20,7 @@ do_rotate() {
 size() {
   local f=$1
   [[ ! -e $f ]] && log "No such file. $f" && return
-  wc -c < "$f"
+  wc -c <"$f"
 }
 
 main() {

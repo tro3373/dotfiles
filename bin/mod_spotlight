@@ -6,7 +6,7 @@ main() {
     echo "No such file exist. $target" 1>&2
     exit 1
   fi
-  if grep Wallpapers $target >& /dev/null; then
+  if grep Wallpapers $target >&/dev/null; then
     echo "Already setuped."
     return
   fi
@@ -15,4 +15,3 @@ main() {
   echo "Done"
 }
 main "$@"
-

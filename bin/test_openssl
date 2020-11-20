@@ -2,7 +2,7 @@
 
 gen_iv() {
   local number=${1:-16}
-  cat < /dev/urandom | tr -dc 'A-F0-9' | fold -w $number | head -n 1
+  cat </dev/urandom | tr -dc 'A-F0-9' | fold -w $number | head -n 1
 }
 
 enc() {
@@ -38,4 +38,3 @@ main() {
 }
 
 main "$@"
-

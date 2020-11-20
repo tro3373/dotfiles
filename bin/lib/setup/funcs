@@ -34,13 +34,13 @@ has() { command -v ${1} >&/dev/null; }
 # TODO change func name
 isexist() { find "$*" >&/dev/null; }
 
-is_arch() { [[ "$DETECT_OS" == "arch" ]]; }
+is_arch() { [[ $DETECT_OS == "arch" ]]; }
 is_arm() { uname -m | grep arm >&/dev/null; }
-is_msys() { [[ "$DETECT_OS" == "msys" ]]; }
-is_cygwin() { [[ "$DETECT_OS" == "cygwin" ]]; }
-is_mac() { [[ "$DETECT_OS" == "mac" ]]; }
-is_ubuntu() { [[ "$DETECT_OS" == "ubuntu" ]]; }
-is_redhat() { [[ "$DETECT_OS" == "redhat" ]]; }
+is_msys() { [[ $DETECT_OS == "msys" ]]; }
+is_cygwin() { [[ $DETECT_OS == "cygwin" ]]; }
+is_mac() { [[ $DETECT_OS == "mac" ]]; }
+is_ubuntu() { [[ $DETECT_OS == "ubuntu" ]]; }
+is_redhat() { [[ $DETECT_OS == "redhat" ]]; }
 is_win() { is_msys || is_cygwin; }
 is_unix() { ! is_win; }
 
@@ -57,14 +57,14 @@ initialize_args() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-    -h | --help) usage && exit 0 ;;
-    #-f*|--file*) file=${1#*=} ;;
-    #-f|--file) shift && file=$1 ;;
-    -e | --exec) dry_run=0 ;;
-    -v | --view) view=1 ;;
-    -f | --force) force=1 ;;
-    -d | --debug) debug=1 ;;
-    *) add_args $1 ;;
+      -h | --help) usage && exit 0 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      -e | --exec) dry_run=0 ;;
+      -v | --view) view=1 ;;
+      -f | --force) force=1 ;;
+      -d | --debug) debug=1 ;;
+      *) add_args $1 ;;
     esac
     shift
   done
@@ -100,7 +100,7 @@ mexe() {
 
 make_dir_if_needed() {
   local tmp="$*"
-  if [[ ! -e "$tmp" ]]; then
+  if [[ ! -e $tmp ]]; then
     mexe "mkdir -p \"$tmp\""
   fi
 }
@@ -230,7 +230,7 @@ backup_file() {
   # バックアップ先ディレクトリにmv
   mexe "mv -fv \"$_target\" \"${_backup_root}/${_timestamp}_$_name\""
   del_if_exist "$_target"
-  if [[ ! -e "$_target" ]]; then
+  if [[ ! -e $_target ]]; then
     dlog "===> Backuped $_target"
   fi
 }
@@ -286,13 +286,13 @@ _github() {
   local url="$2"
   local tag="${3:-}"
   local _sudo=""
-  if ! is_win && [[ "$dst" == "/usr/local/src" ]]; then
+  if ! is_win && [[ $dst == "/usr/local/src" ]]; then
     _sudo="sudo"
   fi
   local repo_name="${url##*/}"
   repo_name="${repo_name%%\.git}"
   local _path="$dst/$repo_name"
-  if [[ -e "$_path" ]]; then
+  if [[ -e $_path ]]; then
     mexe cd $_path
     mexe $_sudo git fetch
   else
@@ -323,7 +323,7 @@ github() {
 dl() {
   local _url="$1"
   local _dst="$2"
-  if [[ -e "$_dst" ]] && [[ ! -d "$_dst" ]]; then
+  if [[ -e $_dst ]] && [[ ! -d $_dst ]]; then
     dlog "Already exists file $_dst"
     return
   fi

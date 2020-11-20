@@ -35,10 +35,10 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-    -h | --help) usage && exit 0 ;;
-    #-f*|--file*) file=${1#*=} ;;
-    #-f|--file) shift && file=$1 ;;
-    *) handle_args "$1" ;;
+      -h | --help) usage && exit 0 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) handle_args "$1" ;;
     esac
     shift
   done

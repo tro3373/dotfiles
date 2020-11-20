@@ -36,7 +36,7 @@ setup_in_live_cd() {
   # install base command to /mnt
   pacstrap /mnt base base-devel
   # gen fstab
-  genfstab -U /mnt >> /mnt/etc/fstab
+  genfstab -U /mnt >>/mnt/etc/fstab
 }
 
 setup_in_chroot() {
@@ -57,15 +57,15 @@ setup_in_chroot() {
   locale-gen
 
   # set locale
-  echo LANG=en_US.UTF-8 > /etc/locale.conf
+  echo LANG=en_US.UTF-8 >/etc/locale.conf
   # set keymap
-  echo KEYMAP=$keyboard_layout >> /etc/vconsole.conf
-  echo FONT=Lat2-Terminus16 >> /etc/vconsole.conf
+  echo KEYMAP=$keyboard_layout >>/etc/vconsole.conf
+  echo FONT=Lat2-Terminus16 >>/etc/vconsole.conf
 
   # set hostname
-  echo $hostname > /etc/hostname
+  echo $hostname >/etc/hostname
   # set hostname in hosts
-  echo "127.0.0.1 $hostname.localdomain $hostname" >> /etc/hosts
+  echo "127.0.0.1 $hostname.localdomain $hostname" >>/etc/hosts
 
   # enable dhcpcd for networking(For Cable Network)
   systemctl enable dhcpcd.service

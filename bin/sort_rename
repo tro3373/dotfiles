@@ -28,14 +28,14 @@ add_args() {
 set_args() {
   for arg in "$@"; do
     case "$arg" in
-      -h|--help)
+      -h | --help)
         usage
         exit 0
         ;;
-      -e|--execute)
+      -e | --execute)
         debug=""
         ;;
-      -d=*|--directory=*)
+      -d=* | --directory=*)
         debug=""
         target_dir=${current_dir#*=}
         ;;
@@ -65,9 +65,9 @@ initialize() {
 cnv() {
   local count=0
   for f in $(ls *.$suffix | sort -n); do
-    count=$(( count + 1 ))
+    count=$((count + 1))
     local num=$(printf "%03d" $count)
-    [[ "$f" == "$num.$suffix" ]] && continue
+    [[ $f == "$num.$suffix" ]] && continue
     $debug mv "$f" $num.$suffix
   done
 }
@@ -78,14 +78,13 @@ main() {
   set -eu
   cd $target_dir
   for d in $(find . -maxdepth 5 -type d); do
-    local is_target_file_exist=$(find $d -maxdepth 1 -type f -name "*.$suffix" |wc -l)
+    local is_target_file_exist=$(find $d -maxdepth 1 -type f -name "*.$suffix" | wc -l)
     [[ $is_target_file_exist -eq 0 ]] && continue
     echo "==> $d"
     cd $d
     cnv
-    cd - &> /dev/null
+    cd - &>/dev/null
   done
 }
 
 main "$@"
-

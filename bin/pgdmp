@@ -7,12 +7,12 @@ readonly d=${3:-postgres}
 readonly dump_sql=dump.sql
 readonly archive=dump.tgz
 
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 dump() {
   echo "> Database Dumping .."
   [[ -e $archive ]] && rm $archive
   echo "> Input $u password .."
-  pg_dump -h $h -U $u -d $d > $dump_sql
+  pg_dump -h $h -U $u -d $d >$dump_sql
   echo "> Archiving $dump_sql .."
   tar cvfpz $archive $dump_sql
   rm $dump_sql

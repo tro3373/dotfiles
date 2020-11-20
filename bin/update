@@ -28,11 +28,11 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-    -h | --help) usage && exit 0 ;;
-    -e) dummy= ;;
-    #-f*|--file*) file=${1#*=} ;;
-    #-f|--file) shift && file=$1 ;;
-    *) add_args "$1" ;;
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
     esac
     shift
   done
@@ -73,11 +73,11 @@ main() {
   set -e
   local _os=$(os)
   case "$_os" in
-  arch) update_arch ;;
-  ubuntu) update_ubuntu ;;
-  msys) update_msys ;;
-  mac) update_mac ;;
-  *) not_supported ;;
+    arch) update_arch ;;
+    ubuntu) update_ubuntu ;;
+    msys) update_msys ;;
+    mac) update_mac ;;
+    *) not_supported ;;
   esac
   ink yellow "Done!"
 }

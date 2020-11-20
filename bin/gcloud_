@@ -9,9 +9,9 @@ has() { command -v ${1} >&/dev/null; }
 initialize() {
   for arg in "$@"; do
     case "$arg" in
-    -e) dummy= ;;
-    sls) setup_sls=1 ;;
-    appcred) gen_app_cred=1 ;;
+      -e) dummy= ;;
+      sls) setup_sls=1 ;;
+      appcred) gen_app_cred=1 ;;
     esac
   done
 }

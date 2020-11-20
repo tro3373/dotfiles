@@ -26,7 +26,7 @@ EOF
 initialize() {
   for arg in "$@"; do
     case "$arg" in
-      -h|--help) usage && exit 0  ;;
+      -h | --help) usage && exit 0 ;;
       -e) dummy= ;;
       -r) region="$arg" ;;
       -p) profile="$arg" ;;

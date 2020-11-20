@@ -4,7 +4,7 @@ def_len=8
 # current_dir=$(pwd)
 # script_dir=$(cd $(dirname $0); pwd)
 command_name=$(basename $0)
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 usage() {
   cat <<EOF
 
@@ -30,7 +30,7 @@ output_header() {
 
 main() {
   local len="$*"
-  if echo $len |grep -E "(-h|--help)" >& /dev/null; then
+  if echo $len | grep -E "(-h|--help)" >&/dev/null; then
     usage
     exit
   fi
@@ -48,12 +48,23 @@ main() {
   fi
   if has openssl; then
     local numb=$(echo $len | awk '{print int($1*1.16)+1}')
-    echo "     openssl:  $(openssl rand -base64 $numb | tr -d "=+/" | head -c $len; echo)"
+    echo "     openssl:  $(
+      openssl rand -base64 $numb | tr -d "=+/" | head -c $len
+      echo
+    )"
   fi
-  echo "    urandom1:  $(</dev/urandom tr -dc '12345!@#$%qwertQWERTasdfgASDFGzxcvbZXCVB' | head -c$len; echo)"
-  echo "    urandom2:  $(</dev/urandom tr -dc _A-Z-a-z-0-9 | head -c$len; echo)"
-  echo "    urandom3:  $(</dev/urandom tr -dc '[:alnum:]'  | fold -w$len | head -n1)"
-  echo "        date:  $(date +%s | sha256sum | base64 | head -c $len; echo)"
+  echo "    urandom1:  $(
+    tr </dev/urandom -dc '12345!@#$%qwertQWERTasdfgASDFGzxcvbZXCVB' | head -c$len
+    echo
+  )"
+  echo "    urandom2:  $(
+    tr </dev/urandom -dc _A-Z-a-z-0-9 | head -c$len
+    echo
+  )"
+  echo "    urandom3:  $(tr </dev/urandom -dc '[:alnum:]' | fold -w$len | head -n1)"
+  echo "        date:  $(
+    date +%s | sha256sum | base64 | head -c $len
+    echo
+  )"
 }
 main "$@"
-

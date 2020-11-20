@@ -5,12 +5,12 @@ ldbdel=/usr/local/samba/bin/ldbdel
 idmap=/usr/local/samba/private/idmap.ldb
 
 user_id=$1
-while [[ "$user_id" == "" ]]; do
-    echo
-    $wbinfo -u
-    echo
-    echo "Input user_id..."
-    read user_id
+while [[ $user_id == "" ]]; do
+  echo
+  $wbinfo -u
+  echo
+  echo "Input user_id..."
+  read user_id
 done
 
 sid=$($wbinfo -n $user_id | awk '{print $1}')
@@ -27,15 +27,15 @@ echo "    gid=$gid"
 echo "---------------------------------"
 
 dowbinfo() {
-    option=$1
-    option=${option/SID/$sid}
-    option=${option/XID/$xid}
-    option=${option/UID/$uid}
-    option=${option/GID/$gid}
-    option=${option/GROUP/$gid}
-    option=${option/Sid-List/$sid}
-    echo "===>${option/--}"
-    $wbinfo ${option}
+  option=$1
+  option=${option/SID/$sid}
+  option=${option/XID/$xid}
+  option=${option/UID/$uid}
+  option=${option/GID/$gid}
+  option=${option/GROUP/$gid}
+  option=${option/Sid-List/$sid}
+  echo "===>${option/--/}"
+  $wbinfo ${option}
 }
 
 dowbinfo --uid-info=UID
@@ -58,10 +58,9 @@ xsid=$($wbinfo --gid-to-sid=$xid)
 group=$($wbinfo -s $xsid | awk '{print $1}' | awk -F"\\" '{print $2}')
 dowbinfo --group-info=$group
 echo "==>user-sids=$sid dump to-gid result"
-for s in `$wbinfo --user-sids=$sid`; do
-    dowbinfo --sid-to-gid=$s
+for s in $($wbinfo --user-sids=$sid); do
+  dowbinfo --sid-to-gid=$s
 done
-
 
 # wbinfo Usage
 #
@@ -135,4 +134,3 @@ done
 #                                      authentication
 # --lanman                             Use lanman cryptography for user
 #                                      authentication
-

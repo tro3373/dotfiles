@@ -7,6 +7,6 @@ main() {
     driver=cp932
   fi
   git config diff.$driver.textconv "iconv -f $driver"
-  echo "*.txt diff=$driver" >> .gitattributes
+  echo "*.txt diff=$driver" >>.gitattributes
 }
 main

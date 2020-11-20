@@ -20,11 +20,11 @@ EOF
 set_args() {
   for arg in "$@"; do
     case "$arg" in
-      -h|--help)
+      -h | --help)
         usage
         exit 0
         ;;
-      -g|--generate)
+      -g | --generate)
         gen_file=1
         ;;
       *)
@@ -107,19 +107,19 @@ EOL2
 }
 
 gen_config() {
-    local target="$1"
-    if [[ -e $target ]]; then
-        echo "===> Already exists config file in $target." 1>&2
-        return 1
-      fi
-    cat_template > $target && chmod $permission $target
-    echo "===> Config file generated in $target."
-    return 0
-  }
+  local target="$1"
+  if [[ -e $target ]]; then
+    echo "===> Already exists config file in $target." 1>&2
+    return 1
+  fi
+  cat_template >$target && chmod $permission $target
+  echo "===> Config file generated in $target."
+  return 0
+}
 
 main() {
-    initialize "$@"
-    [[ $gen_file -ne 1 ]] && usage && cat_template && advice && exit 0
-    (gen_config ~/.ssh/config || gen_config $current_dir/config) || echo "==> No generate space exists!"
-  }
+  initialize "$@"
+  [[ $gen_file -ne 1 ]] && usage && cat_template && advice && exit 0
+  (gen_config ~/.ssh/config || gen_config $current_dir/config) || echo "==> No generate space exists!"
+}
 main "$@"

@@ -26,7 +26,7 @@ has() { command -v ${1} >&/dev/null; }
 
 is_win() {
   local ostype="$OSTYPE"
-  if [[ "$ostype" == "cygwin" ]] || [[ "$ostype" == "msys" ]]; then
+  if [[ $ostype == "cygwin" ]] || [[ $ostype == "msys" ]]; then
     return 0
   fi
   return 1
@@ -51,7 +51,7 @@ is_git_directory_for_win() {
 is_git_directory() {
   is_win && return "$(is_git_directory_for_win)"
   local result=$(git rev-parse --is-inside-work-tree 2>/dev/null)
-  if [[ "$result" == "true" ]]; then
+  if [[ $result == "true" ]]; then
     return 0
   fi
   return 1
@@ -60,16 +60,16 @@ is_git_directory() {
 set_args() {
   for arg in "$@"; do
     case "$arg" in
-    -h | --help)
-      usage
-      exit 0
-      ;;
-    -o* | --out*)
-      out_dir=${arg#*=}
-      ;;
-    *)
-      commit_id="$arg"
-      ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      -o* | --out*)
+        out_dir=${arg#*=}
+        ;;
+      *)
+        commit_id="$arg"
+        ;;
     esac
   done
 }
@@ -107,7 +107,7 @@ get_realpath() {
     target=$(dirname $target)
   done
   local res=$target/$backup
-  if [[ "$target" == "/" ]]; then
+  if [[ $target == "/" ]]; then
     res=/$backup
   fi
   echo $res

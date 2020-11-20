@@ -6,4 +6,3 @@ cat <<EOT
 ==>Disable auto start service
     systemctl disable <service-name>[.service]
 EOT
-

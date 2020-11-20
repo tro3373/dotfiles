@@ -6,17 +6,17 @@ OUTDIR=~/Desktop
 FIXDIR=fix
 ORGDIR=original
 ################################################################################
-shellFileName=`basename $0`
+shellFileName=$(basename $0)
 if [ ! "$1" = "" ]; then
   ROOTDIR=$1
 fi
 if [ ! "$2" = "" ]; then
   OUTDIR=$2
 fi
-OUTDIR="${OUTDIR}/`date +%Y%m%d%H%M%S`"
+OUTDIR="${OUTDIR}/$(date +%Y%m%d%H%M%S)"
 
 log() {
-  dateStr=`date '+%Y%m%d:%H:%M:%S'`
+  dateStr=$(date '+%Y%m%d:%H:%M:%S')
   outMsg="[$shellFileName] $dateStr $*"
   echo "$outMsg"
 }
@@ -51,7 +51,7 @@ compareable() {
   createifnotexist $OUTDIR/$ORGDIR
   log "  cp => $OUTDIR/$ORGDIR/$targetFile"
   cp -p --parents $targetFile $OUTDIR/$ORGDIR
-  basename=`basename $targetFile`
+  basename=$(basename $targetFile)
   log "  cp too => $OUTDIR/$basename"
   cp -pf $OUTDIR/$FIXDIR/$targetFile $OUTDIR/$basename
 }
@@ -65,20 +65,19 @@ copyRevert() {
 }
 
 handInput() {
-  for targetfile in `echo "
+  for targetfile in $(echo "
 
     path/to/hoge.java
     path/to/fuga.java
 
-    "`
-  do
-    if [ $mPrcType -eq 1 ] ; then
+    "); do
+    if [ $mPrcType -eq 1 ]; then
       copyParents $targetfile
-    elif [ $mPrcType -eq 2 ] ; then
+    elif [ $mPrcType -eq 2 ]; then
       svnRevert $targetfile
-    elif [ $mPrcType -eq 3 ] ; then
+    elif [ $mPrcType -eq 3 ]; then
       compareable $targetfile
-    elif [ $mPrcType -eq 4 ] ; then
+    elif [ $mPrcType -eq 4 ]; then
       copyRevert $targetfile
     fi
   done
@@ -92,13 +91,12 @@ log "OUTPUT DIR [$OUTDIR]"
 
 cd $ROOTDIR
 log "Now checking fixed files..."
-FIXED_FILES="`svn diff | awk '/^Index/ {print $NF}'`"
+FIXED_FILES="$(svn diff | awk '/^Index/ {print $NF}')"
 
 log "your fixed files of $ROOTDIR is ..."
 echo ""
 exist=0
-for fff in $FIXED_FILES
-do
+for fff in $FIXED_FILES; do
   exist=1
   echo $fff
 done
@@ -117,26 +115,24 @@ sleep 1
 log "1m"
 sleep 1
 
-
 createifnotexist $OUTDIR
 mPrcType=1
-if [ "$prcType" = "2" ] ; then
+if [ "$prcType" = "2" ]; then
   mPrcType=2
-elif [ "$prcType" = "3" ] ; then
+elif [ "$prcType" = "3" ]; then
   mPrcType=3
-elif [ "$prcType" = "4" ] ; then
+elif [ "$prcType" = "4" ]; then
   mPrcType=4
 fi
 
-for fff in $FIXED_FILES
-do
-  if [ $mPrcType -eq 1 ] ; then
+for fff in $FIXED_FILES; do
+  if [ $mPrcType -eq 1 ]; then
     copyParents $fff
-  elif [ $mPrcType -eq 2 ] ; then
+  elif [ $mPrcType -eq 2 ]; then
     svnRevert $fff
-  elif [ $mPrcType -eq 3 ] ; then
+  elif [ $mPrcType -eq 3 ]; then
     compareable $fff
-  elif [ $mPrcType -eq 4 ] ; then
+  elif [ $mPrcType -eq 4 ]; then
     copyRevert $fff
   fi
 done
@@ -146,11 +142,3 @@ log "--------------------------------------------------------------------"
 log "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< MISSIOIN COMPLETE"
 log "--------------------------------------------------------------------"
 read Wait
-
-
-
-
-
-
-
-

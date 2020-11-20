@@ -17,12 +17,12 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-    -p) shift && profile="$1" ;;
-    -r) shift && region="$1" ;;
-    -f) shift && filter="$1" ;;
-    -s) shift && sta="$1" ;;
-    -e) shift && end="$1" ;;
-    *) group="$1" ;;
+      -p) shift && profile="$1" ;;
+      -r) shift && region="$1" ;;
+      -f) shift && filter="$1" ;;
+      -s) shift && sta="$1" ;;
+      -e) shift && end="$1" ;;
+      *) group="$1" ;;
     esac
     shift
   done

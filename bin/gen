@@ -12,7 +12,7 @@ main() {
     exit 1
   fi
   local dst="$*"
-  if [[ -e "$dst" ]]; then
+  if [[ -e $dst ]]; then
     error "Already exists dst file. $dst"
     exit 1
   fi

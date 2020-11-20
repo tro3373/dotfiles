@@ -34,23 +34,23 @@ add_args() {
 set_args() {
   for arg in "$@"; do
     case "$arg" in
-    -h | --help)
-      usage
-      exit 0
-      ;;
-    -r* | --rid*)
-      local rid=${arg#*=}
-      reg_ids=("${reg_ids[@]}" "$rid")
-      ;;
-    -k* | --key*)
-      api_key=${arg#*=}
-      ;;
-    -c* | --config*)
-      config_file="${arg#*=}"
-      ;;
-    *)
-      add_args "$arg"
-      ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      -r* | --rid*)
+        local rid=${arg#*=}
+        reg_ids=("${reg_ids[@]}" "$rid")
+        ;;
+      -k* | --key*)
+        api_key=${arg#*=}
+        ;;
+      -c* | --config*)
+        config_file="${arg#*=}"
+        ;;
+      *)
+        add_args "$arg"
+        ;;
     esac
   done
 }
@@ -79,10 +79,10 @@ check() {
 
 load_config_ifexists() {
   local loadfile="$*"
-  [[ "$loadfile" == "" ]] && return 1
-  [[ ! -e "$loadfile" ]] && return 1
+  [[ $loadfile == "" ]] && return 1
+  [[ ! -e $loadfile ]] && return 1
   source "$loadfile"
-  if [[ ! -z $reg_id ]]; then
+  if [[ -n $reg_id ]]; then
     reg_ids=("${reg_ids[@]}" "$reg_id")
   fi
   return 0
@@ -99,8 +99,8 @@ load_config() {
 
 load_message_ifexists() {
   local loadfile="$*"
-  [[ "$loadfile" == "" ]] && return 1
-  [[ ! -e "$loadfile" ]] && return 1
+  [[ $loadfile == "" ]] && return 1
+  [[ ! -e $loadfile ]] && return 1
   message=$(cat "$loadfile")
   return 0
 }
@@ -108,7 +108,7 @@ load_message_ifexists() {
 load_message() {
   message="${args[*]}"
   if [[ -z $message ]]; then
-    message="{\"message\":\"Hello\"}"
+    message='{"message":"Hello"}'
     return
   fi
   load_message_ifexists "$message" ||
@@ -120,7 +120,7 @@ load_message() {
 send_gcm() {
   local regids=
   for reg_id in "${reg_ids[@]}"; do
-    if [[ ! -z $regids ]]; then
+    if [[ -n $regids ]]; then
       regids="$regids, "
     fi
     regids="$regids \"$reg_id\""

@@ -12,7 +12,6 @@ main() {
     exit 1
   fi
   echo "==> Backuping $path to $current_dir/data.tar."
-  nohup sh -c "tar cvfp $current_dir/data.tar $path" > $current_dir/backup.log &
+  nohup sh -c "tar cvfp $current_dir/data.tar $path" >$current_dir/backup.log &
 }
 main
-

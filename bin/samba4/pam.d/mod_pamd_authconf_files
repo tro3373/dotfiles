@@ -1,18 +1,18 @@
 #!/bin/bash
 
-if [[ -z "$1" ]]; then
-    src=sss
-    dst=ldap
+if [[ -z $1 ]]; then
+  src=sss
+  dst=ldap
 else
-    src=ldap
-    dst=sss
+  src=ldap
+  dst=sss
 fi
 
 for f in /etc/pam.d/postlogin-ac /etc/pam.d/password-auth-ac /etc/pam.d/system-auth-ac /etc/pam.d/smartcard-auth-ac /etc/pam.d/fingerprint-auth-ac; do
-    echo "==================================================="
-    echo "===> $f"
-    grep $src $f
-    echo "---------------------------------------------"
-    sed -i -e "s/$src/$dst/g" $f
-    grep $dst $f
+  echo "==================================================="
+  echo "===> $f"
+  grep $src $f
+  echo "---------------------------------------------"
+  sed -i -e "s/$src/$dst/g" $f
+  grep $dst $f
 done

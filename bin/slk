@@ -84,17 +84,17 @@ initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-    -h | --help) usage && exit 0 ;;
-    -d | --debug) debug=1 ;;
-    -g | --genconf) gen_conf && exit 0 ;;
-    -f | --file) upload_file=1 ;;
-    -c | --channel) shift && channel=$1 ;;
-    -co | --code) as_code=1 ;;
-    -t | --token) shift && token=$1 ;;
-    # -u|--url) shift && url=$1 ;;
-    -n | --name) shift && name=$1 ;;
-    -i | --icon) shift && icon=$1 ;;
-    *) add_args "$1" ;;
+      -h | --help) usage && exit 0 ;;
+      -d | --debug) debug=1 ;;
+      -g | --genconf) gen_conf && exit 0 ;;
+      -f | --file) upload_file=1 ;;
+      -c | --channel) shift && channel=$1 ;;
+      -co | --code) as_code=1 ;;
+      -t | --token) shift && token=$1 ;;
+      # -u|--url) shift && url=$1 ;;
+      -n | --name) shift && name=$1 ;;
+      -i | --icon) shift && icon=$1 ;;
+      *) add_args "$1" ;;
     esac
     shift
   done
@@ -141,22 +141,22 @@ is_large_message() {
 
 lchannel() {
   case "${channel}" in
-  @*)
-    local _user=$(
-      curl -s -X POST https://slack.com/api/users.list --data-urlencode "token=${token}" 2>&1 |
-        jq -r ".members | map(select(.name == \"${channel/@/}\" or .profile.display_name == \"${channel/@/}\")) | .[0].id"
-    )
-    local _channel=$(
-      curl -s -X POST https://slack.com/api/im.list --data-urlencode "token=${token}" 2>&1 |
-        jq -r ".ims | map(select(.user == \"${_user}\")) | .[].id"
-    )
-    if [[ -z $_channel ]]; then
-      echo $_user
-      return
-    fi
-    echo ${_channel}
-    ;;
-  *) echo ${channel} ;;
+    @*)
+      local _user=$(
+        curl -s -X POST https://slack.com/api/users.list --data-urlencode "token=${token}" 2>&1 |
+          jq -r ".members | map(select(.name == \"${channel/@/}\" or .profile.display_name == \"${channel/@/}\")) | .[0].id"
+      )
+      local _channel=$(
+        curl -s -X POST https://slack.com/api/im.list --data-urlencode "token=${token}" 2>&1 |
+          jq -r ".ims | map(select(.user == \"${_user}\")) | .[].id"
+      )
+      if [[ -z $_channel ]]; then
+        echo $_user
+        return
+      fi
+      echo ${_channel}
+      ;;
+    *) echo ${channel} ;;
   esac
 }
 

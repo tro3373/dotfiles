@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 
 # current_dir=$(pwd)
-script_dir=$(cd "$(dirname $0)"; pwd)
-has() { command -v ${1} >& /dev/null; }
+script_dir=$(
+  cd "$(dirname $0)"
+  pwd
+)
+has() { command -v ${1} >&/dev/null; }
 
 main() {
   local os=$($script_dir/os)
-  if [[ "$os" != "ubuntu" ]]; then
+  if [[ $os != "ubuntu" ]]; then
     echo "Not support os." 1>&2
     exit 1
   fi
-  if [[ $# -eq 0 ]] || [[ ! "$1" =~ ^ppa.* ]]; then
+  if [[ $# -eq 0 ]] || [[ ! $1 =~ ^ppa.* ]]; then
     echo "Specify ppa name" 1>&2
     exit 1
   fi
@@ -18,4 +21,3 @@ main() {
 }
 
 main "$@"
-

@@ -4,17 +4,17 @@ from=$1
 to=$2
 
 is_exist() {
-  type $1 > /dev/null 2>&1
+  type $1 >/dev/null 2>&1
   return $?
 }
 input_from() {
-  while [[ "$from" == "" ]]; do
+  while [[ $from == "" ]]; do
     echo "Input from mail address..."
     read from
   done
 }
 input_to() {
-  while [[ "$to" == "" ]]; do
+  while [[ $to == "" ]]; do
     echo "Input to mail address..."
     read to
   done
@@ -27,7 +27,7 @@ main() {
   input_from
   input_to
 
-  /usr/sbin/sendmail -t << EOF From: $from
+  /usr/sbin/sendmail -t From: $from <<EOF
 Subject: Test mail
 To: $to
 
@@ -35,4 +35,3 @@ This is sendmail test.
 EOF
 }
 main
-

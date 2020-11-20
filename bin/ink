@@ -25,10 +25,10 @@ _ink() {
   local color="$close"
 
   case $1 in
-  black | red | green | yellow | blue | purple | cyan | gray | white)
-    eval color="\$$1"
-    text="$stdin${*:2}"
-    ;;
+    black | red | green | yellow | blue | purple | cyan | gray | white)
+      eval color="\$$1"
+      text="$stdin${*:2}"
+      ;;
   esac
 
   printf "${open}${color}${text}${close}\n" 1>&2

@@ -4,6 +4,6 @@
 # 32bit : i686
 # 64bit : x86_64
 main() {
-  uname -m;
+  uname -m
 }
 main

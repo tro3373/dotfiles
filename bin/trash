@@ -17,7 +17,7 @@ main() {
   fi
   [ ! -e $dst ] && mkdir -p $dst
   for f in "$@"; do
-    [[ ! -e "$f" ]] && continue
+    [[ ! -e $f ]] && continue
     local fname="$(basename "$f")"
     mv -v "$f" "$dst/${timestamp}.$fname"
   done

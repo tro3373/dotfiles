@@ -2,36 +2,36 @@
 
 dotbin=${DOTPATH:-~/.dot}/bin
 version=${1:-}
-has() { command -v ${1} >& /dev/null; }
+has() { command -v ${1} >&/dev/null; }
 intaractive() {
-    while [[ "$input_word" == "" ]]; do
-        rbenv install -l | grep -v rbx | grep -v topaz | grep -v mruby | grep -v maglev | grep -v jruby | grep -v ree
-        echo
-        echo "Input install version. Now version is .. "
-        ruby -v
-        read input_word
-    done
-    version=$input_word
+  while [[ $input_word == "" ]]; do
+    rbenv install -l | grep -v rbx | grep -v topaz | grep -v mruby | grep -v maglev | grep -v jruby | grep -v ree
+    echo
+    echo "Input install version. Now version is .. "
+    ruby -v
+    read input_word
+  done
+  version=$input_word
 }
 main() {
-    if ! has anyenv; then
-        echo "No anyenv exists." 1>&2
-        exit 1
-    fi
-    if ! has rbenv; then
-        echo "Installing rbenv ..."
-        anyenv install rbenv
-    fi
-    if has ruby; then
-        echo "Upgrading rbenv ..."
-        $dotbin/rbenv_upgrade
-    fi
+  if ! has anyenv; then
+    echo "No anyenv exists." 1>&2
+    exit 1
+  fi
+  if ! has rbenv; then
+    echo "Installing rbenv ..."
+    anyenv install rbenv
+  fi
+  if has ruby; then
+    echo "Upgrading rbenv ..."
+    $dotbin/rbenv_upgrade
+  fi
 
-    if [[ -z $version ]]; then
-        intaractive
-    fi
-    rbenv install $version
-    rbenv global $version
-    ruby -v
+  if [[ -z $version ]]; then
+    intaractive
+  fi
+  rbenv install $version
+  rbenv global $version
+  ruby -v
 }
 main "$@"
