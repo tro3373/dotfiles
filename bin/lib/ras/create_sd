@@ -6,45 +6,85 @@ readonly script_dir=$(
   cd "$(dirname ${BASH_SOURCE:-$0})"
   pwd
 )
-# TODO modify this device id.
-target_device_id=/dev/disk2
+export PATH=$script_dir/../../:$PATH
 source $script_dir/../setup/funcs
+
+mkfs_ext4=mkfs.ext4
+mkfs_vfat=mkfs.vfat
 
 usage() {
   cat <<EOF
-Create archlinux sd image command for raspberry pi 3.
+Create archlinux sd image command for raspberry pi 3 or 4.
 EOF
 }
 
+error() { echo "$*" 1>&2; }
+
 check() {
-  if is_dry; then
-    return
-  fi
-  if ! os unix; then
+  if ! os ubuntu; then
     not_supported
     exit 1
   fi
   has_check fdisk
-  has_check $mkdfs_vfat
+  has_check $mkfs_vfat
   has_check $mkfs_ext4
   has_check bsdtar
   root_check
+  if [[ -z $target_device_id ]]; then
+    error "Specify target device id."
+    exit 1
+  fi
+}
+
+check_target_device_partitions() {
+  if is_dry; then
+    return
+  fi
+  if ! fdisk -l $target_device_id >&/dev/null; then
+    error "No such device $target_device_id"
+    exit 1
+  fi
+  if ! fdisk -l $target_device_id | grep "$target_device_id1" >&/dev/null; then
+    error "No such device $target_device_id1"
+    exit 1
+  fi
+  if ! fdisk -l $target_device_id | grep "$target_device_id2" >&/dev/null; then
+    error "No such device $target_device_id2"
+    exit 1
+  fi
+}
+
+fdisk_usage() {
+  cat <<'EOF'
+# -------- execute below..
+# At the fdisk prompt, delete old partitions and create a new one:
+- Type o. This will clear out any partitions on the drive.
+- Type p to list partitions. There should be no partitions left.
+- Type n, then p for primary, 1 for the first partition on the drive, press ENTER to accept the default first sector, then type +200M for the last sector.
+- Type t, then c to set the first partition to type W95 FAT32 (LBA).
+- Type n, then p for primary, 2 for the second partition on the drive, and then press ENTER twice to accept the default first and last sector.
+- Write the partition table and exit by typing w.
+EOF
 }
 
 main() {
   set -e
-  local mkfs_ext4=mkfs.ext4
-  local mkdfs_vfat=mkdfs.vfat
   if is_mac; then
     mkfs_ext4=/usr/local/opt/e2fsprogs/sbin/mkfs.ext4
-    mkdfs_vfat=$(find /usr/local/Cellar/dosfstools/*/sbin/mkfs.vfat)
+    mkfs_vfat=$(find /usr/local/Cellar/dosfstools/*/sbin/mkfs.vfat)
   fi
-  initialize_args "$@"
+  initialize_args "$@" -d
+  # shellcheck disable=SC2154
+  target_device_id="${args[0]}"
+  target_device_id1=${target_device_id}1
+  target_device_id2=${target_device_id}2
   check
 
-  url=$url_ras4
+  local url=$url_ras4
   # shellcheck disable=SC2154
-  if [[ ${args[*]} == ras3 ]]; then
+  local pi_version=${args[1]}
+  if [[ $pi_version -eq 3 ]]; then
+    echo ">> Target setup pi versoin is $pi_version"
     url=$url_ras3
   fi
 
@@ -53,29 +93,30 @@ main() {
     mexe diskutil unMountDisk ${target_device_id}
     # format sd
     local disk_label=RPI
-    mexe sudo diskutil eraseDisk MS-DOS $disk_label ${target_device_id}
-    mexe sudo diskutil partitionDisk /dev/disk2 2 MBRFormat boot 200M JournaledHFS+ root
+    mexe diskutil eraseDisk MS-DOS $disk_label ${target_device_id}
+    mexe diskutil partitionDisk /dev/disk2 2 MBRFormat boot 200M JournaledHFS+ root
   else
-    fdisk -l
+    mexe fdisk -l
+    fdisk_usage | ink yellow
     mexe fdisk ${target_device_id}
-    # # At the fdisk prompt, delete old partitions and create a new one:
-    # - Type o. This will clear out any partitions on the drive.
-    # - Type p to list partitions. There should be no partitions left.
-    # - Type n, then p for primary, 1 for the first partition on the drive, press ENTER to accept the default first sector, then type +200M for the last sector.
-    # - Type t, then c to set the first partition to type W95 FAT32 (LBA).
-    # - Type n, then p for primary, 2 for the second partition on the drive, and then press ENTER twice to accept the default first and last sector.
-    # - Write the partition table and exit by typing w.
   fi
 
-  mexe mkfs.vfat ${target_device_id}1
-  mexe mkdir boot
-  mexe mount ${target_device_id}1 boot
+  check_target_device_partitions
 
-  mexe $mkfs_ext4 ${target_device_id}2
-  mexe mkdir root
-  mexe mount ${target_device_id}2 root
-  mexe curl -fLO $url
+  [[ ! -e tmp ]] && mexe mkdir -p tmp
+  mexe cd tmp
+
+  mexe mkfs.vfat $target_device_id1
+  mexe mkdir -p boot
+  mexe mount $target_device_id1 boot
+
+  mexe $mkfs_ext4 $target_device_id2
+  mexe mkdir -p root
+  mexe mount $target_device_id2 root
   local fnm=${url##*/}
+  if [[ ! -e $fnm ]]; then
+    mexe curl -fLO $url
+  fi
   mexe bsdtar -xpf $fnm -C root
   mexe sync
 
