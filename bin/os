@@ -3,7 +3,7 @@
 is_wsl() { [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]]; }
 
 # TODO indent
-check_os() {
+detect_os() {
   local result=
   if [[ -e /etc/debian_version ]] ||
     [[ -e /etc/debian_release ]]; then
@@ -61,26 +61,27 @@ check_os() {
 }
 
 handle_args() {
-  local os=$1
-  local opt=$2
+  local arg=$1
   local result=false
-  if [[ $opt == "win" ]]; then
+  if [[ $arg == "win" ]]; then
     case "$os" in
       cygwin | msys) result=true ;;
     esac
     is_wsl && result=true
-  elif [[ $opt == "linux" ]]; then
+  elif [[ $arg == "linux" ]]; then
     case "$os" in
       cygwin | msys | mac) ;;
       *) result=true ;;
     esac
-  elif [[ $opt == "unix" ]]; then
+  elif [[ $arg == "unix" ]]; then
     case "$os" in
       cygwin | msys) ;;
       *) result=true ;;
     esac
-  elif [[ $opt == "wsl" ]]; then
+  elif [[ $arg == "wsl" ]]; then
     is_wsl && result=true
+  elif [[ $os == "$arg" ]]; then
+    result=true
   fi
   [[ $result == true ]] && exit 0
   exit 1
@@ -92,12 +93,11 @@ main() {
     cat /etc/issue
     return
   fi
-  local os="$(check_os)"
-  local result="$os"
+  local os="$(detect_os)"
   if [[ $# -eq 0 ]]; then
-    echo ${result}
+    echo $os
     return
   fi
-  handle_args "$os" "$@"
+  handle_args "$@"
 }
 main "$@"
