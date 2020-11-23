@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+target=$1
+dst=$2
+target_subnet=${3:-24}
+not_supported() { echo "Not supported." 1>&2 && exit 1; }
+main() {
+  if ! os mac; then
+    not_supported
+  fi
+  sudo route add -net $target/$target_subnet $dst
+  netstat -nr
+}
+main "$@"
