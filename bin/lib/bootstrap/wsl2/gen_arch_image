@@ -7,7 +7,7 @@ readonly script_dir=$(
   pwd
 )
 readonly tgz=ArchLinux.tar.gz
-source $script_dir/../setup/funcs
+source $script_dir/../../setup/funcs
 
 usage() {
   cat <<EOF

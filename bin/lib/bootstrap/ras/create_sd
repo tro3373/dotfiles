@@ -7,7 +7,7 @@ readonly script_dir=$(
   pwd
 )
 export PATH=$script_dir/../../:$PATH
-source $script_dir/../setup/funcs
+source $script_dir/../../setup/funcs
 
 mkfs_ext4=mkfs.ext4
 mkfs_vfat=mkfs.vfat
