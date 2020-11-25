@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+readonly bootstrapped_path=/etc/bootstrapped
+readonly username=archuser
+
+dummy="echo"
+arm=0
+args=()
+
+usage() {
+  cat <<EOF
+
+Bootstrap setup for  archlinux system.
+
+Usage:
+  $command_name [option] [ras]
+Options
+  -h|--help : Show this usage
+  -a|--arm : for arm (raspberry pi)
+
+EOF
+}
+
+log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
+
+exe() {
+  [[ -z $dummy ]] && log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+  printf "> Executing: $*"
+  [[ -z $dummy ]] && log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+  [[ -n $dummy ]] && return
+  eval "$*"
+}
+
+check() {
+  if [[ $UID -eq 0 ]]; then
+    return
+  fi
+  log "=> permision denied. execute as root."
+  exit 1
+}
+
+add_args() { args+=("$@"); }
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      -a | --arm) arm=1 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+}
+
+bootstrapped() { test -f $bootstrapped_path; }
+finalize() {
+  date |
+    if [[ -z $dummy ]]; then
+      cat - | tee $bootstrapped_path >/dev/null
+    else
+      cat -
+    fi
+}
+
+cat_pac_mirror_list() {
+  cat <<'EOF'
+###########################
+## Japan
+Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
+Server = http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
+Server = http://mirrors.cat.net/archlinux/$repo/os/$arch
+Server = http://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
+###########################
+EOF
+}
+
+setup_packages() {
+  local mirrorlistf=/etc/pacman.d/mirrorlist
+  log "=> Backuping $mirrorlistf.."
+  exe cp $mirrorlistf{,.org}
+  cat_pac_mirror_list |
+    if [[ -z $dummy ]]; then
+      cat - | tee $mirrorlistf >&/dev/null
+    else
+      cat -
+    fi
+  exe pacman-key --init
+  local populate_key=archlinux
+  [[ $arm -eq 1 ]] && populate_key=archlinuxarm
+  exe pacman-key --populate $populate_key
+  exe pacman -Sy gnupg --noconfirm
+  exe pacman -Sy archlinux-keyring --noconfirm
+  local specify_keyserver=pool.sks-keyservers.net
+  local local_gpg_settings=$HOME/.gnupg/gpg.conf
+  if [[ ! -e $local_gpg_settings ]]; then
+    exe mkdir -p "$(dirname $local_gpg_settings)"
+    exe cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
+    echo "keyserver $specify_keyserver" |
+      if [[ -z $dummy ]]; then
+        cat - | tee -a $local_gpg_settings >&/dev/null
+      else
+        cat -
+      fi
+  fi
+  exe pacman-key --refresh-keys --keyserver $specify_keyserver
+  exe pacman -Syyu --noconfirm
+  exe pacman -S base base-devel git curl vim wget grep sed which unzip gzip sudo --noconfirm
+  exe pacman -Sc --noconfirm # delete all packages that not installed
+}
+
+create_user() {
+  if [[ -e /home/$username ]]; then
+    return
+  fi
+  log "=> Adding user $username .."
+  exe useradd -m -G wheel $username
+  log "=> Changing user password for $username .."
+  exe passwd $username
+}
+
+setup_sudoers() {
+  if grep $username /etc/sudoers >&/dev/null; then
+    return
+  fi
+  log "=> Setupping visudo.."
+  echo "$username ALL=(ALL) NOPASSWD: ALL" |
+    if [[ -z $dummy ]]; then
+      cat - | EDITOR='tee -a' visudo
+    else
+      log "=> below sudors will be add .."
+      cat -
+    fi
+}
+
+setup_dot() {
+  if [[ -e /home/$username/.dot ]]; then
+    return
+  fi
+  log "=> Cloning to dotfiles to /home/$username/.dot .."
+  curl -fSsL git.io/tr3s |
+    if [[ -z $dummy ]]; then
+      cat - | sudo -u $username bash -
+    else
+      log "=> Excute below script .."
+      cat -
+    fi
+}
+
+setup_user() {
+  create_user
+  setup_sudoers
+  setup_dot
+}
+
+main() {
+  set -e
+  initialize "$@"
+  if bootstrapped; then
+    log "=> Already bootstraped. $bootstrapped_path" 1>&2
+    return
+  fi
+  setup_packages
+  setup_user
+  finalize
+  [[ -n $dummy ]] && log "\n>>> This is dummy mode. specify -e option."
+}
+main "$@"
