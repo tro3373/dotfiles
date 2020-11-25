@@ -407,9 +407,7 @@ snippet exe
     [[ -z $dummy ]] && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     printf "> Executing: $*" | ink yellow
     [[ -z $dummy ]] && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    if [[ -n $dummy ]]; then
-      return
-    fi
+    [[ -n $dummy ]] && return
     eval "$*"
   }
   initialize "$@"
