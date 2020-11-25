@@ -91,10 +91,13 @@ main() {
   if is_mac; then
     diskutil list
     mexe diskutil unMountDisk ${target_device_id}
-    # format sd
-    local disk_label=RPI
-    mexe diskutil eraseDisk MS-DOS $disk_label ${target_device_id}
-    mexe diskutil partitionDisk /dev/disk2 2 MBRFormat boot 200M JournaledHFS+ root
+    # format sd ==> NG
+    # local disk_label=RPI
+    # MS-DOS: FAT32
+    # mexe diskutil eraseDisk MS-DOS $disk_label ${target_device_id}
+    # https://apple.stackexchange.com/questions/154566/create-a-partition-on-sd-card-for-ext4-filesystem
+    # MacOS cannot see ext partitions...
+    # mexe diskutil partitionDisk ${target_device_id} 2 MBRFormat MS-DOS "boot" 200M JournaledHFS+ "root"
   else
     mexe fdisk -l
     fdisk_usage | ink yellow
