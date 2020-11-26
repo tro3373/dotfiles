@@ -17,9 +17,16 @@ enable.bat
 import_wsl_arch_image.bat
 ```
 
-## 2. bootstrap in wsl2 arch
+## 4. bootstrap in wsl2 arch
 
 ```
 ./bootstrap_arch -e
+```
+
+## 5. setup in wsl2
+
+```
+cd ~/.dot/bin
+./setup wsl_arch -e
 ```
 

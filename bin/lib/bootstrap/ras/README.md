@@ -17,6 +17,13 @@ setup sd card to system, and check device id and execute
 ./bootstrap_arch -a -i 192.168.13.3 -hst alarmpi3 -e
 ```
 
+## 3. setup in pi
+
+```
+cd ~/.dot/bin
+./setup ras_arch -m -e
+```
+
 <!--
 # Install arch linux to raspberry pi 3 via ubuntu
 
