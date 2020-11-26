@@ -14,7 +14,10 @@ setup sd card to system, and check device id and execute
 ## 2. bootstrap in pi
 
 ```
-./bootstrap_arch -a -i 192.168.13.3 -hst alarmpi3 -e
+../bootstrap -a -i 192.168.13.3 -hst alarmpi3 -e
+../bootstrap -a -i 192.168.13.4 -hst alarmpi4 -e
+../bootstrap -a -i 192.168.13.5 -hst alarmpi5 -e
+../bootstrap -a -i 192.168.13.6 -hst alarmpi6 -e
 ```
 
 ## 3. setup in pi

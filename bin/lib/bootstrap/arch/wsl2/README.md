@@ -20,7 +20,7 @@ import_wsl_arch_image.bat
 ## 4. bootstrap in wsl2 arch
 
 ```
-./bootstrap_arch -e
+../bootstrap -e
 ```
 
 ## 5. setup in wsl2
