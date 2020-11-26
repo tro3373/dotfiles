@@ -1,8 +1,6 @@
 #!/bin/bash
 
-export DOT_PATH=$HOME/.dot
 readonly _timestamp=$(date +%Y%m%d_%H%M%S)
-readonly _backup_root="${DOT_PATH}/bkup/setup"
 
 readonly _core_apps=(
   git ssh tig curl bc tree tmux zsh vim ag rg ctags fzf
@@ -43,7 +41,39 @@ is_ubuntu() { [[ $DETECT_OS == "ubuntu" ]]; }
 is_redhat() { [[ $DETECT_OS == "redhat" ]]; }
 is_win() { is_msys || is_cygwin; }
 is_unix() { ! is_win; }
+ink() {
+  local stdin=
+  if [[ -p /dev/stdin ]]; then
+    stdin="$(cat <&0)"
+  fi
+  if [[ $# -eq 0 && -z $stdin ]]; then
+    return
+  fi
 
+  local open="\033["
+  local close="${open}0m"
+  export black="0;30m"
+  export red="1;31m"
+  export green="1;32m"
+  export yellow="1;33m"
+  export blue="1;34m"
+  export purple="1;35m"
+  export cyan="1;36m"
+  export gray="0;37m"
+  export white="$close"
+
+  local text="$stdin$*"
+  local color="$close"
+
+  case $1 in
+    black | red | green | yellow | blue | purple | cyan | gray | white)
+      eval color="\$$1"
+      text="$stdin${*:2}"
+      ;;
+  esac
+
+  printf "${open}${color}${text}${close}\n" 1>&2
+}
 usage() {
   # shellcheck disable=SC2154
   if [[ -n $command_name ]]; then
@@ -421,15 +451,23 @@ sudo_tee() {
   cat_do sudo tee "$@"
 }
 
-cat_bash() {
-  cat_do bash "$@" -
-}
-
 clone_dot() {
-  if [[ -e $DOT_PATH ]]; then
+  local _user=$1
+  local _dstd=$DOT_PATH
+  local _def=1
+  if [[ -n $_user && -e /home/$_user ]]; then
+    _def=0
+    _dstd=/home/$_user/.dot
+  fi
+  if [[ -e $_dstd ]]; then
     return
   fi
-  curl -fSsL git.io/tr3s | cat_bash ""
+  curl -fSsL git.io/tr3s |
+    if [[ $_def -eq 1 ]]; then
+      cat - | cat_do bash -
+    else
+      cat - | cat_do sudo -u $_user bash -
+    fi
 }
 
 default_apps() {
@@ -488,18 +526,41 @@ show_dummy_warn_if_needed() {
   ilog "===================================================="
 }
 
-init_funcs() {
-  [[ $_funcs_initialized -eq 1 ]] && return
-  # 関数ロード
+init_export_path_if_possible() {
   local _com_script_dir=$DOT_PATH/bin
-  if ! echo ":$PATH:" | grep ":$_com_script_dir:" >&/dev/null; then
-    export PATH=$_com_script_dir:$PATH
+  if [[ -e $_com_script_dir ]]; then
+    if ! echo ":$PATH:" | grep ":$_com_script_dir:" >&/dev/null; then
+      ilog "=> init_funcs Exporting PATH env the path $_com_script_dir.."
+      export PATH=$_com_script_dir:$PATH
+    fi
   fi
-  export DETECT_OS=$(os)
-  set_default_install_command
-  _funcs_initialized=1
 }
-init_funcs
+
+init_detect_os() {
+  if [[ -z $_os ]]; then
+    if ! has os; then
+      ilog "> Specify os type"
+      exit 1
+    fi
+    _os=$(os)
+  fi
+  export DETECT_OS=$_os
+}
+
+init_funcs() {
+  local _os=$1
+  local _user=${2:-$USER}
+  [[ $_funcs_initialized -eq 1 ]] && return
+  _funcs_initialized=1
+
+  export DOT_PATH=/home/$_user/.dot
+  export _backup_root="${DOT_PATH}/bkup/setup"
+  # 関数ロード
+  init_export_path_if_possible
+  init_detect_os
+  set_default_install_command
+}
+init_funcs "$@"
 
 [[ ${0} != "${BASH_SOURCE[0]}" ]] && return 0
 _test() {
