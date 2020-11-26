@@ -1,3 +1,23 @@
+# setup arch linux on raspberry pi
+## 1. create sd
+
+Only support linux.
+setup sd card to system, and check device id and execute
+
+```
+# for pi 4 (default)
+./create_sd /dev/sde
+# for pi 3
+./create_sd /dev/sde 3
+```
+
+## 2. bootstrap in pi
+
+```
+./bootstrap_arch -a -i 192.168.13.3 -hst alarmpi3 -e
+```
+
+<!--
 # Install arch linux to raspberry pi 3 via ubuntu
 
 ## Refs
@@ -101,6 +121,5 @@ passwd hoge
 ```sh
 sudo pacman -S git
 ```
-
-
+-->
 
