@@ -13,6 +13,7 @@ dummy="echo"
 arm=0
 username=archuser
 ip=
+host=
 args=()
 
 usage() {
@@ -24,8 +25,9 @@ Usage:
   $command_name [option] [ras]
 Options
   -h|--help : Show this usage
-  -a|--arm : for arm (raspberry pi)
-  -i|--ip  : specify static ip adress (optional)
+  -a|--arm  : for arm (raspberry pi)
+  -i|--ip   : specify static ip adress (optional)
+  -hst|--host : specify hostname (optional)
 
 EOF
 }
@@ -78,10 +80,10 @@ check() {
     log "=> Permision denied. execute as root."
     exit 1
   fi
-  if [[ ! -e $userpass ]]; then
-    log "=> No $userpass (pass file for $username) exist."
-    exit 1
-  fi
+  # if [[ ! -e $userpass ]]; then
+  #   log "=> No $userpass (pass file for $username) exist."
+  #   exit 1
+  # fi
   if [[ ! -e $userpub ]]; then
     log "=> No $userpub (pub key for $username) exist."
     exit 1
@@ -97,6 +99,7 @@ initialize() {
       -e) dummy= ;;
       -a | --arm) arm=1 ;;
       -i | --ip) shift && ip=$1 ;;
+      -hst | --host) shift && host=$1 ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
@@ -196,8 +199,12 @@ create_user() {
     log "=> Adding user $username .."
     exe useradd -m -G wheel $username
   fi
+  [[ ! -e $userpass ]] && return
+  local _pass=$(cat <$userpass | head -1)
+  [[ -z $_pass ]] && return
   log "=> Changing user password for $username .."
-  exe "cat <$userpass |passwd --stdin $username"
+  echo -e "$_pass\n$_pass" |
+    cat_do passwd $username
 }
 
 setup_sudoers() {
@@ -248,62 +255,85 @@ setup_user() {
   # fi
 }
 
-cat_netctl_eth0() {
+# cat_netctl_eth0() {
+#   cat <<EOF
+# Description='A basic static ethernet connection'
+# Interface=eth0
+# Connection=ethernet
+# IP=static
+# Address=('$ip/$sub')
+# #Routes=('192.168.0.0/24 via 192.168.1.2')
+# Gateway='$gw'
+# DNS=('$dns')
+#
+# ## For IPv6 autoconfiguration
+# #IP6=stateless
+#
+# ## For IPv6 static address configuration
+# #IP6=static
+# #Address6=('1234:5678:9abc:def::1/64' '1234:3456::123/96')
+# #Routes6=('abcd::1234')
+# #Gateway6='1234:0:123::abcd'
+# EOF
+# }
+#
+# gen_netctl_eth0() {
+#   local target=/etc/netctl/eth0
+#   if [[ -e $target ]]; then
+#     return
+#   fi
+#   local sub=24
+#   local ip_prefix=${ip%\.*}
+#   local gw=${ip_prefix}.1
+#   local dns=$gw
+#   cat_netctl_eth0 | cat_tee $target
+# }
+
+cat_network_eth0() {
   cat <<EOF
-Description='A basic static ethernet connection'
-Interface=eth0
-Connection=ethernet
-IP=static
-Address=('$ip/$sub')
-#Routes=('192.168.0.0/24 via 192.168.1.2')
-Gateway='$gw'
-DNS=('$dns')
+[Match]
+Name=eth0
 
-## For IPv6 autoconfiguration
-#IP6=stateless
-
-## For IPv6 static address configuration
-#IP6=static
-#Address6=('1234:5678:9abc:def::1/64' '1234:3456::123/96')
-#Routes6=('abcd::1234')
-#Gateway6='1234:0:123::abcd'
+[Network]
+Address=$ip/$sub
+Gateway=$gw
+DNS=$dns
 EOF
 }
 
-gen_netctl_eth0() {
-  local target=/etc/netctl/eth0
-  if [[ -e $target ]]; then
-    return
-  fi
+gen_network_eth0() {
+  local target=/etc/systemd/network/eth0.network
   local sub=24
   local ip_prefix=${ip%\.*}
   local gw=${ip_prefix}.1
   local dns=$gw
-  cat_netctl_eth0 | cat_tee $target
+  if grep $ip $target >&/dev/null; then
+    return
+  fi
+  backup $target
+  cat_network_eth0 | cat_tee $target
 }
 
-# # static wifi setting
-# #cp /etc/netctl/examples/wireless-wpa /etc/netctl/profile
-# cp /etc/netctl/examples/wireless-wpa-static /etc/netctl/wlan
-# vi /etc/netctl/wlan
-# # test add profile
-# netctl start wlan
-# # enable add profile
-# netctl enable wlan
-#
-# # static eth setting
-# cp /etc/netctl/examples/ethernet-static /etc/netctl/eth
-# vi /etc/netctl/eth
-# netctl start eth
-# netctl enable eth
-#
-#
-# # if not work
-# #systemctl status network
-# bash -c 'net link set eth0 down && netctl start profile-eth-static'
-setup_netctl() {
-  gen_netctl_eth0
-  exe netctl enable eth0
+setup_network() {
+  # gen_netctl_eth0
+  # exe netctl enable eth0
+  gen_network_eth0
+}
+
+setup_hostname() {
+  local target=/etc/hostname
+  if grep $host $target >&/dev/null; then
+    return
+  fi
+  local _old_host=$(cat </etc/hostname | head -1)
+  backup $target
+  exe hostnamectl set-hostname $host
+  exe hostnamectl
+  if ! getent hosts | grep $_old_host >&/dev/null; then
+    return
+  fi
+  exe sed -i -e "s,$_old_host,$host,g" /etc/hosts
+  exe getent hosts
 }
 
 main() {
@@ -312,7 +342,10 @@ main() {
   setup_pacman
   setup_user
   if [[ -n $ip ]]; then
-    setup_netctl
+    setup_network
+  fi
+  if [[ -n $host ]]; then
+    setup_hostname
   fi
   finalize
   [[ -n $dummy ]] && log "\n>>> This is dummy mode. specify -e option."
