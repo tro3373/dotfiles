@@ -6,12 +6,12 @@ readonly script_dir=$(
   cd "$(dirname ${BASH_SOURCE:-$0})"
   pwd
 )
+readonly username=archuser
 readonly userpass=$script_dir/pass
 readonly userpub=$script_dir/pub
 
 dummy="echo"
 arm=0
-username=archuser
 ip=
 host=
 args=()
@@ -107,7 +107,7 @@ initialize() {
     shift
   done
 
-  is_arm && username=alarm
+  # is_arm && username=alarm
   check
 }
 
@@ -182,7 +182,7 @@ setup_gnupg() {
 }
 
 setup_packages() {
-  exe pacman -Syu --noconfirm
+  exe pacman -Syyu --noconfirm
   exe pacman -S base base-devel git curl sudo vim wget grep sed which unzip gzip openssh --noconfirm
   exe pacman -Sc --noconfirm # delete all packages that not installed
 }
@@ -339,7 +339,9 @@ setup_hostname() {
 main() {
   set -e
   initialize "$@"
+  # alias sudo=''
   setup_pacman
+  # unalias sudo
   setup_user
   if [[ -n $ip ]]; then
     setup_network

@@ -216,6 +216,7 @@ backup() {
     sudo test ! -e $f && continue
     local dst=$f.org
     sudo test -e $dst && continue
+    log "===> Backupping $f to $dst"
     mexe sudo cp -rf $f $dst
   done
 }
@@ -404,7 +405,10 @@ cat_do() {
     cat -
     log "------------------------------------"
   else
-    cat - | "$@" >/dev/null
+    log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    printf "> Executing: $*\n"
+    log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    cat - | eval "$@" >/dev/null
   fi
 }
 

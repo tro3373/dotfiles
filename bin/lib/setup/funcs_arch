@@ -3,12 +3,12 @@
 # keyboard_layout=jp106
 readonly keyboard_layout=us
 readonly _additional_arch=(
-  pacman-contrib # pacman cache clean
-  reflector
-  net-tools
-  inetutils
+  pacman-contrib        # pacman cache clean
+  reflector             # update mirrorlist tool
+  net-tools             # deplicated. ifconfig, route, arp, netstat...
+  inetutils             # ifconfig, hostname, ping...
   xsel xorg-server-xvfb # for clipboard
-  libxfont2
+  libxfont2             # x11 font rasterisation library
 )
 
 setup_keyboard() {
@@ -70,7 +70,33 @@ setup_additional_pacakges() {
 }
 
 setup_hostname() {
-  echo "$*" >/etc/hostname
+  local _hostname="$*"
+  local target=/etc/hostname
+  if grep $_hostname $target >&/dev/null; then
+    return
+  fi
+  local _old_host=$(cat </etc/hostname | head -1)
+  backup $target
+  mexe hostnamectl set-hostname $_hostname
+  mexe hostnamectl
+  if ! getent hosts | grep $_old_host >&/dev/null; then
+    return
+  fi
+  mexe sed -i -e "s,$_old_host,$_hostname,g" /etc/hosts
+  mexe getent hosts
+}
+
+cat_pac_mirror_list_x86x64() {
+  cat <<'EOF'
+###########################
+## Japan
+Server = https://mirrors.cat.net/archlinux/$repo/os/$arch
+Server = http://mirrors.cat.net/archlinux/$repo/os/$arch
+Server = http://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
+Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
+Server = http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
+###########################
+EOF
 }
 
 update_pacman_millerlist() {
@@ -79,15 +105,7 @@ update_pacman_millerlist() {
     return
   fi
   backup /etc/pacman.d/mirrorlist
-  cat <<'EOF' | sudo_tee /etc/pacman.d/mirrorlist
-###########################
-## Japan
-Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
-Server = http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
-Server = http://mirrors.cat.net/archlinux/$repo/os/$arch
-Server = http://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
-###########################
-EOF
+  cat_pac_mirror_list_x86x64 | sudo_tee /etc/pacman.d/mirrorlist
 }
 
 refresh_pacman_keys() {
