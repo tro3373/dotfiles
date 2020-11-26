@@ -2,7 +2,6 @@
 
 readonly command_name=$(basename $0)
 readonly bootstrapped_path=/etc/bootstrapped
-readonly username=archuser
 readonly script_dir=$(
   cd "$(dirname ${BASH_SOURCE:-$0})"
   pwd
@@ -12,6 +11,7 @@ readonly userpub=$script_dir/pub
 
 dummy="echo"
 arm=0
+username=archuser
 ip=
 args=()
 
@@ -67,6 +67,8 @@ backup() {
   done
 }
 
+is_arm() { test $arm -eq 1; }
+
 check() {
   if [[ -f $bootstrapped_path ]]; then
     log "=> Already bootstraped. $bootstrapped_path" 1>&2
@@ -101,6 +103,8 @@ initialize() {
     esac
     shift
   done
+
+  is_arm && username=alarm
   check
 }
 
@@ -136,7 +140,7 @@ EOF
 }
 
 cat_pac_mirror_list() {
-  if [[ $arm -eq 1 ]]; then
+  if is_arm; then
     cat_pac_mirror_list_arm
   else
     cat_pac_mirror_list_x86x64
@@ -156,7 +160,7 @@ setup_pac_mirror_list() {
 setup_pac_key() {
   exe pacman-key --init
   local populate_key=archlinux
-  [[ $arm -eq 1 ]] && populate_key=archlinuxarm
+  is_arm && populate_key=archlinuxarm
   exe pacman-key --populate $populate_key
 }
 
@@ -188,11 +192,10 @@ setup_pacman() {
 }
 
 create_user() {
-  if [[ -e /home/$username ]]; then
-    return
+  if [[ ! -e /home/$username ]]; then
+    log "=> Adding user $username .."
+    exe useradd -m -G wheel $username
   fi
-  log "=> Adding user $username .."
-  exe useradd -m -G wheel $username
   log "=> Changing user password for $username .."
   exe "cat <$userpass |passwd --stdin $username"
 }
@@ -230,12 +233,19 @@ setup_dot() {
     cat_do sudo -u $username bash -
 }
 
+# del_user() {
+#   local _username=$1
+#   exe userdel -r $_username
+# }
+
 setup_user() {
   create_user
   setup_sudoers
   setup_pub
   setup_dot
-  # TODO delete alarm user
+  # if is_arm; then
+  #   del_user alarm
+  # fi
 }
 
 cat_netctl_eth0() {
