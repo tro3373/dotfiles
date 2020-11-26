@@ -3,9 +3,16 @@
 readonly command_name=$(basename $0)
 readonly bootstrapped_path=/etc/bootstrapped
 readonly username=archuser
+readonly script_dir=$(
+  cd "$(dirname ${BASH_SOURCE:-$0})"
+  pwd
+)
+readonly userpass=$script_dir/pass
+readonly userpub=$script_dir/pub
 
 dummy="echo"
 arm=0
+ip=
 args=()
 
 usage() {
@@ -18,6 +25,7 @@ Usage:
 Options
   -h|--help : Show this usage
   -a|--arm : for arm (raspberry pi)
+  -i|--ip  : specify static ip adress (optional)
 
 EOF
 }
@@ -26,18 +34,56 @@ log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
 
 exe() {
   [[ -z $dummy ]] && log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-  printf "> Executing: $*"
+  printf "> Executing: $*\n"
   [[ -z $dummy ]] && log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
   [[ -n $dummy ]] && return
   eval "$*"
 }
 
-check() {
-  if [[ $UID -eq 0 ]]; then
-    return
+cat_do() {
+  if [[ -n $dummy ]]; then
+    log "===> below stdin will be pass to '$*'"
+    cat -
+    log "------------------------------------"
+  else
+    log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    printf "> Executing: $*\n"
+    log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    cat - | eval "$@" >/dev/null
   fi
-  log "=> permision denied. execute as root."
-  exit 1
+}
+
+cat_tee() {
+  cat_do tee "$@"
+}
+
+backup() {
+  for f in "$@"; do
+    test ! -e $f && continue
+    local dst=$f.org
+    test -e $dst && continue
+    log "===> Backupping $f to $dst"
+    exe cp -rf $f $dst
+  done
+}
+
+check() {
+  if [[ -f $bootstrapped_path ]]; then
+    log "=> Already bootstraped. $bootstrapped_path" 1>&2
+    exit 0
+  fi
+  if [[ $UID -ne 0 ]]; then
+    log "=> Permision denied. execute as root."
+    exit 1
+  fi
+  if [[ ! -e $userpass ]]; then
+    log "=> No $userpass (pass file for $username) exist."
+    exit 1
+  fi
+  if [[ ! -e $userpub ]]; then
+    log "=> No $userpub (pub key for $username) exist."
+    exit 1
+  fi
 }
 
 add_args() { args+=("$@"); }
@@ -48,6 +94,7 @@ initialize() {
       -h | --help) usage && exit 0 ;;
       -e) dummy= ;;
       -a | --arm) arm=1 ;;
+      -i | --ip) shift && ip=$1 ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
@@ -57,42 +104,63 @@ initialize() {
   check
 }
 
-bootstrapped() { test -f $bootstrapped_path; }
 finalize() {
-  date |
-    if [[ -z $dummy ]]; then
-      cat - | tee $bootstrapped_path >/dev/null
-    else
-      cat -
-    fi
+  date | cat_tee $bootstrapped_path
+  exe reboot
 }
 
-cat_pac_mirror_list() {
+cat_pac_mirror_list_x86x64() {
   cat <<'EOF'
 ###########################
 ## Japan
-Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
-Server = http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
+Server = https://mirrors.cat.net/archlinux/$repo/os/$arch
 Server = http://mirrors.cat.net/archlinux/$repo/os/$arch
 Server = http://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
+Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
+Server = http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
 ###########################
 EOF
 }
 
-setup_packages() {
+cat_pac_mirror_list_arm() {
+  cat <<'EOF'
+###########################
+## Taiwan
+## New Taipei City
+Server = http://tw.mirror.archlinuxarm.org/$arch/$repo
+###########################
+# Default mirror
+## Geo-IP based mirror selection and load balancing
+Server = http://mirror.archlinuxarm.org/$arch/$repo
+EOF
+}
+
+cat_pac_mirror_list() {
+  if [[ $arm -eq 1 ]]; then
+    cat_pac_mirror_list_arm
+  else
+    cat_pac_mirror_list_x86x64
+  fi
+}
+
+setup_pac_mirror_list() {
   local mirrorlistf=/etc/pacman.d/mirrorlist
-  log "=> Backuping $mirrorlistf.."
-  exe cp $mirrorlistf{,.org}
+  backup $mirrorlistf
   cat_pac_mirror_list |
-    if [[ -z $dummy ]]; then
-      cat - | tee $mirrorlistf >&/dev/null
-    else
-      cat -
-    fi
+    cat_tee -a $mirrorlistf
+  # # Generate mirrorlist aut(Not work this timing?)
+  # mexe pacman -S reflector
+  # mexe reflector --verbose --country Japan -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist
+}
+
+setup_pac_key() {
   exe pacman-key --init
   local populate_key=archlinux
   [[ $arm -eq 1 ]] && populate_key=archlinuxarm
   exe pacman-key --populate $populate_key
+}
+
+setup_gnupg() {
   exe pacman -Sy gnupg --noconfirm
   exe pacman -Sy archlinux-keyring --noconfirm
   local specify_keyserver=pool.sks-keyservers.net
@@ -101,16 +169,22 @@ setup_packages() {
     exe mkdir -p "$(dirname $local_gpg_settings)"
     exe cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
     echo "keyserver $specify_keyserver" |
-      if [[ -z $dummy ]]; then
-        cat - | tee -a $local_gpg_settings >&/dev/null
-      else
-        cat -
-      fi
+      cat_tee -a $local_gpg_settings
   fi
   exe pacman-key --refresh-keys --keyserver $specify_keyserver
-  exe pacman -Syyu --noconfirm
-  exe pacman -S base base-devel git curl vim wget grep sed which unzip gzip sudo --noconfirm
+}
+
+setup_packages() {
+  exe pacman -Syu --noconfirm
+  exe pacman -S base base-devel git curl sudo vim wget grep sed which unzip gzip openssh --noconfirm
   exe pacman -Sc --noconfirm # delete all packages that not installed
+}
+
+setup_pacman() {
+  setup_pac_mirror_list
+  setup_pac_key
+  setup_gnupg
+  setup_packages
 }
 
 create_user() {
@@ -120,7 +194,7 @@ create_user() {
   log "=> Adding user $username .."
   exe useradd -m -G wheel $username
   log "=> Changing user password for $username .."
-  exe passwd $username
+  exe "cat <$userpass |passwd --stdin $username"
 }
 
 setup_sudoers() {
@@ -128,13 +202,23 @@ setup_sudoers() {
     return
   fi
   log "=> Setupping visudo.."
+  backup /etc/sudoers
   echo "$username ALL=(ALL) NOPASSWD: ALL" |
-    if [[ -z $dummy ]]; then
-      cat - | EDITOR='tee -a' visudo
-    else
-      log "=> below sudors will be add .."
-      cat -
-    fi
+    cat_do "EDITOR='tee -a' visudo"
+}
+
+setup_pub() {
+  local dstd=/home/$username/.ssh
+  local dstf=$dstd/authorized_keys
+  if [[ -e $dstf ]]; then
+    return
+  fi
+  if [[ ! -e $dstd ]]; then
+    exe sudo -u $username mkdir -p $dstd
+  fi
+  exe chmod 700 $dstd
+  exe "cat <$userpub | sudo -u $username tee $dstf"
+  exe chmod 600 $dstf
 }
 
 setup_dot() {
@@ -143,29 +227,83 @@ setup_dot() {
   fi
   log "=> Cloning to dotfiles to /home/$username/.dot .."
   curl -fSsL git.io/tr3s |
-    if [[ -z $dummy ]]; then
-      cat - | sudo -u $username bash -
-    else
-      log "=> Excute below script .."
-      cat -
-    fi
+    cat_do sudo -u $username bash -
 }
 
 setup_user() {
   create_user
   setup_sudoers
+  setup_pub
   setup_dot
+  # TODO delete alarm user
+}
+
+cat_netctl_eth0() {
+  cat <<EOF
+Description='A basic static ethernet connection'
+Interface=eth0
+Connection=ethernet
+IP=static
+Address=('$ip/$sub')
+#Routes=('192.168.0.0/24 via 192.168.1.2')
+Gateway='$gw'
+DNS=('$dns')
+
+## For IPv6 autoconfiguration
+#IP6=stateless
+
+## For IPv6 static address configuration
+#IP6=static
+#Address6=('1234:5678:9abc:def::1/64' '1234:3456::123/96')
+#Routes6=('abcd::1234')
+#Gateway6='1234:0:123::abcd'
+EOF
+}
+
+gen_netctl_eth0() {
+  local target=/etc/netctl/eth0
+  if [[ -e $target ]]; then
+    return
+  fi
+  local sub=24
+  local ip_prefix=${ip%\.*}
+  local gw=${ip_prefix}.1
+  local dns=$gw
+  cat_netctl_eth0 | cat_tee $target
+}
+
+# # static wifi setting
+# #cp /etc/netctl/examples/wireless-wpa /etc/netctl/profile
+# cp /etc/netctl/examples/wireless-wpa-static /etc/netctl/wlan
+# vi /etc/netctl/wlan
+# # test add profile
+# netctl start wlan
+# # enable add profile
+# netctl enable wlan
+#
+# # static eth setting
+# cp /etc/netctl/examples/ethernet-static /etc/netctl/eth
+# vi /etc/netctl/eth
+# netctl start eth
+# netctl enable eth
+#
+#
+# # if not work
+# #systemctl status network
+# bash -c 'net link set eth0 down && netctl start profile-eth-static'
+setup_netctl() {
+  gen_netctl_eth0
+  exe netctl enable eth0
 }
 
 main() {
   set -e
   initialize "$@"
-  if bootstrapped; then
-    log "=> Already bootstraped. $bootstrapped_path" 1>&2
-    return
-  fi
-  setup_packages
+  setup_pacman
   setup_user
+  if [[ -n $ip ]]; then
+    setup_netctl
+  fi
   finalize
   [[ -n $dummy ]] && log "\n>>> This is dummy mode. specify -e option."
 }
