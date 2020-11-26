@@ -4,12 +4,11 @@ export DOT_PATH=$HOME/.dot
 readonly _timestamp=$(date +%Y%m%d_%H%M%S)
 readonly _backup_root="${DOT_PATH}/bkup/setup"
 
-readonly _core_apps_min=(
-  git ssh tig curl bc tree tmux zsh vim ag ctags
-)
 readonly _core_apps=(
-  "${_core_apps_min[@]}"
-  fzf neofetch anyenv go pt rg nvim nkf mmv gomi ghq shellcheck shfmt htop hub
+  git ssh tig curl bc tree tmux zsh vim ag rg ctags fzf
+)
+readonly _core_apps_additional=(
+  neofetch anyenv go pt nvim nkf mmv gomi ghq shellcheck shfmt htop hub
   exa bat
 )
 readonly _core_apps_additional_arch=(
@@ -20,6 +19,7 @@ export debug=0
 export dry_run=1
 export tran=0
 export force=0
+export minimal=0
 export view=0
 args=()
 _funcs_initialized=0
@@ -63,6 +63,7 @@ initialize_args() {
       -e | --exec) dry_run=0 ;;
       -v | --view) view=1 ;;
       -f | --force) force=1 ;;
+      -m | --minimal) minimal=1 ;;
       -d | --debug) debug=1 ;;
       *) add_args $1 ;;
     esac
@@ -434,6 +435,9 @@ clone_dot() {
 default_apps() {
   local _apps=()
   _apps+=("${_core_apps[@]}")
+  if [[ $minimal -ne 1 ]]; then
+    _apps+=("${_core_apps_additional[@]}")
+  fi
   if is_arch; then
     _apps+=("${_core_apps_additional_arch[@]}")
   fi
