@@ -91,7 +91,7 @@ set_default_install_command() {
   fi
 }
 
-mexe() {
+exe() {
   local cmd="$*"
   is_dry && log "   $cmd" && return
   dlog "===> Executing: $cmd"
@@ -101,7 +101,7 @@ mexe() {
 make_dir_if_needed() {
   local tmp="$*"
   if [[ ! -e $tmp ]]; then
-    mexe "mkdir -p \"$tmp\""
+    exe "mkdir -p \"$tmp\""
   fi
 }
 
@@ -109,7 +109,7 @@ make_dir_if_needed() {
 make_link() {
   local from=$1
   local to=$2
-  mexe "ln -s \"$from\" \"$to\""
+  exe "ln -s \"$from\" \"$to\""
 }
 
 # $* のリンクを 絶対パスで表示する（readlink -f の代用（For Mac））
@@ -217,7 +217,7 @@ backup() {
     local dst=$f.org
     sudo test -e $dst && continue
     log "===> Backupping $f to $dst"
-    mexe sudo cp -rf $f $dst
+    exe sudo cp -rf $f $dst
   done
 }
 
@@ -229,7 +229,7 @@ backup_file() {
 
   local _name="$(basename "$_target")"
   # バックアップ先ディレクトリにmv
-  mexe "mv -fv \"$_target\" \"${_backup_root}/${_timestamp}_$_name\""
+  exe "mv -fv \"$_target\" \"${_backup_root}/${_timestamp}_$_name\""
   del_if_exist "$_target"
   if [[ ! -e $_target ]]; then
     dlog "===> Backuped $_target"
@@ -244,7 +244,7 @@ del_if_exist() {
     return
   fi
   if isexist "$rm_target"; then
-    mexe "rm -rf \"$rm_target\""
+    exe "rm -rf \"$rm_target\""
   fi
 }
 
@@ -272,14 +272,14 @@ def_install() {
   done
   [[ ${#_pkgs[@]} -eq 0 ]] && return
   # shellcheck disable=SC2154
-  mexe $def_install_cmd "${_pkgs[*]}"
+  exe $def_install_cmd "${_pkgs[*]}"
 }
 make_work_if_needed() {
   make_dir_if_needed "$workdir"
 }
 cd_work() {
   make_work_if_needed
-  mexe "cd \"$workdir\""
+  exe "cd \"$workdir\""
 }
 
 _github() {
@@ -294,13 +294,13 @@ _github() {
   repo_name="${repo_name%%\.git}"
   local _path="$dst/$repo_name"
   if [[ -e $_path ]]; then
-    mexe cd $_path
-    mexe $_sudo git fetch
+    exe cd $_path
+    exe $_sudo git fetch
   else
     # ignore depth 1 option because tag info not readable
-    # mexe $_sudo git clone --depth 1 "$url" $_path
-    mexe $_sudo git clone "$url" $_path
-    mexe cd $_path
+    # exe $_sudo git clone --depth 1 "$url" $_path
+    exe $_sudo git clone "$url" $_path
+    exe cd $_path
   fi
   if [[ -z $tag ]]; then
     if ! is_dry; then
@@ -314,7 +314,7 @@ _github() {
     local now_branch=$(git branch | grep -E "\*" | tr -d "*" | tr -d " ")
   fi
   if [[ -n $now_branch && $now_branch != "$tag" ]]; then
-    mexe $_sudo git checkout -b $tag $tag
+    exe $_sudo git checkout -b $tag $tag
   fi
 }
 github_user_local() {
@@ -333,16 +333,16 @@ dl() {
   if [[ $# -eq 1 ]]; then
     ! is_dry && log "===> Downloading from $_url"
     if has curl; then
-      mexe "curl -fLO \"$_url\""
+      exe "curl -fLO \"$_url\""
     else
-      mexe "wget \"$_url\""
+      exe "wget \"$_url\""
     fi
   else
     ! is_dry && log "===> Downloading from $_url to $_dst"
     if has curl; then
-      mexe "curl -fL \"$_url\" -o \"$_dst\""
+      exe "curl -fL \"$_url\" -o \"$_dst\""
     else
-      mexe "wget \"$_url\" -O \"$_dst\""
+      exe "wget \"$_url\" -O \"$_dst\""
     fi
   fi
 }
@@ -355,10 +355,10 @@ dl_untar() {
   cd_work
   dl "$url" $_fname
   if [[ ! -e $to ]]; then
-    mexe mkdir -p "$to"
+    exe mkdir -p "$to"
   fi
   if ! find $to >&/dev/null; then
-    mexe "tar xvfpz $_fname -C \"$to\" --strip-components $strip"
+    exe "tar xvfpz $_fname -C \"$to\" --strip-components $strip"
   fi
 }
 dl_unzip() {
@@ -366,7 +366,7 @@ dl_unzip() {
   local to="${2:-$workdir}"
   cd_work
   dl "$url" dl.zip
-  mexe "unzip dl.zip -d \"$to\""
+  exe "unzip dl.zip -d \"$to\""
   log "==> Unzipped"
 }
 
@@ -380,7 +380,7 @@ tool_env() {
 
 rm_dotpath() {
   if [[ -e ~/.path ]]; then
-    mexe rm ~/.path
+    exe rm ~/.path
   fi
 }
 

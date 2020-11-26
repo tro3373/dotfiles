@@ -17,14 +17,14 @@ EOF
 
 gen_arch_tgz() {
   local tmp_d=$(mktemp -d)
-  mexe cd $tmp_d
+  exe cd $tmp_d
   local url=$(get_arch_iso_url_latest)
   log "> Downloading to $tmp_d from $url.."
-  mexe curl -LO $url
-  mexe sudo tar -xzfp ./*.tar.gz
-  mexe cd root.x86_64
-  mexe sudo tar -czfp $tgz .
-  mexe sudo mv -f $tgz $current_dir/
+  exe curl -LO $url
+  exe sudo tar -xzfp ./*.tar.gz
+  exe cd root.x86_64
+  exe sudo tar -czfp $tgz .
+  exe sudo mv -f $tgz $current_dir/
   echo "$current_dir/$tgz"
 }
 

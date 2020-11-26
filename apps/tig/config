@@ -12,13 +12,13 @@ install_ubuntu() {
   cd_work
   if [[ ! -e tig ]]; then
     local v="$(get_latest_version)"
-    mexe git clone --depth 1 -b $v https://github.com/$tig_path.git
+    exe git clone --depth 1 -b $v https://github.com/$tig_path.git
   fi
-  mexe "cd tig"
+  exe "cd tig"
 
   # ビルド, インストール
-  mexe sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
-  mexe /usr/local/bin/tig -v
+  exe sudo LDLIBS=-lncursesw CFLAGS=-I/usr/include/ncursesw make install prefix=/usr/local
+  exe /usr/local/bin/tig -v
 }
 
 get_latest_version() {
@@ -31,23 +31,23 @@ install_redhat() {
   #result=`rpm -qa |grep $targetrpm`
   #if [ "$result" = "" ]; then
   #    cmd="sudo rpm -ivh http://pkgs.repoforge.org/rpmforge-release/${targetrpm}.rpm"
-  #    mexe "$cmd"
+  #    exe "$cmd"
   #fi
   #install_via_os_default
   # ソースコード取得
   cd_work
   if [ ! -e tig ]; then
-    mexe git clone --depth 1 https://github.com/jonas/tig.git
+    exe git clone --depth 1 https://github.com/jonas/tig.git
   fi
-  mexe "cd tig"
-  # mexe git checkout tig-2.1.1
+  exe "cd tig"
+  # exe git checkout tig-2.1.1
 
   # ビルド, インストール
-  mexe ./autogen.sh
-  mexe ./configure prefix=/usr/local
-  mexe sudo make
-  mexe sudo sudo make install
-  mexe /usr/local/bin/tig -v
+  exe ./autogen.sh
+  exe ./configure prefix=/usr/local
+  exe sudo make
+  exe sudo sudo make install
+  exe /usr/local/bin/tig -v
 }
 
 setting_common() {

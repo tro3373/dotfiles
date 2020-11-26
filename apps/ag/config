@@ -5,54 +5,54 @@ install_msys() {
   local type=package # build/zip/package
   if [ "$type" = "package" ]; then
     # shellcheck disable=SC2154
-    mexe "$def_install_cmd mingw-w64-x86_64-ag"
+    exe "$def_install_cmd mingw-w64-x86_64-ag"
     return 0
   fi
   cd_work
   if [ "$type" = "zip" ]; then
     # shellcheck disable=SC2154
     if [ ! -e $workdir/ag.zip ]; then
-      mexe wget https://kjkpub.s3.amazonaws.com/software/the_silver_searcher/rel/0.29.1-1641/ag.zip
+      exe wget https://kjkpub.s3.amazonaws.com/software/the_silver_searcher/rel/0.29.1-1641/ag.zip
     fi
-    mexe unzip ag.zip
-    mexe mv ag/ag.exe $HOME/bin
-    mexe "cd -"
+    exe unzip ag.zip
+    exe mv ag/ag.exe $HOME/bin
+    exe "cd -"
     return 0
   fi
   # for build
-  mexe $def_install_cmd base-devel mingw-w64-x86_64-gcc mingw-w64-x86_64-pcre mingw-w64-x86_64-xz
+  exe $def_install_cmd base-devel mingw-w64-x86_64-gcc mingw-w64-x86_64-pcre mingw-w64-x86_64-xz
   if [ ! -e the_silver_searcher/.git ]; then
-    mexe git clone --depth 1 $url
+    exe git clone --depth 1 $url
   fi
-  mexe cd the_silver_searcher/
-  mexe ./build.sh PCRE_CFLAGS=-DPCRE_STATIC LDFLAGS=-static
-  mexe strip ag.exe
+  exe cd the_silver_searcher/
+  exe ./build.sh PCRE_CFLAGS=-DPCRE_STATIC LDFLAGS=-static
+  exe strip ag.exe
 }
 
 install_cygwin() {
   url=https://github.com/ggreer/the_silver_searcher.git
   # 必要パッケージインストール
-  mexe "$def_install_cmd autoconf automake gcc-g++ gettext gettext-devel liblzma-devel make mingw-gcc-g++ mingw-zlib-devel pkg-config xz zlib-devel"
+  exe "$def_install_cmd autoconf automake gcc-g++ gettext gettext-devel liblzma-devel make mingw-gcc-g++ mingw-zlib-devel pkg-config xz zlib-devel"
   cd_work
-  mexe git clone --depth 1 $url
-  mexe cd the_silver_searcher/
-  mexe aclocal && autoconf && autoheader && automake --add-missing
-  mexe ./configure
-  mexe make
-  mexe make install
+  exe git clone --depth 1 $url
+  exe cd the_silver_searcher/
+  exe aclocal && autoconf && autoheader && automake --add-missing
+  exe ./configure
+  exe make
+  exe make install
 }
 
 install_arch() {
-  mexe "$def_install_cmd the_silver_searcher"
+  exe "$def_install_cmd the_silver_searcher"
 }
 
 install_ubuntu() {
-  mexe "$def_install_cmd silversearcher-ag"
+  exe "$def_install_cmd silversearcher-ag"
 }
 install_redhat() {
   :
   #cmd="sudo rpm -ivh http://swiftsignal.com/packages/centos/6/x86_64/the-silver-searcher-0.13.1-1.el6.x86_64.rpm"
-  #mexe "$cmd"
+  #exe "$cmd"
 }
 
 setting_common() {

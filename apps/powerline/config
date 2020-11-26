@@ -19,27 +19,27 @@ install_common() {
   #   http://qiita.com/qurage/items/4edda8559cc4c98758ee
   if is_mac; then
     if ! test_cmd xcode-select; then
-      mexe xcode-select --install
+      exe xcode-select --install
     fi
-    mexe brew install readline
+    exe brew install readline
     brew link readline
   elif is_ubuntu; then
-    mexe sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev
+    exe sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev
   elif is_redhat; then
-    mexe sudo yum install -y gcc gcc-c++ make git openssl-devel bzip2-devel zlib-devel readline-devel sqlite-devel
+    exe sudo yum install -y gcc gcc-c++ make git openssl-devel bzip2-devel zlib-devel readline-devel sqlite-devel
   elif is_cygwin; then
-    mexe apt-cyg install patch
+    exe apt-cyg install patch
   fi
 
   # pip install powerline
   if [ ! -e ~/.local/lib/python2.7/site-packages/powerline ]; then
-    mexe $cmd_pip install --user git+git://github.com/powerline/powerline
+    exe $cmd_pip install --user git+git://github.com/powerline/powerline
   fi
 
   # powerline settings
   if [ ! -e ~/.config/powerline ]; then
-    mexe mkdir -p ~/.config/powerline
-    mexe cp -R ~/.local/lib/python2.7/site-packages/powerline/config_files/* ~/.config/powerline/
+    exe mkdir -p ~/.config/powerline
+    exe cp -R ~/.local/lib/python2.7/site-packages/powerline/config_files/* ~/.config/powerline/
     make_lnk_with_bkup $app_dir/default.json ~/.config/powerline/themes/tmux/default.json
     make_lnk_with_bkup $app_dir/powerline.json ~/.config/powerline/themes/powerline.json
   fi

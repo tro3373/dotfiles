@@ -6,12 +6,12 @@ install_common() {
       echo "No go exist. install it." 1>&2
       return
   fi
-  mexe go get github.com/jesseduffield/lazydocker
+  exe go get github.com/jesseduffield/lazydocker
 }
 # install_arch()   {
-#   mexe git clone https://aur.archlinux.org/lazydocker.git ~/lazydocker
-#   mexe cd ~/lazydocker
-#   mexe makepkg --install
+#   exe git clone https://aur.archlinux.org/lazydocker.git ~/lazydocker
+#   exe cd ~/lazydocker
+#   exe makepkg --install
 # }
 # install_msys()   { not_supported; }
 # install_cygwin() { not_supported; }

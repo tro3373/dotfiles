@@ -16,7 +16,7 @@ setting_common() {
   local dst=${HOME}/.config/nvim/init.vim
   local dstd=$(dirname $dst)
   if [[ ! -e $dstd ]]; then
-    mexe mkdir -p $dstd
+    exe mkdir -p $dstd
   fi
   make_lnk_with_bkup "$src" "$dst"
 }

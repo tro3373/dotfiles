@@ -7,16 +7,16 @@ is_installed() {
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_common() {
-  mexe "git clone https://github.com/riywo/anyenv ~/.anyenv"
+  exe "git clone https://github.com/riywo/anyenv ~/.anyenv"
 }
 
 setting_common() {
   if grep "anyenv_init" ~/.works.zsh >&/dev/null; then
     return
   fi
-  mexe "echo 'add_path \${HOME}/.anyenv/bin' >> ~/.works.zsh"
-  # mexe "echo 'eval \"\$(anyenv init -)\"' >> ~/.works.zsh"
-  mexe "echo 'eval \"\$(\${HOME}/.dot/bin/anyenv_init)\"' >> ~/.works.zsh"
+  exe "echo 'add_path \${HOME}/.anyenv/bin' >> ~/.works.zsh"
+  # exe "echo 'eval \"\$(anyenv init -)\"' >> ~/.works.zsh"
+  exe "echo 'eval \"\$(\${HOME}/.dot/bin/anyenv_init)\"' >> ~/.works.zsh"
   rm_dotpath
 
   #exec $SHELL -l
@@ -25,7 +25,7 @@ setting_common() {
   # done
   #    if [[ -e ~/.path ]]; then
   #        # ~/.anyenv/bin へ path を通す必要がある
-  #        mexe rm ~/.path
+  #        exe rm ~/.path
   #    fi
 
   ## --------------------------------------------------------

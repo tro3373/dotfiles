@@ -2,8 +2,8 @@
 
 install_common() {
   github_user_local "https://github.com/jhawthorn/fzy.git"
-  mexe make
-  mexe sudo make install
+  exe make
+  exe sudo make install
 }
 
 install_arch() {
@@ -26,7 +26,7 @@ msys_build_ng() {
   fi
   if ! is_dry && [[ ! -e PKGBUILD ]]; then
     # shellcheck disable=SC2154
-    mexe cat <<EOF>PKGBUILD
+    exe cat <<EOF>PKGBUILD
 pkgname=fzy
 pkgver=$v
 pkgrel=1
@@ -54,8 +54,8 @@ package() {
 
 EOF
   fi
-  mexe makepkg-mingw -f
-  mexe pacman -U --noconfirm fzy-$v-1-x86_64.pkg.tar.xz
+  exe makepkg-mingw -f
+  exe pacman -U --noconfirm fzy-$v-1-x86_64.pkg.tar.xz
 }
 
 msys_build() {
@@ -84,8 +84,8 @@ package() {
   install -Dm644 LICENSE "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
 }
 EOF
-mexe makepkg
-mexe pacman -U "${package-name}*.pkg.tar.xz"
+exe makepkg
+exe pacman -U "${package-name}*.pkg.tar.xz"
 }
 
 get_latest_version() {

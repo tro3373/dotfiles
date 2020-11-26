@@ -10,10 +10,10 @@ install_mac()    {
 }
 install_ubuntu() {
   github_user_local "https://github.com/libarchive/libarchive.git"
-  mexe sudo build/autogen.sh
-  mexe sudo ./configure
-  mexe sudo make
-  mexe sudo make install
+  exe sudo build/autogen.sh
+  exe sudo ./configure
+  exe sudo make
+  exe sudo make install
 }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }

@@ -4,11 +4,11 @@ install_common() { not_supported; }
 install_arch() {
   cd_work
   if [[ -e yay ]]; then
-    mexe rm -rf yay
+    exe rm -rf yay
   fi
-  mexe git clone https://aur.archlinux.org/yay.git
-  mexe cd yay
-  mexe makepkg -si --noconfirm
+  exe git clone https://aur.archlinux.org/yay.git
+  exe cd yay
+  exe makepkg -si --noconfirm
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }

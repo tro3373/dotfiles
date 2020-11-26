@@ -15,20 +15,20 @@ _install_common() {
   github_user_local "https://github.com/tmux/tmux.git"
   # local target_dir=/usr/local/src/tmux
   # if [[ -e $target_dir ]]; then
-  #     mexe cd $target_dir
-  #     mexe sudo git pull --rebase
+  #     exe cd $target_dir
+  #     exe sudo git pull --rebase
   # else
-  #     mexe sudo git clone https://github.com/tmux/tmux.git $target_dir
-  #     mexe cd $target_dir
+  #     exe sudo git clone https://github.com/tmux/tmux.git $target_dir
+  #     exe cd $target_dir
   # fi
   # local tag=$(git tag --list | tail -1)
   # if [[ ! -z $tag ]]; then
-  #     mexe sudo git checkout $tag
+  #     exe sudo git checkout $tag
   # fi
-  mexe sudo ./autogen.sh
-  mexe sudo ./configure --prefix=/usr/local
-  mexe sudo make
-  mexe sudo make install
+  exe sudo ./autogen.sh
+  exe sudo ./configure --prefix=/usr/local
+  exe sudo make
+  exe sudo make install
 }
 
 install_mac() {
@@ -45,23 +45,23 @@ build_msys() {
   def_install base-devel ncurses-devel
 
   dl_untar "$(get_libevent_url)" /usr/local/src/libevent 1
-  mexe cd /usr/local/src/libevent
-  mexe ./configure --prefix=/usr/local
-  mexe make
-  mexe make install
+  exe cd /usr/local/src/libevent
+  exe ./configure --prefix=/usr/local
+  exe make
+  exe make install
 
   dl_untar "$(get_ncurses_url)" /usr/local/src/ncurses 1
-  mexe cd /usr/local/src/ncurses
-  mexe ./configure --enable-pc-files --prefix=/usr/local --enable-pc-files --with-pkg-config-libdir=/usr/local/lib/pkgconfig --with-termlib
-  mexe make
-  mexe make install
+  exe cd /usr/local/src/ncurses
+  exe ./configure --enable-pc-files --prefix=/usr/local --enable-pc-files --with-pkg-config-libdir=/usr/local/lib/pkgconfig --with-termlib
+  exe make
+  exe make install
 
   github_user_local "https://github.com/tmux/tmux.git"
-  mexe ./autogen.sh
+  exe ./autogen.sh
   # export LD_LIBRARY_PATH=/usr/local/lib
-  mexe LD_LIBRARY_PATH=/usr/local/lib PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --prefix=/usr/local CFLAGS='-D_GNU_SOURCE'
-  mexe make
-  mexe make install
+  exe LD_LIBRARY_PATH=/usr/local/lib PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure --prefix=/usr/local CFLAGS='-D_GNU_SOURCE'
+  exe make
+  exe make install
 }
 get_libevent_url() {
   curl -fSsL http://libevent.org/ |grep latest |grep href |cut -d"\"" -f4

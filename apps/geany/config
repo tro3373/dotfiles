@@ -24,8 +24,8 @@ setting_ubuntu() {
     make_lnk_with_bkup "$script_path/keybindings.conf" "$confd/keybindings.conf"
 
     local conffd=$confd/filedefs
-    mexe tar xvfpz "$script_path/oblivion2.tar.gz" -C $conffd
-    mexe cp $conffd/filetypes.xml $conffd/filetypes.html
+    exe tar xvfpz "$script_path/oblivion2.tar.gz" -C $conffd
+    exe cp $conffd/filetypes.xml $conffd/filetypes.html
     sed 's/^selection.+$/selection=0x000;0x33B5E5;false;true/g' $conffd/filetypes.common
 
     log "- Themeを[ここ](http://www.geany.org/Download/Extras)からダウンロード"

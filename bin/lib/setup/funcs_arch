@@ -16,7 +16,7 @@ setup_keyboard() {
   if localectl | grep "Keymap" | grep $keyboard_layout >/dev/null; then
     return
   fi
-  mexe sudo localectl set-keymap $keyboard_layout
+  exe sudo localectl set-keymap $keyboard_layout
 }
 
 setup_timezone() {
@@ -25,7 +25,7 @@ setup_timezone() {
   if timedatectl | grep "Time zone" | grep "$val" >/dev/null; then
     return
   fi
-  mexe sudo timedatectl set-timezone $val # タイムゾーン設定
+  exe sudo timedatectl set-timezone $val # タイムゾーン設定
 }
 
 setup_locale() {
@@ -49,7 +49,7 @@ EOF
 en_US.UTF-8 UTF-8
 ja_JP.UTF-8 UTF-8
 EOF
-  mexe sudo locale-gen
+  exe sudo locale-gen
 }
 
 setup_packages() {
@@ -62,7 +62,7 @@ setup_packages() {
   improve_pacman
 
   # パッケージ更新
-  mexe sudo pacman -Syyu --noconfirm
+  exe sudo pacman -Syyu --noconfirm
 }
 
 setup_additional_pacakges() {
@@ -77,13 +77,13 @@ setup_hostname() {
   fi
   local _old_host=$(cat </etc/hostname | head -1)
   backup $target
-  mexe hostnamectl set-hostname $_hostname
-  mexe hostnamectl
+  exe hostnamectl set-hostname $_hostname
+  exe hostnamectl
   if ! getent hosts | grep $_old_host >&/dev/null; then
     return
   fi
-  mexe sed -i -e "s,$_old_host,$_hostname,g" /etc/hosts
-  mexe getent hosts
+  exe sed -i -e "s,$_old_host,$_hostname,g" /etc/hosts
+  exe getent hosts
 }
 
 cat_pac_mirror_list_x86x64() {
@@ -111,24 +111,24 @@ update_pacman_millerlist() {
 refresh_pacman_keys() {
   if [[ $1 == with_manjaro ]]; then
     ## see https://dev.to/mattdark/signature-is-unknown-trust-arch-linux-on-vbox-3452
-    mexe sudo rm -r /etc/pacman.d/gnupg
-    mexe sudo pacman -Sy gnupg archlinux-keyring manjaro-keyring
-    mexe sudo pacman-key --init
-    mexe sudo pacman-key --populate archlinux manjaro
-    mexe sudo pacman-key --refresh-keys
-    mexe sudo pacman -Sc # delete all packages that not installed
+    exe sudo rm -r /etc/pacman.d/gnupg
+    exe sudo pacman -Sy gnupg archlinux-keyring manjaro-keyring
+    exe sudo pacman-key --init
+    exe sudo pacman-key --populate archlinux manjaro
+    exe sudo pacman-key --refresh-keys
+    exe sudo pacman -Sc # delete all packages that not installed
     return
   fi
   ## error occur. see https://bbs.archlinux.org/viewtopic.php?id=253809
   ## execute below in windows..
   # bcdedit /set hypervisorlaunchtype off
 
-  mexe sudo rm -r /etc/pacman.d/gnupg
-  mexe sudo pacman-key --init
-  mexe sudo pacman-key --populate archlinux
-  mexe sudo pacman -Sy gnupg --noconfirm
-  mexe sudo pacman -Sy archlinux-keyring --noconfirm
-  # mexe sudo pacman-key --refresh-keys
+  exe sudo rm -r /etc/pacman.d/gnupg
+  exe sudo pacman-key --init
+  exe sudo pacman-key --populate archlinux
+  exe sudo pacman -Sy gnupg --noconfirm
+  exe sudo pacman -Sy archlinux-keyring --noconfirm
+  # exe sudo pacman-key --refresh-keys
   # ==> Error(see https://bbs.archlinux.org/viewtopic.php?id=257441)
   #     gpg: refreshing 120 keys from hkps://hkps.pool.sks-keyservers.net
   #     gpg: keyserver refresh failed: General error
@@ -137,8 +137,8 @@ refresh_pacman_keys() {
   local specify_keyserver=pool.sks-keyservers.net
   local local_gpg_settings=~/.gnupg/gpg.conf
   if [[ ! -e $local_gpg_settings ]]; then
-    mexe mkdir -p "$(dirname $local_gpg_settings)"
-    mexe cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
+    exe mkdir -p "$(dirname $local_gpg_settings)"
+    exe cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
     echo "keyserver $specify_keyserver" |
       if is_dry; then
         cat -
@@ -146,8 +146,8 @@ refresh_pacman_keys() {
         cat - | tee -a $local_gpg_settings
       fi
   fi
-  mexe sudo pacman-key --refresh-keys --keyserver $specify_keyserver
-  mexe sudo pacman -Sc --noconfirm # delete all packages that not installed
+  exe sudo pacman-key --refresh-keys --keyserver $specify_keyserver
+  exe sudo pacman -Sc --noconfirm # delete all packages that not installed
 }
 
 improve_pacman() {
@@ -158,24 +158,24 @@ improve_pacman() {
 
   backup /etc/pacman.conf
   # fast pacman install
-  mexe sudo pacman -S aria2 --noconfirm
+  exe sudo pacman -S aria2 --noconfirm
   local settings_aria2c='XferCommand = /usr/bin/aria2c --allow-overwrite=true --continue=true --file-allocation=none --log-level=error --max-tries=2 --max-connection-per-server=2 --max-file-not-found=5 --min-split-size=5M --no-conf --remote-time=true --summary-interval=60 --timeout=5 --dir=/ --out %o %u'
-  mexe 'sudo sed -i -e "s,^\(HoldPkg.*\),\1\n'$settings_aria2c',g" /etc/pacman.conf'
-  mexe 'sudo sed -i -e "s,^#Color,Color,g" /etc/pacman.conf'
+  exe 'sudo sed -i -e "s,^\(HoldPkg.*\),\1\n'$settings_aria2c',g" /etc/pacman.conf'
+  exe 'sudo sed -i -e "s,^#Color,Color,g" /etc/pacman.conf'
   if ! grep -E '^ILoveCandy' /etc/pacman.conf >&/dev/null; then
-    mexe 'sudo sed -i -e "s,^Color,Color\nILoveCandy,g" /etc/pacman.conf'
+    exe 'sudo sed -i -e "s,^Color,Color\nILoveCandy,g" /etc/pacman.conf'
   fi
 }
 
 setup_user() {
   local _user=$1
   if [[ ! -e /home/$_user ]]; then
-    mexe useradd -m -G wheel $_user
+    exe useradd -m -G wheel $_user
     echo "=> Changing user password for $_user"
-    mexe passwd $_user
+    exe passwd $_user
   fi
   if ! has sudo; then
-    mexe pacman -S sudo --noconfirm
+    exe pacman -S sudo --noconfirm
   fi
   # TODO auto gen
   echo "=> Setupping visudo.. press Enter."
@@ -190,7 +190,7 @@ setup_login_shell() {
   if cat </etc/passwd | grep $_user | grep zsh >&/dev/null; then
     return
   fi
-  mexe sudo chsh $_user -s /usr/bin/zsh
+  exe sudo chsh $_user -s /usr/bin/zsh
 }
 
 [[ $0 != "${BASH_SOURCE[0]}" ]] && return 0

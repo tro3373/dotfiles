@@ -90,41 +90,41 @@ main() {
 
   if is_mac; then
     diskutil list
-    mexe diskutil unMountDisk ${target_device_id}
+    exe diskutil unMountDisk ${target_device_id}
     # format sd ==> NG
     # local disk_label=RPI
     # MS-DOS: FAT32
-    # mexe diskutil eraseDisk MS-DOS $disk_label ${target_device_id}
+    # exe diskutil eraseDisk MS-DOS $disk_label ${target_device_id}
     # https://apple.stackexchange.com/questions/154566/create-a-partition-on-sd-card-for-ext4-filesystem
     # MacOS cannot see ext partitions...
-    # mexe diskutil partitionDisk ${target_device_id} 2 MBRFormat MS-DOS "boot" 200M JournaledHFS+ "root"
+    # exe diskutil partitionDisk ${target_device_id} 2 MBRFormat MS-DOS "boot" 200M JournaledHFS+ "root"
   else
-    mexe fdisk -l
+    exe fdisk -l
     fdisk_usage | ink yellow
-    mexe fdisk ${target_device_id}
+    exe fdisk ${target_device_id}
   fi
 
   check_target_device_partitions
 
-  [[ ! -e tmp ]] && mexe mkdir -p tmp
-  mexe cd tmp
+  [[ ! -e tmp ]] && exe mkdir -p tmp
+  exe cd tmp
 
-  mexe mkfs.vfat $target_device_id1
-  mexe mkdir -p boot
-  mexe mount $target_device_id1 boot
+  exe mkfs.vfat $target_device_id1
+  exe mkdir -p boot
+  exe mount $target_device_id1 boot
 
-  mexe $mkfs_ext4 $target_device_id2
-  mexe mkdir -p root
-  mexe mount $target_device_id2 root
+  exe $mkfs_ext4 $target_device_id2
+  exe mkdir -p root
+  exe mount $target_device_id2 root
   local fnm=${url##*/}
   if [[ ! -e $fnm ]]; then
-    mexe curl -fLO $url
+    exe curl -fLO $url
   fi
-  mexe bsdtar -xpf $fnm -C root
-  mexe sync
+  exe bsdtar -xpf $fnm -C root
+  exe sync
 
-  mexe mv root/boot/* boot
-  mexe umount boot root
+  exe mv root/boot/* boot
+  exe umount boot root
 
   show_dummy_warn_if_needed
   ink green "Done!"

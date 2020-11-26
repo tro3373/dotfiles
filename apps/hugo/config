@@ -7,8 +7,8 @@ install_common() {
   fi
   # ソースコード取得
   cd_work
-  mexe git clone https://github.com/spf13/hugo
-  mexe cd hugo
-  mexe go install --tags extended
+  exe git clone https://github.com/spf13/hugo
+  exe cd hugo
+  exe go install --tags extended
 }
 

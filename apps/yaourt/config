@@ -21,13 +21,13 @@ install_arch() {
       else
         cat - | sudo tee -a /etc/pacman.conf >/dev/null
       fi
-    mexe sudo pacman -Syy
+    exe sudo pacman -Syy
   fi
   def_install base-devel
   if ! has package-query; then
     dl_untar https://aur.archlinux.org/cgit/aur.git/snapshot/package-query.tar.gz
-    mexe cd package-query
-    mexe makepkg -si
+    exe cd package-query
+    exe makepkg -si
   fi
   install_via_os_default
 }

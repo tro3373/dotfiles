@@ -6,7 +6,7 @@ install_arch() {
     log "No snap command exist. install snap first." 1>&2
     return
   fi
-  mexe sudo snap install gh --edge
+  exe sudo snap install gh --edge
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
@@ -19,7 +19,7 @@ setting_common() {
   if grep 'gh ' ~/.works.zsh >&/dev/null; then
     return
   fi
-  mexe "echo 'eval \"\$(gh completion -s zsh)\"' >> ~/.works.zsh"
+  exe "echo 'eval \"\$(gh completion -s zsh)\"' >> ~/.works.zsh"
 }
 # setting_arch() { not_supported; }
 # setting_msys() { not_supported; }

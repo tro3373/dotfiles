@@ -75,7 +75,7 @@ setup_vag_samba() {
     return
   fi
   if ! sudo test -e /etc/samba/smb.conf.org; then
-    mexe 'sudo wget -O /etc/samba/smb.conf.org "https://git.samba.org/samba.git/?p=samba.git;a=blob_plain;f=examples/smb.conf.default;hb=HEAD"'
+    exe 'sudo wget -O /etc/samba/smb.conf.org "https://git.samba.org/samba.git/?p=samba.git;a=blob_plain;f=examples/smb.conf.default;hb=HEAD"'
   fi
   cat <<EOF | sudo_tee -a /etc/samba/smb.conf
 [global]
@@ -113,29 +113,29 @@ setup_vag_samba() {
 
 EOF
   #sudo smbpasswd vagrant
-  mexe sudo chmod 755 /home/vagrant
-  mexe sudo systemctl enable smb nmb
-  # mexe sudo systemctl start smb nmb
+  exe sudo chmod 755 /home/vagrant
+  exe sudo systemctl enable smb nmb
+  # exe sudo systemctl start smb nmb
 }
 
 # disable_vag_netctl_eth0() {
 #   local delay_shell=/tmp/todo.sh
 #   echo 'sleep 2' >>$delay_shell
 #   if sudo test -e /etc/netctl/eth0; then
-#     # mexe sudo rm /etc/netctl/eth0
+#     # exe sudo rm /etc/netctl/eth0
 #     echo 'sudo rm /etc/netctl/eth0' >>$delay_shell
 #   fi
 #   if test -L /etc/systemd/system/multi-user.target.wants/netctl@eth0.service; then
 #     echo 'sudo systemctl disable netctl@eth0.service' >>$delay_shell
 #   fi
-#   mexe "nohup sh $delay_shell &"
+#   exe "nohup sh $delay_shell &"
 # }
 disable_vag_netctl_eth0() {
   if sudo test -e /etc/netctl/eth0; then
-    mexe sudo rm /etc/netctl/eth0
+    exe sudo rm /etc/netctl/eth0
   fi
   if test -L /etc/systemd/system/multi-user.target.wants/netctl@eth0.service; then
-    mexe sudo systemctl disable netctl@eth0.service
+    exe sudo systemctl disable netctl@eth0.service
   fi
 }
 

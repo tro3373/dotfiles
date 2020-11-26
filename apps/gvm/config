@@ -31,7 +31,7 @@ _install_common() {
     # go get github.com/dufferzafar/cheat
   }
 install_mac()    {
-  mexe brew update
+  exe brew update
   def_install mercurial
   _install_common
 }

@@ -6,8 +6,8 @@ install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() {
   # shellcheck disable=SC2016
-  mexe '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
-  mexe "/usr/local/bin/brew update"
+  exe '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+  exe "/usr/local/bin/brew update"
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
@@ -21,7 +21,7 @@ setting_mac() {
   fi
   echo '>> you need to add /usr/local/bin to PATH variable'
   # shellcheck disable=SC2016
-  mexe 'export PATH=/usr/local/bin:$PATH'
+  exe 'export PATH=/usr/local/bin:$PATH'
 }
 setting_ubuntu() { not_supported; }
 setting_redhat() { not_supported; }

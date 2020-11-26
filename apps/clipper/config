@@ -6,7 +6,7 @@ install_common() {
     return
   fi
 
-  mexe go get -v -u github.com/wincent/clipper
+  exe go get -v -u github.com/wincent/clipper
 }
 
 setting_common() {

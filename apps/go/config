@@ -14,10 +14,10 @@ install_common() {
     log "No version exist"
     exit 1
   fi
-  mexe goenv install $version
-  mexe goenv global $version
-  mexe goenv rehash
-  mexe go version
+  exe goenv install $version
+  exe goenv global $version
+  exe goenv rehash
+  exe go version
 }
 
 install_arch() {
@@ -25,9 +25,9 @@ install_arch() {
 }
 
 install_ubuntu() {
-  mexe sudo add-apt-repository -y ppa:longsleep/golang-backports
-  mexe sudo apt update -y
-  mexe sudo apt install -y golang-go
+  exe sudo add-apt-repository -y ppa:longsleep/golang-backports
+  exe sudo apt update -y
+  exe sudo apt install -y golang-go
 }
 
 install_msys() {
@@ -43,7 +43,7 @@ setting_common() {
   if grep "GOPATH" ~/.works.zsh >&/dev/null; then
     return
   fi
-  mexe "echo 'export GOPATH=\$HOME/go' >> ~/.works.zsh"
-  mexe "echo 'add_path \$GOPATH/bin' >> ~/.works.zsh"
+  exe "echo 'export GOPATH=\$HOME/go' >> ~/.works.zsh"
+  exe "echo 'add_path \$GOPATH/bin' >> ~/.works.zsh"
   rm_dotpath
 }

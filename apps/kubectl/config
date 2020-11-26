@@ -3,21 +3,21 @@
 install_common() {
   cd_work
   local _v=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)
-  mexe "curl -LO 'https://storage.googleapis.com/kubernetes-release/release/$_v/bin/linux/amd64/kubectl'"
-  mexe chmod +x ./kubectl
-  mexe sudo mv ./kubectl /usr/local/bin/kubectl
-  mexe kubectl version --client
+  exe "curl -LO 'https://storage.googleapis.com/kubernetes-release/release/$_v/bin/linux/amd64/kubectl'"
+  exe chmod +x ./kubectl
+  exe sudo mv ./kubectl /usr/local/bin/kubectl
+  exe kubectl version --client
 }
 # install_arch()   { not_supported; }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() { not_supported; }
 install_ubuntu() {
-  mexe 'sudo apt-get update && sudo apt-get install -y apt-transport-https gnupg2 curl'
-  mexe 'curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -'
-  mexe 'echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list'
-  mexe sudo apt-get update
-  mexe sudo apt-get install -y kubectl
+  exe 'sudo apt-get update && sudo apt-get install -y apt-transport-https gnupg2 curl'
+  exe 'curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -'
+  exe 'echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list'
+  exe sudo apt-get update
+  exe sudo apt-get install -y kubectl
 }
 cat_rh_kube_repo() {
   cat <<EOF
@@ -32,7 +32,7 @@ EOF
 }
 install_redhat() {
   cat_rh_kube_repo | sudo_tee /etc/yum.repos.d/kubernetes.repo
-  mexe yum install -y kubectl
+  exe yum install -y kubectl
 }
 setting_common() { not_supported; }
 setting_arch() { not_supported; }

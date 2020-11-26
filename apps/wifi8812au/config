@@ -31,8 +31,8 @@ install_ubuntu() {
     # DRV_VERSION=5.6.4
 
     if [[ $1 == "-r" ]]; then
-      mexe sudo dkms uninstall -m ${DRV_NAME} -v ${DRV_VERSION}
-      mexe sudo dkms status
+      exe sudo dkms uninstall -m ${DRV_NAME} -v ${DRV_VERSION}
+      exe sudo dkms status
       return
     fi
 
@@ -42,27 +42,27 @@ install_ubuntu() {
     local srcd=/usr/src/${DRV_NAME}-${DRV_VERSION}
 
     if [[ ! -e $srcd ]]; then
-      mexe sudo git clone https://github.com/diederikdehaas/rtl8812AU $srcd
+      exe sudo git clone https://github.com/diederikdehaas/rtl8812AU $srcd
     fi
 
-    mexe cd /usr/src/${DRV_NAME}-${DRV_VERSION}
-    mexe sudo git checkout -b driver-${DRV_VERSION} origin/driver-${DRV_VERSION}
-    mexe sudo dkms add -m ${DRV_NAME} -v ${DRV_VERSION}
-    mexe sudo dkms build -m ${DRV_NAME} -v ${DRV_VERSION}
-    mexe sudo dkms install -m ${DRV_NAME} -v ${DRV_VERSION}
-    mexe sudo dkms status
+    exe cd /usr/src/${DRV_NAME}-${DRV_VERSION}
+    exe sudo git checkout -b driver-${DRV_VERSION} origin/driver-${DRV_VERSION}
+    exe sudo dkms add -m ${DRV_NAME} -v ${DRV_VERSION}
+    exe sudo dkms build -m ${DRV_NAME} -v ${DRV_VERSION}
+    exe sudo dkms install -m ${DRV_NAME} -v ${DRV_VERSION}
+    exe sudo dkms status
   fi
 
-  # mexe sudo apt-get update
+  # exe sudo apt-get update
   # def_install linux-headers-generic build-essential
   cd_work
-  mexe git clone https://github.com/abperiasamy/rtl8812AU_8821AU_linux.git
-  mexe cd rtl8812AU_8821AU_linux
-  mexe git checkout -b tmp 72594b5
-  mexe make
-  mexe sudo make install
-  mexe sudo modprobe rtl8812au
-  mexe lsmod | grep rtl8812au
+  exe git clone https://github.com/abperiasamy/rtl8812AU_8821AU_linux.git
+  exe cd rtl8812AU_8821AU_linux
+  exe git checkout -b tmp 72594b5
+  exe make
+  exe sudo make install
+  exe sudo modprobe rtl8812au
+  exe lsmod | grep rtl8812au
 }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }

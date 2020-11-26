@@ -15,15 +15,15 @@ install_ubuntu() {
   fi
   # @see http://sicklylife.hatenablog.com/entry/2017/02/06/211159
   # For Japanize zip file Under ubuntu 16.04
-  mexe "wget -q https://www.ubuntulinux.jp/ubuntu-ja-archive-keyring.gpg -O- | sudo apt-key add -"
-  mexe "wget -q https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -O- | sudo apt-key add -"
-  mexe sudo wget https://www.ubuntulinux.jp/sources.list.d/xenial.list -O /etc/apt/sources.list.d/ubuntu-ja.list
-  mexe sudo apt update
-  mexe sudo apt upgrade
-  mexe sudo apt install ubuntu-defaults-ja p7zip-full
-  mexe sudo add-apt-repository ppa:sicklylife/ppa
-  mexe sudo apt update
-  mexe sudo apt upgrade
+  exe "wget -q https://www.ubuntulinux.jp/ubuntu-ja-archive-keyring.gpg -O- | sudo apt-key add -"
+  exe "wget -q https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -O- | sudo apt-key add -"
+  exe sudo wget https://www.ubuntulinux.jp/sources.list.d/xenial.list -O /etc/apt/sources.list.d/ubuntu-ja.list
+  exe sudo apt update
+  exe sudo apt upgrade
+  exe sudo apt install ubuntu-defaults-ja p7zip-full
+  exe sudo add-apt-repository ppa:sicklylife/ppa
+  exe sudo apt update
+  exe sudo apt upgrade
 }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }

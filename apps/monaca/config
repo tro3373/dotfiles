@@ -5,7 +5,7 @@ install_common() {
     log "No npm command exist. install node first." 1>&2
     return
   fi
-  mexe npm i -g monaca
+  exe npm i -g monaca
 }
 # install_arch()   { not_supported; }
 # install_msys()   { not_supported; }

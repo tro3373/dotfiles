@@ -3,7 +3,7 @@
 min_ub_release=16.04
 
 uninstall() {
-  mexe sudo apt-get purge docker-ce
+  exe sudo apt-get purge docker-ce
 }
 
 is_exist_docker_group() {
@@ -17,7 +17,7 @@ is_in_docker_group() {
 mod_user() {
   log "===> add $USER to docker group... "
   # ユーザーを docker グループに追加
-  mexe sudo usermod -aG docker $USER
+  exe sudo usermod -aG docker $USER
 }
 
 get_dist_version() {
@@ -46,16 +46,16 @@ install_docker_via_repository() {
   fi
   # @see https://docs.docker.com/engine/installation/linux/ubuntu/#install-docker
   # Install packages to allow apt to use a repository over HTTPS:
-  mexe sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+  exe sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
   # Add Docker’s official GPG key:
-  mexe 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -'
+  exe 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -'
   # verify
-  mexe sudo apt-key fingerprint 0EBFCD88
+  exe sudo apt-key fingerprint 0EBFCD88
   local use_version_name=$(lsb_release -cs)
-  mexe sudo add-apt-repository "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu ${use_version_name} stable\""
-  mexe sudo apt-get -y update
-  mexe sudo apt-get -y install docker-ce
-  mexe sudo docker run hello-world
+  exe sudo add-apt-repository "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu ${use_version_name} stable\""
+  exe sudo apt-get -y update
+  exe sudo apt-get -y install docker-ce
+  exe sudo docker run hello-world
 }
 
 get_latest_version() {
@@ -73,16 +73,16 @@ install_via_curl() {
   local url="https://github.com/docker/$m/releases/download/$v/docker-$m-$(uname -s)-$(uname -m)"
   local command_name="docker-$m"
   log "===> Installing... $command_name"
-  mexe "sudo curl -L $url -o /tmp/$command_name"
-  mexe sudo install /tmp/$command_name /usr/local/bin/$command_name
-  mexe $command_name --version
+  exe "sudo curl -L $url -o /tmp/$command_name"
+  exe sudo install /tmp/$command_name /usr/local/bin/$command_name
+  exe $command_name --version
 }
 
 install_common() { not_supported; }
 install_arch()   {
   install_via_os_default
-  mexe sudo systemctl enable docker  # ログイン時にデーモン実行
-  mexe sudo systemctl restart docker
+  exe sudo systemctl enable docker  # ログイン時にデーモン実行
+  exe sudo systemctl restart docker
   install_via_curl machine
   install_via_curl compose
 }
@@ -98,12 +98,12 @@ install_redhat() { not_supported; }
 setting_common() { not_supported; }
 setting_arch()   {
   if ! is_exist_docker_group; then
-    mexe sudo groupadd docker
+    exe sudo groupadd docker
   fi
   if is_in_docker_group; then
     return
   fi
-  mexe sudo gpasswd -a $USER docker
+  exe sudo gpasswd -a $USER docker
 }
 setting_msys()   { not_supported; }
 setting_cygwin() { not_supported; }

@@ -4,11 +4,11 @@ is_installed() { has certbot-auto; }
 install_common() {
   src_dir=/opt/letsencrypt
   if [[ ! -d $src_dir ]]; then
-    mexe sudo git clone https://github.com/letsencrypt/letsencrypt $src_dir
-    mexe cd $src_dir
+    exe sudo git clone https://github.com/letsencrypt/letsencrypt $src_dir
+    exe cd $src_dir
   else
-    mexe cd $src_dir
-    mexe sudo git pull
+    exe cd $src_dir
+    exe sudo git pull
   fi
   $HOME/.dot/bin/certbot-auto_
 }

@@ -5,7 +5,7 @@ is_installed() { [[ -e "$workdir"/flutter ]]; }
 install_common() {
   cd_work
   if [[ ! -e flutter ]]; then
-    mexe git clone https://github.com/flutter/flutter.git -b stable --depth 1
+    exe git clone https://github.com/flutter/flutter.git -b stable --depth 1
   fi
 }
 # install_arch() { not_supported; }
@@ -18,11 +18,11 @@ setting_common() {
   cd_work
   local flutter_bin=$(pwd)/flutter/bin
   if ! grep $flutter_bin ~/.works.zsh >&/dev/null; then
-    mexe "echo 'add_path $flutter_bin' >> ~/.works.zsh"
+    exe "echo 'add_path $flutter_bin' >> ~/.works.zsh"
     rm_dotpath
   fi
-  mexe $flutter_bin/flutter precache
-  mexe $flutter_bin/flutter doctor
+  exe $flutter_bin/flutter precache
+  exe $flutter_bin/flutter doctor
 }
 # setting_arch() { not_supported; }
 # setting_msys() { not_supported; }
@@ -30,9 +30,9 @@ setting_cygwin() { not_supported; }
 setting_mac() {
   setting_common
   if [[ -e /Applications/Xcode.app ]]; then
-    mexe sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
-    mexe sudo xcodebuild -runFirstLaunch
-    mexe sudo xcodebuild -license
+    exe sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+    exe sudo xcodebuild -runFirstLaunch
+    exe sudo xcodebuild -license
   fi
 }
 # setting_ubuntu() { not_supported; }

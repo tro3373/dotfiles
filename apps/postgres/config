@@ -7,16 +7,16 @@ install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() {
 
-  mexe brew install postgresql
+  exe brew install postgresql
   # データベースの初期化 (文字コードはUTF-8)
   #  initdb /usr/local/var/postgres -E utf8
 
-  mexe curl -o fixBrewLionPostgresql.sh http://nextmarvel.net/blog/downloads/fixBrewLionPostgres.sh
-  mexe chmod 755 fixBrewLionPostgresql.sh
-  mexe ./fixBrewLionPostgresql.sh
+  exe curl -o fixBrewLionPostgresql.sh http://nextmarvel.net/blog/downloads/fixBrewLionPostgres.sh
+  exe chmod 755 fixBrewLionPostgresql.sh
+  exe ./fixBrewLionPostgresql.sh
 
   ME=$(whoami)
-  mexe sudo -u $ME psql postgres -f setup_init.sql
+  exe sudo -u $ME psql postgres -f setup_init.sql
 
   # PostgreSQLサーバの起動(参考)
   #  postgres -D /usr/local/var/postgres

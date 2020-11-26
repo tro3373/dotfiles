@@ -15,7 +15,7 @@ gh_dl_url() {
 }
 
 find_font() {
-  mexe find $workdir/ -type f -name 'HackGenConsole-Regular.ttf'
+  exe find $workdir/ -type f -name 'HackGenConsole-Regular.ttf'
 }
 
 _dl_fonts() {
@@ -28,7 +28,7 @@ _install_common() {
   _dl_fonts
   local _path=$(find_font)
   local _installd=$1
-  mexe sudo cp $_path $_installd
+  exe sudo cp $_path $_installd
 }
 install_arch() {
   _install_common /usr/share/fonts
@@ -36,7 +36,7 @@ install_arch() {
 install_msys() {
   _dl_fonts
   local _path=$(find_font)
-  mexe open $_path
+  exe open $_path
 }
 install_cygwin() { not_supported; }
 install_mac() {

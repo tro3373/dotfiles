@@ -28,7 +28,7 @@ setting_arch() {
     else
       cat - | sudo tee $dst >/dev/null
     fi
-  mexe sudo chmod 775 $dst
+  exe sudo chmod 775 $dst
 }
 setting_msys() { not_supported; }
 setting_cygwin() { not_supported; }

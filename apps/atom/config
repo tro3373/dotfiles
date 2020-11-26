@@ -12,20 +12,20 @@ is_installed() {
 install_msys() {
     cd_work
     dl "$(get_dl_url_win)" dl.zip
-    mexe unzip dl.zip -d dl
-    mexe "mv \"dl/Atom x64\" \"$WINHOME/tools/$atom_dir_name\""
+    exe unzip dl.zip -d dl
+    exe "mv \"dl/Atom x64\" \"$WINHOME/tools/$atom_dir_name\""
 }
 
 install_ubuntu() {
     cd_work
     dl https://atom.io/download/deb atom.deb
-    mexe sudo dpkg -i atom.deb
+    exe sudo dpkg -i atom.deb
 }
 
 install_redhat() {
     cd_work
     dl https://atom.io/download/rpm atom.rpm
-    mexe sudo rpm -ivh atom.rpm
+    exe sudo rpm -ivh atom.rpm
 }
 
 get_dl_url_win() {

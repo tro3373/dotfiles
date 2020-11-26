@@ -5,13 +5,13 @@ readonly _tomcat_tar_prefix=apache-tomcat-8*
 readonly _tomcat_setup_d=$HOME/tools/tomcat
 install_common() {
   if [[ ! -e $_tomcat_setup_d ]]; then
-    mexe mkdir -p $_tomcat_setup_d
+    exe mkdir -p $_tomcat_setup_d
   fi
-  mexe cd $_tomcat_setup_d
-  mexe wget $_tomcat_url
-  mexe tar xvfpz $_tomcat_tar_prefix
-  mexe cd $_tomcat_tar_prefix
-  mexe chmod +x bin/*.sh
+  exe cd $_tomcat_setup_d
+  exe wget $_tomcat_url
+  exe tar xvfpz $_tomcat_tar_prefix
+  exe cd $_tomcat_tar_prefix
+  exe chmod +x bin/*.sh
 }
 # install_arch()   { not_supported; }
 install_msys() { not_supported; }

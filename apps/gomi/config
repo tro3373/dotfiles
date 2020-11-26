@@ -5,7 +5,7 @@ install_common() {
     log "golang not installed."
     return
   fi
-  mexe go get -v -u github.com/b4b4r07/gomi
+  exe go get -v -u github.com/b4b4r07/gomi
 }
 # install_arch() { not_supported; }
 # install_msys() { not_supported; }

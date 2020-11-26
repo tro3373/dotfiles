@@ -5,5 +5,5 @@ install_common() {
     log "golang not installed."
     return
   fi
-  mexe go get -v -u github.com/spf13/cobra/cobra
+  exe go get -v -u github.com/spf13/cobra/cobra
 }

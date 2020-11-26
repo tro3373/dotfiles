@@ -2,19 +2,19 @@
 
 install_common() {
   dl_untar "$(get_dl_url linux)"
-  mexe cp peco_linux_amd64/peco $HOME/bin
+  exe cp peco_linux_amd64/peco $HOME/bin
 }
 
 install_msys() {
   not_supported
   return
   # dl_unzip "$(get_dl_url windows)"
-  # mexe cp peco_windows_amd64/peco.exe $HOME/bin
+  # exe cp peco_windows_amd64/peco.exe $HOME/bin
 }
 
 install_mac() {
-  mexe sudo brew tap peco/peco
-  mexe sudo brew install peco
+  exe sudo brew tap peco/peco
+  exe sudo brew install peco
 }
 
 get_dl_url() {
@@ -29,7 +29,7 @@ get_dl_url() {
 
 setting_common() {
   if [ ! -e ${HOME}/.config/peco ]; then
-    mexe "mkdir -p \"${HOME}/.config/peco\""
+    exe "mkdir -p \"${HOME}/.config/peco\""
   fi
   make_lnk_with_bkup "$app_dir/config.json" "${HOME}/.config/peco/config.json"
 }

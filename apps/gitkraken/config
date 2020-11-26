@@ -7,7 +7,7 @@ install_arch()   { not_supported; }
 install_msys()   { not_supported; }
 install_cygwin() { not_supported; }
 install_mac()    {
-  mexe brew cask install gitkraken
+  exe brew cask install gitkraken
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }

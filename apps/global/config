@@ -1,16 +1,16 @@
 #!/bin/bash
 
 install_mac() {
-  mexe brew install global --with-exuberant-ctags --with-pygments
+  exe brew install global --with-exuberant-ctags --with-pygments
 }
 
 install_ubuntu() {
   # shellcheck disable=SC2154
-  mexe "$def_install_cmd python-pip exuberant-ctags ncurses-dev"
-  mexe sudo pip install Pygments
+  exe "$def_install_cmd python-pip exuberant-ctags ncurses-dev"
+  exe sudo pip install Pygments
   download_global_src_and_build
-  mexe cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc
-  mexe "sed -ri -e 's/^(\t:tc=native:)/\1tc=pygments:/g' ~/.globalrc"
+  exe cp -f /usr/local/share/gtags/gtags.conf ~/.globalrc
+  exe "sed -ri -e 's/^(\t:tc=native:)/\1tc=pygments:/g' ~/.globalrc"
 }
 
 get_global_src_url() {
@@ -26,15 +26,15 @@ download_global_src_and_build() {
   # shellcheck disable=SC2154
   if [[ ! -e "$workdir/global.tar.gz" ]]; then
     local dlurl=$(get_global_src_url)
-    mexe curl -sS -o global.tar.gz $dlurl
+    exe curl -sS -o global.tar.gz $dlurl
   fi
   if [[ ! -e "$workdir/global" ]]; then
-    mexe mkdir -p $workdir/global
-    mexe tar xvfpz $workdir/global.tar.gz -C $workdir/global
+    exe mkdir -p $workdir/global
+    exe tar xvfpz $workdir/global.tar.gz -C $workdir/global
   fi
-  mexe cd $workdir/global/global*
-  mexe ./configure --prefix=/usr/local
-  mexe make
-  mexe sudo make install
+  exe cd $workdir/global/global*
+  exe ./configure --prefix=/usr/local
+  exe make
+  exe sudo make install
 }
 

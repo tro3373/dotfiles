@@ -6,16 +6,16 @@ install_common() {
     echo "No anyenv exist. install it." 1>&2
     return
   fi
-  mexe anyenv install goenv
+  exe anyenv install goenv
 }
 
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 
 setting_common() {
-  mexe "echo 'add_path \${GOPATH}/bin' >> ~/.works.zsh"
+  exe "echo 'add_path \${GOPATH}/bin' >> ~/.works.zsh"
   # see https://ksoichiro.blogspot.com/2020/01/ghqpeco.html
-  mexe "echo 'export GOENV_DISABLE_GOPATH=1' >> ~/.works.zsh"
+  exe "echo 'export GOENV_DISABLE_GOPATH=1' >> ~/.works.zsh"
   rm_dotpath
 }
 setting_arch() { not_supported; }

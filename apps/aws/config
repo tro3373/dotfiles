@@ -2,10 +2,10 @@
 
 install_common() {
   dl_unzip https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-  mexe sudo ./aws/install
+  exe sudo ./aws/install
 }
 
 install_mac() {
   dl_unzip https://awscli.amazonaws.com/AWSCLIV2.pkg
-  mexe sudo installer -pkg AWSCLIV2.pkg -target /
+  exe sudo installer -pkg AWSCLIV2.pkg -target /
 }

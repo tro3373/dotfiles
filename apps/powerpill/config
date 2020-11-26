@@ -2,14 +2,14 @@
 
 install_common() { not_supported; }
 install_arch() {
-  mexe gpg --recv-keys --keyserver hkp://pgp.mit.edu 1D1F0DC78F173680
+  exe gpg --recv-keys --keyserver hkp://pgp.mit.edu 1D1F0DC78F173680
   def_install powerpill # Use powerpill instead of pacman. Bye pacman...
   ### =================powerpill SigLevel書き換え===================
   if backup /etc/pacman.conf; then
-    mexe sudo sed -i -e 's/Required DatabaseOptional/PackageRequired/' /etc/pacman.conf
+    exe sudo sed -i -e 's/Required DatabaseOptional/PackageRequired/' /etc/pacman.conf
   fi
   # パッケージ更新
-  mexe sudo powerpill -Syu --noconfirm
+  exe sudo powerpill -Syu --noconfirm
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }

@@ -5,6 +5,6 @@ install_common() {
     log "golang not installed."
     return
   fi
-  mexe go get -v -u github.com/itchyny/mmv/cmd/mmv
+  exe go get -v -u github.com/itchyny/mmv/cmd/mmv
 }
 

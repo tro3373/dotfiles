@@ -10,7 +10,7 @@ _install_common() {
   dl_unzip $url
   for f in jad jad.exe; do
     [[ ! -e $f ]] && continue
-    mexe mv -v $f $HOME/bin
+    exe mv -v $f $HOME/bin
   done
 }
 install_arch() {

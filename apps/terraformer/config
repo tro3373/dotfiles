@@ -8,12 +8,12 @@ install_arch()   {
   fi
   cd_work
   if [[ -e terraformer ]]; then
-    mexe rm -rf terraformer
+    exe rm -rf terraformer
   fi
-  mexe git clone https://github.com/GoogleCloudPlatform/terraformer.git
-  mexe cd terraformer
-  mexe GO111MODULE=on go mod vendor
-  mexe go build -v
+  exe git clone https://github.com/GoogleCloudPlatform/terraformer.git
+  exe cd terraformer
+  exe GO111MODULE=on go mod vendor
+  exe go build -v
 }
 install_msys()   { not_supported; }
 install_cygwin() { not_supported; }

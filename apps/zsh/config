@@ -4,23 +4,23 @@ install_msys() {
   install_via_os_default
   # GNU系コマンド集のインストール（gdircolors 用）
   # shellcheck disable=SC2154
-  mexe $def_install_cmd coreutils
+  exe $def_install_cmd coreutils
 }
 
 install_ubuntu() {
   install_via_os_default
   ## for .zplug
-  #mexe $def_install_cmd gawk
+  #exe $def_install_cmd gawk
 }
 
 setting_common() {
   # .works.zsh
-  [ ! -e ~/.works.zsh ] && mexe touch ~/.works.zsh && mexe chmod 755 ~/.works.zsh
+  [ ! -e ~/.works.zsh ] && exe touch ~/.works.zsh && exe chmod 755 ~/.works.zsh
 
   ## ZPlug
   #local zplug_home=~/.zplug
   #if [ ! -d $zplug_home ] && [ ! -L $zplug_home ]; then
-  #    mexe git clone --depth 1 https://github.com/zplug/zplug $zplug_home
+  #    exe git clone --depth 1 https://github.com/zplug/zplug $zplug_home
   #fi
 
   # LS_COLORS 設定
@@ -30,7 +30,7 @@ setting_common() {
   make_work_if_needed
   # shellcheck disable=SC2154
   if [ ! -e "$workdir/dircolors-solarized" ]; then
-    mexe git clone --depth 1 https://github.com/seebi/dircolors-solarized.git $workdir/dircolors-solarized
+    exe git clone --depth 1 https://github.com/seebi/dircolors-solarized.git $workdir/dircolors-solarized
   fi
   local setcolortheme
   # setcolortheme=dircolors.256dark
@@ -42,15 +42,15 @@ setting_common() {
   fi
 
   if [ ! -e "$workdir/tomorrow-theme" ]; then
-    mexe git clone --depth 1 https://github.com/chriskempson/tomorrow-theme.git $workdir/tomorrow-theme
-    mexe $workdir/tomorrow-theme/Gnome-Terminal/setup-theme.sh
+    exe git clone --depth 1 https://github.com/chriskempson/tomorrow-theme.git $workdir/tomorrow-theme
+    exe $workdir/tomorrow-theme/Gnome-Terminal/setup-theme.sh
   fi
 
   if is_mac && [ ! -e "$workdir/solarized.git" ]; then
-    mexe git clone --depth 1 https://github.com/tomislav/osx-terminal.app-colors-solarized $workdir/solarized.git
+    exe git clone --depth 1 https://github.com/tomislav/osx-terminal.app-colors-solarized $workdir/solarized.git
   fi
   if is_msys && [ ! -e "$workdir/mintty-colors-solarized" ]; then
-    mexe git clone --depth 1 https://github.com/mavnn/mintty-colors-solarized.git $workdir/mintty-colors-solarized
+    exe git clone --depth 1 https://github.com/mavnn/mintty-colors-solarized.git $workdir/mintty-colors-solarized
   fi
 
   # その他ドットファイルリンク作成
@@ -75,7 +75,7 @@ gen_zshrc_for_msys2() {
     backup_file $outfile
   fi
   for file in "$@"; do
-    mexe "cat $app_dir/$file >> $outfile"
+    exe "cat $app_dir/$file >> $outfile"
   done
-  mexe "echo '[ -f ~/.works.zsh ] && source ~/.works.zsh' >> $outfile"
+  exe "echo '[ -f ~/.works.zsh ] && source ~/.works.zsh' >> $outfile"
 }

@@ -156,8 +156,8 @@ setup_pac_mirror_list() {
   cat_pac_mirror_list |
     cat_tee -a $mirrorlistf
   # # Generate mirrorlist aut(Not work this timing?)
-  # mexe pacman -S reflector
-  # mexe reflector --verbose --country Japan -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist
+  # exe pacman -S reflector
+  # exe reflector --verbose --country Japan -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist
 }
 
 setup_pac_key() {

@@ -5,7 +5,7 @@ install_common() {
     log "No go exist. install it." 1>&2
     return
   fi
-  mexe go get github.com/gphotosuploader/gphotos-uploader-cli
+  exe go get github.com/gphotosuploader/gphotos-uploader-cli
 }
 
 cat_config() {
@@ -36,7 +36,7 @@ EOF
 
 setting_keystore() {
   # for arch
-  mexe pass init vag-gpg
+  exe pass init vag-gpg
 }
 
 setting_common() {
@@ -49,7 +49,7 @@ setting_common() {
   if [[ ! -e $_configd ]]; then
     meme mkdir -p $_configd
   fi
-  # mexe gphotos-uploader-cli init
+  # exe gphotos-uploader-cli init
   if is_dry; then
     cat_config
   else

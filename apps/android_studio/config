@@ -8,22 +8,22 @@ install_arch() { not_supported; }
 # install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() {
-  mexe open 'https://developer.android.com/studio'
+  exe open 'https://developer.android.com/studio'
 }
 install_ubuntu() {
   not_supported
 
   # # Install java
-  # mexe sudo add-apt-repository ppa:webupd8team/java
-  # mexe sudo apt-get update
-  # mexe sudo apt-get install oracle-java8-installer
+  # exe sudo add-apt-repository ppa:webupd8team/java
+  # exe sudo apt-get update
+  # exe sudo apt-get install oracle-java8-installer
   #
   # # sudo apt-get install android-tools-adb
   # exe sudo apt-get install libc6-i386 libncurses5:i386 libstdc++6:i386
   #
   # # Install android studio build libs
-  # mexe sudo apt-get install lib32stdc++6
-  # mexe sudo apt-get install lib32z1
+  # exe sudo apt-get install lib32stdc++6
+  # exe sudo apt-get install lib32z1
 }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
@@ -34,7 +34,7 @@ setting_mac() {
   if grep Android/sdk/platform-tools ~/.works.zsh >&/dev/null; then
     return
   fi
-  mexe "echo 'add_path \$HOME/Library/Android/sdk/platform-tools' >> ~/.works.zsh"
+  exe "echo 'add_path \$HOME/Library/Android/sdk/platform-tools' >> ~/.works.zsh"
 }
 setting_ubuntu() { not_supported; }
 setting_redhat() { not_supported; }
@@ -56,13 +56,13 @@ setting_redhat() { not_supported; }
 #github_user_local
 
 uninstall_mac() {
-  mexe 'rm -Rf /Applications/Android\ Studio.app'
-  mexe 'rm -Rf ~/Library/Preferences/AndroidStudio*'
-  mexe 'rm ~/Library/Preferences/com.google.android.studio.plist'
-  mexe 'rm -Rf ~/Library/Application\ Support/AndroidStudio*'
-  mexe 'rm -Rf ~/Library/Logs/AndroidStudio*'
-  mexe 'rm -Rf ~/Library/Caches/AndroidStudio*'
-  mexe 'rm -Rf ~/.gradle'
-  mexe 'rm -Rf ~/.android'
-  mexe 'rm -Rf ~/Library/Android*'
+  exe 'rm -Rf /Applications/Android\ Studio.app'
+  exe 'rm -Rf ~/Library/Preferences/AndroidStudio*'
+  exe 'rm ~/Library/Preferences/com.google.android.studio.plist'
+  exe 'rm -Rf ~/Library/Application\ Support/AndroidStudio*'
+  exe 'rm -Rf ~/Library/Logs/AndroidStudio*'
+  exe 'rm -Rf ~/Library/Caches/AndroidStudio*'
+  exe 'rm -Rf ~/.gradle'
+  exe 'rm -Rf ~/.android'
+  exe 'rm -Rf ~/Library/Android*'
 }

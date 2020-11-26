@@ -14,7 +14,7 @@ EOF
   else
     cat - |sudo tee /etc/profile.d/screenfetch.sh >&/dev/null
   fi
-  mexe sudo chmod 775 /etc/profile.d/screenfetch.sh
+  exe sudo chmod 775 /etc/profile.d/screenfetch.sh
 }
 
 install_common() {

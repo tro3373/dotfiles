@@ -5,7 +5,7 @@ install_common() {
     log "No pip installed"
     return
   fi
-  mexe sudo pip install awslogs
+  exe sudo pip install awslogs
 }
 install_msys()   { not_supported; }
 setting_common() {

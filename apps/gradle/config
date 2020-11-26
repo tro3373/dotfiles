@@ -5,9 +5,9 @@ install_common() {
   if ! has sdk; then
     cd_work
     dl $_gradle_sdk_url _setup_sdk.bash
-    mexe bash _setup_sdk.bash
+    exe bash _setup_sdk.bash
   fi
-  mexe sdk install gradle
+  exe sdk install gradle
 }
 # install_arch()   { not_supported; }
 install_msys() { not_supported; }

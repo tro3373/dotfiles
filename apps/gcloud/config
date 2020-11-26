@@ -10,7 +10,7 @@ install_mac() { not_supported; }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() {
-  mexe echo gcloud init --console-only
+  exe echo gcloud init --console-only
 }
 # setting_arch() { not_supported; }
 setting_msys() { not_supported; }

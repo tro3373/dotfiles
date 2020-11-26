@@ -3,12 +3,12 @@
 install_msys() {
   cd_work
   version=2.1.4
-  mexe wget https://osdn.jp/projects/nkf/downloads/64158/nkf-${version}.tar.gz
-  mexe tar zxvf nkf-${version}.tar.gz
-  mexe cd nkf-${version}
-  mexe make
-  mexe mkdir -p /usr/local/bin
-  mexe make install
+  exe wget https://osdn.jp/projects/nkf/downloads/64158/nkf-${version}.tar.gz
+  exe tar zxvf nkf-${version}.tar.gz
+  exe cd nkf-${version}
+  exe make
+  exe mkdir -p /usr/local/bin
+  exe make install
 }
 
 install_arch() {

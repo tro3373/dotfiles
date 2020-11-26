@@ -8,7 +8,7 @@ install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() { not_supported; }
 install_ubuntu() {
-  mexe sudo apt-get install ldap-auth-client nscd
+  exe sudo apt-get install ldap-auth-client nscd
 
   # For recreate.
   #       dpkg-reconfigure ldap-auth-config
@@ -21,9 +21,9 @@ install_ubuntu() {
   # Session:
   #         required    pam_mkhomedir.so umask=0022 skel=/etc/skel
   # EOF
-  mexe sudo pam-auth-update
-  mexe sudo auth-client-config -t nss -p lac_ldap
-  mexe sudo systemctl restart nscd.service
+  exe sudo pam-auth-update
+  exe sudo auth-client-config -t nss -p lac_ldap
+  exe sudo systemctl restart nscd.service
 }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
