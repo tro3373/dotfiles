@@ -398,34 +398,26 @@ find_trans() {
   done
 }
 
-cat_tee() {
+cat_do() {
   if is_dry; then
-    log "===> tee $*"
+    log "===> below stdin will be pass to '$*'"
     cat -
     log "------------------------------------"
   else
-    cat - | tee "$@" >/dev/null
+    cat - | "$@" >/dev/null
   fi
+}
+
+cat_tee() {
+  cat_do tee "$@"
 }
 
 sudo_tee() {
-  if is_dry; then
-    log "===> sudo tee $*"
-    cat -
-    log "------------------------------------"
-  else
-    cat - | sudo tee "$@" >/dev/null
-  fi
+  cat_do sudo tee "$@"
 }
 
 cat_bash() {
-  if is_dry; then
-    log "===> bash $*"
-    cat -
-    log "------------------------------------"
-  else
-    cat - | bash "$@" >/dev/null
-  fi
+  cat_do bash "$@" -
 }
 
 clone_dot() {

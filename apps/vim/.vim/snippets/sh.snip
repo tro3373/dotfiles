@@ -440,3 +440,20 @@ alias   secondafterarg
     rel_path=${arg1%/}
     args=("${@:2}")
   fi
+
+snippet cattee
+  cat_do() {
+    if [[ -n \$dummy ]]; then
+      log "===> below stdin will be pass to '\$*'"
+      cat -
+      log "------------------------------------"
+    else
+      log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+      printf "> Executing: \$*\n"
+      log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+      cat - | "\$@" >/dev/null
+    fi
+  }
+  cat_tee() {
+    cat_do tee "\$@"
+  }
