@@ -19,7 +19,7 @@ main() {
     echo "No such file exist! $_path" 1>&2
     exit 1
   done
-  for i in $(seq 2 2); do
+  for i in $(seq 3 4); do
     local _ip=$ip_prefix.$i
     echo "> scp sending.."
     scp "${_send_files[@]}" alarm@$_ip:
@@ -32,7 +32,7 @@ main() {
     echo "su - root"
     echo "cd /home/alarm"
     echo "> and execute below"
-    echo "./bootstrap -i $_new_ip -hst $_new_hst -e '-m -e'"
+    echo "nohup ./bootstrap -i $_new_ip -hst $_new_hst -e '-m -e' >&./bootstrap.log &"
   done
 }
 main "$@"
