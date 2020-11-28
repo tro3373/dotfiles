@@ -52,21 +52,16 @@ EOF
   exe sudo locale-gen
 }
 
-setup_packages() {
-  log "==> setupping packages .."
-  # # パッケージ更新が X用のパッケージが邪魔してできないので、先にアンインストール
-  # sudo pacman -R --noconfirm xorg-fonts-misc xorg-font-utils xorg-server xorg-server-common xorg-bdftopcf libxfont libxfont2
-
-  update_pacman_millerlist
-  refresh_pacman_keys "$@"
-  improve_pacman
-
-  # パッケージ更新
-  exe sudo pacman -Syyu --noconfirm
-}
-
 setup_additional_pacakges() {
   def_install "${_additional_arch[@]}"
+}
+
+cat_hosts() {
+  cat <<EOF
+127.0.0.1 localhost
+::1       localhost
+127.0.1.1 $_hostname.localdomain $_hostname
+EOF
 }
 
 setup_hostname() {
@@ -79,14 +74,17 @@ setup_hostname() {
   backup $target
   exe hostnamectl set-hostname $_hostname
   exe hostnamectl
-  if ! getent hosts | grep $_old_host >&/dev/null; then
-    return
+  target=/etc/hosts
+  backup $target
+  if getent hosts | grep $_old_host >&/dev/null; then
+    exe sed -i -e "s,$_old_host,$_hostname,g" /etc/hosts
+  else
+    cat_hosts | sudo_tee -a $target
   fi
-  exe sed -i -e "s,$_old_host,$_hostname,g" /etc/hosts
   exe getent hosts
 }
 
-cat_pac_mirror_list_x86x64() {
+cat_pacman_mirrorlist_x86_64() {
   cat <<'EOF'
 ###########################
 ## Japan
@@ -99,88 +97,150 @@ Server = http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
 EOF
 }
 
-update_pacman_millerlist() {
-  log "==> setupping pacman millerlist .."
-  if sudo grep "ftp.tsukuba.wide.ad.jp" /etc/pacman.d/mirrorlist >&/dev/null; then
-    return
-  fi
-  backup /etc/pacman.d/mirrorlist
-  cat_pac_mirror_list_x86x64 | sudo_tee /etc/pacman.d/mirrorlist
+cat_pacman_mirrorlist_arm() {
+  cat <<'EOF'
+###########################
+## Taiwan
+## New Taipei City
+Server = http://tw.mirror.archlinuxarm.org/$arch/$repo
+###########################
+# Default mirror
+## Geo-IP based mirror selection and load balancing
+Server = http://mirror.archlinuxarm.org/$arch/$repo
+EOF
 }
 
-refresh_pacman_keys() {
-  if [[ $1 == with_manjaro ]]; then
-    ## see https://dev.to/mattdark/signature-is-unknown-trust-arch-linux-on-vbox-3452
-    exe sudo rm -r /etc/pacman.d/gnupg
-    exe sudo pacman -Sy gnupg archlinux-keyring manjaro-keyring
-    exe sudo pacman-key --init
-    exe sudo pacman-key --populate archlinux manjaro
-    exe sudo pacman-key --refresh-keys
-    exe sudo pacman -Sc # delete all packages that not installed
+cat_pacman_mirrorlist() {
+  if is_arm; then
+    cat_pacman_mirrorlist_arm
+  else
+    cat_pacman_mirrorlist_x86_64
+  fi
+}
+
+improve_pacman_millerlist() {
+  local target=/etc/pacman.d/mirrorlist
+  local _grep_key="ftp.tsukuba.wide.ad.jp"
+  if is_arm; then
+    _grep_key="tw.mirror.archlinuxarm.org"
+  fi
+  if sudo grep -E "^Server.*$_grep_key" $target >&/dev/null; then
     return
   fi
-  ## error occur. see https://bbs.archlinux.org/viewtopic.php?id=253809
-  ## execute below in windows..
-  # bcdedit /set hypervisorlaunchtype off
+  backup $target
+  log "==> setupping pacman millerlist .."
+  cat_pacman_mirrorlist | sudo_tee $target
+}
 
-  exe sudo rm -r /etc/pacman.d/gnupg
-  exe sudo pacman-key --init
-  exe sudo pacman-key --populate archlinux
-  exe sudo pacman -Sy gnupg --noconfirm
-  exe sudo pacman -Sy archlinux-keyring --noconfirm
-  # exe sudo pacman-key --refresh-keys
-  # ==> Error(see https://bbs.archlinux.org/viewtopic.php?id=257441)
-  #     gpg: refreshing 120 keys from hkps://hkps.pool.sks-keyservers.net
-  #     gpg: keyserver refresh failed: General error
-  #     ==> ERROR: A specified local key could not be updated from a keyserver.
-  # permanently append
+setup_pac_key() {
+  exe pacman-key --init
+  local populate_key=archlinux
+  is_arm && populate_key=archlinuxarm
+  exe pacman-key --populate $populate_key
+}
+
+setup_gnupg() {
+  local _home_dirs=("$HOME" "${@}")
+  exe pacman -Sy gnupg --noconfirm
+  exe pacman -Sy archlinux-keyring --noconfirm
   local specify_keyserver=pool.sks-keyservers.net
-  local local_gpg_settings=~/.gnupg/gpg.conf
-  if [[ ! -e $local_gpg_settings ]]; then
+  for d in "${_home_dirs[@]}"; do
+    local local_gpg_settings=$d/.gnupg/gpg.conf
+    if [[ -e $local_gpg_settings ]]; then
+      continue
+    fi
     exe mkdir -p "$(dirname $local_gpg_settings)"
     exe cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
     echo "keyserver $specify_keyserver" |
-      if is_dry; then
-        cat -
-      else
-        cat - | tee -a $local_gpg_settings
-      fi
-  fi
-  exe sudo pacman-key --refresh-keys --keyserver $specify_keyserver
-  exe sudo pacman -Sc --noconfirm # delete all packages that not installed
+      cat_tee -a $local_gpg_settings
+  done
+  exe pacman-key --refresh-keys --keyserver $specify_keyserver
 }
 
-improve_pacman() {
-  log "==> improving pacman conf .."
-  if sudo grep aria2 /etc/pacman.conf >&/dev/null; then
-    return
-  fi
+# refresh_pacman_keys() {
+#   exe sudo rm -r /etc/pacman.d/gnupg
+#   setup_pac_key
+#   setup_gnupg
+# }
 
+update_and_add_pacman_packages() {
+  exe pacman -Syyu --noconfirm
+  if [[ $# -ne 0 ]]; then
+    exe pacman -S "$@" --noconfirm
+  fi
+  exe pacman -Sc --noconfirm # delete all packages that not installed
+}
+
+improve_pacman_conf() {
   backup /etc/pacman.conf
-  # fast pacman install
-  exe sudo pacman -S aria2 --noconfirm
-  local settings_aria2c='XferCommand = /usr/bin/aria2c --allow-overwrite=true --continue=true --file-allocation=none --log-level=error --max-tries=2 --max-connection-per-server=2 --max-file-not-found=5 --min-split-size=5M --no-conf --remote-time=true --summary-interval=60 --timeout=5 --dir=/ --out %o %u'
-  exe 'sudo sed -i -e "s,^\(HoldPkg.*\),\1\n'$settings_aria2c',g" /etc/pacman.conf'
-  exe 'sudo sed -i -e "s,^#Color,Color,g" /etc/pacman.conf'
+  if ! grep -E '^Color' /etc/pacman.conf >&/dev/null; then
+    log "==> improving pacman conf Color.."
+    exe 'sudo sed -i -e "s,^#Color,Color,g" /etc/pacman.conf'
+  fi
   if ! grep -E '^ILoveCandy' /etc/pacman.conf >&/dev/null; then
+    log "==> improving pacman conf use ILoveCandy.."
     exe 'sudo sed -i -e "s,^Color,Color\nILoveCandy,g" /etc/pacman.conf'
   fi
 }
 
-setup_user() {
+improve_pacman_aria2() {
+  backup /etc/pacman.conf
+  if sudo grep aria2 /etc/pacman.conf >&/dev/null; then
+    return
+  fi
+  log "==> improving pacman conf to use aria2 .."
+  # fast pacman install
+  exe sudo pacman -S aria2 --noconfirm
+  local settings_aria2c='XferCommand = /usr/bin/aria2c --allow-overwrite=true --continue=true --file-allocation=none --log-level=error --max-tries=2 --max-connection-per-server=2 --max-file-not-found=5 --min-split-size=5M --no-conf --remote-time=true --summary-interval=60 --timeout=5 --dir=/ --out %o %u'
+  exe 'sudo sed -i -e "s,^\(HoldPkg.*\),\1\n'$settings_aria2c',g" /etc/pacman.conf'
+}
+
+create_user() {
   local _user=$1
   if [[ ! -e /home/$_user ]]; then
+    log "=> Adding user $_user .."
     exe useradd -m -G wheel $_user
-    echo "=> Changing user password for $_user"
-    exe passwd $_user
   fi
-  if ! has sudo; then
-    exe pacman -S sudo --noconfirm
+  local _pass="$2"
+  [[ -z $_pass ]] && return
+  log "=> Changing user password for $_user .."
+  echo -e "$_pass\n$_pass" |
+    cat_do passwd $_user
+}
+
+del_user() {
+  local _username=$1
+  exe userdel -r $_username
+}
+
+setup_user_authorized_keys() {
+  local _user=$1
+  local _pubkey=$2
+  if [[ -f $_pubkey ]]; then
+    _pubkey=$(cat <$_pubkey)
   fi
-  # TODO auto gen
-  echo "=> Setupping visudo.. press Enter."
-  read
-  EDITOR=vim visudo
+  local _dstd=/home/$_user/.ssh
+  local _dstf=$_dstd/authorized_keys
+  if [[ -e $_dstf ]]; then
+    return
+  fi
+  if [[ ! -e $_dstd ]]; then
+    exe sudo -u $_user mkdir -p $_dstd
+  fi
+  exe chmod 700 $_dstd
+  exe "echo $_pubkey | sudo -u $_user tee $_dstf"
+  exe chmod 600 $_dstf
+}
+
+setup_sudoers() {
+  local _user=$1
+  if grep $_user /etc/sudoers >&/dev/null; then
+    return
+  fi
+  log "=> Setupping visudo.."
+  backup /etc/sudoers
+  echo "$_user ALL=(ALL) NOPASSWD: ALL" |
+    cat_do "EDITOR='tee -a' visudo"
 }
 
 setup_login_shell() {
@@ -191,6 +251,83 @@ setup_login_shell() {
     return
   fi
   exe sudo chsh $_user -s /usr/bin/zsh
+}
+
+cat_netctl_static() {
+  cat <<EOF
+Description='A basic static ethernet connection'
+Interface=eth0
+Connection=ethernet
+IP=static
+Address=('$_ip/$_mask')
+#Routes=('192.168.0.0/24 via 192.168.1.2')
+Gateway='$_gw'
+DNS=($_dnses)
+
+## For IPv6 autoconfiguration
+#IP6=stateless
+
+## For IPv6 static address configuration
+#IP6=static
+#Address6=('1234:5678:9abc:def::1/64' '1234:3456::123/96')
+#Routes6=('abcd::1234')
+#Gateway6='1234:0:123::abcd'
+EOF
+}
+
+gen_netctl_static() {
+  local _ip=$1
+  local _mask=${2:-24}
+  local _if=${3:-eth0}
+  local _gw=$4
+  local _dnses=$5
+  local target=/etc/netctl/$_if
+  if [[ -e $target ]]; then
+    return
+  fi
+  local ip_prefix=${_ip%\.*}
+  if [[ -z $_gw ]]; then
+    _gw=${ip_prefix}.1
+  fi
+  if [[ -z $_dnses ]]; then
+    _dnses="'$_gw'"
+  fi
+  backup $target
+  cat_netctl_static | cat_tee $target
+}
+
+cat_network_eth0() {
+  cat <<EOF
+[Match]
+Name=eth0
+
+[Network]
+Address=$_ip/$_mask
+Gateway=$_gw
+DNS=$_dnses
+EOF
+}
+
+gen_network_eth0() {
+  local _ip=$1
+  local _mask=${2:-24}
+  local _if=${3:-eth0}
+  local _gw=$4
+  local _dnses=$5
+  # local target=/etc/netctl/$_if
+  local target=/etc/systemd/network/$_if.network
+  if [[ -e $target ]]; then
+    return
+  fi
+  local ip_prefix=${_ip%\.*}
+  if [[ -z $_gw ]]; then
+    _gw=${ip_prefix}.1
+  fi
+  if [[ -z $_dnses ]]; then
+    _dnses="$_gw"
+  fi
+  backup $target
+  cat_network_eth0 | cat_tee $target
 }
 
 [[ $0 != "${BASH_SOURCE[0]}" ]] && return 0

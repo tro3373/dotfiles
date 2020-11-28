@@ -12,7 +12,38 @@ pre_setup() {
 
   setup_timezone
   setup_locale
-  setup_packages
+
+  improve_pacman_millerlist
+  # if [[ $1 == with_manjaro ]]; then
+  #   ## see https://dev.to/mattdark/signature-is-unknown-trust-arch-linux-on-vbox-3452
+  #   exe sudo rm -r /etc/pacman.d/gnupg
+  #   exe sudo pacman -Sy gnupg archlinux-keyring manjaro-keyring
+  #   exe sudo pacman-key --init
+  #   exe sudo pacman-key --populate archlinux manjaro
+  #   exe sudo pacman-key --refresh-keys
+  #   exe sudo pacman -Sc # delete all packages that not installed
+  #   return
+  # fi
+  ## error occur. see https://bbs.archlinux.org/viewtopic.php?id=253809
+  ## execute below in windows..
+  # bcdedit /set hypervisorlaunchtype off
+
+  # refresh_pacman_keys
+  exe sudo rm -r /etc/pacman.d/gnupg
+  setup_pac_key
+  # > Error in vagrant arch.....
+  # exe sudo pacman-key --refresh-keys
+  # ==> Error(see https://bbs.archlinux.org/viewtopic.php?id=257441)
+  #     gpg: refreshing 120 keys from hkps://hkps.pool.sks-keyservers.net
+  #     gpg: keyserver refresh failed: General error
+  #     ==> ERROR: A specified local key could not be updated from a keyserver.
+  # permanently append
+  setup_gnupg
+  improve_pacman_conf
+  improve_pacman_aria2
+
+  # パッケージ更新
+  update_and_add_pacman_packages
   setup_additional_pacakges
 }
 

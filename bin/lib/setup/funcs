@@ -1,5 +1,6 @@
 #!/bin/bash
 
+readonly bootstrapped_path=/etc/bootstrapped
 readonly _timestamp=$(date +%Y%m%d_%H%M%S)
 
 readonly _core_apps=(
@@ -25,15 +26,18 @@ _funcs_initialized=0
 add_args() { args+=("$@"); }
 is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
-log() { echo -e "$*" | ink cyan 1>&2; }
-ilog() { echo -e "$*" | ink green 1>&2; }
-dlog() { if is_debug; then log "$*"; fi; }
+_log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") ${*:2}" | ink $1 1>&2; }
+log() { _log cyan "$*"; }
+ilog() { _log green "$*"; }
+elog() { _log red "$*"; }
+dlog() { if is_debug; then _log black "$*"; fi; }
 has() { command -v ${1} >&/dev/null; }
 # TODO change func name
 isexist() { find "$*" >&/dev/null; }
 
 is_arch() { [[ $DETECT_OS == "arch" ]]; }
 is_arm() { uname -m | grep arm >&/dev/null; }
+is_x86_64() { uname -m | grep x86_64 >&/dev/null; }
 is_msys() { [[ $DETECT_OS == "msys" ]]; }
 is_cygwin() { [[ $DETECT_OS == "cygwin" ]]; }
 is_mac() { [[ $DETECT_OS == "mac" ]]; }
@@ -454,20 +458,30 @@ sudo_tee() {
 clone_dot() {
   local _user=$1
   local _dstd=$DOT_PATH
-  local _def=1
+  local _own_dot=1
+  local _setup_args=
   if [[ -n $_user && -e /home/$_user ]]; then
-    _def=0
+    _own_dot=0
     _dstd=/home/$_user/.dot
+    _setup_args="${*:2}"
+  else
+    _setup_args="${*}"
   fi
   if [[ -e $_dstd ]]; then
     return
   fi
   curl -fSsL git.io/tr3s |
-    if [[ $_def -eq 1 ]]; then
+    if [[ $_own_dot -eq 1 ]]; then
       cat - | cat_do bash -
     else
       cat - | cat_do sudo -u $_user bash -
     fi
+  [[ -z $_setup_args ]] && return
+  if [[ $_own_dot -eq 1 ]]; then
+    exe $HOME/.dot/bin/setup $_setup_args
+  else
+    exe sudo -u $_user /home/$_user/.dot/bin/setup $_setup_args
+  fi
 }
 
 default_apps() {
@@ -499,6 +513,9 @@ load_update_arg_apps() {
 not_supported() {
   log "=> Not supported"
 }
+
+is_bootstrapped() { test -e $bootstrapped_path; }
+bootstrapped() { date | cat_tee $bootstrapped_path; }
 
 has_check() {
   local _pkg="$*"

@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 
+set -e
 readonly command_name=$(basename $0)
-readonly bootstrapped_path=/etc/bootstrapped
 readonly script_dir=$(
   cd "$(dirname ${BASH_SOURCE:-$0})"
   pwd
 )
 readonly username=archuser
-readonly userpass=$script_dir/pass
-readonly userpub=$script_dir/pub
+readonly userpass_path=$script_dir/pass
+readonly userpub_path=$script_dir/pub
+# load funcs
+source $script_dir/funcs arch $username
+source $script_dir/funcs_arch
 
-dummy="echo"
-arm=0
 ip=
 host=
-args=()
 
 usage() {
   cat <<EOF
@@ -22,82 +22,38 @@ usage() {
 Bootstrap setup for  archlinux system.
 
 Usage:
-  $command_name [option] [ras]
+  $command_name [option]
 Options
   -h|--help : Show this usage
-  -a|--arm  : for arm (raspberry pi)
   -i|--ip   : specify static ip adress (optional)
   -hst|--host : specify hostname (optional)
 
 EOF
 }
 
-log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
-
-exe() {
-  [[ -z $dummy ]] && log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-  printf "> Executing: $*\n"
-  [[ -z $dummy ]] && log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-  [[ -n $dummy ]] && return
-  eval "$*"
-}
-
-cat_do() {
-  if [[ -n $dummy ]]; then
-    log "===> below stdin will be pass to '$*'"
-    cat -
-    log "------------------------------------"
-  else
-    log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    printf "> Executing: $*\n"
-    log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    cat - | eval "$@" >/dev/null
-  fi
-}
-
-cat_tee() {
-  cat_do tee "$@"
-}
-
-backup() {
-  for f in "$@"; do
-    test ! -e $f && continue
-    local dst=$f.org
-    test -e $dst && continue
-    log "===> Backupping $f to $dst"
-    exe cp -rf $f $dst
-  done
-}
-
-is_arm() { test $arm -eq 1; }
-
 check() {
-  if [[ -f $bootstrapped_path ]]; then
-    log "=> Already bootstraped. $bootstrapped_path" 1>&2
+  if is_bootstrapped; then
+    log "=> Already bootstraped." 1>&2
     exit 0
   fi
-  if [[ $UID -ne 0 ]]; then
-    log "=> Permision denied. execute as root."
-    exit 1
-  fi
-  # if [[ ! -e $userpass ]]; then
-  #   log "=> No $userpass (pass file for $username) exist."
+  root_check
+  # if [[ ! -e $userpass_path ]]; then
+  #   log "=> No $userpass_path (pass file for $username) exist."
   #   exit 1
   # fi
-  if [[ ! -e $userpub ]]; then
-    log "=> No $userpub (pub key for $username) exist."
+  if [[ ! -e $userpub_path ]]; then
+    log "=> No $userpub_path (pub key for $username) exist."
     exit 1
   fi
 }
 
-add_args() { args+=("$@"); }
 initialize() {
+  # shellcheck disable=SC2034
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
       -h | --help) usage && exit 0 ;;
-      -e) dummy= ;;
-      -a | --arm) arm=1 ;;
+      -e | --exec) dry_run=0 ;;
       -i | --ip) shift && ip=$1 ;;
       -hst | --host) shift && host=$1 ;;
       #-f*|--file*) file=${1#*=} ;;
@@ -107,249 +63,63 @@ initialize() {
     shift
   done
 
-  # is_arm && username=alarm
   check
 }
 
 finalize() {
-  date | cat_tee $bootstrapped_path
+  bootstrapped
   exe reboot
 }
 
-cat_pac_mirror_list_x86x64() {
-  cat <<'EOF'
-###########################
-## Japan
-Server = https://mirrors.cat.net/archlinux/$repo/os/$arch
-Server = http://mirrors.cat.net/archlinux/$repo/os/$arch
-Server = http://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
-Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
-Server = http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
-###########################
-EOF
-}
-
-cat_pac_mirror_list_arm() {
-  cat <<'EOF'
-###########################
-## Taiwan
-## New Taipei City
-Server = http://tw.mirror.archlinuxarm.org/$arch/$repo
-###########################
-# Default mirror
-## Geo-IP based mirror selection and load balancing
-Server = http://mirror.archlinuxarm.org/$arch/$repo
-EOF
-}
-
-cat_pac_mirror_list() {
-  if is_arm; then
-    cat_pac_mirror_list_arm
-  else
-    cat_pac_mirror_list_x86x64
-  fi
-}
-
-setup_pac_mirror_list() {
-  local mirrorlistf=/etc/pacman.d/mirrorlist
-  backup $mirrorlistf
-  cat_pac_mirror_list |
-    cat_tee -a $mirrorlistf
-  # # Generate mirrorlist aut(Not work this timing?)
-  # exe pacman -S reflector
-  # exe reflector --verbose --country Japan -l 200 -p http --sort rate --save /etc/pacman.d/mirrorlist
-}
-
-setup_pac_key() {
-  exe pacman-key --init
-  local populate_key=archlinux
-  is_arm && populate_key=archlinuxarm
-  exe pacman-key --populate $populate_key
-}
-
-setup_gnupg() {
-  exe pacman -Sy gnupg --noconfirm
-  exe pacman -Sy archlinux-keyring --noconfirm
-  local specify_keyserver=pool.sks-keyservers.net
-  local local_gpg_settings=$HOME/.gnupg/gpg.conf
-  if [[ ! -e $local_gpg_settings ]]; then
-    exe mkdir -p "$(dirname $local_gpg_settings)"
-    exe cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
-    echo "keyserver $specify_keyserver" |
-      cat_tee -a $local_gpg_settings
-  fi
-  exe pacman-key --refresh-keys --keyserver $specify_keyserver
-}
-
-setup_packages() {
-  exe pacman -Syyu --noconfirm
-  exe pacman -S base base-devel git curl sudo vim wget grep sed which unzip gzip openssh --noconfirm
-  exe pacman -Sc --noconfirm # delete all packages that not installed
-}
-
 setup_pacman() {
-  setup_pac_mirror_list
+  improve_pacman_millerlist
+  improve_pacman_conf
   setup_pac_key
   setup_gnupg
-  setup_packages
+  improve_pacman_aria2
+  update_and_add_pacman_packages base base-devel git curl sudo vim wget grep sed which unzip gzip openssh zsh
 }
 
-create_user() {
-  if [[ ! -e /home/$username ]]; then
-    log "=> Adding user $username .."
-    exe useradd -m -G wheel $username
+_create_user() {
+  local _pass=
+  if [[ ! -e $userpass_path ]]; then
+    _pass=$(cat <$userpass_path | head -1)
   fi
-  [[ ! -e $userpass ]] && return
-  local _pass=$(cat <$userpass | head -1)
-  [[ -z $_pass ]] && return
-  log "=> Changing user password for $username .."
-  echo -e "$_pass\n$_pass" |
-    cat_do passwd $username
+  create_user $username $_pass
 }
-
-setup_sudoers() {
-  if grep $username /etc/sudoers >&/dev/null; then
-    return
-  fi
-  log "=> Setupping visudo.."
-  backup /etc/sudoers
-  echo "$username ALL=(ALL) NOPASSWD: ALL" |
-    cat_do "EDITOR='tee -a' visudo"
-}
-
-setup_pub() {
-  local dstd=/home/$username/.ssh
-  local dstf=$dstd/authorized_keys
-  if [[ -e $dstf ]]; then
-    return
-  fi
-  if [[ ! -e $dstd ]]; then
-    exe sudo -u $username mkdir -p $dstd
-  fi
-  exe chmod 700 $dstd
-  exe "cat <$userpub | sudo -u $username tee $dstf"
-  exe chmod 600 $dstf
-}
-
-setup_dot() {
-  if [[ -e /home/$username/.dot ]]; then
-    return
-  fi
-  log "=> Cloning to dotfiles to /home/$username/.dot .."
-  curl -fSsL git.io/tr3s |
-    cat_do sudo -u $username bash -
-}
-
-# del_user() {
-#   local _username=$1
-#   exe userdel -r $_username
-# }
 
 setup_user() {
-  create_user
-  setup_sudoers
-  setup_pub
-  setup_dot
+  _create_user
+  setup_gnupg /home/$username
+  setup_sudoers $username
+  setup_login_shell $username
+  setup_user_authorized_keys $username $userpub_path
+  # shellcheck disable=SC2154
+  clone_dot $username "${args[@]}"
+
   # if is_arm; then
   #   del_user alarm
   # fi
 }
 
-# cat_netctl_eth0() {
-#   cat <<EOF
-# Description='A basic static ethernet connection'
-# Interface=eth0
-# Connection=ethernet
-# IP=static
-# Address=('$ip/$sub')
-# #Routes=('192.168.0.0/24 via 192.168.1.2')
-# Gateway='$gw'
-# DNS=('$dns')
-#
-# ## For IPv6 autoconfiguration
-# #IP6=stateless
-#
-# ## For IPv6 static address configuration
-# #IP6=static
-# #Address6=('1234:5678:9abc:def::1/64' '1234:3456::123/96')
-# #Routes6=('abcd::1234')
-# #Gateway6='1234:0:123::abcd'
-# EOF
-# }
-#
-# gen_netctl_eth0() {
-#   local target=/etc/netctl/eth0
-#   if [[ -e $target ]]; then
-#     return
-#   fi
-#   local sub=24
-#   local ip_prefix=${ip%\.*}
-#   local gw=${ip_prefix}.1
-#   local dns=$gw
-#   cat_netctl_eth0 | cat_tee $target
-# }
-
-cat_network_eth0() {
-  cat <<EOF
-[Match]
-Name=eth0
-
-[Network]
-Address=$ip/$sub
-Gateway=$gw
-DNS=$dns
-EOF
-}
-
-gen_network_eth0() {
-  local target=/etc/systemd/network/eth0.network
-  local sub=24
-  local ip_prefix=${ip%\.*}
-  local gw=${ip_prefix}.1
-  local dns=$gw
-  if grep $ip $target >&/dev/null; then
-    return
-  fi
-  backup $target
-  cat_network_eth0 | cat_tee $target
-}
-
-setup_network() {
-  # gen_netctl_eth0
-  # exe netctl enable eth0
-  gen_network_eth0
-}
-
-setup_hostname() {
-  local target=/etc/hostname
-  if grep $host $target >&/dev/null; then
-    return
-  fi
-  local _old_host=$(cat </etc/hostname | head -1)
-  backup $target
-  exe hostnamectl set-hostname $host
-  exe hostnamectl
-  if ! getent hosts | grep $_old_host >&/dev/null; then
-    return
-  fi
-  exe sed -i -e "s,$_old_host,$host,g" /etc/hosts
-  exe getent hosts
+sudo() {
+  local _sudo=$(type -f -p sudo)
+  $_sudo "$@"
 }
 
 main() {
-  set -e
   initialize "$@"
-  # alias sudo=''
   setup_pacman
-  # unalias sudo
+  setup_timezone
+  setup_locale
   setup_user
-  if [[ -n $ip ]]; then
-    setup_network
-  fi
   if [[ -n $host ]]; then
-    setup_hostname
+    setup_hostname $host
+  fi
+  if [[ -n $ip ]]; then
+    gen_network_eth0 $ip
   fi
   finalize
-  [[ -n $dummy ]] && log "\n>>> This is dummy mode. specify -e option."
+  show_dummy_warn_if_needed
 }
 main "$@"

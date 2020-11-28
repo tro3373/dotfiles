@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+readonly ip_prefix=192.168.13
+readonly script_dir=$(
+  cd "$(dirname ${BASH_SOURCE:-$0})"
+  pwd
+)
+readonly _send_files=(
+  "$script_dir/../bootstrap"
+  "$script_dir/../../../setup/funcs"
+  "$script_dir/../../../setup/funcs_arch"
+  "$script_dir/pub"
+  "$script_dir/pass"
+)
+
+main() {
+  for _path in "${_send_files[@]}"; do
+    [[ -e $_path ]] && continue
+    echo "No such file exist! $_path" 1>&2
+    exit 1
+  done
+  for i in $(seq 2 2); do
+    local _ip=$ip_prefix.$i
+    echo "> scp sending.."
+    scp "${_send_files[@]}" alarm@$_ip:
+    local id=$((i + 2))
+    local _new_ip=$ip_prefix.$id
+    local _new_hst=alarmpi$id
+    echo "> bootstrap command is.."
+    # echo "ssh alarm@$_ip sudo ./bootstrap -i $_new_ip -hst $_new_hst -e '-m -e'"
+    echo "ssh alarm@$_ip"
+    echo "su - root"
+    echo "cd /home/alarm"
+    echo "> and execute below"
+    echo "./bootstrap -i $_new_ip -hst $_new_hst -e '-m -e'"
+  done
+}
+main "$@"
