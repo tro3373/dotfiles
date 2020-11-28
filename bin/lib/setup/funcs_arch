@@ -316,7 +316,7 @@ gen_network_eth0() {
   local _dnses=$5
   # local target=/etc/netctl/$_if
   local target=/etc/systemd/network/$_if.network
-  if [[ -e $target ]]; then
+  if [[ -e $target ]] && grep $_ip $target >&/dev/null; then
     return
   fi
   local ip_prefix=${_ip%\.*}
