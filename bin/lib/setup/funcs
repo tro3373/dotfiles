@@ -30,7 +30,7 @@ _log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") ${*:2}" | ink $1 1>&2; }
 log() { _log cyan "$*"; }
 ilog() { _log green "$*"; }
 elog() { _log red "$*"; }
-dlog() { if is_debug; then _log black "$*"; fi; }
+dlog() { if is_debug; then _log yellow "$*"; fi; }
 has() { command -v ${1} >&/dev/null; }
 # TODO change func name
 isexist() { find "$*" >&/dev/null; }
