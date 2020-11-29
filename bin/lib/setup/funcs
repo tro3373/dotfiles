@@ -467,15 +467,14 @@ clone_dot() {
   else
     _setup_args="${*}"
   fi
-  if [[ -e $_dstd ]]; then
-    return
+  if [[ ! -e $_dstd ]]; then
+    curl -fSsL git.io/tr3s |
+      if [[ $_own_dot -eq 1 ]]; then
+        cat - | cat_do bash -
+      else
+        cat - | cat_do sudo -u $_user bash -
+      fi
   fi
-  curl -fSsL git.io/tr3s |
-    if [[ $_own_dot -eq 1 ]]; then
-      cat - | cat_do bash -
-    else
-      cat - | cat_do sudo -u $_user bash -
-    fi
   [[ -z $_setup_args ]] && return
   if [[ $_own_dot -eq 1 ]]; then
     exe $HOME/.dot/bin/setup $_setup_args
