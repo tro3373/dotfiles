@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
+readonly command_name=$(basename $0)
 readonly url_ras3=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
 readonly url_ras4=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
 readonly script_dir=$(
   cd "$(dirname ${BASH_SOURCE:-$0})"
   pwd
 )
-export PATH=$script_dir/../../:$PATH
-source $script_dir/../../setup/funcs
+export PATH=$script_dir/../../../../:$PATH
+source $script_dir/../../../setup/funcs
 
 mkfs_ext4=mkfs.ext4
 mkfs_vfat=mkfs.vfat
@@ -15,6 +16,16 @@ mkfs_vfat=mkfs.vfat
 usage() {
   cat <<EOF
 Create archlinux sd image command for raspberry pi 3 or 4.
+
+Usage:
+  $command_name <device_id> [<pi_version>] [option]
+Options
+  using funcs initialize_args
+    -h|--help : Show this usage
+    -d,-e,..
+  device_id: ex) /dev/sde or /dev/sdb ...
+  pi_version: specify 3 if you create pi 3. default is pi 4.
+
 EOF
 }
 
@@ -56,7 +67,9 @@ check_target_device_partitions() {
 
 fdisk_usage() {
   cat <<'EOF'
-# -------- execute below..
+
+#############################################################################################
+# >>>>>>>>>>>> execute below..
 # At the fdisk prompt, delete old partitions and create a new one:
 - Type o. This will clear out any partitions on the drive.
 - Type p to list partitions. There should be no partitions left.
@@ -64,6 +77,7 @@ fdisk_usage() {
 - Type t, then c to set the first partition to type W95 FAT32 (LBA).
 - Type n, then p for primary, 2 for the second partition on the drive, and then press ENTER twice to accept the default first and last sector.
 - Write the partition table and exit by typing w.
+#############################################################################################
 EOF
 }
 
@@ -99,7 +113,7 @@ main() {
     # MacOS cannot see ext partitions...
     # exe diskutil partitionDisk ${target_device_id} 2 MBRFormat MS-DOS "boot" 200M JournaledHFS+ "root"
   else
-    exe fdisk -l
+    # exe fdisk -l
     fdisk_usage | ink yellow
     exe fdisk ${target_device_id}
   fi
