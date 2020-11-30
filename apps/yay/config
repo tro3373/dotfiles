@@ -4,10 +4,12 @@ install_common() { not_supported; }
 install_arch() {
   cd_work
   if [[ -e yay ]]; then
-    exe rm -rf yay
+    exe cd yay
+    exe git pull
+  else
+    exe git clone https://aur.archlinux.org/yay.git
+    exe cd yay
   fi
-  exe git clone https://aur.archlinux.org/yay.git
-  exe cd yay
   exe makepkg -si --noconfirm
 }
 install_msys() { not_supported; }
