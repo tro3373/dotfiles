@@ -80,16 +80,16 @@ setup_pacman() {
   update_and_add_pacman_packages base base-devel git curl sudo vim wget grep sed which unzip gzip openssh zsh
 }
 
-_create_user() {
-  local _pass=
+cat_userpass() {
   if [[ ! -e $userpass_path ]]; then
-    _pass=$(cat <$userpass_path | head -1)
+    return
   fi
-  create_user $username $_pass
+  cat <$userpass_path | head -1
 }
 
 setup_user() {
-  _create_user
+  local _pass=$(cat_userpass)
+  create_user $username "$_pass"
   setup_gnupg /home/$username
   setup_sudoers $username
   setup_login_shell $username
@@ -97,6 +97,9 @@ setup_user() {
   # shellcheck disable=SC2154
   clone_dot $username "${args[@]}"
 
+  if [[ -n $_pass ]]; then
+    change_passwd root "$_pass"
+  fi
   # if is_arm; then
   #   del_user alarm
   # fi

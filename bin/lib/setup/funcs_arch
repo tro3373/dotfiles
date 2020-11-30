@@ -214,6 +214,13 @@ create_user() {
   fi
   local _pass="$2"
   [[ -z $_pass ]] && return
+  change_passwd "$_user" "$_pass"
+}
+
+change_passwd() {
+  local _user=$1
+  local _pass="$2"
+  [[ -z $_pass ]] && elog "==> invalid args. cannot set password for user $_user" && return
   log "=> Changing user password for $_user .."
   echo -e "$_pass\n$_pass" |
     cat_do passwd $_user
