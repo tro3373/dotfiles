@@ -21,12 +21,12 @@ main() {
   done
   for i in $(seq 2 5); do
     local _ip=$ip_prefix.$i
-    echo "> scp sending.."
+    echo "> For $_ip.."
     scp "${_send_files[@]}" alarm@$_ip:
     local id=$((i + 1))
     local _new_ip=$ip_prefix.$id
     local _new_hst=alarmpi$id
-    echo "su - root -c 'cd /home/alarm && nohup ./bootstrap -i $_new_ip -hst $_new_hst -e '-m -e' >&./bootstrap.log &'" |
+    echo "su - root -c \"cd /home/alarm && nohup ./bootstrap -i $_new_ip -hst $_new_hst -e '-m -e' >&./bootstrap.log &\"" |
       ssh alarm@$_ip 'cat - > start.sh && chmod 775 start.sh'
     ssh alarm@$_ip ./start.sh
   done
