@@ -78,20 +78,24 @@ ink() {
 
   printf "${open}${color}${text}${close}\n" 1>&2
 }
-usage() {
+_usage() {
+  if type -t usage; then
+    usage
+    return
+  fi
   # shellcheck disable=SC2154
   if [[ -n $command_name ]]; then
     echo "$command_name command"
     return
   fi
-  echo "This is funcs usage. overwrite usage method."
+  echo "This is funcs usage. define usage method."
 }
 
 initialize_args() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
-      -h | --help) usage && exit 0 ;;
+      -h | --help) _usage && exit 0 ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
       -e | --exec) dry_run=0 ;;
