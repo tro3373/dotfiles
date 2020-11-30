@@ -28,6 +28,27 @@ setup_timezone() {
   exe sudo timedatectl set-timezone $val # タイムゾーン設定
 }
 
+cat_locale_conf() {
+  # LC_NUMERIC=en_US.UTF8
+  # LC_MONETARY=en_US.UTF8
+  # LC_PAPER=en_US.UTF8
+  # LC_MEASUREMENT=en_US.UTF8
+  cat <<'EOF'
+LANG=en_US.UTF8
+LANGUAGE=en_US.UTF8
+LC_TIME=en_DK.UTF8
+LC_COLLATE=C
+EOF
+}
+
+cat_locale_gen() {
+  cat <<'EOF'
+ja_JP.UTF-8 UTF-8
+en_US.UTF-8 UTF-8
+en_DK.UTF-8 UTF-8
+EOF
+}
+
 setup_locale() {
   log "==> setupping locale .."
   if sudo grep "en_US.UTF-8 UTF-8" /etc/locale.gen >&/dev/null && sudo grep "LANG=en_US.UTF8" /etc/locale.conf >&/dev/null; then
@@ -36,19 +57,9 @@ setup_locale() {
   backup /etc/locale.gen
   backup /etc/locale.conf
 
-  cat <<'EOF' | sudo_tee /etc/locale.conf
-LANG=en_US.UTF8
-LC_NUMERIC=en_US.UTF8
-LC_TIME=en_US.UTF8
-LC_MONETARY=en_US.UTF8
-LC_PAPER=en_US.UTF8
-LC_MEASUREMENT=en_US.UTF8
-EOF
+  cat_locale_conf | sudo_tee /etc/locale.conf
+  cat_locale_gen | sudo_tee /etc/locale.gen
 
-  cat <<'EOF' | sudo_tee /etc/locale.gen
-en_US.UTF-8 UTF-8
-ja_JP.UTF-8 UTF-8
-EOF
   exe sudo locale-gen
 }
 
