@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+main() {
+  local query="$*"
+  if [[ -n $query ]]; then
+    query="-q $query"
+  fi
+  local files=$(
+    git status -s |
+      fzf -m $query --preview 'head -100 {}' -0 -1 |
+      awk '{print $2}' |
+      sed -e 's,\\\n, ,g'
+  )
+  vim -p $files
+}
+main "$@"

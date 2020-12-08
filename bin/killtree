@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+_killtree() {
+  local _pid=$1
+  local children=$(ps --ppid $_pid --no-heading | awk '{ print $1 }')
+  for child in $children; do
+    _killtree $child
+  done
+  echo "==> killing $_pid"
+  kill $_pid
+}
+main() {
+  if [[ $# -eq 0 ]]; then
+    echo "Specify parent process id" 1>&2
+    exit 1
+  fi
+  for pid in "$@"; do
+    _killtree $pid
+  done
+  echo "done."
+}
+main "$@"
