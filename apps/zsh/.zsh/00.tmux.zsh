@@ -2,7 +2,6 @@
 # tmux start settings
 #
 
-has() { command -v \${1} >&/dev/null; }
 add_usr_local_bin_path() { if ! has tmux; then export PATH=/usr/local/bin:$PATH; fi; }
 is_exists() {
   type "$1" >/dev/null 2>&1
@@ -55,13 +54,13 @@ tmux_automatically_attach_session() {
     tmux list-sessions
     echo -n "Tmux: attach? (y/N/num) "
     read
-    if [[ "$REPLY" =~ ^[Yy]$ ]] || [[ "$REPLY" == '' ]]; then
+    if [[ $REPLY =~ ^[Yy]$ ]] || [[ $REPLY == '' ]]; then
       tmux attach-session
       if [ $? -eq 0 ]; then
         echo "$(tmux -V) attached session"
         return 0
       fi
-    elif [[ "$REPLY" =~ ^[0-9]+$ ]]; then
+    elif [[ $REPLY =~ ^[0-9]+$ ]]; then
       tmux attach -t "$REPLY"
       if [ $? -eq 0 ]; then
         echo "$(tmux -V) attached session"

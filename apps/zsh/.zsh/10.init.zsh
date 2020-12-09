@@ -5,8 +5,6 @@ export GENMANPATHF=$HOME/.manpath
 export WORKPATHF=$HOME/.work.path
 [ ${OSTYPE} = "msys" ] && export WINHOME=/c/Users/$(whoami)
 
-has() { which ${1} >&/dev/null; }
-
 zcompile_ifneeded() {
   if [[ ! -e $1.zwc || $1 -nt $1.zwc ]]; then
     echo "==> zcompiling $1 .."

@@ -1,14 +1,15 @@
 ###############################################################################
 ##          _
-##  _______| |__  _ __ ___ 
+##  _______| |__  _ __ ___
 ## |_  / __| '_ \| '__/ __|
-##  / /\__ \ | | | | | (__ 
+##  / /\__ \ | | | | | (__
 ## /___|___/_| |_|_|  \___|
 ##
 ###############################################################################
 ## 高速化
 # https://qiita.com/vintersnow/items/c29086790222608b28cf
 #
+has() { command -v ${1} >&/dev/null; }
 #===========================================
 # zprof debug
 #===========================================
@@ -19,34 +20,30 @@ ZPOFDEBUG=0
 # debug zsh load
 #===========================================
 LOADDEBUG=0
-function now_msec() {
-    echo "$(date +%s)$(printf "%03d" $(($(date +%N)/1000000)))"
+now_msec() {
+  echo "$(date +%s)$(printf "%03d" $(($(date +%N) / 1000000)))"
 }
-function debug_load() {
-    [[ $LOADDEBUG -ne 1 ]] && return
-    [[ -z $LOADST ]] && return
-    local t=$(($(now_msec)-LOADST))
-    echo "==> $(printf "%05d" $t) msec $1"
+debug_load() {
+  [[ $LOADDEBUG -ne 1 ]] && return
+  [[ -z $LOADST ]] && return
+  local t=$(($(now_msec) - LOADST))
+  echo "==> $(printf "%05d" $t) msec $1"
 }
 if [[ $LOADDEBUG -eq 1 ]]; then
-    export LOADST=$(now_msec)
-    debug_load ".zshrc load start"
+  export LOADST=$(now_msec)
+  debug_load ".zshrc load start"
 fi
 
 export TERM=xterm-256color
 if [ -d ~/.zsh ]; then
-    debug_load ".zsh/ load start"
-    for z in $(ls ~/.zsh/??\.*\.zsh); do
-        debug_load "$z load start"
-        source $z
-    done
-    load_zsh ~/.fzf.zsh
-    debug_load ".zsh/ load end"
+  debug_load ".zsh/ load start"
+  for z in $(find ~/.zsh/??\.*\.zsh -type f); do
+    debug_load "$z load start"
+    source $z
+  done
+  load_zsh ~/.fzf.zsh
+  debug_load ".zsh/ load end"
 fi
 
-if [[ $ZPOFDEBUG -eq 1 ]]; then
-    if (which zprof > /dev/null) ;then
-        zprof | less
-    fi
-fi
+[[ $ZPOFDEBUG -eq 1 ]] && zprof | less
 debug_load "done"
