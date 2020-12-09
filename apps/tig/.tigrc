@@ -14,6 +14,7 @@ set split-view-height = 80%
 # ====================================
 # Diff Settings
 # ====================================
+# TODO: Not worked option: --color-moved=dimmed_zebra
 # Mergeコミットの場合、merge diffを見れるようにする
 set diff-options = -m --first-parent
 # インデント、空白のみの変更を無視
