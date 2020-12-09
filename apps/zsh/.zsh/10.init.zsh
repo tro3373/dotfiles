@@ -21,6 +21,7 @@ load_zsh() {
 source_pkg() {
   local url=$1
   local with_source=$2
+  local source_path=$3
   local nm=${url##*/}
   nm=${nm%%.git}
   local dst=~/.zsh/plugins/$nm
@@ -31,16 +32,23 @@ source_pkg() {
     echo "==> zcompiling $nm .."
     find $dst/ -name "*.zsh" | while read -r line; do zcompile $line; done
   fi
-  local src=$dst/$nm.zsh
-  if [[ $with_source -eq 1 && -e $src ]]; then
-    source $src
-  fi
+  [[ $with_source -ne 1 ]] && return
+  local src=$dst/${source_path:-$nm.zsh}
+  [[ ! -e $src ]] && return
+  source $src
 }
 
 source_pkgs() {
   source_pkg https://github.com/zsh-users/zsh-completions.git
   source_pkg https://github.com/zsh-users/zsh-history-substring-search.git 1
   source_pkg https://github.com/zsh-users/zsh-syntax-highlighting.git 1
+  source_pkg https://github.com/zsh-users/zsh-autosuggestions.git 1
+  # zsh-autosuggestions settings
+  # https://github.com/zsh-users/zsh-autosuggestions
+  export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=236'
+  export ZSH_AUTOSUGGEST_USE_ASYNC=1
+  # bindkey '^ ' autosuggest-accept # ctrl + space
+  # source_pkg https://github.com/olivierverdier/zsh-git-prompt.git 1 zshrc.sh
 }
 # function is_exist_path() {
 #     echo "$PATH:" |grep "$@:" >& /dev/null
