@@ -2,51 +2,51 @@
 # Alias
 ##############################################
 case "${OSTYPE}" in
-darwin*)
-  #alias ls="ls -G -w"
-  alias ls='gls -F --color=auto'
-  alias xcode='open -a Xcode' # コマンドラインからXcode起動
-  # alias gvim='open -a MacVim'         # コマンドラインからMacVim起動
-  ;;
-linux*)
-  alias ls='ls -F --color=auto'
-  alias pbcopy='xsel --clipboard --input'       # Mac OS-Xのpbcopyの代わり
-  alias pbpaste='xsel --clipboard --output'     # Mac OS-Xのpbpasteの代わり
-  alias tmux-copy='tmux save-buffer - | pbcopy' # tmuxのコピーバッファとクリップボードを連携
-  alias tmux='tmux -2'                          # Ubuntu12.04で256を使用するため
-  alias git='nocorrect git'                     # Ubuntuで_gitと誤解されるため
-  if [[ -e /etc/arch-release ]]; then
-    if has yay; then
-      alias y=yay
-    elif has yaourt; then
-      alias y=yaourt
+  darwin*)
+    #alias ls="ls -G -w"
+    alias ls='gls -F --color=auto'
+    alias xcode='open -a Xcode' # コマンドラインからXcode起動
+    # alias gvim='open -a MacVim'         # コマンドラインからMacVim起動
+    ;;
+  linux*)
+    alias ls='ls -F --color=auto'
+    alias pbcopy='xsel --clipboard --input'       # Mac OS-Xのpbcopyの代わり
+    alias pbpaste='xsel --clipboard --output'     # Mac OS-Xのpbpasteの代わり
+    alias tmux-copy='tmux save-buffer - | pbcopy' # tmuxのコピーバッファとクリップボードを連携
+    alias tmux='tmux -2'                          # Ubuntu12.04で256を使用するため
+    alias git='nocorrect git'                     # Ubuntuで_gitと誤解されるため
+    if [[ -e /etc/arch-release ]]; then
+      if has yay; then
+        alias y=yay
+      elif has yaourt; then
+        alias y=yaourt
+      fi
+      if has powerpill; then
+        alias p='sudo powerpill'
+      else
+        alias p='sudo pacman'
+      fi
     fi
-    if has powerpill; then
-      alias p='sudo powerpill'
-    else
-      alias p='sudo pacman'
-    fi
-  fi
-  ;;
-freebsd*)
-  alias ls="ls -G -w"
-  ;;
-cygwin*)
-  alias ls='ls -F --color=auto'
-  alias apt-get='apt-cyg'         # apt-get emulate
-  alias tmux='tmux -2'            # 256Color有効化
-  alias sudo='echo "No sudo...";' # sudo がないので、エイリアスで逃げる
-  ;;
-msys*)
-  alias ls='ls -F --color=auto'
-  alias pbcopy='cat - >/dev/clipboard'
-  alias pbpaste='cat /dev/clipboard'
-  alias tmux='tmux -2'            # 256Color有効化
-  alias sudo='echo "No sudo...";' # sudo がないので、エイリアスで逃げる
-  alias nvim=$(which vim)
-  alias vim=gvim
-  alias git="PATH=/usr/bin winpty git"
-  ;;
+    ;;
+  freebsd*)
+    alias ls="ls -G -w"
+    ;;
+  cygwin*)
+    alias ls='ls -F --color=auto'
+    alias apt-get='apt-cyg'         # apt-get emulate
+    alias tmux='tmux -2'            # 256Color有効化
+    alias sudo='echo "No sudo...";' # sudo がないので、エイリアスで逃げる
+    ;;
+  msys*)
+    alias ls='ls -F --color=auto'
+    alias pbcopy='cat - >/dev/clipboard'
+    alias pbpaste='cat /dev/clipboard'
+    alias tmux='tmux -2'            # 256Color有効化
+    alias sudo='echo "No sudo...";' # sudo がないので、エイリアスで逃げる
+    alias nvim=$(which vim)
+    alias vim=gvim
+    alias git="PATH=/usr/bin winpty git"
+    ;;
 esac
 
 if has exa; then
@@ -76,6 +76,7 @@ alias gs="git status"
 alias vi=vim
 alias f="find -name"
 alias j="jobs -l"
+alias g="git"
 alias cddot="cd $DOTPATH"
 alias history="history -i"
 
