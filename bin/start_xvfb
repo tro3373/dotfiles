@@ -4,7 +4,6 @@ has() { command -v ${1} >&/dev/null; }
 is_executable() { has Xvfb && has VBoxClient; }
 main() {
   ! is_executable && return
-  export DISPLAY=:0
   if [[ ! -f /tmp/.X0-lock ]]; then
     echo "==> Starting Xvfb .."
     # Xvfb -screen 0 320x240x8 >& /dev/null &
