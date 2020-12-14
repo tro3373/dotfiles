@@ -20,5 +20,5 @@ function! MyFZFQ(q) abort
   " exe(":FZF " . l:d)
   :call fzf#vim#files(l:d, {'options': ['--query=' . a:q, '--layout=reverse', '--info=inline', '--preview', 'cat {}']})
 endfunction
-nnoremap <Leader>l <ESC>:call MyFZFQ('')<ENTER>
-nnoremap <Leader>k <ESC>:call MyFZFQ(expand('<cword>'))<ENTER>
+nnoremap <Leader>k <ESC>:call MyFZFQ('')<ENTER>
+nnoremap <Leader>l <ESC>:call MyFZFQ(expand('<cword>'))<ENTER>
