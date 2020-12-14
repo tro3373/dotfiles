@@ -2,12 +2,13 @@ CONTAINERNAME=mysql
 # VERSION=1.0.0
 # DOCKER_RUN_OPTIONS=
 
+all_container=$$(docker ps -a -q)
+active_container=$$(docker ps -q)
+images=$$(docker images | awk '/^<none>/ { print $$3 }')
 local_ip=$$(ip route |awk 'END {print $$NF}')
 
-all_container=`docker ps -a -q`
-active_container=`docker ps -q`
-images=`docker images | awk '/^<none>/ { print $$3 }'`
-
+#.PHONY: all test clean
+#default: build
 .DEFAULT_GOAL := up
 
 restart: stop start
