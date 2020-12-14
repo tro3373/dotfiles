@@ -64,18 +64,18 @@ get_latest_version() {
 }
 
 install_via_curl() {
-  if [[ -e /usr/local/bin/$command_name ]]; then
-    log "===> Command already exist /usr/local/bin/$command_name"
+  local m=$1
+  local _command_name="docker-$m"
+  if [[ -e /usr/local/bin/$_command_name ]]; then
+    log "===> Command already exist /usr/local/bin/$_command_name"
     return
   fi
-  local m=$1
   local v="$(get_latest_version $m)"
   local url="https://github.com/docker/$m/releases/download/$v/docker-$m-$(uname -s)-$(uname -m)"
-  local command_name="docker-$m"
-  log "===> Installing... $command_name"
-  exe "sudo curl -L $url -o /tmp/$command_name"
-  exe sudo install /tmp/$command_name /usr/local/bin/$command_name
-  exe $command_name --version
+  log "===> Installing... $_command_name"
+  exe "sudo curl -L $url -o /tmp/$_command_name"
+  exe sudo install /tmp/$_command_name /usr/local/bin/$_command_name
+  exe $_command_name --version
 }
 
 install_common() { not_supported; }
