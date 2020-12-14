@@ -18,7 +18,7 @@ import openpyxl
 
 def get_start_row(sheet):
     for i in range(1, 10):
-        value = sheet.cell(row=i, column=2).value
+        value = sheet.cell(row=i, column=1).value
         if (value == "No"):
             return (i + 1)
     return 5
@@ -28,27 +28,31 @@ def for_sheet(wb, sheetname):
     # print(f"===> SHEET:{sheetname}")
     sheet = wb[sheetname]
     start_row = get_start_row(sheet)
-    table_name_jp = sheet.cell(row=1, column=6).value
-    table_name = sheet.cell(row=1, column=18).value
+    table_name_jp = sheet.cell(row=2, column=23).value
+    table_name = sheet.cell(row=1, column=23).value
     # print(sheet['A1'].value)
     # print(start_row)
     row = start_row
     row_max = 1000
     while True:
         row_values = ""
-        for col in range(1, 23):
+        for col in range(1, 32):
             # print(row)
             # print(col)
-            if (col not in [3, 11, 15, 19, 21, 23]):
+            if (col not in [1, 3, 11, 19, 23, 25, 27, 30, 32]):
                 continue
             value = sheet.cell(row=row, column=col).value
-            # print(f"{row} {col} {value}")
+            # print(f"row:{row} col:{col} val:{value}")
             # if (col == 1):
             #     if not value:
             #         return
             #     continue
-            if not value:
+            if value == None:
+                if col == 1:
+                    return
                 value = ""
+                # continue
+            value = f"{value}"
             value = re.sub("\n", "", value)
             value = re.sub("”", "\"", value)
             # if (value == "特になし" or value == "。"):
@@ -64,7 +68,8 @@ def for_sheet(wb, sheetname):
             # print("--------------------")
             return
 
-
+# def for_row():
+#
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("path", help="Specify xlsx file path", type=str)
@@ -75,15 +80,18 @@ def main():
 
     # file_path = get_xls()
     # wb = openpyxl.load_workbook(file_path)
-    wb = openpyxl.load_workbook(args.path)
+    wb = openpyxl.load_workbook(args.path, data_only=True)
     no = 0
     for sheetname in wb.sheetnames:
         if args.list:
             print(sheetname)
             continue
         no += 1
-        if (no == 1):
-            continue
+        if not re.match('^[tm]_.+', sheetname) or re.match('.*_データ$', sheetname):
+          continue
+        # print(f"{no}:{sheetname}")
+        # if (no == 1):
+        #     continue
         for_sheet(wb, sheetname)
         # break
 
