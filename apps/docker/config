@@ -7,11 +7,11 @@ uninstall() {
 }
 
 is_exist_docker_group() {
-  cat < /etc/group |grep docker >& /dev/null
+  cat </etc/group | grep docker >&/dev/null
 }
 
 is_in_docker_group() {
-  groups $USER |grep docker >& /dev/null
+  groups $USER | grep docker >&/dev/null
 }
 
 mod_user() {
@@ -21,7 +21,7 @@ mod_user() {
 }
 
 get_dist_version() {
-  local version="$(cat < /etc/lsb-release |grep RELEASE)"
+  local version="$(cat </etc/lsb-release | grep RELEASE)"
   version=${version##*=}
   echo $version
 }
@@ -60,7 +60,7 @@ install_docker_via_repository() {
 
 get_latest_version() {
   local p=${1:-compose}
-  curl -fSsL https://github.com/docker/$p/releases |grep "/docker/$p/releases/tag/" |head -1 |cut -d'>' -f2 |cut -d'<' -f1
+  curl -fSsL https://github.com/docker/$p/releases | grep "/docker/$p/releases/tag/" | head -1 | cut -d'>' -f2 | cut -d'<' -f1
 }
 
 install_via_curl() {
@@ -79,16 +79,16 @@ install_via_curl() {
 }
 
 install_common() { not_supported; }
-install_arch()   {
+install_arch() {
   install_via_os_default
-  exe sudo systemctl enable docker  # ログイン時にデーモン実行
+  exe sudo systemctl enable docker # ログイン時にデーモン実行
   exe sudo systemctl restart docker
   install_via_curl machine
   install_via_curl compose
 }
-install_msys()   { not_supported; }
+install_msys() { not_supported; }
 install_cygwin() { not_supported; }
-install_mac()    { not_supported; }
+install_mac() { not_supported; }
 install_ubuntu() {
   install_docker_via_repository
   install_via_curl machine
@@ -96,7 +96,7 @@ install_ubuntu() {
 }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
-setting_arch()   {
+setting_arch() {
   if ! is_exist_docker_group; then
     exe sudo groupadd docker
   fi
@@ -105,9 +105,9 @@ setting_arch()   {
   fi
   exe sudo gpasswd -a $USER docker
 }
-setting_msys()   { not_supported; }
+setting_msys() { not_supported; }
 setting_cygwin() { not_supported; }
-setting_mac()    { not_supported; }
+setting_mac() { not_supported; }
 setting_ubuntu() {
   if is_in_docker_group; then
     return
@@ -115,8 +115,6 @@ setting_ubuntu() {
   mod_user
 }
 setting_redhat() { not_supported; }
-
-
 
 # install_common() { not_supported; }
 # install_arch()   { not_supported; }
