@@ -42,6 +42,8 @@ services:
       - ./src/:/works/
     environment:
       - TZ=Asia/Tokyo
+    tty:
+      true
 EOF
 }
 cat_makefile() {
