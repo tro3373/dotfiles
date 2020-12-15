@@ -42,10 +42,10 @@ initialize() {
 not_supported() { echo "Not supported." 1>&2 && exit 1; }
 update_arch() {
   if has yay; then
-    $dummy yay -Syu --noconfirm "${args[@]}"
+    $dummy yay -Syyu --noconfirm "${args[@]}"
     return
   fi
-  $dummy sudo pacman -Syu --noconfirm "${args[@]}"
+  $dummy sudo pacman -Syyu --noconfirm "${args[@]}"
 }
 update_ubuntu() {
   $dummy sudo apt-get -y update "${args[@]}"
