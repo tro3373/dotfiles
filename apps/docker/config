@@ -66,7 +66,7 @@ get_latest_version() {
 install_via_curl() {
   local m=$1
   local _command_name="docker-$m"
-  if [[ -e /usr/local/bin/$_command_name ]]; then
+  if ! is_force && [[ -e /usr/local/bin/$_command_name ]]; then
     log "===> Command already exist /usr/local/bin/$_command_name"
     return
   fi

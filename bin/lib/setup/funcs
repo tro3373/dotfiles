@@ -27,6 +27,7 @@ _funcs_initialized=0
 add_args() { args+=("$@"); }
 is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
+is_force() { [[ $force -eq 1 ]]; }
 _log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") ${*:2}" | ink $1 1>&2; }
 log() { _log cyan "$*"; }
 ilog() { _log green "$*"; }
@@ -303,8 +304,7 @@ has_local_package() {
 def_install() {
   local _pkgs=()
   for p in "$@"; do
-    # shellcheck disable=SC2154
-    if [[ $force -ne 1 ]]; then
+    if is_force; then
       has $p && continue
       has_local_package $p && continue
     fi
