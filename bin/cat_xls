@@ -36,7 +36,7 @@ def for_sheet(wb, sheetname):
     row_max = 1000
     while True:
         row_values = ""
-        for col in range(1, 32):
+        for col in range(1, 33):
             # print(row)
             # print(col)
             if (col not in [1, 3, 11, 19, 23, 25, 27, 30, 32]):
