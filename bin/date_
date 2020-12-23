@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+# readonly script_dir=$(cd "$(dirname ${BASH_SOURCE:-$0})"; pwd)
+# readonly command_name=$(basename $0)
+
+cat_example() {
+  local _unix=$(date +%s)
+  cat <<EOF
+date +%Y-%m-%d_%H-%M-%S
+date +%Y-%m-%d_%H-%M-%S -r $0
+date -d "-9 hour -1 min" "+%Y-%m-%dT%H:%M:%S%z"
+date +%s
+date -d @$_unix
+date -d @$_unix +%Y-%m-%d_%H-%M-%S
+EOF
+}
+
+main() {
+  # set -euxo pipefail
+  cat_example |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      echo "$line => $(eval $line)"
+    done
+}
+main "$@"
