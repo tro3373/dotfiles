@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+sub() {
+  echo "> removing $line.."
+  rm -rf $line
+}
+
+main() {
+  find ~/.local/share/vim-lsp-settings/servers/ -maxdepth 1 -mindepth 1 -type d |
+    fzf -m |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      sub
+    done
+}
+main "$@"
