@@ -7,8 +7,12 @@ install_common() {
   fi
   # ソースコード取得
   cd_work
-  exe git clone https://github.com/spf13/hugo
-  exe cd hugo
+  if [[ -e hugo ]]; then
+    exe cd hugo
+    exe git pull --rebase
+  else
+    exe git clone https://github.com/spf13/hugo
+    exe cd hugo
+  fi
   exe go install --tags extended
 }
-
