@@ -72,6 +72,9 @@ alias gt="git tag"
 alias gc="git commit"
 alias gr="git remote -v"
 alias gs="git status"
+if has nvim; then
+  alias vim="nvim"
+fi
 # alias v=vim
 alias vi=vim
 alias f="find -name"
