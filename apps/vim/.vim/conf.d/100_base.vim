@@ -37,7 +37,8 @@ set wildmode=longest:full,full
 " https://stackoverflow.com/questions/6726783/changing-default-position-of-quickfix-window-in-vim
 " For quickfix
 set splitright
-
+" デフォルトのdiffspritは縦分割指定
+set diffopt+=vertical
 
 " ターミナル時でもマウスを使えるようにする
 set mouse=a
