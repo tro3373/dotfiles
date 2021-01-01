@@ -178,13 +178,8 @@ call plug#begin('$HOME/.vim/plugged')
     " Plug 'sgur/vim-editorconfig'                              " Not Official editorconfig(less depends)
     Plug 'editorconfig/editorconfig-vim'                      " Official editorconfig
 
-    if has('job') && has('channel') && has('timers')
-      " Plug 'w0rp/ale'                                         " 構文解析(非同期)
-      Plug 'dense-analysis/ale'                               " 構文解析(非同期)
-    else
-      Plug 'scrooloose/syntastic'                             " 構文解析
-      " Plug 'vim-syntastic/syntastic'                        " 構文解析
-    endif
+    " ale
+    Plug 'dense-analysis/ale'                               " 構文解析(非同期)
   endif
 
   " Vim LSP!
@@ -264,4 +259,3 @@ let g:plug = {
 function! g:plug.is_installed(name)
   return has_key(self.plugs, a:name) ? isdirectory(self.plugs[a:name].dir) : 0
 endfunction
-

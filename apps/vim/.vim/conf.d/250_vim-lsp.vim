@@ -57,7 +57,7 @@ let g:lsp_fold_enabled = 0                  " 折り畳み無効
 let g:lsp_signature_help_enabled = 1        " シグニチャヘルプ(重い場合は無効に)
 let g:lsp_completion_resolve_timeout = 0    " 補完候補情報の問い合わせをブロックしない(Ctrl+n,pでガタつく場合に設定)
 let g:lsp_anync_completion = 0              " 補完候補の問い合わせをブロックしない(重い場合に設定)
-
+" let g:lsp_format_sync_timeout = 1000        " disable timeout in format sync. (default is -1(disabled))
 
 let g:asyncomplete_log_file = expand('$HOME/.vim/asyncomplete.log')
 " let g:asyncomplete_popup_delay = 200        " ポップアップ表示ディレイ(default: 30)
@@ -132,4 +132,3 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
 "\     }
 "\   },
 "\}
-

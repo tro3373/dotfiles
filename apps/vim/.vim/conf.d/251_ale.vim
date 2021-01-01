@@ -5,45 +5,51 @@ endif
 "=============================================
 " ale
 "=============================================
+" 保存時チェック
+let g:ale_lint_on_save = 1
+" ファイル変更時チェック
+let g:ale_lint_on_text_changed = 0
+" let g:ale_lint_on_text_changed = 'always'
+" Open時にチェック
+let g:ale_lint_on_enter = 1
+" ファイル保存時に実行
+let g:ale_fix_on_save = 1
 " 画面表示領域を常に表示
 let g:ale_sign_column_always = 1
 " エラーリストを常に表示
 let g:ale_open_list = 1
 " エラーと警告がなくなっても開いたままにするか
 let g:ale_keep_list_wildow_open = 0
-" シンボル変更
-let g:ale_sign_error = '!!'
-let g:ale_sign_warning = '=='
 " ハイライト無効
 highlight clear ALEErrorSign
 highlight clear ALEWarningSign
-
-" 保存時チェック
-let g:ale_lint_on_save = 1
-" ファイル変更時チェック
-let g:ale_lint_on_text_changed = 0
-" Open時にチェック
-let g:ale_lint_on_enter = 1
-" ファイル保存時に実行
-let g:ale_fix_on_save = 1
-" ローカルの設定ファイルを考慮する
-let g:ale_javascript_prettier_use_local_config = 1
-
-" Ignore shellcheck error
-let g:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162'
-
-let g:ale_go_gofmt_options = '-s'
-let g:ale_go_gometalinter_options = '--enable=gosimple --enable=staticcheck'
+" ALE completion
 let g:ale_completion_enabled = 1
+
+
+" シンボル変更
+let g:ale_sign_error = '!!'
+let g:ale_sign_warning = '=='
 let g:ale_echo_msg_info_str = 'I'
 let g:ale_echo_msg_error_str = 'E'
 let g:ale_echo_msg_warning_str = 'W'
 " let g:ale_echo_msg_format = '[%linter%] [%severity%] %code: %%s'
-let g:ale_echo_msg_format = '[%linter%] %code: %%s'
+let g:ale_echo_msg_format = '[ALE:%linter%] %code: %%s'
 
+
+" ローカルの設定ファイルを考慮する
+let g:ale_javascript_prettier_use_local_config = 1
+
+let g:ale_go_gofmt_options = '-s'
+let g:ale_go_gometalinter_options = '--enable=gosimple --enable=staticcheck'
+
+" Ignore shellcheck error
+let g:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162'
 " shfmt see .editorconfig?(not working... so specify option)
 let g:ale_sh_shfmt_options = '-i 2 -ci -s'
 
+" let g:ale_python_flake8_options = '--ignore=E501,E402,F401,E701' " ignore long-lines, import on top of the file, unused modules and statement with colon
+" let g:ale_python_autopep8_options = '--ignore=E501'              " ignore long-lines for autopep8 fixer
 
 " let g:ale_linters = {
 "\   'javascript': ['eslint'],
@@ -62,24 +68,24 @@ let g:ale_linters['vue'] = ['eslint']
 
 let g:ale_fixers = {}
 let g:ale_fixers['*']          = ['trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['javascript'] = ['prettier-eslint', 'prettier', 'eslint', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['json']       = ['prettier', 'fixjson', 'jq', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['scss']       = ['prettier', 'stylelint', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['css']        = ['prettier', 'stylelint', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['less']       = ['prettier', 'stylelint', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['stylus']     = ['stylelint', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['c']          = ['clang-format', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['cpp']        = ['clang-format', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['rust']       = ['rustfmt', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['python']     = ['autopep8', 'yapf', 'isort', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['zsh']        = ['shfmt', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['sh']         = ['shfmt', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['go']         = ['gofmt', 'goimports', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['markdown']   = ['prettier', 'trim_whitespace', 'remove_trailing_lines']
+" let g:ale_fixers['javascript'] = ['prettier-eslint', 'prettier', 'eslint']
+let g:ale_fixers['javascript'] = ['prettier', 'eslint']
+let g:ale_fixers['vue']        = ['prettier', 'eslint']
+let g:ale_fixers['json']       = ['prettier', 'fixjson', 'jq']
+let g:ale_fixers['scss']       = ['prettier', 'stylelint']
+let g:ale_fixers['css']        = ['prettier', 'stylelint']
+let g:ale_fixers['less']       = ['prettier', 'stylelint']
+let g:ale_fixers['stylus']     = ['stylelint']
+let g:ale_fixers['c']          = ['clang-format']
+let g:ale_fixers['cpp']        = ['clang-format']
+let g:ale_fixers['rust']       = ['rustfmt']
+let g:ale_fixers['python']     = ['autopep8', 'yapf', 'isort']
+let g:ale_fixers['zsh']        = ['shfmt']
+let g:ale_fixers['sh']         = ['shfmt']
+let g:ale_fixers['go']         = ['gofmt', 'goimports']
+" let g:ale_fixers['markdown']   = ['prettier']
 " let g:ale_fixers['markdown'] = [{buffer, lines -> {'command': 'textlint -c ~/.config/textlintrc -o /dev/null --fix --no-color --quiet %t', 'read_temporary_file': 1}}]
-" let g:ale_fixers['vue']        = ['prettier', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['vue']        = ['eslint', 'trim_whitespace', 'remove_trailing_lines']
-let g:ale_fixers['java']       = ['google_java_format', 'trim_whitespace', 'remove_trailing_lines']
+let g:ale_fixers['java']       = ['google_java_format']
 
 " let g:ale_fix_on_save_ignore = ['sh', 'javascript']
 " let g:ale_fix_on_save_ignore = ['markdown', 'javascript']
