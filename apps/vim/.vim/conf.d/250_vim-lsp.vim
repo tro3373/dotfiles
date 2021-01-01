@@ -16,16 +16,24 @@ function! s:on_lsp_buffer_enabled() abort
   nmap <buffer> <f2> <plug>(lsp-rename)
   nmap <buffer> <C-n> <plug>(lsp-next-error)
   nmap <buffer> <C-p> <plug>(lsp-previouse-error)
+  " ------------------------------------------------------------------------------------------------------------------
+  " WARNING!!! `LspCodeActionSync source.organizeImports` is not work in nvim.
+  "            disable codeaction on save because now code format will run in
+  "            ale plugin.
+  " https://qiita.com/kitagry/items/216c2cf0066ff046d200
   " Auto Import
-  autocmd BufWritePre <buffer> call execute('LspCodeActionSync source.organizeImports')
+  " autocmd BufWritePre <buffer> call execute('LspCodeActionSync source.organizeImports')
+  " Auto Format
+  " autocmd BufWritePre <buffer> LspDocumentFormatSync
+  " autocmd BufWritePre <buffer> call execute(['LspCodeActionSync source.organizeImports'])
+  " autocmd BufWritePre <buffer> call execute(['LspDocumentFormatSync'])
+  " autocmd BufWritePre <buffer> call execute(['LspCodeActionSync source.organizeImports', 'LspDocumentFormatSync'])
+  " ------------------------------------------------------------------------------------------------------------------
 endfunction
 
 augroup lsp_install
   au!
   autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
-  " https://qiita.com/kitagry/items/216c2cf0066ff046d200
-  " Auto Format
-  " autocmd BufWritePre <buffer> LspDocumentFormatSync
 augroup END
 command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('$HOME/.vim/lsp.log')
 let g:lsp_log_verbose=1
