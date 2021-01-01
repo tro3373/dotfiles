@@ -43,7 +43,7 @@ case "${OSTYPE}" in
     alias pbpaste='cat /dev/clipboard'
     alias tmux='tmux -2'            # 256Color有効化
     alias sudo='echo "No sudo...";' # sudo がないので、エイリアスで逃げる
-    alias nvim=$(which vim)
+    # alias nvim=$(which vim)
     alias vim=gvim
     alias git="PATH=/usr/bin winpty git"
     ;;
