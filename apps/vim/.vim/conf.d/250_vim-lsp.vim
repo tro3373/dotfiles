@@ -5,6 +5,7 @@ endif
 function! s:on_lsp_buffer_enabled() abort
   setlocal omnifunc=lsp#complete
   setlocal signcolumn=yes
+  if exists('+tagfunc') | setlocal tagfunc=lsp#tagfunc | endif
   " nmap <buffer> gd <plug>(lsp-definition)
   " nmap <buffer> <C-]> <plug>(lsp-definition)
   nmap <buffer> <C-]> :tab split<cr>:LspDefinition<cr>
@@ -16,6 +17,15 @@ function! s:on_lsp_buffer_enabled() abort
   nmap <buffer> <f2> <plug>(lsp-rename)
   nmap <buffer> <C-n> <plug>(lsp-next-error)
   nmap <buffer> <C-p> <plug>(lsp-previouse-error)
+  " Official settings
+  " nmap <buffer> gd <plug>(lsp-definition)
+  " nmap <buffer> gr <plug>(lsp-references)
+  " nmap <buffer> gi <plug>(lsp-implementation)
+  " nmap <buffer> gt <plug>(lsp-type-definition)
+  " nmap <buffer> <leader>rn <plug>(lsp-rename)
+  " nmap <buffer> [g <Plug>(lsp-previous-diagnostic)
+  " nmap <buffer> ]g <Plug>(lsp-next-diagnostic)
+  " nmap <buffer> K <plug>(lsp-hover)
   " ------------------------------------------------------------------------------------------------------------------
   " WARNING!!! `LspCodeActionSync source.organizeImports` is not work in nvim.
   "            disable codeaction on save because now code format will run in
@@ -29,6 +39,8 @@ function! s:on_lsp_buffer_enabled() abort
   " autocmd BufWritePre <buffer> call execute(['LspDocumentFormatSync'])
   " autocmd BufWritePre <buffer> call execute(['LspCodeActionSync source.organizeImports', 'LspDocumentFormatSync'])
   " ------------------------------------------------------------------------------------------------------------------
+  let g:lsp_format_sync_timeout = 1000        " disable timeout in format sync. (default is -1(disabled))
+  autocmd! BufWritePre *.rs,*.go call execute('LspDocumentFormatSync')
 endfunction
 
 augroup lsp_install
@@ -57,7 +69,6 @@ let g:lsp_fold_enabled = 0                  " 折り畳み無効
 let g:lsp_signature_help_enabled = 1        " シグニチャヘルプ(重い場合は無効に)
 let g:lsp_completion_resolve_timeout = 0    " 補完候補情報の問い合わせをブロックしない(Ctrl+n,pでガタつく場合に設定)
 let g:lsp_anync_completion = 0              " 補完候補の問い合わせをブロックしない(重い場合に設定)
-" let g:lsp_format_sync_timeout = 1000        " disable timeout in format sync. (default is -1(disabled))
 
 let g:asyncomplete_log_file = expand('$HOME/.vim/asyncomplete.log')
 " let g:asyncomplete_popup_delay = 200        " ポップアップ表示ディレイ(default: 30)
