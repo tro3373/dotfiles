@@ -98,6 +98,8 @@ main() {
   if [[ $yes_i_edit =~ [nN] ]]; then
     return
   fi
-  vim -p "${configs[@]}"
+  local _vim=vim
+  has nvim && _vim=nvim
+  $_vim -p "${configs[@]}"
 }
 main "$@"

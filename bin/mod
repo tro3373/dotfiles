@@ -7,6 +7,7 @@
 has() { command -v ${1} >&/dev/null; }
 main() {
   ! has fzf && echo "No fzf exist" 1>&2 && exit 1
+  # shellcheck disable=SC2016
   local files="$(
     git status -s |
       grep -E -v '^ D ' |
@@ -14,6 +15,8 @@ main() {
       cut -c4-
   )"
   [[ -z $files ]] && return
-  vim -p $files </dev/tty
+  local _vim=vim
+  has nvim && _vim=nvim
+  $_vim -p $files </dev/tty
 }
 main "$@"

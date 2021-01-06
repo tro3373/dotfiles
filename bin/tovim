@@ -7,6 +7,7 @@
 #
 
 set -e
+has() { command -v ${1} >&/dev/null; }
 
 trap 'rm -f $TOVIMTMP' ERR
 
@@ -16,12 +17,14 @@ if [ -p /dev/stdin ]; then
     exit
   fi
 
+  _vim=vim
+  has nvim && _vim=nvim
   if [ -e "$in" ]; then
-    vim "$in" </dev/tty >/dev/tty
+    $_vim "$in" </dev/tty >/dev/tty
   else
     TOVIMTMP=~/.tovim_tmp_"$(date +%Y-%m-%d_%H-%M-%S.txt)"
     echo "$in" >"$TOVIMTMP"
-    vim "$TOVIMTMP" </dev/tty >/dev/tty
+    $_vim "$TOVIMTMP" </dev/tty >/dev/tty
     cat "$TOVIMTMP"
     rm "$TOVIMTMP"
   fi
