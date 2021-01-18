@@ -4,9 +4,13 @@ readonly timestamp=$(date +%Y%m%d%H%M%S)
 readonly dst=${timestamp}_gened.csv
 readonly current_dir=$(pwd)
 deals=
+exclude_regexp=
+tag=
 
 initialize() {
   deals=$1
+  exclude_regexp=$2
+  tag=${3:-converted}
   if [[ -z $deals ]]; then
     deals=$current_dir/deals.csv
   fi
@@ -22,15 +26,30 @@ header() {
 EOF
 }
 
+gen_tag() {
+  local _org=$1
+  local _tag=$tag
+  if [[ -n $_org ]]; then
+    _tag=$_tag,$_org
+  fi
+  echo "\"$_tag\""
+}
+
 gen() {
   header
   cat <$deals |
     nkf -Lu -w |
     tail -n +2 |
+    if [[ -n $exclude_regexp ]]; then
+      cat - | grep -v -E "$exclude_regexp"
+    else
+      cat -
+    fi |
     while IFS=, read -r c01 c02 c03 c04 c05 c06 c07 c08 c09 c10 c11 c12 c13 c14 c15 c16 c17; do
-      [[ $c08 =~ ^-.* ]] && c10=-$c10
+      # [[ $c08 =~ ^-.* ]] && c10=-$c10
       c16= #登録銀行口座情報削除
       [[ -n $c17 ]] && c16=事業主借
+      c14=$(gen_tag $c14)
       echo "$c01,$c02,$c03,$c04,$c05,$c06,$c07,$c08,$c09,$c10,$c11,$c12,$c13,$c14,$c15,$c16,$c17"
     done
 }
