@@ -102,7 +102,7 @@ handle_deals() {
 handle_template() {
   while IFS=, read -r c01 c02 c03 c04 c05 c06 c07 c08 c09 c10 c11 c12 c13 c14 c15 c16; do
     if [[ -n $c05 && $c05 != 事業主借 ]]; then
-      c05= #登録銀行口座情報削除
+      c05=事業主借 #登録銀行口座情報削除
     fi
     echo "$c01,$c02,$c03,$c04,$c05,$c06,$c07,$c08,$c09,$c10,$c11,$c12,$c13,$c14,$c15,$c16"
   done
