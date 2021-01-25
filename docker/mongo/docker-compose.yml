@@ -1,0 +1,74 @@
+version: '3.8'
+services:
+  mongo001:
+    image: mongo:latest
+    container_name: mongo001
+    restart: always
+    environment:
+      - TZ=Asia/Tokyo
+      # # # see https://qiita.com/homines22/items/038dc08fca6405813e0b
+      # - MONGO_INITDB_ROOT_USERNAME=root
+      # - MONGO_INITDB_ROOT_PASSWORD=root
+      # - MONGO_INITDB_DATABASE=test
+    ports:
+      - 27017:27017
+    depends_on:
+      - mongo002
+      - mongo003
+    volumes:
+      - ./mongo-data/001:/data/db
+      # see https://qiita.com/homines22/items/038dc08fca6405813e0b
+      # initialize but not work
+      # - ./setup_rs:/docker-entrypoint-initdb.d/setup_rs.sh
+      - ./setup_rs:/setup_rs
+    command: mongod --replSet rs1
+  mongo002:
+    image: mongo:latest
+    container_name: mongo002
+    restart: always
+    environment:
+      - TZ=Asia/Tokyo
+      # - MONGO_INITDB_ROOT_USERNAME=root
+      # - MONGO_INITDB_ROOT_PASSWORD=root
+      # - MONGO_INITDB_DATABASE=test
+    ports:
+      - 27018:27017
+    volumes:
+      - ./mongo-data/002:/data/db
+    command: mongod --replSet rs1
+  mongo003:
+    image: mongo:latest
+    container_name: mongo003
+    restart: always
+    environment:
+      - TZ=Asia/Tokyo
+      # - MONGO_INITDB_ROOT_USERNAME=root
+      # - MONGO_INITDB_ROOT_PASSWORD=root
+      # - MONGO_INITDB_DATABASE=test
+    ports:
+      - 27019:27017
+    volumes:
+      - ./mongo-data/003:/data/db
+    command: mongod --replSet rs1
+  # mongo-express:
+  #   image: mongo-express
+  #   restart: always
+  #   depends_on:
+  #     - mongo001
+  #     - mongo002
+  #     - mongo003
+  #   ports:
+  #     - 8081:8081
+  #   environment:
+  #     ME_CONFIG_MONGODB_ADMINUSERNAME: root
+  #     ME_CONFIG_MONGODB_ADMINPASSWORD: root
+  #     ME_CONFIG_MONGODB_PORT: 27017
+  #     ME_CONFIG_MONGODB_SERVER: mongo001
+
+# volumes:
+#   db-volume:
+#     driver: 'local'
+#     driver_opts:
+#       type: none
+#       o: bind
+#       device: ./db-data
