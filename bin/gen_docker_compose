@@ -3,9 +3,6 @@
 cat_compose() {
   cat <<'EOF'
 version: '3.8'
-volumes:
-  db-volume:
-    driver: 'local'
 services:
   db:
     image: mongo:latest
@@ -17,6 +14,10 @@ services:
       - 27017:27017
     environment:
       TZ: Asia/Tokyo
+      # # see https://qiita.com/homines22/items/038dc08fca6405813e0b
+      # - MONGO_INITDB_ROOT_USERNAME=root
+      # - MONGO_INITDB_ROOT_PASSWORD=root
+      # - MONGO_INITDB_DATABASE=test
     command: mongod --replSet devReplSet
   nginx:
     image: nginx
@@ -44,6 +45,10 @@ services:
       - TZ=Asia/Tokyo
     tty:
       true
+
+# volumes:
+#   db-volume:
+#     driver: 'local'
 EOF
 }
 cat_makefile() {

@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+command_name=$(basename $0)
+dummy="echo"
+ref_path=
+args=()
+usage() {
+  cat <<EOF
+
+Git submodule remove.
+
+Usage:
+  $command_name [option] ref_path
+Options
+  -h|--help : Show this usage
+
+EOF
+}
+add_args() { args+=("$@"); }
+check() {
+  [[ -e $ref_path ]] && return
+  echo "Specify exist ref_path $ref_path" 1>&2
+  exit 1
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  ref_path="${args[*]}"
+  check
+}
+main() {
+  initialize "$@"
+  $dummy git submodule deinit -f $ref_path
+  $dummy git rm -f $ref_path
+  $dummy rm -rf .git/modules/$ref_path
+  [[ -n $dummy ]] && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+}
+main "$@"

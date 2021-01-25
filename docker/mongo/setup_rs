@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+main() {
+  # var cfg = {
+  #   _id: "rs1",
+  #   version: 1,
+  #   members: [
+  #     { _id: 0, host: "${mongo001}:27017", priority: 100 },
+  #     { _id: 1, host: "${mongo002}:27017", priority: 10 },
+  #     { _id: 2, host: "${mongo003}:27017", priority: 0, arbiterOnly: true }
+  #   ],settings: {chainingAllowed: true}
+  # };
+  # rs.initiate(cfg, { force: true });
+  # rs.reconfig(cfg, { force: true });
+  # rs.slaveOk();
+  # db.getMongo().setReadPref('nearest');
+  # db.getMongo().setSlaveOk();
+  mongo <<EOF
+use admin;
+db.auth('root', 'root');
+var cfg = {
+  _id: "rs1",
+  members: [
+    { _id: 0, host: "mongo001:27017", priority: 100 },
+    { _id: 1, host: "mongo002:27017", priority: 10 },
+    { _id: 2, host: "mongo003:27017", priority: 0, arbiterOnly: true }
+  ]
+};
+rs.initiate(cfg);
+EOF
+}
+main "$@"
