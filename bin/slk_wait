@@ -3,11 +3,11 @@
 readonly me=$$
 has() { command -v ${1} >&/dev/null; }
 
-killtree() {
+_kill_tree() {
   local _pid=$1
   local children=$(ps --ppid $_pid --no-heading | awk '{ print $1 }')
   for child in $children; do
-    killtree $child
+    _kill_tree $child
   done
   echo "==> killing $_pid"
   kill $_pid
@@ -40,7 +40,7 @@ notice() {
 }
 
 end() {
-  killtree $me
+  _kill_tree $me
 }
 
 main() {

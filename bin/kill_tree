@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+ppid=
+dummy="echo"
+only_child=0
+
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -e) dummy= ;;
+      -c) only_child=1 ;;
+      *) ppid=$arg ;;
+    esac
+  done
+  if [[ -z $ppid ]]; then
+    log "Specify pid"
+    exit 1
+  fi
+}
+
+_kill_tree() {
+  local _ppid=$1
+  local _only_child=${2:-0}
+  local _deep=${3:-0}
+  local children=$(ps --ppid $_ppid --no-heading | awk '{ print $1 }')
+  for child in $children; do
+    _kill_tree $child 0 $((_deep + 1))
+  done
+
+  if [[ $_only_child -eq 1 ]]; then
+    log "==> Skipping kill (deep:$_deep) $_ppid because only_child flag."
+    return
+  fi
+  log "==> Killing (deep:$_deep) $_ppid"
+  $dummy kill $_ppid
+}
+
+main() {
+  initialize "$@"
+  _kill_tree $ppid $only_child
+  [[ -n $dummy ]] && echo -e "\n>>> This is dummy mode. specify -e option."
+}
+main "$@"
