@@ -574,7 +574,9 @@ init_funcs() {
   [[ $_funcs_initialized -eq 1 ]] && return
   _funcs_initialized=1
 
-  export DOT_PATH=/home/$_user/.dot
+  local _home=/home
+  [[ $(uname) == "Darwin" ]] && _home=/Users
+  export DOT_PATH=$_home/$_user/.dot
   export _backup_root="${DOT_PATH}/bkup/setup"
   # 関数ロード
   init_export_path_if_possible
