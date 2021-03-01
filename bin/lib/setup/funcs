@@ -304,7 +304,7 @@ has_local_package() {
 def_install() {
   local _pkgs=()
   for p in "$@"; do
-    if is_force; then
+    if ! is_force; then
       has $p && continue
       has_local_package $p && continue
     fi
