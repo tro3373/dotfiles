@@ -47,9 +47,11 @@ augroup lsp_install
   au!
   autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
 augroup END
-command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('$HOME/.vim/lsp.log')
-let g:lsp_log_verbose=1
+" command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('$HOME/.vim/lsp.log')
+command! LspDebug let lsp_log_verbose=1
+" let g:lsp_log_verbose=1
 let g:lsp_log_file = expand('$HOME/.vim/lsp.log')
+let g:asyncomplete_log_file = expand('$HOME/.vim/asyncomplete.log')
 
 " let g:lsp_signs_enabled = 1
 " let g:lsp_signs_error = {'text': '✗'}
@@ -70,7 +72,6 @@ let g:lsp_signature_help_enabled = 1        " シグニチャヘルプ(重い場
 let g:lsp_completion_resolve_timeout = 0    " 補完候補情報の問い合わせをブロックしない(Ctrl+n,pでガタつく場合に設定)
 let g:lsp_anync_completion = 0              " 補完候補の問い合わせをブロックしない(重い場合に設定)
 
-let g:asyncomplete_log_file = expand('$HOME/.vim/asyncomplete.log')
 " let g:asyncomplete_popup_delay = 200        " ポップアップ表示ディレイ(default: 30)
 let g:asyncomplete_auto_popup = 1           " 自動で入力補完ポップアップを表示
 
