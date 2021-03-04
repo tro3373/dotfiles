@@ -47,11 +47,8 @@ augroup lsp_install
   au!
   autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
 augroup END
-" command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('$HOME/.vim/lsp.log')
-command! LspDebug let lsp_log_verbose=1
-" let g:lsp_log_verbose=1
-let g:lsp_log_file = expand('$HOME/.vim/lsp.log')
-let g:asyncomplete_log_file = expand('$HOME/.vim/asyncomplete.log')
+command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('$HOME/.vim/lsp.log')
+command! LspDebugAsyncComplete let g:asyncomplete_log_file = expand('$HOME/.vim/asyncomplete.log')
 
 " let g:lsp_signs_enabled = 1
 " let g:lsp_signs_error = {'text': '✗'}
