@@ -54,7 +54,7 @@ bkup_files() {
     while read -r rel_path; do
       [[ -z $rel_path ]] && continue
       [[ $rel_path =~ ^#.* ]] && continue
-      $dummy cp --parents $rel_path $mod_files_d/
+      $dummy cp -r --parents $rel_path $mod_files_d/
     done
   echo "Done! snapshot saved to $tmpd"
   [[ -z $dummy ]] && echo $tmpd | clip
