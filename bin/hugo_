@@ -4,13 +4,16 @@ main() {
   # setup_hugo
   # setup_memo $1
   cat <<'EOF'
-> Generate New website template.
+# Gen new post
+hugo new post/hello.md
+
+# Generate New website template.
 hugo new site mysite
 
-> Clone themes all
+# Clone themes all
 git clone --recursive https://github.com/spf13/hugoThemes.git tmp
 
-> Sample config.yaml
+# Sample config.yaml
 ---
 contentdir: "content"
 layoutdir: "layouts"

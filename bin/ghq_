@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+main() {
+  cat <<'EOF'
+==> Clone
+  ghq get <github_user>/<repo>
+EOF
+}
+main "$@"
