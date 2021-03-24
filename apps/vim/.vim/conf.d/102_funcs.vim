@@ -245,19 +245,41 @@ function! Hugolize() abort
 endfun
 command! Hugolize call Hugolize()
 
-function! SaveMemo() abort
-  let outdir = "."
-  let memodir = expand("~/works/00_memos")
-  if isdirectory(memodir)
-    let outdir = memodir
+function! Chomp(string)
+  " return substitute(a:string, '\n\+$', '', '')
+  return trim(a:string)
+endfunction
+
+function! SaveMemoInner(outdir) abort
+  let dir = a:outdir
+  if !isdirectory(expand(dir))
+    echo expand(dir)
+    let dir = "."
   endif
   let now = localtime()
-  let strnow = strftime("%Y-%m-%d-", now)
+  let strnow = strftime("%Y-%m-%d", now)
   let title = input("FileName: ", "",  "file")
   redraw
-  exe ":w ".outdir."/".strnow.title.".md"
+  if title != ""
+    let title = "-" . title
+  endif
+  exe ":w ".dir."/".strnow.title.".md"
+  return 0
+endfun
+
+function! SaveMemo() abort
+  call SaveMemoInner(expand("~/works/00_memos"))
 endfun
 command! SaveMemo call SaveMemo()
+
+function! SaveMd() abort
+  let outdir = ""
+  if executable("ghq")
+    let outdir = Chomp(system("ghq list --full-path tro3373/md")) . "/.md"
+  endif
+  call SaveMemoInner(outdir)
+endfun
+command! SaveMd call SaveMd()
 
 " 全選択コピー
 function! CopyAll() abort
