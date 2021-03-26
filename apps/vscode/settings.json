@@ -15,6 +15,7 @@
     "source.fixAll": true,
     "source.fixAll.eslint": true
   },
+  "eslint.workingDirectories": [{ "mode": "auto" }],
   // "eslint.autoFixOnSave": true,
   // "tslint.autoFixOnSave": true,
   // "prettier.eslintIntegration": true,
