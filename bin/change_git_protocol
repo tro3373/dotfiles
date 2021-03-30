@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+get_origin() {
+  git remote get-url origin
+}
+
+main() {
+  local _git_root=$(get_git_root)
+  if [[ -z $_git_root ]]; then
+    echo "=> Excute in git repository." 1>&2
+    exit 1
+  fi
+  local _origin=$(get_origin)
+  if [[ $_origin =~ ^git@.*$ ]]; then
+    echo "=> Already git protocol used."
+    return
+  fi
+  local _user_repo=${_origin##*github.com/}
+  local _new_origin="git@github.com:$_user_repo.git"
+
+  # echo _git_root: $_git_root
+  # echo _user_repo: $_user_repo
+  # echo _new_origin: $_new_origin
+
+  # echo "=> Backupping origin to origin_bk.."
+  # git branch --unset-upstream
+  git remote rename origin origin_bk
+  echo "=> Adding new origin $_new_origin.."
+  git remote add origin $_new_origin
+  # echo "=> Fetching new origin.."
+  # git fetch
+  # echo "=> Setting upstream.."
+  # git branch --set-upstream
+}
+main "$@"
