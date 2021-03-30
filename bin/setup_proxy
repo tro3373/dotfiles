@@ -3,47 +3,99 @@
 interactive() {
   local variable=$1
   local msg=$2
+  local require=${3:-0}
   local input_word=
   # local yesno=x
-  while [[ $input_word == "" ]]; do
+  while [[ -z $input_word ]]; do
     echo "$msg"
     read input_word
+    [[ $require -ne 1 && -z $input_word ]] && return
   done
   eval "$variable=$input_word"
 }
-main() {
-  interactive server "Input Proxy server url."
-  interactive port "Input Proxy server port."
-  interactive userid "Input userid."
-  interactive passwd "Input password."
-  echo
-  echo "==> Execute bellow."
-  echo
-  # shellcheck disable=SC2154
-  echo "  git config --global http.proxy http://$userid:'$passwd'@$server:$port"
-  echo "  git config --global https.proxy http://$userid:'$passwd'@$server:$port"
-  echo
-  echo "==> Write in bashrc/zshrc bellow."
-  echo
-  echo "  export http_proxy=http://$userid:'$passwd'@$server:$port"
-  echo "  export https_proxy=http://$userid:'$passwd'@$server:$port"
-  echo "  export ftp_proxy=http://$userid:'$passwd'@$server:$port"
-  echo "  export HTTP_PROXY=http://$userid:'$passwd'@$server:$port"
-  echo "  export HTTPS_PROXY=http://$userid:'$passwd'@$server:$port"
-  echo "  export FTP_PROXY=http://$userid:'$passwd'@$server:$port"
-  echo
-  echo "==> Write in .wgetrc bellow."
-  echo
-  echo "  echo \"http_proxy=http://${server}:${port}/\" >> ~/.wgetrc"
-  echo "  echo \"proxy_user=${userid}\" >> ~/.wgetrc"
-  echo "  echo \"proxy_password='${passwd}'\" >> ~/.wgetrc"
-  echo
-  echo "==> Write in .curlrc bellow."
-  echo
-  echo "  echo \"proxy-user = \\\"${userid}:${passwd}\\\"\" >> ~/.curlrc"
-  echo "  echo \"proxy = \\\"http://${server}:${port}/\\\"\" >> ~/.curlrc"
 
-  echo
-  echo "chips......if Username or password contain '@', convert '@' '%40'."
+setup_proxy_settings() {
+  interactive server "Input Proxy server url." 1
+  interactive port "Input Proxy server port." 1
+  interactive user_id "Input user_id."
+  interactive passwd "Input password."
+}
+
+cat_result() {
+  local up=
+  # shellcheck disable=SC2154
+  [[ -n $user_id ]] && up="$user_id:'$passwd'@"
+  # shellcheck disable=SC2154
+  local sp=$server:$port
+  cat <<EOF
+==> Execute bellow.
+
+  git config --global http.proxy http://$up$sp
+  git config --global https.proxy http://$up$sp
+
+==> Write in bashrc/zshrc bellow.
+
+  export http_proxy=http://$up$sp
+  export https_proxy=http://$up$sp
+  export ftp_proxy=http://$up$sp
+  export HTTP_PROXY=http://$up$sp
+  export HTTPS_PROXY=http://$up$sp
+  export FTP_PROXY=http://$up$sp
+
+==> Write in ~/.wgetrc bellow.
+
+  http_proxy=http://$sp/
+$([[ -n $user_id ]] && echo "  proxy_user=${user_id}")
+$([[ -n $user_id ]] && echo "  proxy_password='${passwd}'")
+
+==> Write in ~/.curlrc bellow.
+
+  proxy = "http://$sp/"
+$([[ -n $user_id ]] && echo "  proxy-user = \"${user_id}:${passwd}\"")
+
+EOF
+  # proxy-user = "${user_id}:${passwd}"
+  # proxy_user=${user_id}
+  # proxy_password='${passwd}'
+}
+
+cat_tips() {
+  cat <<'EOF'
+chips......if Username or password contain '@', convert '@' '%40'.
+EOF
+}
+
+main() {
+  setup_proxy_settings
+  cat_result
+  cat_tips
+  # echo
+  # echo "==> Execute bellow."
+  # echo
+  # echo "  git config --global http.proxy http://$user_id:'$passwd'@$server:$port"
+  # echo "  git config --global https.proxy http://$user_id:'$passwd'@$server:$port"
+  # echo
+  # echo "==> Write in bashrc/zshrc bellow."
+  # echo
+  # echo "  export http_proxy=http://$user_id:'$passwd'@$server:$port"
+  # echo "  export https_proxy=http://$user_id:'$passwd'@$server:$port"
+  # echo "  export ftp_proxy=http://$user_id:'$passwd'@$server:$port"
+  # echo "  export HTTP_PROXY=http://$user_id:'$passwd'@$server:$port"
+  # echo "  export HTTPS_PROXY=http://$user_id:'$passwd'@$server:$port"
+  # echo "  export FTP_PROXY=http://$user_id:'$passwd'@$server:$port"
+  # echo
+  # echo "==> Write in .wgetrc bellow."
+  # echo
+  # echo "  echo \"http_proxy=http://${server}:${port}/\" >> ~/.wgetrc"
+  # echo "  echo \"proxy_user=${user_id}\" >> ~/.wgetrc"
+  # echo "  echo \"proxy_password='${passwd}'\" >> ~/.wgetrc"
+  # echo
+  # echo "==> Write in .curlrc bellow."
+  # echo
+  # echo "  echo \"proxy-user = \\\"${user_id}:${passwd}\\\"\" >> ~/.curlrc"
+  # echo "  echo \"proxy = \\\"http://${server}:${port}/\\\"\" >> ~/.curlrc"
+  #
+  # echo
+  # echo "chips......if Username or password contain '@', convert '@' '%40'."
 }
 main
