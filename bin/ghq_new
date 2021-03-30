@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+command_name=$(basename $0)
+args=()
+private=0
+usage() {
+  cat <<EOF
+
+Create github repo and clone via ghq
+
+Usage:
+  $command_name <repo_name>
+Options
+  -h|--help : Show this usage
+  -p|--private : Create as private
+
+EOF
+}
+
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow 1>&2; }
+
+add_args() { args+=("$@"); }
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -p | --private) private=1 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+}
+
+main() {
+  initialize "$@"
+
+  set -euo pipefail
+  local name="${args[*]}"
+  if [[ -z $name ]]; then
+    log "Specify repository name"
+    exit 1
+  fi
+  local tmpd=/tmp/ghq_new/$name
+
+  mkdir -p $tmpd
+  cd $tmpd
+
+  log "==> Creating repository $name .."
+  hub init
+  local _opt_create=
+  [[ $private -eq 1 ]] && _opt_create="-p"
+  hub create $_opt_create
+
+  local _user_repo=$(git remote get-url origin | sed -e 's,^.*github.com.,,g' -e 's,.git,,g')
+  ghq get $_opt_create $_user_repo # -p option can clone via git protocol
+
+  log "==> Removing $tmpd.."
+  rm -rf $tmpd
+}
+main "$@"
