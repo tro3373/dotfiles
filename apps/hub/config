@@ -3,6 +3,26 @@
 install_common() {
   install_via_os_default
 }
-# setting_common() {
-#   make_lnk_with_bkup "$app_dir/hub" "$HOME/.config/hub"
-# }
+
+cat_config() {
+  cat <<'EOF'
+github.com:
+- protocol: https
+  user: YOUR_USER_ID
+  oauth_token: YOUR_OAUTH_TOKEN
+EOF
+}
+setting_common() {
+  local _hub_config=$HOME/.config/hub
+  # make_lnk_with_bkup "$app_dir/hub" "$HOME/.config/hub"
+  if [[ -e $_hub_config ]]; then
+    log "Already hub config exist. $_hub_config"
+    return
+  fi
+  cat_config |
+    if is_dry; then
+      cat -
+    else
+      cat - | tee $_hub_config >&/dev/null && chmod 600 $_hub_config
+    fi
+}
