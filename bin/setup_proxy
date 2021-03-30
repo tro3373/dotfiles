@@ -4,7 +4,7 @@ interactive() {
   local variable=$1
   local msg=$2
   local input_word=
-  local yesno=x
+  # local yesno=x
   while [[ $input_word == "" ]]; do
     echo "$msg"
     read input_word
@@ -19,6 +19,7 @@ main() {
   echo
   echo "==> Execute bellow."
   echo
+  # shellcheck disable=SC2154
   echo "  git config --global http.proxy http://$userid:'$passwd'@$server:$port"
   echo "  git config --global https.proxy http://$userid:'$passwd'@$server:$port"
   echo
