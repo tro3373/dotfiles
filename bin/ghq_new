@@ -56,7 +56,8 @@ main() {
   hub create $_opt_create
 
   local _user_repo=$(git remote get-url origin | sed -e 's,^.*github.com.,,g' -e 's,.git,,g')
-  ghq get $_opt_create $_user_repo # -p option can clone via git protocol
+  # ghq get $_opt_create $_user_repo # -p option can clone via git protocol
+  ghq get -p $_user_repo # -p option can clone via git protocol
 
   log "==> Removing $tmpd.."
   rm -rf $tmpd
