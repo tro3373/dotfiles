@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 # readonly current_dir=$(pwd)
-readonly script_dir=$(
-  cd "$(dirname ${BASH_SOURCE:-$0})"
-  pwd
-)
+# readonly script_dir=$(
+#   cd "$(dirname ${BASH_SOURCE:-$0})"
+#   pwd
+# )
 readonly command_name=$(basename $0)
 readonly conf=$HOME/.vpn
 server=0
@@ -64,6 +64,7 @@ run_server() {
   # --entrypoint '' \
   # /bin/bash
   vpn_opt="--no-cert-check" # docker version opt notwork. so orverride it
+  # shellcheck disable=SC2154
   docker run -it --rm --privileged \
     -p 127.0.0.1:22222:22 \
     -e SSH_PUB="$(cat <$HOME/.ssh/id_rsa.pub)" \
