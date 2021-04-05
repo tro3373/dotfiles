@@ -7,7 +7,7 @@ readonly script_dir=$(
   pwd
 )
 readonly tgz=ArchLinux.tar.gz
-source $script_dir/../../setup/funcs
+source $script_dir/../../../setup/funcs
 
 usage() {
   cat <<EOF
@@ -21,9 +21,9 @@ gen_arch_tgz() {
   local url=$(get_arch_iso_url_latest)
   log "> Downloading to $tmp_d from $url.."
   exe curl -LO $url
-  exe sudo tar -xzfp ./*.tar.gz
+  exe sudo tar xzfp ./*.tar.gz
   exe cd root.x86_64
-  exe sudo tar -czfp $tgz .
+  exe sudo tar czfp $tgz .
   exe sudo mv -f $tgz $current_dir/
   echo "$current_dir/$tgz"
 }
