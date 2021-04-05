@@ -9,9 +9,9 @@ readonly script_dir=$(
 readonly username=archuser
 readonly userpass_path=$script_dir/pass
 readonly userpub_path=$script_dir/pub
-# load funcs
-source $script_dir/funcs arch $username
-source $script_dir/funcs_arch
+# # load funcs
+# source $script_dir/funcs arch $username
+# source $script_dir/funcs_arch
 
 ip=
 host=
@@ -31,6 +31,16 @@ Options
 EOF
 }
 
+load_funcs() {
+  local search_dir=("$script_dir" "$script_dir/../../setup")
+  for d in "${search_dir[@]}"; do
+    [[ ! -e $d/funcs ]] && continue
+    source $d/funcs arch $username
+    source $d/funcs_arch
+    break
+  done
+}
+
 check() {
   if is_bootstrapped; then
     log "=> Already bootstraped." 1>&2
@@ -48,6 +58,7 @@ check() {
 }
 
 initialize() {
+  load_funcs
   # shellcheck disable=SC2034
   while true; do
     [[ -z $1 ]] && break
