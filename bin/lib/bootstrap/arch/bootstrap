@@ -84,11 +84,11 @@ finalize() {
 
 setup_pacman() {
   improve_pacman_millerlist
-  improve_pacman_conf
   setup_pac_key
   setup_gnupg
   improve_pacman_aria2
   update_and_add_pacman_packages base base-devel git curl sudo vim wget grep sed which unzip gzip openssh zsh
+  improve_pacman_conf
 }
 
 cat_userpass() {
