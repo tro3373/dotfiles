@@ -1,9 +1,12 @@
-# Inisialize
-export DOTPATH="$HOME/.dot"
-export GENPATHF=$HOME/.path
-export GENMANPATHF=$HOME/.manpath
-export WORKPATHF=$HOME/.work.path
-[ ${OSTYPE} = "msys" ] && export WINHOME=/c/Users/$(whoami)
+_initialize_env() {
+  # Inisialize
+  export DOTPATH="$HOME/.dot"
+  export GENPATHF=$HOME/.path
+  export GENMANPATHF=$HOME/.manpath
+  export WORKPATHF=$HOME/.work.path
+  [ ${OSTYPE} = "msys" ] && export WINHOME=/c/Users/$(whoami)
+  [[ -n $WSL_DISTRO_NAME ]] && export WINHOME=/mnt/c/Users/$(cmd.exe /c "echo %USERNAME%" 2>/dev/null)
+}
 
 zcompile_ifneeded() {
   if [[ ! -e $1.zwc || $1 -nt $1.zwc ]]; then
@@ -233,6 +236,7 @@ load_my_env() {
 is_vagrant() { pwd | grep /home/vagrant >&/dev/null; }
 
 _initialize() {
+  _initialize_env
   zcompile_ifneeded ~/.zshrc
   for z in $(ls ~/.zsh/*.zsh); do
     zcompile_ifneeded $z
