@@ -79,6 +79,7 @@ initialize() {
 
 finalize() {
   bootstrapped
+  # TODO ignore if wsl2. fix with setup arch for timedatectl..
   exe reboot
 }
 
@@ -124,6 +125,7 @@ sudo() {
 main() {
   initialize "$@"
   setup_pacman
+  # TODO ignore if wsl2
   setup_timezone
   setup_locale
   setup_user
