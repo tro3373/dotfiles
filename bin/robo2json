@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+readonly dataf=$0.data
+
+cat_data() {
+  if [[ -p /dev/stdin ]]; then
+    cat -
+  elif [[ -e $dataf ]]; then
+    cat <$dataf
+  else
+    xsel -bo
+  fi
+}
+
+main() {
+  cat_data |
+    sed -e 's,^/.*,,g' -e '/^$/d' -e 's,^{,\,{,g' |
+    sed -e '1s/^,{/{/g' |
+    sed -e 's,ObjectId(\(.*\)),\1,g' |
+    sed -e 's,ISODate(\(.*\)),\1,g'
+}
+main "$@"
