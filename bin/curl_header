@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  curl -D - -s -o /dev/null "$@"
+}
+main "$@"
