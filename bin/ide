@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+type1() {
+  tmux split-window -v
+  tmux split-window -h
+  tmux resize-pane -D 15
+  tmux select-pane -t 1
+}
+
+type2() {
+  tmux split-window -v
+  tmux resize-pane -D 15
+  tmux select-pane -D
+}
+type3() {
+  tmux split-window -h
+  tmux split-window -v
+  tmux resize-pane -D 15
+  tmux select-pane -t 1
+  tmux split-window -v
+  tmux select-pane -t 1
+}
+type4() {
+  cd ~/Desktop/python
+  tmux split-window -v
+  tmux split-window -h
+  tmux resize-pane -D 15
+  tmux select-pane -t 1
+  vi .
+}
+
+main() {
+  case $1 in
+    1) type2 ;;
+    2) type3 ;;
+    py) type4 ;;
+    *) type1 ;;
+  esac
+  clear
+}
+main "$@"
