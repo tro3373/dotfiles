@@ -10,6 +10,7 @@
   "editor.cursorStyle": "block",
   "editor.fontLigatures": false,
   "editor.insertSpaces": true,
+  "editor.wordSeparators": "`~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?、。　",
   // "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.fixAll": true,
