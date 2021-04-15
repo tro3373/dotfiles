@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  sleep infinity
+}
+main "$@"
