@@ -29,13 +29,22 @@ type4() {
   vi .
 }
 
+_def() {
+  tmux split-window -v -l 15 htop
+  tmux select-pane -U
+  tmux clock-mode
+  tmux split-window -h -l 220 vim
+  # tmux resize-pane -L 50
+}
+
 main() {
-  case $1 in
-    1) type2 ;;
-    2) type3 ;;
-    py) type4 ;;
-    *) type1 ;;
-  esac
+  _def
+  # case $1 in
+  #   1) type2 ;;
+  #   2) type3 ;;
+  #   py) type4 ;;
+  #   *) type1 ;;
+  # esac
   clear
 }
 main "$@"
