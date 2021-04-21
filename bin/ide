@@ -30,6 +30,10 @@ type4() {
 }
 
 _def() {
+  tmux split-window -h -l 220 vim .
+}
+
+_htop() {
   tmux split-window -v -l 15 htop
   tmux select-pane -U
   tmux clock-mode
