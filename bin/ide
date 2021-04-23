@@ -30,7 +30,14 @@ type4() {
 }
 
 _def() {
-  tmux split-window -h -l 220 vim .
+  tmux split-window -h -l 190 vim
+  tmux split-window -v -l 15 # TODO /bin/ls --color
+  tmux select-pane -L
+  tmux split-window -v -l 15
+  tmux clock-mode
+  tmux select-pane -U
+  htop
+  tmux select-pane -R # TODO
 }
 
 _htop() {
