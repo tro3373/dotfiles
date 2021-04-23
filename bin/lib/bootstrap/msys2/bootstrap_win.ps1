@@ -26,6 +26,7 @@ scoop install firefox
 
 scoop install windows-terminal
 scoop install vscode
+scoop install go
 scoop install winscp
 scoop install sumatrapdf
 scoop install mpc-hc

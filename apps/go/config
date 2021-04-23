@@ -32,6 +32,7 @@ install_ubuntu() {
 
 install_msys() {
   def_install mingw-w64-x86_64-go
+  # exe scoop install go
 }
 install_cygwin() {
   not_supported
