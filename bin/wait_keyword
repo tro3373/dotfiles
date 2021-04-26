@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+readonly me=$$
+readonly debug=0
+
+has() { command -v ${1} >&/dev/null; }
+log() { test $debug -eq 1 && echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
+killtree() {
+  local _pid=$1
+  local children=$(ps --ppid $_pid --no-heading | awk '{ print $1 }')
+  for child in $children; do
+    killtree $child
+  done
+  log "==> killing $_pid"
+  kill $_pid
+}
+
+start_wait() {
+  log "=> Start waiting $key in $f.."
+  tail -F -n 0 $f |
+    grep --line-buffered -e "$key" |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      end
+    done
+}
+
+end() {
+  killtree $me
+}
+
+main() {
+  local f=$1
+  local key=$2
+  if [[ -z $f ]] || ! test -e $f; then
+    log "=> Specify exist file."
+    exit 1
+  fi
+  if [[ -z $key ]]; then
+    log "=> Specify keyword"
+    exit 1
+  fi
+  if [[ $debug -eq 1 ]]; then
+    start_wait &
+  else
+    start_wait 2>/dev/null &
+  fi
+  wait
+}
+main "$@"
