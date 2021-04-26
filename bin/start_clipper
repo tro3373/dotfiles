@@ -15,6 +15,7 @@ initialize() {
       -d) debug= ;;
     esac
   done
+  check
 }
 
 check() {
@@ -26,7 +27,6 @@ check() {
     echo "No clip command exist" 1>&2
     exit 1
   fi
-  check
 }
 
 clipd() {
