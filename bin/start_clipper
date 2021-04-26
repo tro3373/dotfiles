@@ -6,16 +6,16 @@ debug=0
 has() { command -v ${1} >&/dev/null; }
 is_debug() { [[ $debug -eq 1 ]]; }
 initialize() {
+  check
   if [[ -e $pidf ]]; then
     is_debug && echo "=> Already clipd running."
     exit 0
   fi
   for arg in "$@"; do
     case "$arg" in
-      -d) debug= ;;
+      -d) debug=1 ;;
     esac
   done
-  check
 }
 
 check() {
@@ -32,7 +32,7 @@ check() {
 clipd() {
   while (true); do
     is_debug && echo "=> Waiting clip.."
-    nc -l 5556 | clip
+    nc -l -p 5556 | clip
   done
 }
 
@@ -54,4 +54,4 @@ main() {
   trap end 0 1 2 3 15
   clipd
 }
-main "$@" &
+main "$@" -d &
