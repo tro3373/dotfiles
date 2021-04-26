@@ -21,6 +21,8 @@ Host vag
   # For chrome proxy browsing
   # https://qiita.com/iredic/items/47b5c8c573bfea51be14
   DynamicForward localhost:5963
+  # https://gist.github.com/dergachev/8259104
+  RemoteForward 5556 localhost:5556
 EOL
   echo "===> vag config setupped  to .ssh/config."
 }
