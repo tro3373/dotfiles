@@ -46,6 +46,7 @@ case "${OSTYPE}" in
     # alias nvim=$(which vim)
     alias vim=gvim
     alias git="PATH=/usr/bin winpty git"
+    alias tig="PATH=/usr/bin winpty tig"
     ;;
 esac
 
