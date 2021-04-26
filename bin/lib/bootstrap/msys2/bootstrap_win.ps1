@@ -32,7 +32,10 @@ scoop install sumatrapdf
 scoop install mpc-hc
 # scoop install gitkraken
 scoop install tortoisesvn
+
 #(TODO) scoop install virtualbox
+# https://laptrinhx.com/docker-wsl2-to-vagrant-virtualbox-wo-windows-de-bing-yongsuru-huan-jing-zuo-cheng-fang-fa-2550350989/
+#(TODO) scoop install virtualbox-with-extension-pack-np
 scoop install vagrant
 scoop install slack
 scoop install autohotkey
