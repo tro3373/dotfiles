@@ -30,10 +30,14 @@ check() {
 }
 
 clipd() {
+  local os=$(os)
   while (true); do
     is_debug && echo "=> Waiting clip.."
-    # nc -l -p 5556 | clip
-    nc -l -p 5556 localhost |clip
+    if [[ $os == mac ]]; then
+      nc -l 5556
+    else
+      nc -l -p 5556 localhost
+    fi | clip
   done
 }
 
@@ -44,7 +48,7 @@ end() {
 }
 
 main() {
-  # set -eo pipefail
+  set -eo pipefail
   initialize "$@"
   echo $$ >$pidf
   # 0 プロセス終了時に、プロセスが自分自身に対して送出する EXIT シグナル。
