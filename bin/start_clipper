@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+readonly port=5556
 readonly pidf=/tmp/clipd.pid
 debug=0
 
@@ -32,23 +33,33 @@ check() {
 clipd() {
   local os=$(os)
   while (true); do
-    is_debug && echo "=> Waiting clip.."
+    [[ ! -e $pidf ]] && break
+    echo "=> Start Waiting clipd.."
     if [[ $os == mac ]]; then
-      nc -l 5556
+      nc -l $port
     else
-      nc -l -p 5556 localhost
-    fi | clip
+      nc -l -p $port localhost
+    fi |
+      clip |
+      if is_debug; then
+        cat -
+      else
+        cat - >&/dev/null
+      fi
   done
 }
 
 end() {
-  [[ ! -e $pidf ]] && return
-  is_debug && echo "=> End Removing $pidf.."
+  if [[ ! -e $pidf ]]; then
+    echo "=> Ending clipd.."
+    return
+  fi
+  echo "=> End Removing $pidf.."
   rm $pidf
 }
 
 main() {
-  set -eo pipefail
+  # set -eo pipefail
   initialize "$@"
   echo $$ >$pidf
   # 0 プロセス終了時に、プロセスが自分自身に対して送出する EXIT シグナル。
@@ -60,4 +71,5 @@ main() {
   trap end 0 1 2 3 15
   clipd
 }
-main "$@" -d &
+# main "$@" -d &
+main "$@" &
