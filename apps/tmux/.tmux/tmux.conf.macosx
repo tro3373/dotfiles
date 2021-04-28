@@ -1,11 +1,16 @@
 bind C-o display-message "Mac OS-X conf loaded"
 
-set -g default-command 'reattach-to-user-namespace -l zsh'
+# @see https://qiita.com/upinetree/items/cd80bc7865c52091be10
+# tmux 2.6 からは、以下で説明している reattach-to-user-namespace の設定は不要です。
+# set -g default-command 'reattach-to-user-namespace -l zsh'
 
 # コピーした内容をクリップボードに送る
 # unbind   -T copy-mode-vi Enter
 # bind-key -T copy-mode-vi Enter send -X copy-pipe "reattach-to-user-namespace pbcopy"
-bind-key -T copy-mode-vi y     send -X copy-pipe "reattach-to-user-namespace pbcopy"
+# bind-key -T copy-mode-vi y send -X copy-pipe "reattach-to-user-namespace pbcopy"
+# bind-key -T copy-mode-vi y send -X copy-pipe "pbcopy"
+bind-key -T copy-mode-vi y send -X copy-pipe "cat - |~/.dot/bin/clip"
 
 # クリップボードの内容を貼り付ける
-bind -r C-v run-shell "reattach-to-user-namespace pbpaste | tmux load-buffer - && tmux paste-buffer"
+# bind -r C-v run-shell "reattach-to-user-namespace pbpaste | tmux load-buffer - && tmux paste-buffer"
+bind -r C-v run-shell "pbpaste | tmux load-buffer - && tmux paste-buffer"
