@@ -3,6 +3,7 @@
 readonly command_name=$(basename $0)
 readonly port=5556
 readonly direct=0
+readonly debug=0
 readonly pidf=/tmp/clipd.pid
 daemon=0
 
@@ -56,7 +57,11 @@ initialize() {
 }
 
 direct() { test $direct -eq 1; }
-hasd() { netstat -ln | grep $port >&/dev/null; }
+hasd() {
+  local opt="-ln"
+  [[ $OSTYPE =~ msys ]] && opt="-an"
+  netstat $opt | grep $port >&/dev/null
+}
 
 _clip() {
   cat - |
@@ -71,7 +76,7 @@ _start_clipd() {
   echo $$ >$pidf
   while (true); do
     [[ ! -e $pidf ]] && break
-    echo "=> Start Waiting clipd.."
+    [[ $debug -eq 1 ]] && echo "=> Start Waiting clipd.."
     if [[ $OSTYPE =~ darwin* ]]; then
       nc -l $port
     else
@@ -107,7 +112,7 @@ _clippp() {
       *) cat - | xsel -bi --display ${DISPLAY:-:0} ;;
     esac
   # echo "==> clipped. $_val"
-  echo "==> clipped."
+  [[ $debug -eq 1 ]] && echo "==> clipped."
 }
 
 main() {
