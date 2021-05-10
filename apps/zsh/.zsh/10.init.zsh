@@ -247,7 +247,8 @@ _initialize() {
     export DISPLAY=:0
     ${DOTPATH}/bin/start_xvfb
   else
-    ${DOTPATH}/bin/start_clipper
+    # ${DOTPATH}/bin/start_clipper
+    ${DOTPATH}/bin/clip -d
   fi
   # ${DOTPATH}/bin/tmux_dog
   load_zsh ~/.works.zsh

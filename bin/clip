@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
-# current_dir=$(pwd)
-# script_dir=$(cd $(dirname $0); pwd)
-command_name=$(basename $0)
-clip_val=
+readonly command_name=$(basename $0)
+readonly port=5556
+readonly direct=0
+readonly pidf=/tmp/clipd.pid
+daemon=0
 
 usage() {
   cat <<EOF
@@ -20,69 +21,101 @@ EOF
 }
 
 has() { command -v ${1} >&/dev/null; }
-
-is_clipperable() { has nc && has clipper && pgrep -alf clipper >&/dev/null; }
-
-initialize() {
-  if [[ $# -eq 1 && $1 =~ ^(-h|--help)$ ]]; then
-    usage
-    exit 0
-  fi
-  if [[ $# -eq 0 && ! -p /dev/stdin ]]; then
-    usage
-    exit 0
-  fi
-  is_clipperable && return
-  case "${OSTYPE}" in
-    msys*) ;;
-
-    darwin*)
-      check pbcopy
-      ;;
-    *)
-      check xsel
-      ;;
-  esac
+hass() {
+  for arg in "$@"; do
+    has $arg && continue
+    echo "No such command $arg exist." 1>&2
+    exit 1
+  done
 }
 
 check() {
-  if ! has $1; then
-    echo "==> No $1 command exist." >&2
+  local use_commands=("nc")
+  case "${OSTYPE}" in
+    msys*) ;;
+    darwin*) use_commands+=("pbcopy") ;;
+    *) use_commands+=("xsel") ;;
+  esac
+  hass "${use_commands[@]}"
+  if [[ $daemon -ne 1 && ! -p /dev/stdin ]]; then
+    echo "No clip target(stdin) exist." 1>&2
     exit 1
   fi
 }
 
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -d) daemon=1 ;;
+    esac
+    shift
+  done
+  check
+}
+
+direct() { test $direct -eq 1; }
+hasd() { netstat -ln | grep $port >&/dev/null; }
+
 _clip() {
-  if [[ $# -gt 0 ]]; then
-    clip_val="$*"
-  fi
-  if [[ -p /dev/stdin ]]; then
-    clip_val="$clip_val$(cat -)"
-  fi
-  echo -n -e "$clip_val" |
-    if is_clipperable; then
-      cat - | nc localhost 8377
+  cat - |
+    if ! direct && hasd; then
+      nc -c localhost $port
     else
-      case "${OSTYPE}" in
-        msys*)
-          cat - >/dev/clipboard
-          ;;
-        darwin*)
-          pbcopy
-          ;;
-        *)
-          local _display=${DISPLAY:-:0}
-          xsel -bi --display $_display
-          # cat - |
-          #   tee -a $0.log |
-          #   xsel -bi --display $_display
-          ;;
-      esac
+      _clippp
     fi
+}
+
+_start_clipd() {
+  echo $$ >$pidf
+  while (true); do
+    [[ ! -e $pidf ]] && break
+    echo "=> Start Waiting clipd.."
+    if [[ $OSTYPE =~ darwin* ]]; then
+      nc -l $port
+    else
+      # nc -v -c -l -p $port localhost
+      nc -l -p $port localhost
+    fi |
+      _clippp
+  done
+}
+
+_end_clipd() {
+  if [[ ! -e $pidf ]]; then
+    echo "=> Ending clipd.."
+    return
+  fi
+  echo "=> End Removing $pidf.."
+  rm $pidf
+}
+
+_clipd() {
+  # [[ -e $pidf ]] && echo "=> Already clipd pidf exist." && return
+  hasd && echo "=> Already clipd running." && return
+  trap _end_clipd 0 1 2 3 15
+  _start_clipd
+}
+
+_clippp() {
+  local _val="$(cat -)"
+  echo -n -e "$_val" |
+    case "${OSTYPE}" in
+      msys*) cat - >/dev/clipboard ;;
+      darwin*) cat - | pbcopy ;;
+      *) cat - | xsel -bi --display ${DISPLAY:-:0} ;;
+    esac
+  # echo "==> clipped. $_val"
+  echo "==> clipped."
 }
 
 main() {
   initialize "$@"
-  _clip "$@" && echo "==> clipped."
+  if [[ $daemon -eq 1 ]]; then
+    _clipd
+    return
+  fi
+  _clip "$@"
 }
 main "$@"

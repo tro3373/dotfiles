@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+
+# current_dir=$(pwd)
+# script_dir=$(cd $(dirname $0); pwd)
+command_name=$(basename $0)
+clip_val=
+
+usage() {
+  cat <<EOF
+
+Copy to os clipboard for wrap different distribution.
+Arguments and Normal input will be clipped.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+
+EOF
+}
+
+has() { command -v ${1} >&/dev/null; }
+
+is_clipperable() { has nc && has clipper && pgrep -alf clipper >&/dev/null; }
+
+initialize() {
+  if [[ $# -eq 1 && $1 =~ ^(-h|--help)$ ]]; then
+    usage
+    exit 0
+  fi
+  if [[ $# -eq 0 && ! -p /dev/stdin ]]; then
+    usage
+    exit 0
+  fi
+  is_clipperable && return
+  case "${OSTYPE}" in
+    msys*) ;;
+
+    darwin*)
+      check pbcopy
+      ;;
+    *)
+      check xsel
+      ;;
+  esac
+}
+
+check() {
+  if ! has $1; then
+    echo "==> No $1 command exist." >&2
+    exit 1
+  fi
+}
+
+_clip() {
+  if [[ $# -gt 0 ]]; then
+    clip_val="$*"
+  fi
+  if [[ -p /dev/stdin ]]; then
+    clip_val="$clip_val$(cat -)"
+  fi
+  echo -n -e "$clip_val" |
+    if is_clipperable; then
+      cat - | nc localhost 8377
+    else
+      case "${OSTYPE}" in
+        msys*)
+          cat - >/dev/clipboard
+          ;;
+        darwin*)
+          pbcopy
+          ;;
+        *)
+          local _display=${DISPLAY:-:0}
+          xsel -bi --display $_display
+          # cat - |
+          #   tee -a $0.log |
+          #   xsel -bi --display $_display
+          ;;
+      esac
+    fi
+}
+
+main() {
+  initialize "$@"
+  _clip "$@" && echo "==> clipped."
+}
+main "$@"
