@@ -74,6 +74,14 @@ alias rea
 
 snippet has
   has() { command -v \${1} >& /dev/null; }
+snippet hass
+  hass() {
+    for arg in "\$@"; do
+      has \$arg && continue
+      echo "No such command \$arg exist." 1>&2
+      exit 1
+    done
+  }
 
 snippet shellcheckignore
 alias ignore
