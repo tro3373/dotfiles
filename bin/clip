@@ -58,7 +58,7 @@ initialize() {
   check
 }
 
-direct() { test $direct -eq 2; }
+direct() { test $direct -eq 1 || test "$(logname)" == vagrant; }
 hasd() {
   if [[ $OSTYPE =~ msys ]]; then
     netstat -an | grep $port >&/dev/null
