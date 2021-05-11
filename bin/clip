@@ -59,13 +59,7 @@ initialize() {
 }
 
 direct() { test $direct -eq 1 || test "$(logname)" == vagrant; }
-hasd() {
-  if [[ $OSTYPE =~ msys ]]; then
-    netstat -an | grep $port >&/dev/null
-  else
-    netstat -an | grep $port | grep LISTEN >&/dev/null
-  fi
-}
+hasd() { netstat -an | grep $port | grep LISTEN >&/dev/null; }
 killd() {
   if ! hasd; then
     echo "No kill target exist."
