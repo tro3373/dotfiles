@@ -58,7 +58,7 @@ initialize() {
   check
 }
 
-direct() { test $direct -eq 1 || test "$(logname)" == vagrant; }
+direct() { test $direct -eq 1 || test "$(whoami)" == vagrant; }
 hasd() { netstat -an | grep $port | grep LISTEN >&/dev/null; }
 killd() {
   if ! hasd; then
