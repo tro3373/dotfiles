@@ -5,7 +5,7 @@ _initialize_env() {
   export GENMANPATHF=$HOME/.manpath
   export WORKPATHF=$HOME/.work.path
   [ ${OSTYPE} = "msys" ] && export WINHOME=/c/Users/$(whoami)
-  [[ -n $WSL_DISTRO_NAME ]] && export WINHOME=/mnt/c/Users/$(cmd.exe /c "echo %USERNAME%" 2>/dev/null)
+  [[ -n $WSL_DISTRO_NAME ]] && export WINHOME=/mnt/c/Users/$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
 }
 
 zcompile_ifneeded() {

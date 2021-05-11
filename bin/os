@@ -1,6 +1,7 @@
 #!/bin/bash
 
-is_wsl() { [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]]; }
+# is_wsl() { [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]]; }
+is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
 
 # TODO indent
 detect_os() {

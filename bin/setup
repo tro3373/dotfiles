@@ -104,20 +104,25 @@ handle_view_if_needed() {
 
 make_setup_dirs() {
   local works_home=$HOME
-  if is_msys; then
+  if is_msys || is_wsl; then
     if [ -z $WINHOME ]; then
-      WINHOME="$(cd "/c/Users/$(whoami)" && pwd)"
+      is_msys && WINHOME="$(cd "/c/Users/$(whoami)" && pwd)"
+      # is_wsl && WINHOME=/mnt/c/Users/$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | sed -e 's,\r,,g')
+      if is_wsl; then
+        local _u=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
+        WINHOME=$(echo /mnt/c/Users/$_u | tr -d '\r' | tr -d '\n')
+      fi
     fi
     works_home=$WINHOME
   fi
   make_dir_if_needed "$works_home/bin"
   make_dir_if_needed "$works_home/tools"
   make_dir_if_needed "$works_home/works/00_memos"
-  if ! is_msys; then
+  if ! is_msys && ! is_wsl; then
     return
   fi
   make_lnk_with_bkup $WINHOME $HOME/win
-  make_lnk_with_bkup $WINHOME/bin $HOME/bin
+  # make_lnk_with_bkup $WINHOME/bin $HOME/bin
   make_lnk_with_bkup $WINHOME/tools $HOME/tools
   make_lnk_with_bkup $WINHOME/works $HOME/works
   make_lnk_with_bkup $WINHOME/Downloads $HOME/Downloads

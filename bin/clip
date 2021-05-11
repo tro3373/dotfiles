@@ -108,7 +108,7 @@ _clipd() {
   _start_clipd
 }
 
-is_wsl() { [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]]; }
+is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
 
 _clippp() {
   local _OSTYPE=$OSTYPE

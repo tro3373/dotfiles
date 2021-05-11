@@ -1,21 +1,27 @@
 #!/usr/bin/env bash
 
 install_common() { not_supported; }
-install_arch()   { not_supported; }
-install_msys()   { not_supported; }
+install_arch() {
+  ! os wsl && not_supported
+  setting_msys
+}
+install_msys() { not_supported; }
 install_cygwin() { not_supported; }
-install_mac()    { not_supported; }
+install_mac() { not_supported; }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
-setting_arch()   { not_supported; }
-setting_msys()   {
+setting_arch() {
+  ! os wsl && not_supported
+  setting_msys
+}
+setting_msys() {
   # local dst="${WINHOME}/AppData/Local/Microsoft/Windows Terminal/settings.json"
   local dst="${WINHOME}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"
   make_lnk_with_bkup "$app_dir/settings.json" "${dst}"
 }
 setting_cygwin() { not_supported; }
-setting_mac()    { not_supported; }
+setting_mac() { not_supported; }
 setting_ubuntu() { not_supported; }
 setting_redhat() { not_supported; }
 #is_installed
