@@ -3,7 +3,6 @@
 readonly command_name=$(basename $0)
 readonly port=5556
 readonly direct=0
-readonly debug=0
 readonly pidf=/tmp/clipd.pid
 daemon=0
 
@@ -17,6 +16,8 @@ Arguments and Normal input will be clipped.
       $command_name [option]
     Options
       -h|--help : Show this usage
+      -d        : start daemon
+      -k        : kill daemon
 
 EOF
 }
@@ -50,17 +51,27 @@ initialize() {
     case "$1" in
       -h | --help) usage && exit 0 ;;
       -d) daemon=1 ;;
+      -k) killd && exit 0 ;;
     esac
     shift
   done
   check
 }
 
-direct() { test $direct -eq 1; }
+direct() { test $direct -eq 2; }
 hasd() {
-  local opt="-ln"
-  [[ $OSTYPE =~ msys ]] && opt="-an"
-  netstat $opt | grep $port >&/dev/null
+  if [[ $OSTYPE =~ msys ]]; then
+    netstat -an | grep $port >&/dev/null
+  else
+    netstat -an | grep $port | grep LISTEN >&/dev/null
+  fi
+}
+killd() {
+  if ! hasd; then
+    echo "No kill target exist."
+  fi
+  _end_clipd
+  echo "clipd killed" | _clip
 }
 
 _clip() {
@@ -76,7 +87,7 @@ _start_clipd() {
   echo $$ >$pidf
   while (true); do
     [[ ! -e $pidf ]] && break
-    [[ $debug -eq 1 ]] && echo "=> Start Waiting clipd.."
+    echo "=> Start Waiting clipd.."
     if [[ $OSTYPE =~ darwin* ]]; then
       nc -l $port
     else
@@ -112,7 +123,7 @@ _clippp() {
       *) cat - | xsel -bi --display ${DISPLAY:-:0} ;;
     esac
   # echo "==> clipped. $_val"
-  [[ $debug -eq 1 ]] && echo "==> clipped."
+  echo "==> clipped."
 }
 
 main() {
