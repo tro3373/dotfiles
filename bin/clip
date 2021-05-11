@@ -108,10 +108,15 @@ _clipd() {
   _start_clipd
 }
 
+is_wsl() { [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]]; }
+
 _clippp() {
+  local _OSTYPE=$OSTYPE
+  is_wsl && _OSTYPE=wsl
   local _val="$(cat -)"
   echo -n -e "$_val" |
-    case "${OSTYPE}" in
+    case "${_OSTYPE}" in
+      wsl) cat - | clip.exe ;;
       msys*) cat - >/dev/clipboard ;;
       darwin*) cat - | pbcopy ;;
       *) cat - | xsel -bi --display ${DISPLAY:-:0} ;;
