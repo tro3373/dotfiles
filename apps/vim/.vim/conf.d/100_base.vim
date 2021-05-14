@@ -297,3 +297,25 @@ if executable(s:clip)
     autocmd TextYankPost * if v:event.operator ==# 'y' | call system(s:clip, @0) | endif
   augroup END
 endif
+
+" Enable Java Highlight
+" @see https://nanasi.jp/articles/vim/java_vim.html
+" 標準クラス名のハイライト
+let java_highlight_all = 1
+" デバッグ文のハイライト
+let java_highlight_debug=1
+" C++ キーワードのハイライト
+" 下記のC++言語のキーワードをハイライトします。
+" auto delete enum extern friend inline redeclared
+" register signed sizeof struct template typedef union
+" unsigned operator
+let java_allow_cpp_keywords=1
+" 余分な空白に対して警告
+let java_space_errors=1
+" メソッドの宣言文と、ブレースのハイライト
+let java_highlight_functions = 1
+" @see https://superuser.com/questions/627636/better-syntax-highlighting-for-java-in-vim
+" Some more highlights, in addition to those suggested by cmcginty
+" highlight link javaScopeDecl Statement
+" highlight link javaType Type
+" highlight link javaDocTags PreProc
