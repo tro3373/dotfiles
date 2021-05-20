@@ -1,19 +1,38 @@
 #!/usr/bin/env bash
 
 readonly command_name=$(basename $0)
-readonly def_command="bin/tail_tomcat_log"
 
-main() {
-  local prj=${1}
-  [[ -z $prj ]] && echo "Specify prj to ssh" 1>&2 && exit 1
+split2() {
+  local window_name="${command_name}_$prj"
+  tmux rename-window $window_name
+  tmux split-window -v
+  tmux send-keys -t $window_name.1 "ssh ${prj}a1" C-m
+  tmux send-keys -t $window_name.2 "ssh ${prj}a2" C-m
+}
+
+split4() {
   local window_name="${command_name}_$prj"
   tmux rename-window $window_name
   tmux split-window -v
   tmux split-window -v -t $window_name.1
   tmux split-window -v -t $window_name.3
-  tmux send-keys -t $window_name.1 "ssh ${prj}a1 $def_command" C-m
-  tmux send-keys -t $window_name.2 "ssh ${prj}a2 $def_command" C-m
+  tmux send-keys -t $window_name.1 "ssh ${prj}a1 $command" C-m
+  tmux send-keys -t $window_name.2 "ssh ${prj}a2 $command" C-m
   tmux send-keys -t $window_name.3 "ssh ${prj}a1" C-m
   tmux send-keys -t $window_name.4 "ssh ${prj}a2" C-m
+}
+
+main() {
+  local prj=${1}
+  local command=${2}
+  [[ -z $prj ]] && echo "Specify prj to ssh" 1>&2 && exit 1
+  if [[ -n $command ]]; then
+    if [[ $command -eq 1 ]]; then
+      command="bin/tail_tomcat_log"
+    fi
+    split4
+    return
+  fi
+  split2
 }
 main "$@"
