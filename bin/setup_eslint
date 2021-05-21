@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+#-------------------------------------------------------
+# @ see https://blog.ojisan.io/prettier-eslint-cli
+#-------------------------------------------------------
+cat_add_scripts() {
+  cat <<'EOF'
+  "scripts": {
+    "lint-fix": "eslint --fix './**/*.{js,vue}' && prettier --write './**/*.{js,vue}'",
+  },
+EOF
+}
+cat_husky_settings() {
+  cat <<'EOF'
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,vue}": [
+      "npm run lint-fix",
+      "git add"
+    ]
+  }
+EOF
+}
+
+command_name=$(basename $0)
+dummy="echo"
+vue=0
+husky=0
+args=()
+usage() {
+  cat <<EOF
+
+Enable eslint/prettier husky settings
+
+  Usage:
+    $command_name [option]
+  Options
+    -h|--help : Show this usage
+    -e        : Excute (default is dry-run mode)
+    -k        : With husky
+    -v        : With vue pkgs
+
+EOF
+}
+add_args() { args+=("$@"); }
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      -v) vue=1 ;;
+      -k) husky=1 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+}
+main() {
+  initialize "$@"
+
+  local pkgs=(eslint eslint-config-prettier prettier)
+  # pkgs+=("yarn prettier-eslint-cli prettier-eslint")
+  if [[ $husky -eq 1 ]]; then
+    pkgs+=("husky" "lint-staged")
+  fi
+  if [[ $vue -eq 1 ]]; then
+    pkgs+=("eslint-plugin-vue" "babel-eslint")
+  fi
+  $dummy npm i -D "${pkgs[@]}"
+  echo "Bellow settings is needed."
+  cat_add_scripts
+  if [[ $husky -eq 1 ]]; then
+    echo "Bellow husky settings also is needed."
+    cat_husky_settings
+  fi
+}
+main "$@"
