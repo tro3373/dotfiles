@@ -11,10 +11,10 @@
   "editor.fontLigatures": false,
   "editor.insertSpaces": true,
   "editor.wordSeparators": "`~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?、。　",
-  // "editor.formatOnSave": true,
+  "editor.formatOnSave": true, // Prettier を実行
   "editor.codeActionsOnSave": {
     "source.fixAll": true,
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": true // ESLint を実行
   },
   "eslint.workingDirectories": [{ "mode": "auto" }],
   // "eslint.autoFixOnSave": true,
@@ -60,5 +60,18 @@
     "**/.svn": true,
     "**/.git": true,
     "**/.DS_Store": true
+  },
+  "redhat.telemetry.enabled": false,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }
