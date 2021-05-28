@@ -29,7 +29,8 @@
     "defaults": {
       // Put settings here that you want to apply to all profiles.
       "theme": "dark",
-      "colorScheme": "One Half Dark",
+      // "colorScheme": "One Half Dark",
+      "colorScheme": "Hybrid",
       // "backgroundImage": "C:\\Windows\\Web\\Wallpaper\\Windows\\img0.jpg",
       // "backgroundImageOpacity": 0.3,
       // frame opacity.
@@ -96,7 +97,54 @@
 
   // Add custom color schemes to this array.
   // To learn more about color schemes, visit https://aka.ms/terminal-color-schemes
-  "schemes": [],
+  "schemes": [
+    {
+      "name": "Hybrid",
+      "black": "#2a2e33",
+      "red": "#b84d51",
+      "green": "#b3bf5a",
+      "yellow": "#e4b55e",
+      "blue": "#6e90b0",
+      "purple": "#a17eac",
+      "cyan": "#7fbfb4",
+      "white": "#b5b9b6",
+      "brightBlack": "#1d1f22",
+      "brightRed": "#8d2e32",
+      "brightGreen": "#798431",
+      "brightYellow": "#e58a50",
+      "brightBlue": "#4b6b88",
+      "brightPurple": "#6e5079",
+      "brightCyan": "#4d7b74",
+      "brightWhite": "#5a626a",
+      "background": "#161719",
+      "foreground": "#b7bcba",
+      "selectionBackground": "#1e1f22",
+      "cursorColor": "#b7bcba"
+    },
+    {
+      "name": "Afterglow",
+      "black": "#151515",
+      "red": "#ac4142",
+      "green": "#7e8e50",
+      "yellow": "#e5b567",
+      "blue": "#6c99bb",
+      "purple": "#9f4e85",
+      "cyan": "#7dd6cf",
+      "white": "#d0d0d0",
+      "brightBlack": "#505050",
+      "brightRed": "#ac4142",
+      "brightGreen": "#7e8e50",
+      "brightYellow": "#e5b567",
+      "brightBlue": "#6c99bb",
+      "brightPurple": "#9f4e85",
+      "brightCyan": "#7dd6cf",
+      "brightWhite": "#f5f5f5",
+      "background": "#212121",
+      "foreground": "#d0d0d0",
+      "selectionBackground": "#303030",
+      "cursorColor": "#d0d0d0"
+    }
+  ],
 
   // Add custom actions and keybindings to this array.
   // To unbind a key combination from your defaults.json, set the command to "unbound".
