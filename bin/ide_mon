@@ -3,7 +3,6 @@
 readonly command_name=$(basename $0)
 
 split2() {
-  local window_name="${command_name}_$prj"
   tmux rename-window $window_name
   tmux split-window -v
   tmux send-keys -t $window_name.1 "ssh ${prj}a1" C-m
@@ -11,7 +10,6 @@ split2() {
 }
 
 split4() {
-  local window_name="${command_name}_$prj"
   tmux rename-window $window_name
   tmux split-window -v
   tmux split-window -v -t $window_name.1
@@ -22,9 +20,21 @@ split4() {
   tmux send-keys -t $window_name.4 "ssh ${prj}a2" C-m
 }
 
+get_window_name() {
+  local idx=0
+  while true; do
+    idx=$((idx + 1))
+    local _name="${command_name}_${prj}_$idx"
+    tmux lsw | grep $_name >&/dev/null && continue
+    echo $_name
+    break
+  done
+}
+
 main() {
   local prj=${1}
   local command=${2}
+  local window_name="$(get_window_name)"
   [[ -z $prj ]] && echo "Specify prj to ssh" 1>&2 && exit 1
   if [[ -n $command ]]; then
     if [[ $command -eq 1 ]]; then
