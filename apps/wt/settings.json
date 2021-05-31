@@ -44,7 +44,8 @@
       // UI
       "padding": "10, 10, 10, 10",
       "scrollBarState": "visible",
-      "closeOnExit": true
+      "closeOnExit": true,
+      "bellStyle": "none"
     },
     "list": [
       {
