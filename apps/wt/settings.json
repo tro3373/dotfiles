@@ -36,6 +36,7 @@
       // frame opacity.
       "useAcrylic": false,
       "fontFace": "HackGen Console",
+      "fontSize": 14,
       // cursor
       "cursorColor": "#FFFFFF",
       "cursorHeight": 25,
