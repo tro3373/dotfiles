@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+main() {
+  set -x
+  [[ -z $TMUX ]] && return
+  local selected="$(tmux ls | fzf-tmux | cut -d : -f 1)"
+  [[ -z $selected ]] && return
+  tmux switch -t $selected
+}
+main "$@"
