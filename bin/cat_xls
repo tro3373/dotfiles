@@ -28,7 +28,8 @@ def for_sheet(wb, sheetname):
     sheet = wb[sheetname]
     start_row = get_start_row(sheet)
     table_name_jp = sheet.cell(row=2, column=23).value
-    table_name = sheet.cell(row=1, column=23).value
+    # table_name = sheet.cell(row=1, column=23).value
+    table_name = sheetname
     # print(sheet['A1'].value)
     # print(start_row)
     row = start_row
