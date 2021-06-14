@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """cat xls content."""
 
 import argparse
 import re
-# import os
 
 import openpyxl
 
+# import os
 
 # def get_xls():
 #     # print(os.getcwd())
@@ -47,7 +46,7 @@ def for_sheet(wb, sheetname):
             #     if not value:
             #         return
             #     continue
-            if value == None:
+            if value is None:
                 if col == 1:
                     return
                 value = ""
@@ -68,12 +67,13 @@ def for_sheet(wb, sheetname):
             # print("--------------------")
             return
 
-# def for_row():
-#
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("path", help="Specify xlsx file path", type=str)
-    parser.add_argument("--list", "-l", help="Optional show sheet name only",
+    parser.add_argument("--list",
+                        "-l",
+                        help="Optional show sheet name only",
                         action="store_true")
     args = parser.parse_args()
     # args.param
@@ -87,8 +87,9 @@ def main():
             print(sheetname)
             continue
         no += 1
-        if not re.match('^[tm]_.+', sheetname) or re.match('.*_データ$', sheetname):
-          continue
+        if not re.match('^[tm]_.+', sheetname) or re.match(
+                '.*_データ$', sheetname):
+            continue
         # print(f"{no}:{sheetname}")
         # if (no == 1):
         #     continue
