@@ -21,6 +21,12 @@
 
   "multiLinePasteWarning": false,
 
+  // Runch position settings
+  "initialCols": 202,
+  "initialPosition": "50,0", // x,y
+  "initialRows": 49,
+  "launchMode": "default", // maximized or not
+
   // A profile specifies a command to execute paired with information about how it should look and feel.
   // Each one of them will appear in the 'New Tab' dropdown,
   //   and can be invoked from the commandline with `wt.exe -p xxx`
