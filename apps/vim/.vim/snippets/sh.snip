@@ -293,6 +293,9 @@ snippet forarg
     esac
   done
 
+snippet isdummy
+  is_dummy() { test -n $dummy; }
+
 snippet dummyset
   dummy="echo"
   initialize() {
