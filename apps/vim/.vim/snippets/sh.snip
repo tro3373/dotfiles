@@ -293,11 +293,9 @@ snippet forarg
     esac
   done
 
-snippet isdummy
-  is_dummy() { test -n $dummy; }
-
 snippet dummyset
   dummy="echo"
+  is_dummy() { [[ -n $dummy ]]; }
   initialize() {
     for arg in "$@"; do
       case "$arg" in
@@ -306,7 +304,7 @@ snippet dummyset
     done
   }
   initialize "$@"
-  [[ -n $dummy ]] && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
 
 snippet initialize
   initialize() {
@@ -330,6 +328,7 @@ snippet reado
 snippet initializzzz
   command_name=$(basename \$0)
   dummy="echo"
+  is_dummy() { [[ -n $dummy ]]; }
   args=()
   usage() {
     cat <<EOF
@@ -367,6 +366,7 @@ snippet initializzzz
       echo "Arguments: $arg"
     done
     # echo $file
+    is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
   }
   main "$@"
 
@@ -407,6 +407,7 @@ snippet innnk
 
 snippet exe
   dummy="echo"
+  is_dummy() { [[ -n $dummy ]]; }
   initialize() {
     for arg in "$@"; do
       case "$arg" in
@@ -415,14 +416,14 @@ snippet exe
     done
   }
   exe() {
-    [[ -z $dummy ]] && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    ! is_dummy && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     printf "> Executing: $*" | ink yellow
-    [[ -z $dummy ]] && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    [[ -n $dummy ]] && return
+    ! is_dummy && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    is_dummy && return
     eval "$*"
   }
   initialize "$@"
-  [[ -n $dummy ]] && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
 
 snippet iffff
   if [[ -e ${1} ]]; then
@@ -454,7 +455,7 @@ alias   secondafterarg
 
 snippet cattee
   cat_do() {
-    if [[ -n \$dummy ]]; then
+    if is_dummy; then
       log "===> below stdin will be pass to '\$*'"
       cat -
       log "------------------------------------"
@@ -471,3 +472,9 @@ snippet cattee
 
 snippet seteop
   set -euxo pipefail
+
+snippet isdummy
+  is_dummy() { [[ -n $dummy ]]; }
+
+snippet iswsl
+  is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
