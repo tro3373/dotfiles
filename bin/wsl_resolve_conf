@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+command_name=$(basename $0)
+dummy="echo"
+wslconf=0
+args=()
+
+usage() {
+  cat <<EOF
+
+Generate wsl resolve.conf on vpn
+
+Usage:
+  $command_name [option]
+Options
+  -h|--help : Show this usage
+  -w|--wslconf : With generate wsl.conf to Not generate resolve.conf
+
+EOF
+}
+add_args() { args+=("$@"); }
+is_dummy() { [[ -n $dummy ]]; }
+is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
+check() {
+  if ! is_wsl; then
+    echo "Not supported os." 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      -w | --wslconf) wslconf=1 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+}
+
+cat_vpn_resolve_conf() {
+  {
+    head -1 /etc/resolv.conf | grep '^#.*generated'
+    for i in $(/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command "Get-DnsClientServerAddress -AddressFamily ipv4 | Select-Object -ExpandProperty ServerAddresses"); do
+      echo nameserver $i
+    done
+    tail -n+2 /etc/resolv.conf | grep -v '^nameserver'
+  } | tr -d '\r'
+}
+
+gen_resolve_conf() {
+  local target=/etc/resolve.conf
+  echo "==> Generating $target.."
+  cat_vpn_resolve_conf |
+    if is_dummy; then
+      cat -
+    else
+      cat - | sudo tee $target >&/dev/null
+    fi
+}
+
+cat_no_resolve_conf() {
+  cat <<'EOF'
+[network]
+generateResolvConf = false
+EOF
+}
+
+gen_no_resolve_conf() {
+  local target=/etc/wsl.conf
+  echo "==> Generating $target.."
+  if [[ -e $target ]]; then
+    grep generateResolvConf $target >&/dev/null && return
+  fi
+  cat_no_resolve_conf |
+    if is_dummy; then
+      cat -
+    else
+      cat - | sudo tee -a $target >&/dev/null
+    fi
+}
+
+main() {
+  initialize "$@"
+  if [[ $wslconf -eq 1 ]]; then
+    gen_no_resolve_conf
+  fi
+  gen_resolve_conf
+  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+}
+main "$@"
