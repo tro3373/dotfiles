@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+
+# =============================================================================
+# https://aquasoftware.net/blog/?p=1472
+# https://qiita.com/hisato_imanishi/items/0358e093cc6714b571dc
+# https://gist.github.com/nfekete/7a277bf9e25e89e1c8bfb8b64dcc08ed
+# https://zenn.dev/hashiba/articles/wls2-on-cisco-anyconnect
+# https://github.com/microsoft/WSL/issues/4277#issuecomment-779141250
+# =============================================================================
+
+readonly command_name=$(basename $0)
+readonly ps=/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
+readonly adapter_if_key="Cisco AnyConnect"
+dummy="echo"
+wslconf=0
+args=()
+
+usage() {
+  cat <<EOF
+
+Setting up Anny Connect network i/f metric and
+Generate wsl resolv.conf for wsl accessable in vpn.
+
+Usage:
+  $command_name [option]
+Options
+  -h|--help : Show this usage
+  -w|--wslconf : With generate wsl.conf to Not generate resolv.conf
+
+EOF
+}
+add_args() { args+=("$@"); }
+is_dummy() { [[ -n $dummy ]]; }
+is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
+check() {
+  if ! is_wsl; then
+    echo "Not supported os." 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      -w | --wslconf) wslconf=1 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+}
+
+exec_powershell() {
+  local _args="$*"
+  $ps -Command "$_args"
+}
+
+cat_dnses() {
+  exec_powershell "Get-DnsClientServerAddress -AddressFamily ipv4 | Select-Object -ExpandProperty ServerAddresses" |
+    tr -d '\r' |
+    sort -u |
+    while read -r ip; do
+      [[ -z $ip ]] && continue
+      [[ $ip =~ ^#.* ]] && continue
+      echo "nameserver $ip"
+    done
+}
+
+cat_vpn_resolv_conf() {
+  sed -e 's,^nameserver,# nameserver,g' /etc/resolv.conf
+  cat_dnses
+}
+
+gen_resolv_conf() {
+  local target=/etc/resolv.conf
+  echo "==> Generating $target.."
+  cat_vpn_resolv_conf |
+    if is_dummy; then
+      cat -
+    else
+      cat - | sudo tee $target >&/dev/null
+    fi
+}
+
+cat_no_resolv_conf() {
+  cat <<'EOF'
+[network]
+generateResolvConf = false
+EOF
+}
+
+gen_wsl_conf() {
+  local target=/etc/wsl.conf
+  echo "==> Generating $target.."
+  if [[ -e $target ]]; then
+    grep generateResolvConf $target >&/dev/null && return
+  fi
+  cat_no_resolv_conf |
+    if is_dummy; then
+      cat -
+    else
+      cat - | sudo tee -a $target >&/dev/null
+    fi
+}
+
+set_anny_connect_metric() {
+  echo "==> Setting $adapter_if_key metric.."
+  # # define function
+  # function Get-NetworkAddress ([Parameter(Mandatory, ValueFromPipelineByPropertyName)][string]$IPAddress, [Parameter(Mandatory, ValueFromPipelineByPropertyName)][int]$PrefixLength) {
+  #     process {
+  #         [pscustomobject]@{
+  #             Addr = $IPAddress;
+  #             Prfx = $PrefixLength;
+  #             NwAddr = [ipaddress]::Parse($IPAddress).Address -band [uint64][BitConverter]::ToUInt32([System.Linq.Enumerable]::Reverse([BitConverter]::GetBytes([uint32](0xFFFFFFFFL -shl (32 - $PrefixLength) -band 0xFFFFFFFFL))), 0);
+  #         };
+  #     }
+  # }
+  # # extend route metric
+  # $targets = Get-NetAdapter | Where-Object InterfaceDescription -Match 'Hyper-V Virtual Ethernet Adapter' | Get-NetIPAddress -AddressFamily IPv4 | Get-NetworkAddress;
+  # Get-NetAdapter | Where-Object InterfaceDescription -Match 'Cisco AnyConnect' | Get-NetRoute -AddressFamily IPv4 | Select-Object -PipelineVariable rt | Where-Object { $targets | Where-Object { $_.NwAddr -eq (Get-NetworkAddress $rt.DestinationPrefix.Split('/')[0] $_.Prfx).NwAddr } } | Set-NetRoute -RouteMetric 60000;
+  #
+  #Get-DnsClientServerAddress -AddressFamily ipv4 | Select-Object -ExpandProperty ServerAddresses
+  # shellcheck disable=SC2016
+  $dummy exec_powershell 'Get-NetAdapter | Where-Object {$_.InterfaceDescription -Match "'$adapter_if_key'"} | Set-NetIPInterface -InterfaceMetric 6000;'
+}
+
+main() {
+  initialize "$@"
+  if [[ $wslconf -eq 1 ]]; then
+    gen_wsl_conf
+  fi
+  set_anny_connect_metric
+  gen_resolv_conf
+  echo "Done" | ink cyan
+  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+}
+main "$@"
