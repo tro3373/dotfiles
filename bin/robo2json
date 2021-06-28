@@ -3,19 +3,27 @@
 readonly dataf=$0.data
 
 cat_data() {
-  if [[ -p /dev/stdin ]]; then
-    cat -
+  local f="$*"
+  if [[ -n $f ]]; then
+    if [[ -e $f ]]; then
+      cat <$f
+    else
+      echo -e "$f"
+    fi
   elif [[ -e $dataf ]]; then
     cat <$dataf
+  elif [[ -p /dev/stdin ]]; then
+    cat -
   else
     xsel -bo
   fi
 }
 
 main() {
-  cat_data |
+  cat_data "$@" |
     sed -e 's,^/.*,,g' -e '/^$/d' -e 's,^{,\,{,g' |
     sed -e '1s/^,{/{/g' |
+    sed -e 's,NumberLong(\(.*\)),\1,g' |
     sed -e 's,ObjectId(\(.*\)),\1,g' |
     sed -e 's,ISODate(\(.*\)),\1,g'
 }
