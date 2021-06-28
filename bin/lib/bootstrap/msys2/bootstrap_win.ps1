@@ -51,6 +51,7 @@ scoop bucket add java
 scoop install openjdk
 scoop install adopt8-hotspot
 
+scoop install dbeaver
 # scoop cache rm *
 scoop list
 # scoop update *
