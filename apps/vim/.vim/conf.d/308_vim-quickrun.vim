@@ -29,3 +29,4 @@ let g:quickrun_config = {
 \       "exec" : ["node " . expand('%:p')],
 \   }
 \}
+nmap <Leader>r :QuickRun<CR>
