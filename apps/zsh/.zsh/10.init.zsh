@@ -156,6 +156,7 @@ gen_path_file_ifneeded() {
   add_path "/usr/local/opt/gnu-which/libexec/gnubin"
 
   # add main env path
+  add_path /usr/local/sbin
   add_path ${HOME}/.local/bin
   add_path ${DOTPATH}/bin
   add_path ${HOME}/bin
