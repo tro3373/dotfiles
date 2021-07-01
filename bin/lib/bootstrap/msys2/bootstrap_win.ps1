@@ -40,6 +40,9 @@ scoop install vagrant
 scoop install slack
 scoop install autohotkey
 
+scoop bucket add jp https://github.com/dooteeen/scoop-for-jp
+scoop install vim-kaoriya
+
 scoop bucket add iyokan-jp https://github.com/tetradice/scoop-iyokan-jp
 scoop install sakura-editor
 scoop install winmerge-jp
