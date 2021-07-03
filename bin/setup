@@ -157,6 +157,7 @@ debug_options() {
 
 install_app() {
   default_called=0
+  is_wsl && install_wsl
   is_arch && install_arch
   is_msys && install_msys
   is_cygwin && install_cygwin
@@ -170,6 +171,7 @@ install_app() {
 
 setting_app() {
   default_called=0
+  is_wsl && setting_wsl
   is_arch && setting_arch
   is_msys && setting_msys
   is_cygwin && setting_cygwin

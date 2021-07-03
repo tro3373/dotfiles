@@ -8,6 +8,7 @@ install_common() {
   dlog "====> No install setting(INSTALL) for $app"
   install_via_os_default
 }
+install_wsl() { default_called=1; }
 install_arch() { default_called=1; }
 install_msys() { default_called=1; }
 install_cygwin() { default_called=1; }
@@ -18,6 +19,7 @@ install_redhat() { default_called=1; }
 setting_common() {
   dlog "====> No install setting(SETTING) for $app"
 }
+setting_wsl() { default_called=1; }
 setting_arch() { default_called=1; }
 setting_msys() { default_called=1; }
 setting_cygwin() { default_called=1; }
