@@ -35,7 +35,9 @@ load_funcs() {
   local search_dir=("$script_dir" "$script_dir/../../setup")
   for d in "${search_dir[@]}"; do
     [[ ! -e $d/funcs ]] && continue
+    # shellcheck disable=SC1091
     source $d/funcs arch $username
+    # shellcheck disable=SC1091
     source $d/funcs_arch
     break
   done
@@ -125,7 +127,7 @@ sudo() {
 
 main() {
   initialize "$@"
-  # setup_pacman
+  setup_pacman
   # setup_timezone
   setup_locale
   setup_user

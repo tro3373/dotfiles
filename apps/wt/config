@@ -18,6 +18,7 @@ setting_arch() {
 setting_msys() {
   # local dst="${WINHOME}/AppData/Local/Microsoft/Windows Terminal/settings.json"
   local dst="${WINHOME}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"
+  # shellcheck disable=SC2154
   make_lnk_with_bkup "$app_dir/settings.json" "${dst}"
 }
 setting_cygwin() { not_supported; }
