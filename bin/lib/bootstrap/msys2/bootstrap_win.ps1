@@ -8,55 +8,63 @@ iex (new-object net.webclient).downloadstring('https://get.scoop.sh')
 
 #(TODO) [Ctrl2Cap](https://docs.microsoft.com/ja-jp/sysinternals/downloads/ctrl2cap)
 
-
+# Insatall first..
 scoop install git
 scoop install 7zip
+
+# Add additional bucket
 scoop bucket add extras
 scoop bucket add versions
+## For vim-kaoriya
+scoop bucket add jp https://github.com/dooteeen/scoop-for-jp
+## For sakura-editor,winmerge-jp
+scoop bucket add iyokan-jp https://github.com/tetradice/scoop-iyokan-jp
+## For google-japanese-input-np
+scoop bucket add nonportable
+## For java
+scoop bucket add java
 
+
+# Install packages
 scoop install dark innounp
-# scoop checkup
-
-# theme of powershell
-scoop install concfg
+scoop install concfg # theme of powershell
 concfg import harmonic-dark
 
-scoop install googlechrome
-scoop install firefox
-
-scoop install windows-terminal
-scoop install vscode
-scoop install go
-scoop install winscp
-scoop install sumatrapdf
-scoop install mpc-hc
-# scoop install gitkraken
-scoop install tortoisesvn
-
-#(TODO) scoop install virtualbox
-# https://laptrinhx.com/docker-wsl2-to-vagrant-virtualbox-wo-windows-de-bing-yongsuru-huan-jing-zuo-cheng-fang-fa-2550350989/
-#(TODO) scoop install virtualbox-with-extension-pack-np
-scoop install vagrant
-scoop install slack
 scoop install autohotkey
-
-scoop bucket add jp https://github.com/dooteeen/scoop-for-jp
+scoop install google-japanese-input-np
+scoop install googlechrome
 scoop install vim-kaoriya
+scoop install windows-terminal
+scoop install virtualbox-with-extension-pack-np
+scoop install vagrant
+scoop install msys2
 
-scoop bucket add iyokan-jp https://github.com/tetradice/scoop-iyokan-jp
+scoop install sumatrapdf
+scoop install vscode
 scoop install sakura-editor
 scoop install winmerge-jp
+scoop install winscp
+scoop install mpc-hc
+scoop install tortoisesvn
+scoop install dbeaver
+scoop install firefox
+scoop install slack
 
-scoop bucket add nonportable
-scoop install google-japanese-input-np
-
-scoop bucket add java
+# Install lang..
+scoop install go
 scoop install openjdk
 scoop install adopt8-hotspot
 
-scoop install dbeaver
-# scoop cache rm *
+# Nouse
+# scoop install gitkraken
+#(TODO) scoop install virtualbox
+# https://laptrinhx.com/docker-wsl2-to-vagrant-virtualbox-wo-windows-de-bing-yongsuru-huan-jing-zuo-cheng-fang-fa-2550350989/
+
+Write-Host '>> Listing scoop packages..'
 scoop list
+
+# scoop checkup
+# scoop cache rm *
 # scoop update *
 # scoop reset *
 # scoop cleanup *
