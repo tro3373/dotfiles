@@ -21,8 +21,5 @@
 ## 3. setup
 
 ```
-setup -e
+./setup msys2 -e
 ```
-
-
-

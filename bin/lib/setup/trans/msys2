@@ -7,10 +7,8 @@ readonly _script_dir=$(
 source $_script_dir/../funcs_arch
 
 pre_setup() {
-  log "=> pre setting up"
-
-  setup_hostname archlinux.wsl2
-  setup_additional_pacakges
+  # log "=> pre setting up"
+  :
 }
 
 load_update_arg_apps() {
@@ -21,5 +19,6 @@ load_update_arg_apps() {
 }
 
 post_setup() {
-  log "===> reboot maybe needed."
+  # log "===> reboot maybe needed."
+  :
 }

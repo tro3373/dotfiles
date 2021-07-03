@@ -38,11 +38,13 @@ pre_setup() {
   #     gpg: keyserver refresh failed: General error
   #     ==> ERROR: A specified local key could not be updated from a keyserver.
   # permanently append
+  # shellcheck disable=SC2119
   setup_gnupg
   improve_pacman_conf
   improve_pacman_aria2
 
   # パッケージ更新
+  # shellcheck disable=SC2119
   update_and_add_pacman_packages
   setup_additional_pacakges
 }
