@@ -106,6 +106,10 @@ Server = http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
 Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
 Server = https://jpn.mirror.pkgbuild.com/$repo/os/$arch
 ###########################
+## Macedonia
+Server = http://mirror.t-home.mk/archlinux/$repo/os/$arch
+## Canada
+Server = http://mirror.frgl.pw/archlinux/$repo/os/$arch
 EOF
 }
 
