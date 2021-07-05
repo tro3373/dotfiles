@@ -81,8 +81,10 @@ install_via_curl() {
 install_common() { not_supported; }
 install_arch() {
   install_via_os_default
-  exe sudo systemctl enable docker # ログイン時にデーモン実行
-  exe sudo systemctl restart docker
+  if ! is_wsl; then
+    exe sudo systemctl enable docker # ログイン時にデーモン実行
+    exe sudo systemctl restart docker
+  fi
   install_via_curl machine
   install_via_curl compose
 }
