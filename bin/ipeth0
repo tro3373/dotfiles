@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+main() {
+  ip a show dev eth0 |
+    grep -v inet6 |
+    grep inet |
+    awk '{print $2}' |
+    sed -e 's,/.*,,g'
+}
+main "$@"

@@ -8,6 +8,7 @@
 readonly command_name=$(basename $0)
 readonly conf=$HOME/.vpn
 server=0
+with_proxy=1
 
 has() { command -v ${1} >&/dev/null; }
 
@@ -80,13 +81,24 @@ run_local() {
     sudo openconnect -u $vpn_usr $vpn_opt $vpn_srv
 }
 
+run_proxy() {
+  ! has gost && return
+  [[ $with_proxy -ne 1 ]] && return
+  local _ip=$(ipeth0)
+  local _port=5963
+  echo "==> Running proxy $_ip:$_port .." | ink yellow
+  gost -L=:$_port #|& ink yellow
+}
+
 main() {
   initialize "$@"
   source $conf
+  run_proxy &
   if [[ $server -eq 1 ]]; then
     run_server
     return
   fi
   run_local
+  wait
 }
 main "$@"
