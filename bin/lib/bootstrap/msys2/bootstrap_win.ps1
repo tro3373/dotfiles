@@ -23,6 +23,8 @@ scoop bucket add iyokan-jp https://github.com/tetradice/scoop-iyokan-jp
 scoop bucket add nonportable
 ## For java
 scoop bucket add java
+## For JetBrains
+scoop bucket add JetBrains
 
 
 # Install packages
@@ -49,6 +51,7 @@ scoop install tortoisesvn
 scoop install dbeaver
 scoop install firefox
 scoop install slack
+scoop install IntelliJ-IDEA
 
 # Install lang..
 scoop install go
