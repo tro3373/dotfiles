@@ -12,6 +12,8 @@ alias       wraperror
 snippet     lognewww
   log.New(os.Stderr, "", log.LstdFlags)
 
+snippet     zapnewww
+  logger, err := zap.NewProduction()
 
 snippet     ifstringer
   if v, ok := ${1:interface}.(fmt.Stringer); ok {
@@ -147,3 +149,14 @@ snippet strconvitoaaa
 alias   itoaaa
   strconv.Itoa(${1})
 
+snippet execrun
+  err := exec.Command("ls", "-la").Run()
+
+snippet execout
+  out, err := exec.Command("ls", "-la").Output()
+
+snippet execstart
+  cmd := exec.Command("sleep", "5s")
+  cmd.Start()
+  fmt.Println("sleep中: ", time.Now().Format("15:04:05"))
+  cmd.Wait()
