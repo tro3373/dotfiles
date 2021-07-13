@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+cat_msg() {
+  cat <<'EOF'
+Add below settings to Maven build import vm option.
+
+File > Settings > Build, Excution, Deployment > Build Tools > Maven > Importing
+`VM options for importer:` attribute settings.
+
+`-DproxySet=true -DproxyHost={Ip Address} -DproxyPort={Port No}`
+EOF
+}
+main() {
+  cat_msg
+}
+main "$@"
