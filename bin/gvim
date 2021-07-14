@@ -9,7 +9,16 @@ dlog() {
     echo "gvim debug: $*"
   fi
 }
-change() { cygpath -aw "$*"; }
+
+is_msys() { test ${OSTYPE} == "msys"; }
+is_win() { os wsl || is_msys; }
+change() {
+  if is_msys; then
+    cygpath -aw "$*"
+  else
+    wslpath -aw "$*"
+  fi
+}
 changes() {
   local tmp=
   for v in "$@"; do
@@ -67,15 +76,16 @@ set_win_env() {
 
 main() {
   set -eu
-  if [[ ${OSTYPE} != "msys" ]]; then
+  if ! is_win; then
     gvim "$@"
     return 0
   fi
 
-  local args="$@"
+  local args="$*"
   if [ "$args" = "" ]; then
     #args=$(change "$(pwd)")
-    args=$(pwd)
+    # args=$(pwd)
+    args=$WINHOME
   fi
   args="$(changes $args)"
 
@@ -86,7 +96,6 @@ main() {
   fi
   dlog "AllPath: ==> $winpath"
   dlog "Args: =====> $args"
-  local gvim_dir=vim82-kaoriya-win64
-  $WINHOME/tools/$gvim_dir/gvim.exe --remote-tab-silent $args &
+  $WINHOME/scoop/apps/vim-kaoriya/current/gvim.exe --remote-tab-silent $args &
 }
 main "$@"
