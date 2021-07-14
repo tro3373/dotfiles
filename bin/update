@@ -52,13 +52,16 @@ update_ubuntu() {
   $dummy sudo apt-get upgrade -y
   $dummy sudo apt-get dist-upgrade -y
 }
-update_msys() {
+update_scoop() {
   $dummy scoop update
   local list="${args[*]}"
   if [[ -z $list ]]; then
     list=$(scoop list | grep -E '^ .*' | grep -v vagrant | awk '{print $1}' | tr '\n' ' ')
   fi
   $dummy scoop update "$list"
+}
+update_msys() {
+  update_scoop
 }
 update_mac() {
   # no needed. brew upgrade execute brew update too
@@ -79,6 +82,9 @@ main() {
     mac) update_mac ;;
     *) not_supported ;;
   esac
+  if os wsl; then
+    update_scoop
+  fi
   ink yellow "Done!"
 }
 main "$@"
