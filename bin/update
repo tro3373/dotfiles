@@ -54,6 +54,9 @@ update_ubuntu() {
 }
 update_scoop() {
   $dummy scoop update
+  $dummy scoop cache rm '*'
+  $dummy scoop cache show
+  $dummy scoop cleanup '*'
   local list="${args[*]}"
   if [[ -z $list ]]; then
     list=$(scoop list | grep -E '^ .*' | grep -v vagrant | awk '{print $1}' | tr '\n' ' ')
