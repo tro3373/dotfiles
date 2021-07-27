@@ -3,6 +3,45 @@
 #-------------------------------------------------------
 # @ see https://blog.ojisan.io/prettier-eslint-cli
 #-------------------------------------------------------
+
+command_name=$(basename $0)
+dummy="echo"
+vue=0
+husky=0
+args=()
+usage() {
+  cat <<EOF
+
+Enable eslint/prettier husky settings
+
+  Usage:
+    $command_name [option]
+  Options
+    -h|--help : Show this usage
+    -e        : Excute (default is dry-run mode)
+    -k        : With husky
+    -v        : With vue pkgs
+
+EOF
+}
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
+add_args() { args+=("$@"); }
+is_dummy() { [[ -n $dummy ]]; }
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      -v) vue=1 ;;
+      -k) husky=1 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+}
 cat_add_scripts() {
   cat <<'EOF'
   "scripts": {
@@ -26,42 +65,6 @@ cat_husky_settings() {
 EOF
 }
 
-command_name=$(basename $0)
-dummy="echo"
-vue=0
-husky=0
-args=()
-usage() {
-  cat <<EOF
-
-Enable eslint/prettier husky settings
-
-  Usage:
-    $command_name [option]
-  Options
-    -h|--help : Show this usage
-    -e        : Excute (default is dry-run mode)
-    -k        : With husky
-    -v        : With vue pkgs
-
-EOF
-}
-add_args() { args+=("$@"); }
-initialize() {
-  while true; do
-    [[ -z $1 ]] && break
-    case "$1" in
-      -h | --help) usage && exit 0 ;;
-      -e) dummy= ;;
-      -v) vue=1 ;;
-      -k) husky=1 ;;
-      #-f*|--file*) file=${1#*=} ;;
-      #-f|--file) shift && file=$1 ;;
-      *) add_args "$1" ;;
-    esac
-    shift
-  done
-}
 cat_vscode_extensions_recommendations() {
   cat <<'EOF'
 {
@@ -75,9 +78,13 @@ EOF
 setup_vscode_extensions_recommendations() {
   local target_d="$(get_git_root)/.vscode"
   local target_f=$target_d/extensions.json
+  if [[ -e $target_f ]]; then
+    log "==> $target_f is exist. check below contents is already exist."
+    return
+  fi
   cat_vscode_extensions_recommendations |
-    if [[ -e $target_f ]]; then
-      echo "==> $target_f is exist. check below contents is exist."
+    if is_dummy; then
+      log "==> Bellow content will be added to $target_f..."
       cat -
     else
       $dummy mkdir -p
@@ -95,11 +102,12 @@ main() {
   if [[ $vue -eq 1 ]]; then
     pkgs+=("eslint-plugin-vue" "babel-eslint")
   fi
+  log "==> Installing packages.."
   $dummy npm i -D "${pkgs[@]}"
-  echo "Bellow settings is needed."
+  log "==> Bellow settings is needed to package.json."
   cat_add_scripts
   if [[ $husky -eq 1 ]]; then
-    echo "Bellow husky settings also is needed."
+    log "==> Bellow husky settings also is needed."
     cat_husky_settings
   fi
   setup_vscode_extensions_recommendations
