@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+readonly server_key=$1
+readonly sender_id=$2
+readonly token=$3
+
+main() {
+  curl -X POST \
+    --header "Authorization: key=$server_key" \
+    --header "project_id: key=$sender_id" \
+    --header Content-Type:"application/json" \
+    https://fcm.googleapis.com/fcm/send \
+    -d @- <<EOF
+{
+    "to": "$token",
+    "notification": {
+        "body": "test"
+    },
+}
+EOF
+}
+main "$@"
