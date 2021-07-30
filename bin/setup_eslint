@@ -52,6 +52,9 @@ EOF
 }
 cat_husky_settings() {
   cat <<'EOF'
+  "scripts": {
+    "prepare": "husky install",
+  },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
