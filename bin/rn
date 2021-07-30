@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+add=0
+pad=1
+dummy="echo"
+is_dummy() { [[ -n $dummy ]]; }
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -e) dummy= ;;
+      -a) add=1 ;;
+      -p) pad=0 ;;
+    esac
+  done
+}
+main() {
+  initialize "$@"
+  if [[ ! -p /dev/stdin ]]; then
+    echo "No stdin" 1>&2
+    exit 1
+  fi
+  local count=0
+  cat - |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      [[ ! -e $line ]] && continue
+      count=$((count + 1))
+      local prefix=$count
+      [[ $pad -eq 1 ]] && prefix=$(printf "%03d" $count)
+      local d=$(dirname $line)
+      local f=$(basename $line)
+      local dst=$d/${prefix}_${f}
+      if [[ $add -ne 1 ]]; then
+        local ext=${f##*.}
+        local suffix=
+        [[ -n $ext ]] && suffix=.$ext
+        dst=$d/$prefix$suffix
+      fi
+      echo "==> Renaming $line to $dst" | ink yellow
+      $dummy mv "$line" "$dst"
+    done
+  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+}
+main "$@"
