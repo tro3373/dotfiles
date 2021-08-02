@@ -77,7 +77,7 @@ update_msys() {
 update_mac() {
   log "=> Cleaning.."
   $dummy brew cleanup
-  $dummy brew cask cleanup --outdated
+  # $dummy brew cask cleanup --outdated
   log "=> Updating.."
   # no needed. brew upgrade execute brew update too
   # $dummy brew update
