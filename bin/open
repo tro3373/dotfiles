@@ -3,9 +3,9 @@
 current_dir=$(pwd)
 
 main() {
-  local args="$*"
+  local args=("$@")
   if [[ $# -eq 0 ]]; then
-    args=$current_dir
+    args=("$current_dir")
   fi
   # local _open=open
   local _open=$(type -a open | grep -v $0 | head -1 | cut -d' ' -f3)
@@ -15,12 +15,12 @@ main() {
     linux*) _open=xdg-open ;;
     cygwin*) _open=cygstart ;;
     msys*) _open=explorer ;;
-    wsl*) _open=explorer.exe && args="." ;;
+    wsl*) _open=explorer.exe && args=(".") ;;
   esac
   if [[ $OSTYPE == "msys" || $OSTYPE == "cygwin" ]]; then
-    args="$(cygpath -aw $args)"
+    args=("$(cygpath -aw "${args[@]}")")
   fi
-  echo "==> open $args"
-  $_open "$args" &>/dev/null
+  echo "==> open ${args[*]}"
+  $_open "${args[@]}" &>/dev/null
 }
 main "$@"
