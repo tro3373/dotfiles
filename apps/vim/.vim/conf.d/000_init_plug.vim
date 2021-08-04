@@ -211,9 +211,13 @@ call plug#begin('$HOME/.vim/plugged')
 
   " Markdown Preview 関連
   Plug 'plasticboy/vim-markdown'
-  " Plug 'rcmdnk/vim-markdown'
-  Plug 'kannokanno/previm'
+  " " Plug 'rcmdnk/vim-markdown'
+  " Plug 'kannokanno/previm'
   Plug 'tyru/open-browser.vim'
+
+  Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm i'  }
+  " Preview in buffer. depends MichaelMure/mdr
+  Plug 'skanehira/preview-markdown.vim'
 
   if g:is_windows
     " Plug 'mattn/webapi-vim'                               " vim interface to Web API
