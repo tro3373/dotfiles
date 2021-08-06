@@ -42,8 +42,8 @@ case ${UID} in
 esac
 export LANG="${LANGUAGE}"
 # export LC_CTYPE="${LANGUAGE}"
-export LC_CTYPE=ja_JP.UTF-8
-export LC_MESSAGES=ja_JP.UTF-8
+# export LC_CTYPE=ja_JP.UTF-8
+# export LC_MESSAGES=ja_JP.UTF-8
 # export LC_ALL="${LANGUAGE}"
 # export LC_TIME=en_DK.UTF8 # for time format: YYYY-MM-DD
 export LC_COLLATE=C # for default sort
