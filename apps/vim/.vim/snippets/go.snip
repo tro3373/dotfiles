@@ -160,3 +160,16 @@ snippet execstart
   cmd.Start()
   fmt.Println("sleep中: ", time.Now().Format("15:04:05"))
   cmd.Wait()
+
+snippet exists
+  func exists(filename string) bool {
+    _, err := os.Stat(filename)
+    return err == nil
+  }
+  func existsPrefix(name string) (bool, error) {
+    matches, err := filepath.Glob(name + ".*")
+    if err != nil {
+        return false, err
+    }
+    return len(matches) > 0, nil
+  }
