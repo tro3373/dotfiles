@@ -42,12 +42,12 @@ initialize() {
 
 not_supported() { echo "Not supported." 1>&2 && exit 1; }
 update_arch() {
-  local _cmd=pacman
+  local _cmd="sudo pacman"
   if has yay; then
     local _cmd=yay
   fi
   log "=> Updating.."
-  $dummy sudo $_cmd -Syyu --noconfirm "${args[@]}"
+  $dummy $_cmd -Syyu --noconfirm "${args[@]}"
 }
 update_ubuntu() {
   log "=> Updating.."
