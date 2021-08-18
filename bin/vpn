@@ -85,8 +85,10 @@ run_proxy() {
   ! has gost && return
   [[ $with_proxy -ne 1 ]] && return
   local _ip=$(ipeth0)
+  echo $_ip | clip &>/dev/null
   local _port=5963
   echo "==> Running proxy $_ip:$_port .." | ink yellow
+  # gost -L=localhost:$_port #|& ink yellow
   gost -L=:$_port #|& ink yellow
 }
 
