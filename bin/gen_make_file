@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+mode=sls
+cat_sls_makefile() {
+  cat <<'EOF'
+PROFILE_DEV=texample
+PROFILE_PRD=example
+STAGE=dev
+TEST_API_PREFIX_DEV=https://test.example.com/api/v1
+TEST_API_PREFIX_PRD=https://example.com/api/v1
+TEST_API_PREFIX=${TEST_API_PREFIX_DEV}
+PREV_COMMANDS=([[ ! -e node_modules ]] && npm i || :) && \
+	if [[ ${STAGE} == "prd" ]]; then export PROFILE=${PROFILE_PRD}; else export PROFILE=${PROFILE_DEV}; fi && \
+	export AWS_PROFILE="$${PROFILE}"; export AWS_DEFAULT_PROFILE="$${PROFILE}"; export SLS_DEBUG=*
+PREV_COMMANDS_CURLTEST=if [[ ${STAGE} == "prd" ]]; then export TEST_API_PREFIX=${TEST_API_PREFIX_PRD}; else export TEST_API_PREFIX=${TEST_API_PREFIX_DEV}; fi
+
+_setup-%:
+	npm i -g ${*}
+.PHONY: setup
+setup: _setup-serverless _setup-eslint _setup-prettier _setup-eslint-config-prettier
+
+_sls:
+	@${PREV_COMMANDS} && sls ${CMD} -v --stage ${STAGE} && echo done!;
+
+deploy:
+	@$(MAKE) CMD=deploy _sls
+remove:
+	@$(MAKE) CMD=remove _sls
+
+_test:
+	@${PREV_COMMANDS} \
+		&& export STAGE=${STAGE} \
+		&& export DEBUG_LAMBDA=true \
+		&& export DEBUG_API_CLIENT=1 \
+		&& export AWS_SDK_LOAD_CONFIG=true \
+		&& eval "$$(grep -E '(^DB_|^LAMBDA_REGION)' ./envs/dev.yml | \
+		sed -e 's,: ,=,g' \
+			-e 's,LAMBDA_REGION,REGION,g' \
+			-e 's,DB_HOST=.*,DB_HOST=localhost,g' \
+			-e 's,^,export ,g' | \
+		tr '\n' ';')" \
+		&& npm run ${CMD}
+
+tests:
+	@$(MAKE) CMD=tests _test
+test:
+	@$(MAKE) CMD=test _test
+test-%:
+	@$(MAKE) CMD=test-${*} _test
+testt-%:
+	@$(MAKE) CMD="testt -- ${*}" _test
+
+curl_flist:
+	@${PREV_COMMANDS_CURLTEST} && curl "$${TEST_API_PREFIX}/contents" \
+		-Ls |jq .
+EOF
+}
+
+cat_makefile() {
+  cat <<'EOF'
+SERVICE=api
+.DEFAULT_GOAL := deploy
+tag:
+	@tag="Release_${SERVICE}_$$(date +%Y%m%d.%H%M%S)" && git tag "$$tag" && echo "==> $$tag tagged."
+EOF
+}
+
+sub() {
+  cat_makefile
+  if [[ $mode == sls ]]; then
+    cat_sls_makefile
+  fi
+}
+
+main() {
+  sub |
+    gen ./Makefile
+}
+main "$@"
