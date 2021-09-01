@@ -162,7 +162,7 @@ bind blob    `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
 
 # Copy commit id
 bind generic 0      @sh -c "echo %(commit) | ~/.dot/bin/clip"
-bind refs    0      @sh -c "echo %(branch) | ~/.dot/bin/clip"
+bind refs    0      @sh -c "echo %(tag)%(branch) | ~/.dot/bin/clip"
 # Copy commit title to clipboard:
 bind generic 9      @sh -c "git show -s --format=%s %(commit) | ~/.dot/bin/clip"
 
@@ -241,4 +241,3 @@ set line-graphics = ascii
 #color diff-chunk magenta default
 #color "Reported-by:" green default
 #color graph-commit cyan default
-
