@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  cat </etc/resolv.conf | grep 'nameserver' | cut -f 2 -d ' '
+}
+main "$@"
