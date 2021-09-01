@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+has() { command -v ${1} >&/dev/null; }
+main() {
+  if ! os wsl || ! os arch; then
+    echo "Not supported os." 1>&2
+    exit 1
+  fi
+  if ! has dockerd; then
+    echo "No dockerd command exist." 1>&2
+    exit 1
+  fi
+  # https://gist.github.com/ld100/3376435a4bb62ca0906b0cff9de4f94b
+  sudo dockerd -H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock --dns 8.8.8.8
+}
+main "$@"
