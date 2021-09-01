@@ -18,6 +18,7 @@ usage() {
 EOF
 }
 
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
 has() { command -v ${1} >&/dev/null; }
 cat_conf() {
   cat <<EOF
@@ -63,23 +64,31 @@ setup_conf() {
     exit 1
   fi
   cat_conf >$conf_path
+  log "==> gpg config generated."
 }
 
 gen() {
-  gpg --gen-key --batch $conf_path
+  if gpg -k | grep $name >&/dev/null; then
+    log "==> Already gpg key $name exist."
+    gpg -k
+  else
+    log "==> Generating gpg key via $conf_path.."
+    gpg --gen-key --batch $conf_path
+  fi
+  gpg -o ./$name.public.gpg --export $name
+  gpg -o ./$name.private.gpg --export-secret-key $name
+  cat <./$name.public.gpg | base64 | tr -d '\n' >./$name.public.gpg.base64
 }
 
 main() {
   [[ $1 == -h ]] && usage && exit
-  if [[ $1 == -g ]]; then
-    pass=$2
-    setup_from_git_config
-    setup_conf
-    return
-  fi
+  setup_from_git_config
   if [[ ! -e $conf_path ]]; then
-    echo "No such config exist. $conf_path"
-    exit 1
+    log "==> Generating gpg config.. $conf_path"
+    pass=$2
+    setup_conf
+  else
+    log "==> Generating via existin config $conf_path."
   fi
   gen
 }
