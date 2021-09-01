@@ -76,11 +76,10 @@ EOL
 
 main() {
   initialize "$@"
-  all_args="${args[@]}"
+  local opt=--skip-worktree
   if [[ $cancel -eq 1 ]]; then
-    git update-index --no-skip-worktree $all_args
-  else
-    git update-index --skip-worktree $all_args
+    opt=--no-skip-worktree
   fi
+  git update-index $opt "${args[@]}"
 }
 main "$@"
