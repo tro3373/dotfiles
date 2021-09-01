@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+
+##########################################################
+# Not working in wsl.
+# nsenter process propagate...
+##########################################################
+# see https://gifnksm.hatenablog.jp/entry/2021/01/02/183830
+
+install_common() { not_supported; }
+install_wsl() {
+  install_via_os_default
+}
+install_arch() { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+setting_common() { not_supported; }
+cat_wsl_conf() {
+  cat <<'EOF'
+[automount]
+enabled = true
+options = "metadata,uid=1000,gid=1000,umask=22,fmask=11,case=off"
+mountFsTab = true
+crossDistro = true
+
+[network]
+generateHosts = false
+generateResolvConf = true
+
+[interop]
+enabled = true
+appendWindowsPath = true
+
+[user]
+default = archuser
+EOF
+}
+
+setup_wsl_conf() {
+  local target=/etc/wsl.conf
+  if [[ -e $target ]]; then
+    log "Already $target exist."
+    return
+  fi
+  cat_wsl_conf |
+    if is_dry; then
+      log "==> Below settings will be generated to $target"
+      cat -
+    else
+      cat - | sudo tee $target >&/dev/null
+    fi
+}
+
+cat_systemd_script() {
+  cat <<'EOF'
+#!/bin/bash
+
+start_systemd() {
+  sudo /usr/bin/daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target
+}
+
+get_systemd_pid() {
+  # ps -ef |
+  #   grep '/lib/systemd/systemd --system-unit=basic.target$' |
+  #   grep -v unshare |
+  #   awk '{print $2}'
+  pgrep -f '^/lib/systemd/systemd --system-unit=basic.target$' -o # -a
+}
+
+start_systemd_if_needed() {
+  local pid=$(get_systemd_pid)
+  if [[ -n $pid ]]; then
+    echo $pid
+  fi
+  start_systemd && get_systemd_pid
+}
+
+main() {
+  local systemd_pid=$(start_systemd_if_needed)
+  if [[ -z $systemd_pid ]]; then
+    echo "Failed to start systemd" 1>&2
+    return
+  fi
+  if [[ $systemd_pid -ne 1 ]]; then
+    echo "Failed to start systemd. systemd_pid($systemd_pid) ne 1" 1>&2
+    return
+  fi
+  exec sudo /usr/bin/nsenter -t $systemd_pid -a su - $LOGNAME
+}
+main "$@"
+EOF
+}
+
+setup_systemd_script() {
+  local target=/etc/profile.d/00-wsl2-systemd.sh
+  if [[ -e $target ]]; then
+    log "Already $target exist."
+    return
+  fi
+  cat_systemd_script |
+    if is_dry; then
+      log "==> Below settings will be generated to $target"
+      cat -
+    else
+      cat - | sudo tee $target >&/dev/null
+    fi
+}
+setting_wsl() {
+  setup_wsl_conf
+  setup_systemd_script
+}
+
+setting_arch() { not_supported; }
+setting_msys() { not_supported; }
+setting_cygwin() { not_supported; }
+setting_mac() { not_supported; }
+setting_ubuntu() { not_supported; }
+setting_redhat() { not_supported; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
+#sudo_tee
