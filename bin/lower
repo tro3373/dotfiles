@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  upper_lower l
+}
+main "$@"

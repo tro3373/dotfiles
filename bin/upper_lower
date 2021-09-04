@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+main() {
+  local mode=${1:-l}
+  if [[ ! -p /dev/stdin ]]; then
+    return
+  fi
+  local s="[:upper:]"
+  local d="[:lower:]"
+  if [[ $mode == "u" ]]; then
+    s="[:lower:]"
+    d="[:upper:]"
+  fi
+  cat - | tr "$s" "$d"
+}
+main "$@"
