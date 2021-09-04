@@ -173,3 +173,11 @@ snippet exists
     }
     return len(matches) > 0, nil
   }
+
+snippet getenvvv
+  func getEnv(key, fallback string) string {
+      if value, ok := os.LookupEnv(key); ok {
+          return value
+      }
+      return fallback
+  }
