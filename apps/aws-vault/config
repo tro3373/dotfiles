@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+# see https://dev.classmethod.jp/articles/terraform-assumerole/
+# see https://hackers-high.com/aws/aws-vault-on-linux/#pass_GnuPG
+# see https://github.com/99designs/aws-vault
+
+install_common() {
+  if ! has gpg; then
+    log "gpg command not installed."
+    return
+  fi
+  if ! has pass; then
+    log "pass command not installed."
+    # shellcheck disable=SC2016
+    log '  Install and execute `pass init {gpg mail}`.'
+    return
+  fi
+  local gpg_conf=$(which gen_gpg_keys).conf
+  if [[ ! -e $gpg_conf ]]; then
+    log "gpg conf not generated. do gen_gpg_keys command"
+    return
+  fi
+  install_via_os_default
+}
+# install_wsl() { not_supported; }
+# install_arch() { not_supported; }
+# install_msys() { not_supported; }
+# install_cygwin() { not_supported; }
+# install_mac() { not_supported; }
+# install_ubuntu() { not_supported; }
+# install_redhat() { not_supported; }
+
+cat_add_vault_export_env() {
+  cat <<'EOF'
+export AWS_VAULT_BACKEND=pass
+export AWS_VAULT_PASS_PREFIX=aws-vault
+export AWS_SESSION_TOKEN_TTL=3h
+EOF
+}
+setup_work_env() {
+  local target=~/.works.zsh
+  if grep AWS_VAULT_PASS_PREFIX $target >&/dev/null; then
+    return
+  fi
+  cat_add_vault_export_env |
+    cat_tee -a $target
+}
+setup_gpg_agent() {
+  local target=~/.gnupg/gpg-agent.conf
+  if [[ -e $target ]]; then
+    grep default-cache-ttl $target >&/dev/null && return
+  fi
+  echo "default-cache-ttl 10800" |
+    cat_tee -a $target
+  exe chmod 600 $target
+  exe gpg-connect-agent reloadagent /bye
+}
+
+cheat_aws_vault() {
+  cat <<'EOF'
+=> No need aws credentials. (~/.aws/credentials)
+=> Only config settings is needed. (~/.aws/config)
+==> Sample mfa settings is bellow
+
+[profile example_user]
+include_profile=common
+
+[profile example]
+source_profile = example_user
+mfa_serial = arn:aws:iam::xxxxx:mfa/xxxxx-user-name
+role_arn = arn:aws:iam::xxxxx:role/xxxxx-role-name
+EOF
+}
+
+setting_common() {
+  setup_work_env
+  setup_gpg_agent
+  cheat_aws_vault
+}
+# setting_wsl() { not_supported; }
+# setting_arch() { not_supported; }
+# setting_msys() { not_supported; }
+# setting_cygwin() { not_supported; }
+# setting_mac() { not_supported; }
+# setting_ubuntu() { not_supported; }
+# setting_redhat() { not_supported; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
+#sudo_tee
