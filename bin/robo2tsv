@@ -5,12 +5,26 @@ readonly script_dir=$(
   cd "$(dirname ${BASH_SOURCE:-$0})"
   pwd
 )
+readonly node_table_pipe_hor=──
+readonly node_table_pipe=│
+readonly node_table_pipe_rep='_____pipe_____'
 
 convert_node_table2tsv() {
   cat - |
-    grep -v '──' |
-    sed -e 's, *│ *,\t,g' |
-    sed -e 's,^\t,,g' -e 's,\t$,,g'
+    grep -v "$node_table_pipe_hor" |
+    sed -e "s, *$node_table_pipe *,\t,g" |
+    sed -e "s,$node_table_pipe_rep,$node_table_pipe,g" |
+    sed -e 's,^\t,,g' -e 's,\t$,,g' |
+    sed -e "s,',,g"
+}
+
+escape_pipe() {
+  cat - |
+    if [[ $text -ne 1 ]]; then
+      cat -
+    else
+      cat - | sed -e "s,$node_table_pipe,$node_table_pipe_rep,g"
+    fi
 }
 
 handle_file() {
@@ -18,13 +32,13 @@ handle_file() {
   # shellcheck disable=SC2064
   trap "rm $tmpf" 0 1 2 3 15
   cat <<EOF >$tmpf
-[$($script_dir/robo2json "$f")]
+[$($script_dir/robo2json "$f" | escape_pipe)]
 EOF
   node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync('$tmpf','utf8'));console.table(d);"
 }
 
 handle_no_file() {
-  local data=$($script_dir/robo2json "$@")
+  local data=$($script_dir/robo2json "$@" | escape_pipe)
   node -e "console.table([$data]);"
 }
 
