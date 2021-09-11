@@ -1,6 +1,39 @@
 Vim Tips
 =================================================================
 
+## vim neosnippet
+### Ref
+- [NeoSnippetのsnippetファイルの設定](https://adragoona.hatenablog.com/entry/20130929/1380437722)
+### Tips
+```
+snippet [name]
+abbr [abbreviation]
+alias [aliases]
+regexp [pattern]
+options [options]
+  if ${1:conditions}
+    ${2}
+  endif
+```
+
+- name: 展開トリガーとなるキーワード
+- abbr: 保管のポップアップに表示される説明文要約
+- alias: 別名
+- regexp: [pattern] にマッチした場合のみ展開
+- options:
+    - word: 単語区切りで name キーワードを探す
+    - head: 行頭に書かれた name のみに適用される
+    - indent: snippet展開後にindentを適用する
+- place holder
+    - ${number:text}: numberがジャンプ順、textが初期値
+    - ${number:#text}: 入力しなければtextは消える(コメントに近い)
+    - ${number:TARGET}: visualモードで選択中のテキストをここに挿入できる。
+      この機能を使うためには、(neosnippet_expand_target)で
+      snippetを展開するようkey mappingしないとだめ
+    - ${number}:ただのジャンプ先のみの指定
+    - $number: ジャンプ先ではなく、入力と同値を設定する場合に使用
+    - ${0}: 最後にジャンプする場所
+
 ## vim diff
 1. Vimを起動してそのままdiffを取りたい内容を貼り付け
 2. :vnew(または:new)で新しいバッファを開く
