@@ -57,6 +57,7 @@ setup_bashrc() {
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -l'
+export PATH=~/bin:$PATH
 EOF
 }
 
@@ -122,7 +123,7 @@ cat_url_opener() {
   # --audio-format FORMAT
   #       Specify audio format: "best", "aac", "flac", "mp3", "m4a", "opus", "vorbis", or "wav"; "best" by default; No effect without -x
   cat <<'EOF'
-yoursth-dl \
+youtube-dl \
   --no-mtime \
   --restrict-filenames \
   -f 'bestvideo[ext=mp4][height<=720]+bestaudio' \
@@ -147,7 +148,7 @@ setup_url_opener() {
 setup_nvim() {
   log "==> Setup nvim..."
   has nvim && log_skip && return
-  apt install neovim
+  apt install -y neovim
 }
 
 setup_file_editor() {
@@ -168,5 +169,6 @@ main() {
   setup_ssh
   setup_url_opener
   setup_file_editor
+  log "Done!"
 }
 main "$@"
