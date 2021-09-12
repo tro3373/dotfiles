@@ -112,6 +112,14 @@ setup_youtubedl() {
   # echo '--no-mtime -o ~/storage/downloads/%(title)s.%(ext)s -f "bestvideo[height<=1280][ext=mp4]+bestaudio[ext=m4a]"' >>~/.config/youtube-dl/config
 }
 
+setup_upd() {
+  local target=upd
+  log "==> Setup $target..."
+  has $target && log_skip && return
+  echo 'pip install -U youtube-dl' >>~/bin/$target
+  chmod 755 ~/bin/$target
+}
+
 cat_url_opener() {
   # -f, --format FORMAT :  Video format code, see the "FORMAT SELECTION" for all the info
   #       bestvideo[height<=1280][ext=mp4]+bestaudio[ext=m4a]
@@ -124,13 +132,13 @@ cat_url_opener() {
   #       Specify audio format: "best", "aac", "flac", "mp3", "m4a", "opus", "vorbis", or "wav"; "best" by default; No effect without -x
   cat <<'EOF'
 youtube-dl \
-  --no-mtime \
-  --restrict-filenames \
   -f 'bestvideo[ext=mp4][height<=720]+bestaudio' \
   -x --audio-format mp3 \
   -o '~/storage/downloads/%(id)s-%(title)s.%(ext)s' \
   $1
 EOF
+  # --no-mtime \
+  # --restrict-filenames \
   # -f 'bestvideo[height<=1280][ext=mp4]+bestaudio[ext=m4a]' \
 }
 
@@ -141,6 +149,7 @@ setup_url_opener() {
   setup_python
   setup_ffmpeg
   setup_youtubedl
+  setup_upd
   cat_url_opener >>~/bin/$target
   chmod 755 ~/bin/$target
 }
