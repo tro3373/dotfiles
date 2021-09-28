@@ -159,6 +159,7 @@ bind stage   `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
 bind status  `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
 bind tree    `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
 bind blob    `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
+bind diff    `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
 
 # Copy commit id
 bind generic 0      @sh -c "echo %(commit) | ~/.dot/bin/clip"
