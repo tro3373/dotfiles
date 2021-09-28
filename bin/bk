@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
+main() {
+  if [[ $# -eq 0 ]]; then
+    log "Specify file"
+    exit 1
+  fi
+  for src in "$@"; do
+    [[ -z $src ]] && continue
+    [[ $src =~ ^#.* ]] && continue
+    if [[ ! -e $src ]]; then
+      log "> No such file or direcotry exist. $src"
+      continue
+    fi
+    # log "> $src .."
+    local dst=$src.bk
+    if [[ -e $dst ]]; then
+      log "> $dst already exist"
+      continue
+    fi
+    log "> Backup coping $src to $dst .."
+    cp -rf $src $dst
+  done
+  log "Done!"
+}
+main "$@"
