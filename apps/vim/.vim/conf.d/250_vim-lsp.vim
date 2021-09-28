@@ -140,4 +140,35 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
 "\       }
 "\     }
 "\   },
+" \  'efm-langserver': {
+" \    'disabled': v:false,
+" \  },
 "\}
+let g:lsp_settings = {
+  \  'yaml-language-server': {
+  \     'workspace_config': {
+  \       'yaml': {
+  \         'customTags': [
+  \           '!fn',
+  \           '!And',
+  \           '!If',
+  \           '!Not',
+  \           '!Equals',
+  \           '!Or',
+  \           '!FindInMap sequence',
+  \           '!Base64',
+  \           '!Cidr',
+  \           '!Ref',
+  \           '!Ref Scalar',
+  \           '!Sub',
+  \           '!GetAtt',
+  \           '!GetAZs',
+  \           '!ImportValue',
+  \           '!Select',
+  \           '!Split',
+  \           '!Join sequence'
+  \         ],
+  \       },
+  \     },
+  \   },
+\}
