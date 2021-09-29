@@ -255,11 +255,10 @@ function! Chomp(string)
   return trim(a:string)
 endfunction
 
-function! SaveMemoInner(outdir) abort
+function! SaveMemoInner(outdir, createDirectory) abort
   let dir = a:outdir
   if !isdirectory(expand(dir))
-    echo expand(dir)
-    let dir = "."
+    call mkdir(expand(dir))
   endif
   let now = localtime()
   let strnow = strftime("%Y-%m-%d", now)
@@ -268,21 +267,23 @@ function! SaveMemoInner(outdir) abort
   if title != ""
     let title = "-" . title
   endif
-  exe ":w ".dir."/".strnow.title.".md"
+  let name = strnow.title
+  if a:createDirectory == 1
+    let dir = dir."/".name
+    call mkdir(expand(dir))
+    let name = "index"
+  endif
+  exe ":w ".dir."/".name.".md"
   return 0
 endfun
 
 function! SaveMemo() abort
-  call SaveMemoInner(expand("~/works/00_memos"))
+  call SaveMemoInner("~/works/00_memos", 0)
 endfun
 command! SaveMemo call SaveMemo()
 
 function! SaveMd() abort
-  let outdir = ""
-  if executable("ghq")
-    let outdir = Chomp(system("ghq list --full-path tro3373/md")) . "/.md"
-  endif
-  call SaveMemoInner(outdir)
+  call SaveMemoInner("~/.md", 1)
 endfun
 command! SaveMd call SaveMd()
 
