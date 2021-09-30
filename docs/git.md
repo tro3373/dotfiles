@@ -1,5 +1,13 @@
 # git tips.
 
+## Chnange date
+```
+git rebase -i HEAD~数字
+git commit --amend --date="Wed Jan 10 23:59:59 2018 +0900"
+git rebase --continue
+git rebase HEAD~数字 --committer-date-is-author-date
+```
+
 ## Show diff with ignore all white spaces.
 
 ```sh
