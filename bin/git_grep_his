@@ -33,6 +33,7 @@ initialize() {
 
 main() {
   initialize "$@"
+  # shellcheck disable=SC2046
   git grep "${args[@]}" $(git rev-list --all)
 }
 main "$@"
