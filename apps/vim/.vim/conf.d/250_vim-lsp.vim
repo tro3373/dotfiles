@@ -84,6 +84,35 @@ let g:asyncomplete_auto_completeopt = 0     " 自動で入力補完ポップア�
 " set completeopt=menuone,noinsert,noselect,preview
 set completeopt=menuone,noinsert,noselect
 
+let g:lsp_settings = {
+  \  'yaml-language-server': {
+  \     'workspace_config': {
+  \       'yaml': {
+  \         'customTags': [
+  \           '!fn',
+  \           '!And',
+  \           '!If',
+  \           '!Not',
+  \           '!Equals',
+  \           '!Or',
+  \           '!FindInMap sequence',
+  \           '!Base64',
+  \           '!Cidr',
+  \           '!Ref',
+  \           '!Ref Scalar',
+  \           '!Sub',
+  \           '!GetAtt',
+  \           '!GetAZs',
+  \           '!ImportValue',
+  \           '!Select',
+  \           '!Split',
+  \           '!Join sequence'
+  \         ],
+  \       },
+  \     },
+  \   },
+\}
+
 
 " 補完表示時のEnterで改行をしない
 inoremap <expr> <cr> pumvisible() ? "\<c-y>\<cr>" : "\<cr>"
@@ -144,31 +173,3 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
 " \    'disabled': v:false,
 " \  },
 "\}
-let g:lsp_settings = {
-  \  'yaml-language-server': {
-  \     'workspace_config': {
-  \       'yaml': {
-  \         'customTags': [
-  \           '!fn',
-  \           '!And',
-  \           '!If',
-  \           '!Not',
-  \           '!Equals',
-  \           '!Or',
-  \           '!FindInMap sequence',
-  \           '!Base64',
-  \           '!Cidr',
-  \           '!Ref',
-  \           '!Ref Scalar',
-  \           '!Sub',
-  \           '!GetAtt',
-  \           '!GetAZs',
-  \           '!ImportValue',
-  \           '!Select',
-  \           '!Split',
-  \           '!Join sequence'
-  \         ],
-  \       },
-  \     },
-  \   },
-\}

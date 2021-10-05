@@ -142,22 +142,6 @@ call plug#begin('$HOME/.vim/plugged')
   " =================================================================
   " Feature/Funcs Edit
   " =================================================================
-  Plug 'Shougo/neosnippet'                                " Ctrl+k でスニペットを用意
-  Plug 'Shougo/neosnippet-snippets'                       " 基本スニペット for neosnippet
-  Plug 'honza/vim-snippets'                               " snipMate UltiSnip Snippets
-  " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
-
-  " Plug 'Shougo/neocomplcache.vim'                         " 補完候補を自動でポップアップ(old)
-  " Plug 'Shougo/neocomplete.vim'                           " Next generation completion framework after neocomplcache
-  " if has('nvim')
-  "   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-  " else
-  "   Plug 'Shougo/deoplete.nvim'
-  "   Plug 'roxma/nvim-yarp'
-  "   Plug 'roxma/vim-hug-neovim-rpc', { 'do': 'pip install pynvim' }
-  " endif
-  Plug 'mattn/sonictemplate-vim'
-
   " Plug 'kana/vim-smartchr'                                " = 等の便利入力
   Plug 'kana/vim-smartinput'                              " () 等の入力補完
   " Plug 'mattn/vim-lexiv'                                " () 等の入力補完
@@ -189,11 +173,41 @@ call plug#begin('$HOME/.vim/plugged')
     Plug 'hrsh7th/vim-vsnip'                                  " 穴あき形式補完候補用？
     Plug 'hrsh7th/vim-vsnip-integ'
     Plug 'prabirshrestha/async.vim'                           " NoNeeded?
+
+
+    " Async complete is needed
+    " Plug 'prabirshrestha/asyncomplete.vim'
+    " Plug 'Shougo/neosnippet.vim'
+    " Plug 'Shougo/neosnippet-snippets'
+    " Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
+
+
     Plug 'prabirshrestha/asyncomplete.vim'
+    Plug 'Shougo/neosnippet'                                " Ctrl+k でスニペットを用意
+    Plug 'Shougo/neosnippet-snippets'                       " 基本スニペット for neosnippet
+    Plug 'honza/vim-snippets'                               " snipMate UltiSnip Snippets
+    " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
+
+    " Plug 'Shougo/neocomplcache.vim'                         " 補完候補を自動でポップアップ(old)
+    " Plug 'Shougo/neocomplete.vim'                           " Next generation completion framework after neocomplcache
+    " if has('nvim')
+    "   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+    " else
+    "   Plug 'Shougo/deoplete.nvim'
+    "   Plug 'roxma/nvim-yarp'
+    "   Plug 'roxma/vim-hug-neovim-rpc', { 'do': 'pip install pynvim' }
+    " endif
+    Plug 'mattn/sonictemplate-vim'
     Plug 'prabirshrestha/asyncomplete-lsp.vim'
     Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
     " Plug 'prabirshrestha/asyncomplete-buffer.vim'
     Plug 'prabirshrestha/asyncomplete-file.vim'
+
+    " " TODO
+    " " This plugin integrates neosnippet.vim in vim-lsp to provide Language Server Protocol snippets.
+    " Plug 'thomasfaingnaert/vim-lsp-snippets'
+    " Plug 'thomasfaingnaert/vim-lsp-neosnippet'
+
     " Plug 'Shougo/neco-syntax'
     " Plug 'prabirshrestha/asyncomplete-necosyntax.vim'
     " Plug 'Shougo/neco-vim'
