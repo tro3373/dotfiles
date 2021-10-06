@@ -618,3 +618,16 @@ command! -nargs=*
 \|  catch
 \|      echom <q-args>
 \|  endtry
+
+" C2A0問題修正
+function! ReplaceC2A0() abort
+  " %s/\%ua0//
+  call SilentFExec(":%s/\\%ua0/ /g")
+endfun
+command! ReplaceC2A0 call ReplaceC2A0()
+command! FixC2A0 call ReplaceC2A0()
+function! FindC2A0() abort
+  " https://stackoverflow.com/questions/1803539/how-do-i-turn-on-search-highlighting-from-a-vim-script
+  call feedkeys("/\\%ua0\<CR>")
+endfun
+command! FindC2A0 call FindC2A0()
