@@ -152,11 +152,17 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
    \ 'priority': 99,
    \ 'completor': function('asyncomplete#sources#neosnippet#completor'),
    \ }))
-au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#buffer#get_source_options({
-    \ 'name': 'buffer',
-    \ 'priority': 98,
+" au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#buffer#get_source_options({
+"    \ 'name': 'buffer',
+"    \ 'priority': 98,
+"    \ 'allowlist': ['*'],
+"    \ 'completor': function('asyncomplete#sources#buffer#completor'),
+"    \ }))
+call asyncomplete#register_source(asyncomplete#sources#around#get_source_options({
+    \ 'name': 'around',
     \ 'allowlist': ['*'],
-    \ 'completor': function('asyncomplete#sources#buffer#completor'),
+    \ 'priority': 98,
+    \ 'completor': function('asyncomplete#sources#around#completor'),
     \ }))
 au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
      \ 'name': 'file',

@@ -197,7 +197,8 @@ call plug#begin('$HOME/.vim/plugged')
 
     Plug 'prabirshrestha/asyncomplete-lsp.vim'
     Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
-    Plug 'prabirshrestha/asyncomplete-buffer.vim'
+    " Plug 'prabirshrestha/asyncomplete-buffer.vim'
+    Plug 'akaimo/asyncomplete-around.vim'
     Plug 'prabirshrestha/asyncomplete-file.vim'
 
     " " TODO
