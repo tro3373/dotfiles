@@ -130,31 +130,31 @@ inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 " completor の登録
 au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#neosnippet#get_source_options({
    \ 'name': 'neosnippet',
-   \ 'whitelist': ['*'],
    \ 'priority': 5,
+   \ 'allowlist': ['*'],
    \ 'completor': function('asyncomplete#sources#neosnippet#completor'),
    \ }))
 " au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#buffer#get_source_options({
-"      \ 'name': 'buffer',
+"     \ 'name': 'buffer',
 "      \ 'priority': 11,
-"      \ 'whitelist': ['*'],
-"      \ 'completor': function('asyncomplete#sources#buffer#completor'),
-"      \ }))
+"     \ 'allowlist': ['*'],
+"     \ 'completor': function('asyncomplete#sources#buffer#completor'),
+"     \ }))
 au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
      \ 'name': 'file',
      \ 'priority': 12,
-     \ 'whitelist': ['*'],
+     \ 'allowlist': ['*'],
      \ 'completor': function('asyncomplete#sources#file#completor'),
      \ }))
 " au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#necosyntax#get_source_options({
 "      \ 'name': 'necosyntax',
 "      \ 'priority': 9,
-"      \ 'whitelist': ['*'],
+"      \ 'allowlist': ['*'],
 "      \ 'completor': function('asyncomplete#sources#necosyntax#completor'),
 "      \ }))
 " au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#necovim#get_source_options({
 "      \ 'name': 'necovim',
-"      \ 'whitelist': ['vim'],
+"      \ 'allowlist': ['vim'],
 "      \ 'priority': 10,
 "      \ 'completor': function('asyncomplete#sources#necovim#completor'),
 "      \ }))
