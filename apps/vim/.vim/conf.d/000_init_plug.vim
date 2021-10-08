@@ -155,39 +155,17 @@ call plug#begin('$HOME/.vim/plugged')
   " Code Edit
   " =================================================================
   if empty($VIM_DISABLE_LINTER) || (!empty($VIM_DISABLE_LINTER) && $VIM_DISABLE_LINTER != 1)
+    Plug 'dense-analysis/ale'                               " 構文解析(非同期)
+    Plug 'editorconfig/editorconfig-vim'                      " Official editorconfig
+    Plug 'mattn/sonictemplate-vim'
+
     " Code Formatter
     " Plug 'google/vim-maktaba'                               " GoogleCodeFormatter depends
     " Plug 'google/vim-codefmt'                               " GoogleCodeFormatter
     " Plug 'google/vim-glaive'                                " GoogleCodeFormatter depends
     " Plug 'sgur/vim-editorconfig'                              " Not Official editorconfig(less depends)
-    Plug 'editorconfig/editorconfig-vim'                      " Official editorconfig
 
-    " ale
-    Plug 'dense-analysis/ale'                               " 構文解析(非同期)
-
-    " Vim LSP!
-    " @see https://mattn.kaoriya.net/?page=3
-    Plug 'prabirshrestha/vim-lsp'                             " Vim Language Server Protocol
-    Plug 'mattn/vim-lsp-settings'                             " use `:LspInstallServer`
-    Plug 'mattn/vim-lsp-icons'
-    Plug 'hrsh7th/vim-vsnip'                                  " 穴あき形式補完候補用？
-    Plug 'hrsh7th/vim-vsnip-integ'
-    Plug 'prabirshrestha/async.vim'                           " NoNeeded?
-
-
-    " Async complete is needed
-    " Plug 'prabirshrestha/asyncomplete.vim'
-    " Plug 'Shougo/neosnippet.vim'
-    " Plug 'Shougo/neosnippet-snippets'
-    " Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
-
-
-    Plug 'prabirshrestha/asyncomplete.vim'
-    Plug 'Shougo/neosnippet'                                " Ctrl+k でスニペットを用意
-    Plug 'Shougo/neosnippet-snippets'                       " 基本スニペット for neosnippet
-    Plug 'honza/vim-snippets'                               " snipMate UltiSnip Snippets
-    " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
-
+    " Complete
     " Plug 'Shougo/neocomplcache.vim'                         " 補完候補を自動でポップアップ(old)
     " Plug 'Shougo/neocomplete.vim'                           " Next generation completion framework after neocomplcache
     " if has('nvim')
@@ -197,13 +175,33 @@ call plug#begin('$HOME/.vim/plugged')
     "   Plug 'roxma/nvim-yarp'
     "   Plug 'roxma/vim-hug-neovim-rpc', { 'do': 'pip install pynvim' }
     " endif
-    Plug 'mattn/sonictemplate-vim'
+
+    Plug 'prabirshrestha/async.vim'                           " NoNeeded?
+
+    " Vim LSP!
+    " @see https://mattn.kaoriya.net/?page=3
+    Plug 'prabirshrestha/vim-lsp'                             " Vim Language Server Protocol
+    Plug 'mattn/vim-lsp-settings'                             " use `:LspInstallServer`
+    Plug 'mattn/vim-lsp-icons'
+
+    " Async complete is needed
+    Plug 'prabirshrestha/asyncomplete.vim'
+
+    " Snip
+    Plug 'hrsh7th/vim-vsnip'                                  " 穴あき形式補完候補用？
+    Plug 'hrsh7th/vim-vsnip-integ'
+
+    Plug 'Shougo/neosnippet'                                " Ctrl+k でスニペットを用意
+    Plug 'Shougo/neosnippet-snippets'                       " 基本スニペット for neosnippet
+    Plug 'honza/vim-snippets'                               " snipMate UltiSnip Snippets
+
     Plug 'prabirshrestha/asyncomplete-lsp.vim'
     Plug 'prabirshrestha/asyncomplete-neosnippet.vim'
-    " Plug 'prabirshrestha/asyncomplete-buffer.vim'
+    Plug 'prabirshrestha/asyncomplete-buffer.vim'
     Plug 'prabirshrestha/asyncomplete-file.vim'
 
     " " TODO
+    " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
     " " This plugin integrates neosnippet.vim in vim-lsp to provide Language Server Protocol snippets.
     " Plug 'thomasfaingnaert/vim-lsp-snippets'
     " Plug 'thomasfaingnaert/vim-lsp-neosnippet'
