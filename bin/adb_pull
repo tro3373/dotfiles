@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-script_dir=$(
-  cd $(dirname $0)
-  pwd
-)
-command_name=$(basename $0)
+readonly command_name=$(basename $0)
 
 package_name=
 pull_file=
@@ -57,7 +52,7 @@ initialize() {
 }
 
 check_connected() {
-  local count=$(adb devices | grep -v "List of devices attached" | grep device | wc -l)
+  local count=$(adb devices | grep -v "List of devices attached" | grep -c device)
   if [[ $count -eq 0 ]]; then
     echo "No device connected." 1>&2
     exit 1
