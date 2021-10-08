@@ -127,23 +127,41 @@ inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 " autocmd vimrc FileType autohotkey,autoit,cfg,git,go,groovy,java,javascript,python,snippet,toml,vim,vb,xsl call asyncomplete#enable_for_buffer()
 
 
+" Enable priority sort
+function! s:sort_by_priority_preprocessor(options, matches) abort
+  let l:items = []
+  for [l:source_name, l:matches] in items(a:matches)
+    for l:item in l:matches['items']
+      if stridx(l:item['word'], a:options['base']) == 0
+        let l:item['priority'] =
+            \ get(asyncomplete#get_source_info(l:source_name),'priority',0)
+        call add(l:items, l:item)
+      endif
+    endfor
+  endfor
+  let l:items = sort(l:items, {a, b -> b['priority'] - a['priority']})
+  call asyncomplete#preprocess_complete(a:options, l:items)
+endfunction
+
+let g:asyncomplete_preprocessor = [function('s:sort_by_priority_preprocessor')]
+
 " completor の登録
 au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#neosnippet#get_source_options({
    \ 'name': 'neosnippet',
-   \ 'priority': 5,
    \ 'allowlist': ['*'],
+   \ 'priority': 99,
    \ 'completor': function('asyncomplete#sources#neosnippet#completor'),
    \ }))
 " au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#buffer#get_source_options({
 "     \ 'name': 'buffer',
-"      \ 'priority': 11,
+"     \ 'priority': 98,
 "     \ 'allowlist': ['*'],
 "     \ 'completor': function('asyncomplete#sources#buffer#completor'),
 "     \ }))
 au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#file#get_source_options({
      \ 'name': 'file',
-     \ 'priority': 12,
      \ 'allowlist': ['*'],
+     \ 'priority': 97,
      \ 'completor': function('asyncomplete#sources#file#completor'),
      \ }))
 " au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#necosyntax#get_source_options({
