@@ -158,7 +158,7 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
 "    \ 'allowlist': ['*'],
 "    \ 'completor': function('asyncomplete#sources#buffer#completor'),
 "    \ }))
-call asyncomplete#register_source(asyncomplete#sources#around#get_source_options({
+au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#around#get_source_options({
     \ 'name': 'around',
     \ 'allowlist': ['*'],
     \ 'priority': 98,
