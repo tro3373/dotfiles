@@ -7,4 +7,4 @@ main() {
   fi
   hugo && hugo server --watch -D --bind="0.0.0.0" -b "http://$base_url:1313"
 }
-main
+main "$@"
