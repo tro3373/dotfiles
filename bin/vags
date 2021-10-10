@@ -60,7 +60,8 @@ initialize() {
     exit 1
   fi
 
-  local _rel=$(echo $src | sed -e "s,$src_rootd,,g")
+  # local _rel=$(echo $src | sed -e "s,$src_rootd,,g")
+  local _rel=${src//$src_rootd/}
   dst=$dst_rootd$_rel
   [[ ! -e $dst ]] && $dummy mkdir -p $dst
 }
