@@ -98,7 +98,7 @@ setup_vscode_extensions_recommendations() {
 }
 
 setup_packages() {
-  local pkgs=(eslint eslint-config-prettier prettier)
+  local pkgs=(eslint eslint-config-prettier prettier eslint-plugin-json)
   # pkgs+=("yarn prettier-eslint-cli prettier-eslint")
   if [[ $husky -eq 1 ]]; then
     pkgs+=("husky" "lint-staged")
