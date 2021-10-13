@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-exclude_branches='develop|master'
+exclude_branches='develop|master|release'
 dummy="echo"
 initialize() {
   for arg in "$@"; do
@@ -11,7 +11,7 @@ initialize() {
 }
 exe() {
   [[ -z $dummy ]] && echo "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
-  ink yellow "> Executing: $*"
+  echo "> Executing: $*" | ink yellow
   [[ -z $dummy ]] && echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
   if [[ -z $dummy ]]; then
     eval "$*"
