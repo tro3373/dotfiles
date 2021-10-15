@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+_color() {
+  cat - |
+    while read -r line; do
+      # [[ -z $line ]] && continue
+      if [[ $line =~ ^#.* ]]; then
+        echo $line | ink red
+      else
+        echo $line | ink cyan
+      fi
+    done
+}
+
+_cat() {
+  cat <<'EOF'
+# Run all tests (default):
+jest
+
+# Run only the tests that were specified with a pattern or filename:
+jest my-test #or
+jest path/to/my-test.js
+
+# Run tests related to changed files based on hg/git (uncommitted files):
+jest -o
+
+# Run tests that match this spec name
+# (match against the name in describe or test, basically).
+jest -t name-of-spec
+
+# Set the default timeout interval for tests and before/after hooks in milliseconds.
+# This only affects the test file from which this function is called.
+# Note: The default timeout interval is 5 seconds if this method is not called.
+# Note: If you want to set the timeout for all test files,
+#  a good place to do this is in setupFilesAfterEnv.
+jest.setTimeout(timeout)
+
+# A list of paths to modules that run some code to configure
+# or to set up the testing framework before each test.
+# Beware that files imported by the setup scripts
+# will not be mocked during testing.
+--setupFilesAfterEnv <path1> ... <pathN>#
+
+# Runs failed tests n-times until they pass
+# or until the max number of retries is exhausted.
+# This only works with the default jest-circus runner!
+jest.retryTimes()
+
+# Using with npm scripts
+## If you run Jest via npm test,
+## you can still use the command line arguments by inserting a --
+## between npm test and the Jest arguments.
+npm test -- -u -t="ColorPicker"
+
+# Run tests related to path/to/fileA.js and path/to/fileB.js:
+jest --findRelatedTests path/to/fileA.js path/to/fileB.js
+# Run watch mode:
+jest --watch #runs jest -o by default
+jest --watchAll #runs all tests
+
+EOF
+}
+main() {
+  _cat | _color
+}
+main "$@"
