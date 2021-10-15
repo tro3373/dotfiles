@@ -32,6 +32,9 @@ nnoremap g# g#zz
 " ビジュアルモード選択した部分を*で検索
 vnoremap * "zy:let @/ = @z<CR>nzz
 vnoremap " "zy:let @/ = @z<CR>nzz
+
+" カーソル下の単語をハイライトしてから置換する
+nmap # <Space><Space>:%s/<C-r>///g<Left><Left>
 " " for us keyboard
 " nnoremap ; :
 " nnoremap : ;
@@ -147,8 +150,8 @@ nnoremap sq :<C-u>q<CR>
 nnoremap sQ :<C-u>bd<CR>
 
 "" 現在行をコメント化
-map s# 0i# <ESC>
-vmap # <c-V>0I#<esc>
+" map s# 0i# <ESC>
+" vmap # <c-V>0I#<esc>
 " ハードタブ非表示
 map sx :set lcs=tab:>\ ,trail:_,extends:\<Enter>
 " ハードタブ表示
@@ -254,5 +257,3 @@ elseif g:is_linux
 else
   " その他
 endif
-
-
