@@ -13,12 +13,11 @@ exe() {
   [[ -z $dummy ]] && echo "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
   echo "> Executing: $*" | ink yellow
   [[ -z $dummy ]] && echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-  if [[ -z $dummy ]]; then
-    eval "$*"
-  fi
+  [[ -n $dummy ]] && return
+  eval "$*"
 }
 clean_local() {
-  git branch --merged |
+  git branch --format '%(refname:short)' --merged |
     grep -v -E "$exclude_branches" |
     while read -r branch; do
       [[ -z $branch ]] && continue
