@@ -13,6 +13,7 @@ main() {
       log "> No such file or direcotry exist. $src"
       continue
     fi
+    src=${src%/}
     # log "> $src .."
     local dst=$src.bk
     if [[ -e $dst ]]; then
@@ -20,7 +21,8 @@ main() {
       continue
     fi
     log "> Backup coping $src to $dst .."
-    cp -rf $src $dst
+    # cp -rf $src $dst
+    mv -v $src $dst
   done
   log "Done!"
 }
