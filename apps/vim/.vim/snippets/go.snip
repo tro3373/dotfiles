@@ -112,7 +112,12 @@ options word
     return fmt.Sprintf("${2}")
   }
 
-snippet jsonstructtt
+snippet structtt
+  type ${1:#struct_name} struct {
+      ${2:#variable} ${3:#type}
+  }
+
+snippet struct_jsonnn
   type ${1} struct {
       // json:<マッピングするJSONオブジェクトのフィールド名>,<オプション> という形式で記述します
       // omitempty   0値(空文字、0、nil等)であればフィールドを出力しない   0値であれば無視される                                            json:"field,omitempty"
