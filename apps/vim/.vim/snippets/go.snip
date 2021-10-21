@@ -282,3 +282,13 @@ snippet factoryyyy
 
       fmt.Printf("%T %T %T\n", a, b, c)
   }
+
+snippet mutexxx
+alias   rwmutexxx
+  var (
+    mu sync.RWMutex
+  )
+  mu.Lock()
+  defer mu.Unlock()
+  mu.RLock()
+  defer mu.RUnlock()
