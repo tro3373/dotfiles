@@ -58,10 +58,10 @@ EOF
 
 cat_makefile() {
   cat <<'EOF'
-SERVICE=api
+NAME=api
 .DEFAULT_GOAL := deploy
 tag:
-	@tag="Release_${SERVICE}_$$(date +%Y%m%d.%H%M%S)" && git tag "$$tag" && echo "==> $$tag tagged."
+	@tag="Release_${NAME}_$$(date +%Y%m%d.%H%M%S)" && git tag "$$tag" && echo "==> $$tag tagged."
 EOF
 }
 
