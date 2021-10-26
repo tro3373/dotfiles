@@ -45,7 +45,7 @@ source_pkgs() {
   source_pkg https://github.com/zsh-users/zsh-completions.git
   source_pkg https://github.com/zsh-users/zsh-history-substring-search.git 1
   source_pkg https://github.com/zsh-users/zsh-syntax-highlighting.git 1
-  source_pkg https://github.com/zsh-users/zsh-autosuggestions.git 1
+  [[ ${OSTYPE} != "msys" ]] && source_pkg https://github.com/zsh-users/zsh-autosuggestions.git 1
   # zsh-autosuggestions settings
   # https://github.com/zsh-users/zsh-autosuggestions
   export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=236'
