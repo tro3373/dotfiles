@@ -7,7 +7,9 @@ install_common() {
     dl $_gradle_sdk_url _setup_sdk.bash
     exe bash _setup_sdk.bash
   fi
-  exe sdk install gradle
+  # TODO reload zsh/bash rc
+  local gradle_version=
+  exe sdk install gradle $gradle_version
 }
 # install_arch()   { not_supported; }
 install_msys() { not_supported; }
