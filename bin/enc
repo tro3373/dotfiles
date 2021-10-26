@@ -4,6 +4,8 @@ current_dir=$(pwd)
 # script_dir=$(cd "$(dirname $0)"; pwd)
 command_name=$(basename $0)
 args=()
+readonly ignore_exts=(png csv jpg jpeg exe mp3 mp4)
+# TODO uppercase
 
 usage() {
   cat <<EOF
