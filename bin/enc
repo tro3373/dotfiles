@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-# script_dir=$(cd "$(dirname $0)"; pwd)
-command_name=$(basename $0)
-args=()
+readonly current_dir=$(pwd)
+readonly command_name=$(basename $0)
 readonly ignore_exts=(png csv jpg jpeg exe mp3 mp4)
-# TODO uppercase
+
+ignore_reg_exts=
+args=()
 
 usage() {
   cat <<EOF
@@ -44,16 +44,26 @@ initialize() {
   #   add_args "$current_dir"
   # fi
   # all_args="${args[*]}"
+  set_ignore_reg_exts
+}
+
+set_ignore_reg_exts() {
+  for ext in "${ignore_exts[@]}"; do
+    ignore_reg_exts="$ignore_reg_exts|$ext|${ext^^}"
+  done
+  ignore_reg_exts=".*\.(${ignore_reg_exts:1})"
 }
 
 show_encode() {
   nkf --guess $line
 }
 
+is_ignored() { [[ $line =~ $ignore_reg_exts ]]; }
+
 handle_file() {
   while read -r line; do
     local src_enc=$(show_encode $line)
-    if [[ $unix -eq 1 || $dos -eq 1 ]]; then
+    if ! is_ignored && [[ $unix -eq 1 || $dos -eq 1 ]]; then
       if [[ $unix -eq 1 ]]; then
         # convert to utf8,lf
         nkf -Lu -w --overwrite $line
