@@ -292,3 +292,6 @@ alias   rwmutexxx
   defer mu.Unlock()
   mu.RLock()
   defer mu.RUnlock()
+
+snippet floatstringgg
+  strconv.FormatFloat(target, 'f', -1, 64)
