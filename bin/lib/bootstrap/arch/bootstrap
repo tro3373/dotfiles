@@ -118,6 +118,12 @@ setup_user() {
   # if is_arm; then
   #   del_user alarm
   # fi
+  if is_wsl; then
+    cat <<EOF >>/etc/wsl.conf
+[user]
+default=$username
+EOF
+  fi
 }
 
 sudo() {
