@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  ssh -V 2>&1 | cut -d, -f1 | cut -d_ -f2 | cut -c1-3
+}
+main "$@"

@@ -98,7 +98,11 @@ main() {
   if [[ $rm_pass -eq 1 ]]; then
     rm_pass_phrase $file
   else
-    ssh-keygen -t rsa -b 4096 -f $file $email_opt -m pem
+    local optm=
+    if is_newer_openssh; then
+      optm="-m pem"
+    fi
+    ssh-keygen -t rsa -b 4096 -f $file $email_opt $optm
   fi
 }
 main "$@"
