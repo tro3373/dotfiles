@@ -519,6 +519,10 @@ not_supported() {
   log "=> Not supported"
 }
 
+no_settings() {
+  log "=> Nothing to do in setting"
+}
+
 is_bootstrapped() { test -e $bootstrapped_path; }
 bootstrapped() { date | cat_tee $bootstrapped_path; }
 
