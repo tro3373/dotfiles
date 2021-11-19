@@ -17,7 +17,7 @@ cat_neofetch_shell() {
 neofetch
 EOF
 }
-setting_common() { not_supported; }
+setting_common() { no_settings; }
 setting_arch() {
   local dst=/etc/profile.d/neofetch.sh
   [[ -e $dst ]] && return
@@ -30,11 +30,11 @@ setting_arch() {
     fi
   exe sudo chmod 775 $dst
 }
-setting_msys() { not_supported; }
-setting_cygwin() { not_supported; }
-setting_mac() { not_supported; }
-setting_ubuntu() { not_supported; }
-setting_redhat() { not_supported; }
+setting_msys() { no_settings; }
+setting_cygwin() { no_settings; }
+setting_mac() { no_settings; }
+setting_ubuntu() { no_settings; }
+setting_redhat() { no_settings; }
 #is_installed
 #install_via_os_default
 #def_install

@@ -20,10 +20,10 @@ setting_common() {
   fi
   make_lnk_with_bkup "$src" "$dst"
 }
-setting_msys() { not_supported; }
-setting_cygwin() { not_supported; }
-setting_ubuntu() { not_supported; }
-setting_redhat() { not_supported; }
+setting_msys() { no_settings; }
+setting_cygwin() { no_settings; }
+setting_ubuntu() { no_settings; }
+setting_redhat() { no_settings; }
 #is_installed
 #install_via_os_default
 #def_install

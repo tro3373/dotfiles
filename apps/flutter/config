@@ -24,9 +24,9 @@ setting_common() {
   exe $flutter_bin/flutter precache
   exe $flutter_bin/flutter doctor
 }
-# setting_arch() { not_supported; }
-# setting_msys() { not_supported; }
-setting_cygwin() { not_supported; }
+# setting_arch() { no_settings; }
+# setting_msys() { no_settings; }
+setting_cygwin() { no_settings; }
 setting_mac() {
   setting_common
   if [[ -e /Applications/Xcode.app ]]; then
@@ -35,8 +35,8 @@ setting_mac() {
     exe sudo xcodebuild -license
   fi
 }
-# setting_ubuntu() { not_supported; }
-setting_redhat() { not_supported; }
+# setting_ubuntu() { no_settings; }
+setting_redhat() { no_settings; }
 #is_installed
 #install_via_os_default
 #def_install

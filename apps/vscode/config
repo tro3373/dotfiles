@@ -23,13 +23,13 @@ install_cygwin() { not_supported; }
 install_mac() { not_supported; }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
-setting_common() { not_supported; }
-setting_arch() { not_supported; }
+setting_common() { no_settings; }
+setting_arch() { no_settings; }
 setting_msys() {
   _ln_jsons "$settings_d_msys"
   _add_packages
 }
-setting_cygwin() { not_supported; }
+setting_cygwin() { no_settings; }
 setting_mac() {
   _ln_jsons "$settings_d_mac"
   _add_code_path "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
@@ -37,7 +37,7 @@ setting_mac() {
 setting_ubuntu() {
   _ln_jsons "$settings_d_ubuntu"
 }
-setting_redhat() { not_supported; }
+setting_redhat() { no_settings; }
 _add_code_path() {
   local _code_bin="$*"
   local _target=$HOME/.works.zsh

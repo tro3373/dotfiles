@@ -11,5 +11,5 @@ install_msys()   { not_supported; }
 setting_common() {
   :
 }
-setting_msys()   { not_supported; }
+setting_msys()   { no_settings; }
 
