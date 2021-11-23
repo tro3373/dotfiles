@@ -7,7 +7,7 @@ gh_dl_url() {
   local user_repo=$1
   local gh_prefix=https://github.com
   local _url=$(curl -fSsL $gh_prefix/$user_repo/releases |
-    grep 'a href' | grep 'releases/download' |
+    grep 'a href' | grep 'releases/download' | grep -v Nerd |
     head -1 |
     sed -e 's,^.*href=",,g' |
     cut -d'"' -f1)

@@ -6,7 +6,7 @@ is_installed() {
 install_common() { not_supported; }
 install_arch() { not_supported; }
 install_msys() {
-  scoop install sakura-editor
+  exe scoop install sakura-editor
 }
 install_cygwin() { not_supported; }
 install_mac() { not_supported; }

@@ -27,7 +27,7 @@ setting_common() {
   make_lnk_with_bkup "$app_dir/alt-ime-ahk.ahk" "'$dst'"
 }
 # setting_arch() { no_settings; }
-setting_msys() { no_settings; }
+# setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
 setting_mac() { no_settings; }
 setting_ubuntu() { no_settings; }

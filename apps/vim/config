@@ -1,6 +1,9 @@
 #!/bin/bash
 
-kaoriya_dir_name=vim82-kaoriya-win64
+readonly kaoriya_scoop_dir=$WINHOME/scoop/apps/vim-kaoriya/current
+# readonly kaoriya_dir_name=vim82-kaoriya-win64
+# readonly kaoriya_tools_dir=$WINHOME/tools/$kaoriya_dir_name
+
 is_installed() {
   if is_arch; then
     # gvim で +clipboardを狙う
@@ -14,9 +17,12 @@ is_installed() {
   fi
   # for windows
   if has $app; then
-    if [[ -e $WINHOME/tools/$kaoriya_dir_name ]]; then
+    if [[ -e $kaoriya_scoop_dir ]]; then
       return 0
     fi
+    # if [[ -e $kaoriya_tools_dir ]]; then
+    #   return 0
+    # fi
   fi
   return 1
 }
@@ -28,21 +34,19 @@ install_msys() {
   else
     build_msys
   fi
-  if [[ -e $WINHOME/tools/$kaoriya_dir_name ]]; then
-    return 0
-  fi
-  install_kaoriya_msys
+  exe scoop install vim-kaoriya
+  # install_kaoriya_msys
 }
 
-install_kaoriya_msys() {
-  dl_unzip "$(get_dl_url_win)" "$WINHOME/tools/$kaoriya_dir_name"
-}
+# install_kaoriya_msys() {
+#   dl_unzip "$(get_dl_url_win)" "$kaoriya_tools_dir"
+# }
 
-get_dl_url_win() {
-  curl -fsSL http://vim-jp.org/redirects/koron/vim-kaoriya/latest/win64/ \
-    | grep "a href" \
-    | awk -F\" '{print $2}'
-}
+# get_dl_url_win() {
+#   curl -fsSL http://vim-jp.org/redirects/koron/vim-kaoriya/latest/win64/ \
+#     | grep "a href" \
+#     | awk -F\" '{print $2}'
+# }
 
 build_msys() {
   # install lua.

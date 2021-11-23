@@ -34,7 +34,7 @@ concfg import harmonic-dark
 
 scoop install autohotkey
 scoop install google-japanese-input-np
-scoop install googlechrome
+# scoop install googlechrome
 scoop install vim-kaoriya
 scoop install windows-terminal
 scoop install virtualbox-with-extension-pack-np
@@ -47,16 +47,16 @@ scoop install sakura-editor
 scoop install winmerge-jp
 scoop install winscp
 scoop install mpc-hc
-scoop install tortoisesvn
+# scoop install tortoisesvn
 scoop install dbeaver
 scoop install firefox
 scoop install slack
 scoop install IntelliJ-IDEA
 
 # Install lang..
-scoop install go
-scoop install openjdk
-scoop install adopt8-hotspot
+# scoop install go
+# scoop install openjdk
+# scoop install adopt8-hotspot
 
 # Nouse
 # scoop install gitkraken
