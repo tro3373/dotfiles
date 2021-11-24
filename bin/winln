@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+cat_content() {
+  cat <<EOF
+[InternetShortcut]
+URL="$(cygpath -wa $1)"
+IconFile=C:\WINDOWS\system32\SHELL32.dll
+IconIndex=20
+EOF
+}
+
+main() {
+  only msys || exit 1
+  [[ $# -ne 2 ]] && echo "Specify valid args" 1>&2 && exit 1
+  [[ -e $2 ]] && echo "Already $2 exist" 1>&2 && exit 1
+  cat_content "$1" >$2.url
+}
+main "$@"
