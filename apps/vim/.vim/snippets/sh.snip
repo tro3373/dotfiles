@@ -102,6 +102,12 @@ snippet confirm
     fi
   }
 
+snippet press_enter
+alias wait_key
+alias cancelable
+  echo "==> Press Enter to continue..(Cancel: Ctrl+C)"
+  read _
+
 snippet interactive1
   interactive1() {
     local variable=$1
