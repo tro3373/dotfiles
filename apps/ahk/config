@@ -28,7 +28,7 @@ setting_common() {
 }
 # setting_arch() { no_settings; }
 setting_msys() {
-  local dst="${WINHOME}/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup/alt-ime-ahk.url"
+  local dst="${WINHOME}/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup/alt-ime-ahk.lnk"
   [[ -e $dst ]] && return
   # shellcheck disable=SC2154
   exe winln "$app_dir/alt-ime-ahk.ahk" "'$dst'"

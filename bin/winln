@@ -13,6 +13,9 @@ main() {
   only msys || exit 1
   [[ $# -ne 2 ]] && echo "Specify valid args" 1>&2 && exit 1
   [[ -e $2 ]] && echo "Already $2 exist" 1>&2 && exit 1
-  cat_content "$1" >$2.url
+  local dst="$2"
+  [[ $dst =~ ^.*\.lnk ]] || dst="$dst.lnk"
+  # NOT WORK! FIXME! https://stackoverflow.com/questions/30028709/how-do-i-create-a-shortcut-via-command-line-in-windows
+  cat_content "$1" >"$dst"
 }
 main "$@"
