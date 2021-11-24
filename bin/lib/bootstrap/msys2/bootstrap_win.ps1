@@ -54,7 +54,7 @@ scoop install slack
 scoop install IntelliJ-IDEA
 
 # Install lang..
-# scoop install go
+scoop install go
 # scoop install openjdk
 # scoop install adopt8-hotspot
 

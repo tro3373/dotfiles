@@ -1,23 +1,69 @@
 #!/usr/bin/env bash
 
-main() {
-  # pacman -Syyu pacman --noconfirm
+readonly _state=$0.state
+
+setup_home_lnk() {
+  echo "==> Setting home link.."
+  local u=$(whoami)
+  local unxh=/c/Users/$u/.unxh
+  mkdir -p $unxh
+  echo "C:/Users/$u/.unxh /home/$u" >>/etc/fstab
+  # local win=/c/Users/$u/scoop/persist/msys2/home/$u
+  # echo "$win /home/$u" >>/etc/fstab
+  # ln -s $win /c/Users/$u/.unxh
+}
+
+update_pkgs() {
+  echo "==> Updating packages.."
+  echo "==> Terminal will be disapper. Next Do is Re-run bootstrap too!"
+  echo "==> Press Enter to continue..(Cancel: Ctrl+C)"
+  read _
+  touch $_state
+  pacman -Syyu pacman --noconfirm # terminal will be disapper!
+}
+
+bootstrap1() {
+  echo "==> Bootstrapping 1.."
+  setup_home_lnk
+  update_pkgs
+}
+
+install_pkgs() {
+  echo "==> Installing packages.."
   pacman -S --noconfirm \
     base-devel msys2-devel mingw-w64-i686-toolchain mingw-w64-x86_64-toolchain \
     man zsh vim git winpty svn wget sed diffutils tar zip unzip patch bc \
     mingw-w64-x86_64-ag
+}
+
+setup_msys2_shell_cmd() {
+  echo "==> Setting msys2 shell cmd.."
   # must?
   sed -ri -e 's,^.*(profile_d zsh),  \1\n  SHELL=/bin/zsh,g' /etc/profile
   sed -ri \
     -e 's/bash/zsh/g' \
     -e 's/rem set MSYS=win/set MSYS=win/g' \
     /msys2_shell.cmd
-  local u=$(whoami)
-  local win=/c/Users/$u
-  # TODO Admin check? Check executable ln command
-  ln -s $win/scoop/persist/msys2/home/$u $win/.unxh
+}
+
+setup_dot() {
+  echo "==> Cloning dot.."
   curl -fSsL git.io/tr3s | bash
-  # TODO current is here
-  # TODO unzip modified dotfiles-master not merged
+}
+
+bootstrap2() {
+  echo "==> Bootstrapping 2.."
+  install_pkgs
+  setup_msys2_shell_cmd
+  setup_dot
+}
+
+main() {
+  export MSYS=winsymlinks:nativestrict # enable symbolic link in admined msys
+  if [[ ! -e $_state ]]; then
+    bootstrap1
+    return
+  fi
+  bootstrap2
 }
 main "$@"

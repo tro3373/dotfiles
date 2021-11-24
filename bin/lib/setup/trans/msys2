@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
-readonly _script_dir=$(
-  cd "$(dirname ${BASH_SOURCE:-$0})"
-  pwd
-)
-source $_script_dir/../funcs_arch
+export minimal=1
+# readonly _script_dir=$(
+#   cd "$(dirname ${BASH_SOURCE:-$0})"
+#   pwd
+# )
+# source $_script_dir/../funcs_arch
 
 pre_setup() {
   # log "=> pre setting up"

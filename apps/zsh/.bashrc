@@ -143,6 +143,10 @@ EDITOR=vim
 PATH=$PATH:~/bin
 
 export PATH LANG EDITOR
+if [[ ${OSTYPE} = "msys" ]]; then
+  export WINHOME=/c/Users/$(whoami)
+  export MSYS=winsymlinks:nativestrict # enable symbolic link in admined msys
+fi
 
 #cd_up() {
 #    cd ..

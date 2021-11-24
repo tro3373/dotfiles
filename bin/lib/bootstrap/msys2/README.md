@@ -1,32 +1,55 @@
 # setup msys2
-## 1. install packages via scoop
+## 1. Set ps execution policy
+```
+./setup_ps_execution_policy.bat
+```
+
+## 2. install packages via scoop
 
 ```
 ./bootstrap_win.ps1
 ```
 
-## 2. setup msys2
-### 1. start msys via Admin
+## 3. Bootstrap
 
 ```
-set MSYS=winsymlinks:nativestrict
-@powershell start-process "%userprofile%\scoop\apps\msys2\current\msys2_shell.cmd" -verb runas
+# bootstap1
+./admin_msys2.ps1
+./bootstrap
 
-@powershell start-process "set MSYS=winsymlinks:nativestrict && %userprofile%\scoop\apps\msys2\current\msys2_shell.cmd" -verb runas
-```
-
-### 2. bootstrap msys2
-
-```
+# bootstap2
+./admin_msys2.ps1
 ./bootstrap
 ```
 
 ## 3. setup
 
 ```
+cd .dot/bin
 ./setup msys2 -e
 ```
 
-todo fix ahk setup. not symlink. shotcut. and lnk path is wrong.
-is msys2 tran setup include hackgen?
-scoop 7zip context menu is need to kick reg file?
+## TODO
+- gui
+    - Task bar
+        - Move to left
+        - Remove shortcuts
+        - Dislay all task icons always
+        - Not integrate button
+        - Auto disapper
+        - Use small task bar button
+    - Explore
+        - Show extention
+        - Show hidden files
+        - Add Quick Launch
+        - Set icon to `admin msys start batch`
+    - Desktop Icons
+        - Display pc, network, control panel
+        - Setup changer wallpaper
+    - Window snap
+        - Disable show nighbor snap app suggestion
+        - Disable change windows size for nighbor app window when snapped
+- scoop
+    - scoop 7zip context menu is need to kick reg file?
+- setup
+    - is msys2 tran setup include hackgen?

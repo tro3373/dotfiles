@@ -24,10 +24,28 @@ setup_email() {
   fi
 }
 cat_git_configs() {
+  cat_git_configs_dynamic
+  cat_git_configs_fixed
+}
+
+cat_git_configs_dynamic() {
+  local _editor=vim
+  if is_msys; then
+    local _target=/home/joker/win/scoop/shims/gvim.exe
+    if [[ -e $_target ]]; then
+      _editor=$_target
+    fi
+  fi
+  cat <<EOF
+# git config --global core.editor "$_editor --remote-tab-wait-silent -f -c 'set fenc=utf-8'"
+git config --global core.editor "vim -c 'set fenc=utf-8'"
+EOF
+}
+cat_git_configs_fixed() {
   cat <<'EOF'
 # git config --global user.name sample_username
 # git config --global user.email sample_email@domain.com
-git config --global core.editor "vim -c 'set fenc=utf-8'"
+git config --global core.symlinks true
 git config --global core.quotepath false
 git config --global core.preloadindex true
 git config --global core.fscache true
