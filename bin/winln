@@ -1,21 +1,108 @@
 #!/usr/bin/env bash
 
-cat_content() {
+readonly command_name=$(basename $0)
+readonly current_dir=$(pwd)
+readonly script_dir=$(
+  cd "$(dirname ${BASH_SOURCE:-$0})"
+  pwd
+)
+readonly winln_ps1=$script_dir/winln.ps1
+startup=0
+args=()
+usage() {
   cat <<EOF
-[InternetShortcut]
-URL="$(cygpath -wa $1)"
-IconFile=C:\WINDOWS\system32\SHELL32.dll
-IconIndex=20
+
+Make windows shortcut.
+
+  Usage:
+    $command_name [option] src dst
+  Options
+    -h|--help : Show this usage
+    -s|--startup : Create shortcut as windows startup
+
 EOF
+}
+add_args() { args+=("$@"); }
+check() {
+  only win
+  if [[ ! -e $src ]]; then
+    echo "Specify exist path. src=$src" 1>&2
+    exit 1
+  fi
+  if [[ -e $dst && -f $dst ]]; then
+    echo "Already dst exist. dst=$dst" 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -s | --startup) startup=1 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  read -r src dst _ < <(echo "${args[@]}")
+  src=$(to_abs "$src")
+  local def_dst_nm=$(basename $src).lnk
+  if [[ -z $dst ]]; then
+    dst="$current_dir/$def_dst_nm"
+  elif [[ -d $dst ]]; then
+    dst="$dst/$def_dst_nm"
+  fi
+  if [[ $startup -eq 1 ]]; then
+    dst="$WINHOME/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup/$def_dst_nm"
+  fi
+  dst=$(to_abs "$dst")
+  echo "==> Creating windows shortcut src:$src dst:$dst.."
+  check
+}
+
+# cat_content() {
+#   cat <<EOF
+# [InternetShortcut]
+# URL="$(cygpath -wa $1)"
+# IconFile=C:\WINDOWS\system32\SHELL32.dll
+# IconIndex=20
+# EOF
+# }
+#
+# mk_internet_short_cut_url() {
+#   local dst="$2"
+#   [[ $dst =~ ^.*\.lnk ]] || dst="$dst.lnk"
+#   # NOT WORK! FIXME! https://stackoverflow.com/questions/30028709/how-do-i-create-a-shortcut-via-command-line-in-windows
+#   # https://kurukurupapa.hatenablog.com/entry/20090926/1253981467
+#   cat_content "$1" >"$dst"
+# }
+
+to_abs() {
+  readlink -m "$*"
+}
+
+to_abs_win() {
+  if os wsl; then
+    wslpath -wa "$*" 2>/dev/null
+    return
+  fi
+  cygpath -wa "$*" 2>/dev/null
+}
+
+parse() {
+  local _path="$*"
+  local _path_f=$(basename "$_path")
+  local _path_d=$(dirname "$_path")
+  [[ ! -e $_path_d ]] && mkdir -p "$_path_d"
+  local _res="$(to_abs_win "$_path_d")\\$_path_f"
+  echo "$_res"
 }
 
 main() {
-  only msys || exit 1
-  [[ $# -ne 2 ]] && echo "Specify valid args" 1>&2 && exit 1
-  [[ -e $2 ]] && echo "Already $2 exist" 1>&2 && exit 1
-  local dst="$2"
-  [[ $dst =~ ^.*\.lnk ]] || dst="$dst.lnk"
-  # NOT WORK! FIXME! https://stackoverflow.com/questions/30028709/how-do-i-create-a-shortcut-via-command-line-in-windows
-  cat_content "$1" >"$dst"
+  # set -x
+  initialize "$@"
+  powershell.exe -ExecutionPolicy RemoteSigned -File $winln_ps1 "$(parse "$src")" "$(parse "$dst")"
 }
 main "$@"
