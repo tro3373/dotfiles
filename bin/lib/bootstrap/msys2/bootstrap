@@ -33,7 +33,7 @@ install_pkgs() {
   pacman -S --noconfirm \
     base-devel msys2-devel mingw-w64-i686-toolchain mingw-w64-x86_64-toolchain \
     man zsh vim git winpty svn wget sed diffutils tar zip unzip patch bc \
-    mingw-w64-x86_64-ag
+    mingw-w64-x86_64-ag gnu-netcat
 }
 
 setup_msys2_shell_cmd() {
