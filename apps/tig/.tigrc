@@ -232,7 +232,7 @@ set line-graphics = ascii
 #set show-line-numbers = yes
 #
 ## Color Settings
-#color default white black
+color default white default
 #color cursor default magenta
 #color date cyan default
 #color delimiter cyan default
