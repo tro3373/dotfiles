@@ -2,8 +2,9 @@
 
 not_supported() { echo "Not supported." 1>&2 && exit 1; }
 main() {
-  local arg=${1:-arch}
-  os $arg && return
+  for arg in "$@"; do
+    os $arg && return
+  done
   not_supported
 }
 main "$@"
