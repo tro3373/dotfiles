@@ -31,7 +31,7 @@ check() {
   fi
   if [[ -e $dst && -f $dst ]]; then
     echo "Already dst exist. dst=$dst" 1>&2
-    exit 1
+    exit 0
   fi
 }
 initialize() {
@@ -58,7 +58,6 @@ initialize() {
     dst="$WINHOME/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup/$def_dst_nm"
   fi
   dst=$(to_abs "$dst")
-  echo "==> Creating windows shortcut src:$src dst:$dst.."
   check
 }
 
@@ -103,6 +102,7 @@ parse() {
 main() {
   # set -x
   initialize "$@"
+  echo "==> Creating windows shortcut src:$src dst:$dst.."
   powershell.exe -ExecutionPolicy RemoteSigned -File $winln_ps1 "$(parse "$src")" "$(parse "$dst")"
 }
 main "$@"
