@@ -40,7 +40,7 @@ setting_common() {
   log "   config.disksize.size = '150GB'"
   exe vagrant plugin install vagrant-winnfsd
   log "Add Vagrantfile bellow "
-  log "   config.vm.synced_folder \".\", \"/var/www/src\", type: \"nfs\""
+  log '   config.vm.synced_folder ".", "/var/www/src", type: "nfs"'
 }
 setting_arch() { no_settings; }
 setting_msys() { no_settings; }
