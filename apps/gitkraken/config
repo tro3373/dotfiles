@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
 
-
-
 install_common() { not_supported; }
-install_arch()   { not_supported; }
-install_msys()   { not_supported; }
+install_arch() { not_supported; }
+install_msys() { not_supported; }
 install_cygwin() { not_supported; }
-install_mac()    {
-  exe brew cask install gitkraken
+install_mac() {
+  exe brew install --cask gitkraken
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
-setting_arch()   { no_settings; }
-setting_msys()   { no_settings; }
+setting_arch() { no_settings; }
+setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
-setting_mac()    {
+setting_mac() {
   :
 }
 setting_ubuntu() { no_settings; }
@@ -37,4 +35,3 @@ setting_redhat() { no_settings; }
 #dl_untar
 #github
 #github_user_local
-
