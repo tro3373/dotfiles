@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-main() {
-  only mac || exit 1
+fix_host_only_network_ns_error_failure() {
   # Bringing machine 'default' up with 'virtualbox' provider...
   # ==> default: Clearing any previously set network interfaces...
   # There was an error while executing `VBoxManage`, a CLI used by Vagrant
@@ -17,6 +16,58 @@ main() {
   # VBoxManage: error: Context: "RTEXITCODE handleCreate(HandlerArg *)" at line 95 of file VBoxManageHostonly.cpp
 
   # @see: https://qiita.com/akane_kato/items/c103332729e3d0ac39e6
-  sudo kmutil load -b org.virtualbox.kext.VBoxDrv
+  # sudo kmutil load -b org.virtualbox.kext.VBoxDrv
+  kmutil_load org.virtualbox.kext.VBoxDrv
+
+  # @see https://github.com/hashicorp/vagrant/issues/12557#issuecomment-954704523
+  # sudo kextload -b org.virtualbox.kext.VBoxDrv
+  # sudo kextload -b org.virtualbox.kext.VBoxNetFlt
+  # sudo kextload -b org.virtualbox.kext.VBoxNetAdp
+  # sudo kextload -b org.virtualbox.kext.VBoxUSB
+  kmutil_load org.virtualbox.kext.VBoxNetFlt
+  kmutil_load org.virtualbox.kext.VBoxNetAdp
+  kmutil_load org.virtualbox.kext.VBoxUSB
+}
+
+kmutil_load() {
+  local target=$1
+  echo "==> kmutil loading $target .."
+  sudo kmutil load -b $target
+}
+
+fix_host_only_network_range_error() {
+  # The IP address configured for the host-only network is not within the
+  # allowed ranges. Please update the address used to be within the allowed
+  # ranges and run the command again.
+  #
+  #   Address: 192.168.33.10
+  #   Ranges:
+  #
+  # Valid ranges can be modified in the /etc/vbox/networks.conf file. For
+  # more information including valid format see:
+  #
+  #   https://www.virtualbox.org/manual/ch06.html#network_hostonly
+  local target=/etc/vbox/networks.conf
+  if [[ -e $target ]]; then
+    echo "==> Already $target exist." 1>&2
+    return
+  fi
+  sudo mkdir -p /etc/vbox
+  cat_networks_conf |
+    sudo tee -a $target >&/dev/null
+  echo "==> $target generated."
+}
+
+cat_networks_conf() {
+  cat <<'EOF'
+* 0.0.0.0/0 ::/0
+EOF
+}
+
+main() {
+  only mac || exit 1
+  set -e
+  fix_host_only_network_ns_error_failure
+  fix_host_only_network_range_error
 }
 main "$@"
