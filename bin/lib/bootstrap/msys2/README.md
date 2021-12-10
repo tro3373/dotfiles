@@ -13,6 +13,10 @@
 ## 3. Bootstrap
 
 ```
+# init msys2
+./admin_msys2.ps1
+exit
+
 # bootstap1
 ./admin_msys2.ps1
 ./bootstrap
