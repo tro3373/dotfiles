@@ -21,6 +21,6 @@ main() {
     args=("$(cygpath -aw "${args[@]}")")
   fi
   echo "==> open ${args[*]}"
-  $_open "${args[@]}" &>/dev/null
+  $_open "${args[@]}" &>/dev/null &
 }
 main "$@"
