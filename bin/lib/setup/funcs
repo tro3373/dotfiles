@@ -19,6 +19,7 @@ export debug=0
 export dry_run=1
 export tran=0
 export force=0
+export additional=0
 export minimal=0
 export view=0
 args=()
@@ -27,6 +28,7 @@ _funcs_initialized=0
 add_args() { args+=("$@"); }
 is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
+is_additional() { [[ $additional -eq 1 ]]; }
 is_force() { [[ $force -eq 1 ]]; }
 _log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") ${*:2}" | ink $1 1>&2; }
 log() { _log cyan "$*"; }
@@ -104,6 +106,7 @@ initialize_args() {
       -e | --exec) dry_run=0 ;;
       -v | --view) view=1 ;;
       -f | --force) force=1 ;;
+      -a | --additional) additional=1 ;;
       -m | --minimal) minimal=1 ;;
       -d | --debug) debug=1 ;;
       *) add_args $1 ;;

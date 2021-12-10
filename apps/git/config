@@ -43,8 +43,8 @@ EOF
 }
 cat_git_configs_fixed() {
   cat <<'EOF'
-# git config --global user.name sample_username
-# git config --global user.email sample_email@domain.com
+git config --global user.name sample_username
+git config --global user.email sample_email@domain.com
 git config --global core.symlinks true
 git config --global core.quotepath false
 git config --global core.preloadindex true
@@ -79,8 +79,8 @@ EOF
 setting_common() {
   # shellcheck disable=SC2154
   make_link_dot2home $app_dir
-  # local usrn=0
-  # local mail=0
+  local usrn=0
+  local mail=0
   local list="$(git config --list --global 2>/dev/null)"
   while read -r line; do
     [[ -z $line ]] && continue
@@ -94,14 +94,14 @@ setting_common() {
     fi
 
     case "$key" in
-      # user.name)
-      #   is_dry && exe "$line" && continue
-      #   usrn=1
-      #   ;;
-      # user.email)
-      #   is_dry && exe "$line" && continue
-      #   mail=1
-      #   ;;
+      user.name)
+        is_dry && is_additional && exe "$line" && continue
+        usrn=1
+        ;;
+      user.email)
+        is_dry && is_additional && exe "$line" && continue
+        mail=1
+        ;;
       core.filemode)
         local filemode=true
         is_msys && filemode=false
@@ -113,14 +113,15 @@ setting_common() {
     esac
   done < <(cat_git_configs)
 
-  # if [[ -t 1 ]]; then
-  #   if [[ $usrn -eq 1 ]]; then
-  #     setup_username
-  #   fi
-  #   if [[ $mail -eq 1 ]]; then
-  #     setup_email
-  #   fi
-  # fi
+  [[ $additional -ne 1 ]] && return
+  if [[ -t 1 ]]; then
+    if [[ $usrn -eq 1 ]]; then
+      setup_username
+    fi
+    if [[ $mail -eq 1 ]]; then
+      setup_email
+    fi
+  fi
 }
 
 # setting_common() {
