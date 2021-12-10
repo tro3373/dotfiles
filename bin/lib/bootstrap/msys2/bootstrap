@@ -6,11 +6,13 @@ setup_home_lnk() {
   echo "==> Setting home link.."
   local u=$(whoami)
   local unxh=/c/Users/$u/.unxh
-  mkdir -p $unxh
-  echo "C:/Users/$u/.unxh /home/$u" >>/etc/fstab
-  # local win=/c/Users/$u/scoop/persist/msys2/home/$u
-  # echo "$win /home/$u" >>/etc/fstab
-  # ln -s $win /c/Users/$u/.unxh
+  ## Enable fstab
+  # mkdir -p $unxh
+  # echo "C:/Users/$u/.unxh /home/$u" >>/etc/fstab
+  local scoop_persist_home=/c/Users/$u/scoop/persist/msys2/home/$u
+  # echo "$scoop_persist_home /home/$u" >>/etc/fstab
+  ## Enable symlink
+  ln -s $scoop_persist_home /c/Users/$u/.unxh
 }
 
 update_pkgs() {

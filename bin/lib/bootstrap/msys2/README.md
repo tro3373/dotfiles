@@ -24,7 +24,9 @@
 
 ## 3. setup
 
+# TODO https://www.ncaq.net/2020/11/10/15/40/08/
 ```
+./admin_msys2.ps1
 cd .dot/bin
 ./setup msys2 -e
 ```
