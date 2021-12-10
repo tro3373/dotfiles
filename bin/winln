@@ -8,7 +8,9 @@ readonly script_dir=$(
 )
 readonly winln_ps1=$script_dir/winln.ps1
 startup=0
+quicklaunch=0
 args=()
+dsts=()
 usage() {
   cat <<EOF
 
@@ -19,18 +21,27 @@ Make windows shortcut.
   Options
     -h|--help : Show this usage
     -s|--startup : Create shortcut as windows startup
+    -q|--quicklaunch : Create shortcut as windows quick launch
 
 EOF
 }
 add_args() { args+=("$@"); }
+add_dsts() {
+  local _dst="$@"
+  if [[ -e $_dst && -f $_dst ]]; then
+    echo "Already dst exist. dst=$_dst" 1>&2
+    return
+  fi
+  dsts+=("$@");
+}
 check() {
   only win
   if [[ ! -e $src ]]; then
     echo "Specify exist path. src=$src" 1>&2
     exit 1
   fi
-  if [[ -e $dst && -f $dst ]]; then
-    echo "Already dst exist. dst=$dst" 1>&2
+  if [[ "${dsts[@]}" == "" ]]; then
+    echo "No target to link. " 1>&2
     exit 0
   fi
 }
@@ -40,6 +51,7 @@ initialize() {
     case "$1" in
       -h | --help) usage && exit 0 ;;
       -s | --startup) startup=1 ;;
+      -q | --quicklaunch) quicklaunch=1 ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
@@ -57,6 +69,11 @@ initialize() {
   fi
   if [[ $startup -eq 1 ]]; then
     dst="$WINHOME/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup/$def_dst_nm"
+  fi
+  add_dsts "$dst"
+  if [[ $quicklaunch -eq 1 ]]; then
+    dst="$WINHOME/AppData/Roaming/Microsoft/Internet Explorer/Quick Launch/$def_dst_nm"
+    add_dsts "$dst"
   fi
   # NoNeed?
   #dst=$(to_abs "$dst")
@@ -80,9 +97,9 @@ initialize() {
 #   cat_content "$1" >"$dst"
 # }
 
-to_abs() {
-  readlink -m "$*"
-}
+# to_abs() {
+#   readlink -m "$*"
+# }
 
 to_abs_win() {
   if os wsl; then
@@ -104,7 +121,9 @@ parse() {
 main() {
   # set -x
   initialize "$@"
-  echo "==> Creating windows shortcut src:$src dst:$dst.."
-  powershell.exe -ExecutionPolicy RemoteSigned -File $winln_ps1 "$(parse "$src")" "$(parse "$dst")"
+  for dst in "${dsts[@]}"; do
+    echo "==> Creating windows shortcut src:$src dst:$dst.."
+    powershell.exe -ExecutionPolicy RemoteSigned -File $winln_ps1 "$(parse "$src")" "$(parse "$dst")"
+  done
 }
 main "$@"
