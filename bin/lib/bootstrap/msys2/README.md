@@ -14,15 +14,18 @@
 
 ```
 # init msys2
-./admin_msys2.ps1
+./sudo_msys2.bat
 exit
 
+./sudo_cmd.bat
+./setup_unxh.bat
+
 # bootstap1
-./admin_msys2.ps1
+./sudo_msys2.bat
 ./bootstrap
 
 # bootstap2
-./admin_msys2.ps1
+./sudo_msys2.bat
 ./bootstrap
 ```
 
@@ -30,7 +33,7 @@ exit
 
 # TODO https://www.ncaq.net/2020/11/10/15/40/08/
 ```
-./admin_msys2.ps1
+./sudo_msys2.bat
 cd .dot/bin
 ./setup msys2 -e
 ```
@@ -56,6 +59,13 @@ cd .dot/bin
         - Disable show nighbor snap app suggestion
         - Disable change windows size for nighbor app window when snapped
 - scoop
-    - scoop 7zip context menu is need to kick reg file?
-- setup
-    - is msys2 tran setup include hackgen?
+    - add to context menu
+        - 7zip
+            - sudo 7zFM & add context menu from option settings
+        - auto setup
+            - sakura
+            - code
+            - vim
+- move bootstrap_win.ps1 pkgs to setup app
+- winln with icon
+- sudo_cmd.bat with work directory

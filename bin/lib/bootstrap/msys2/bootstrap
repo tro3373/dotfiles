@@ -2,18 +2,32 @@
 
 readonly _state=$0.state
 
-setup_home_lnk() {
-  echo "==> Setting home link.."
-  local u=$(whoami)
-  local unxh=/c/Users/$u/.unxh
-  ## Enable fstab
-  # mkdir -p $unxh
-  # echo "C:/Users/$u/.unxh /home/$u" >>/etc/fstab
-  local scoop_persist_home=/c/Users/$u/scoop/persist/msys2/home/$u
-  # echo "$scoop_persist_home /home/$u" >>/etc/fstab
-  ## Enable symlink
-  ln -s $scoop_persist_home /c/Users/$u/.unxh
-}
+# setup_fstab() {
+#   # Enable fstab
+#   mkdir -p $unxh
+#   echo "C:/Users/$u/.unxh /home/$u" >>/etc/fstab
+#   # echo "$scoop_persist_home /home/$u" >>/etc/fstab
+# }
+#
+# setup_home_lnk_src_persist() {
+#   ## Enable symlink
+#   ln -s $scoop_persist_home $unxh
+# }
+# setup_home_lnk_src_unxh() {
+#   ## Enable symlink
+#   mv $scoop_persist_home $unxh
+#   ln -s $unxh $scoop_persist_home
+# }
+#
+# setup_home_lnk() {
+#   echo "==> Setting home link.."
+#   local u=$(whoami)
+#   local unxh=/c/Users/$u/.unxh
+#   local scoop_persist_home=/c/Users/$u/scoop/persist/msys2/home/$u
+#   # setup_fstab
+#   setup_home_lnk_src_persist
+#   # setup_home_lnk_src_unxh
+# }
 
 update_pkgs() {
   echo "==> Updating packages.."
@@ -26,7 +40,7 @@ update_pkgs() {
 
 bootstrap1() {
   echo "==> Bootstrapping 1.."
-  setup_home_lnk
+  # setup_home_lnk
   update_pkgs
 }
 
