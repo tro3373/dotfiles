@@ -5,7 +5,9 @@ install_arch() {
   ! os wsl && not_supported
   setting_msys
 }
-install_msys() { not_supported; }
+install_msys() {
+  exe scoop install windows-terminal
+}
 install_cygwin() { not_supported; }
 install_mac() { not_supported; }
 install_ubuntu() { not_supported; }
@@ -16,10 +18,14 @@ setting_arch() {
   setting_msys
 }
 setting_msys() {
-  # local dst="${WINHOME}/AppData/Local/Microsoft/Windows Terminal/settings.json"
-  local dst="${WINHOME}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"
+  local dst1="${WINHOME}/AppData/Local/Microsoft/Windows Terminal/settings.json"
+  local dst2="${WINHOME}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"
+  local dst=$dst1
+  [[ ! -e $dst ]] && dst=$dst2
   # shellcheck disable=SC2154
   make_lnk_with_bkup "$app_dir/settings.json" "${dst}"
+  exe winln -q $WINHOME/scoop/apps/windows-terminal/current/wt.exe
+  exe winln -q $app_dir/sudo_wt.bat
 }
 setting_cygwin() { no_settings; }
 setting_mac() { no_settings; }

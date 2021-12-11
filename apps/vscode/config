@@ -6,7 +6,8 @@ settings_d_ubuntu="$HOME/.config/Code/User"
 
 is_installed() {
   if is_msys; then
-    test -e "$settings_d_msys"
+    # test -e "$settings_d_msys"
+    has_scoop vscode
   elif is_mac; then
     test -e "$settings_d_mac"
   elif is_ubuntu; then
@@ -18,7 +19,9 @@ is_installed() {
 }
 install_common() { not_supported; }
 install_arch() { not_supported; }
-install_msys() { not_supported; }
+install_msys() {
+  exe scoop install vscode
+}
 install_cygwin() { not_supported; }
 install_mac() { not_supported; }
 install_ubuntu() { not_supported; }
@@ -28,6 +31,7 @@ setting_arch() { no_settings; }
 setting_msys() {
   _ln_jsons "$settings_d_msys"
   _add_packages
+  exe winln -q $WINHOME/scoop/apps/vscode/current/Code.exe
 }
 setting_cygwin() { no_settings; }
 setting_mac() {

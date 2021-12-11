@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 
 is_installed() {
-  has sakura.exe
+  # has sakura.exe
+  has_scoop sakura-editor
 }
 install_common() { not_supported; }
 install_arch() { not_supported; }
 install_msys() {
+  if ! has_scoop_bucket iyokan-jp; then
+    ## For sakura-editor,winmerge-jp
+    exe scoop bucket add iyokan-jp https://github.com/tetradice/scoop-iyokan-jp
+  fi
   exe scoop install sakura-editor
 }
 install_cygwin() { not_supported; }
@@ -14,7 +19,9 @@ install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
 setting_arch() { no_settings; }
-setting_msys() { no_settings; }
+setting_msys() {
+  exe winln -q $WINHOME/scoop/apps/sakura-editor/current/sakura.exe
+}
 setting_cygwin() { no_settings; }
 setting_mac() { no_settings; }
 setting_ubuntu() { no_settings; }

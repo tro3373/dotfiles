@@ -34,6 +34,10 @@ install_msys() {
   else
     build_msys
   fi
+  if ! has_scoop_bucket jp; then
+    ## For vim-kaoriya
+    exe scoop bucket add jp https://github.com/dooteeen/scoop-for-jp
+  fi
   exe scoop install vim-kaoriya
   # install_kaoriya_msys
 }
@@ -192,7 +196,8 @@ setting_msys() {
   make_lnk_with_bkup "$app_dir/.vimrc" "${WINHOME}/_vimrc"
   make_lnk_with_bkup "$app_dir/.gvimrc" "${WINHOME}/_gvimrc"
   make_lnk_with_bkup "$app_dir/.vim" "${WINHOME}/.vim"
-  make_lnk_with_bkup "$app_dir/gvim.bat" "${WINHOME}/bin/gvim.bat"
+  exe winln -q $WINHOME/scoop/apps/vim-kaoriya/current/gvim.exe
+  # make_lnk_with_bkup "$app_dir/gvim.bat" "${WINHOME}/bin/gvim.bat"
   # local buildvim=/usr/local/src/Msys2-packages/vim/pkg/vim/usr/bin/vim.exe
   # if [ -e $buildvim ]; then
   #     make_lnk_with_bkup "$buildvim" "${HOME}/bin/vim"
