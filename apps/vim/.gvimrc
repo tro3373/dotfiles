@@ -16,6 +16,7 @@ source $VIMRUNTIME/menu.vim
 " Removes the toolbar.
 set guioptions -=T
 set viminfo+=n~/.vim/_viminfo
+set guioptions-=a
 
 source ~/.vim/conf.d/200_colorscheme.vim
 
@@ -53,4 +54,3 @@ augroup END
 if filereadable(g:save_window_file)
   execute 'source' g:save_window_file
 endif
-
