@@ -45,6 +45,26 @@ check() {
     exit 0
   fi
 }
+set_dests() {
+  read -r src dst _ < <(echo "${args[@]}")
+  # NoNeed?  # src=$(to_abs "$src") && dst=$(to_abs "$dst")
+  local def_dst_nm=$(basename $src).lnk
+  if [[ $startup -eq 1 ]]; then
+    dst="$WINHOME/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup/$def_dst_nm"
+    add_dsts "$dst"
+  fi
+  if [[ $quicklaunch -eq 1 ]]; then
+    dst="$WINHOME/AppData/Roaming/Microsoft/Internet Explorer/Quick Launch/$def_dst_nm"
+    add_dsts "$dst"
+  fi
+  [[ -n $dst ]] && return
+  if [[ -z $dst ]]; then
+    dst="$current_dir/$def_dst_nm"
+  elif [[ -d $dst ]]; then
+    dst="$dst/$def_dst_nm"
+  fi
+  add_dsts "$dst"
+}
 initialize() {
   while true; do
     [[ -z $1 ]] && break
@@ -58,25 +78,7 @@ initialize() {
     esac
     shift
   done
-  read -r src dst _ < <(echo "${args[@]}")
-  # NoNeed?
-  # src=$(to_abs "$src")
-  local def_dst_nm=$(basename $src).lnk
-  if [[ -z $dst ]]; then
-    dst="$current_dir/$def_dst_nm"
-  elif [[ -d $dst ]]; then
-    dst="$dst/$def_dst_nm"
-  fi
-  if [[ $startup -eq 1 ]]; then
-    dst="$WINHOME/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup/$def_dst_nm"
-  fi
-  add_dsts "$dst"
-  if [[ $quicklaunch -eq 1 ]]; then
-    dst="$WINHOME/AppData/Roaming/Microsoft/Internet Explorer/Quick Launch/$def_dst_nm"
-    add_dsts "$dst"
-  fi
-  # NoNeed?
-  #dst=$(to_abs "$dst")
+  set_dests
   check
 }
 
