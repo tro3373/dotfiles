@@ -20,7 +20,7 @@ main() {
   if [[ $OSTYPE == "msys" || $OSTYPE == "cygwin" ]]; then
     args=("$(cygpath -aw "${args[@]}")")
   fi
-  echo "==> open ${args[*]}"
+  echo "==> open ${args[*]}" 1>&2
   $_open "${args[@]}" &>/dev/null &
 }
 main "$@"

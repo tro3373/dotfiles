@@ -631,3 +631,10 @@ function! FindC2A0() abort
   call feedkeys("/\\%ua0\<CR>")
 endfun
 command! FindC2A0 call FindC2A0()
+
+function! Open()
+  let l:current_file_d = expand('%:p:h')
+  " execute system('open ' . l:current_file_d)
+  call system('open ' . l:current_file_d)
+endfunction
+command! Open call Open()
