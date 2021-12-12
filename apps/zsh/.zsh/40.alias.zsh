@@ -67,6 +67,7 @@ alias egrep='egrep --color=auto'
 alias pod='nocorrect pod'
 alias where="command -v"
 alias diff="diff -Nru"
+alias diffs="diff -Nru --strip-trailing-cr"
 alias gp="git pull --rebase"
 alias gb="git branch -vv"
 alias gt="git tag"
