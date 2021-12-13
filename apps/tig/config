@@ -23,7 +23,9 @@ install_ubuntu() {
 
 get_latest_version() {
   curl -fSsL https://github.com/$tig_path/releases |
-    grep "/$tig_path/releases/tag/" |head -1 |cut -d'>' -f2 |cut -d'<' -f1
+    grep "/$tig_path/releases/tag/" |
+    head -1 |
+    sed -e 's,^.*tag/,,g' -e 's,".*,,g'
 }
 
 install_redhat() {
