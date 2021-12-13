@@ -3,12 +3,16 @@
 
 ```
 enable.bat
+install_ubuntu.bat
 ```
 
 ## 2. generate arch image (must be in linux!) and import bat
 
 ```
-./gen_arch_image
+curl -fSsL git.io/tr3s |bash
+.dot/bin/setup -e
+cd .dot/bin/lib/bootstrap/arch/wsl2
+./gen_arch_image -e
 ```
 
 ## 3. import generated arch image via generated bat script
@@ -29,4 +33,3 @@ import_wsl_arch_image.bat
 cd ~/.dot/bin
 ./setup wsl_arch -e
 ```
-

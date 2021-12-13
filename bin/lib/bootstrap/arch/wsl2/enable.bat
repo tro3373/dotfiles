@@ -10,10 +10,11 @@ exit /b 0
   rem https://docs.microsoft.com/ja-jp/windows/wsl/install-win10
   dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
   dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-  set /P read="Download and install https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi and Press Key..."
-  wsl --set-default-version 2
-  wsl --list --verbose
-  rem wsl --set-version Ubuntu-20.04 2
+  set /P read="You need to reboot andDownload And install https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi and Press Key..."
+  REM wsl --set-default-version 2
+  REM wsl --list --online
+  REM wsl --install -d Ubuntu-20.04
+  REM wsl --set-version Ubuntu-20.04 2
 exit /b 0
 
 :disable
@@ -94,15 +95,15 @@ rem rem    set DIR_EXST=D:\EXST
 rem     set index=0
 rem exit /b 0
 rem
-rem rem *******************************************************
-rem rem Output Logs
-rem rem *******************************************************
-rem :logs
-rem     SET DTLOG=%date:/=%
-rem     SET TMLOG=%time::=%
-rem     echo %DTLOG% %TMLOG% %JOBNM% %*
-rem     echo %DTLOG% %TMLOG% %JOBNM% %*>>%LOG%
-rem exit /b 0
+rem *******************************************************
+rem Output Logs
+rem *******************************************************
+:logs
+    SET DTLOG=%date:/=%
+    SET TMLOG=%time::=%
+    echo %DTLOG% %TMLOG% %JOBNM% %*
+    echo %DTLOG% %TMLOG% %JOBNM% %*>>%LOG%
+exit /b 0
 rem
 rem rem *******************************************************
 rem rem execute cmd
@@ -250,4 +251,3 @@ rem     if not exist "%HOMEPATH%/.vim/plugged/vim-plug/autoload" (
 rem         call :exccmd git clone https://github.com/junegunn/vim-plug.git "%HOMEPATH%/.vim/plugged/vim-plug/autoload"
 rem     )
 rem exit /b 0
-

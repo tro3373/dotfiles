@@ -7,6 +7,8 @@ readonly script_dir=$(
   pwd
 )
 readonly tgz=ArchLinux.tar.gz
+readonly dotbin=$script_dir/../../../..
+export PATH=$dotbin:$PATH
 source $script_dir/../../../setup/funcs
 
 usage() {
