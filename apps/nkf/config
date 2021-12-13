@@ -2,8 +2,8 @@
 
 install_msys() {
   cd_work
-  version=2.1.4
-  exe wget https://osdn.jp/projects/nkf/downloads/64158/nkf-${version}.tar.gz
+  version=2.1.5
+  exe wget https://osdn.jp/projects/nkf/downloads/70406/nkf-${version}.tar.gz
   exe tar zxvf nkf-${version}.tar.gz
   exe cd nkf-${version}
   exe make
