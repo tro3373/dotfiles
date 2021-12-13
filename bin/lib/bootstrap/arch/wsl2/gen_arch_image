@@ -2,32 +2,28 @@
 
 readonly current_dir=$(pwd)
 readonly arch_iso_latest_url=http://ftp.jaist.ac.jp/pub/Linux/ArchLinux/iso/latest/
-readonly script_dir=$(
-  cd "$(dirname ${BASH_SOURCE:-$0})"
-  pwd
-)
 readonly tgz=ArchLinux.tar.gz
-readonly dotbin=$script_dir/../../../..
-export PATH=$dotbin:$PATH
-source $script_dir/../../../setup/funcs
+readonly import_image_path=$current_dir/$tgz
+readonly import_bat_path=$current_dir/import_wsl_arch_image.bat
 
-usage() {
-  cat <<EOF
-Generate wsl2 arch image command
-EOF
-}
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
 
 gen_arch_tgz() {
+  local target=$import_image_path
+  if [[ -e $target ]]; then
+    log "> Already $target exist. skip"
+    return
+  fi
+  log "> Generating $target"
   local tmp_d=$(mktemp -d)
-  exe cd $tmp_d
+  cd $tmp_d
   local url=$(get_arch_iso_url_latest)
   log "> Downloading to $tmp_d from $url.."
-  exe curl -LO $url
-  exe sudo tar xzfp ./*.tar.gz
-  exe cd root.x86_64
-  exe sudo tar czfp $tgz .
-  exe sudo mv -f $tgz $current_dir/
-  echo "$current_dir/$tgz"
+  curl -LO $url
+  sudo tar xzfp ./*.tar.gz
+  cd root.x86_64
+  sudo tar czfp $tgz .
+  sudo mv -f $tgz $current_dir/
 }
 
 get_arch_iso_url_latest() {
@@ -42,33 +38,24 @@ get_arch_iso_url_latest() {
 
 cat_import_bat() {
   cat <<EOF
-wsl --import ArchLinux %USERPROFILE%\wsl\ArchLinux $tgz
-wsl -d ArchLinux
+wsl --import ArchLinux %USERPROFILE%\\wsl\\ArchLinux $tgz & wsl -d ArchLinux
 EOF
 }
 
 gen_import_bat() {
-  cat_import_bat |
-    if is_dry; then
-      log "=> below bat will be gen."
-      cat - 1>&2
-    else
-      cat - | gen_bat $current_dir/import_wsl_arch_image.bat
-    fi
+  local target=$import_bat_path
+  if [[ -e $target ]]; then
+    log "> Already $target exist. skip"
+    return
+  fi
+  log "> Generating $target"
+  cat_import_bat >$current_dir/import_wsl_arch_image.bat
 }
 
 main() {
   set -e
-  initialize_args "$@"
-  if ! os unix; then
-    not_supported
-    exit 1
-  fi
-  local import_image_path=$(gen_arch_tgz)
-  local import_bat_path=$(gen_import_bat)
-  log "==>  $import_image_path gened."
-  log "==>  $import_bat_path gened."
-  show_dummy_warn_if_needed
-  ink green "Done!"
+  gen_arch_tgz
+  gen_import_bat
+  log "Done!"
 }
 main "$@"

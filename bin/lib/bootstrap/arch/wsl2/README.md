@@ -8,9 +8,14 @@ install_ubuntu.bat
 
 ## 2. generate arch image (must be in linux!) and import bat
 
+Optional: If setup ubuntu..
+
 ```
 curl -fSsL git.io/tr3s |bash
 .dot/bin/setup -e
+```
+
+```
 cd .dot/bin/lib/bootstrap/arch/wsl2
 ./gen_arch_image -e
 ```
