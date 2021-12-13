@@ -38,7 +38,7 @@ get_arch_iso_url_latest() {
 
 cat_import_bat() {
   cat <<EOF
-wsl --import ArchLinux %USERPROFILE%\\wsl\\ArchLinux $tgz & wsl -d ArchLinux
+md %USERPROFILE%\\wsl && wsl --import ArchLinux %USERPROFILE%\\wsl\\ArchLinux $tgz && wsl -d ArchLinux & pause > nul
 EOF
 }
 
