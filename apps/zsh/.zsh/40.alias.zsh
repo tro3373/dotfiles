@@ -85,6 +85,11 @@ alias g="git"
 alias cddot="cd $DOTPATH"
 alias history="history -i"
 
+gm() {
+  [[ -z "$*" ]] && echo "Specify commit message" 1>&2 && return
+  git commit -m "$*"
+}
+
 # --------------------------------------------------------
 # ag 設定
 # --------------------------------------------------------
