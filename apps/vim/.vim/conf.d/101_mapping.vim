@@ -87,12 +87,21 @@ nnoremap <Leader>y 0v$h"+y
 " vp doesn't replace paste buffer
 function! RestoreRegister()
   let @" = s:restore_reg
+  if IsUbuntu()
+    return ''
+  endif
   let @+ = s:restore_reg
   let @* = s:restore_reg
   return ''
 endfunction
 function! s:Repl()
-  let s:restore_reg = @"
+  " let s:restore_reg = @"
+  let s:restore_reg = ""
+  if IsUbuntu()
+    let s:restore_reg = @"
+  else
+    let s:restore_reg = @+
+  endif
   return "p@=RestoreRegister()\<cr>"
 endfunction
 vmap <silent> <expr> p <sid>Repl()
@@ -102,7 +111,12 @@ vmap <silent> <expr> p <sid>Repl()
 " nnoremap <silent> ciy ciw<C-r>0<ESC>:let@/=@1<CR>:noh<CR>
 " nnoremap <silent> ciy ciw<C-r>0<ESC>
 function! s:ReplacePaste()
-  let s:buf = @+
+  let s:buf = ""
+  if IsUbuntu()
+    let s:buf = @"
+  else
+    let s:buf = @+
+  endif
   " execute ":normal ciw".s:buf
   " echo "==> s:buf: (".s:buf.")"
   " return "\<ESC>"
