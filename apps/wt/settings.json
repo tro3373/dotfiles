@@ -85,7 +85,7 @@
         // -no-start: これがないとminttyが立ち上がってしまう
         // -full-path: scoopが設定したパスなどを受け継ぐ
         // -shell zsh: シェルにzshを使う
-        "commandline": "cmd.exe /c set TERM=xterm-256color && set MSYS=winsymlinks:nativestrict && C:%HOMEPATH%/scoop/apps/msys2/current/msys2_shell.cmd -defterm -no-start -full-path -shell bash",
+        "commandline": "cmd.exe /c set TERM=xterm-256color && set MSYS=winsymlinks:nativestrict && C:%HOMEPATH%/scoop/apps/msys2/current/msys2_shell.cmd -defterm -no-start -full-path -mingw64 -shell zsh",
         // "commandline": "cmd.exe /c set TERM=xterm-256color && set MSYS=winsymlinks:nativestrict && %USERPROFILE%/AppData/Local/Msys64/msys2_shell.cmd -defterm -no-start -full-path -shell zsh",
         "hidden": false
       },
