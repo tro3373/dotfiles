@@ -12,7 +12,6 @@ readonly _core_apps_additional=(
 )
 readonly _core_apps_additional_arch=(
   yay
-  systemd-timesyncd
 )
 # Dynamic Variables
 export debug=0
@@ -36,8 +35,8 @@ ilog() { _log green "$*"; }
 elog() { _log red "$*"; }
 dlog() { if is_debug; then _log yellow "$*"; fi; }
 has() { command -v ${1} >&/dev/null; }
-has_scoop() { scoop list $1 |grep -v matching |grep $1 >&/dev/null; }
-has_scoop_bucket() { scoop bucket list |grep $1 &>/dev/null; }
+has_scoop() { scoop list $1 | grep -v matching | grep $1 >&/dev/null; }
+has_scoop_bucket() { scoop bucket list | grep $1 &>/dev/null; }
 
 # TODO change func name
 isexist() { find "$*" >&/dev/null; }

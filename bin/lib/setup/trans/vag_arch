@@ -39,6 +39,7 @@ pre_setup() {
   #     ==> ERROR: A specified local key could not be updated from a keyserver.
   # permanently append
   # shellcheck disable=SC2119
+  setup_gnupg_keyserver_settings /home/vagrant
   setup_gnupg
   improve_pacman_conf
   improve_pacman_aria2
@@ -49,7 +50,12 @@ pre_setup() {
   setup_additional_pacakges
 }
 
-# load_update_arg_apps() {}
+load_update_arg_apps() {
+  # shellcheck disable=SC2034
+  read -a args < <(
+    echo "$(default_apps) systemd-timesyncd"
+  )
+}
 
 post_setup() {
   setup_login_shell vagrant

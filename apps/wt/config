@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 
 install_common() { not_supported; }
-install_arch() {
-  ! os wsl && not_supported
-  setting_msys
-}
+install_arch() { not_supported; }
 install_msys() {
   exe scoop install windows-terminal
 }
@@ -13,10 +10,7 @@ install_mac() { not_supported; }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
-setting_arch() {
-  ! os wsl && not_supported
-  setting_msys
-}
+setting_arch() { no_settings; }
 setting_msys() {
   local dst1="${WINHOME}/AppData/Local/Microsoft/Windows Terminal/settings.json"
   local dst2="${WINHOME}/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json"

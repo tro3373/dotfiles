@@ -81,7 +81,7 @@ initialize() {
 
 finalize() {
   bootstrapped
-  # TODO ignore if wsl2. fix with setup arch for timedatectl..
+  is_wsl && return
   exe reboot
 }
 
@@ -89,9 +89,11 @@ setup_pacman() {
   improve_pacman_millerlist
   setup_pac_key
   improve_pacman_conf
+  setup_gnupg_keyserver_settings /root
   setup_gnupg
   improve_pacman_aria2
   update_and_add_pacman_packages base base-devel git curl sudo vim wget grep sed which unzip gzip openssh zsh
+  ! is_wsl && update_and_add_pacman_packages systemd-timesyncd
   improve_pacman_conf
 }
 
@@ -105,7 +107,8 @@ cat_userpass() {
 setup_user() {
   local _pass=$(cat_userpass)
   create_user $username "$_pass"
-  setup_gnupg /home/$username
+  setup_gnupg_keyserver_settings /home/$username
+  setup_gnupg
   setup_sudoers $username
   setup_login_shell $username
   setup_user_authorized_keys $username $userpub_path

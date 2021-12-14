@@ -9,7 +9,7 @@ source $_script_dir/../funcs_arch
 pre_setup() {
   log "=> pre setting up"
 
-  setup_hostname archlinux.wsl2
+  # setup_hostname archlinux.wsl2
   setup_additional_pacakges
 }
 

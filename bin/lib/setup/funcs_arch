@@ -3,12 +3,12 @@
 # keyboard_layout=jp106
 readonly keyboard_layout=us
 readonly _additional_arch=(
-  pacman-contrib        # pacman cache clean
-  reflector             # update mirrorlist tool
-  net-tools             # deplicated. ifconfig, route, arp, netstat...
-  inetutils             # ifconfig, hostname, ping...
+  pacman-contrib # pacman cache clean
+  reflector # update mirrorlist tool
+  net-tools # deplicated. ifconfig, route, arp, netstat...
+  inetutils # ifconfig, hostname, ping...
   xsel xorg-server-xvfb # for clipboard
-  libxfont2             # x11 font rasterisation library
+  libxfont2 # x11 font rasterisation library
 )
 
 setup_keyboard() {
@@ -155,10 +155,8 @@ setup_pac_key() {
   exe pacman-key --populate $populate_key
 }
 
-setup_gnupg() {
-  local _home_dirs=("$HOME" "${@}")
-  exe pacman -Sy gnupg --noconfirm
-  exe pacman -Sy archlinux-keyring --noconfirm
+setup_gnupg_keyserver_settings() {
+  local _home_dirs=("${@}")
   local specify_keyserver=pool.sks-keyservers.net
   for d in "${_home_dirs[@]}"; do
     local local_gpg_settings=$d/.gnupg/gpg.conf
@@ -170,6 +168,11 @@ setup_gnupg() {
     echo "keyserver $specify_keyserver" |
       cat_tee -a $local_gpg_settings
   done
+}
+
+setup_gnupg() {
+  exe pacman -Sy gnupg --noconfirm
+  exe pacman -Sy archlinux-keyring --noconfirm
   exe pacman-key --refresh-keys --keyserver $specify_keyserver
 }
 

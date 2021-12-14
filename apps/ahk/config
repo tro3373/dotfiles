@@ -20,12 +20,12 @@ install_cygwin() { not_supported; }
 install_mac() { not_supported; }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
-setting_common() {
+setting_common() { no_settings; }
+setting_arch() { no_settings; }
+setting_msys() {
   # shellcheck disable=SC2154
   exe winln -s "$app_dir/alt-ime-ahk.ahk"
 }
-# setting_arch() { no_settings; }
-# setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
 setting_mac() { no_settings; }
 setting_ubuntu() { no_settings; }
