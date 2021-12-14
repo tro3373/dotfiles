@@ -23,9 +23,10 @@
 
   // Runch position settings
   "initialCols": 202,
-  "initialPosition": "50,0", // x,y
-  "initialRows": 49,
+  "initialPosition": "60,0", // x,y
+  "initialRows": 51,
   "launchMode": "default", // maximized or not
+  // "firstWindowPreference": "persistedWindowLayout", // from 1.12
 
   // A profile specifies a command to execute paired with information about how it should look and feel.
   // Each one of them will appear in the 'New Tab' dropdown,
@@ -51,7 +52,7 @@
       // UI
       "padding": "10, 10, 10, 10",
       "scrollBarState": "visible",
-      "closeOnExit": true,
+      "closeOnExit": "always",
       "bellStyle": "none"
     },
     "list": [
