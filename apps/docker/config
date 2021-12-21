@@ -60,7 +60,11 @@ install_docker_via_repository() {
 
 get_latest_version() {
   local p=${1:-compose}
-  curl -fSsL https://github.com/docker/$p/releases | grep "/docker/$p/releases/tag/" | head -1 | cut -d'>' -f2 | cut -d'<' -f1
+  local _key=/docker/$p/releases/tag/
+  curl -fSsL https://github.com/docker/$p/releases |
+    grep "$_key" |
+    sed -e "s,^.*$_key,,g" -e 's,".*,,g' |
+    head -1
 }
 
 install_via_curl() {
