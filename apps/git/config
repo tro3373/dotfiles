@@ -113,6 +113,7 @@ setting_common() {
     esac
   done < <(cat_git_configs)
 
+  # shellcheck disable=SC2154
   [[ $additional -ne 1 ]] && return
   if [[ -t 1 ]]; then
     if [[ $usrn -eq 1 ]]; then
