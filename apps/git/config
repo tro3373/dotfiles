@@ -57,6 +57,8 @@ git config --global push.default simple
 git config --global --add merge.ff false
 git config --global rebase.autostash true
 git config --global init.defaultbranch main
+git config --global init.templatedir '~/.git_template'
+git config --global commit.template ~/.gitmessage
 git config --global alias.co checkout
 git config --global alias.sw switch
 git config --global alias.rs restore
@@ -71,9 +73,7 @@ git config --global alias.tar "archive --format=tar HEAD -o"
 git config --global alias.tgz "archive --format=tgz HEAD -o"
 git config --global alias.zip "archive --format=zip HEAD -o"
 git config --global alias.or orphan
-git config --global init.templatedir '~/.git_template'
 git config --global alias.ignore '!gi() { curl -L -s https://www.gitignore.io/api/$@ ;}; gi'
-git config --global commit.template ~/.gitmessage
 EOF
 }
 
@@ -88,7 +88,7 @@ setting_common() {
     [[ $line =~ ^#.* ]] && continue
 
     local key=$(echo "$line" | sed -e 's,^.\+global ,,g' -e 's,--add ,,g' -e 's, .\+,,g')
-    # echo "$(printf "% -20s" $key) ==> $line"
+    # echo "$(printf "% -20s" $key) <== $line"
     if echo -e "$list" | grep "$key=" >&/dev/null; then
       # already configed.
       continue
