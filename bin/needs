@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+main() {
+  [[ $# -eq 0 ]] && return
+  for arg in "$@"; do
+    has $arg && continue
+    echo "No $arg command exist" 1>&2
+    exit 1
+  done
+}
+main "$@"
