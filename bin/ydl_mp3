@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+readonly current_dir=$(pwd)
+
+main() {
+  youtube-dl \
+    -x --audio-format mp3 \
+    -f 'bestvideo[ext=mp4][height<=720]+bestaudio' \
+    -o "$current_dir/%(id)s-%(title)s.%(ext)s" \
+    "$@"
+}
+main "$@"
