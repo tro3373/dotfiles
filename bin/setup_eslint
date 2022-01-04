@@ -107,6 +107,7 @@ setup_packages() {
     pkgs+=("eslint-plugin-vue" "babel-eslint")
   fi
   log "==> Installing packages.."
+  $dummy npm i -g jsonlint
   $dummy npm i -D "${pkgs[@]}"
 }
 

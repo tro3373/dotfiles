@@ -65,6 +65,7 @@ let g:ale_linters['java'] = []
 let g:ale_linters['python'] = ['flake8']
 let g:ale_linters['go'] = ['gometalinter', 'gobuild']
 let g:ale_linters['vue'] = ['eslint']
+let g:ale_linters['json'] = ['jsonlint']
 
 let g:ale_fixers = {}
 let g:ale_fixers['*']          = ['trim_whitespace', 'remove_trailing_lines']
