@@ -27,12 +27,12 @@ EOF
 }
 add_args() { args+=("$@"); }
 add_dsts() {
-  local _dst="$@"
+  local _dst="$*"
   if [[ -e $_dst && -f $_dst ]]; then
     echo "Already dst exist. dst=$_dst" 1>&2
     return
   fi
-  dsts+=("$@");
+  dsts+=("$@")
 }
 check() {
   only win
@@ -40,7 +40,7 @@ check() {
     echo "Specify exist path. src=$src" 1>&2
     exit 1
   fi
-  if [[ "${dsts[@]}" == "" ]]; then
+  if [[ ${dsts[*]} == "" ]]; then
     echo "No target to link. " 1>&2
     exit 0
   fi
