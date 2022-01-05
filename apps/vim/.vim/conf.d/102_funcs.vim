@@ -638,3 +638,8 @@ function! Open()
   call system('open ' . l:current_file_d)
 endfunction
 command! Open call Open()
+
+function! MysqlDdlStripCols() abort
+  %s/\(^.\{-}`\|`.*\)//g
+endfunction
+command! MysqlDdlStripCols call MysqlDdlStripCols()
