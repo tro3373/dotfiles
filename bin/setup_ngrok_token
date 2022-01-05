@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+main() {
+  local target=$HOME/.ngrok2/ngrok.yml
+  [[ -e $target ]] && echo "Aready $target exist." 1>&2 && return
+  [[ $# -eq 0 ]] && echo "Specify token" 1>&2 && exit 1
+  mkdir -p "$(dirname $target)"
+  echo "authtoken: $*" >>$target
+  echo "==> $target generated."
+}
+main "$@"
