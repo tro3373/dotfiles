@@ -77,6 +77,8 @@ nnoremap - <C-x>
 nnoremap <Leader>w :w<CR>
 " alias quit
 nnoremap <Leader>q :q<CR>
+" alias reloead
+nnoremap <Leader>e :e<CR>
 
 
 " Y で行末までコピー
