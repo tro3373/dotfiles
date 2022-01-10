@@ -4,19 +4,17 @@ readonly repo=tro3373/md
 readonly dst=$HOME/.md
 
 abs_repo() {
-  ghq list --full-path $repo
+  ghq list --full-path $repo 2>/dev/null
 }
 
 main() {
+  set -e
   if [[ -e $dst ]]; then
     echo "$dst already exist." 1>&2
     exit 1
   fi
+  ghq get git@github.com:$repo.git
   local src_root=$(abs_repo)
-  if [[ -z $src ]]; then
-    ghq get git@github.com:$repo.git
-    src_root=$(abs_repo)
-  fi
   local src=$src_root/.md
   ln -s $src $dst
   echo "Done"
