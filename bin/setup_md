@@ -12,11 +12,12 @@ main() {
     echo "$dst already exist." 1>&2
     exit 1
   fi
-  local src=$(abs_repo)
+  local src_root=$(abs_repo)
   if [[ -z $src ]]; then
     ghq get git@github.com:$repo.git
-    src=$(abs_repo)
+    src_root=$(abs_repo)
   fi
+  local src=$src_root/.md
   ln -s $src $dst
   echo "Done"
 }
