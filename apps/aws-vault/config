@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-# see https://dev.classmethod.jp/articles/terraform-assumerole/
-# see https://hackers-high.com/aws/aws-vault-on-linux/#pass_GnuPG
-# see https://github.com/99designs/aws-vault
+# see [[Terraform CLI]MFA認証を使ったAssumeRole。AWSVaultで解決 | DevelopersIO](https://dev.classmethod.jp/articles/terraform-assumerole/)
+# see [aws-vaultをLinux環境でも使う方法【セキュリティ向上】 – Hacker's High](https://hackers-high.com/aws/aws-vault-on-linux/#pass_GnuPG)
+# see [99designs/aws-vault: A vault for securely storing and accessing AWS credentials in development environments](https://github.com/99designs/aws-vault)
+# see [aws-vault についてのあれこれ - Qiita](https://qiita.com/kangaechu/items/cb8f68e3866ee5af71c8)
 
 install_common() {
   if ! has gpg; then
