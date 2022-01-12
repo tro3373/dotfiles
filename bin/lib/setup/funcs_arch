@@ -242,6 +242,10 @@ del_user() {
 setup_user_authorized_keys() {
   local _user=$1
   local _pubkey=$2
+  if [[ -z $_pubkey ]]; then
+    log "=> No pubkey specified"
+    return
+  fi
   if [[ -f $_pubkey ]]; then
     _pubkey=$(cat <$_pubkey)
   fi

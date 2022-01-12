@@ -53,7 +53,7 @@ check() {
   #   log "=> No $userpass_path (pass file for $username) exist."
   #   exit 1
   # fi
-  if [[ ! -e $userpub_path ]]; then
+  if ! is_wsl && [[ ! -e $userpub_path ]]; then
     log "=> No $userpub_path (pub key for $username) exist."
     exit 1
   fi
@@ -93,8 +93,8 @@ setup_pacman() {
   setup_gnupg
   improve_pacman_aria2
   update_and_add_pacman_packages base base-devel git curl sudo vim wget grep sed which unzip gzip openssh zsh
-  ! is_wsl && update_and_add_pacman_packages systemd-timesyncd
-  improve_pacman_conf
+  is_wsl && return
+  update_and_add_pacman_packages systemd-timesyncd
 }
 
 cat_userpass() {

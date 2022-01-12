@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-settings_d_msys="${WINHOME}/AppData/Roaming/Code/User"
+# settings_d_msys="${WINHOME}/AppData/Roaming/Code/User"
+settings_d_msys="${WINHOME}/scoop/persist/vscode/data/user-data/User"
 settings_d_mac="${HOME}/Library/Application Support/Code/User"
 settings_d_ubuntu="$HOME/.config/Code/User"
 

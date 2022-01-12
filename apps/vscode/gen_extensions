@@ -6,6 +6,7 @@ readonly script_dir=$(
 )
 
 main() {
+  export PATH=$HOME/win/scoop/apps/vscode/current/bin/:$PATH # for win
   if [[ $# -eq 0 ]]; then
     code --list-extensions >$script_dir/extensions
     return
