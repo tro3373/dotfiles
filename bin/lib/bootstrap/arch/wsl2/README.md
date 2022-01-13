@@ -12,6 +12,7 @@ Optional: If setup ubuntu..
 
 ```
 curl -fSsL git.io/tr3s |bash
+sudo apt-get update -y && sudo apt-get upgrade -y && sudo apt-get dist-upgrade -y
 .dot/bin/setup -e
 ```
 

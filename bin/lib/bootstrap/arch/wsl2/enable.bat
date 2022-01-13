@@ -8,8 +8,8 @@ exit /b 0
 
 :enable
   rem https://docs.microsoft.com/ja-jp/windows/wsl/install-win10
-  dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-  dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+  REM dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+  REM dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
   set /P read="You need to reboot andDownload And install https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi and Press Key..."
   REM wsl --set-default-version 2
   REM wsl --list --online
@@ -80,7 +80,7 @@ rem     set TM=%TM: =0%
 rem     set JOBNM=setup.bat
 rem     rem バッチ自身に、d:ドライブ付,p:パス付で表したもの
 rem     set DOTPATH=%~dp0
-rem     rem パスの最後に￥が入る為、以下コマンドで、０番目〜（最後-１）までを抽出
+rem     rem パスの最後に￥が入る為、以下コマンドで、０番目～（最後-１）までを抽出
 rem     set DOTPATH=%DOTPATH:~0,-1%
 rem     set BKUPMAX=8
 rem     set BKUPROOTDIR=%DOTPATH%\bkup
