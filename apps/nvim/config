@@ -9,7 +9,12 @@ install_cygwin() { not_supported; }
 install_mac() {
   def_install neovim
 }
-install_ubuntu() { not_supported; }
+install_ubuntu() {
+  exe sudo apt-get install -y software-properties-common
+  exe sudo add-apt-repository -y ppa:neovim-ppa/stable
+  exe sudo apt-get -y update
+  exe sudo apt-get -y install neovim
+}
 install_redhat() { not_supported; }
 setting_common() {
   local src=$HOME/.vimrc
@@ -22,7 +27,7 @@ setting_common() {
 }
 setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
-setting_ubuntu() { no_settings; }
+#setting_ubuntu() { no_settings; }
 setting_redhat() { no_settings; }
 #is_installed
 #install_via_os_default

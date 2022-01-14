@@ -333,7 +333,7 @@ _github() {
   local url="$2"
   local tag="${3:-}"
   local _sudo=""
-  if ! is_win && [[ $dst == "/usr/local/src" ]]; then
+  if ! is_win && [[ $dst =~ /usr/local/?.* ]]; then
     _sudo="sudo"
   fi
   local repo_name="${url##*/}"
@@ -392,19 +392,27 @@ dl() {
     fi
   fi
 }
+is_empty_dir() {
+  local _count=$(find "$1"/ -type d -empty 2>/dev/null|wc -l)
+  test $_count -eq 1
+}
 dl_untar() {
   local url="$1"
   local _fname="${url##*/}"
-  local to="${2:-$workdir/${_fname%%.*}}"
+  local dst="${2:-$workdir/${_fname%%.*}}"
+  local _sudo=""
+  if ! is_win && [[ $dst =~ /usr/local/?.* ]]; then
+    _sudo="sudo"
+  fi
   local strip=${3:-1}
   [[ -z $_fname ]] && _fname=dl.tgz
   cd_work
   dl "$url" $_fname
-  if [[ ! -e $to ]]; then
-    exe mkdir -p "$to"
+  if [[ ! -e $dst ]]; then
+    exe $_sudo mkdir -p "$dst"
   fi
-  if ! find $to >&/dev/null; then
-    exe "tar xvfpz $_fname -C \"$to\" --strip-components $strip"
+  if is_empty_dir "$dst"; then
+    exe "$_sudo tar xvfpz $_fname -C \"$dst\" --strip-components $strip"
   fi
 }
 dl_unzip() {

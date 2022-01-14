@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+readonly usr_local_go=/usr/local/go
+
+is_installed() {
+  if is_ubuntu; then
+    test -e $usr_local_go
+  else
+     has $app
+  fi
+}
+
 _go_latest() {
   goenv install -l | grep -v beta | tail -1 | awk '{print $1}'
 }
@@ -29,9 +39,17 @@ install_mac() {
 }
 
 install_ubuntu() {
-  exe sudo add-apt-repository -y ppa:longsleep/golang-backports
-  exe sudo apt update -y
-  exe sudo apt install -y golang-go
+  # exe sudo add-apt-repository -y ppa:longsleep/golang-backports
+  # exe sudo apt update -y
+  # exe sudo apt install -y golang-go
+  if [[ -e $usr_local_go ]]; then
+    if ! is_force; then
+      return
+    fi
+    exe rm -rf $usr_local_go
+  fi
+  local _url="https://dl.google.com/go/$(curl -fSsL https://golang.org/VERSION?m=text).linux-amd64.tar.gz"
+  dl_untar $_url $usr_local_go 1
 }
 
 install_msys() {
@@ -52,3 +70,41 @@ setting_common() {
   exe "echo 'add_path \$GOPATH/bin' >> ~/.works.zsh"
   rm_dotpath
 }
+
+# install_common() { not_supported; }
+# install_wsl()    { not_supported; }
+# install_arch()   { not_supported; }
+# install_msys()   { not_supported; }
+# install_cygwin() { not_supported; }
+# install_mac()    { not_supported; }
+# install_ubuntu() { not_supported; }
+# install_redhat() { not_supported; }
+# setting_common() { not_supported; }
+# setting_wsl()    { not_supported; }
+# setting_arch()   { not_supported; }
+# setting_msys()   { not_supported; }
+# setting_cygwin() { not_supported; }
+# setting_mac()    { not_supported; }
+setting_ubuntu() {
+  exe "echo 'add_path $usr_local_go/bin' >> ~/.works.zsh"
+  setting_common
+}
+# setting_redhat() { not_supported; }
+# #is_installed
+# #install_via_os_default
+# #def_install
+# #is_debug
+# #is_dry
+# #log
+# #dlog
+# #not_supported
+# #make_link_dot2home
+# #make_lnk_with_bkup
+# #cd_work
+# #make_work_if_needed
+# #dl
+# #dl_unzip
+# #dl_untar
+# #github
+# #github_user_local
+# #sudo_tee

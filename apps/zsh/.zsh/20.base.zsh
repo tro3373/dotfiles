@@ -9,6 +9,7 @@ umask 0002
 #
 # N-/ : means no add if not exist.
 # NOTE: set fpath before compinit
+# TODO FIXME init buggy...
 fpath=(~/.zsh/Completion(N-/) $fpath)
 fpath=(~/.zsh/functions/*(N-/) $fpath)
 fpath=(~/.zsh/plugins/zsh-completions(N-/) $fpath)

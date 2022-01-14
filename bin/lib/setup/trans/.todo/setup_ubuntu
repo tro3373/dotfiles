@@ -77,7 +77,7 @@ install_apps() {
 
   apt_update_if_needed
 
-  local apps=(gnome-tweak-tool)
+  local apps=(gnome-tweaks)
   while read -r line; do
     [[ -z $line ]] && continue
     [[ $line =~ ^#.* ]] && continue
@@ -90,7 +90,7 @@ xsel
 smartmontools
 hardinfo
 google-chrome-stable
-gconf-editor
+# gconf-editor
 numix-gtk-theme
 numix-icon-theme
 numix-icon-theme-circle
