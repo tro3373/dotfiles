@@ -24,7 +24,7 @@ scoop bucket add nonportable
 ## For java
 scoop bucket add java
 ## For JetBrains
-scoop bucket add JetBrains
+scoop bucket add JetBrains https://github.com/Ash258/Scoop-JetBrains
 
 
 # Install packages
@@ -48,6 +48,7 @@ scoop install winmerge-jp
 scoop install winscp
 scoop install mpc-hc
 # scoop install tortoisesvn
+#   and call tortoisesvn-install.reg
 scoop install dbeaver
 scoop install firefox
 scoop install slack
@@ -56,7 +57,7 @@ scoop install IntelliJ-IDEA
 # Install lang..
 scoop install go
 # scoop install openjdk
-# scoop install adopt8-hotspot
+# scoop install temurin8-jdk
 
 # Nouse
 # scoop install gitkraken
