@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 
-readonly cred=$HOME/.aws/credentials
+readonly cred=$HOME/.aws/config
 list_profile() {
   cat <$cred |
-    grep "\[" |
-    tr -d '[' |
-    tr -d ']' |
-    sed -e 's/profile //g'
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      echo $line |
+        grep "\[" |
+        tr -d '[' |
+        tr -d ']' |
+        sed -e 's/profile //g'
+    done
 }
 
 main() {
