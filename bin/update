@@ -57,9 +57,12 @@ update_ubuntu() {
   log "=> Dist Upgrading.."
   $dummy sudo apt-get dist-upgrade -y
 }
+fix_scoop_for_wsl() {
+  $dummy sed -i -e 's,\r,,g' "$(which scoop)"
+}
 update_scoop() {
   log "=> Updating.."
-  $dummy scoop update
+  $dummy scoop update || fix_scoop_for_wsl
   log "=> Cleaning.."
   $dummy scoop cache rm '*'
   $dummy scoop cache show
