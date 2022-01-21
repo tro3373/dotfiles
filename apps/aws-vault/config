@@ -59,17 +59,19 @@ setup_gpg_agent() {
 
 cheat_aws_vault() {
   cat <<'EOF'
-=> No need aws credentials. (~/.aws/credentials)
-=> Only config settings is needed. (~/.aws/config)
+------------------------------------------------------------------
+==> No need aws credentials. (~/.aws/credentials)
+==> Only config settings is needed. (~/.aws/config)
 ==> Sample mfa settings is bellow
-
-[profile example_user]
-include_profile=common
-
-[profile example]
-source_profile = example_user
-mfa_serial = arn:aws:iam::xxxxx:mfa/xxxxx-user-name
-role_arn = arn:aws:iam::xxxxx:role/xxxxx-role-name
+  [profile example_user]
+  include_profile=common
+  [profile example]
+  source_profile = example_user
+  mfa_serial = arn:aws:iam::xxxxx:mfa/xxxxx-user-name
+  role_arn = arn:aws:iam::xxxxx:role/xxxxx-role-name
+==> If you have no mfa device, `--no-session` option can be used.
+==> You need this first. `export GPG_TTY=$(tty)`
+------------------------------------------------------------------
 EOF
 }
 
