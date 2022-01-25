@@ -15,9 +15,7 @@ pre_setup() {
 
 load_update_arg_apps() {
   # shellcheck disable=SC2034
-  read -a args < <(
-    echo "$(default_apps) ahk wt"
-  )
+  read -a args < <(default_apps)
 }
 
 post_setup() {

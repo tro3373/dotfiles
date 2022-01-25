@@ -23,7 +23,7 @@ setup_arch_via_usb_stick() {
   # boot bios menu
   # bios setting(UEFI boot)
   # boot via usb-stick
-  if ! ls ls /sys/firmware/ | grep efi >&/dev/null; then
+  if find /sys/firmware/ -maxdepth 1 -mindepth 1 | grep efi >&/dev/null; then
     echo "your system not efi booting." 1>&2
     exit 1
   fi
