@@ -7,8 +7,8 @@ readonly _core_apps=(
   git ssh tig curl bc tree tmux zsh vim ag rg ctags fzf
 )
 readonly _core_apps_additional=(
-  neofetch anyenv go pt nvim nkf mmv gomi ghq shellcheck shfmt htop hub
-  exa bat
+  neofetch anyenv netcat go pt nvim mmv gomi ghq shellcheck shfmt htop hub
+  exa bat nkf
 )
 readonly _core_apps_additional_arch=(
   yay
@@ -393,7 +393,7 @@ dl() {
   fi
 }
 is_empty_dir() {
-  local _count=$(find "$1"/ -type d -empty 2>/dev/null|wc -l)
+  local _count=$(find "$1"/ -type d -empty 2>/dev/null | wc -l)
   test $_count -eq 1
 }
 dl_untar() {
