@@ -8,6 +8,6 @@ main() {
   echo "==>hdd fill zero."
   echo "    dd if=/dev/zero of=/dev/sdb bs=4096"
   echo "==>create usb image(ex. chromium os usb)"
-  echo "    dd if=hoge.img of=/dev/sdx bs=4M iflag=fullblock oflag=sync"
+  echo "    dd if=hoge.img of=/dev/sdx bs=4M iflag=fullblock oflag=sync status=progress && sync"
 }
 main
