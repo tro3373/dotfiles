@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+readonly current_dir=$(pwd)
+readonly script_dir=$(
+  cd "$(dirname ${BASH_SOURCE:-$0})"
+  pwd
+)
+export PATH=$script_dir/../../../../:$PATH
+source $script_dir/../../../setup/funcs
+
+readonly iso_url=https://mirrors.cat.net/archlinux/iso/latest
+
+usage() {
+  cat <<EOF
+Create archlinux usb image command for x86_64
+
+Usage:
+  $command_name [option]
+Options
+  using funcs initialize_args
+    -h|--help : Show this usage
+    -d,-e,..
+  device_id: ex) /dev/sde or /dev/sdb ...
+
+EOF
+}
+
+error() { echo "$*" 1>&2; }
+
+check() {
+  if ! is_unix; then
+    not_supported
+    exit 1
+  fi
+}
+
+get_iso_url() {
+  local fnm=$(curl -fSsL $iso_url | grep 'href="' | sed -e 's,^.*href=",,g' | cut -d\" -f1 | grep -E 'iso$' | head -1)
+  test -z $fnm && echo "Failed to latest iso url" 1>&2 && exit 1
+  echo $iso_url/$fnm
+}
+
+find_current_dir() {
+  find $current_dir/$1 -type f -print 2>/dev/null | head -1
+}
+
+dl_iso() {
+  local find_key_iso='archlinux*.iso'
+  local find_key_sig='archlinux*.sig'
+  local url=$(get_iso_url)
+  local _iso=$(find_current_dir "$find_key_iso")
+  local _sig=$(find_current_dir "$find_key_sig")
+  if [[ -e $_iso && -e $_sig ]]; then
+    echo "$_iso"
+    return
+  fi
+  if [[ ! -e $_iso ]]; then
+    exe curl -fSsLO $url
+  fi
+  if [[ ! -e $_sig ]]; then
+    exe curl -fSsLO $url.sig
+  fi
+  if is_dry; then
+    echo "$current_dir/$find_key_iso"
+    return
+  fi
+  if ! gpg --keyserver-options auto-key-retrieve --verify "$find_key_sig" |& grep 'Good signature' >&/dev/null; then
+    echo "Failed to verify sign" 1>&2
+    exit 1
+  fi
+  find_current_dir "$find_key_iso"
+}
+
+write_to_usb() {
+  cat <<EOF
+==> do below. sdX is youre device id.
+
+  sudo dd if=$iso of=/dev/sdX bs=4M iflag=fullblock oflag=sync status=progress && sync
+
+EOF
+}
+
+main() {
+  set -e
+  local iso=$(dl_iso)
+  write_to_usb "$@"
+
+  show_dummy_warn_if_needed
+  ink green "Done!"
+}
+main "$@"
