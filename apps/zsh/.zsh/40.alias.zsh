@@ -86,7 +86,7 @@ alias cddot="cd $DOTPATH"
 alias history="history -i"
 
 gm() {
-  [[ -z "$*" ]] && echo "Specify commit message" 1>&2 && return
+  [[ -z $* ]] && echo "Specify commit message" 1>&2 && return
   git commit -m "$*"
 }
 
@@ -209,31 +209,57 @@ zle -N cd_up              # redist `cd_up` as widget
 bindkey '^f' vi-kill-line # デフォルトのキーバインド(^U)を変更
 bindkey '^u' cd_up
 
+function supported() {
+  local cmd="$*"
+  if ! has $cmd; then
+    echo "Not supported(No $cmd command exist)" 1>&2
+    return 1
+  fi
+  return 0
+}
+function cd_dir() {
+  local d="$*"
+  if [ -n "$d" ]; then
+    BUFFER="cd $d"
+    zle accept-line # execute buffer string
+  fi
+  zle -R -c # refresh
+}
 function _find_src_root() {
   # find $HOME/src/ -maxdepth 1 -mindepth 1 -type d
   # find $HOME/go/src -type d -name '.git' 2>/dev/null | xargs dirname
   ghq list --full-path 2>/dev/null | tac
 }
 function cd_src() {
-  if ! has fzf; then
-    echo 'Not supported(No fzf command exist)' 1>&2
-    return
-  fi
-  if ! has ghq; then
-    echo 'Not supported(No ghq command exist)' 1>&2
-    return
-  fi
+  supported fzf || return
+  supported ghq || return
   # LBUFFER: 現在のカーソル位置よりも左のバッファ
   # RBUFFER: 現在のカーソル位置を含む右のバッファ
   local src=$(
     _find_src_root |
       fzf --query "$LBUFFER" --preview "ls -laF {}"
   )
-  if [ -n "$src" ]; then
-    BUFFER="cd $src"
-    zle accept-line # execute buffer string
-  fi
-  zle -R -c # refresh
+  cd_dir "$src"
 }
 zle -N cd_src
 bindkey '^]' cd_src
+
+function _find_dirs() {
+  find . -type d -maxdepth 5 |
+    grep -E -v '/\.' |
+    grep -v 'node_modules' |
+    grep -v 'bower_components' |
+    sort -r
+}
+function cd_under_d() {
+  supported fzf || return
+  # LBUFFER: 現在のカーソル位置よりも左のバッファ
+  # RBUFFER: 現在のカーソル位置を含む右のバッファ
+  local src=$(
+    _find_dirs |
+      fzf --query "$LBUFFER" --preview "ls -laF {}"
+  )
+  cd_dir "$src"
+}
+zle -N cd_under_d
+bindkey '^k' cd_under_d
