@@ -15,6 +15,7 @@ install_app() {
 install_apps() {
   # install brew
   if ! has brew; then
+    # shellcheck disable=SC2016
     echo 'export PATH=/usr/local/bin:$PATH' >>~/.bash_profile
     sudo mkdir /usr/local/
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
@@ -23,6 +24,7 @@ install_apps() {
     brew -v
   fi
 
+  install_app bash # for upgrade
   install_app git
   install_app gnu-sed
   install_app lua
