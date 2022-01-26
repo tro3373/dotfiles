@@ -24,7 +24,8 @@ install_apps() {
     brew -v
   fi
 
-  install_app bash # for upgrade
+  # for upgrade
+  install_app bash
   install_app git
   install_app gnu-sed
   install_app lua
@@ -35,17 +36,19 @@ install_apps() {
   install_app diffutils
   install_app findutils
   install_app gawk
-  install_app gnu-sed
   install_app gnu-tar
   # install_app gnutls
   install_app grep
   install_app gzip
   # install_app wdiff
   install_app wget
-  # install_app --with-default-names ed
+  # MEMO: with-default-names: No prefix `g` command install option.
+  # install_app ed --with-default-names
   install_app gnu-indent
   install_app gnu-which
-  # install_app --with-readline gpg
+  # MEMO: with-readline: Enable interactive(enable handle cursor) option when install.
+  # install_app gpg --with-readline
+  install_app gpg
 
   # casc install
   brew tap caskroom/cask
