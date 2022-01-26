@@ -462,6 +462,7 @@ cat_do() {
     log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     printf "> Executing: $*\n"
     log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    # shellcheck disable=SC2294
     cat - | eval "$@" >/dev/null
   fi
 }
