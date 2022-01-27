@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+main() {
+  check_has gpg
+  local sig="$*"
+  if [[ ! -e $sig ]]; then
+    echo "Specify exisit sig path. $sig" 1>&2
+    exit 1
+  fi
+  if ! gpg --keyserver-options auto-key-retrieve --verify "$sig" |& grep 'Good signature' >&/dev/null; then
+    echo "Failed to verify sign" 1>&2
+    exit 1
+  fi
+}
+main "$@"

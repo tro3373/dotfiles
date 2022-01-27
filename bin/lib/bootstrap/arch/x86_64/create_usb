@@ -65,10 +65,7 @@ dl_iso() {
     echo "$current_dir/$find_key_iso"
     return
   fi
-  if ! gpg --keyserver-options auto-key-retrieve --verify "$find_key_sig" |& grep 'Good signature' >&/dev/null; then
-    echo "Failed to verify sign" 1>&2
-    exit 1
-  fi
+  verify_sig "$find_key_sig"
   find_current_dir "$find_key_iso"
 }
 
