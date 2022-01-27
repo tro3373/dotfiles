@@ -248,8 +248,7 @@ function _find_dirs() {
   find . -type d -maxdepth 5 |
     grep -E -v '/\.' |
     grep -v 'node_modules' |
-    grep -v 'bower_components' |
-    sort -r
+    grep -v 'bower_components'
 }
 function cd_under_d() {
   supported fzf || return
