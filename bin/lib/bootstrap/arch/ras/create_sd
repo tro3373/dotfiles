@@ -36,11 +36,11 @@ check() {
     not_supported
     exit 1
   fi
-  has_check fdisk
-  has_check $mkfs_vfat
-  has_check $mkfs_ext4
-  has_check bsdtar
-  root_check
+  check_has fdisk
+  check_has $mkfs_vfat
+  check_has $mkfs_ext4
+  check_has bsdtar
+  check_root
   if [[ -z $target_device_id ]]; then
     error "Specify target device id."
     exit 1

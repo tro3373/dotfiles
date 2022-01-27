@@ -84,7 +84,7 @@ EOF
 main() {
   set -e
   initialize_args "$@" -d
-  has_check gpg
+  check_has gpg
   local iso=$(dl_iso)
   write_to_usb "$@"
 

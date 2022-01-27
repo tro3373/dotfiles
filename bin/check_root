@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+main() {
+  [[ $UID -eq 0 ]] && return
+  echo "Permission denied." 1>&2
+  exit 1
+}
+main "$@"

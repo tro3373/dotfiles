@@ -48,7 +48,7 @@ check() {
     log "=> Already bootstraped." 1>&2
     exit 0
   fi
-  root_check
+  check_root
   # if [[ ! -e $userpass_path ]]; then
   #   log "=> No $userpass_path (pass file for $username) exist."
   #   exit 1
