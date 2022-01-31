@@ -550,7 +550,8 @@ show_dummy_warn_if_needed() {
 }
 
 init_export_path_if_possible() {
-  local _com_script_dir=$DOT_PATH/bin
+  local _git_root=$(git rev-parse --show-toplevel)
+  local _com_script_dir=$_git_root/bin
   if [[ -e $_com_script_dir ]]; then
     if ! echo ":$PATH:" | grep ":$_com_script_dir:" >&/dev/null; then
       ilog "=> init_funcs Exporting PATH env the path $_com_script_dir.."
@@ -571,6 +572,7 @@ init_detect_os() {
 }
 
 init_funcs() {
+  set -e
   local _os=$1
   local _user=${2:-$USER}
   [[ $_funcs_initialized -eq 1 ]] && return
