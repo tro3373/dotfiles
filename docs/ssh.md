@@ -30,4 +30,11 @@ ssh remoteuser@ip.address.of.remote.machine "cat > remote" < file
 # References from...
 - [How to Use SSH Pipes on Linux](https://www.maketecheasier.com/ssh-pipes-linux/)
 
-
+## Variables
+- '%d' (local user's home directory)
+- '%h' (remote host name)
+- '%l' (local host name)
+- '%n' (host name as provided on the command line)
+- '%p' (remote port)
+- '%r' (remote user name)
+- '%u' (local user name)

@@ -162,15 +162,9 @@ fi
 # http://qiita.com/yuku_t/items/4ffaa516914e7426419a
 function ssh() {
   TERM=xterm
-  if [[ -z $TMUX ]]; then
-    command ssh $@
-  else
-    local window_name=$(tmux display -p '#{window_name}')
-    [[ $@ == vag ]] && tmux_dog
-    command ssh $@
-    [[ $@ == vag ]] && tmux_dog -r
-    tmux rename-window $window_name
-  fi
+  local window_name=$(tmux_ssh_dog -p "$@")
+  command ssh "$@"
+  tmux_ssh_dog -r "$window_name" "$@"
 }
 
 alias tmux_a='tmux set-option -g prefix C-a'

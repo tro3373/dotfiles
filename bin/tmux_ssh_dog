@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+readonly enable_servers=${TMUX_SSH_PREFIX_DOG_ENABLE_SERVERS:-vag}
+is_prev=0
+server=
+restore_window_name=
+args=()
+
+usage() {
+  cat <<EOF
+
+TMUX dog for ssh
+
+Usage:
+  $command_name [option] <ssh option>
+Options
+  -h|--help           : Show this usage
+  -p                  : Set previous(Default after)
+  -r <window name>    : Recovery window name
+  -e <enable server>  : Add enable settings to .works.zsh
+
+EOF
+}
+add_args() { args+=("$@"); }
+is_msys() { [[ $OSTYPE == "msys" ]]; }
+is_vagrant() { hostname | grep .vagrant >&/dev/null; }
+is_tmux_runnning() { [[ -n $TMUX ]]; }
+is_exists_still_connection() { pgrep -f "ssh $server" >&/dev/null; }
+# is_dogging() { pgrep -f 'tmux_dog' >&/dev/null; }
+is_dog_enable_server() { echo ",$enable_servers," | grep ",$server," >&/dev/null; }
+initialize() {
+  ! is_tmux_runnning && return 1
+  # is_vagrant && return 1
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -p) is_prev=1 ;;
+      -r) shift && restore_window_name=$1 ;;
+      -e) shift && add_enable_server $1 && exit 0 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  if [[ ${#args[@]} -ne 1 ]]; then
+    # Return error if not simple ssh to ignore
+    return 1
+  fi
+  server="${args[*]}"
+  return 0
+}
+change_tmux_key() {
+  local _opt=C-$1
+  if tmux show-options -g prefix | grep $_opt >&/dev/null; then
+    # echo "==> Already tmux prefix $_opt"
+    return
+  fi
+  echo "==> Change tmux prefix to $_opt" 1>&2
+  tmux set-option -g prefix $_opt
+}
+add_enable_server() {
+  local add=$1
+  [[ -z $add ]] && echo "Specify add server name" 1>&2 && exit 1
+  local export_prefix='export TMUX_SSH_PREFIX_DOG_ENABLE_SERVERS'
+  local target=$HOME/.works.zsh
+  local current=$(sed -n -e "s,$export_prefix=,,p" $target)
+  local dst=$(echo "vag,$add,$current" | tr , '\n' | sort -u | tr '\n' ',')
+  sed -i -e "/$export_prefix=/d" $target
+  echo "$export_prefix=$dst" >>$target
+  echo "==> Bellow settings now enabled." 1>&2
+  grep "$export_prefix=" $target
+}
+before() {
+  is_dog_enable_server && change_tmux_key b
+  tmux display -p '#{window_name}'
+  tmux rename-window "$server"
+}
+after() {
+  tmux rename-window "$restore_window_name"
+  is_msys && return
+  ! is_dog_enable_server && return
+  is_exists_still_connection && return
+  change_tmux_key a
+}
+main() {
+  initialize "$@" || return
+  if [[ $is_prev -eq 1 ]]; then
+    before
+    return
+  fi
+  after
+}
+main "$@"

@@ -44,15 +44,23 @@ Host *
   IdentityFile /path/to/your/identity/file
   ServerAliveInterval 30
   GSSAPIAuthentication no
-  ForwardX11 yes
-  ForwardX11Trusted yes
-  PermitLocalCommand  yes
-  LocalCommand [[ -n $TMUX ]] && tmux rename-window %n
+  # ForwardX11 yes
+  # ForwardX11Trusted yes
   # disable because tunnel to vag not work
   ## Use master connection(faster)
   #ControlMaster auto
   #ControlPath ~/.ssh/mux-%r@%h:%p
   #ControlPersist 10
+Host sp* al*
+  PermitLocalCommand  yes
+  LocalCommand [[ -n $TMUX ]] && tmux rename-window %n
+  # '%d' (local user's home directory)
+  # '%h' (remote host name)
+  # '%l' (local host name)
+  # '%n' (host name as provided on the command line)
+  # '%p' (remote port)
+  # '%r' (remote user name)
+  # '%u' (local user name)
 Host springboard
   HostName XXX.XXX.XXX.XXX
   Port 22
