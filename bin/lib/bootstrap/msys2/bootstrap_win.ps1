@@ -50,6 +50,7 @@ scoop install mpc-hc
 # scoop install tortoisesvn
 #   and call tortoisesvn-install.reg
 scoop install dbeaver
+scoop install robo3t
 scoop install firefox
 scoop install slack
 scoop install IntelliJ-IDEA
