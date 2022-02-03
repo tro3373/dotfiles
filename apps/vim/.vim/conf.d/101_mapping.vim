@@ -60,7 +60,8 @@ noremap gF gf
 noremap gV `[v`]
 
 " Clip All
-nmap <Leader>a ggVGy
+" nmap <Leader>a ggVGy
+nmap <Leader>a :%y<CR>
 " Esc Esc でハイライトOFF nohlsearch
 nnoremap <Esc><Esc> :noh<CR>
 " インサートモードを抜けたときIME Off
