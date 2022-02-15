@@ -94,7 +94,10 @@ handle_deals() {
   while IFS=, read -r c01 c02 c03 c04 c05 c06 c07 c08 c09 c10 c11 c12 c13 c14 c15 c16 c17; do
     # [[ $c08 =~ ^-.* ]] && c10=-$c10
     c16= #登録銀行口座情報削除
-    [[ -n $c17 ]] && c16=事業主借
+    if [[ -n $c17 ]]; then
+      c16=事業主借
+      [[ $c01 == 収入 ]] && c16=事業主貸
+    fi
     c14=$(gen_deals_tag $c14)
     echo "$c01,$c02,$c03,$c04,$c05,$c06,$c07,$c08,$c09,$c10,$c11,$c12,$c13,$c14,$c15,$c16,$c17"
   done
