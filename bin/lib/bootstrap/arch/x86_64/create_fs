@@ -192,6 +192,26 @@ setup_passwd() {
     passwd
 }
 
+cat_wired_static() {
+  # shellcheck disable=SC2154
+  cat <<EOF
+[Match]
+Name=$wired_if
+
+[Network]
+DHCP=ipv4
+Address=$ip_static/$ip_static_masc
+EOF
+}
+cat_setup_wired_static() {
+  # shellcheck disable=SC2154
+  cat <<EOF
+cp /root/nd$_conf $_conf
+systemctl daemon-reload
+systemctl restart systemd-networkd
+EOF
+}
+
 cat_iwd_static_ip() {
   # shellcheck disable=SC2154
   cat <<EOF
@@ -220,9 +240,19 @@ NameResolvingService=systemd
 END
 }
 
+cat_setup_iwd_static() {
+  # shellcheck disable=SC2154
+  cat <<EOF
+cp /root$_conf $_conf
+cp /root$iwd_ssid_settings_path $iwd_ssid_settings_path
+systemctl restart iwd
+EOF
+}
+
 bkup_to_root() {
-  local _path=$1
-  local _dst=/root/iwd$_path
+  local _group=$1
+  local _path=$2
+  local _dst=/root/$_group$_path
   mkdir -p "$(dirname $_dst)"
   cat - >>$_dst
   echo "==> Saved to $_dst"
@@ -239,22 +269,27 @@ setup_for_bootstrap() {
   systemctl enable iwd
   systemctl enable sshd
 
-  waiting_for Save iwd sample to /root.
-  cat_iwd_main | bkup_to_root /etc/iwd/main.conf
+  local _conf=/etc/systemd/network/${wired_if}-static.network
+  waiting_for Save systemd-networkd sample to /root.
   # shellcheck disable=SC2154
-  cat_iwd_static_ip | bkup_to_root $iwd_ssid_settings_path
-  cat <<EOF >>/root/iwd/setup_after_iwd_connected
-cp /root/etc/iwd/main.conf /etc/iwd/main.conf
-cp /root$iwd_ssid_settings_path $iwd_ssid_settings_path
-systemctl restart iwd
-EOF
+  cat_wired_static | bkup_to_root nd $_conf
+  cat_setup_wired_static | bkup_to_root nd /setup_if_use_networkd
+
+  _conf=/etc/iwd/main.conf
+  waiting_for Save iwd sample to /root.
+  cat_iwd_main | bkup_to_root iwd $_conf
+  # shellcheck disable=SC2154
+  cat_iwd_static_ip | bkup_to_root iwd $iwd_ssid_settings_path
+  cat_setup_iwd_static | bkup_to_root iwd /setup_if_use_iwd
 }
 
 gen_conf_sample() {
   cat <<'EOF' >>$conf
 export dst_dev=/dev/sdX
+export wired_if=eno1
 export ip_prefix=192.168.XXX
 export ip_static=$ip_prefix.X
+export ip_static_masc=24
 export ssid=XXXXX
 export ssid_type=psk
 export iwd_ssid_settings_path=/var/lib/iwd/$ssid.$ssid_type
