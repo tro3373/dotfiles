@@ -46,7 +46,7 @@ scoop install vscode
 scoop install sakura-editor
 scoop install winmerge-jp
 scoop install winscp
-scoop install mpc-hc
+scoop install mpc-hc-fork
 # scoop install tortoisesvn
 #   and call tortoisesvn-install.reg
 scoop install dbeaver
