@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+main() {
+  cat <<'EOF'
+sudo systemctl reboot --boot-loader-entry=auto-windows
+sudo systemctl reboot --firmware-setup
+EOF
+}
+main "$@"
