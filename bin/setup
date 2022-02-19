@@ -24,6 +24,10 @@ Setup my dev env.
         execute install/setup process.
       -f|--force
         install process will be executed forcibly if already installed, and also setup process will be executed.
+      -a|--additional
+        enable additional setup
+      -m|--minimal
+        enable minimal setup
       -v|--view
         vim edit apps config
 
