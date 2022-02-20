@@ -4,12 +4,14 @@ readonly specify_keyserver=pool.sks-keyservers.net
 # keyboard_layout=jp106
 readonly keyboard_layout=us
 readonly _additional_arch=(
-  pacman-contrib        # pacman cache clean
-  reflector             # update mirrorlist tool
-  net-tools             # deplicated. ifconfig, route, arp, netstat...
-  inetutils             # ifconfig, hostname, ping...
-  xsel xorg-server-xvfb # for clipboard
-  libxfont2             # x11 font rasterisation library
+  pacman-contrib # pacman cache clean
+  reflector # update mirrorlist tool
+  net-tools # deplicated. ifconfig, route, arp, netstat...
+  gnu-netcat # netcat
+  inetutils # ifconfig, hostname, ping...
+  xsel
+  xorg-server-xvfb # for clipboard
+  libxfont2 # x11 font rasterisation library
 )
 
 setup_keyboard() {

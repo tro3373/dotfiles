@@ -93,6 +93,7 @@ setup_pacman() {
   setup_gnupg
   improve_pacman_aria2
   update_and_add_pacman_packages base base-devel git curl sudo vim wget grep sed which unzip gzip openssh zsh
+  setup_additional_pacakges
   ! is_arm && return
   update_and_add_pacman_packages systemd-timesyncd
 }

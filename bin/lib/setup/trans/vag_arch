@@ -40,7 +40,7 @@ pre_setup() {
   # permanently append
   # shellcheck disable=SC2119
   setup_gnupg_keyserver_settings /home/vagrant
-  setup_gnupg
+  setup_gnupg refresh
   improve_pacman_conf
   improve_pacman_aria2
 
