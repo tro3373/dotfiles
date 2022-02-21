@@ -8,5 +8,6 @@ undo/*
 bundle/*
 backup/*
 plugged/*
+.clip.tmp
 
 !.gitkeep

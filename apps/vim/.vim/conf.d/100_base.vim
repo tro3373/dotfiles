@@ -290,12 +290,30 @@ let &colorcolumn="80,120"
 "   setglobal completeslash=slash
 " endif
 
-" WSL yank support
-let s:clip = '/mnt/c/Windows/System32/clip.exe'  " change this path according to your mount point
-if executable(s:clip)
-  augroup WSLYank
+" Yank post handling
+" @see
+" - [Vim: pipe register to external command - Stack Overflow](https://stackoverflow.com/questions/10780469/vim-pipe-register-to-external-command)
+" - [vim : how to write to another file my lines yanked? - Stack Overflow](https://stackoverflow.com/questions/34785759/vim-how-to-write-to-another-file-my-lines-yanked)
+" autocmd TextYankPost * if v:event.operator ==# 'y' | call system('echo '.@0.'|'.s:clip) | endif
+" autocmd TextYankPost * call system(s:clip, @0)
+let s:winclip = '/mnt/c/Windows/System32/clip.exe'  " change this path according to your mount point
+let s:clip = $HOME.'/.dot/bin/clip'
+if executable(s:winclip)
+  augroup MyYankPost
     autocmd!
-    autocmd TextYankPost * if v:event.operator ==# 'y' | call system(s:clip, @0) | endif
+    autocmd TextYankPost * call system(s:winclip, @0)
+  augroup MyYankPost
+  augroup END
+elseif executable(s:clip)
+  function! s:my_yank_post(event)
+    let s:cliptmp = $HOME.'/.vim/.clip.tmp'
+    call writefile(split(getreg('0'), '\n'), s:cliptmp)
+    call system('cat <'.s:cliptmp.'|'.s:clip)
+  endfunction
+  augroup MyYankPost
+    autocmd!
+    autocmd TextYankPost * call s:my_yank_post(v:event)
+  augroup MyYankPost
   augroup END
 endif
 
