@@ -220,18 +220,19 @@ command! HugoHelperLastModIsNow call HugoHelperLastModIsNow()
 
 function! Hugolize() abort
   let strnow = GetHugoNowDate()
+  let slug = '%h'
   let list = [
   \ '---',
   \ 'draft: false',
   \ 'slug: the-title-of-the-contents',
   \ 'title: The tilte of the contents',
-  \ 'cover: img.jpg',
+  \ '# cover: img.jpg',
   \ 'useRelativeCover: true',
   \ 'categories:',
   \ '  - tech',
-  \ 'tags:',
-  \ '  - AWS',
-  \ '  - ApiGateway',
+  \ '# tags:',
+  \ '#   - AWS',
+  \ '#   - ApiGateway',
   \ 'date: '.strnow,
   \ 'lastmod: '.strnow,
   \ 'comments: true      # set false to hide Disqus comments',
