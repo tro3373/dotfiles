@@ -127,8 +127,28 @@ snippet struct_jsonnn
   }
 
 snippet fmtprintfff
+alias   printfff
   // https://qiita.com/rock619/items/14eb2b32f189514b5c3c
-  fmt.Printf("%#+v", ${1})
+  // verb
+  fmt.Printf("%v\n", ${1}) // Output default format for the value.
+  fmt.Printf("%+v\n", ${1}) // Output with field name
+  fmt.Printf("%#v\n", ${1}) // Output with golang type spec format
+  fmt.Printf("%#+v\n", ${1}) // Output with field name and type spec
+  fmt.Printf("%T\n", ${1}) // Output The type
+  fmt.Printf("%%\n", ${1}) // Output '%'
+  // %t: bool
+  // %d: decimal number
+  // %b: binary number
+  // %o: octal number
+  // %x: hexa decimal number
+  // %c: word for unicode point
+  // %q: Quoted value
+  // %b: no decimal point index
+  // %e: index
+  // %E: Show large 'E'
+  // %f: no index (same as %F)
+  // %g: lage index then %e else %f
+  // %G: lage index then %E else %F
 
 snippet openfileee
   file, err := os.OpenFile(${1}, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -295,3 +315,11 @@ alias   rwmutexxx
 
 snippet floatstringgg
   strconv.FormatFloat(target, 'f', -1, 64)
+
+snippet lsdirrr
+  files, err := ioutil.ReadDir(".")
+
+snippet sorttt
+  sort.Slice(files, func(i, j int) bool {
+    return files[i].Name() > files[j].Name()
+  })
