@@ -306,9 +306,10 @@ if executable(s:winclip)
   augroup END
 elseif executable(s:clip)
   function! s:my_yank_post(event)
-    let s:cliptmp = $HOME.'/.vim/.clip.tmp'
-    call writefile(split(getreg('0'), '\n'), s:cliptmp)
-    call system('cat <'.s:cliptmp.'|'.s:clip)
+    " let s:cliptmp = $HOME.'/.vim/.clip.tmp'
+    " call writefile(split(getreg('0'), '\n'), s:cliptmp)
+    " call system('cat <'.s:cliptmp.'|'.s:clip)
+    call system(s:clip, @0)
   endfunction
   augroup MyYankPost
     autocmd!
