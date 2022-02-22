@@ -1,10 +1,15 @@
+# is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
+is_vagrant() { pwd | grep /home/vagrant >&/dev/null; }
 _initialize_env() {
   # Inisialize
   export DOTPATH="$HOME/.dot"
   export GENPATHF=$HOME/.path
   export GENMANPATHF=$HOME/.manpath
   export WORKPATHF=$HOME/.work.path
-  if [[ ${OSTYPE} = "msys" ]]; then
+  if is_vagrant; then
+    export IS_VAGRANT=1
+  fi
+  if [[ ${OSTYPE} == "msys" ]]; then
     export WINHOME=/c/Users/$(whoami)
     export MSYS=winsymlinks:nativestrict # enable symbolic link in admined msys
   fi
@@ -237,9 +242,6 @@ load_my_env() {
   gen_manpath_file_ifneeded
   export MANPATH="$(cat <$GENMANPATHF)"
 }
-
-# is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
-is_vagrant() { pwd | grep /home/vagrant >&/dev/null; }
 
 _initialize() {
   _initialize_env
