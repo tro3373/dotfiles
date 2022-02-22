@@ -643,3 +643,15 @@ function! MysqlDdlStripCols() abort
   %s/\(^.\{-}`\|`.*\)//g
 endfunction
 command! MysqlDdlStripCols call MysqlDdlStripCols()
+
+function! Hoge() abort
+  " let @*='hogehogehoge'
+  " let @+=@*
+  let h='hogehogehoge\n'
+  let l=h[-1:]
+  echo l
+  " :echo "abcd"[-1] . "abcd"[-2:]
+  " echo ['a', 'b'][-1]
+  " call CopyComm()
+endfunction
+command! Hoge call Hoge()

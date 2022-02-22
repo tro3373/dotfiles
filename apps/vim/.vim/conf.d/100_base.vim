@@ -206,6 +206,7 @@ set display=lastline
 " ■Unicodeで行末が変になる問題を解決
 if &encoding == 'utf-8'
   set ambiwidth=double
+  " set ambiwidth=single
 endif
 " 全角スペースを分かりやすく表示する
 highlight ZenkakuSpace cterm=underline ctermfg=lightmagenta guibg=lightmagenta
@@ -309,6 +310,23 @@ elseif executable(s:clip)
     let s:cliptmp = $HOME.'/.vim/.clip.tmp'
     call writefile(split(getreg('0'), '\n'), s:cliptmp)
     call system('cat <'.s:cliptmp.'|'.s:clip)
+    " let s:cliptmp = $HOME.'/.vim/.clip.tmp'
+    " call writefile([len(split(getreg('0'), '\n'))], s:cliptmp)
+    " call writefile(split(getreg('0'), '\n'), s:cliptmp))
+    " call writefile(split(getreg('0'), '\n') + [''], s:cliptmp)
+    " call writefile(getreg('0', 1, 1) + ['\n'], s:cliptmp)
+    " call system('cat <'.s:cliptmp.'|'.s:clip)
+    " call system('echo -n -e "' . shellescape(getreg('0')) . '"|' . s:clip)
+    " call system('echo -e "' . getreg('0') . '"|' . s:clip)
+    " call system('echo -e ' . shellescape(getreg('0')) . '|' . s:clip)
+    " call system('echo -e '.shellescape(getreg('0')).'|'.s:clip)
+    " exe ":!echo -e '".getreg('0')."' | " . s:clip
+    " exe ":!echo -e '".getreg('0')."'"
+    " let s:clipstr = getreg('0')
+    " :echo s:clipstr[-1]
+    " let @" = 'hoge'
+    " let l=getreg('0')[-1:]
+    " echo l == ''
   endfunction
   augroup MyYankPost
     autocmd!
