@@ -6,7 +6,8 @@ is_installed() {
   if is_ubuntu; then
     test -e $usr_local_go
   else
-     has $app
+    # shellcheck disable=SC2154
+    has $app
   fi
 }
 
