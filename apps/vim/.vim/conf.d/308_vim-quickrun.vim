@@ -25,8 +25,22 @@ let g:quickrun_config = {
 \   "do": {
 \       "exec" : ["make do"],
 \   },
+\   "run": {
+\       "exec" : ["make run"],
+\   },
 \   "node": {
 \       "exec" : ["node " . expand('%:p')],
 \   }
 \}
-nmap <Leader>r :QuickRun<CR>
+
+function! QuickRunAuto() abort
+  let _ft = &ft
+  if _ft == "go"
+    :QuickRun run
+  else
+    :QuickRun
+  endif
+endfunction
+command! QuickRunAuto call QuickRunAuto()
+" nmap <Leader>r :QuickRun<CR>
+nmap <Leader>r :QuickRunAuto<CR>
