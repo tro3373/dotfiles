@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+name=
+dummy="echo"
+
+is_dummy() { [[ -n $dummy ]]; }
+args=()
+usage() {
+  cat <<EOF
+
+Description for this command.
+
+Usage:
+  $command_name [option] <command_name>
+Options
+  -h|--help : Show this usage
+  -e : Execute command(default is dummy mode)
+
+EOF
+}
+add_args() { args+=("$@"); }
+check() {
+  if [[ -z $name ]]; then
+    echo "Specify command name" 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  name="${args[0]}"
+  check
+}
+
+cat_makefile() {
+  cat <<EOF
+NAME := $name
+VERSION := v0.0.1
+# REVISION := \$(shell git rev-parse --short HEAD)
+# OSARCH := "darwin/amd64 linux/amd64"
+PACKAGE := github.com/tro3373/\$(NAME)
+.DEFAULT_GOAL := run
+
+ifndef GOBIN
+GOBIN := \$(shell echo "\$\${GOPATH%%:*}/bin")
+endif
+
+COBRA := \$(GOBIN)/cobra
+
+\$(COBRA): ; @go get -v -u github.com/spf13/cobra/cobra
+
+.PHONY: get
+get:
+	@go get github.com/mitchellh/go-homedir \
+		go get github.com/spf13/viper
+
+.PHONY: deps
+deps:
+	@go list -m all
+
+.PHONY: tidy
+tidy:
+	@go mod tidy
+
+.PHONY: build
+build:
+	@env GOOS=linux go build -ldflags="-s -w"
+
+.PHONY: clean
+clean:
+	rm -rf ./\$(NAME)
+
+.PHONY: help
+help:
+	@go run ./main.go --help
+
+.PHONY: run
+run:
+	@go run ./main.go
+EOF
+}
+
+main() {
+  initialize "$@"
+  local user=$(git config --global --get user.name)
+  $dummy go mod init github.com/$user/$name
+  $dummy cobra init --pkg-name github.com/$user/$name
+  $dummy go mod tidy
+  if [[ -e Makefile ]]; then
+    echo "Already Makefile exist." 1>&2
+  else
+    cat_makefile |
+      if is_dummy; then
+        echo "Bellow Makefile will be create" | ink yellow
+        cat -
+      else
+        cat - >Makefile
+      fi
+  fi
+
+  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+}
+main "$@"
