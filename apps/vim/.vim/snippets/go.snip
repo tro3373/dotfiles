@@ -5,6 +5,10 @@ snippet     timenowww
 alias       nowww
   now := time.Now().Format("20060102_150405")
 
+snippet     timefrommm
+alias       timeparseee
+  t, _ := time.Parse("20060102_150405", "20141231_000000")
+
 snippet     errorwrapf
 alias       wraperror
   err = fmt.Errorf("Failed %s, %w", message, err)
@@ -340,3 +344,8 @@ snippet filereaddd
           fmt.Println(scanner.Text())
       }
   }
+
+snippet regexppp
+alias   matchstringgg
+  r := regexp.MustCompile(\`abc\`)
+  fmt.Println(r.MatchString("hello"))
