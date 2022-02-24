@@ -323,3 +323,6 @@ snippet sorttt
   sort.Slice(files, func(i, j int) bool {
     return files[i].Name() > files[j].Name()
   })
+
+snippet filepathhh
+  files, err := filepath.Glob("./*/*/*.md")
