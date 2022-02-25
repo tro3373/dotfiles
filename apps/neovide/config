@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+install_common() { not_supported; }
+install_wsl() { not_supported; }
+install_arch() {
+  # not_supported;
+  github https://github.com/neovide/neovide
+  exe cd neovide
+  exe cargo build --release
+}
+install_msys() {
+  scoop install neovide
+}
+install_cygwin() { not_supported; }
+install_mac() {
+  if ! has cargo; then
+    echo "No cargo exist. install it." 1>&2
+    return
+  fi
+  # Install CMake. Using homebrew: brew install cmake
+  exe brew install cmake
+  github https://github.com/neovide/neovide
+  exe cd neovide
+
+  exe cargo build --release
+  # Copy ./target/release/neovide to a known location and enjoy.
+  exe cp ./target/release/neovide $HOME/bin/
+  exe cargo install cargo-bundle
+  exe cargo bundle --release
+  # Copy ./target/release/bundle/osx/neovide.app to ~/Applications and enjoy.
+  exe cp -r ./target/release/bundle/osx/Neovide.app $HOME/Applications/
+}
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+setting_common() { no_settings; }
+setting_wsl() { no_settings; }
+setting_arch() { no_settings; }
+setting_msys() { no_settings; }
+setting_cygwin() { no_settings; }
+setting_mac() { no_settings; }
+setting_ubuntu() { no_settings; }
+setting_redhat() { no_settings; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#no_settings
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
+#sudo_tee
