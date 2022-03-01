@@ -1,22 +1,24 @@
 #!/usr/bin/env bash
 
 readonly repo=tro3373/md
-readonly dst=$HOME/.md
+readonly dst_d=$HOME/.md
 
-abs_repo() {
-  ghq list --full-path $repo 2>/dev/null
-}
-
+has() { command -v ${1} >&/dev/null; }
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
 main() {
-  set -e
-  if [[ -e $dst ]]; then
-    echo "$dst already exist." 1>&2
+  if [[ -e $dst_d ]]; then
+    log "=> Already $dst_d exist."
+    return
+  fi
+  if ! has ghq; then
+    log "=> No ghq command exist."
     exit 1
   fi
-  ghq get git@github.com:$repo.git
-  local src_root=$(abs_repo)
-  local src=$src_root/.md
-  ln -s $src $dst
-  echo "Done"
+  local src_d=$(ghq list --full-path $repo)
+  if [[ -z $src_d ]]; then
+    ghq get git@github.com:$repo.git
+  fi
+  ln -s $src_d $dst_d
+  log "Done"
 }
 main "$@"
