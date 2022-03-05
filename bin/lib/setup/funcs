@@ -341,7 +341,7 @@ _github() {
   local _path="$dst/$repo_name"
   if [[ -e $_path ]]; then
     exe cd $_path
-    exe $_sudo git fetch
+    exe $_sudo git pull --rebase
   else
     # ignore depth 1 option because tag info not readable
     # exe $_sudo git clone --depth 1 "$url" $_path
