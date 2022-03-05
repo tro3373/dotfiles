@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+readonly timestamp=$(date +%Y%m%d.%H%M%S)
+readonly current_dir=$(pwd)
+readonly log=$current_dir/$command_name.$timestamp.log
+
+dummy="echo"
+tag=backup
+prof=
+args=()
+
+is_dummy() { [[ -n $dummy ]]; }
+usage() {
+  cat <<EOF
+
+Request aws dynamodb backup to all table
+
+Usage:
+  $command_name [option]
+Options
+  -h|--help : Show this usage
+  -t|--tag  : Tag name for backup
+  -p|--profile : AWS Profile
+
+EOF
+}
+add_args() { args+=("$@"); }
+check() {
+  if [[ -z $prof ]]; then
+    echo "Specify profile via -p option" 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      # -f*|--file*) file=${1#*=} ;;
+      -t | --tag) shift && tag=$1 ;;
+      -p | --profile) shift && prof=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+
+  export AWS_SDK_LOAD_CONFIG=1
+  export AWS_DEFAULT_REGION=ap-northeast-1
+  export AWS_PROFILE=$prof
+  export AWS_DEFAULT_PROFILE=$prof
+}
+
+list_tables() {
+  aws dynamodb list-tables | jq ".TableNames[]" -r
+}
+
+bkup() {
+  $dummy aws dynamodb create-backup \
+    --table-name $table \
+    --backup-name ${timestamp}_$tag |& tee -a $log
+}
+
+main() {
+  initialize "$@"
+  list_tables |
+    while read -r table; do
+      [[ -z $table ]] && continue
+      [[ $table =~ ^#.* ]] && continue
+      bkup
+    done
+  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  echo "Done!" | ink yellow
+}
+main "$@"
