@@ -22,6 +22,7 @@ Options
   -h|--help : Show this usage
   -t|--tag  : Tag name for backup
   -p|--profile : AWS Profile
+  -e        : Execute(Default is dummy mode)
 
 EOF
 }

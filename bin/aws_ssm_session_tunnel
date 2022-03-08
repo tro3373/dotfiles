@@ -73,15 +73,15 @@ setup_wrap_aws() {
 
 detect_local_ssh_port() {
   local ssh_cnf=$HOME/.ssh/config
-  local key="Host $profile"
-  local n=$(grep -n "$key" $ssh_cnf | cut -d: -f1)
+  local key="Host $remote"
+  local n=$(grep -E -n "^$key$" $ssh_cnf | cut -d: -f1)
   if [[ -z $n ]]; then
-    log "No ssh config settings for $profile exist."
+    log "No ssh config settings for $remote exist."
     exit 1
   fi
   local p=$(tail -n +$n $ssh_cnf | grep Port | head -1 | awk '{print $2}')
   if [[ -z $p ]]; then
-    log "No ssh config for 'Port' settings for $profile exist."
+    log "No ssh config for 'Port' settings for $remote exist."
     exit 1
   fi
   local_ssh_port=$p
