@@ -5,6 +5,8 @@ readonly port=5556
 readonly direct=0
 readonly pidf=/tmp/clipd.pid
 daemon=0
+readonly log_enable=0
+readonly logf=$HOME/clipd.log
 
 usage() {
   cat <<EOF
@@ -22,11 +24,13 @@ Arguments and Normal input will be clipped.
 EOF
 }
 
+logmsg() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*"; }
+log() { logmsg "$*" | tee >(if [[ $log_enable -eq 1 ]]; then cat - | tee -a $logf >&/dev/null; fi); }
 has() { command -v ${1} >&/dev/null; }
 hass() {
   for arg in "$@"; do
     has $arg && continue
-    echo "No such command $arg exist." 1>&2
+    log "No such command $arg exist."
     exit 1
   done
 }
@@ -40,7 +44,7 @@ check() {
   esac
   hass "${use_commands[@]}"
   if [[ $daemon -ne 1 && ! -p /dev/stdin ]]; then
-    echo "No clip target(stdin) exist." 1>&2
+    log "No clip target(stdin) exist."
     exit 1
   fi
 }
@@ -62,7 +66,7 @@ direct() { test $direct -eq 1 || test "$(whoami)" == vagrant; }
 hasd() { netstat -an | grep $port | grep LISTEN >&/dev/null; }
 killd() {
   if ! hasd; then
-    echo "No kill target exist."
+    log "No kill target exist."
   fi
   _end_clipd
   echo "clipd killed" | _clip
@@ -81,7 +85,7 @@ _start_clipd() {
   echo $$ >$pidf
   while (true); do
     [[ ! -e $pidf ]] && break
-    echo "=> Start Waiting clipd.."
+    log "=> Start Waiting clipd.."
     if [[ $OSTYPE =~ darwin* ]]; then
       nc -l $port
     else
@@ -94,16 +98,16 @@ _start_clipd() {
 
 _end_clipd() {
   if [[ ! -e $pidf ]]; then
-    echo "=> Ending clipd.."
+    log "=> Ending clipd.."
     return
   fi
-  echo "=> End Removing $pidf.."
+  log "=> End Removing $pidf.."
   rm $pidf
 }
 
 _clipd() {
-  # [[ -e $pidf ]] && echo "=> Already clipd pidf exist." && return
-  hasd && echo "=> Already clipd running." && return
+  # [[ -e $pidf ]] && log "=> Already clipd pidf exist." && return
+  hasd && log "=> Already clipd running." && return
   trap _end_clipd 0 1 2 3 15
   _start_clipd
 }
@@ -121,8 +125,8 @@ _clippp() {
       darwin*) cat - | pbcopy ;;
       *) cat - | xsel -bi --display ${DISPLAY:-:0} ;;
     esac
-  # echo "==> clipped. $_val"
-  echo "==> clipped."
+  # log "==> clipped. $_val"
+  log "==> clipped."
 }
 
 main() {
