@@ -8,7 +8,8 @@ function! s:on_lsp_buffer_enabled() abort
   if exists('+tagfunc') | setlocal tagfunc=lsp#tagfunc | endif
   " nmap <buffer> gd <plug>(lsp-definition)
   " nmap <buffer> <C-]> <plug>(lsp-definition)
-  nmap <buffer> <C-]> :tab split<cr>:LspDefinition<cr>
+  " nmap <buffer> <C-]> :tab split<cr>:LspDefinition<cr>
+  nmap <buffer> <C-]> :tab LspDefinition<cr>
   " nmap <buffer> <C-]> :tab LspDefinition<cr>
   " nmap <buffer> <C-]> :leftabove LspDefinition
   " nmap <buffer> <C-]> :rightbelow vertical LspDefinition<cr>
