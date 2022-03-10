@@ -254,7 +254,7 @@ _initialize() {
   if is_vagrant; then
     export DISPLAY=:0
     ${DOTPATH}/bin/start_xvfb
-  else
+  elif [[ -z "${REMOTEHOST}${SSH_CONNECTION}" ]]; then
     ${DOTPATH}/bin/clip -d >&/dev/null &
   fi
   # ${DOTPATH}/bin/tmux_dog
