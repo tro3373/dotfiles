@@ -6,6 +6,7 @@ readonly direct=0
 readonly pidf=/tmp/clipd.pid
 daemon=0
 readonly log_enable=0
+readonly log_enable_content=0
 readonly logf=$HOME/clipd.log
 
 usage() {
@@ -125,8 +126,10 @@ _clippp() {
       darwin*) cat - | pbcopy ;;
       *) cat - | xsel -bi --display ${DISPLAY:-:0} ;;
     esac
-  # log "==> clipped. $_val"
   log "==> clipped."
+  if [[ $log_enable_content -eq 1 ]]; then
+    log "$_val"
+  fi
 }
 
 main() {
