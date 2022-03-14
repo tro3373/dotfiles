@@ -64,7 +64,7 @@ initialize() {
 }
 
 direct() { test $direct -eq 1 || test "$(whoami)" == vagrant; }
-hasd() { netstat -an | grep $port | grep LISTEN >&/dev/null; }
+hasd() { netstat -an | grep LISTEN | grep ":$port" >&/dev/null; }
 killd() {
   if ! hasd; then
     log "No kill target exist."
@@ -108,7 +108,10 @@ _end_clipd() {
 
 _clipd() {
   # [[ -e $pidf ]] && log "=> Already clipd pidf exist." && return
-  hasd && log "=> Already clipd running." && return
+  if hasd; then
+    log "=> Already clipd running."
+    return
+  fi
   trap _end_clipd 0 1 2 3 15
   _start_clipd
 }

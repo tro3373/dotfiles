@@ -156,7 +156,7 @@ ink() {
   printf "${open}${color}${text}${close}\n" 1>&2
 }
 log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
-is_port_useing() { netstat -ano | grep ":$1" >&/dev/null; }
+is_port_useing() { netstat -ano | grep LISTEN | grep ":$1" >&/dev/null; }
 
 wait_and_tunnel_https() {
   wait_until_port_used $local_ssh_port
