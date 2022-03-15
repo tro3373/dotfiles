@@ -3,6 +3,7 @@ snippet     timeformattt
 
 snippet     timenowww
 alias       nowww
+alias       timestamppp
   now := time.Now().Format("20060102_150405")
 
 snippet     timefrommm
@@ -344,6 +345,10 @@ snippet filereaddd
           fmt.Println(scanner.Text())
       }
   }
+
+snippet filewritejsonnn
+  file, _ := json.MarshalIndent(data, "", " ")
+  _ = ioutil.WriteFile("test.json", file, 0644)
 
 snippet regexppp
 alias   matchstringgg
