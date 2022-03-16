@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+# readonly host=0.0.0.0
+# readonly host=127.0.0.1
+readonly host=localhost
+mode=add
+args=()
+usage() {
+  cat <<EOF
+
+Windows port forwarding.
+
+Usage:
+  $command_name [option] <from_port> <to_port>
+Options
+  -h|--help   : Show this usage
+  -l|--list   : Show current settings
+  -d|--delete : Delete settings
+
+EOF
+}
+add_args() { args+=("$@"); }
+not_supported() { echo "Not supported." 1>&2 && exit 1; }
+check() {
+  os wsl || not_supported
+  if [[ $mode == delete && ${#args[@]} -lt 1 ]]; then
+    echo "Specify forward from port" 1>&2
+    usage
+    exit 1
+  fi
+  if [[ $mode == add && ${#args[@]} -lt 2 ]]; then
+    echo "Specify forward from port and to port" 1>&2
+    usage
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -l | --list) mode=list ;;
+      -d | --delete) mode=delete ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+}
+list() {
+  echo "==> Listing proxy.."
+  netsh.exe interface portproxy show all
+}
+delete() {
+  powershell.exe start-process -verb runas "netsh.exe" -ArgumentList "interface,portproxy,delete,v4tov4,$from,$host"
+  list
+}
+check_already_exist() {
+  list |
+    grep $host |
+    grep $from |
+    grep $to
+}
+add() {
+  # netsh.exe interface portproxy add v4tov4 listenport=$from listenaddress=$host connectport=$to connectaddress=$host
+  local exist=$(check_already_exist)
+  if [[ -n $exist ]]; then
+    echo "==> Already exist."
+    list
+    return
+  fi
+  powershell.exe start-process -verb runas "netsh.exe" -ArgumentList "interface,portproxy,add,v4tov4,listenport=$from,listenaddress=$host,connectport=$to,connectaddress=$host"
+  list
+}
+main() {
+  initialize "$@"
+  local from=${args[0]}
+  local to=${args[1]}
+  case "$mode" in
+    list) list ;;
+    delete) delete ;;
+    add) add ;;
+  esac
+  echo "Done"
+}
+main "$@"
