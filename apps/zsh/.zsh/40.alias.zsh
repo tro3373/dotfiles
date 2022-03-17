@@ -82,6 +82,8 @@ alias vi=vim
 alias f="find -name"
 alias j="jobs -l"
 alias g="git"
+alias d="docker"
+alias s="systemctl"
 alias cddot="cd $DOTPATH"
 alias history="history -i"
 
