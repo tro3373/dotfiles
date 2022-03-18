@@ -88,17 +88,21 @@ gitfy() {
 
 main() {
   set -e
-  if [[ -z $_repo ]]; then
-    cat <<EOF 1>&2
-Specify git url and user and <optional:email>
-ex) $command_name <git_url> <user_name> [<email>]
-EOF
-    exit 1
-  fi
   cd $_project_root
   if [[ ! -e .git ]]; then
+    echo "=> Git Initializing.." 1>&2
     git init
+    echo "=> Improving git config.." 1>&2
     improve_git_config
+    echo "=> Improved git config." 1>&2
+  fi
+  if [[ -z $_repo ]]; then
+    cat <<EOF 1>&2
+=> If you want to attach remote repository,
+   Remove .git/ and Specify remote url and user and <optional:email>.
+ex) rm -rf .git/ && $command_name <git_url> <user_name> [<email>]
+EOF
+    return
   fi
   if ! git_config_improved; then
     echo "Not improved config. already gitfy?" 1>&2
