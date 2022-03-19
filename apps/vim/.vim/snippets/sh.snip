@@ -1,493 +1,493 @@
-snippet     filename
-alias       fname
-  `expand("%")`
+snippet	filename
+alias	fname
+	`expand("%")`
 
-snippet     fullfilename
-alias       ffname
-  `substitute(expand("%:p"), '\', '/', "g")`
+snippet	fullfilename
+alias	ffname
+	`substitute(expand("%:p"), '\', '/', "g")`
 
-snippet devnull
-alias tonull
-alias nullll
-  &>/dev/null
+snippet	devnull
+alias	tonull
+alias	nullll
+	&>/dev/null
 
-snippet error
-  1>&2
+snippet	error
+	1>&2
 
-snippet echoerror
-  echo "${1}" 1>&2
-  exit 1
+snippet	echoerror
+	echo "${1}" 1>&2
+	exit 1
 
-snippet new
-  ${1}() {
-    ${2}
-  }
+snippet	new
+	${1}() {
+		${2}
+	}
 
-snippet fire
-  fire() {
-    cat <<EOF
-  EOF
-  }
+snippet	fire
+	fire() {
+		cat <<EOF
+	EOF
+	}
 
-snippet cateof
-    cat <<'EOF'
-  EOF
+snippet	cateof
+		cat <<'EOF'
+	EOF
 
 
-snippet mkdir_if_needed
-  mkdir_if_needed() {
-    [[ -e \$1 ]] && return
-    mkdir -p \$1
-  }
+snippet	mkdir_if_needed
+	mkdir_if_needed() {
+		[[ -e \$1 ]] && return
+		mkdir -p \$1
+	}
 
-snippet error_method
-  error() { echo "$*" 1>&2; }
+snippet	error_method
+	error() { echo "$*" 1>&2; }
 
-snippet command_name
-  readonly command_name=$(basename \$0)
+snippet	command_name
+	readonly command_name=$(basename \$0)
 
-snippet current_dir
-  readonly current_dir=$(pwd)
+snippet	current_dir
+	readonly current_dir=$(pwd)
 
-snippet script_dir
-  readonly script_dir=$(cd "$(dirname ${BASH_SOURCE:-\$0})"; pwd)
+snippet	script_dir
+	readonly script_dir=$(cd "$(dirname ${BASH_SOURCE:-\$0})"; pwd)
 
-snippet script_real_dir
-  readonly script_dir=$(cd "$(dirname $(readlink -f \$0))"; pwd)
+snippet	script_real_dir
+	readonly script_dir=$(cd "$(dirname $(readlink -f \$0))"; pwd)
 
-snippet dotbin
-  readonly dotbin=${DOTPATH:-~/.dot}/bin
+snippet	dotbin
+	readonly dotbin=${DOTPATH:-~/.dot}/bin
 
 # http://d.hatena.ne.jp/adragoona/20130929/1380437722
-snippet while_read_line
-  while read -r ${1:line}; do
-    [[ -z \$$1 ]] && continue
-    [[ \$$1 =~ ^#.* ]] && continue
-  done
+snippet	while_read_line
+	while read -r ${1:line}; do
+		[[ -z \$$1 ]] && continue
+		[[ \$$1 =~ ^#.* ]] && continue
+	done
 
-snippet readwhil
-alias rea
-  while [[ "$$input_word" == "" ]]; do
-    echo "$$msg"
-    read input_word
-  done
+snippet	readwhil
+alias	rea
+	while [[ "$$input_word" == "" ]]; do
+		echo "$$msg"
+		read input_word
+	done
 
-snippet has
-  has() { command -v \${1} >& /dev/null; }
-snippet hass
-  hass() {
-    for arg in "\$@"; do
-      has \$arg && continue
-      echo "No such command \$arg exist." 1>&2
-      exit 1
-    done
-  }
+snippet	has
+	has() { command -v \${1} >& /dev/null; }
+snippet	hass
+	hass() {
+		for arg in "\$@"; do
+			has \$arg && continue
+			echo "No such command \$arg exist." 1>&2
+			exit 1
+		done
+	}
 
-snippet shellcheckignore
-alias ignore
-  # shellcheck disable=SC2154
+snippet	shellcheckignore
+alias	ignore
+	# shellcheck disable=SC2154
 
-snippet add_args
-  add_args() { args+=("$@"); }
+snippet	add_args
+	add_args() { args+=("$@"); }
 
-snippet confirm
-  confirm() {
-    message=\${1:-"Are you ready?"}
-    message="${message} (y/N)"
-    echo -e "$message"
-    read yesno
-    if [[ ! "$yesno" =~ (y|Y) ]]; then
-      echo "==> proc canceled. terminate this proc."
-      exit 1
-    fi
-  }
+snippet	confirm
+	confirm() {
+		message=\${1:-"Are you ready?"}
+		message="${message} (y/N)"
+		echo -e "$message"
+		read yesno
+		if [[ ! "$yesno" =~ (y|Y) ]]; then
+			echo "==> proc canceled. terminate this proc."
+			exit 1
+		fi
+	}
 
-snippet press_enter
-alias wait_key
-alias cancelable
-  echo "==> Press Enter to continue..(Cancel: Ctrl+C)"
-  read _
+snippet	press_enter
+alias	wait_key
+alias	cancelable
+	echo "==> Press Enter to continue..(Cancel: Ctrl+C)"
+	read _
 
-snippet interactive1
-  interactive1() {
-    local variable=$1
-    local msg=$2
-    local input_word=
-    local yesno=x
-    while [[ "$input_word" == "" ]]; do
-      echo "$msg"
-      read input_word
-    done
-    eval "$variable=$input_word"
-  }
+snippet	interactive1
+	interactive1() {
+		local variable=$1
+		local msg=$2
+		local input_word=
+		local yesno=x
+		while [[ "$input_word" == "" ]]; do
+			echo "$msg"
+			read input_word
+		done
+		eval "$variable=$input_word"
+	}
 
-snippet interactive2
-  interactive2() {
-    local variable=$1
-    local msg=$2
-    local input_word=
-    local yesno=x
-    while [[ "$input_word" == "" ]]; do
-      echo "$msg"
-      read input_word
-      echo
-      while [[ ! "$yesno" =~ [yYnN]  ]]; do
-        echo "Are you ok?(y/N) input: ${input_word}"
-        read yesno
-      done
-      if [[ $yesno =~ [nN] ]]; then
-        input_word=
-        yesno=
-      else
-        break
-      fi
-    done
-    eval "$variable=$input_word"
-  }
+snippet	interactive2
+	interactive2() {
+		local variable=$1
+		local msg=$2
+		local input_word=
+		local yesno=x
+		while [[ "$input_word" == "" ]]; do
+			echo "$msg"
+			read input_word
+			echo
+			while [[ ! "$yesno" =~ [yYnN]  ]]; do
+				echo "Are you ok?(y/N) input: ${input_word}"
+				read yesno
+			done
+			if [[ $yesno =~ [nN] ]]; then
+				input_word=
+				yesno=
+			else
+				break
+			fi
+		done
+		eval "$variable=$input_word"
+	}
 
-snippet shebangggg
-  #!/usr/bin/env bash
+snippet	shebangggg
+	#!/usr/bin/env bash
 
 
-snippet case
-alias switch
-  case "$arg" in
-    -h|--help|--help*) ;;
-    *) ;;
-  esac
+snippet	case
+alias	switch
+	case "$arg" in
+		-h|--help|--help*) ;;
+		*) ;;
+	esac
 
-snippet tounixtime
-  local unixtime=$(date +%s%3N --date "2019-09-01 00:00")
+snippet	tounixtime
+	local unixtime=$(date +%s%3N --date "2019-09-01 00:00")
 
-snippet unixtime
-  local unixtime=$(date +%s)
+snippet	unixtime
+	local unixtime=$(date +%s)
 
-snippet unixtime3n
-  local unixtime=$(date +%s%3N)
+snippet	unixtime3n
+	local unixtime=$(date +%s%3N)
 
-snippet timestamp
-  readonly timestamp=$(date +%Y%m%d.%H%M%S)
+snippet	timestamp
+	readonly timestamp=$(date +%Y%m%d.%H%M%S)
 
-snippet readuser
-  read -p  "user: " user
+snippet	readuser
+	read -p  "user: " user
 
-snippet readpass
-  read -sp "pass: " pass
+snippet	readpass
+	read -sp "pass: " pass
 
-snippet log
-  log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
+snippet	log
+	log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
 
-snippet dlog
-  dlog() {
-    if [[ $debug -eq 1 ]]; then
-      echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2;
-    fi
-  }
+snippet	dlog
+	dlog() {
+		if [[ $debug -eq 1 ]]; then
+			echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2;
+		fi
+	}
 
-snippet not_supported
-  not_supported() { echo "Not supported." 1>&2 && exit 1; }
+snippet	not_supported
+	not_supported() { echo "Not supported." 1>&2 && exit 1; }
 
-snippet install_setup_template
-  install_common() { not_supported; }
-  install_wsl()    { not_supported; }
-  install_arch()   { not_supported; }
-  install_msys()   { not_supported; }
-  install_cygwin() { not_supported; }
-  install_mac()    { not_supported; }
-  install_ubuntu() { not_supported; }
-  install_redhat() { not_supported; }
-  setting_common() { not_supported; }
-  setting_wsl()    { not_supported; }
-  setting_arch()   { not_supported; }
-  setting_msys()   { not_supported; }
-  setting_cygwin() { not_supported; }
-  setting_mac()    { not_supported; }
-  setting_ubuntu() { not_supported; }
-  setting_redhat() { not_supported; }
-  #is_installed
-  #install_via_os_default
-  #def_install
-  #is_debug
-  #is_dry
-  #log
-  #dlog
-  #not_supported
-  #make_link_dot2home
-  #make_lnk_with_bkup
-  #cd_work
-  #make_work_if_needed
-  #dl
-  #dl_unzip
-  #dl_untar
-  #github
-  #github_user_local
-  #sudo_tee
+snippet	install_setup_template
+	install_common() { not_supported; }
+	install_wsl()		 { not_supported; }
+	install_arch()	 { not_supported; }
+	install_msys()	 { not_supported; }
+	install_cygwin() { not_supported; }
+	install_mac()		 { not_supported; }
+	install_ubuntu() { not_supported; }
+	install_redhat() { not_supported; }
+	setting_common() { not_supported; }
+	setting_wsl()		 { not_supported; }
+	setting_arch()	 { not_supported; }
+	setting_msys()	 { not_supported; }
+	setting_cygwin() { not_supported; }
+	setting_mac()		 { not_supported; }
+	setting_ubuntu() { not_supported; }
+	setting_redhat() { not_supported; }
+	#is_installed
+	#install_via_os_default
+	#def_install
+	#is_debug
+	#is_dry
+	#log
+	#dlog
+	#not_supported
+	#make_link_dot2home
+	#make_lnk_with_bkup
+	#cd_work
+	#make_work_if_needed
+	#dl
+	#dl_unzip
+	#dl_untar
+	#github
+	#github_user_local
+	#sudo_tee
 
-snippet main
-  main () {
-    :
-  }
-  main "$@"
+snippet	main
+	main () {
+		:
+	}
+	main "$@"
 
-snippet usaaggee
-alias helpppp
-  readonly command_name=$(basename \$0)
-  usage() {
-    cat <<EOF
+snippet	usaaggee
+alias	helpppp
+	readonly command_name=$(basename \$0)
+	usage() {
+		cat <<EOF
 
-  Description for this command.
-    Usage:
-        $command_name [option]
-      Options
-        -h|--help : Show this usage
+	Description for this command.
+		Usage:
+				$command_name [option]
+			Options
+				-h|--help : Show this usage
 
-  EOF
-  }
+	EOF
+	}
 
-snippet trappp
-  # 0 プロセス終了時に、プロセスが自分自身に対して送出する EXIT シグナル。
-  # 1 XWindow のクローズや、デーモンのリセットに使用されるハングアップシグナル。
-  # 2 Ctrl+C や Del キーを押したときに発生する割り込みシグナル。
-  # 3 Ctrl+\ を押したときに発生するクイットシグナル。
-  # 9 プロセスを強制終了するためのキルシグナル。強制終了なので当然、trap はできない。
-  #15 プロセスを終了させるための終了シグナル。kill コマンドはデフォルトでこのシグナルを使用する (つまり kill PID は kill -15 PID と同じ結果になる)。
-  trap ${1:end} 0 1 2 3 15
+snippet	trappp
+	# 0 プロセス終了時に、プロセスが自分自身に対して送出する EXIT シグナル。
+	# 1 XWindow のクローズや、デーモンのリセットに使用されるハングアップシグナル。
+	# 2 Ctrl+C や Del キーを押したときに発生する割り込みシグナル。
+	# 3 Ctrl+\ を押したときに発生するクイットシグナル。
+	# 9 プロセスを強制終了するためのキルシグナル。強制終了なので当然、trap はできない。
+	#15 プロセスを終了させるための終了シグナル。kill コマンドはデフォルトでこのシグナルを使用する (つまり kill PID は kill -15 PID と同じ結果になる)。
+	trap ${1:end} 0 1 2 3 15
 
-snippet checkroot
-  check_root () {
-    [[ $UID -eq 0 ]] && return
-    echo "Permission denied." 1>&2
-    exit 1
-  }
+snippet	checkroot
+	check_root () {
+		[[ $UID -eq 0 ]] && return
+		echo "Permission denied." 1>&2
+		exit 1
+	}
 
-snippet ifempty
-  if [[ -z \$1 ]]; then
-    echo "Specify args" 1>&2
-    exit 1
-  fi
+snippet	ifempty
+	if [[ -z \$1 ]]; then
+		echo "Specify args" 1>&2
+		exit 1
+	fi
 
-snippet checkexists
-alias   ifnotexists
-  if [[ ! -e \$1 ]]; then
-    echo "No such file exists. \$1" 1>&2
-    exit 1
-  fi
+snippet	checkexists
+alias	ifnotexists
+	if [[ ! -e \$1 ]]; then
+		echo "No such file exists. \$1" 1>&2
+		exit 1
+	fi
 
-snippet checkexists_fn
-alias   ifnotexists_fn
-  exit_if_not_exist() {
-    if [[ ! -e \$1 ]]; then
-      echo "No such file exists. \$1" 1>&2
-      exit 1
-    fi
-  }
+snippet	checkexists_fn
+alias	ifnotexists_fn
+	exit_if_not_exist() {
+		if [[ ! -e \$1 ]]; then
+			echo "No such file exists. \$1" 1>&2
+			exit 1
+		fi
+	}
 
-snippet ifstdin
-  if [[ -p /dev/stdin ]]; then
-      :
-  fi
+snippet	ifstdin
+	if [[ -p /dev/stdin ]]; then
+			:
+	fi
 
-snippet stdin
-  local stdin=
-  if [[ -p /dev/stdin ]]; then
-    stdin="$(cat <&0)"
-  fi
+snippet	stdin
+	local stdin=
+	if [[ -p /dev/stdin ]]; then
+		stdin="$(cat <&0)"
+	fi
 
-snippet forarg
-  for arg in "$@"; do
-    case "$arg" in
-      -h|--help) usage && exit 0 ;;
-      *) target="$arg" ;;
-    esac
-  done
+snippet	forarg
+	for arg in "$@"; do
+		case "$arg" in
+			-h|--help) usage && exit 0 ;;
+			*) target="$arg" ;;
+		esac
+	done
 
-snippet dummyset
-  dummy="echo"
-  is_dummy() { [[ -n $dummy ]]; }
-  initialize() {
-    for arg in "$@"; do
-      case "$arg" in
-        -e) dummy= ;;
-      esac
-    done
-  }
-  initialize "$@"
-  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+snippet	dummyset
+	dummy="echo"
+	is_dummy() { [[ -n $dummy ]]; }
+	initialize() {
+		for arg in "$@"; do
+			case "$arg" in
+				-e) dummy= ;;
+			esac
+		done
+	}
+	initialize "$@"
+	is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
 
-snippet initialize
-  initialize() {
-    while true; do
-      [[ -z \$1 ]] && break
-      case "\$1" in
-        -h|--help) usage && exit 0  ;;
-        #-f*|--file*) file=${1#*=} ;;
-        #-f|--file) shift && file=\$1 ;;
-        *) add_args "\$1"            ;;
-      esac
-      shift
-    done
-    check
-    # all_args="${args[*]}"
-  }
+snippet	initialize
+	initialize() {
+		while true; do
+			[[ -z \$1 ]] && break
+			case "\$1" in
+				-h|--help) usage && exit 0	;;
+				#-f*|--file*) file=${1#*=} ;;
+				#-f|--file) shift && file=\$1 ;;
+				*) add_args "\$1"						 ;;
+			esac
+			shift
+		done
+		check
+		# all_args="${args[*]}"
+	}
 
-snippet reado
-alias   read
-alias   redo
-  readonly
+snippet	reado
+alias	read
+alias	redo
+	readonly
 
-snippet initializzzz
-  command_name=$(basename \$0)
-  dummy="echo"
-  is_dummy() { [[ -n $dummy ]]; }
-  args=()
-  usage() {
-    cat <<EOF
+snippet	initializzzz
+	command_name=$(basename \$0)
+	dummy="echo"
+	is_dummy() { [[ -n $dummy ]]; }
+	args=()
+	usage() {
+		cat <<EOF
 
-  Description for this command.
+	Description for this command.
 
-    Usage:
-        $command_name [option]
-      Options
-        -h|--help : Show this usage
+		Usage:
+				$command_name [option]
+			Options
+				-h|--help : Show this usage
 
-  EOF
-  }
-  add_args() { args+=("$@"); }
-  check() {
-    :
-  }
-  initialize() {
-    while true; do
-      [[ -z \$1 ]] && break
-      case "\$1" in
-        -h|--help) usage && exit 0  ;;
-        -e) dummy= ;;
-        #-f*|--file*) file=${1#*=} ;;
-        #-f|--file) shift && file=\$1 ;;
-        *) add_args "\$1"            ;;
-      esac
-      shift
-    done
-    check
-  }
-  main() {
-    initialize "$@"
-    for arg in "${args[@]}"; do
-      echo "Arguments: $arg"
-    done
-    # echo $file
-    is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
-  }
-  main "$@"
+	EOF
+	}
+	add_args() { args+=("$@"); }
+	check() {
+		:
+	}
+	initialize() {
+		while true; do
+			[[ -z \$1 ]] && break
+			case "\$1" in
+				-h|--help) usage && exit 0	;;
+				-e) dummy= ;;
+				#-f*|--file*) file=${1#*=} ;;
+				#-f|--file) shift && file=\$1 ;;
+				*) add_args "\$1"						 ;;
+			esac
+			shift
+		done
+		check
+	}
+	main() {
+		initialize "$@"
+		for arg in "${args[@]}"; do
+			echo "Arguments: $arg"
+		done
+		# echo $file
+		is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+	}
+	main "$@"
 
-snippet innnk
-  ink() {
-    local stdin=
-    if [[ -p /dev/stdin ]]; then
-      stdin="$(cat <&0)"
-    fi
-    if [[ $# -eq 0 && -z $stdin ]]; then
-      return
-    fi
+snippet	innnk
+	ink() {
+		local stdin=
+		if [[ -p /dev/stdin ]]; then
+			stdin="$(cat <&0)"
+		fi
+		if [[ $# -eq 0 && -z $stdin ]]; then
+			return
+		fi
 
-    local open="\033["
-    local close="${open}0m"
-    export black="0;30m"
-    export red="1;31m"
-    export green="1;32m"
-    export yellow="1;33m"
-    export blue="1;34m"
-    export purple="1;35m"
-    export cyan="1;36m"
-    export gray="0;37m"
-    export white="$close"
+		local open="\033["
+		local close="${open}0m"
+		export black="0;30m"
+		export red="1;31m"
+		export green="1;32m"
+		export yellow="1;33m"
+		export blue="1;34m"
+		export purple="1;35m"
+		export cyan="1;36m"
+		export gray="0;37m"
+		export white="$close"
 
-    local text="$stdin$*"
-    local color="$close"
+		local text="$stdin$*"
+		local color="$close"
 
-    case \$1 in
-    black | red | green | yellow | blue | purple | cyan | gray | white)
-      eval color="\\$\$1"
-      text="$stdin${*:2}"
-      ;;
-    esac
+		case \$1 in
+		black | red | green | yellow | blue | purple | cyan | gray | white)
+			eval color="\\$\$1"
+			text="$stdin${*:2}"
+			;;
+		esac
 
-    printf "${open}${color}${text}${close}\n" 1>&2
-  }
+		printf "${open}${color}${text}${close}\n" 1>&2
+	}
 
-snippet exe
-  dummy="echo"
-  is_dummy() { [[ -n $dummy ]]; }
-  initialize() {
-    for arg in "$@"; do
-      case "$arg" in
-      -e) dummy= ;;
-      esac
-    done
-  }
-  exe() {
-    ! is_dummy && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    printf "> Executing: $*" | ink yellow
-    ! is_dummy && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    is_dummy && return
-    eval "$*"
-  }
-  initialize "$@"
-  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+snippet	exe
+	dummy="echo"
+	is_dummy() { [[ -n $dummy ]]; }
+	initialize() {
+		for arg in "$@"; do
+			case "$arg" in
+			-e) dummy= ;;
+			esac
+		done
+	}
+	exe() {
+		! is_dummy && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		printf "> Executing: $*" | ink yellow
+		! is_dummy && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+		is_dummy && return
+		eval "$*"
+	}
+	initialize "$@"
+	is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
 
-snippet iffff
-  if [[ -e ${1} ]]; then
-    ${2}
-  fi
+snippet	iffff
+	if [[ -e ${1} ]]; then
+		${2}
+	fi
 
-snippet afterarggg
-  # substring after second args
-  local after_args=${@:2}
+snippet	afterarggg
+	# substring after second args
+	local after_args=${@:2}
 
-snippet module
-alias   test
-  [[ \${0} != "${BASH_SOURCE[0]}" ]] && return 0
-  _test() {
-    :
-  }
-  _test "$@"
+snippet	module
+alias	test
+	[[ \${0} != "${BASH_SOURCE[0]}" ]] && return 0
+	_test() {
+		:
+	}
+	_test "$@"
 
-snippet iffirstargisd
-alias   secondafterarg
-  local args=("$@")
-  local arg1=\$1
-  local rel_path=
-  if [[ -d $arg1 ]]; then
-    cd $arg1
-    rel_path=${arg1%/}
-    args=("${@:2}")
-  fi
+snippet	iffirstargisd
+alias	secondafterarg
+	local args=("$@")
+	local arg1=\$1
+	local rel_path=
+	if [[ -d $arg1 ]]; then
+		cd $arg1
+		rel_path=${arg1%/}
+		args=("${@:2}")
+	fi
 
-snippet cattee
-  cat_do() {
-    if is_dummy; then
-      log "===> below stdin will be pass to '\$*'"
-      cat -
-      log "------------------------------------"
-    else
-      log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-      printf "> Executing: \$*\n"
-      log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-      cat - | "\$@" >/dev/null
-    fi
-  }
-  cat_tee() {
-    cat_do tee "\$@"
-  }
+snippet	cattee
+	cat_do() {
+		if is_dummy; then
+			log "===> below stdin will be pass to '\$*'"
+			cat -
+			log "------------------------------------"
+		else
+			log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			printf "> Executing: \$*\n"
+			log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+			cat - | "\$@" >/dev/null
+		fi
+	}
+	cat_tee() {
+		cat_do tee "\$@"
+	}
 
-snippet seteop
-  set -euxo pipefail
+snippet	seteop
+	set -euxo pipefail
 
-snippet isdummy
-  is_dummy() { [[ -n $dummy ]]; }
+snippet	isdummy
+	is_dummy() { [[ -n $dummy ]]; }
 
-snippet iswsl
-  is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
+snippet	iswsl
+	is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
 
-snippet onlyyy
-  only ${1} || exit 1
+snippet	onlyyy
+	only ${1} || exit 1

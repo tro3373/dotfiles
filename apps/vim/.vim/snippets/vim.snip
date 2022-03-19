@@ -1,8 +1,8 @@
-snippet     pluginstalled
-alias       plug
-options     head
-    if g:plug.is_installed("${1:#:plug_name}")
-    endif
+snippet	pluginstalled
+alias	plug
+options	head
+	if g:plug.is_installed("${1:#:plug_name}")
+	endif
 
-snippet     commandddd
-  command! -nargs=1 ${1:#CommandName} call ${2:#CallCommandName}(<f-args>)
+snippet	commandddd
+	command! -nargs=1 ${1:#CommandName} call ${2:#CallCommandName}(<f-args>)

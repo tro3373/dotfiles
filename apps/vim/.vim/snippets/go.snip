@@ -1,356 +1,355 @@
-snippet     timeformattt
-  "20060102_150405"
+snippet	timeformattt
+	"20060102_150405"
 
-snippet     timenowww
-alias       nowww
-alias       timestamppp
-  now := time.Now().Format("20060102_150405")
+snippet	timenowww
+alias	nowww
+alias	timestamppp
+	now := time.Now().Format("20060102_150405")
 
-snippet     timefrommm
-alias       timeparseee
-  t, _ := time.Parse("20060102_150405", "20141231_000000")
+snippet	timefrommm
+alias	timeparseee
+	t, _ := time.Parse("20060102_150405", "20141231_000000")
 
-snippet     errorwrapf
-alias       wraperror
-  err = fmt.Errorf("Failed %s, %w", message, err)
+snippet	errorwrapf
+alias	wraperror
+	err = fmt.Errorf("Failed %s, %w", message, err)
 
-snippet     lognewww
-  log.New(os.Stderr, "", log.LstdFlags)
+snippet	lognewww
+	log.New(os.Stderr, "", log.LstdFlags)
 
-snippet     zapnewww
-  logger, err := zap.NewProduction()
+snippet	zapnewww
+	logger, err := zap.NewProduction()
 
-snippet     ifstringer
-  if v, ok := ${1:interface}.(fmt.Stringer); ok {
-    ${2}
-  }
-
-
-snippet     reflect_isnil_or_pointer
-  rv := reflect.ValueOf(${1})
-  if rv.Kind() == reflect.Ptr || rv.IsNil() {
-    ${2}
-  }
+snippet	ifstringer
+	if v, ok := ${1:interface}.(fmt.Stringer); ok {
+		${2}
+	}
 
 
-snippet context_with_cancel
-  ctx,  cancel  :=  context.WithCancel(context.Background())
-  defer cancel()
+snippet	reflect_isnil_or_pointer
+	rv := reflect.ValueOf(${1})
+	if rv.Kind() == reflect.Ptr || rv.IsNil() {
+		${2}
+	}
 
-snippet context_with_timeout
-  ctx, cancel := context.WithTimeout(context.Background(), Timeout)
-  defer cancel()
+snippet	context_with_cancel
+	ctx,  cancel  :=  context.WithCancel(context.Background())
+	defer cancel()
 
-snippet cancelcontext
-  package  main
-  import (
-    "fmt"
-    "sync"
-    "context"
-  )
-  var wg sync.WaitGroup
-  func main() {
-    //  キャンセルするためのContextを生成
-    ctx,  cancel  :=  context.WithCancel(context.Background())
-    queue  :=  make(chan  string)
-    for i  :=  0; i <  2; i++ {
-      wg.Add(1)
-      go  fetchURL(ctx,  queue)
-    }
-    queue  <-  "https://www.example.com"
-    queue  <-  "https://www.example.net"
-    queue  <-  "https://www.example.net/foo"
-    queue  <-  "https://www.example.net/bar"
-    cancel()   //  ctxを終了させる
-    wg.Wait()  //  すべてのgoroutineが終了するのを待つ
-  }
-  func fetchURL(ctx  context.Context,  queue  chan  string) {
-    for {
-      select {
-      case  <-ctx.Done():
-        fmt.Println("worker  exit")
-        wg.Done()
-        return
-      case  url  :=  <-queue:
-        //  URL取得処理
-      }
-    }
-  }
+snippet	context_with_timeout
+	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
+	defer cancel()
 
-snippet fetchurl
-  func fetchURL(queue  chan  string,  done  chan  bool) {
-    for url :=  range  queue {
-      // url取得処理
-    }
-    fmt.Pritln("worker  exit")
-    done <- true
-  }
+snippet	cancelcontext
+	package  main
+	import (
+		"fmt"
+		"sync"
+		"context"
+	)
+	var wg sync.WaitGroup
+	func main() {
+		//  キャンセルするためのContextを生成
+		ctx,  cancel  :=  context.WithCancel(context.Background())
+		queue  :=  make(chan  string)
+		for i  :=  0; i <  2; i++ {
+			wg.Add(1)
+			go  fetchURL(ctx,  queue)
+		}
+		queue  <-  "https://www.example.com"
+		queue  <-  "https://www.example.net"
+		queue  <-  "https://www.example.net/foo"
+		queue  <-  "https://www.example.net/bar"
+		cancel()   //  ctxを終了させる
+		wg.Wait()  //  すべてのgoroutineが終了するのを待つ
+	}
+	func fetchURL(ctx  context.Context,  queue  chan  string) {
+		for {
+			select {
+			case  <-ctx.Done():
+				fmt.Println("worker  exit")
+				wg.Done()
+				return
+			case  url  :=  <-queue:
+				//  URL取得処理
+			}
+		}
+	}
 
-snippet     randam_int
-  rand.Intn(10)
+snippet	fetchurl
+	func fetchURL(queue  chan  string,  done  chan  bool) {
+		for url :=  range  queue {
+			// url取得処理
+		}
+		fmt.Pritln("worker  exit")
+		done <- true
+	}
 
-snippet     randam_sleep
-  time.Sleep(time.Duration(rand.Intn(2000)) * time.Millisecond)
-snippet     sleeppp
-  time.Sleep(time.Duration(1) * time.Millisecond)
+snippet	randam_int
+	rand.Intn(10)
 
+snippet	randam_sleep
+	time.Sleep(time.Duration(rand.Intn(2000)) * time.Millisecond)
 
-snippet     select_channel
-  select {
-  case res := <-c1:
-      fmt.Println(res)
-  case <-time.After(1 * time.Second):
-      fmt.Println("timeout 1")
-  }
+snippet	sleeppp
+	time.Sleep(time.Duration(1) * time.Millisecond)
 
-snippet     new_error
-  errors.New(fmt.Sprintf("Error: %s", "${1}"))
+snippet	select_channel
+	select {
+	case res := <-c1:
+		fmt.Println(res)
+	case <-time.After(1 * time.Second):
+		fmt.Println("timeout 1")
+	}
 
-snippet     new_error_fmt
-  fmt.Errorf("Error: %s", "${1}")
+snippet	new_error
+	errors.New(fmt.Sprintf("Error: %s", "${1}"))
+
+snippet	new_error_fmt
+	fmt.Errorf("Error: %s", "${1}")
 
 # http://engineerspirit.com/2017/01/22/post-637/
-snippet stringgg
-abbr    add struct string func
-options word
+snippet	stringgg
+abbr		add struct string func
+options	word
   func ${1:#:(s S)} String() string {
     return fmt.Sprintf("${2}")
   }
 
-snippet structtt
-  type ${1:#struct_name} struct {
-      ${2:#variable} ${3:#type}
-  }
+snippet	structtt
+	type ${1:#struct_name} struct {
+		${2:#variable} ${3:#type}
+	}
 
-snippet struct_jsonnn
-  type ${1} struct {
-      // json:<マッピングするJSONオブジェクトのフィールド名>,<オプション> という形式で記述します
-      // omitempty   0値(空文字、0、nil等)であればフィールドを出力しない   0値であれば無視される                                            json:"field,omitempty"
-      // -           出力しない                                            無視される                                                       json:"-"
-      // string      出力時に Quote される                                 Quoteされていても型に合わせて変換する。Quoteされてないとエラー   json:"field,string"
-      ${2} string \`json:"${3},string"\`
-  }
+snippet	struct_jsonnn
+	type ${1} struct {
+	 	// json:<マッピングするJSONオブジェクトのフィールド名>,<オプション> という形式で記述します
+	 	// omitempty   0値(空文字、0、nil等)であればフィールドを出力しない   0値であれば無視される                                            json:"field,omitempty"
+	 	// -           出力しない                                            無視される                                                       json:"-"
+	 	// string      出力時に Quote される                                 Quoteされていても型に合わせて変換する。Quoteされてないとエラー   json:"field,string"
+	 	${2} string \`json:"${3},string"\`
+	}
 
-snippet fmtprintfff
-alias   printfff
-  // https://qiita.com/rock619/items/14eb2b32f189514b5c3c
-  // verb
-  fmt.Printf("%v\n", ${1}) // Output default format for the value.
-  fmt.Printf("%+v\n", ${1}) // Output with field name
-  fmt.Printf("%#v\n", ${1}) // Output with golang type spec format
-  fmt.Printf("%#+v\n", ${1}) // Output with field name and type spec
-  fmt.Printf("%T\n", ${1}) // Output The type
-  fmt.Printf("%%\n", ${1}) // Output '%'
-  // %t: bool
-  // %d: decimal number
-  // %b: binary number
-  // %o: octal number
-  // %x: hexa decimal number
-  // %c: word for unicode point
-  // %q: Quoted value
-  // %b: no decimal point index
-  // %e: index
-  // %E: Show large 'E'
-  // %f: no index (same as %F)
-  // %g: lage index then %e else %f
-  // %G: lage index then %E else %F
+snippet	fmtprintfff
+alias	printfff
+	// https://qiita.com/rock619/items/14eb2b32f189514b5c3c
+	// verb
+	fmt.Printf("%v\n", ${1}) // Output default format for the value.
+	fmt.Printf("%+v\n", ${1}) // Output with field name
+	fmt.Printf("%#v\n", ${1}) // Output with golang type spec format
+	fmt.Printf("%#+v\n", ${1}) // Output with field name and type spec
+	fmt.Printf("%T\n", ${1}) // Output The type
+	fmt.Printf("%%\n", ${1}) // Output '%'
+	// %t: bool
+	// %d: decimal number
+	// %b: binary number
+	// %o: octal number
+	// %x: hexa decimal number
+	// %c: word for unicode point
+	// %q: Quoted value
+	// %b: no decimal point index
+	// %e: index
+	// %E: Show large 'E'
+	// %f: no index (same as %F)
+	// %g: lage index then %e else %f
+	// %G: lage index then %E else %F
 
-snippet openfileee
-  file, err := os.OpenFile(${1}, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-  if err != nil {
-    return fmt.Errorf("Failed to OpenFile %s, %w", $1, err)
-  }
-  defer file.Close()
+snippet	openfileee
+	file, err := os.OpenFile(${1}, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		return fmt.Errorf("Failed to OpenFile %s, %w", $1, err)
+	}
+	defer file.Close()
 
-snippet funcnewww
-  func New${1}() *$1 {
-    return &$1{}
-  }
+snippet	funcnewww
+	func New${1}() *$1 {
+		return &$1{}
+	}
 
-snippet custom_prefix_writerrr
-  type customWriter struct {
-    io.Writer
-    timeFormat string
-  }
-  func (w customWriter) Write(b []byte) (n int, err error) {
-    return w.Writer.Write(append([]byte(time.Now().Format(w.timeFormat)), b...))
-  }
-  logger := log.New(&customWriter{os.Stderr, "2006/01/02 15:04:05"}, ${1:prefix}, 0)
+snippet	custom_prefix_writerrr
+	type customWriter struct {
+		io.Writer
+		timeFormat string
+	}
+	func (w customWriter) Write(b []byte) (n int, err error) {
+		return w.Writer.Write(append([]byte(time.Now().Format(w.timeFormat)), b...))
+	}
+	logger := log.New(&customWriter{os.Stderr, "2006/01/02 15:04:05"}, ${1:prefix}, 0)
 
-snippet strconvitoaaa
-alias   itoaaa
-  strconv.Itoa(${1})
+snippet	strconvitoaaa
+alias	itoaaa
+	strconv.Itoa(${1})
 
-snippet execrun
-  err := exec.Command("ls", "-la").Run()
+snippet	execrun
+	err := exec.Command("ls", "-la").Run()
 
-snippet execout
-  out, err := exec.Command("ls", "-la").Output()
+snippet	execout
+	out, err := exec.Command("ls", "-la").Output()
 
-snippet execstart
-  cmd := exec.Command("sleep", "5s")
-  cmd.Start()
-  fmt.Println("sleep中: ", time.Now().Format("15:04:05"))
-  cmd.Wait()
+snippet	execstart
+	cmd := exec.Command("sleep", "5s")
+	cmd.Start()
+	fmt.Println("sleep中: ", time.Now().Format("15:04:05"))
+	cmd.Wait()
 
-snippet exists
-  func exists(filename string) bool {
-    _, err := os.Stat(filename)
-    return err == nil
-  }
-  func existsPrefix(name string) (bool, error) {
-    matches, err := filepath.Glob(name + ".*")
-    if err != nil {
-        return false, err
-    }
-    return len(matches) > 0, nil
-  }
+snippet	exists
+	func exists(filename string) bool {
+		_, err := os.Stat(filename)
+		return err == nil
+	}
+	func existsPrefix(name string) (bool, error) {
+		matches, err := filepath.Glob(name + ".*")
+		if err != nil {
+				return false, err
+		}
+		return len(matches) > 0, nil
+	}
 
-snippet getenvvv
-  func getEnv(key, fallback string) string {
-      if value, ok := os.LookupEnv(key); ok {
-          return value
-      }
-      return fallback
-  }
+snippet	getenvvv
+	func getEnv(key, fallback string) string {
+		if value, ok := os.LookupEnv(key); ok {
+				return value
+		}
+		return fallback
+	}
 
-snippet ppp
-  func p(a ...interface{}) {
-      fmt.Println(a...)
-  }
+snippet	ppp
+	func p(a ...interface{}) {
+		fmt.Println(a...)
+	}
 
-snippet factoryyyy
-  package factory
+snippet	factoryyyy
+	package factory
 
-  import (
-      "strings"
-      "sync"
-  )
+	import (
+		"strings"
+		"sync"
+	)
 
-  type Factory interface {
-      New(name string) (interface{}, bool)
-  }
+	type Factory interface {
+		New(name string) (interface{}, bool)
+	}
 
-  var (
-      mu        sync.RWMutex
-      factories = make(map[string]Factory)
-  )
+	var (
+		mu        sync.RWMutex
+		factories = make(map[string]Factory)
+	)
 
-  func Register(pkgName string, f Factory) {
-      mu.Lock()
-      defer mu.Unlock()
+	func Register(pkgName string, f Factory) {
+		mu.Lock()
+		defer mu.Unlock()
 
-      if f == nil {
-          panic("Factory is nil")
-      }
-      if _, exist := factories[pkgName]; exist {
-          panic("Factory already registered")
-      }
+		if f == nil {
+			panic("Factory is nil")
+		}
+		if _, exist := factories[pkgName]; exist {
+			panic("Factory already registered")
+		}
 
-      factories[pkgName] = f
-  }
+		factories[pkgName] = f
+	}
 
-  func New(typeName string) (interface{}, bool) {
-      items := strings.Split(typeName, ".")
-      if len(items) >= 2 {
-          mu.RLock()
-          defer mu.RUnlock()
-          if f, exist := factories[items[0]]; exist {
-              return f.New(items[1])
-          }
-      }
-      return nil, false
-  }
-  // ==========================================================================
-  package pkga
+	func New(typeName string) (interface{}, bool) {
+		items := strings.Split(typeName, ".")
+		if len(items) >= 2 {
+			mu.RLock()
+			defer mu.RUnlock()
+			if f, exist := factories[items[0]]; exist {
+				return f.New(items[1])
+			}
+		}
+		return nil, false
+	}
+	// ==========================================================================
+	package pkga
 
-  import "path/to/your/factory"
+	import "path/to/your/factory"
 
-  type thisFactory struct {
-  }
+	type thisFactory struct {
+	}
 
-  type Alpha struct{}
-  type Beta struct{}
-  type Gamma struct{}
+	type Alpha struct{}
+	type Beta struct{}
+	type Gamma struct{}
 
-  func (f *thisFactory) New(name string) (interface{}, bool) {
-      switch name {
-      case "Alpha":
-          return &Alpha{}, true
-      case "Beta":
-          return &Beta{}, true
-      case "Gamma":
-          return &Gamma{}, true
-      }
-      return nil, false
-  }
+	func (f *thisFactory) New(name string) (interface{}, bool) {
+		switch name {
+		case "Alpha":
+			return &Alpha{}, true
+		case "Beta":
+			return &Beta{}, true
+		case "Gamma":
+			return &Gamma{}, true
+		}
+		return nil, false
+	}
 
-  func init() {
-      factory.Register("pkga", &thisFactory{})
-  }
-  // ==========================================================================
-  package main
+	func init() {
+		factory.Register("pkga", &thisFactory{})
+	}
+	// ==========================================================================
+	package main
 
-  import (
-      "fmt"
+	import (
+		"fmt"
 
-      "path/to/your/factory"
-      _ "path/to/custom/pkga"
-      _ "path/to/custom/pkgb"
-      //add more packages ...
-  )
+		"path/to/your/factory"
+		_ "path/to/custom/pkga"
+		_ "path/to/custom/pkgb"
+		//add more packages ...
+	)
 
-  func main() {
-      a, _ := factory.New("pkga.Alpha")
-      b, _ := factory.New("pkgb.Beta")
-      c, _ := factory.New("pkga.Gamma")
+	func main() {
+		 a, _ := factory.New("pkga.Alpha")
+		 b, _ := factory.New("pkgb.Beta")
+		 c, _ := factory.New("pkga.Gamma")
 
-      fmt.Printf("%T %T %T\n", a, b, c)
-  }
+		 fmt.Printf("%T %T %T\n", a, b, c)
+	}
 
-snippet mutexxx
-alias   rwmutexxx
-  var (
-    mu sync.RWMutex
-  )
-  mu.Lock()
-  defer mu.Unlock()
-  mu.RLock()
-  defer mu.RUnlock()
+snippet	mutexxx
+alias	rwmutexxx
+	var (
+		mu sync.RWMutex
+	)
+	mu.Lock()
+	defer mu.Unlock()
+	mu.RLock()
+	defer mu.RUnlock()
 
-snippet floatstringgg
-  strconv.FormatFloat(target, 'f', -1, 64)
+snippet	floatstringgg
+	strconv.FormatFloat(target, 'f', -1, 64)
 
-snippet lsdirrr
-  files, err := ioutil.ReadDir(".")
+snippet	lsdirrr
+	files, err := ioutil.ReadDir(".")
 
-snippet sorttt
-  sort.Slice(files, func(i, j int) bool {
-    return files[i].Name() > files[j].Name()
-  })
+snippet	sorttt
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Name() > files[j].Name()
+	})
 
-snippet filepathhh
-  files, err := filepath.Glob("./*/*/*.md")
+snippet	filepathhh
+	files, err := filepath.Glob("./*/*/*.md")
 
-snippet filereaddd
-  func useBufioScanner(fileName string) {
-      fp, err := os.Open(fileName)
-      if err != nil {
-          panic(err)
-      }
-      defer fp.Close()
+snippet	filereaddd
+	func useBufioScanner(fileName string) {
+		 fp, err := os.Open(fileName)
+		 if err != nil {
+		 	panic(err)
+		 }
+		 defer fp.Close()
 
-      scanner := bufio.NewScanner(fp)
-      for scanner.Scan() {
-          fmt.Println(scanner.Text())
-      }
-  }
+		scanner := bufio.NewScanner(fp)
+		for scanner.Scan() {
+			fmt.Println(scanner.Text())
+		}
+	}
 
-snippet filewritejsonnn
-  file, _ := json.MarshalIndent(data, "", " ")
-  _ = ioutil.WriteFile("test.json", file, 0644)
+snippet	filewritejsonnn
+	file, _ := json.MarshalIndent(data, "", " ")
+	_ = ioutil.WriteFile("test.json", file, 0644)
 
-snippet regexppp
-alias   matchstringgg
-  r := regexp.MustCompile(\`abc\`)
-  fmt.Println(r.MatchString("hello"))
+snippet	regexppp
+alias	matchstringgg
+	r := regexp.MustCompile(\`abc\`)
+	fmt.Println(r.MatchString("hello"))

@@ -1,7 +1,8 @@
 # https://qiita.com/chibi929/items/b8c5f36434d5d3fbfa4a
-snippet scriptpathhh
-  $(abspath $(lastword $(MAKEFILE_LIST)))
-snippet scriptdirrr
-  mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
-  # $(patsubst PATTERN,REPLACEMENT,TEXT)
-  current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+snippet	scriptpathhh
+	$(abspath $(lastword $(MAKEFILE_LIST)))
+
+snippet	scriptdirrr
+	mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+	# $(patsubst PATTERN,REPLACEMENT,TEXT)
+	current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))

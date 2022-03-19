@@ -1,6 +1,13 @@
 Vim Tips
 =================================================================
 
+## Replace and Repeat
+
+```
+%s@^\(  \)\+@\=repeat("\t",len(submatch(0))/2)@g
+```
+
+
 ## vim neosnippet
 ### Ref
 - [NeoSnippetのsnippetファイルの設定](https://adragoona.hatenablog.com/entry/20130929/1380437722)
