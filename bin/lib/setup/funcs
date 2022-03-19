@@ -550,7 +550,11 @@ show_dummy_warn_if_needed() {
 }
 
 init_export_path_if_possible() {
-  local _git_root=$(git rev-parse --show-toplevel)
+  local _script_dir=$(
+    cd "$(dirname ${BASH_SOURCE:-$0})"
+    pwd
+  )
+  local _git_root=$(cd $_script_dir && git rev-parse --show-toplevel)
   local _com_script_dir=$_git_root/bin
   if [[ -e $_com_script_dir ]]; then
     if ! echo ":$PATH:" | grep ":$_com_script_dir:" >&/dev/null; then
