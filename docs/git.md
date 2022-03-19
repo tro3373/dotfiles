@@ -1,5 +1,24 @@
 # git tips.
 
+## Gitの設定をリポジトリにより自動で切り替える
+
+.gitconfig
+
+```
+[ghq]
+  root = ~/src
+[includeIf "gitdir:~/src/github.com/sample/"]
+  path = ~/.config/git/sample.gitconfig
+```
+
+~/.config/git/sample.gitconfig
+
+```
+[user]
+  email = sample@sample.com
+  signingkey = XXXXXXXXXXXXXXXXX
+```
+
 ## Chnange date
 ```
 git rebase -i HEAD~数字
