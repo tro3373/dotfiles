@@ -66,7 +66,6 @@ snippet	while_read_line
 	done
 
 snippet	readwhil
-alias	rea
 	while [[ "$$input_word" == "" ]]; do
 		echo "$$msg"
 		read input_word
@@ -176,6 +175,9 @@ snippet	readpass
 
 snippet	log
 	log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
+
+snippet	logcolorrr
+	log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" |ink yellow; }
 
 snippet	dlog
 	dlog() {
@@ -331,12 +333,12 @@ snippet	initialize
 	}
 
 snippet	reado
-alias	read
 alias	redo
+alias	red
 	readonly
 
 snippet	initializzzz
-	command_name=$(basename \$0)
+	readonly command_name=$(basename \$0)
 	dummy="echo"
 	is_dummy() { [[ -n $dummy ]]; }
 	args=()
