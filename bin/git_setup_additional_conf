@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+readonly config_path=$HOME/.gitconfig
+readonly additional_config_path=$HOME/.config/git/additional.gitconfig
+
+dummy="echo"
+target_dir=
+user=
+email=
+args=()
+
+usage() {
+  cat <<EOF
+
+Setup additional settings for gitconfig.
+Additional Settings: Auto change author by path
+
+  Usage:
+      $command_name [option] <setup dir path> <username> [<useremail>]
+    Options
+      -h|--help : Show this usage
+
+EOF
+}
+add_args() { args+=("$@"); }
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
+exe() {
+  ! is_dummy && log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+  printf "> Executing: $*" | ink yellow
+  ! is_dummy && log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+  is_dummy && return
+  eval "$*"
+}
+is_dummy() { [[ -n $dummy ]]; }
+check() {
+  if [[ ! -e $config_path ]]; then
+    echo "No git config exist. $config_path" 1>&2
+    exit 1
+  fi
+  if grep $target_dir $config_path >&/dev/null; then
+    echo "Already $target_dir settings exist." 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  target_dir=${args[0]}
+  user=${args[1]}
+  email=${args[2]}
+  if [[ -z $email ]]; then
+    email="$user@gmail.com"
+  fi
+  check
+}
+
+cat_gitconfig() {
+  cat <<EOF
+[includeIf "gitdir:$target_dir/"]
+  path = $additional_config_path
+EOF
+}
+
+touch_additional_gitconfig() {
+  local _dir=$(dirname $additional_config_path)
+  [[ ! -e $_dir ]] && exe mkdir -p $_dir
+  exe touch $additional_config_path
+}
+
+cat_additional_gitconfig() {
+  cat <<EOF
+[user]
+	name = $user
+	email = $email
+EOF
+}
+
+main() {
+  initialize "$@"
+  cat_gitconfig |
+    if is_dummy; then
+      log "==> Bolow settings will be added to $config_path"
+      cat -
+    else
+      cat - >>$config_path
+    fi
+  touch_additional_gitconfig
+  cat_additional_gitconfig |
+    if is_dummy; then
+      log "==> Bolow settings will be added to $additional_config_path"
+      cat -
+    else
+      cat - >>$additional_config_path
+    fi
+  is_dummy && log -e "\n>>> This is dummy mode. specify -e option."
+}
+main "$@"
