@@ -8,7 +8,8 @@ sub() {
     echo "=> No such file exist. $f" 1>&2
     return
   fi
-  echo "=> Changing Owner $u.$g $f with R option..." 1>&2
+  echo "=> Changing Owner $u.$g $f with R option...(Enter to continue)" 1>&2
+  read _
   sudo chown -R $u.$g $f
 }
 main() {
