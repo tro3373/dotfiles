@@ -16,6 +16,8 @@ pre_setup() {
   _setup_default_editor
   # _enable_smartctl_sda
   _install_apps
+  _setup_allow_colord
+  _setup_allow_shutdown
 }
 
 load_update_arg_apps() {
@@ -154,4 +156,39 @@ _apt_update_if_needed() {
 
   log "=> apt updating .."
   exe sudo apt update
+}
+
+_setup_allow_colord() {
+  local target=/etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla
+  [[ -e $target ]] && return
+  _cat_allow_colord |
+    sudo_tee $target
+}
+
+_cat_allow_colord() {
+  cat <<'EOF'
+[Allow Colord all Users]
+Identity=unix-user:*
+Action=org.freedesktop.color-manager.create-device;org.freedesktop.color-manager.create-profile;org.freedesktop.color-manager.delete-device;org.freedesktop.color-manager.delete-profile;org.freedesktop.color-manager.modify-device;org.freedesktop.color-manager.modify-profile
+ResultAny=no
+ResultInactive=no
+ResultActive=yes
+EOF
+}
+
+_setup_allow_shutdown() {
+  local target=/etc/polkit-1/localauthority/50-local.d/allow_all_users_to_shutdown.pkla
+  [[ -e $target ]] && return
+  _cat_allow_shutdown |
+    sudo_tee $target
+}
+
+_cat_allow_shutdown() {
+  cat <<'EOF'
+[Allow all users to shutdown]
+Identity=unix-user:*
+Action=org.freedesktop.consolekit.system.stop-multiple-users
+ResultInactive=no
+ResultActive=yes
+EOF
 }
