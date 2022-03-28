@@ -1,28 +1,55 @@
 #!/usr/bin/env bash
 
+base64() { openssl base64 -e -A | tr -- '+/' '-_' | tr -d =; }
+sign() { printf "$1" | openssl dgst -binary -sha256 -sign "$key_id" | base64; }
 main() {
   bundle_id=$1
   pem_path=$2
-  token=$3
+  key_id=$3
+  team_id=$4
+  token=$5
 
-  if [[ -z $bundle_id || -z $pem_path || -z $token ]]; then
-    echo "Invalid params. bundle_id:$bundle_id pem_path:$pem_path token:$token" 1>&2
+  if [[ -z $bundle_id || -z $pem_path || -z $key_id || -z $team_id || -z $token ]]; then
+    echo "Invalid params. bundle_id:$bundle_id pem_path:$pem_path key_id:$key_id team_id:$team_id token:$token" 1>&2
     exit 1
   fi
 
-  url="https://api.development.push.apple.com/3/device/"
+  endpoint="https://api.development.push.apple.com"
   if [[ $ENV == prod ]]; then
-    url="https://api.push.apple.com/3/device/"
+    endpoint="https://api.push.apple.com"
   fi
 
-  pushData='{"aps": {"alert": "push test"}}'
-  curl -v \
-    -d "$pushData" \
-    -H "apns-priority: 10" \
-    -H "apns-expiration: 0" \
-    -H "apns-topic: ${bundle_id}" \
-    --http2 \
-    --cert ${pem_path} \
-    ${url}${token}
+  read -r -d '' payload <<-'EOF'
+{
+   "aps": {
+      "alert": {
+         "title": "notification title",
+         "subtitle": "notification subtitle",
+         "body": "notification body "
+      }
+   }
+}
+EOF
+
+  time=$(date +%s)
+  header=$(printf '{ "alg": "ES256", "kid": "%s" }' "$key_id" | base64)
+  claims=$(printf '{ "iss": "%s", "iat": %d }' "$team_id" "$time" | base64)
+  jwt="$header.$claims.$(sign $header.$claims)"
+
+  # curl -v \
+  #   -d "$payload" \
+  #   -H "apns-priority: 10" \
+  #   -H "apns-expiration: 0" \
+  #   -H "apns-topic: ${bundle_id}" \
+  #   --http2 \
+  #   --cert ${pem_path} \
+  #   ${url}${token}
+
+  curl --verbose \
+    --header "content-type: application/json" \
+    --header "authorization: bearer $jwt" \
+    --header "apns-topic: $bundle_id" \
+    --data "$payload" \
+    $endpoint/3/device/$token
 }
 main "$@"
