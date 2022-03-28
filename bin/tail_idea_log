@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+readonly srcd=$HOME/win/AppData/Local/JetBrains
+# C:/Users/bp-hirata/AppData/Local/JetBrains/IdeaIC2021.3/log/idea.log
+not_supported() { echo "Not supported." 1>&2 && exit 1; }
+main() {
+  os wsl || not_supported
+  [[ ! -e $srcd ]] && echo "No such directory exist. $srcd" 1>&2 && exit 1
+  local idead=$(find $srcd/ -maxdepth 1 -mindepth 1 -type d -name "IdeaIC*" | sort -r | head -1)
+  [[ ! -e $idead ]] && echo "No such directory exist. $idead" 1>&2 && exit 1
+  local logd=$idead/log
+  local logf=$logd/idea.log
+  local logbf=$logd/build-log/build.log
+  [[ ! -e $logf ]] && echo "No such file exist. $logf" 1>&2 && exit 1
+  tail -F $logf $logbf
+}
+
+main "$@"
