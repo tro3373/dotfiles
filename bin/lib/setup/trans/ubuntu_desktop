@@ -114,7 +114,8 @@ EOF
     return
   fi
 
-  def_install_cmd "${apps[@]}"
+  # shellcheck disable=SC2154
+  exe $def_install_cmd "${apps[@]}"
 }
 
 _apt_update_if_needed() {
@@ -144,13 +145,13 @@ _apt_update_if_needed() {
 
   # y-ppa-manager for fix GPG keys errors.
   #sudo add-apt-repository -y ppa:webupd8team/y-ppa-manager
-  #sudo apt-get update
-  #sudo apt-get install -y y-ppa-manager
+  #sudo apt update
+  #sudo apt install -y y-ppa-manager
 
   if [[ $_update -ne 1 ]]; then
     return
   fi
 
-  log "=> apt-get updating .."
-  exe sudo apt-get update
+  log "=> apt updating .."
+  exe sudo apt update
 }
