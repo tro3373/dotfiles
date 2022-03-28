@@ -198,9 +198,8 @@ tunnel_https() {
     ssh -g -N -C -L 1443:localhost:443 $remote &
     if is_wsl; then
       netsh 443 1443
-    else
-      sudo gost -L=tcp://:443/127.0.0.1:1443
     fi
+    sudo gost -L=tcp://:443/127.0.0.1:1443
   } &
   pid_443=$!
 
@@ -208,9 +207,8 @@ tunnel_https() {
     ssh -g -N -C -L 18080:localhost:80 $remote &
     if is_wsl; then
       netsh 80 18080
-    else
-      sudo gost -L=tcp://:80/127.0.0.1:18080
     fi
+    sudo gost -L=tcp://:80/127.0.0.1:18080
   } &
   pid_80=$!
 
