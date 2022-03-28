@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+
+readonly _smartctl_device=/dev/sda
+# readonly _script_dir=$(
+#   cd "$(dirname ${BASH_SOURCE:-$0})"
+#   pwd
+# )
+# source $_script_dir/../funcs_arch
+
+pre_setup() {
+  log "=> pre setting up"
+
+  # _setup_capslocks
+  _setup_home_dir_names
+  _setup_mount_media_setting
+  _setup_default_editor
+  # _enable_smartctl_sda
+  _install_apps
+}
+
+load_update_arg_apps() {
+  # shellcheck disable=SC2034
+  read -a args < <(
+    echo "$(default_apps) fcitx5-mozc chrome_rdp"
+  )
+}
+
+post_setup() {
+  log "===> reboot maybe needed."
+  _setup_default_editor
+}
+
+_setup_home_dir_names() {
+  # if [ -e ~/Desktop ]; then
+  #     return
+  # fi
+  # 日本語ディレクトリ名を英語化
+  exe env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
+}
+
+_setup_mount_media_setting() {
+  # Disable automount external media
+  exe gsettings set org.gnome.desktop.media-handling automount false
+}
+
+_enable_smartctl_sda() {
+  exe smartctl -s on $_smartctl_device
+}
+
+_setup_dconf() {
+  local k="$1"
+  local v="$2"
+  local tmp=$(dconf read "$k")
+  if [[ $tmp == "$v" ]]; then
+    log "==> Already dconf setuped. key=$k value=$v"
+    return
+  fi
+  exe dconf reset "$k"
+  exe dconf write "$k" "$v"
+}
+
+_setup_capslocks() {
+  if ! has dconf; then
+    log "==> No dconf command exist."
+    return
+  fi
+  # Cpas Lock => Ctrl setting
+  setup_dconf /org/gnome/settings-daemon/plugins/keyboard/active true
+  setup_dconf /org/gnome/desktop/input-sources/xkb-options "['ctrl:nocaps']"
+}
+
+_setup_default_editor() {
+  # if ! has vim; then
+  #   sudo apt-get install vim
+  # fi
+  if sudo update-alternatives --get-selections | grep -E "^editor" | grep vim >&/dev/null; then
+    return
+  fi
+  # visudo エディタをvimに設定
+  exe sudo update-alternatives --config editor
+}
+
+_install_apps() {
+
+  _apt_update_if_needed
+
+  local apps=(gnome-tweaks)
+  while read -r line; do
+    [[ -z $line ]] && continue
+    [[ $line =~ ^#.* ]] && continue
+    dpkg -l $line >&/dev/null && continue
+    apps+=("$line")
+  done < <(
+    cat <<EOF
+mozc-utils-gui
+xsel
+net-tools
+gparted
+smartmontools
+hardinfo
+google-chrome-stable
+# gconf-editor
+numix-gtk-theme
+numix-icon-theme
+numix-icon-theme-circle
+meld
+#rapidsvn
+#guake
+#unity-tweak-tool
+EOF
+  )
+
+  if [[ ${#apps[@]} -eq 0 ]]; then
+    return
+  fi
+
+  def_install_cmd "${apps[@]}"
+}
+
+_apt_update_if_needed() {
+  # Chrome install
+  local _update=0
+  local target=/etc/apt/sources.list.d/google-chrome.list
+  if [[ ! -e $target ]]; then
+    log "=> Adding apt-key For Google Chrome .."
+    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub |
+      if is_dry; then
+        cat -
+      else
+        cat - | sudo apt-key add -
+      fi
+    log "=> Adding sources.list.d/google-chrome.list For Google Chrome .."
+    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" |
+      sudo_tee -a $target
+    _update=1
+  fi
+
+  ## Numix Icon theme
+  #if ! find /etc/apt/sources.list.d/numix-*list -type f >&/dev/null; then
+  #  log "=> Adding repository ppa For Numix Icon .."
+  #  sudo apt-add-repository -y ppa:numix/ppa
+  #  _update=1
+  #fi
+
+  # y-ppa-manager for fix GPG keys errors.
+  #sudo add-apt-repository -y ppa:webupd8team/y-ppa-manager
+  #sudo apt-get update
+  #sudo apt-get install -y y-ppa-manager
+
+  if [[ $_update -ne 1 ]]; then
+    return
+  fi
+
+  log "=> apt-get updating .."
+  exe sudo apt-get update
+}
