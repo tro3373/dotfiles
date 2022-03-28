@@ -35,20 +35,9 @@ hass() {
     exit 1
   done
 }
-
-check() {
-  local use_commands=("nc")
-  case "${OSTYPE}" in
-    msys*) ;;
-    darwin*) use_commands+=("pbcopy") ;;
-    *) use_commands+=("xsel") ;;
-  esac
-  hass "${use_commands[@]}"
-  if [[ $daemon -ne 1 && ! -p /dev/stdin ]]; then
-    log "No clip target(stdin) exist."
-    exit 1
-  fi
-}
+is_ubuntu() { [[ -e /etc/debian_version && -e /etc/lsb-release ]]; }
+is_mac() { [[ $(uname) == "Darwin" ]]; }
+is_msys() { [[ $OSTYPE == "msys" ]]; }
 
 initialize() {
   while true; do
@@ -63,8 +52,35 @@ initialize() {
   check
 }
 
+check() {
+  local use_commands=("nc")
+  if is_mac; then
+    use_commands+=("pbcopy")
+  elif ! is_msys; then
+    use_commands+=("xsel")
+  fi
+  hass "${use_commands[@]}"
+  if ! has netstat && ! has ss; then
+    log "No netstat or ss exist."
+    exit 1
+  fi
+  if [[ $daemon -ne 1 && ! -p /dev/stdin ]]; then
+    log "No clip target(stdin) exist."
+    exit 1
+  fi
+}
+
 direct() { test $direct -eq 1 || test "$(whoami)" == vagrant; }
-hasd() { netstat -an | grep LISTEN | grep -E "[:.]$port" >&/dev/null; }
+hasd() {
+  {
+    if has netstat; then
+      netstat -an
+    else
+      ss -nlpt
+    fi
+  } | grep LISTEN | grep -E "[:.]$port" >&/dev/null
+}
+
 killd() {
   if ! hasd; then
     log "No kill target exist."
@@ -76,7 +92,11 @@ killd() {
 _clip() {
   cat - |
     if ! direct && hasd; then
-      nc -c localhost $port
+      if is_ubuntu; then
+        nc -w 0 -C localhost $port
+      else
+        nc -c localhost $port
+      fi
     else
       _clippp
     fi
@@ -87,7 +107,7 @@ _start_clipd() {
   while (true); do
     [[ ! -e $pidf ]] && break
     log "=> Start Waiting clipd.."
-    if [[ $OSTYPE =~ darwin* ]]; then
+    if is_mac || is_ubuntu; then
       nc -l $port
     else
       # nc -v -c -l -p $port localhost
