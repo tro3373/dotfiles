@@ -392,6 +392,22 @@ dl() {
     fi
   fi
 }
+
+gsettings_if_needed() {
+  local _scheme=$1
+  local _path=$2
+  local _val=$3
+  if [[ -z $_val ]]; then
+    _val=$_path
+    _path=
+  fi
+  local _current=$(gsettings get $_scheme $_path)
+  if [[ $_current == "$_val" ]]; then
+    return
+  fi
+  exe gsettings set _scheme _path _val
+}
+
 is_empty_dir() {
   local _count=$(find "$1"/ -type d -empty 2>/dev/null | wc -l)
   test $_count -eq 1

@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+pre_setup() {
+  log "=> pre setting up"
+
+  _setup_user_group
+  _setup_visudo_editor
+  _setup_home_dir_names
+  _setup_mount_media_setting
+  _setup_improve_monitor_scale
+  _install_apps
+}
+
+load_update_arg_apps() {
+  # shellcheck disable=SC2034
+  read -a args < <(
+    echo "$(default_apps) hackgen fcitx5-mozc"
+  )
+}
+
+post_setup() {
+  log "===> reboot maybe needed."
+}
+
+_setup_user_group() {
+  if id | grep wheel >&/dev/null; then
+    return
+  fi
+  exe sudo gpasswd -a "$(whoami)" wheel
+}
+
+_setup_visudo_editor() {
+  local target=/etc/environment
+  if sudo grep EDITOR=vim $target | grep vim >&/dev/null; then
+    return
+  fi
+  if is_dry; then
+    sudo sed -n -e 's,EDITOR=.*,EDITOR=vim,p' $target
+  else
+    exe sudo sed -i -e 's,EDITOR=.*,EDITOR=vim,g' $target
+  fi
+}
+
+_setup_home_dir_names() {
+  # if [ -e ~/Desktop ]; then
+  #     return
+  # fi
+  # 日本語ディレクトリ名を英語化
+  exe env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
+}
+
+_setup_mount_media_setting() {
+  # Disable automount external media
+  gsettings_if_needed org.gnome.desktop.media-handling automount false
+}
+
+_setup_improve_monitor_scale() {
+  gsettings_if_needed org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
+}
+
+_install_apps() {
+  local apps=()
+  while read -r line; do
+    [[ -z $line ]] && continue
+    [[ $line =~ ^#.* ]] && continue
+    pacman -Qs $line >&/dev/null && continue
+    apps+=("$line")
+  done < <(
+    cat <<EOF
+vim
+base-devel
+gnu-netcat
+xsel
+net-tools
+gparted
+smartmontools
+hardinfo
+google-chrome
+numix-gtk-theme
+numix-icon-theme
+numix-circle-icon-theme-git
+meld
+gnome-tweaks
+EOF
+  )
+
+  if [[ ${#apps[@]} -eq 0 ]]; then
+    return
+  fi
+
+  exe sudo pacman -Syyu
+
+  # shellcheck disable=SC2154
+  exe $def_install_cmd "${apps[@]}"
+}
