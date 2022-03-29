@@ -23,7 +23,7 @@ pre_setup() {
 load_update_arg_apps() {
   # shellcheck disable=SC2034
   read -a args < <(
-    echo "$(default_apps) fcitx5-mozc chrome_rdp"
+    echo "$(default_apps) hackgen fcitx5-mozc chrome_rdp"
   )
 }
 
@@ -42,7 +42,7 @@ _setup_home_dir_names() {
 
 _setup_mount_media_setting() {
   # Disable automount external media
-  exe gsettings set org.gnome.desktop.media-handling automount false
+  gsettings_if_needed org.gnome.desktop.media-handling automount false
 }
 
 _enable_smartctl_sda() {
@@ -67,8 +67,8 @@ _setup_capslocks() {
     return
   fi
   # Cpas Lock => Ctrl setting
-  setup_dconf /org/gnome/settings-daemon/plugins/keyboard/active true
-  setup_dconf /org/gnome/desktop/input-sources/xkb-options "['ctrl:nocaps']"
+  _setup_dconf /org/gnome/settings-daemon/plugins/keyboard/active true
+  _setup_dconf /org/gnome/desktop/input-sources/xkb-options "['ctrl:nocaps']"
 }
 
 _setup_default_editor() {
@@ -86,7 +86,7 @@ _install_apps() {
 
   _apt_update_if_needed
 
-  local apps=(gnome-tweaks)
+  local apps=()
   while read -r line; do
     [[ -z $line ]] && continue
     [[ $line =~ ^#.* ]] && continue
@@ -94,18 +94,19 @@ _install_apps() {
     apps+=("$line")
   done < <(
     cat <<EOF
-mozc-utils-gui
 xsel
 net-tools
 gparted
 smartmontools
 hardinfo
 google-chrome-stable
-# gconf-editor
 numix-gtk-theme
 numix-icon-theme
 numix-icon-theme-circle
 meld
+mozc-utils-gui
+gnome-tweaks
+# gconf-editor
 #rapidsvn
 #guake
 #unity-tweak-tool
