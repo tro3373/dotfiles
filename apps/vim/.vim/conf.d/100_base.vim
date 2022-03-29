@@ -84,7 +84,7 @@ set clipboard=unnamed
 if !has("mac") && has("unix")
   let s:ostype = substitute(system("echo $OSTYPE"), '\n', '', '')
   " !msys && !ubuntu
-  if "msys" != s:ostype && !filereadable("/etc/lsb-release")
+  if "msys" != s:ostype && (!filereadable("/etc/debian_version") && !filereadable("/etc/lsb-release"))
     " '+' register => x window clipboard
     set clipboard=unnamedplus
     vmap <C-c> :w !xsel -ib<CR><CR>
