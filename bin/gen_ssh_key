@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-# current_dir=$(pwd)
-# script_dir=$(cd $(dirname $0); pwd)
 command_name=$(basename $0)
 args=()
 rm_pass=0
@@ -11,14 +9,16 @@ usage() {
   cat <<EOF
 Generate sshkey
   Usage:
-      $command_name [option] [generate file path]
+      $command_name [option] [key file path]
     Options
       -h|--help:
         Show this usage
       -e=<email>|--email=<email>:
         specify email
       -f=<file>|--file=<file>:
-        specify generate file
+        specify key file
+          If run with -r option, use as load file,
+          Else use as generated to.
       -r|--rm:
         specify rm passphrase file
       -rf|--rmf:
@@ -75,7 +75,14 @@ rm_pass_phrase() {
   if [[ $OSTYPE == msys ]]; then
     precmd=winpty
   fi
-  $precmd openssl rsa -in $file -out $dst
+  if head $file | grep 'BEGIN OPENSSH PRIVATE KEY' >&/dev/null; then
+    # MEMO: ssh-keygen orverwride file
+    # -m pem: Old version output
+    cp -p $file $dst
+    $precmd ssh-keygen -p -m pem -N "" -f $dst
+  else
+    $precmd openssl rsa -in $file -out $dst
+  fi
   chmod 600 $dst
   echo "==> No pass key generated. $dst"
   if [[ $rm_force -ne 1 ]]; then
