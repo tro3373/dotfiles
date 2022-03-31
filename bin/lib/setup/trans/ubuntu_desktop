@@ -118,7 +118,7 @@ EOF
   fi
 
   # shellcheck disable=SC2154
-  exe $def_install_cmd "${apps[@]}"
+  def_install "${apps[@]}"
 }
 
 _apt_update_if_needed() {
