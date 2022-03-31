@@ -3,7 +3,9 @@
 is_installed() { has fcitx5; }
 install_common() { not_supported; }
 install_wsl() { not_supported; }
-install_arch() { not_supported; }
+install_arch() {
+  def_install fcitx5-im fcitx5-mozc
+}
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() { not_supported; }
@@ -16,7 +18,24 @@ install_ubuntu() {
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
 setting_wsl() { no_settings; }
-setting_arch() { no_settings; }
+setting_arch() {
+  local target=$HOME/.pam_environment
+  if [[ -e $target ]]; then
+    if grep DEFAULT=fcitx $target >&/dev/null; then
+      return
+    fi
+  fi
+  cat_pam_environment |
+    cat_tee $target
+  # exe fcitx-autostart
+}
+cat_pam_environment() {
+  cat <<'EOF'
+GTK_IM_MODULE DEFAULT=fcitx
+QT_IM_MODULE  DEFAULT=fcitx
+XMODIFIERS    DEFAULT=@im=fcitx
+EOF
+}
 setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
 setting_mac() { no_settings; }
