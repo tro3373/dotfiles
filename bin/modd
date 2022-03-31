@@ -7,15 +7,12 @@ main() {
     query="-q $query"
   fi
   # shellcheck disable=SC2016
-  local files=$(
+  local file=$(
     git status -s |
-      fzf -m $query --preview 'head -100 $(echo {} |cut -c4-)' -0 -1 |
+      fzf $query --preview 'head -100 $(echo {} |cut -c4-)' -0 -1 |
       cut -c4-
-    # awk '{print $2}' |
-    # sed -e 's,\\\n, ,g'
   )
-  local _vim=vim
-  has nvim && _vim=nvim
-  $_vim -p $files </dev/tty
+  local d=$(dirname $file)
+  echo cd $d | clip
 }
 main "$@"
