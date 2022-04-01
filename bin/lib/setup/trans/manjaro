@@ -7,6 +7,7 @@ pre_setup() {
   _setup_visudo_editor
   _setup_home_dir_names
   _setup_mount_media_setting
+  _setup_custom_shortcut
   _setup_improve_monitor_scale
   _install_apps
 }
@@ -54,6 +55,13 @@ _setup_mount_media_setting() {
   gsettings_if_needed org.gnome.desktop.media-handling automount false
 }
 
+_setup_custom_shortcut() {
+  # MEMO Shift+Insert paste primary not clipboard. wont be change it, but not work..
+  : gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name "'Paste into terminal'"
+  : gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding "'<Ctrl><Shift><Insert>'"
+  : gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command "'xdottool key --clearmodifiers ctrl+shift+v'"
+}
+
 _setup_improve_monitor_scale() {
   gsettings_if_needed org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
 }
@@ -71,6 +79,7 @@ vim
 base-devel
 gnu-netcat
 xsel
+xdotool
 net-tools
 gparted
 smartmontools
