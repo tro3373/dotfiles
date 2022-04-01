@@ -5,7 +5,7 @@ install_common() {
     log "golang not installed."
     return
   fi
-  exe go get -v -u github.com/x-motemen/ghq
+  exe go install github.com/x-motemen/ghq@latest
 }
 
 cat_add_config() {

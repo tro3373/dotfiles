@@ -5,7 +5,7 @@ install_common() {
     log "golang not installed."
     return
   fi
-  exe go get -v -u github.com/mvdan/sh/cmd/shfmt
+  exe go install github.com/mvdan/sh/cmd/shfmt@latest
 }
 
 # setting_common() {

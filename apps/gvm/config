@@ -10,27 +10,27 @@ _install_common() {
     bash < <(curl -s -S -L $url_gvm_installer)
   fi
 
-    # echo '[[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"' >> .zshrc
-    # gvm install go1.4
-    # gvm use go1.4
-    # gvm install go1.5
+  # echo '[[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"' >> .zshrc
+  # gvm install go1.4
+  # gvm use go1.4
+  # gvm install go1.5
 
-    # go version
-    # gvm use go1.4.2 --default
-    # gvm list
-    # gvm listall
+  # go version
+  # gvm use go1.4.2 --default
+  # gvm list
+  # gvm listall
 
-    ## go setting(@see https://github.com/astaxie/build-web-application-with-golang/blob/master/ja/01.1.md)
-    # export GOROOT=$HOME/go
-    # export GOPATH=$HOME/gopath
-    # export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+  ## go setting(@see https://github.com/astaxie/build-web-application-with-golang/blob/master/ja/01.1.md)
+  # export GOROOT=$HOME/go
+  # export GOPATH=$HOME/gopath
+  # export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
-    # [ dufferzafar/cheat ]( http://mattn.kaoriya.net/software/lang/go/20150518101220.htm )
-    # - https://github.com/dufferzafar/cheat
-    # - https://github.com/jahendrie/cheat
-    # go get github.com/dufferzafar/cheat
-  }
-install_mac()    {
+  # [ dufferzafar/cheat ]( http://mattn.kaoriya.net/software/lang/go/20150518101220.htm )
+  # - https://github.com/dufferzafar/cheat
+  # - https://github.com/jahendrie/cheat
+  # go install github.com/dufferzafar/cheat@latest
+}
+install_mac() {
   exe brew update
   def_install mercurial
   _install_common
@@ -43,15 +43,14 @@ install_redhat() {
   def_install bison gcc glibc-devel
   _install_common
 }
-install_arch()   { not_supported; }
-install_msys()   { not_supported; }
+install_arch() { not_supported; }
+install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 
-
 setting_common() { no_settings; }
-setting_arch()   { no_settings; }
-setting_msys()   { no_settings; }
+setting_arch() { no_settings; }
+setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
-setting_mac()    { no_settings; }
+setting_mac() { no_settings; }
 setting_ubuntu() { no_settings; }
 setting_redhat() { no_settings; }

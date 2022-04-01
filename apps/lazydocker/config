@@ -3,10 +3,10 @@
 install_common() {
   # setup for posix system
   if ! has go; then
-      echo "No go exist. install it." 1>&2
-      return
+    echo "No go exist. install it." 1>&2
+    return
   fi
-  exe go get github.com/jesseduffield/lazydocker
+  exe go install github.com/jesseduffield/lazydocker@latest
 }
 # install_arch()   {
 #   exe git clone https://aur.archlinux.org/lazydocker.git ~/lazydocker
@@ -19,10 +19,10 @@ install_common() {
 # install_ubuntu() { not_supported; }
 # install_redhat() { not_supported; }
 setting_common() { no_settings; }
-setting_arch()   { no_settings; }
-setting_msys()   { no_settings; }
+setting_arch() { no_settings; }
+setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
-setting_mac()    { no_settings; }
+setting_mac() { no_settings; }
 setting_ubuntu() { no_settings; }
 setting_redhat() { no_settings; }
 #is_installed

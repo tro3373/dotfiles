@@ -5,11 +5,10 @@ install_common() {
     log "golang not installed."
     return
   fi
-  exe go get -v -u github.com/monochromegane/the_platinum_searcher/...
+  exe go install github.com/monochromegane/the_platinum_searcher/...@latest
 }
 
 setting_common() {
   # shellcheck disable=SC2154
   make_link_dot2home $app_dir
 }
-

@@ -5,7 +5,7 @@ install_common() {
     log "No go exist. install it." 1>&2
     return
   fi
-  exe go get github.com/gphotosuploader/gphotos-uploader-cli
+  exe go install github.com/gphotosuploader/gphotos-uploader-cli@latest
 }
 
 cat_config() {
@@ -53,7 +53,6 @@ setting_common() {
   if is_dry; then
     cat_config
   else
-    cat_config | tee $_config &> /dev/null
+    cat_config | tee $_config &>/dev/null
   fi
 }
-

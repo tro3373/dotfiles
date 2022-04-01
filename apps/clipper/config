@@ -6,11 +6,10 @@ install_common() {
     return
   fi
 
-  exe go get -v -u github.com/wincent/clipper
+  exe go install github.com/wincent/clipper@latest
 }
 
 setting_common() {
   # shellcheck disable=SC2154
   make_link_dot2home $app_dir
 }
-

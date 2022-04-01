@@ -5,7 +5,7 @@ install_common() {
     log "golang not installed."
     return
   fi
-  exe go get -v github.com/MichaelMure/mdr
+  exe go install github.com/MichaelMure/mdr@latest
 }
 # install_wsl()    { not_supported; }
 # install_arch()   { not_supported; }

@@ -8,7 +8,7 @@ install_common() {
 
   # github https://github.com/pdfcpu/pdfcpu
   # exe cd pdfcpu/cmd/pdfcpu
-  exe go get github.com/pdfcpu/pdfcpu/cmd/...
+  exe go install github.com/pdfcpu/pdfcpu/cmd/...@latest
   # exe cd $GOPATH/src/github.com/pdfcpu/pdfcpu/cmd/pdfcpu
   # exe go install
   # exe pdfcpu version

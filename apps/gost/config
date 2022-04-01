@@ -5,7 +5,7 @@ install_common() {
     log "golang not installed."
     return
   fi
-  # exe go get -v -u github.com/ginuerzh/gost
+  # exe go install github.com/ginuerzh/gost@latest
   github https://github.com/ginuerzh/gost.git
   exe cd cmd/gost
   exe go build
