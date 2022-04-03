@@ -19,7 +19,13 @@ install_redhat() { not_supported; }
 setting_common() { no_settings; }
 setting_wsl() { no_settings; }
 setting_arch() {
-  local target=$HOME/.pam_environment
+  local target_d=$HOME/.config/autostart
+  local target_n=org.fcitx.Fcitx5.desktop
+  local target=$target_d/$target_n
+  if [[ ! -e $target ]]; then
+    exe cp /usr/share/applications/$target_n $target_d
+  fi
+  target=$HOME/.pam_environment
   if [[ -e $target ]]; then
     if grep DEFAULT=fcitx $target >&/dev/null; then
       return
