@@ -78,20 +78,6 @@ else
 endif
 
 
-" ヤンクした際にクリップボードへ配置する
-" '*' register => x window clipboard
-set clipboard=unnamed
-if !has("mac") && has("unix")
-  let s:ostype = substitute(system("echo $OSTYPE"), '\n', '', '')
-  " !msys && !ubuntu
-  if "msys" != s:ostype && (!filereadable("/etc/debian_version") && !filereadable("/etc/lsb-release"))
-    " '+' register => x window clipboard
-    set clipboard=unnamedplus
-    vmap <C-c> :w !xsel -ib<CR><CR>
-    vmap <C-y> :w !xsel -ib<CR><CR>
-  endif
-endif
-
 " 挿入モードからノーマルモードに戻る時にペーストモードを自動で解除
 autocmd InsertLeave * set nopaste
 
@@ -270,8 +256,6 @@ augroup END
 let &colorcolumn="80,120"
 
 
-
-
 " カレントディレクトリを自動的に変更
 " set autochdir
 
@@ -289,6 +273,36 @@ let &colorcolumn="80,120"
 " if exists('&completeslash')
 "   setglobal completeslash=slash
 " endif
+
+" Enable Java Highlight
+" @see https://nanasi.jp/articles/vim/java_vim.html
+" 標準クラス名のハイライト
+let java_highlight_all = 1
+" デバッグ文のハイライト
+let java_highlight_debug=1
+" C++ キーワードのハイライト
+" 下記のC++言語のキーワードをハイライトします。
+" auto delete enum extern friend inline redeclared
+" register signed sizeof struct template typedef union
+" unsigned operator
+let java_allow_cpp_keywords=1
+" 余分な空白に対して警告
+let java_space_errors=1
+" メソッドの宣言文と、ブレースのハイライト
+let java_highlight_functions = 1
+" @see https://superuser.com/questions/627636/better-syntax-highlighting-for-java-in-vim
+" Some more highlights, in addition to those suggested by cmcginty
+" highlight link javaScopeDecl Statement
+" highlight link javaType Type
+" highlight link javaDocTags PreProc
+
+if g:is_linux
+  set clipboard=unnamedplus
+  " vmap <C-c> :w !xsel -ib<CR><CR>
+  " vmap <C-y> :w !xsel -ib<CR><CR>
+else
+  set clipboard=unnamed
+endif
 
 " Yank post handling
 " @see
@@ -321,25 +335,3 @@ elseif executable(s:clip)
   augroup MyYankPost
   augroup END
 endif
-
-" Enable Java Highlight
-" @see https://nanasi.jp/articles/vim/java_vim.html
-" 標準クラス名のハイライト
-let java_highlight_all = 1
-" デバッグ文のハイライト
-let java_highlight_debug=1
-" C++ キーワードのハイライト
-" 下記のC++言語のキーワードをハイライトします。
-" auto delete enum extern friend inline redeclared
-" register signed sizeof struct template typedef union
-" unsigned operator
-let java_allow_cpp_keywords=1
-" 余分な空白に対して警告
-let java_space_errors=1
-" メソッドの宣言文と、ブレースのハイライト
-let java_highlight_functions = 1
-" @see https://superuser.com/questions/627636/better-syntax-highlighting-for-java-in-vim
-" Some more highlights, in addition to those suggested by cmcginty
-" highlight link javaScopeDecl Statement
-" highlight link javaType Type
-" highlight link javaDocTags PreProc

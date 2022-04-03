@@ -62,6 +62,16 @@ let g:ctrlp_prompt_mappings = {
     \ 'PrtCurLeft()': ['<left>'],
     \ 'AcceptSelection("e")': ['<Space>', '<cr>', '<2-LeftMouse>'],
     \ }
+
+" Not work in manjaro
+" let g:ctrlp_buffer_func = { 'enter': 'BrightHighlightOn', 'exit':  'BrightHighlightOff', }
+" function BrightHighlightOn()
+"   hi CursorLine guibg=darkred
+" endfunction
+" function BrightHighlightOff()
+"   hi CursorLine guibg=#191919
+" endfunction
+
 nnoremap <Leader>p :CtrlPMRU<CR>
 " nnoremap <Leader>m :CtrlPMixed<CR>
 " nnoremap <Leader>j :CtrlPDir %:h<CR>
