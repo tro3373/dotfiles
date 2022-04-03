@@ -1,6 +1,23 @@
 Vim Tips
 =================================================================
 
+# Environment and Clipboard and Register
+
+## Windows
+
+- `*`, `+` is same.
+- Use `set clipboard=unnamed`
+
+## X11 system
+
+- `*` : Selection(Primary)
+- `+` : Cut buffer(Clipboard)
+- Use `set clipboard=unnamedplus`
+
+> Under Windows, the * and + registers are equivalent. For X11 systems, though, they differ.
+> For X11 systems, * is the selection, and + is the cut buffer (like clipboard).
+[Accessing the system clipboard | Vim Tips Wiki | Fandom](https://vim.fandom.com/wiki/Accessing_the_system_clipboard)
+
 ## Replace and Repeat
 
 ```
