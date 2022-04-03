@@ -32,7 +32,11 @@ install_common() {
 }
 
 install_arch() {
-  install_via_os_default
+  if has snap; then
+    exe sudo snap install go --classic
+  else
+    install_via_os_default
+  fi
 }
 
 install_mac() {
