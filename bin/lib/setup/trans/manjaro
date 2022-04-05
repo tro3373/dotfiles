@@ -15,7 +15,7 @@ pre_setup() {
 load_update_arg_apps() {
   # shellcheck disable=SC2034
   read -a args < <(
-    echo "$(default_apps) hackgen fcitx5-mozc"
+    echo "$(default_apps) snap fcitx5-mozc hackgen udev-gothic gnome-font-viewer"
   )
 }
 
