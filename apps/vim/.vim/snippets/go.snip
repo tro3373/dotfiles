@@ -10,10 +10,6 @@ snippet	timefrommm
 alias	timeparseee
 	t, _ := time.Parse("20060102_150405", "20141231_000000")
 
-snippet	errorwrapf
-alias	wraperror
-	err = fmt.Errorf("Failed %s, %w", message, err)
-
 snippet	lognewww
 	log.New(os.Stderr, "", log.LstdFlags)
 
@@ -101,12 +97,6 @@ snippet	select_channel
 	case <-time.After(1 * time.Second):
 		fmt.Println("timeout 1")
 	}
-
-snippet	new_error
-	errors.New(fmt.Sprintf("Error: %s", "${1}"))
-
-snippet	new_error_fmt
-	fmt.Errorf("Error: %s", "${1}")
 
 # http://engineerspirit.com/2017/01/22/post-637/
 snippet	stringgg
@@ -365,3 +355,32 @@ snippet	regexppp
 alias	matchstringgg
 	r := regexp.MustCompile(\`abc\`)
 	fmt.Println(r.MatchString("hello"))
+
+###############################################################################
+# Error
+###############################################################################
+snippet	new_errors
+alias		errors_new
+	errors.New("Error")
+
+snippet	new_errors_fmt
+alias		errors_new_fmt
+	errors.Errorf("Error: %s", "${1}")
+
+# See [今goのエラーハンドリングを無難にしておく方法（2021.09現在）](https://zenn.dev/nekoshita/articles/097e00c6d3d1c9)
+snippet	error_wrap_no_stackkk
+alias	wrap_error_no_stackkk
+	err = fmt.Errorf("Failed to %s: %w", "do somthing", err)
+	# if errors.Is(err, SampleError) {
+	# }
+
+snippet	error_wrap_with_stackkk
+alias	wrap_error_with_stackkk
+	err = errors.WithStack(SampleError)
+	# if errors.Cause(err) == SampleError {
+	# }
+snippet	error_wrap_stackkk
+alias	wrap_error_stackkk
+	err = errors.Wrap(SampleError, "Failed to do somthing")
+	# if errors.Cause(err) == SampleError {
+	# }
