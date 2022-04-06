@@ -28,6 +28,8 @@ _setup_user_group() {
     return
   fi
   exe sudo gpasswd -a "$(whoami)" wheel
+  # shellcheck disable=SC2154
+  exe sudo mv /etc/sudoers.d/10-installer $_backup_root/
 }
 
 _setup_visudo_editor() {
