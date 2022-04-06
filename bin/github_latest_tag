@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+main() {
+  local repo=$1
+  if [[ -z $repo ]]; then
+    echo "Specify repository url" 1>&2
+    exit 1
+  fi
+  git ls-remote --refs --tags "$repo" |
+    cut -d'/' -f3 |
+    tr '-' '~' |
+    sort --version-sort |
+    tail -1
+}
+main "$@"
