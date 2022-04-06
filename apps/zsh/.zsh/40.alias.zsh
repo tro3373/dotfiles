@@ -224,7 +224,12 @@ function cd_dir() {
 function _find_src_root() {
   # find $HOME/src/ -maxdepth 1 -mindepth 1 -type d
   # find $HOME/go/src -type d -name '.git' 2>/dev/null | xargs dirname
-  ghq list --full-path 2>/dev/null | tac
+  {
+    find $HOME/.dot/bin/lib/bootstrap -maxdepth 1 -mindepth 1 -type d
+    find $HOME/.dot/bin/lib/setup -maxdepth 1 -mindepth 1 -type d
+    find $HOME/.dot/apps -maxdepth 1 -mindepth 1 -type d
+    ghq list --full-path 2>/dev/null
+  } | tac
 }
 function cd_src() {
   supported fzf || return
