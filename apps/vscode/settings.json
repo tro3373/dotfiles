@@ -3,7 +3,7 @@
   "window.restoreWindows": "all",
   "workbench.colorTheme": "Apprentice",
   "workbench.iconTheme": "vscode-icons",
-  "editor.fontFamily": "'HackGen Console', Osaka-Mono, Cica-Regular, 'Ricty Diminished Discord', 'Ricty Diminished', 'Myrica M', Consolas, 'Courier New', monospace",
+  "editor.fontFamily": "'UDEV Gothic JPDOC', 'HackGen Console', Osaka-Mono, Cica-Regular, 'Ricty Diminished Discord', 'Ricty Diminished', 'Myrica M', Consolas, 'Courier New', monospace",
   "editor.fontSize": 18,
   "editor.lineHeight": 20,
   "editor.wordWrap": "on",

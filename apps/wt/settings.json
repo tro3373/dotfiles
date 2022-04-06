@@ -42,7 +42,8 @@
       // "backgroundImageOpacity": 0.3,
       // frame opacity.
       "useAcrylic": false,
-      "fontFace": "HackGen Console",
+      // "fontFace": "HackGen Console",
+      "fontFace": "UDEV Gothic JPDOC",
       "fontSize": 13,
       // cursor
       "cursorColor": "#FFFFFF",
