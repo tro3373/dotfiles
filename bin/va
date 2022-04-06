@@ -1,14 +1,21 @@
 #!/usr/bin/env bash
 
-readonly dotapps=${DOTPATH:-~/.dot}/apps
+readonly dotd=${DOTPATH:-~/.dot}
 
 has() { command -v ${1} >&/dev/null; }
+sources() {
+  {
+    find $dotd/bin/lib/bootstrap/ -type f -print0
+    find $dotd/bin/lib/setup/ -type f -print0
+    find $dotd/apps/*/config -type f -print0
+  } | xargs -0 ls -t
+}
 main() {
   local q=
   if [[ $# -ne 0 ]]; then
     q="--query $1"
   fi
-  local paths=$(find $dotapps/*/config -type f -print0 | xargs -0 ls -t | fzf $q -m --preview "cat {}")
+  local paths=$(sources | fzf $q -m --preview "cat {}")
   [[ -z $paths ]] && exit 1
   local _vim=vim
   has nvim && _vim=nvim
