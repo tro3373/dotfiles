@@ -18,6 +18,8 @@ main() {
   if [[ -z $src_d ]]; then
     ghq get git@github.com:$repo.git
   fi
+  src_d=$src_d/.md
+  log "=> Linking $src_d to $dst_d.."
   ln -s $src_d $dst_d
   log "Done"
 }
