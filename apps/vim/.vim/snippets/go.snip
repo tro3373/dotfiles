@@ -121,8 +121,16 @@ snippet	struct_jsonnn
 	 	${2} string \`json:"${3},string"\`
 	}
 
+snippet	fmtprintlnnn
+alias	printlnnn
+	fmt.Println("${1}")
+
 snippet	fmtprintfff
 alias	printfff
+	fmt.Printf("%#+v\n", ${1})
+
+snippet	fmtprint_samplesss
+alias	print_samplesss
 	// https://qiita.com/rock619/items/14eb2b32f189514b5c3c
 	// verb
 	fmt.Printf("%v\n", ${1}) // Output default format for the value.
@@ -147,6 +155,7 @@ alias	printfff
 
 snippet	openfileee
 	file, err := os.OpenFile(${1}, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	// file, err := os.OpenFile($1, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0664)
 	if err != nil {
 		return fmt.Errorf("Failed to OpenFile %s, %w", $1, err)
 	}
@@ -360,6 +369,12 @@ alias	matchstringgg
 ###############################################################################
 # Error
 ###############################################################################
+snippet	iferrr
+	if err != nil {
+		return err
+	}
+	${0}
+
 snippet	new_errors
 alias		errors_new
 	errors.New("Error")
@@ -371,17 +386,28 @@ alias		errors_new_fmt
 # See [今goのエラーハンドリングを無難にしておく方法（2021.09現在）](https://zenn.dev/nekoshita/articles/097e00c6d3d1c9)
 snippet	error_wrap_no_stackkk
 alias	wrap_error_no_stackkk
-	err = fmt.Errorf("Failed to %s: %w", "do somthing", err)
-	# if errors.Is(err, SampleError) {
-	# }
+	fmt.Errorf("Failed to ${1:#do somthing} %s: %w", "${2}", err)
 
-snippet	error_wrap_with_stackkk
-alias	wrap_error_with_stackkk
-	err = errors.WithStack(SampleError)
-	# if errors.Cause(err) == SampleError {
-	# }
+snippet	error_wrap_no_stack_causeee
+alias	wrap_error_no_stack_causeee
+	if errors.Is(err, SampleError) { }
+
+snippet	error_wrap_stackkk_use_with
+alias	wrap_error_stackkk_use_with
+	errors.WithStack(err)
+
 snippet	error_wrap_stackkk
 alias	wrap_error_stackkk
-	err = errors.Wrap(SampleError, "Failed to do somthing")
-	# if errors.Cause(err) == SampleError {
-	# }
+	errors.Wrapf(err, "Failed to ${1:#do somthing} %s", "${2}")
+
+snippet	error_wrap_stack_causeee
+alias	wrap_error_stack_causeee
+	if errors.Cause(err) == SampleError { }
+
+###############################################################################
+# File
+###############################################################################
+snippet mkdirrr
+	os.Mkdir(${1}, ${2:0775})
+snippet mkdiralll
+	os.MkdirAll(${1}, ${2:0775})
