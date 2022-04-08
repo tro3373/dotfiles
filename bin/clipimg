@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+readonly command_name=$(basename $0)
+dst_rootd=/tmp/clipimg
+dst_fnm=
+ext=png
+args=()
+usage() {
+  cat <<EOF
+
+Save clipboard image to file
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+      -d        : Specify output directory(Default is /tmp/${command_name})
+      -f        : Specify output fileName(Default is yyyyMMdd.hhmmss_${command_name}.png)
+
+EOF
+}
+add_args() { args+=("$@"); }
+has() { command -v ${1} >&/dev/null; }
+check() {
+  if ! has xclip; then
+    echo "No xclip exists" 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -d) shift && dst_rootd=$1 ;;
+      -f) shift && dst_fnm=$1 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+  set -e
+}
+out() {
+  local timestamp=$(date +%Y%m%d.%H%M%S)
+  if [[ -z $dst_fnm ]]; then
+    dst_fnm=${timestamp}_${command_name}.$ext
+  fi
+  ext=${dst_fnm##.}
+  local dst=$dst_rootd/$dst_fnm
+  local dstd=$(dirname $dst)
+  [[ ! -e $dstd ]] && mkdir -p $dstd
+  echo "=> Saving image to $dst.."
+  xclip -selection clipboard -t image/$ext -o >$dst ||
+    echo "==> Failed to save images. Possible is." && xclip -selection clipboard -t TARGETS -o
+  echo "=> Done"
+  open $dstd
+}
+main() {
+  initialize "$@"
+  out
+}
+main "$@"
