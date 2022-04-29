@@ -230,6 +230,7 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'kannokanno/previm'
   Plug 'tyru/open-browser.vim'
 
+  " Preview in browser.
   Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm i'  }
   " Preview in buffer. depends MichaelMure/mdr
   Plug 'skanehira/preview-markdown.vim'
