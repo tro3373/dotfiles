@@ -192,10 +192,10 @@ snippet	execstart
 	fmt.Println("sleep中: ", time.Now().Format("15:04:05"))
 	cmd.Wait()
 
-snippet	exists
+snippet	existsss
 	func exists(filename string) bool {
 		_, err := os.Stat(filename)
-		return err == nil
+		return os.IsExist(err)
 	}
 
 snippet	existsprefixxx
@@ -347,20 +347,6 @@ snippet	filereaddd
 		}
 	}
 
-snippet	filewritejsonnn
-alias		writefilejsonnn
-	file, _ := json.MarshalIndent(data, "", " ")
-	_ = ioutil.WriteFile("test.json", file, 0644)
-snippet	filereadjsonnn
-alias		readfilejsonnn
-	raw, err := ioutil.ReadFile("test.json")
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exist(1)
-	}
-	var s SampleStruct
-	json.Unmarshal(raw, &s)
-
 snippet	regexppp
 alias	matchstringgg
 	r := regexp.MustCompile(\`abc\`)
@@ -411,3 +397,46 @@ snippet mkdirrr
 	os.Mkdir(${1}, ${2:0775})
 snippet mkdiralll
 	os.MkdirAll(${1}, ${2:0775})
+snippet touchhh
+	func touch(path string) error {
+		_, err := os.Stat(path)
+		if os.IsNotExist(err) {
+			file, err := os.Create("temp.txt")
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+			return nil
+		}
+		currentTime := time.Now().Local()
+		err = os.Chtimes(path, currentTime, currentTime)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+snippet	filewritejsonnn
+alias		writefilejsonnn
+	file, _ := json.MarshalIndent(data, "", " ")
+	_ = ioutil.WriteFile("test.json", file, 0644)
+snippet	filereadjsonnn
+alias		readfilejsonnn
+	raw, err := ioutil.ReadFile("test.json")
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exist(1)
+	}
+	var s SampleStruct
+	json.Unmarshal(raw, &s)
+snippet	currentDirrr
+	pwd, err := os.GetWd()
+	if err != nil {
+		return err
+	}
+snippet	binDirrr
+alias	scriptDirrr
+	ex, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	exPath := filepath.Dir(ex)
