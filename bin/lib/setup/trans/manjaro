@@ -93,6 +93,8 @@ numix-icon-theme
 numix-circle-icon-theme-git
 meld
 gnome-tweaks
+# for nautilus smb:// access
+gvfs-smb
 EOF
   )
 
