@@ -7,8 +7,8 @@ readonly _core_apps=(
   git ssh tig curl bc tree tmux zsh vim ag rg ctags fzf
 )
 readonly _core_apps_additional=(
-  neofetch anyenv netcat go goimports pt nvim mmv gomi ghq shellcheck shfmt htop hub
-  exa bat nkf
+  lsof neofetch anyenv netcat go goimports pt nvim mmv gomi ghq shellcheck shfmt
+  htop hub exa bat nkf
 )
 readonly _core_apps_additional_arch=(
   yay
