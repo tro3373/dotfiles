@@ -102,6 +102,9 @@ EOF
     return
   fi
 
+  if ! grep Japan /etc/pacman.d/mirrorlist >&/dev/null; then
+    exe sudo pacman-mirrors -c Japan
+  fi
   exe sudo pacman -Syyu
 
   # shellcheck disable=SC2154
