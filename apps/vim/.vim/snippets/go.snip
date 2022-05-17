@@ -360,6 +360,10 @@ snippet	iferrr
 		return err
 	}
 	${0}
+snippet	ifexecerrr
+	if err := ${1}; err != nil {
+		log.Fatalf("==> Err:%+v\n", err)
+	}
 
 snippet	new_errors
 alias		errors_new
