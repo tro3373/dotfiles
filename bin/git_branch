@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+main() {
+  # git rev-parse --abbrev-ref HEAD
+  git branch --show-current
+}
+main "$@"
