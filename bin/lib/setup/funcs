@@ -145,6 +145,12 @@ exe() {
   eval "$cmd" || (echo "===> Failed..... Executing $cmd" && exit 1)
 }
 
+exes() {
+  local cmd="$*"
+  is_dry && echo "\$($cmd)" && return
+  exe "$@"
+}
+
 make_dir_if_needed() {
   local tmp="$*"
   if [[ ! -e $tmp ]]; then
