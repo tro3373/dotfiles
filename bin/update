@@ -71,16 +71,19 @@ update_scoop() {
   if [[ -z $list ]]; then
     list=$(
       scoop list |
-        grep -E '^ .*' |
-        grep -v vagrant |
-        grep -v msys2 |
-        grep -v virtualbox |
+        tr '\r' ' ' |
+        tail -n +5 |
         awk '{print $1}' |
+        grep -v -E '(vagrant|msys2|virtualbox)' |
+        while read -r line; do
+          [[ -z $line ]] && continue
+          echo $line
+        done |
         tr '\n' ' '
     )
   fi
-  log "=> Updating pkgs.."
-  $dummy scoop update "$list"
+  log "=> Updating pkgs.. ($list)"
+  $dummy scoop update "$list" || fix_scoop_for_wsl
 }
 update_msys() {
   update_scoop
