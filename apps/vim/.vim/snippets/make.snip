@@ -28,3 +28,9 @@ snippet	docker_all_container
 	docker_all_container=$$(docker ps -a -q)
 snippet	docker_active_container
 	docker_active_container=$$(docker ps -q)
+
+snippet	checkkk
+	depends_cmds := ${1:#command names for check}
+	.PHONY: check
+	check:
+		@for cmd in ${depends_cmds}; do command -v $$cmd >&/dev/null || (echo "No $$cmd command" && exit 1); done
