@@ -493,3 +493,6 @@ snippet	iswsl
 
 snippet	onlyyy
 	only ${1} || exit 1
+
+snippet	findmvvv
+	find ${1} -type f -print0 |xargs -0 mv -t ${2}
