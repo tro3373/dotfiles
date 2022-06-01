@@ -1,5 +1,6 @@
 # is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
 is_vagrant() { pwd | grep /home/vagrant >&/dev/null; }
+is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
 _initialize_env() {
   # Inisialize
   export DOTPATH="$HOME/.dot"
@@ -256,6 +257,9 @@ _initialize() {
     ${DOTPATH}/bin/start_xvfb
   elif [[ -z "${REMOTEHOST}${SSH_CONNECTION}" ]]; then
     ${DOTPATH}/bin/clip -d >&/dev/null &
+    if is_wsl && ! test -e /tmp/dockerd.log; then
+      ${DOTPATH}/bin/start_dockerd &
+    fi
   fi
   # ${DOTPATH}/bin/tmux_dog
   load_zsh ~/.works.zsh
