@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+
+readonly current_dir=$(pwd)
+readonly work_dir=$current_dir/tmp
+
+tables() {
+  grep -n DROP $input_f |
+    sed -e 's,:.* `, ,g' -e 's,`;,,g' |
+    while read -r n table; do
+      [[ -z $n ]] && continue
+      [[ $n =~ ^#.* ]] && continue
+      echo $((n - 1))
+      printf "$table $n "
+    done |
+    tail -n +2
+  echo
+}
+
+divide() {
+  tables |
+    while read -r table sta end; do
+      [[ -z $table ]] && continue
+      [[ $table =~ ^#.* ]] && continue
+      # echo $table $sta $end
+      local rows=$((end - sta))
+      tail -n +$sta $input_f |
+        if [[ -z $end ]]; then
+          cat -
+        else
+          cat - | head -$rows
+        fi >$work_dir/$table.sql
+    done
+}
+
+cols() {
+  # shellcheck disable=SC2016
+  local _cols=$(
+    grep -E '^ *`' $tablef |
+      cut -d\` -f2 |
+      tr '\n' '@' |
+      sed -e 's/@/`,`/g'
+  )
+  _cols=\`$_cols
+  _cols=${_cols%,\`}
+  echo $_cols
+}
+
+cat_rebuild_sqls() {
+  find $work_dir/*sql -type f |
+    # head -1 |
+    while read -r tablef; do
+      [[ -z $tablef ]] && continue
+      [[ $tablef =~ ^#.* ]] && continue
+      local table=$(basename ${tablef%.sql})
+      local table_bk=${table}_bk
+      echo
+      echo "drop table if exists $table_bk;"
+      echo "create table $table_bk as select * from $table;"
+      cat <$tablef
+      local cols=$(cols)
+      echo "insert into $table($cols) select $cols from $table_bk;"
+    done
+}
+
+main() {
+  local input_f=$1
+  if [[ -z $input_f || ! -e $input_f ]]; then
+    echo "Specify valid input file"
+    exit 1
+  fi
+  set -euo pipefail
+  if [[ -e $work_dir ]]; then
+    read -p "Removing $work_dir: (Enter to continue)" _
+    rm -rfv $work_dir 1>&2
+  fi
+  mkdir -p $work_dir
+  divide
+  cat_rebuild_sqls
+}
+main "$@"
