@@ -10,7 +10,7 @@ sub() {
   fi
   echo "=> Changing Owner $u.$g $f with R option...(Enter to continue)" 1>&2
   read _
-  sudo chown -R $u.$g $f
+  sudo chown -R $u:$g $f
 }
 main() {
   local u=$(id -u -n)
