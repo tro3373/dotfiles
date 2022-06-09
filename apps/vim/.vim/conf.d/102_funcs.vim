@@ -553,7 +553,8 @@ function! DiffTable() abort
     for aLine in aLines
       if line == aLine
         " echo lineNumber.":a: much! ".aLine
-        let outputLine .= aLine
+        " let outputLine .= aLine
+        let outputLine .= "X"
         break
       endif
     endfor
@@ -561,7 +562,8 @@ function! DiffTable() abort
     let outputLine .= tab
     for bLine in bLines
       if line == bLine
-        let outputLine .= bLine
+        " let outputLine .= bLine
+        let outputLine .= "X"
         break
       endif
     endfor
