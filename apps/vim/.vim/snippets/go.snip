@@ -16,7 +16,7 @@ snippet	lognewww
 snippet	zapnewww
 	logger, err := zap.NewProduction()
 
-snippet	ifstringer
+snippet	ifStringer
 	if v, ok := ${1:interface}.(fmt.Stringer); ok {
 		${2}
 	}
@@ -346,6 +346,14 @@ snippet	filereaddd
 			fmt.Println(scanner.Text())
 		}
 	}
+snippet	filesizeee
+	func getFileSize(filePath string) (int64, error) {
+		info, err := os.Stat(filePath)
+		if err != nil {
+			return -1, err
+		}
+		return info.Size(), nil
+	}
 
 snippet	regexppp
 alias	matchstringgg
@@ -399,7 +407,7 @@ alias	wrap_error_stack_causeee
 ###############################################################################
 snippet mkdirrr
 	os.Mkdir(${1}, ${2:0775})
-snippet mkdiralll
+snippet mkdirAlll
 	os.MkdirAll(${1}, ${2:0775})
 snippet touchhh
 	func touch(path string) error {
@@ -419,12 +427,12 @@ snippet touchhh
 		}
 		return nil
 	}
-snippet	filewritejsonnn
-alias		writefilejsonnn
+snippet	fileWriteJsonnn
+alias		writeFileJsonnn
 	file, _ := json.MarshalIndent(data, "", " ")
 	_ = ioutil.WriteFile("test.json", file, 0644)
-snippet	filereadjsonnn
-alias		readfilejsonnn
+snippet	fileReadJsonnn
+alias		readFileJsonnn
 	raw, err := ioutil.ReadFile("test.json")
 	if err != nil {
 		fmt.Println(err.Error())
@@ -432,13 +440,13 @@ alias		readfilejsonnn
 	}
 	var s SampleStruct
 	json.Unmarshal(raw, &s)
-snippet	filewriteee
-alias		writefileee
+snippet	fileWriteee
+alias		writeFileee
 	func WriteFile(filePath, data string) error {
 		return ioutil.WriteFile(filePath, []byte(data), 0644)
 	}
-snippet	filereadifexistttt
-alias		readfileifexisttt
+snippet	fileReadIfExistttt
+alias		readFileIfExisttt
 	func ReadFileIfExist(filePath string) (string, error) {
 		if len(filePath) == 0 || !Exists(filePath) {
 			return "", nil
@@ -461,6 +469,24 @@ alias	scriptDirrr
 		return err
 	}
 	exPath := filepath.Dir(ex)
+
+snippet	isEmptyDirrr
+alias	emptyDirrr
+	func IsEmptyDir(dirPath string) (bool, error) {
+		f, err := os.Open(dirPath)
+		if err != nil {
+			return false, err
+		}
+		defer f.Close()
+		_, err = f.Readdirnames(1)
+		if err == io.EOF {
+			return true, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+	}
 
 snippet	containsss
 	func Contains(list interface{}, target interface{}) bool {

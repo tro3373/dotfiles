@@ -34,3 +34,14 @@ snippet	checkkk
 	.PHONY: check
 	check:
 		@for cmd in ${depends_cmds}; do command -v $$cmd >&/dev/null || (echo "No $$cmd command" && exit 1); done
+
+snippet	shellbinbashhhh
+	SHELL := /bin/bash
+
+snippet	current_goalsss
+	@echo "==> $@ $(STAGE)" && \
+snippet	goalsss
+	@echo "==> $(MAKECMDGOALS) $(STAGE)" && \
+
+snippet	creannn
+	@for d in node_modules dist; do if [[ -e $${d} ]]; then echo "==> Removing $${d}.." && rm -rf $${d}; fi done
