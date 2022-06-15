@@ -73,8 +73,10 @@ gitfy() {
     xargs -0 mv -vt $bkupd/
   echo ">> Git fetching.."
   git fetch
-  echo ">> Git checkouting master.."
-  git checkout -b master origin/master
+  local branch_nm=$(git br -r | grep origin/main >&/dev/null && echo main)
+  [[ -z $branch_nm ]] && branch_nm=master
+  echo ">> Git checkouting $branch_nm.."
+  git checkout -b $branch_nm origin/$branch_nm
   echo ">> Removing cloned node_modules.."
   rm -rf node_modules
   mv $bkupd/node_modules .
