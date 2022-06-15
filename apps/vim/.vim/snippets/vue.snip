@@ -1,0 +1,30 @@
+snippet	syncProppp
+	<parent>
+		<component-name :propName.sync="obj.list" :executer="prentMethod" />
+	<child>
+		props: [ 'propName', 'executer' ]
+		methods: {
+			update() {
+				this.$emit('update:propName', 'value');
+				this.executer("call parent method");
+			}
+		}
+snippet	callChildMethodddd
+	<parent>
+		<component-name ref="childName" />
+		methods: {
+			confirm(key) {
+				this.$refs.childName.childMethod(async () => {
+					await this.parentMethod(key);
+				});
+			}
+			async parentMethod(key) {
+				await somethig(key);
+			}
+		}
+	<child>
+		methods: {
+			childMethod(fn) {
+				fn();
+			}
+		}

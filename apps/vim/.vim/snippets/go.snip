@@ -405,10 +405,14 @@ alias	wrap_error_stack_causeee
 ###############################################################################
 # File
 ###############################################################################
-snippet mkdirrr
+snippet mkDirrr
 	os.Mkdir(${1}, ${2:0775})
-snippet mkdirAlll
+snippet mkDirAlll
 	os.MkdirAll(${1}, ${2:0775})
+snippet rmDirrr
+	err := os.Remove(${1})
+snippet rmDirAlll
+	err := os.RemoveAll(${1})
 snippet touchhh
 	func touch(path string) error {
 		_, err := os.Stat(path)
