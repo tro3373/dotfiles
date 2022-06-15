@@ -1,5 +1,22 @@
 # bash chips
 
+## Priority of process
+
+```
+# プロセス優先度最低、ディスクI/O優先度最低
+ionice -c 2 -n 7 nice -n 19 <command>
+```
+
+### ionice
+- -c            | --class               : I/O スケジューリングのクラスを指定する(0~3. 1が最優先)
+                                        :   0: none, 1: realtime, 2: best-effort, 3: idle
+- -n            | --classdata           : クラス1と2の中で優先度を0~7でいていする(0が最優先)
+- -p プロセスID | --pid プロセスID      : 対象とするプロセスのID（空白区切りで複数指定可能）
+- -t            | --ignore              : クラスや優先度がセットできない場合もコマンドを実行する
+
+### nice
+- -n 優先度     | --adjustment=優先度   : 優先度（-20～19）を指定する
+
 ## pipe vim
 
 ```
