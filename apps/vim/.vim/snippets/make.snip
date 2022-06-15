@@ -45,3 +45,6 @@ snippet	goalsss
 
 snippet	creannn
 	@for d in node_modules dist; do if [[ -e $${d} ]]; then echo "==> Removing $${d}.." && rm -rf $${d}; fi done
+
+snippet	timestamppp
+	timestamp := $(shell date '+%Y%m%d.%H%M%S')

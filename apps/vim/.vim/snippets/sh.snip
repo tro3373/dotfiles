@@ -496,3 +496,7 @@ snippet	onlyyy
 
 snippet	findmvvv
 	find ${1} -type f -print0 |xargs -0 mv -t ${2}
+
+snippet	niceeee
+alias	priorityyyyy
+	ionice -c 2 -n 7 nice -n 19 ${1}
