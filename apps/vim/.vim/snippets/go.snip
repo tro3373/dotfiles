@@ -121,13 +121,14 @@ snippet	struct_jsonnn
 	 	${2} string \`json:"${3},string"\`
 	}
 
-snippet	fmtprintlnnn
-alias	printlnnn
-	fmt.Println("${1}")
-
-snippet	fmtprintfff
-alias	printfff
+snippet	loglnnn
+	fmt.Println("${1}", ${2})
+snippet	logfff
+	fmt.Printf("${1}\n")
+snippet	logvvv
 	fmt.Printf("%#+v\n", ${1})
+snippet	logerrr
+	fmt.Printf("Failed to ${2}. Err:%+v\n", err)
 
 snippet	fmtprint_samplesss
 alias	print_samplesss
@@ -154,8 +155,8 @@ alias	print_samplesss
 	// %G: lage index then %E else %F
 
 snippet	openfileee
-	file, err := os.OpenFile(${1}, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	// file, err := os.OpenFile($1, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0664)
+	file, err := os.OpenFile(filepath.Clean(${1}), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)  //#nosec G306
+	// file, err := os.OpenFile(filepath.Clean($1), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0664)  //#nosec G306
 	if err != nil {
 		return fmt.Errorf("Failed to OpenFile %s, %w", $1, err)
 	}
@@ -335,7 +336,7 @@ snippet	filepathhh
 
 snippet	filereaddd
 	func useBufioScanner(fileName string) {
-		 fp, err := os.Open(fileName)
+		 fp, err := os.Open(filepath.Clean(fileName))
 		 if err != nil {
 		 	panic(err)
 		 }
@@ -370,7 +371,7 @@ snippet	iferrr
 	${0}
 snippet	ifexecerrr
 	if err := ${1}; err != nil {
-		log.Fatalf("==> Err:%+v\n", err)
+		return fmt.Errorf("Failed to ${1:#do somthing} %s: %w", "${2}", err)
 	}
 
 snippet	new_errors
@@ -382,6 +383,12 @@ alias		errors_new_fmt
 	errors.Errorf("Error: %s", "${1}")
 
 # See [今goのエラーハンドリングを無難にしておく方法（2021.09現在）](https://zenn.dev/nekoshita/articles/097e00c6d3d1c9)
+# - stacktraceが不要な場合
+#   - fmt.Errorfでラップし、errors.Isで判定する
+# - stacktraceが必要な場合
+#   - pkg/errors.Wrapでラップし、pkg/errors.Causeで判定する
+#   - log.Printf("%+v", err)でstacktraceを出力する
+#   - 新しいエラーを返す時はpkg/errors.Neworpkg/errors.Errorfを使う
 snippet	error_wrap_no_stackkk
 alias	wrap_error_no_stackkk
 	fmt.Errorf("Failed to ${1:#do somthing} %s: %w", "${2}", err)
@@ -406,9 +413,9 @@ alias	wrap_error_stack_causeee
 # File
 ###############################################################################
 snippet mkDirrr
-	os.Mkdir(${1}, ${2:0775})
+	os.Mkdir(${1}, 0775) //#nosec G301
 snippet mkDirAlll
-	os.MkdirAll(${1}, ${2:0775})
+	os.MkdirAll(${1}, 0775) //#nosec G301
 snippet rmDirrr
 	err := os.Remove(${1})
 snippet rmDirAlll
@@ -434,10 +441,10 @@ snippet touchhh
 snippet	fileWriteJsonnn
 alias		writeFileJsonnn
 	file, _ := json.MarshalIndent(data, "", " ")
-	_ = ioutil.WriteFile("test.json", file, 0644)
+	_ = ioutil.WriteFile("test.json", file, 0664) //#nosec G306
 snippet	fileReadJsonnn
 alias		readFileJsonnn
-	raw, err := ioutil.ReadFile("test.json")
+	raw, err := ioutil.ReadFile(filepath.Clean("test.json"))
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exist(1)
@@ -447,7 +454,7 @@ alias		readFileJsonnn
 snippet	fileWriteee
 alias		writeFileee
 	func WriteFile(filePath, data string) error {
-		return ioutil.WriteFile(filePath, []byte(data), 0644)
+		return ioutil.WriteFile(filePath, []byte(data), 0664) //#nosec G306
 	}
 snippet	fileReadIfExistttt
 alias		readFileIfExisttt
@@ -455,7 +462,7 @@ alias		readFileIfExisttt
 		if len(filePath) == 0 || !Exists(filePath) {
 			return "", nil
 		}
-		raw, err := ioutil.ReadFile(filePath)
+		raw, err := ioutil.ReadFile(filepath.Clean(filePath))
 		if err != nil {
 			return "", err
 		}
@@ -477,7 +484,7 @@ alias	scriptDirrr
 snippet	isEmptyDirrr
 alias	emptyDirrr
 	func IsEmptyDir(dirPath string) (bool, error) {
-		f, err := os.Open(dirPath)
+		f, err := os.Open(filepath.Clean(dirPath))
 		if err != nil {
 			return false, err
 		}
@@ -513,3 +520,9 @@ snippet	containsss
 		}
 		return false
 	}
+# Expect file permissions to be 0600, 0750
+# G301: Poor file permissions used when creating a directory
+# G302: Poor file permissions used with chmod
+# G306: Poor file permissions used when writing to a new file
+snippet	ignoreee
+	//#nosec G301 G302 G306

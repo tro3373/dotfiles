@@ -1,3 +1,9 @@
+# format slice
+
+```
+fmt.Printf("%v\n", []string{"1", "2"}) // Output [1, 2]
+```
+
 # go get with wildcard
 
 From `go help packages`
