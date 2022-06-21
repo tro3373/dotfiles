@@ -263,3 +263,11 @@ function cd_under_d() {
 }
 zle -N cd_under_d
 bindkey '^k' cd_under_d
+
+function _paste_png() {
+  has paste_png || return
+  paste_png
+  zle reset-prompt # redraw prompt
+}
+zle -N _paste_png
+bindkey '^e' _paste_png
