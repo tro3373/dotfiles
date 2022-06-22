@@ -1,3 +1,12 @@
+# Lower/Upper
+
+```
+# Lower
+sed -e 's/\(.*\)/\L\1/'
+# Upper
+sed -e 's/\(.*\)/\U\1/'
+```
+
 # Delete specify row
 
 ```
