@@ -50,10 +50,11 @@ main() {
   cd $tmpd
 
   log "==> Creating repository $name .."
-  hub init
+  git_init_allow_empty
   local _opt_create=
   [[ $private -eq 1 ]] && _opt_create="-p"
   hub create $_opt_create
+  git push -u origin main
 
   local _user_repo=$(git remote get-url origin | sed -e 's,^.*github.com.,,g' -e 's,.git,,g')
   # ghq get $_opt_create $_user_repo # -p option can clone via git protocol
