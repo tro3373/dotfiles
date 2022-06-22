@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+has() { command -v ${1} >&/dev/null; }
+main() {
+  if ! has split; then
+    echo "No split command exists" 1>&2
+    exit 1
+  fi
+  if [[ $# -eq 0 ]]; then
+    echo "Specify target file" 1>&2
+    exit 1
+  fi
+  local fnm=$(basename $1)
+  local count=${2:-10000}
+  split -l $count -d $1 $fnm.
+}
+main "$@"
