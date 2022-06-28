@@ -1,24 +1,62 @@
 #!/usr/bin/env bash
 
-#current_dir=$(pwd)
-#script_dir=$(cd "$(dirname $0)"; pwd)
+readonly command_name=$(basename $0)
+
+force=0
+args=()
 has() { command -v ${1} >&/dev/null; }
-sub() {
-  if [[ ! -e $f ]]; then
-    echo "=> No such file exist. $f" 1>&2
-    return
+usage() {
+  cat <<EOF
+
+chown easily
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help  : Show this usage
+      -f|--force : No confirm
+
+EOF
+}
+add_args() { args+=("$@"); }
+check() {
+  if [[ ! -p /dev/stdin && ${#args[@]} -eq 0 ]]; then
+    echo "=> Specify target" 1>&2
+    exit 1
   fi
-  echo "=> Changing Owner $u.$g $f with R option...(Enter to continue)" 1>&2
-  read _
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -f | --force) force=1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+  set -eo pipefail
+}
+sub() {
+  if [[ ! -e $f || $f == / ]]; then
+    echo "=> Invalid target. $f" 1>&2
+    exit 1
+  fi
+  if [[ $force -ne 1 ]]; then
+    echo "=> Changing Owner $u.$g $f with R option...(Enter to continue)" 1>&2
+    read _
+  fi
   sudo chown -R $u:$g $f
 }
 main() {
+  initialize "$@"
   local u=$(id -u -n)
   local g=$(id -g -n)
   if [ -p /dev/stdin ]; then
     while read -r f; do sub; done
   else
-    for f in "$@"; do sub; done
+    for f in "${args[@]}"; do sub; done
   fi
 }
 main "$@"
