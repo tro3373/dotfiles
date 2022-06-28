@@ -300,6 +300,14 @@ if g:is_linux
   set clipboard=unnamedplus
   " vmap <C-c> :w !xsel -ib<CR><CR>
   " vmap <C-y> :w !xsel -ib<CR><CR>
+  "
+  " unnamedplus: use clipboard in vim for linux.
+  " `set clipboard&`: Set clipboard option to default.(Support reload vimrc to fix add loop)
+  " `set clipboard^=unnamedplus`: Add `unnamedplus` option to first.
+  "   - Default clipboard options is `autoselect,exclude:cons\|linux`
+  "     - option will be excluded defined after `exclude`.
+  " set clipboard&
+  " set clipboard^=unnamedplus
 else
   set clipboard=unnamed
 endif
