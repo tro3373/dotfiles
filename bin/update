@@ -83,7 +83,7 @@ update_scoop() {
     )
   fi
   log "=> Updating pkgs.. ($list)"
-  $dummy scoop update "$list" || fix_scoop_for_wsl
+  $dummy scoop update $list || fix_scoop_for_wsl
 }
 update_msys() {
   update_scoop
