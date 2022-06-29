@@ -36,6 +36,7 @@ scoop install autohotkey
 scoop install google-japanese-input-np
 # scoop install googlechrome
 scoop install vim-kaoriya
+scoop install neovim
 scoop install windows-terminal
 # scoop install virtualbox-with-extension-pack-np@6.1.26
 scoop install vagrant
