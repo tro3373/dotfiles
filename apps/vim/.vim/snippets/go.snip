@@ -10,6 +10,9 @@ snippet	timefrommm
 alias	timeparseee
 	t, _ := time.Parse("20060102_150405", "20141231_000000")
 
+snippet	timeunixxx
+	t := time.Unix(${1}, 0)
+
 snippet	lognewww
 	log.New(os.Stderr, "", log.LstdFlags)
 
@@ -108,6 +111,7 @@ options	word
   }
 
 snippet	structtt
+alias	typeee
 	type ${1:#struct_name} struct {
 		${2:#variable} ${3:#type}
 	}
