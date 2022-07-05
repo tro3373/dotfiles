@@ -419,6 +419,14 @@ function! DeleteSelectedLineInvert() abort
   call SilentFExec(':%v//d')
 endfun
 command! DeleteSelectedLineInvert call DeleteSelectedLineInvert()
+function! TrimSelectedLine() abort
+  call SilentFExec(':%s/^.*'.histget('/',-1).'.*//g')
+endfun
+command! TrimSelectedLine call TrimSelectedLine()
+function! TrimSelectedLineInvert() abort
+  call SilentFExec(':%s/^\%(.*'.histget('/',-1).'.*\)\@!.*//g')
+endfun
+command! TrimSelectedLineInvert call TrimSelectedLineInvert()
 " 指定文字より後ろを削除
 function! DeleteAfter(...) abort
   if a:0 >= 1
