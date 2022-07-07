@@ -524,9 +524,23 @@ snippet	containsss
 		}
 		return false
 	}
+
 # Expect file permissions to be 0600, 0750
 # G301: Poor file permissions used when creating a directory
 # G302: Poor file permissions used with chmod
 # G306: Poor file permissions used when writing to a new file
 snippet	ignoreee
 	//#nosec G301 G302 G306
+
+snippet	deepCopyyy
+	func deepcopy(src interface{}, dst interface{}) (err error) {
+		b, err := json.Marshal(src)
+		if err != nil {
+				return err
+		}
+		err = json.Unmarshal(b, dst)
+		if err != nil {
+				return err
+		}
+		return nil
+	}
