@@ -213,12 +213,14 @@ endfun
 command! HugoHelperDateIsNow call HugoHelperDateIsNow()
 
 function! HugoHelperLastModIsNow()
+  " TODO no move cursor
   let strnow = GetHugoNowDate()
   exe 'g/^lastmod: /s/.*/lastmod: '.strnow.'/'
 endfun
 command! HugoHelperLastModIsNow call HugoHelperLastModIsNow()
 
 function! Hugolize() abort
+  " TODO copy slug/title from path?
   let strnow = GetHugoNowDate()
   let slug = '%h'
   let list = [
@@ -257,6 +259,7 @@ function! Chomp(string)
 endfunction
 
 function! SaveMemoInner(outdir, createDirectory) abort
+  " TODO with hugolize?
   let dir = a:outdir
   if !isdirectory(expand(dir))
     call mkdir(expand(dir))
@@ -654,3 +657,5 @@ function! MysqlDdlStripCols() abort
   %s/\(^.\{-}`\|`.*\)//g
 endfunction
 command! MysqlDdlStripCols call MysqlDdlStripCols()
+
+" TODO paste_png alias
