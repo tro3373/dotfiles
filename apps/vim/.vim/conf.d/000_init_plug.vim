@@ -224,16 +224,22 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'cohama/vim-smartinput-endwise'                      " for ruby (end 補完)
   Plug 'digitaltoad/vim-pug'                                " pug
 
-  " Markdown Preview 関連
-  Plug 'plasticboy/vim-markdown'
-  " " Plug 'rcmdnk/vim-markdown'
-  " Plug 'kannokanno/previm'
-  Plug 'tyru/open-browser.vim'
+  Plug 'tyru/open-browser.vim'                              " Open browser
+  Plug 'rcmdnk/vim-markdown'                                " Markdown syntax
 
+  " Markdown Preview 関連
+  " Plug 'kannokanno/previm'
+  " Plug 'plasticboy/vim-markdown'
+  " MEMO: Not work all. render quit in the middle
+  " Plug 'skanehira/preview-markdown.vim'                   " Preview in buffer. depends MichaelMure/mdr
+  " MEMO: deno is cool, but layout is..
+  " if executable('deno')
+  "   Plug 'vim-denops/denops.vim'
+  "   " Need chrome extension https://chrome.google.com/webstore/detail/cross-domain-cors/mjhpgnbimicffchbodmgfnemoghjakai/related?hl=ja
+  "   Plug 'kat0h/bufpreview.vim'
+  " endif
   " Preview in browser.
   Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm i'  }
-  " Preview in buffer. depends MichaelMure/mdr
-  Plug 'skanehira/preview-markdown.vim'
 
   if g:is_windows
     " Plug 'mattn/webapi-vim'                               " vim interface to Web API
