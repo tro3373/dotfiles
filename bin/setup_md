@@ -3,22 +3,30 @@
 readonly repo=tro3373/md
 readonly dst_d=$HOME/.md
 
-has() { command -v ${1} >&/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
 log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
-main() {
-  if [[ -e $dst_d ]]; then
-    log "=> Already $dst_d exist."
+rm_dstd_ifneeded() {
+  if [[ ! -e $dst_d ]]; then
     return
   fi
+  if [[ -L $dst_d && $src_d == "$(readlink "$dst_d")" ]]; then
+    log "=> Already $dst_d setupped."
+    return
+  fi
+  rm "$dst_d"
+}
+main() {
   if ! has ghq; then
     log "=> No ghq command exist."
     exit 1
   fi
-  local src_d=$(ghq list --full-path $repo)
+  local src_d
+  src_d=$(ghq list --full-path $repo)
   if [[ -z $src_d ]]; then
     ghq get git@github.com:$repo.git
   fi
-  src_d=$src_d/.md
+  # src_d=$src_d/.md
+  rm_dstd_ifneeded
   log "=> Linking $src_d to $dst_d.."
   ln -s $src_d $dst_d
   log "Done"
