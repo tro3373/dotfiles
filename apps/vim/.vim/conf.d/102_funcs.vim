@@ -164,20 +164,21 @@ function! Ctags() abort
 endfunction
 command! Ctags call Ctags()
 
-function! HugoHelperFrontMatterReorder()
-  exe 'g/^draft/m 1'
-  exe 'g/^date/m 2'
-  exe 'g/^title/m 3'
-  exe 'g/^slug/m 4'
-  exe 'g/^description/m 5'
-  exe 'g/^tags/m 6'
-  exe 'g/^categories/m 7'
-  " create date taxonomy
-  exe 'g/^date/co 8'
-  exe ':9'
-  exe ':s/.*\(\d\{4\}\)-\(\d\{2\}\).*/\1 = ["\2"]'
-endfun
-command! HugoHelperFrontMatterReorder call HugoHelperFrontMatterReorder()
+" function! HugoHelperFrontMatterReorder()
+"   exe 'g/^draft/m 1'
+"   exe 'g/^date/m 2'
+"   exe 'g/^lastmod/m 3'
+"   exe 'g/^title/m 4'
+"   exe 'g/^slug/m 5'
+"   exe 'g/^description/m 6'
+"   exe 'g/^tags/m 6'
+"   exe 'g/^categories/m 7'
+"   " " create date taxonomy
+"   " exe 'g/^date/co 8'
+"   " exe ':9'
+"   " exe ':s/.*\(\d\{4\}\)-\(\d\{2\}\).*/\1 = ["\2"]'
+" endfun
+" command! HugoHelperFrontMatterReorder call HugoHelperFrontMatterReorder()
 
 function! HugoHelperHighlight(language)
   normal! I{{< highlight language_placeholder >}}
@@ -188,12 +189,12 @@ command! -nargs=? HugoHelperHighlight call HugoHelperHighlight(<f-args>)
 
 
 function! HugoHelperDraft()
-  exe 'g/^draft/s/false/true'
+  exe 'g/^draft/s/false/true|norm!``'
 endfun
 command! HugoHelperDraft call HugoHelperDraft()
 
 function! HugoHelperUndraft()
-  exe 'g/^draft/s/true/false'
+  exe 'g/^draft/s/true/false|norm!``'
 endfun
 command! HugoHelperUndraft call HugoHelperUndraft()
 
@@ -208,41 +209,41 @@ endfun
 function! HugoHelperDateIsNow()
   " exe 'g/^date/s/".*"/\=strftime("%FT%T%z")/'
   let strnow = GetHugoNowDate()
-  exe 'g/^date: /s/.*/date: '.strnow.'/'
+  exe 'g/^date: /s/.*/date: '.strnow.'/|norm!``'
 endfun
 command! HugoHelperDateIsNow call HugoHelperDateIsNow()
 
 function! HugoHelperLastModIsNow()
-  " TODO no move cursor
+  " MEMO no move cursor
+  " [macvim - How to run a search and replace command without cursor moving in Vim? - Stack Overflow](https://stackoverflow.com/questions/10468324/how-to-run-a-search-and-replace-command-without-cursor-moving-in-vim)
   let strnow = GetHugoNowDate()
-  exe 'g/^lastmod: /s/.*/lastmod: '.strnow.'/'
+  exe 'g/^lastmod: /s/.*/lastmod: '.strnow.'/|norm!``'
 endfun
 command! HugoHelperLastModIsNow call HugoHelperLastModIsNow()
 
 function! Hugolize() abort
-  " TODO copy slug/title from path?
   let strnow = GetHugoNowDate()
-  let slug = '%h'
+ " slug form dirname with remove `yyyy-mm-dd-`
+ " TODO Support not in target md directory case
+  let slug = expand('%:h:t')[11:]
+ " TODO title from h1
+
   let list = [
   \ '---',
   \ 'draft: false',
-  \ 'slug: the-title-of-the-contents',
-  \ 'title: The tilte of the contents',
-  \ '# cover: img.jpg',
-  \ 'useRelativeCover: true',
-  \ 'categories:',
-  \ '  - tech',
-  \ '# tags:',
-  \ '#   - AWS',
-  \ '#   - ApiGateway',
   \ 'date: '.strnow,
   \ 'lastmod: '.strnow,
+  \ 'cover: img.png',
+  \ 'useRelativeCover: true',
   \ 'comments: true      # set false to hide Disqus comments',
   \ 'share: true         # set false to share buttons',
   \ 'menu: ""            # set "main" to add this content to the main menu',
-  \ '# aliases:',
-  \ '#   - /ubuntu-server-14-04-insutorukarakvmhuan-jing-gou-zhu-made/',
-  \ '# image: /images/2015/06/aaaaaaaa-1.jpg',
+  \ 'slug: '.slug,
+  \ 'title: '.slug,
+  \ 'categories:',
+  \ '  - tech',
+  \ 'tags:',
+  \ '  - golang',
   \ '---',
   \ ]
   let i = 0
@@ -258,8 +259,7 @@ function! Chomp(string)
   return trim(a:string)
 endfunction
 
-function! SaveMemoInner(outdir, createDirectory) abort
-  " TODO with hugolize?
+function! SaveMemoInner(outdir, createDirectory, withHugolize) abort
   let dir = a:outdir
   if !isdirectory(expand(dir))
     call mkdir(expand(dir))
@@ -278,16 +278,20 @@ function! SaveMemoInner(outdir, createDirectory) abort
     let name = "index"
   endif
   exe ":w ".dir."/".name.".md"
+  if a:withHugolize == 1
+    call Hugolize()
+    exe ":w"
+  endif
   return 0
 endfun
 
 function! SaveMemo() abort
-  call SaveMemoInner("~/works/00_memos", 0)
+  call SaveMemoInner("~/works/00_memos", 0, 0)
 endfun
 command! SaveMemo call SaveMemo()
 
 function! SaveMd() abort
-  call SaveMemoInner("~/.md", 1)
+  call SaveMemoInner("~/.md/.md", 1, 1)
 endfun
 command! SaveMd call SaveMd()
 
