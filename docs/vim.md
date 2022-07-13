@@ -1,6 +1,77 @@
 Vim Tips
 =================================================================
 
+# All paragraph into a single line
+
+see help *edit-paragraph-join*
+
+```
+:g/./,/^$/join
+```
+
+# global
+
+When the command is used recursively, it only works on one line.  Giving a
+range is then not allowed. This is useful to find all lines that match a
+pattern and do not match another pattern:
+
+```vim
+:g/found/v/notfound/{cmd}
+```
+
+To execute a non-Ex command, you can use the `:normal` command: >
+
+```vim
+:g/pat/normal {commands}
+```
+
+For ":v" and ":g!" the command is executed for each not
+marked line.  If a line is deleted its mark disappears.
+
+# Current filename, Current directory, etc...
+
+Register `%` contains the name of the current file, and register `#` contains the name of the alternate file.
+
+- In insert mode, type Ctrl-R then % to insert the name of the current file.
+- In command mode (after typing a colon), type Ctrl-R then % to insert the name of the current file. The inserted name can then be edited to create a similar name.
+- In normal mode, type "%p to put the name of the current file after the cursor (or "%P to insert the name before the cursor).
+
+```vim
+" directory/name of file (relative to the current working directory of /abc)
+:echo @%                  " def/my.txt
+
+" name of file ('tail')
+:echo expand('%:t')       " my.txt
+
+" full path
+:echo expand('%:p')       " /abc/def/my.txt
+
+" directory containing file ('head')
+:echo expand('%:p:h')     " /abc/def
+
+" First get the full path with :p (/abc/def/my.txt), then get the head of that with :h (/abc/def), then get the tail of that with :t (def)
+:echo expand('%:p:h:t')   " def
+
+" name of file less one extension ('root')
+:echo expand('%:r')       " def/my
+
+" name of file's extension ('extension')
+:echo expand('%:e')       " txt
+
+```
+
+- The following commands insert lines consisting of the full path of the current and alternate files into the buffer
+```
+:put =expand('%:p')
+:put =expand('#:p')
+```
+
+# Get EOF line number
+
+```
+line('$')
+```
+
 # Environment and Clipboard and Register
 
 ## Windows

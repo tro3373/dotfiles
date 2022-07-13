@@ -1,3 +1,21 @@
+# go uninstall
+- Show dependency and clean
+- Remove src under codes if needed.
+- Remove bin under binary if needed.
+
+# Show go installed dependency
+
+> The -i flag causes clean to remove the corresponding installed
+> archive or binary (what 'go install' would create).
+
+> The -n flag causes clean to print the remove commands it would execute,
+> but not run them.
+
+```
+go clean -i -n github.com/mvdan/sh/cmd/shfmt
+```
+
+
 # format slice
 
 ```
