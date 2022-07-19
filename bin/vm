@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+main() {
+  local post_path
+  post_path=$HOME/.md/content/post
+  cd ~/.md || exit 1
+  rg -l "draft: *true" "$post_path"/ | v
+}
+main
