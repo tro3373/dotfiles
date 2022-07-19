@@ -9,7 +9,13 @@ rm_dstd_ifneeded() {
   if [[ ! -e $dst_d ]]; then
     return
   fi
-  if [[ -L $dst_d && $src_d == "$(readlink "$dst_d")" ]]; then
+  if [[ ! -L $dst_d ]]; then
+    local timestamp
+    timestamp=$(date +%Y%m%d.%H%M%S)
+    mv "$dst_d" "$dst_d.$timestamp"
+    return
+  fi
+  if [[ $src_d == "$(readlink "$dst_d")" ]]; then
     log "=> Already $dst_d setupped."
     return
   fi
@@ -28,7 +34,7 @@ main() {
   # src_d=$src_d/.md
   rm_dstd_ifneeded
   log "=> Linking $src_d to $dst_d.."
-  ln -s $src_d $dst_d
+  ln -s "$src_d" "$dst_d"
   log "Done"
 }
 main "$@"
