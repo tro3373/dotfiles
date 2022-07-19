@@ -44,19 +44,24 @@ snippet	error_method
 	error() { echo "$*" 1>&2; }
 
 snippet	command_name
-	readonly command_name=$(basename \$0)
+	readonly command_name
+	command_name=$(basename \$0)
 
 snippet	current_dir
-	readonly current_dir=$(pwd)
+	readonly current_dir
+	current_dir=$(pwd)
 
 snippet	script_dir
-	readonly script_dir=$(cd "$(dirname ${BASH_SOURCE:-\$0})"; pwd)
+	readonly script_dir
+	script_dir=$(cd "$(dirname "${BASH_SOURCE:-\$0}")" && pwd)
 
 snippet	script_real_dir
-	readonly script_dir=$(cd "$(dirname $(readlink -f \$0))"; pwd)
+	readonly script_dir
+	script_dir=$(cd "$(dirname "$(readlink -f "\$0")")" && pwd)
 
 snippet	dotbin
-	readonly dotbin=${DOTPATH:-~/.dot}/bin
+	readonly dotbin
+	dotbin=${DOTPATH:-~/.dot}/bin
 
 # http://d.hatena.ne.jp/adragoona/20130929/1380437722
 snippet	while_read_line
@@ -72,7 +77,7 @@ snippet	readwhil
 	done
 
 snippet	has
-	has() { command -v \${1} >& /dev/null; }
+	has() { command -v "\${1}" >&/dev/null; }
 snippet	hass
 	hass() {
 		for arg in "\$@"; do
@@ -165,7 +170,8 @@ snippet	unixtime3n
 	local unixtime=$(date +%s%3N)
 
 snippet	timestamp
-	readonly timestamp=$(date +%Y%m%d.%H%M%S)
+	readonly timestamp
+	timestamp=$(date +%Y%m%d.%H%M%S)
 
 snippet	readuser
 	read -p  "user: " user
@@ -233,7 +239,8 @@ snippet	main
 
 snippet	usaaggee
 alias	helpppp
-	readonly command_name=$(basename \$0)
+	readonly command_name
+	command_name=$(basename \$0)
 	usage() {
 		cat <<EOF
 
@@ -338,7 +345,8 @@ alias	red
 	readonly
 
 snippet	initializzzz
-	readonly command_name=$(basename \$0)
+	readonly command_name
+	command_name=$(basename \$0)
 	dummy="echo"
 	is_dummy() { [[ -n $dummy ]]; }
 	args=()
