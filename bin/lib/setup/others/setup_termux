@@ -31,11 +31,12 @@ ink() {
       ;;
   esac
 
+  # shellcheck disable=SC2059
   printf "${open}${color}${text}${close}\n" 1>&2
 }
 log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink red; }
 log_skip() { log "===> Already setupped."; }
-has() { command -v ${1} >&/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
 
 setup_bin() {
   [[ -e ~/bin ]] && return
@@ -54,6 +55,7 @@ setup_bashrc() {
   log "==> Setting up $target..."
   [[ -e $target ]] && log_skip && return
   cat <<'EOF' >>$target
+# [[ $SHLVL = 1 ]] && termux-chroot
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -l'
@@ -65,6 +67,7 @@ setup_pkgs() {
   log "==> Update & Upgradeing pkgs...(termux-change-repo needed...)"
   apt update -y
   apt upgrade -y
+  pkg install -y proot
 }
 
 setup_ssh_auth_keys() {
@@ -118,6 +121,12 @@ setup_ytdlp() {
   pip install yt-dlp
 }
 
+setup_ydl() {
+  log "==> Setup ydl..."
+  has ydl && log_skip && return
+  # TODO
+}
+
 setup_upd() {
   local target=upd
   log "==> Setup $target..."
@@ -126,7 +135,7 @@ setup_upd() {
   chmod 755 ~/bin/$target
 }
 
-cat_url_opener() {
+cat_url_opener_old() {
   # -f, --format FORMAT :  Video format code, see the "FORMAT SELECTION" for all the info
   #       bestvideo[height<=1280][ext=mp4]+bestaudio[ext=m4a]
   #       bestvideo[ext=mp4][height<=720]+bestaudio
@@ -148,7 +157,28 @@ yt-dlp \
   -o '~/storage/downloads/%(id)s-%(title)s.%(ext)s' \
   $1
 EOF
+}
 
+cat_url_opener() {
+  cat <<'EOF'
+#!/data/data/com.termux/files/usr/bin/bash
+
+has() { command -v "${1}" >&/dev/null; }
+main() {
+  if ! has termux-chroot; then
+    echo "No termux-chroot exist" 1>&2
+    return
+  fi
+  if ! termux-chroot "test -e /etc/resolv.conf && grep nameserver /etc/resolv.conf" >&/dev/null; then
+    termux-chroot "echo 'nameserver 8.8.8.8' >>/etc/resolv.conf /etc/resolv.conf"
+  fi
+  if ! pgrep ydl >&/dev/null; then
+    nohup termux-chroot /home/bin/ydl &
+  fi
+  am start -a android.intent.action.VIEW -d "http://localhost:3000?url=$@"
+}
+main "$@"
+EOF
 }
 
 setup_url_opener() {
@@ -159,6 +189,7 @@ setup_url_opener() {
   setup_ffmpeg
   setup_youtubedl
   setup_ytdlp
+  setup_ydl
   setup_upd
   cat_url_opener >>~/bin/$target
   chmod 755 ~/bin/$target
@@ -175,8 +206,9 @@ setup_file_editor() {
   log "==> Setup $target..."
   has $target && log_skip && return
   setup_nvim
-  local _path=$(which nvim)
-  ln -s $_path ~/bin/$target
+  local _path
+  _path=$(which nvim)
+  ln -s "$_path" ~/bin/$target
 }
 
 main() {
