@@ -127,11 +127,20 @@ setup_ydl() {
   # TODO
 }
 
+setup_start_ydl() {
+  local target=start_ydl
+  log "==> Setup $target..."
+  has $target && log_skip && return
+  echo 'termux-chroot /home/bin/ydl' >>~/bin/$target
+  chmod 755 ~/bin/$target
+}
+
 setup_upd() {
   local target=upd
   log "==> Setup $target..."
   has $target && log_skip && return
-  echo 'pip install -U yt-dlp youtube-dl' >>~/bin/$target
+  # echo 'pip install -U youtube-dl' >>~/bin/$target
+  echo 'pip install -U yt-dlp' >>~/bin/$target
   chmod 755 ~/bin/$target
 }
 
@@ -187,9 +196,10 @@ setup_url_opener() {
   has $target && log_skip && return
   setup_python
   setup_ffmpeg
-  setup_youtubedl
+  # setup_youtubedl
   setup_ytdlp
   setup_ydl
+  setup_start_ydl
   setup_upd
   cat_url_opener >>~/bin/$target
   chmod 755 ~/bin/$target
