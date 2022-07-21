@@ -135,14 +135,14 @@ setup_start_ydl() {
   chmod 755 ~/bin/$target
 }
 
-setup_upd() {
-  local target=upd
-  log "==> Setup $target..."
-  has $target && log_skip && return
-  # echo 'pip install -U youtube-dl' >>~/bin/$target
-  echo 'pip install -U yt-dlp' >>~/bin/$target
-  chmod 755 ~/bin/$target
-}
+# setup_upd() {
+#   local target=upd
+#   log "==> Setup $target..."
+#   has $target && log_skip && return
+#   # echo 'pip install -U youtube-dl' >>~/bin/$target
+#   echo 'pip install -U yt-dlp' >>~/bin/$target
+#   chmod 755 ~/bin/$target
+# }
 
 cat_url_opener_old() {
   # -f, --format FORMAT :  Video format code, see the "FORMAT SELECTION" for all the info
@@ -200,7 +200,7 @@ setup_url_opener() {
   setup_ytdlp
   setup_ydl
   setup_start_ydl
-  setup_upd
+  # setup_upd
   cat_url_opener >>~/bin/$target
   chmod 755 ~/bin/$target
 }
