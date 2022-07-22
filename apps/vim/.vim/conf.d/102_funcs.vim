@@ -223,10 +223,11 @@ command! HugoHelperLastModIsNow call HugoHelperLastModIsNow()
 
 function! Hugolize() abort
   let strnow = GetHugoNowDate()
- " slug form dirname with remove `yyyy-mm-dd-`
- " TODO Support not in target md directory case
+  " slug form dirname with remove `yyyy-mm-dd-`
+  " TODO Support not in target md directory case
   let slug = expand('%:h:t')[11:]
- " TODO title from h1
+  " TODO title from h1
+  let title = getline(search("^#"))[2:]
 
   let list = [
   \ '---',
@@ -239,7 +240,7 @@ function! Hugolize() abort
   \ 'share: true         # set false to share buttons',
   \ 'menu: ""            # set "main" to add this content to the main menu',
   \ 'slug: '.slug,
-  \ 'title: '.slug,
+  \ 'title: '.title,
   \ 'categories:',
   \ '  - tech',
   \ 'tags:',
@@ -657,6 +658,9 @@ function! Open()
 endfunction
 command! Open call Open()
 
+" Strip column list from mysql ddl sql
+"   ex) src: ^___`target_col_name`___
+"       dst: target_col_name
 function! MysqlDdlStripCols() abort
   %s/\(^.\{-}`\|`.*\)//g
 endfunction
