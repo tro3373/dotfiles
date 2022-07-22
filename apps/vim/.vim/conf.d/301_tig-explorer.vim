@@ -19,7 +19,5 @@ endif
 
 " nnoremap sv :<C-u>vs<CR>
 " nnoremap <Leader>s :TigStatus<CR>
-nnoremap <Leader>s :TigOpenProjectRootDir<CR>
-nnoremap <Leader>t :TigOpenCurrentFile<CR>
-
-
+nnoremap <Leader>t :tabnew %<cr>:TigOpenProjectRootDir<cr>
+nnoremap <Leader>T :tabnew %<cr>:TigOpenCurrentFile<cr>
