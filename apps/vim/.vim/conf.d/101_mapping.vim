@@ -208,7 +208,7 @@ command! -nargs=? Doc call Doc(<f-args>)
 nmap <Leader>0 :Settings<CR>
 nmap <Leader>9 :tabe $HOME/.vim/snippets<CR>
 nmap <Leader>8 :Doc<CR>
-nmap <Leader>7 :tabe $HOME/works/00_memos<CR>
+nmap <Leader>7 :tabe $HOME/.vim/plugged<CR>
 nmap <Leader>6 :tabe $HOME/.vim/backup<CR>
 nmap <Leader>h :h <C-R><C-W><CR>
 
