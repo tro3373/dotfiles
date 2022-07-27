@@ -240,7 +240,16 @@ nnoremap sP :<C-u>bp<CR>
 " タブ 新規
 nnoremap st :<C-u>tabnew<CR>
 " タブで複製
-nnoremap sc :<C-u>tabnew %<CR>
+" nnoremap sc :<C-u>tabnew %<CR>
+function! TabNewCurrentWithCursor()
+  let l:view = winsaveview()
+  " let l:pos = getpos(".")
+  :tabnew %
+  " call cursor(l:pos[1], l:pos[2])
+  call winrestview(l:view)
+endfunction
+command! TabNewCurrentWithCursor call TabNewCurrentWithCursor()
+nnoremap sc :TabNewCurrentWithCursor<CR>
 " タブ一覧
 nnoremap sT :<C-u>Unite tab -direction=botright -auto-resize<CR>
 nnoremap sb :<C-u>Unite buffer_tab -direction=botright -auto-resize -buffer-name=file<CR>
