@@ -1,6 +1,16 @@
 Vim Tips
 =================================================================
 
+# Case sensitive comparison
+
+```
+:let var = "text"
+:echo var ==# "text"
+"# => 1
+:echo var ==# "TEXT"
+"# => 0
+```
+
 # All paragraph into a single line
 
 see help *edit-paragraph-join*
