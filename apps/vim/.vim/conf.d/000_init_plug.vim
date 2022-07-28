@@ -125,7 +125,7 @@ call plug#begin('$HOME/.vim/plugged')
   " =================================================================
   " Feature/Funcs Search/Finds/Analyze
   " =================================================================
-  Plug 'rking/ag.vim'                                     " SilverSearcher
+  " Plug 'rking/ag.vim'                                     " SilverSearcher
   if !g:is_windows && !g:is_cygmsys2
       Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
         \ 'do': './install --all' }                       " FZF

@@ -14,6 +14,17 @@ endif
 " nnoremap ,j :FZF -q <C-R><C-W>
 " vnoremap ,j y:FZF -q <C-R>"
 
+" [【解説】開発ライブ実況 #1 (Vim / Go) 編 by メルペイ Architect チーム Backend エンジニア #mercari_codecast | メルカリエンジニアリング](https://engineering.mercari.com/blog/entry/mercari_codecast_1/)
+function! s:find_rip_grep() abort
+  call fzf#vim#grep(
+      \   'rg --ignore-file ~/.ignore --column --line-number --no-heading --hidden --smart-case .+',
+      \   1,
+      \   fzf#vim#with_preview({'options': '--delimiter : --nth 4..'}, 'right:50%', '?'),
+      \   0,
+      \)
+endfunction
+nnoremap <silent> <Leader>g :<C-u>silent call <SID>find_rip_grep()<CR>
+
 function! MyFZFQ(q) abort
   let l:d = GetGitRoot()
   " echo l:d
