@@ -25,11 +25,9 @@ function! s:find_rip_grep() abort
 endfunction
 nnoremap <silent> <Leader>g :<C-u>silent call <SID>find_rip_grep()<CR>
 
-function! MyFZFQ(q) abort
-  let l:d = GetGitRoot()
-  " echo l:d
-  " exe(":FZF " . l:d)
-  :call fzf#vim#files(l:d, {'options': ['--query=' . a:q, '--layout=reverse', '--info=inline', '--preview', 'cat {}']})
+function! s:find_rip_grep_files(q) abort
+  let l:target_dir = GetGitRoot()
+  :call fzf#vim#files(l:target_dir, {'options': ['--query=' . a:q, '--layout=reverse', '--info=inline', '--preview', 'cat {}']})
 endfunction
-nnoremap <Leader>k <ESC>:call MyFZFQ('')<ENTER>
-nnoremap <Leader>l <ESC>:call MyFZFQ(expand('<cword>'))<ENTER>
+nnoremap <silent> <Leader>l :<C-u>silent call <SID>find_rip_grep_files('')<CR>
+nnoremap <silent> <Leader>k :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'))<CR>
