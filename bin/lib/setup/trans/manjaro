@@ -104,6 +104,8 @@ EOF
 
   if ! grep Japan /etc/pacman.d/mirrorlist >&/dev/null; then
     exe sudo pacman-mirrors -c Japan
+    # Server = http://ftp.tsukuba.wide.ad.jp/Linux/manjaro/stable/$repo/$arch
+    # Server = http://ftp.riken.jp/Linux/manjaro/stable/$repo/$arch
   fi
   exe sudo pacman -Syyu
 
