@@ -14,7 +14,7 @@ pre_setup() {
 
 load_update_arg_apps() {
   # shellcheck disable=SC2034
-  read -a args < <(
+  read -r -a args < <(
     echo "$(default_apps) xclip snap fcitx5-mozc hackgen udev-gothic gnome-font-viewer"
   )
 }
@@ -29,7 +29,7 @@ _setup_user_group() {
   fi
   exe sudo gpasswd -a "$(whoami)" wheel
   # shellcheck disable=SC2154
-  exe sudo mv /etc/sudoers.d/10-installer $_backup_root/
+  exe sudo mv /etc/sudoers.d/10-installer "$_backup_root"/
 }
 
 _setup_visudo_editor() {
@@ -73,7 +73,7 @@ _install_apps() {
   while read -r line; do
     [[ -z $line ]] && continue
     [[ $line =~ ^#.* ]] && continue
-    pacman -Qs $line >&/dev/null && continue
+    pacman -Qs "$line" >&/dev/null && continue
     apps+=("$line")
   done < <(
     cat <<EOF
@@ -108,7 +108,7 @@ EOF
   exe sudo pacman -Syyu
 
   # shellcheck disable=SC2154
-  exe $def_install_cmd "${apps[@]}"
+  exe "$def_install_cmd" "${apps[@]}"
 
   # TODO install org.gnome.shell.extensions & dash-to-dock
   # https://extensions.gnome.org/extension/307/dash-to-dock/
