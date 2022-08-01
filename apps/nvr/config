@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+install_common() {
+  if ! has pip; then
+    log "No pip installed"
+    return
+  fi
+  exe pip install neovim-remote
+}
+install_msys()   { not_supported; }
+setting_common() {
+  :
+}
+setting_msys()   { no_settings; }
+
