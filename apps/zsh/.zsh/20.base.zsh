@@ -51,9 +51,10 @@ export LC_COLLATE=C # for default sort
 
 # Editor
 export EDITOR=vim
+has nvim && export EDITOR=nvim
 export CVSEDITOR="${EDITOR}"
 export SVN_EDITOR="${EDITOR}"
-export GIT_EDITOR="${EDITOR}"
+export GIT_EDITOR="${GIT_EDITOR:-${EDITOR}}"
 
 # Pager
 export PAGER=less
