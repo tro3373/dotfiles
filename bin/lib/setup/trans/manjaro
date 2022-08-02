@@ -95,6 +95,7 @@ meld
 gnome-tweaks
 # for nautilus smb:// access
 gvfs-smb
+python-pip
 EOF
   )
 
