@@ -152,6 +152,21 @@ if has("autocmd")
   " ctagsファイルの設定ファイル
   " autocmd BufNewFile,BufRead *.rb set tags+=;$HOME/.ruby.ctags;
   " autocmd BufNewFile,BufRead *.js set tags+=;$HOME/.javascript.ctags;
+  if exists('##TermOpen')
+    " tig から開く vim? にTermOpenイベントがないため
+    " エラーが発生するので有効な場合のみ
+    augroup terminal
+      autocmd!
+      " " terminal開始時にインサートモードを開始する(302-tig-nvr起動時のみ)
+      " autocmd BufWinEnter,WinEnter term://* startinsert
+      " terminal開始時にインサートモードを開始する(常に)
+      autocmd TermOpen term://* startinsert
+      " " terminal バッファから抜ける際ににインサートモードを解除する
+      " autocmd BufLeave term://* stopinsert
+      " terminal JOBの終了ステータスが成功であれば、バッファを閉じる
+      autocmd TermClose * if !v:event.status | exe 'bdelete! '..expand('<abuf>') | endif
+    augroup END
+  endif
 endif
 
 

@@ -64,6 +64,8 @@ noremap gV `[v`]
 nmap <Leader>a :%y<CR>
 " Esc Esc でハイライトOFF nohlsearch
 nnoremap <Esc><Esc> :noh<CR>
+" Terminalのインサートモードを抜けるのにEscを使用する
+tnoremap <Esc><Esc> <C-\><C-n>
 " インサートモードを抜けたときIME Off
 " inoremap <silent> <ESC> <ESC>:set iminsert=0<CR>
 " ビジュアル選択後のインデント調整で２回目以降もビジュアル選択を残す設定

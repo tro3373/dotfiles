@@ -2,6 +2,11 @@ if !g:plug.is_installed("tig-explorer.vim")
   finish
 endif
 
+if has('nvim')
+  " Fix: `Unknown function: stdpath` error
+  let $GIT_EDITOR = 'nvim'
+endif
+
 " Following commands are available on tig launched from tig-explorer
 " ```
 " e, <Ctrl-o>: edit on existing tab
