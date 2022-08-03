@@ -86,6 +86,15 @@ alias d="docker"
 alias s="systemctl"
 alias cddot="cd $DOTPATH"
 alias history="history -i"
+if has mmv; then
+  mmv() {
+    if [[ $# -ne 0 ]]; then
+      command mmv "$@"
+      return
+    fi
+    command mmv ./*
+  }
+fi
 
 gm() {
   [[ -z $* ]] && echo "Specify commit message" 1>&2 && return
