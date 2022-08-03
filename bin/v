@@ -49,6 +49,7 @@ fire_files() {
 main() {
   ! has fzf && echo "No fzf exist" 1>&2 && exit 1
   local files=$(fire_files "$@")
+  [[ -z $files ]] && return
   local _vim=vim
   has nvim && _vim=nvim
   $_vim -p $files </dev/tty
