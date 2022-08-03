@@ -15,9 +15,12 @@ main() {
     linux*) _open=xdg-open ;;
     cygwin*) _open=cygstart ;;
     msys*) _open=explorer ;;
-    wsl*) _open=explorer.exe && args=(".") ;;
+    wsl*) _open=explorer.exe ;;
   esac
-  if [[ $OSTYPE == "msys" || $OSTYPE == "cygwin" ]]; then
+  if [[ $_ostype == "wsl" ]]; then
+    args=("$(wslpath -w "${args[@]}")")
+  fi
+  if [[ $_ostype == "msys" || $_ostype == "cygwin" ]]; then
     args=("$(cygpath -aw "${args[@]}")")
   fi
   echo "==> open ${args[*]}" 1>&2
