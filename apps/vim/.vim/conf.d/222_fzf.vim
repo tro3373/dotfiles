@@ -15,15 +15,15 @@ endif
 " vnoremap ,j y:FZF -q <C-R>"
 
 " [【解説】開発ライブ実況 #1 (Vim / Go) 編 by メルペイ Architect チーム Backend エンジニア #mercari_codecast | メルカリエンジニアリング](https://engineering.mercari.com/blog/entry/mercari_codecast_1/)
-function! s:find_rip_grep() abort
+function! s:find_rip_grep(q) abort
   call fzf#vim#grep(
       \   'rg --ignore-file ~/.ignore --column --line-number --no-heading --hidden --smart-case .+',
       \   1,
-      \   fzf#vim#with_preview({'options': '--delimiter : --nth 4..'}, 'right:50%', '?'),
+      \   fzf#vim#with_preview({'options': '--query=' . a:q . ' --delimiter : --nth 4..'}, 'right:50%', '?'),
       \   0,
       \)
 endfunction
-nnoremap <silent> <Leader>g :<C-u>silent call <SID>find_rip_grep()<CR>
+nnoremap <silent> <Leader>g :<C-u>silent call <SID>find_rip_grep(expand('<cword>'))<CR>
 
 function! s:find_rip_grep_files(q) abort
   let l:target_dir = GetGitRoot()
