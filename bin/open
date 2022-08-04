@@ -18,7 +18,13 @@ main() {
     wsl*) _open=explorer.exe ;;
   esac
   if [[ $_ostype == "wsl" ]]; then
-    args=("$(wslpath -w "${args[@]}")")
+    # cmd.exe /C start http://localhost
+    if [[ "${args[*]}" =~ ^https?://.* ]]; then
+      _open=cmd.exe
+      args=("/C" "start" "${args[@]}")
+    else
+      args=("$(wslpath -w "${args[@]}")")
+    fi
   fi
   if [[ $_ostype == "msys" || $_ostype == "cygwin" ]]; then
     args=("$(cygpath -aw "${args[@]}")")
