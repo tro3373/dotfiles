@@ -49,3 +49,15 @@ snippet	creannn
 
 snippet	timestamppp
 	timestamp := $(shell date '+%Y%m%d.%H%M%S')
+
+snippet	taggg
+	SERVICE := api
+	TIMESTAMP := $(shell date '+%Y%m%d.%H%M%S')
+	tag:
+		@tag="Release_${SERVICE}_${TIMESTAMP}" && git tag "$$tag" && echo "==> $$tag tagged."
+snippet	tagvvv
+	export APP_VER := 1.0.0
+	tag:
+		@tag="v${APP_VER}" && git tag "$$tag" && echo "==> $$tag tagged."
+snippet	ownerrr
+	export OWNER := $(if $(OWNER),$(OWNER),$(shell git config --get remote.origin.url |sed -e 's,^.*:,,g' -e 's,/.*,,g'))
