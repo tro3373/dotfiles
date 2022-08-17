@@ -1,3 +1,11 @@
+# Use dinamic variable
+
+```
+_setup-%:
+	npm i -g ${*}
+setup: _setup-serverless _setup-eslint _setup-prettier _setup-eslint-config-prettier
+```
+
 # `=` と `:=` と `?=`
 
 - `:=` : 即時評価

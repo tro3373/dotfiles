@@ -1,6 +1,19 @@
 Vim Tips
 =================================================================
 
+# Replace selected by shell result
+
+```
+# select row by `V`
+:!sh
+```
+
+# Execute buffer
+
+```
+:w !sh
+```
+
 # Case sensitive comparison
 
 ```

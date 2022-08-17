@@ -1,3 +1,19 @@
+# Parameter Expansion
+
+```
+var=HeyThere
+echo ${var,,}
+heythere
+```
+
+```
+${var^}     #Heythere
+${var^^}    #HEYTHERE
+${var,}     #heyThere
+${var,,}    #heythere
+```
+
+
 # bash chips
 
 ## Priority of process
