@@ -182,7 +182,8 @@ main() {
     termux-chroot "echo 'nameserver 8.8.8.8' >>/etc/resolv.conf /etc/resolv.conf"
   fi
   if ! pgrep ydl >&/dev/null; then
-    nohup termux-chroot /home/bin/ydl &
+    # nohup termux-chroot /home/bin/ydl &
+    nohup start_ydl &
   fi
   am start -a android.intent.action.VIEW -d "http://localhost:3000?url=$@"
 }
