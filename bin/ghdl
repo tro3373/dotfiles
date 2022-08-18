@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+main() {
+  local owner=$1
+  local repo=$2
+  local grep_key=${3}
+  local tag=${4:-latest}
+  if [[ -z $owner || -z $repo ]]; then
+    echo "Specify owner and repo" 1>&2
+    exit 1
+  fi
+  # shellcheck disable=SC2155
+  local url=$(
+    curl -fSsL "https://api.github.com/repos/$owner/$repo/releases/$tag" |
+      grep browser_download_url |
+      if [[ -z $grep_key ]]; then
+        cat - | grep -v checksums
+      else
+        cat - | grep -E "$grep_key"
+      fi |
+      head -1 |
+      awk '{print $2}' |
+      sed -e 's,",,g'
+  )
+  if [[ -z $url ]]; then
+    echo "No target is filtered." 1>&2
+    exit 1
+  fi
+  echo "==> Downloding from $url.." 1>&2
+  curl -fSsLO "$url"
+  echo "==> Done" 1>&2
+}
+main "$@"

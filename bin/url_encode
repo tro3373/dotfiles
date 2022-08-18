@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+main() {
+  if [[ $# -eq 0 && ! -p /dev/stdin ]]; then
+    echo "Speciry url" 1>&2
+    exit 1
+  fi
+  if [[ -p /dev/stdin ]]; then
+    cat -
+  else
+    echo "$@"
+  fi | curl -Gso /dev/null -w '%{url_effective}' --data-urlencode @- "" | cut -c 3-
+}
+main "$@"
