@@ -124,7 +124,10 @@ setup_ytdlp() {
 setup_ydl() {
   log "==> Setup ydl..."
   has ydl && log_skip && return
-  # TODO
+  setup_ghdl
+  cd ~/bin
+  ghdl tro3373 ydl android
+  tar xvfpz ydl_android*tar.gz
 }
 
 setup_start_ydl() {
@@ -173,7 +176,10 @@ cat_url_opener() {
 #!/data/data/com.termux/files/usr/bin/bash
 
 has() { command -v "${1}" >&/dev/null; }
+#url_encode() { cat - |sed -e 's,^.*=,,g' -e 's,^.*/,,g' |curl -Gso /dev/null -w '%{url_effective}' --data-urlencode @- "" | cut -c 3-; }
+url_encode() { cat - |sed -e 's,^.*=,,g' -e 's,^.*/,,g'; }
 main() {
+  # echo "$@" >> /data/data/com.termux/files/home/bin/log
   if ! has termux-chroot; then
     echo "No termux-chroot exist" 1>&2
     return
@@ -183,9 +189,9 @@ main() {
   fi
   if ! pgrep ydl >&/dev/null; then
     # nohup termux-chroot /home/bin/ydl &
-    nohup start_ydl &
+    nohup ~/bin/start_ydl &
   fi
-  am start -a android.intent.action.VIEW -d "http://localhost:3000?url=$@"
+  am start -a android.intent.action.VIEW -d "http://localhost:3000?url=$(echo "$@" |url_encode)"
 }
 main "$@"
 EOF
@@ -204,6 +210,52 @@ setup_url_opener() {
   # setup_upd
   cat_url_opener >>~/bin/$target
   chmod 755 ~/bin/$target
+}
+
+setup_ghdl() {
+  local target=ghdl
+  log "==> Setup $target..."
+  has $target && log_skip && return
+  cat_ghdl >~/bin/$target
+  chmod 755 ~/bin/$target
+}
+
+cat_ghdl() {
+  cat <<'EOF'
+#!/data/data/com.termux/files/usr/bin/bash
+
+main() {
+  local owner=$1
+  local repo=$2
+  local grep_key=${3}
+  local tag=${4:-latest}
+  if [[ -z $owner || -z $repo ]]; then
+    echo "Specify owner and repo" 1>&2
+    exit 1
+  fi
+  # shellcheck disable=SC2155
+  local url=$(
+    curl -fSsL "https://api.github.com/repos/$owner/$repo/releases/$tag" |
+      grep browser_download_url |
+      if [[ -z $grep_key ]]; then
+        cat - | grep -v checksums
+      else
+        cat - | grep -E "$grep_key"
+      fi |
+      head -1 |
+      awk '{print $2}' |
+      sed -e 's,",,g'
+  )
+  if [[ -z $url ]]; then
+    echo "No target is filtered." 1>&2
+    exit 1
+  fi
+  echo "==> Downloding from $url.." 1>&2
+  curl -fSsLO "$url"
+  echo "==> Done" 1>&2
+}
+main "$@"
+EOF
 }
 
 setup_nvim() {
