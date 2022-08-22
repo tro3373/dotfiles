@@ -191,7 +191,7 @@ main() {
     # nohup termux-chroot /home/bin/ydl &
     nohup ~/bin/start_ydl &
   fi
-  am start -a android.intent.action.VIEW -d "http://localhost:3000?url=$(echo "$@" |url_encode)"
+  am start -a android.intent.action.VIEW -d "http://localhost:3000?uuid=me&url=$(echo "$@" |url_encode)"
 }
 main "$@"
 EOF
