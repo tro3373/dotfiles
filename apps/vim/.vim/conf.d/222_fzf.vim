@@ -15,19 +15,29 @@ endif
 " vnoremap ,j y:FZF -q <C-R>"
 
 " [【解説】開発ライブ実況 #1 (Vim / Go) 編 by メルペイ Architect チーム Backend エンジニア #mercari_codecast | メルカリエンジニアリング](https://engineering.mercari.com/blog/entry/mercari_codecast_1/)
-function! s:find_rip_grep(q) abort
+function! s:find_rip_grep(q, d) abort
+  let l:target_dir = GetGitRoot()
+  if a:d != ''
+    let l:target_dir = a:d
+  endif
   call fzf#vim#grep(
-      \   'rg --ignore-file ~/.ignore --column --line-number --no-heading --hidden --smart-case .+',
+      \   'rg --ignore-file ~/.ignore --column --line-number --no-heading --hidden --smart-case .+ ' . l:target_dir,
       \   1,
       \   fzf#vim#with_preview({'options': '--query=' . a:q . ' --delimiter : --nth 4..'}, 'right:50%', '?'),
       \   0,
       \)
 endfunction
-nnoremap <silent> <Leader>g :<C-u>silent call <SID>find_rip_grep(expand('<cword>'))<CR>
+nnoremap <silent> <Leader>g :<C-u>silent call <SID>find_rip_grep(expand('<cword>'), '')<CR>
+nnoremap <silent> <Leader>G :<C-u>silent call <SID>find_rip_grep(expand('<cword>'), expand('%:p:h'))<CR>
 
-function! s:find_rip_grep_files(q) abort
+function! s:find_rip_grep_files(q, d) abort
   let l:target_dir = GetGitRoot()
+  if a:d != ''
+    let l:target_dir = a:d
+  endif
   :call fzf#vim#files(l:target_dir, {'options': ['--query=' . a:q, '--layout=reverse', '--info=inline', '--preview', 'cat {}']})
 endfunction
-nnoremap <silent> <Leader>l :<C-u>silent call <SID>find_rip_grep_files('')<CR>
-nnoremap <silent> <Leader>k :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'))<CR>
+nnoremap <silent> <Leader>l :<C-u>silent call <SID>find_rip_grep_files('', '')<CR>
+nnoremap <silent> <Leader>L :<C-u>silent call <SID>find_rip_grep_files('', expand('%:p:h'))<CR>
+nnoremap <silent> <Leader>; :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), '')<CR>
+nnoremap <silent> <Leader>; :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), expand('%:p:h'))<CR>
