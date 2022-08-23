@@ -6,7 +6,8 @@ case "${OSTYPE}" in
     #alias ls="ls -G -w"
     alias ls='gls -F --color=auto'
     alias xcode='open -a Xcode' # コマンドラインからXcode起動
-    # alias gvim='open -a MacVim'         # コマンドラインからMacVim起動
+    # alias gvim='open -a MacVim'     # コマンドラインからMacVim起動
+    alias sudo='sudo -E ' # E: 環境変数のリセット無効(sudo vim で個人設定反映など)
     ;;
   linux*)
     alias ls='ls -F --color=auto'
@@ -15,6 +16,7 @@ case "${OSTYPE}" in
     alias tmux-copy='tmux save-buffer - | pbcopy' # tmuxのコピーバッファとクリップボードを連携
     alias tmux='tmux -2'                          # Ubuntu12.04で256を使用するため
     alias git='nocorrect git'                     # Ubuntuで_gitと誤解されるため
+    alias sudo='sudo -E '                         # E: 環境変数のリセット無効(sudo vim で個人設定反映など)
     if [[ -e /etc/arch-release ]]; then
       if has yay; then
         alias y=yay
