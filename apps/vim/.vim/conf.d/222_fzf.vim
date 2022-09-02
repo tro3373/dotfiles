@@ -37,7 +37,7 @@ function! s:find_rip_grep_files(q, d) abort
   endif
   :call fzf#vim#files(l:target_dir, {'options': ['--query=' . a:q, '--layout=reverse', '--info=inline', '--preview', 'cat {}']})
 endfunction
-nnoremap <silent> <Leader>l :<C-u>silent call <SID>find_rip_grep_files('', '')<CR>
-nnoremap <silent> <Leader>L :<C-u>silent call <SID>find_rip_grep_files('', expand('%:p:h'))<CR>
-nnoremap <silent> <Leader>; :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), '')<CR>
-nnoremap <silent> <Leader>; :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), expand('%:p:h'))<CR>
+nnoremap <silent> <Leader>l :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), '')<CR>
+nnoremap <silent> <Leader>L :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), expand('%:p:h'))<CR>
+nnoremap <silent> <Leader>; :<C-u>silent call <SID>find_rip_grep_files('', '')<CR>
+nnoremap <silent> <Leader>: :<C-u>silent call <SID>find_rip_grep_files('', expand('%:p:h'))<CR>
