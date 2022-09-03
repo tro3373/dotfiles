@@ -378,12 +378,10 @@ snippet	ifexecerrr
 		return fmt.Errorf("Failed to ${1:#do somthing} %s: %w", "${2}", err)
 	}
 
-snippet	new_errors
-alias		errors_new
+snippet	errors_new
 	errors.New("Error")
 
-snippet	new_errors_fmt
-alias		errors_new_fmt
+snippet	errors_new_fmt
 	errors.Errorf("Error: %s", "${1}")
 
 # See [今goのエラーハンドリングを無難にしておく方法（2021.09現在）](https://zenn.dev/nekoshita/articles/097e00c6d3d1c9)
@@ -393,24 +391,21 @@ alias		errors_new_fmt
 #   - pkg/errors.Wrapでラップし、pkg/errors.Causeで判定する
 #   - log.Printf("%+v", err)でstacktraceを出力する
 #   - 新しいエラーを返す時はpkg/errors.Neworpkg/errors.Errorfを使う
-snippet	error_wrap_no_stackkk
-alias	wrap_error_no_stackkk
+snippet	errors_wrap_no_stackkk
 	fmt.Errorf("Failed to ${1:#do somthing} %s: %w", "${2}", err)
 
-snippet	error_wrap_no_stack_causeee
-alias	wrap_error_no_stack_causeee
-	if errors.Is(err, SampleError) { }
-
-snippet	error_wrap_stackkk_use_with
-alias	wrap_error_stackkk_use_with
+snippet	errors_wrap_withstackkk
 	errors.WithStack(err)
 
-snippet	error_wrap_stackkk
-alias	wrap_error_stackkk
+snippet	errors_wrap_stackkk
 	errors.Wrapf(err, "Failed to ${1:#do somthing} %s", "${2}")
 
-snippet	error_wrap_stack_causeee
-alias	wrap_error_stack_causeee
+snippet	errors_cause_wrap_no_stackkk
+	fmt.Errorf("Failed to ${1:#do somthing} %s: %w", "${2}", err)
+	if errors.Is(err, SampleError) { }
+
+snippet	errors_cause_wrap_stackkk
+	errors.Wrapf(err, "Failed to ${1:#do somthing} %s", "${2}")
 	if errors.Cause(err) == SampleError { }
 
 ###############################################################################
@@ -544,3 +539,6 @@ snippet	deepCopyyy
 		}
 		return nil
 	}
+
+snippet	count_field
+	reflect.TypeOf(Person{}).NumField()
