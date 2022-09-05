@@ -166,6 +166,8 @@ snippet	unixtime3n
 
 snippet	timestamp
 	readonly timestamp=$(date +%Y%m%d.%H%M%S)
+snippet	timestamp2date
+  local d=echo "$(echo $timestamp |cut -d. -f1 |sed -e 's,\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\),\1-\2-\3,g') $(echo $timestamp |cut -d. -f2 |sed -e 's,\([0-9]\{2\}\),\1:,g' -e 's,:$,,g')"
 
 snippet	readuser
 	read -p  "user: " user
