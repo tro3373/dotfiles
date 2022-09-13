@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+install_common() {
+  exe scoop install vcxsrv
+}
+install_wsl() {
+  install_common
+}
+install_arch() { not_supported; }
+install_msys() {
+  install_common
+}
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+setting_common() {
+  local xlaunch=$(which xlaunch.exe)
+  [[ -z $xlaunch ]] && return
+  # $xlaunch
+  # exe winln -s "$app_dir/config.xlaunch"
+  exe winln -s "$xlaunch"
+  log "==> TODO Modify ln xlaunch.exe -run <path to config.xlaunch>"
+}
+
+setting_wsl() {
+  setting_common
+}
+setting_arch() { no_settings; }
+setting_msys() { no_settings; }
+setting_cygwin() {
+  setting_common
+}
+setting_mac() { no_settings; }
+setting_ubuntu() { no_settings; }
+setting_redhat() { no_settings; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#no_settings
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
+#sudo_tee
