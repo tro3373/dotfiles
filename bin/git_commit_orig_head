@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  git commit -C ORIG_HEAD
+}
+main "$@"

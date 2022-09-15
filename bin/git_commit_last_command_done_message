@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+last_commit_msg() {
+  git status |
+    grep 'Last command done' -A1 |
+    tail -1 |
+    while read -r _ _ msg; do
+      [[ -z $msg ]] && continue
+      echo "$msg"
+    done
+}
+
+main() {
+  local msg
+  msg=$(last_commit_msg)
+  if [[ -z $msg ]]; then
+    echo "Illegal state error. msg is empty" 1>&2
+    exit 1
+  fi
+  echo "==> Executing: git commit -m '$msg' (Continue to press Enter)"
+  read _wait
+  git commit -m "$msg"
+}
+main "$@"

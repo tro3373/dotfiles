@@ -61,3 +61,6 @@ snippet	tagvvv
 		@tag="v${APP_VER}" && git tag "$$tag" && echo "==> $$tag tagged."
 snippet	ownerrr
 	export OWNER := $(if $(OWNER),$(OWNER),$(shell git config --get remote.origin.url |sed -e 's,^.*:,,g' -e 's,/.*,,g'))
+
+snippet	defaulttt
+	.DEFAULT_GOAL := build
