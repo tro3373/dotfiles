@@ -32,6 +32,14 @@ _setup_user_group() {
   exe sudo mv /etc/sudoers.d/10-installer "$_backup_root"/
 }
 
+_setup_cronie() {
+  local target=cronie
+  if sudo systamctl status $target | grep Active | grep active >&/dev/null; then
+    return
+  fi
+  exe sudo systamctl enable $target
+}
+
 _setup_visudo_editor() {
   local target=/etc/environment
   if sudo grep EDITOR=vim $target | grep vim >&/dev/null; then
