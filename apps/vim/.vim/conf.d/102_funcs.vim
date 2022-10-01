@@ -231,7 +231,7 @@ function! Hugolize() abort
 
   let list = [
   \ '---',
-  \ 'draft: false',
+  \ 'draft: true',
   \ 'date: '.strnow,
   \ 'lastmod: '.strnow,
   \ 'cover: img.png',
