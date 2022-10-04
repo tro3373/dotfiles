@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env -S bash -e
 
 current_dir=$(pwd)
 # script_dir=$(cd $(dirname $0); pwd)
@@ -59,7 +59,7 @@ initialize() {
 
 cat_template_hard() {
   cat <<'EOL'
-#!/usr/bin/env bash
+#!/usr/bin/env -S bash -e
 
 command_name=$(basename $0)
 args=()
@@ -115,7 +115,7 @@ EOL
 
 cat_template_simple() {
   cat <<'EOL'
-#!/usr/bin/env bash
+#!/usr/bin/env -S bash -e
 
 main() {
   :
