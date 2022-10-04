@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+ANDROID_SDK_HOME=$HOME/Android/Sdk
+ANDROID_SDK_BIN=$ANDROID_SDK_HOME/cmdline-tools/latest/bin
+
+get_latest_url() {
+  curl -fSsL 'https://developer.android.com/studio/index.html#downloads' |
+    grep href |
+    grep android/repository/commandlinetools-linux |
+    head -1 |
+    cut -d\" -f2
+}
+
+is_installed() {
+  if has sdkmanager || test -e $ANDROID_SDK_BIN; then
+    return 0
+  fi
+  return 1
+}
+
+install_common() {
+  local target_dir url
+  target_dir=$ANDROID_SDK_HOME/cmdline-tools
+  url=$(get_latest_url)
+  exe mkdir -p $target_dir
+  dl_unzip $url
+  exe mv cmdline-tools $target_dir/latest
+}
+# install_wsl()    { not_supported; }
+# install_arch()   { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+# install_ubuntu() { not_supported; }
+# install_redhat() { not_supported; }
+setting_common() {
+  local target
+  target=$HOME/.works.zsh
+  if grep 'ANDROID_HOME=' $target >&/dev/null; then
+    return
+  fi
+  cat <<EOF | cat_tee -a $target
+export ANDROID_HOME=$ANDROID_SDK_HOME
+add_path $ANDROID_SDK_BIN
+EOF
+  rm_dotpath
+}
+# setting_wsl()    { no_settings; }
+# setting_arch()   { no_settings; }
+# setting_msys()   { no_settings; }
+# setting_cygwin() { no_settings; }
+# setting_mac()    { no_settings; }
+# setting_ubuntu() { no_settings; }
+# setting_redhat() { no_settings; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#no_settings
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
+#sudo_tee
