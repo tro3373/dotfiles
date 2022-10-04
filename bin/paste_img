@@ -1,0 +1,81 @@
+#!/usr/bin/env -S bash -e
+
+current_dir=$(pwd) && readonly current_dir
+command_name=$(basename "$0") && readonly command_name
+
+ext=png
+dst_rootd=$HOME/Downloads
+dst_fnm=
+args=()
+usage() {
+  cat <<EOF
+
+Save clipboard image to file
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+      -d        : Specify output directory(Default is $dst_rootd)
+      -f        : Specify output fileName(Default is img.png, If exist img_00n.png)
+
+EOF
+}
+add_args() { args+=("$@"); }
+has() { command -v "${1}" >&/dev/null; }
+check() {
+  if ! has gclip && ! has xclip; then
+    echo "No gclip(or xclip) exists" 1>&2
+    exit 1
+  fi
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -d) shift && dst_rootd=$1 ;;
+      -f) shift && dst_fnm=$1 ;;
+      #-f*|--file*) file=${1#*=} ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+  set -e
+}
+fix_dst_fnm() {
+  local fnm n dstf
+  fnm=img.$ext
+  n=0
+  while true; do
+    dstf=$dst_rootd/$fnm
+    [[ ! -e $dstf ]] && echo "$fnm" && return
+    n=$((n + 1))
+    fnm=img_$(printf "%03d" $n).$ext
+  done
+}
+out() {
+  if [[ -z $dst_rootd ]]; then
+    dst_rootd=$current_dir
+  fi
+  if [[ -z $dst_fnm ]]; then
+    dst_fnm=$(fix_dst_fnm)
+  fi
+  local dst dstd
+  ext=${dst_fnm##.}
+  dst=$dst_rootd/$dst_fnm
+  dstd=$(dirname "$dst")
+  [[ ! -e $dstd ]] && mkdir -p "$dstd"
+  if has gclip; then
+    gclip -paste -f "$dst"
+  else
+    xclip -selection clipboard -t "image/$ext" -o >"$dst"
+  fi
+  echo "$dst"
+}
+main() {
+  initialize "$@"
+  out
+}
+main "$@"
