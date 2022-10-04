@@ -456,6 +456,7 @@ tool_env() {
 
 rm_dotpath() {
   if [[ -e ~/.path ]]; then
+    log "==> Removing ~/.path .."
     exe rm ~/.path
   fi
 }
