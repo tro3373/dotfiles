@@ -14,6 +14,7 @@ split4() {
   tmux split-window -v
   tmux split-window -v -t $window_name.1
   tmux split-window -v -t $window_name.3
+  sleep 1
   tmux send-keys -t $window_name.1 "ssh ${prj}a1 $command" C-m
   tmux send-keys -t $window_name.2 "ssh ${prj}a2 $command" C-m
   tmux send-keys -t $window_name.3 "ssh ${prj}a1" C-m
