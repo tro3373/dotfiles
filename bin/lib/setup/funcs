@@ -1,7 +1,7 @@
 #!/bin/bash
 
-readonly bootstrapped_path=/etc/bootstrapped
-readonly _timestamp=$(date +%Y%m%d_%H%M%S)
+bootstrapped_path=/etc/bootstrapped && readonly bootstrapped_path
+_timestamp=$(date +%Y%m%d.%H%M%S) && readonly _timestamp
 
 readonly _core_apps=(
   git ssh tig curl bc tree tmux zsh vim ag rg ctags fzf
@@ -29,14 +29,14 @@ is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
 is_additional() { [[ $additional -eq 1 ]]; }
 is_force() { [[ $force -eq 1 ]]; }
-_log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") ${*:2}" | ink $1 1>&2; }
+_log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") ${*:2}" | ink "$1" 1>&2; }
 log() { _log cyan "$*"; }
 ilog() { _log green "$*"; }
 elog() { _log red "$*"; }
 dlog() { if is_debug; then _log yellow "$*"; fi; }
-has() { command -v ${1} >&/dev/null; }
-has_scoop() { scoop list $1 | grep -v matching | grep $1 >&/dev/null; }
-has_scoop_bucket() { scoop bucket list | grep $1 &>/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
+has_scoop() { scoop list "$1" | grep -v matching | grep "$1" >&/dev/null; }
+has_scoop_bucket() { scoop bucket list | grep "$1" &>/dev/null; }
 
 # TODO change func name
 isexist() { find "$*" >&/dev/null; }
@@ -83,6 +83,7 @@ ink() {
       ;;
   esac
 
+  # shellcheck disable=SC2059
   printf "${open}${color}${text}${close}\n" 1>&2
 }
 _usage() {
@@ -111,7 +112,7 @@ initialize_args() {
       -a | --additional) additional=1 ;;
       -m | --minimal) minimal=1 ;;
       -d | --debug) debug=1 ;;
-      *) add_args $1 ;;
+      *) add_args "$1" ;;
     esac
     shift
   done
@@ -186,7 +187,7 @@ readlink_path() {
 make_link_dot2home() {
   local dir="$*"
   for file in $(
-    find $dir -maxdepth 1 -mindepth 1 -name "\.*" -exec basename {} \; |
+    find "$dir" -maxdepth 1 -mindepth 1 -name "\.*" -exec basename {} \; |
       grep -v "^.git$" |
       grep -v "^.gitignore$" |
       grep -v "^.gitkeep$" |
@@ -226,8 +227,9 @@ make_lnk_with_bkup() {
     if [ -L "${lnk}" ]; then
       # リンク
       # dlog "   @@@@@@ Link!"
-      local fullpath_lnk="$(readlink_path "${lnk}")"
-      local fullpath_src="$(readlink_path "${src}")"
+      local fullpath_lnk fullpath_src
+      fullpath_lnk="$(readlink_path "${lnk}")"
+      fullpath_src="$(readlink_path "${src}")"
       # dlog "    lnk:$lnk => fullpath_lnk=$fullpath_lnk"
       # dlog "    src:$src => fullpath_src=$fullpath_src"
       if ! is_same_link "$fullpath_lnk" "$fullpath_src"; then
@@ -266,11 +268,11 @@ make_lnk_with_bkup() {
 
 backup() {
   for f in "$@"; do
-    sudo test ! -e $f && continue
+    sudo test ! -e "$f" && continue
     local dst=$f.org
-    sudo test -e $dst && continue
+    sudo test -e "$dst" && continue
     log "===> Backupping $f to $dst"
-    exe sudo cp -rf $f $dst
+    exe sudo cp -rf "$f" "$dst"
   done
 }
 
@@ -280,7 +282,8 @@ backup_file() {
   # バックアップ先のディレクトリがない場合は作成する
   make_dir_if_needed "$_backup_root"
 
-  local _name="$(basename "$_target")"
+  local _name
+  _name="$(basename "$_target")"
   # バックアップ先ディレクトリにmv
   exe "mv -fv \"$_target\" \"${_backup_root}/${_timestamp}_$_name\""
   del_if_exist "$_target"
@@ -304,11 +307,11 @@ del_if_exist() {
 has_local_package() {
   local p=$1
   if is_arch || is_msys; then
-    pacman -Qi $p >&/dev/null && return 0
+    pacman -Qi "$p" >&/dev/null && return 0
   elif is_ubuntu; then
-    dpkg -l $p | grep -E '^ii' >&/dev/null && return 0
+    dpkg -l "$p" | grep -E '^ii' >&/dev/null && return 0
   elif is_redhat; then
-    rpm -qi $p >&/dev/null && return 0
+    rpm -qi "$p" >&/dev/null && return 0
   else
     return 1
   fi
@@ -317,14 +320,14 @@ def_install() {
   local _pkgs=()
   for p in "$@"; do
     if ! is_force; then
-      has $p && continue
-      has_local_package $p && continue
+      has "$p" && continue
+      has_local_package "$p" && continue
     fi
     _pkgs+=("$p")
   done
   [[ ${#_pkgs[@]} -eq 0 ]] && return
   # shellcheck disable=SC2154
-  exe $def_install_cmd "${_pkgs[*]}"
+  exe "$def_install_cmd" "${_pkgs[*]}"
 }
 make_work_if_needed() {
   make_dir_if_needed "$workdir"
@@ -346,27 +349,29 @@ _github() {
   repo_name="${repo_name%%\.git}"
   local _path="$dst/$repo_name"
   if [[ -e $_path ]]; then
-    exe cd $_path
+    exe cd "$_path"
     exe $_sudo git pull --rebase
   else
     # ignore depth 1 option because tag info not readable
     # exe $_sudo git clone --depth 1 "$url" $_path
-    exe $_sudo git clone "$url" $_path
-    exe cd $_path
+    exe $_sudo git clone "$url" "$_path"
+    exe cd "$_path"
   fi
   if [[ -z $tag ]]; then
     if ! is_dry; then
-      local tag=$(git tag --list | tail -1 2>/dev/null)
+      local tag
+      tag=$(git tag --list | tail -1 2>/dev/null)
     fi
     if [[ -z $tag ]]; then
       return
     fi
   fi
   if ! is_dry; then
-    local now_branch=$(git branch | grep -E "\*" | tr -d "*" | tr -d " ")
+    local now_branch
+    now_branch=$(git branch | grep -E "\*" | tr -d "*" | tr -d " ")
   fi
   if [[ -n $now_branch && $now_branch != "$tag" ]]; then
-    exe $_sudo git checkout -b $tag $tag
+    exe $_sudo git checkout -b "$tag" "$tag"
   fi
 }
 github_user_local() {
@@ -407,7 +412,8 @@ gsettings_if_needed() {
     _val=$_path
     _path=
   fi
-  local _current=$(gsettings get $_scheme $_path)
+  local _current=
+  _current=$(gsettings get "$_scheme" "$_path")
   if [[ $_current == "$_val" ]]; then
     return
   fi
@@ -415,8 +421,9 @@ gsettings_if_needed() {
 }
 
 is_empty_dir() {
-  local _count=$(find "$1"/ -type d -empty 2>/dev/null | wc -l)
-  test $_count -eq 1
+  local _count
+  _count=$(find "$1"/ -type d -empty 2>/dev/null | wc -l)
+  test "$_count" -eq 1
 }
 dl_untar() {
   local url="$1"
@@ -464,7 +471,7 @@ rm_dotpath() {
 find_trans() {
   local trans_dir=$script_dir/lib/setup/trans
   if [[ $1 == -l ]]; then
-    find $trans_dir/ -maxdepth 1 -mindepth 1 -type f -exec basename {} \; |
+    find "$trans_dir"/ -maxdepth 1 -mindepth 1 -type f -exec basename {} \; |
       grep -v -E "^funcs.*" # noneeded
     return
   fi
@@ -483,7 +490,7 @@ cat_do() {
     log "------------------------------------"
   else
     log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    printf "> Executing: $*\n"
+    printf "> Executing: %s\n" "$*"
     log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     # shellcheck disable=SC2294
     cat - | eval "$@" >/dev/null
@@ -515,14 +522,14 @@ clone_dot() {
       if [[ $_own_dot -eq 1 ]]; then
         cat - | cat_do bash -
       else
-        cat - | cat_do sudo -u $_user bash -
+        cat - | cat_do sudo -u "$_user" bash -
       fi
   fi
   [[ -z $_setup_args ]] && return
   if [[ $_own_dot -eq 1 ]]; then
-    exe $HOME/.dot/bin/setup $_setup_args
+    exe "$HOME/.dot/bin/setup" "$_setup_args"
   else
-    exe sudo -u $_user /home/$_user/.dot/bin/setup $_setup_args
+    exe sudo -u "$_user" "/home/$_user/.dot/bin/setup" "$_setup_args"
   fi
 }
 
@@ -573,11 +580,13 @@ show_dummy_warn_if_needed() {
 }
 
 init_export_path_if_possible() {
-  local _script_dir=$(
-    cd "$(dirname ${BASH_SOURCE:-$0})"
+  local _script_dir
+  _script_dir=$(
+    cd "$(dirname "${BASH_SOURCE:-$0}")"
     pwd
   )
-  local _git_root=$(cd $_script_dir && git rev-parse --show-toplevel)
+  local _git_root
+  _git_root=$(cd "$_script_dir" && git rev-parse --show-toplevel)
   local _com_script_dir=$_git_root/bin
   if [[ -e $_com_script_dir ]]; then
     if ! echo ":$PATH:" | grep ":$_com_script_dir:" >&/dev/null; then
@@ -621,7 +630,7 @@ _test() {
   # default_apps
   # default_apps |mapfile args
   # args+=($(default_apps))
-  read -a args < <(default_apps)
+  read -r -a args < <(default_apps)
   for arg in "${args[@]}"; do
     echo "$arg"
   done
