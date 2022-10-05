@@ -1,25 +1,34 @@
 #!/usr/bin/env bash
+# Modify pom.xml with Update to version specified for the `artifact_id_prefix` module
 
-# Attention
-#  target key module version tag must be at below artifactname.
 main() {
-  local key=${1:-sp2-}
+  local artifact_id_prefix dst_version
+  artifact_id_prefix=$1
+  dst_version=$2
+  if [[ -z $artifact_id_prefix ]]; then
+    echo "Specify artifact id prefix to modify" 1>&2
+    exit 1
+  fi
+  if [[ -z $dst_version ]]; then
+    echo "Specify version to update" 1>&2
+    exit 1
+  fi
   find . -type f -name "pom.xml" |
     while read -r f; do
       [[ -z $f ]] && continue
       [[ $f =~ ^#.* ]] && continue
       echo "===> $f"
-      grep $key "$f" |
+      grep "$artifact_id_prefix" "$f" |
         while read -r line; do
           [[ -z $line ]] && continue
           [[ $line =~ ^#.* ]] && continue
-          grep -n -A1 $line $f --color |
+          grep -n -A1 "$line" "$f" --color |
             grep version |
             while read -r row other; do
               [[ -z $row ]] && continue
               row=${row/-/}
-              echo $row $other >/dev/null
-              sed -i -e "$row s,\(<version>\).*\(</version>\),\11.0.0-SNAPSHOT\2,g" $f
+              echo "$row" "$other" >/dev/null
+              sed -i -e "$row s,\(<version>\).*\(</version>\),$dst_version\2,g" "$f"
             done
         done
     done
