@@ -3,12 +3,44 @@
 is_installed() {
   if is_ubuntu; then
     has_local_package dkms
+  elif is_arch; then
+    systemctl list-unit-files displaylink.service >&/dev/null
   else
     return 1
   fi
 }
 install_common() { not_supported; }
-install_arch() { not_supported; }
+install_arch() {
+  local kernel_headers_pkg
+  kernel_headers_pkg=$(_current_kernel_headers)
+  exe yay -S "$kernel_headers_pkg"
+  exe yay -S evdi displaylink
+  # exe yay -S evdi-git
+  exe sudo systemctl enable displaylink
+  # exe sudo systemctl start displaylink
+  local target
+  target=/usr/share/X11/xorg.conf.d/20-evdidevice.conf
+  if [[ -e $target ]]; then
+    return
+  fi
+  cat_evdidevice_conf | sudo_tee $target
+  log "Reboot needed"
+}
+_current_kernel_headers() {
+  local v
+  v=$(uname -r | tr . ' ' | awk '{print $1$2}')
+  echo "linux$v-headers"
+}
+cat_evdidevice_conf() {
+  cat <<'EOF'
+Section "OutputClass"
+	Identifier "DisplayLink"
+	MatchDriver "evdi"
+	Driver "modesetting"
+	Option  "AccelMethod" "none"
+EndSection
+EOF
+}
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() { not_supported; }
