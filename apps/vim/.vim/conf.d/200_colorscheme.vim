@@ -1,6 +1,7 @@
 if 0      " カラーテーマ設定
 elseif g:plug.is_installed("Apprentice") " cool
   colorscheme apprentice
+  set termguicolors
   function! MyHighlights() abort
     " highlight Comment ctermfg=245
     " highlight NonText ctermbg=17
@@ -48,4 +49,3 @@ elseif g:plug.is_installed("molokai") " ng
   " ==> Molokai
   colorscheme molokai
 endif
-
