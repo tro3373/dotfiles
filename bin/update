@@ -42,6 +42,8 @@ initialize() {
 
 not_supported() { echo "Not supported." 1>&2 && exit 1; }
 update_arch() {
+  log "=> Cleaning.."
+  clear_pkg_cache
   local _cmd="sudo pacman"
   if has yay; then
     local _cmd=yay
