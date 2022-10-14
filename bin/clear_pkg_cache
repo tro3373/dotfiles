@@ -23,7 +23,7 @@ arch() {
   # インストール済みパッケージのキャッシュ1代のみを残し、
   # キャッシュを一掃する
   # pacman -Sc
-  yay -Sc
+  yay -Sc --noconfirm
 
   echo "> done."
   echo ">  package directory is /var/cache/pacman/pkg"
