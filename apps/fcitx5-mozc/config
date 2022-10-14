@@ -23,16 +23,25 @@ setting_arch() {
   local target_n=org.fcitx.Fcitx5.desktop
   local target=$target_d/$target_n
   if [[ ! -e $target ]]; then
-    exe cp /usr/share/applications/$target_n $target_d
+    exe cp /usr/share/applications/$target_n "$target_d"
   fi
+
+  # [fcitxでCtrl+;を押したらクリップボード履歴が出る問題 - HacoLab](https://hacolab.hatenablog.com/entry/2020/03/01/095656)
+  target=$HOME/.config/fcitx/addon/fcitx-clipboard.conf
+  if [[ ! -e $target ]]; then
+    make_dir_if_needed "$(dirname "$target")"
+    cat_fcitx_clipboard_conf |
+      cat_tee -a "$target"
+  fi
+
   target=$HOME/.pam_environment
   if [[ -e $target ]]; then
-    if grep DEFAULT=fcitx $target >&/dev/null; then
+    if grep DEFAULT=fcitx "$target" >&/dev/null; then
       return
     fi
   fi
   cat_pam_environment |
-    cat_tee $target
+    cat_tee "$target"
   # exe fcitx-autostart
 }
 cat_pam_environment() {
@@ -40,6 +49,12 @@ cat_pam_environment() {
 GTK_IM_MODULE DEFAULT=fcitx
 QT_IM_MODULE  DEFAULT=fcitx
 XMODIFIERS    DEFAULT=@im=fcitx
+EOF
+}
+cat_fcitx_clipboard_conf() {
+  cat <<'EOF'
+[Addon]
+Enabled=False
 EOF
 }
 setting_msys() { no_settings; }
