@@ -339,13 +339,13 @@ Sub output2Sheet()
     Dim sht As Worksheet
 '    For Each sht In ThisWorkbook.Worksheets
     For Each sht In targetWb.Worksheets
-        If sht.Name Like "MST*" Or sht.Name Like "TRN*" Then
+        If (sht.Name Like "m_*" Or sht.Name Like "t_*" Or sht.Name Like "MST_*" Or sht.Name Like "TRN_*") And Not sht.Name Like "*_データ" Then
             tableName = LCase(sht.Name)
             'tableName = LCase(sht.Cells(1, 23).Value)
             Call output2Cell("DROP TABLE IF EXISTS `" & tableName & "`;")
             Call output2Cell("CREATE TABLE `" & tableName & "` (")
 
-            n = sht.Range("C6").End(xlDown).row
+            n = sht.Cells(Rows.Count, 3).End(xlUp).row
             pkeys = ""
 
             ' ===============================================================
@@ -363,8 +363,9 @@ Sub output2Sheet()
                 colType = sht.Cells(i, 19).Value
 
                 autoIncrement = ""
-                If colId = "id" And colName = "id" Then
-                    colTypeStr = "INT"
+                If (colId = "id" Or colId = "ID") And (colName = "id" Or colName = "ID") And (colType Like "*INT") Then
+                    ' colTypeStr = "INT UNSIGNED"
+                    colTypeStr = colType
                     autoIncrement = " AUTO_INCREMENT"
                 ' ElseIf colType = "INT" Then → INTEGER は INT のシノニム
                 '     colTypeStr = "INTEGER"
@@ -380,7 +381,7 @@ Sub output2Sheet()
                 colLen2 = sht.Cells(i, 25).Value
                 If colTypeStr = "TEXT" Or colTypeStr = "BLOB" Then
                     ' 桁部分を無視
-                ElseIf colLen1 <> "" And colLen2 <> "" Then
+                ElseIf colLen1 <> "" And Trim(colLen2) <> "" Then
                     colTypeStr = colTypeStr & "(" & colLen1 & "," & colLen2 & ")"
                 ElseIf colLen1 <> "" Then
                     colTypeStr = colTypeStr & "(" & colLen1 & ")"
@@ -389,13 +390,15 @@ Sub output2Sheet()
 
                 ' NOT NULL の指定
                 nn = sht.Cells(i, 27).Value
-                If nn <> "" Then
+                If Trim(nn) <> "" Then
                     nn = "NOT NULL"
                 End If
 
                 ' PKEY項目の収集
                 pkey = sht.Cells(i, 30).Value
-                If pkey <> "" Then
+                If Trim(pkey) = "UK" Then
+                    colTypeStr = colTypeStr & " UNIQUE"
+                ElseIf Trim(pkey) <> "" Then
                     If pkeys <> "" Then
                         pkeys = pkeys & ","
                     End If
@@ -420,7 +423,7 @@ Sub output2Sheet()
             If optKeys3 <> "" Then
                 Call output2Cell("" & optKeys3)
             End If
-            Call output2Cell(") ENGINE=InnoDB DEFAULT CHARSET=utf8")
+            Call output2Cell(") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci")
             tableComment = sht.Cells(2, 23).Value
             Call output2Cell("comment='" & tableComment & "';")
             Call output2Cell("")
@@ -434,6 +437,7 @@ Sub output2Sheet()
     Sheets(OutSheetName).Range("A1:A" & lastrow).Select
     MsgBox "出力しました。"
 End Sub
+
 
 ' ' ファイル生成(Depricated)
 'Sub output2SqlFile()
@@ -522,4 +526,3 @@ Public Sub VisibleNames()
     MsgBox "すべての名前の定義を表示しました。Ctrl+F3で表示", vbOKOnly
 End Sub
 ```
-
