@@ -64,3 +64,10 @@ snippet	ownerrr
 
 snippet	defaulttt
 	.DEFAULT_GOAL := build
+
+snippet	ifeqqqq
+	ifeq ($(STAGE),dev)
+		VAULT := $(VAULT_DEV)
+	else
+		VAULT := $(VAULT_PRD)
+	endif
