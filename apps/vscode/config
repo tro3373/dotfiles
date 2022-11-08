@@ -15,7 +15,7 @@ is_installed() {
     test -e "$settings_d_ubuntu"
   else
     # shellcheck disable=SC2154
-    has $app
+    has "$app"
   fi
 }
 install_common() { not_supported; }
@@ -32,7 +32,7 @@ setting_arch() { no_settings; }
 setting_msys() {
   _ln_jsons "$settings_d_msys"
   _add_packages
-  exe winln -q $WINHOME/scoop/apps/vscode/current/Code.exe
+  exe winln -q "$WINHOME/scoop/apps/vscode/current/Code.exe"
 }
 setting_cygwin() { no_settings; }
 setting_mac() {
@@ -46,7 +46,7 @@ setting_redhat() { no_settings; }
 _add_code_path() {
   local _code_bin="$*"
   local _target=$HOME/.works.zsh
-  if grep "$_code_bin" $_target >&/dev/null; then
+  if grep "$_code_bin" "$_target" >&/dev/null; then
     return
   fi
   log "==> Adding to $_target.."
@@ -54,9 +54,9 @@ _add_code_path() {
     if is_dry; then
       cat -
     else
-      cat - | tee -a $_target
+      cat - | tee -a "$_target"
     fi
-  del_if_exist $HOME/.path
+  del_if_exist "$HOME/.path"
   _add_packages
 }
 _add_packages() {
@@ -67,11 +67,11 @@ _add_packages() {
       [[ -z $p ]] && continue
       [[ $p =~ ^#.* ]] && continue
       echo "  - $p"
-    done <$app_dir/extensions
+    done <"$app_dir/extensions"
   fi
   log "==> vscode installing packages.."
   export PATH="$_code_bin:$PATH"
-  exe $app_dir/gen_extensions 1
+  exe "$app_dir/gen_extensions" 1
 }
 _ln_jsons() {
   # shellcheck disable=SC2154
