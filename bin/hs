@@ -26,6 +26,7 @@ white="\033[37m"
 reset="\033[0m"
 
 while (($# > 0)); do
+  # shellcheck disable=SC2221,SC2222
   case "$1" in
     -h | --help)
       print_help
@@ -112,8 +113,10 @@ calc() {
 
 time_namelookup="$(get time_namelookup)"
 time_connect="$(get time_connect)"
+# shellcheck disable=SC2034
 time_appconnect="$(get time_appconnect)"
 time_pretransfer="$(get time_pretransfer)"
+# shellcheck disable=SC2034
 time_redirect="$(get time_redirect)"
 time_starttransfer="$(get time_starttransfer)"
 time_total="$(get time_total)"
