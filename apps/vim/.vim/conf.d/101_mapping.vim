@@ -52,8 +52,8 @@ cnoremap <C-o> <C-\>e(getcmdtype() == '' <Bar><Bar> getcmdtype() == '?') ? '\<' 
 
 
 " Goto file under cursor
-noremap gf gF
-noremap gF gf
+noremap gf <C-W>gF
+noremap gF <C-W>gf
 
 
 " 貼り付けたテキストを選択
