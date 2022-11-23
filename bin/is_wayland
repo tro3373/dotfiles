@@ -1,0 +1,9 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  local session_id type
+  session_id="$(awk '/tty/ {print $1}' <(loginctl))"
+  type=$(loginctl show-session "$session_id" -p Type | awk -F= '{print $2}')
+  test "$type" == "wayland"
+}
+main "$@"

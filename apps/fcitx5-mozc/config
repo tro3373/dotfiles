@@ -33,7 +33,26 @@ setting_arch() {
     cat_fcitx_clipboard_conf |
       cat_tee -a "$target"
   fi
-
+  if "$DOT_PATH"/bin/is_wayland; then
+    setting_arch_for_wayland
+  else
+    setting_arch_for_x
+  fi
+}
+setting_arch_for_wayland() {
+  target=/etc/environment
+  if [[ -e $target ]]; then
+    if grep GTK_IM_MODULE=fcitx "$target" >&/dev/null; then
+      return
+    fi
+  fi
+  cat_fcitx_env |
+    sudo_tee -a "$target"
+}
+setting_arch_for_x() {
+  # [環境変数 - ArchWiki](https://wiki.archlinux.jp/index.php/%E7%92%B0%E5%A2%83%E5%A4%89%E6%95%B0)
+  # > ~/.pam_environment の読み込みは非推奨になり、
+  # > この機能は将来のある時点で削除される予定です。
   target=$HOME/.pam_environment
   if [[ -e $target ]]; then
     if grep DEFAULT=fcitx "$target" >&/dev/null; then
@@ -41,7 +60,16 @@ setting_arch() {
     fi
   fi
   cat_pam_environment |
-    cat_tee "$target"
+    cat_tee -a "$target"
+
+  # target=$HOME/.xprofile
+  # if [[ -e $target ]]; then
+  #   if grep GTK_IM_MODULE=fcitx "$target" >&/dev/null; then
+  #     return
+  #   fi
+  # fi
+  # cat_fcitx_env |
+  #   cat_tee -a "$target"
   # exe fcitx-autostart
 }
 cat_pam_environment() {
@@ -49,6 +77,13 @@ cat_pam_environment() {
 GTK_IM_MODULE DEFAULT=fcitx
 QT_IM_MODULE  DEFAULT=fcitx
 XMODIFIERS    DEFAULT=@im=fcitx
+EOF
+}
+cat_fcitx_env() {
+  cat <<'EOF'
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
 EOF
 }
 cat_fcitx_clipboard_conf() {
