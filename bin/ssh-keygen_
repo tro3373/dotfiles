@@ -1,0 +1,12 @@
+#!/usr/bin/env -S bash -e
+
+usage() {
+  cat <<'EOF'
+# Generate public key from private key
+ssh-keygen -y -f /path/to/file
+EOF
+}
+main() {
+  usage
+}
+main "$@"
