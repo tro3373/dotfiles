@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+main() {
+  if [[ $# -eq 0 ]]; then
+    echo "Specify directory that contain pdfs to merge" 1>&2
+    exit 1
+  fi
+  d=$1
+  if [[ ! -e $d ]]; then
+    echo "Specify exists directory" 1>&2
+    exit 1
+  fi
+  find "$d"/ -type f -iname '*pdf' |
+    pdf_unite -o "$d.pdf"
+}
+main "$@" #|tee todo.sh
