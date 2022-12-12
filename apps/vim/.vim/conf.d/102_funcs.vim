@@ -87,6 +87,9 @@ endfunction
 " じゃあ両方にコピーすべし
 function! CopyComm()
   let @+=@*
+  if g:is_wsl && executable(g:winclip)
+    call system(g:winclip, @*)
+  endif
   echo "Copy!=> ".@*
 endfunction
 function! CopyPath()

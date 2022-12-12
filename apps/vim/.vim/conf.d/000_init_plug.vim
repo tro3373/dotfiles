@@ -10,6 +10,7 @@ let g:is_mac = !g:is_windows && !g:is_cygmsys2
       \   (!executable('xdg-open') &&
       \     system('uname') =~? '^darwin'))
 let g:is_linux = !g:is_windows && !g:is_cygmsys2 && !g:is_mac && has('unix')
+let g:is_wsl = !empty($WSL_DISTRO_NAME)
 let g:is_ubuntu = g:is_linux && (!filereadable("/etc/debian_version") && !filereadable("/etc/lsb-release"))
 if g:is_windows
   " Windows でもパスの区切り文字を / にする

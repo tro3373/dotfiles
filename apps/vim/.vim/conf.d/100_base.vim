@@ -333,12 +333,12 @@ endif
 " - [vim : how to write to another file my lines yanked? - Stack Overflow](https://stackoverflow.com/questions/34785759/vim-how-to-write-to-another-file-my-lines-yanked)
 " autocmd TextYankPost * if v:event.operator ==# 'y' | call system('echo '.@0.'|'.s:clip) | endif
 " autocmd TextYankPost * call system(s:clip, @0)
-let s:winclip = '/mnt/c/Windows/System32/clip.exe'  " change this path according to your mount point
+let g:winclip = '/mnt/c/Windows/System32/clip.exe'  " change this path according to your mount point
 let s:clip = $HOME.'/.dot/bin/clip'
-if executable(s:winclip)
+if executable(g:winclip)
   augroup MyYankPost
     autocmd!
-    autocmd TextYankPost * call system(s:winclip, @0)
+    autocmd TextYankPost * call system(g:winclip, @0)
   augroup MyYankPost
   augroup END
 elseif executable(s:clip)
