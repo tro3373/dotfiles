@@ -76,8 +76,8 @@ snippet	has
 snippet	hass
 	hass() {
 		for arg in "\$@"; do
-			has \$arg && continue
-			echo "No such command \$arg exist." 1>&2
+			has "\$arg" && continue
+			echo "No \$arg command exist." 1>&2
 			exit 1
 		done
 	}
@@ -242,7 +242,7 @@ snippet	main
 
 snippet	usaaggee
 alias	helpppp
-	command_name=$(basename \$0) && readonly command_name
+	command_name=$(basename "\$0") && readonly command_name
 	usage() {
 		cat <<EOF
 
@@ -293,6 +293,17 @@ alias	ifnotexists_fn
 		fi
 	}
 
+snippet	check_commandsss
+	has() { command -v "\${1}" >&/dev/null; }
+	check_commands() {
+		for arg in "$@"; do
+			if ! has "$arg"; then
+				echo "No $arg command exist" 1>&2
+				exit 1
+			fi
+		done
+	}
+
 snippet	ifstdin
 	if [[ -p /dev/stdin ]]; then
 			:
@@ -304,6 +315,13 @@ snippet	stdin
 	if [[ -p /dev/stdin ]]; then
 		stdin="$(cat <&0)"
 	fi
+
+snippet	stdinargssss
+alias	allargsss
+  arg="$*"
+  if [[ -p /dev/stdin ]]; then
+    arg="$arg $(cat <&0 | while read -r line; do printf "%s" "$line"; done)"
+  fi
 
 snippet	forarg
 	for arg in "$@"; do
@@ -348,7 +366,7 @@ alias	red
 	${1}= && readonly $1
 
 snippet	initializzzz
-	readonly command_name=$(basename \$0) && readonly command_name
+	command_name=$(basename "\$0") && readonly command_name
 	dummy="echo"
 	is_dummy() { [[ -n $dummy ]]; }
 	args=()
