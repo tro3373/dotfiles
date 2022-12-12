@@ -1,5 +1,10 @@
 # pacman
 
+## `--needed` option
+
+グループの中にインストール済みのパッケージがある場合でも、
+グループに合わせて再インストールされるが、それを無視するオプション
+
 ## Refs
 - [はじめてのpacmanパッケージ管理ガイド](https://dev.classmethod.jp/articles/package-management-use-pacman/)
 - [pacmanのオプションSyuについてほんの少し調べたこと](http://sotoattanito.hatenablog.com/entry/2016/09/24/133931)
