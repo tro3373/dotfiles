@@ -71,3 +71,7 @@ snippet	ifeqqqq
 	else
 		VAULT := $(VAULT_PRD)
 	endif
+
+snippet	variable_argssss
+	_subcommand-%:
+		_subcommand ${*}
