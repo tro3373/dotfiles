@@ -17,7 +17,15 @@ install_ubuntu() {
 }
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
-setting_arch() { no_settings; }
+setting_arch() {
+  target=$HOME/.works.zsh
+  if grep 'export JAVA_HOME=' $target >&/dev/null; then
+    return
+  fi
+  cat <<EOF | cat_tee -a $target
+export JAVA_HOME=/usr/lib/jvm/default
+EOF
+}
 setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
 setting_mac() { no_settings; }
