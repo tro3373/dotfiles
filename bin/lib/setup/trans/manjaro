@@ -66,10 +66,44 @@ _setup_mount_media_setting() {
 }
 
 _setup_custom_shortcut() {
+  # MEMO
+  #   @see [command line - How to set custom keyboard shortcuts from terminal? - Ask Ubuntu](https://askubuntu.com/questions/597395/how-to-set-custom-keyboard-shortcuts-from-terminal)
+  #
+  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings
+  #   ['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/']
+  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name
+  #   'Paste into terminal'
+  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding
+  #   '<Primary><Shift>Insert'
+  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command
+  #   'xdotool key --clearmodifiers ctrl+shift+v'
+  #   > gsettings get org.gnome.desktop.wm.keybindings switch-applications
+
+  # TODO test
   # MEMO Shift+Insert paste primary not clipboard. wont be change it, but not work..
-  : gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name "'Paste into terminal'"
-  : gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding "'<Ctrl><Shift><Insert>'"
-  : gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command "'xdottool key --clearmodifiers ctrl+shift+v'"
+  : gsettings_add_custom_keybind custom1 name "'Paste into terminal'"
+  : gsettings_add_custom_keybind custom1 binding "'<Primary><Shift>Insert'"
+  : gsettings_add_custom_keybind custom1 command "'xdotool key --clearmodifiers ctrl+shift+v'"
+  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name
+  #   'terminal'
+  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding
+  #   '<Primary><Alt>t'
+  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command
+  #   'gnome-terminal'
+  : gsettings_add_custom_keybind custom1 name "'terminal'"
+  : gsettings_add_custom_keybind custom1 binding "'<Primary><Alt>t'"
+  : gsettings_add_custom_keybind custom1 command "'gnome-terminal'"
+
+  # [MYN - 2021/01/12 14:52 / gnome-shell で Alt-tab で group ベースの window switch (swith-application)をしない](https://myn.meganecco.org/1610430720.html)
+  : gsettings_if_needed org.gnome.desktop.wm.keybindings switch-applications "['<Super>Tab']"
+  : gsettings_if_needed org.gnome.desktop.wm.keybindings switch-windows "['<Alt>Tab']"
+}
+
+gsettings_add_custom_keybind() {
+  s=org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/$1/
+  n=$2
+  v=$3
+  gsettings_if_needed "$s" "$n" "$v"
 }
 
 _setup_improve_monitor_scale() {
