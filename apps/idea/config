@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+scoop_idea=IntelliJ-IDEA
+
+is_installed() {
+  if is_msys || is_wsl; then
+    has_scoop $scoop_idea
+  else
+    # shellcheck disable=SC2154
+    has "$app"
+  fi
+}
+install_common() { not_supported; }
+install_wsl() {
+  exe scoop install $scoop_idea
+}
+install_arch() { not_supported; }
+install_msys() {
+  install_wsl
+}
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+setting_common() { no_settings; }
+setting_wsl() {
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/_ideavimrc" "$WINHOME/_ideavimrc"
+}
+setting_arch() { no_settings; }
+setting_msys() {
+  setting_wsl
+}
+setting_cygwin() { no_settings; }
+setting_mac() { no_settings; }
+setting_ubuntu() { no_settings; }
+setting_redhat() { no_settings; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#no_settings
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
+#sudo_tee
