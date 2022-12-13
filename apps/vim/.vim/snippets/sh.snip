@@ -412,8 +412,7 @@ snippet	initializzzz
 
 snippet	innnk
 	ink() {
-		local stdin open close text color
-		stdin=
+		local stdin=
 		if [[ -p /dev/stdin ]]; then
 			stdin="$(cat <&0)"
 		fi
@@ -421,8 +420,8 @@ snippet	innnk
 			return
 		fi
 
-		open && open="\033["
-		close && close="${open}0m"
+		local open="\033["
+		local close="${open}0m"
 		export black="0;30m"
 		export red="1;31m"
 		export green="1;32m"
@@ -433,14 +432,14 @@ snippet	innnk
 		export gray="0;37m"
 		export white="$close"
 
-		text && text="$stdin$*"
-		color && color="$close"
+		local text="$stdin$*"
+		local color="$close"
 
 		case \$1 in
-		black | red | green | yellow | blue | purple | cyan | gray | white)
-			eval color="\\$\$1"
-			text="$stdin${*:2}"
-			;;
+			black | red | green | yellow | blue | purple | cyan | gray | white)
+				eval color="\\$\$1"
+				text="$stdin${*:2}"
+				;;
 		esac
 
 		# shellcheck disable=SC2059
