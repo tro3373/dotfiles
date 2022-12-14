@@ -44,6 +44,7 @@ snippet	error_method
 	error() { echo "$*" 1>&2; }
 
 snippet	command_name
+alias	script_name
 	command_name=$(basename "\$0") && readonly command_name
 
 snippet	current_dir
@@ -186,7 +187,15 @@ snippet	log
 	log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
 
 snippet	logcolorrr
-	log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" |ink yellow; }
+	_log() {
+		# shellcheck disable=SC2145
+		echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"
+	}
+	log() { _log yellow "$*"; }
+	error() {
+		_log red "$*"
+		exit 1
+	}
 
 snippet	dlog
 	dlog() {
