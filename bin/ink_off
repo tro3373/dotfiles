@@ -1,0 +1,20 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  if [[ ! -p /dev/stdin ]]; then
+    echo "No stdin" 1>&2
+    exit 1
+  fi
+  # =====================================
+  # Sample Ansi color. yellowed `hoge`
+  # $ echo hoge |ink yellow
+  # [1;33mhoge[0m
+  # =====================================
+
+  # [bash - Removing colors from output - Stack Overflow](https://stackoverflow.com/questions/17998978/removing-colors-from-output)
+  cat - | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g"
+
+  # [regex - Removing ANSI color codes from text stream - Super User](https://superuser.com/questions/380772/removing-ansi-color-codes-from-text-stream)
+  # cat - | sed -e 's/\x1b\[[0-9;]*m//g'
+}
+main "$@"
