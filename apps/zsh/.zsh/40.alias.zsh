@@ -275,10 +275,11 @@ function cd_under_d() {
 zle -N cd_under_d
 bindkey '^k' cd_under_d
 
-function _paste_png() {
-  has paste_png || return
-  paste_png
+function _paste_img() {
+  has paste_img || return
+  paste_img -d "$(pwd)"
   zle reset-prompt # redraw prompt
 }
-zle -N _paste_png
-bindkey '^e' _paste_png
+zle -N _paste_img
+bindkey '^e' _paste_img
+# TODO ALT+P

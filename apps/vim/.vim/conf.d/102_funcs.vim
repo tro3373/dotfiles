@@ -668,5 +668,3 @@ function! MysqlDdlStripCols() abort
   %s/\(^.\{-}`\|`.*\)//g
 endfunction
 command! MysqlDdlStripCols call MysqlDdlStripCols()
-
-" TODO paste_png alias

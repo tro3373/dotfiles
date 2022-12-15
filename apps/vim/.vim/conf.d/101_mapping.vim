@@ -292,4 +292,4 @@ elseif g:is_linux
 else
   " その他
 endif
-" TODO past_png alias
+" TODO ALT+P paste_img
