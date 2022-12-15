@@ -455,6 +455,10 @@ snippet	innnk
 		printf "${open}${color}${text}${close}\n" 1>&2
 	}
 
+snippet	innnk_off
+alias	tee_innnk_off
+	|& tee >(cat - | ink_off >>example_log_file)
+
 snippet	exe
 	dummy="echo"
 	is_dummy() { [[ -n $dummy ]]; }
