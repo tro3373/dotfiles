@@ -66,6 +66,9 @@ test コマンドのオプションの意味
 diff <(cat file1) <(cat file1 |grep hogehoge)
 # command1の結果をcommand2とcommand3に渡す
 command1 | tee >(command2) | command3
+# command1の結果(カラー付き)を標準出力、標準エラー出力しながら、ファイルにも書き込むが、そのときはカラーをOFFる
+# @see vim snippet innnk_off
+command1 |& tee >(cat - | ink_off >>example_log_file)
 
 # 標準エラー出力の行頭に[ERROR]を付けて標準出力に出力する
 command 2> >(awk '{print "[ERROR]", $0}')
@@ -178,6 +181,8 @@ expr1 -o expr2  ==> 式expr1 と式expr2 のいずれかが真であれば真
 command1 | command2  ==> コマンド１の標準出力をコマンド２の標準入力に渡す
 command1 && command2 ==> コマンド１が正常終了すればコマンド２を実行
 command1 || command2 ==> コマンド１が正常終了でなければコマンド２を実行
+command1 |& command2 ==> コマンド１の標準出力と標準エラー出力の両方をコマンド２へパイプ
+    - [bash - How can I pipe stderr, and not stdout? - Stack Overflow](https://stackoverflow.com/questions/2342826/how-can-i-pipe-stderr-and-not-stdout)
 
 ```sh
 # ファイル名を取得
