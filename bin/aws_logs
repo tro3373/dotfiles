@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-profile=${AWS_PROFILE:-default}
+profile=
 region=ap-northeast-1
 group=
 filter="START"
@@ -42,11 +42,15 @@ initialize() {
 main() {
   initialize "$@"
   # sta/end is GMT
+  profile_opt=
+  if [[ -n $profile ]]; then
+    profile_opt="--profile $profile"
+  fi
   awslogs get $group \
     -s "$sta" \
     -e "$end" \
     -f "\"$filter\"" \
-    --aws-region $region \
-    --profile $profile && echo "Done"
+    --aws-region $region $profile_opt &&
+    echo "Done"
 }
 main "$@"
