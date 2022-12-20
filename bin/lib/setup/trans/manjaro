@@ -94,6 +94,10 @@ _setup_custom_shortcut() {
   : gsettings_add_custom_keybind custom1 binding "'<Primary><Alt>t'"
   : gsettings_add_custom_keybind custom1 command "'gnome-terminal'"
 
+  : gsettings_add_custom_keybind custom1 name "'open'"
+  : gsettings_add_custom_keybind custom1 binding "'<Super>e'"
+  : gsettings_add_custom_keybind custom1 command "'nautilus Downloads'"
+
   # [MYN - 2021/01/12 14:52 / gnome-shell で Alt-tab で group ベースの window switch (swith-application)をしない](https://myn.meganecco.org/1610430720.html)
   : gsettings_if_needed org.gnome.desktop.wm.keybindings switch-applications "['<Super>Tab']"
   : gsettings_if_needed org.gnome.desktop.wm.keybindings switch-windows "['<Alt>Tab']"
