@@ -1,0 +1,371 @@
+#!/usr/bin/env -S bash -e
+
+command_name=$(basename "$0") && readonly command_name
+script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
+conf_file=$0.cnf && readonly conf_file
+log_file=$0.log && readonly log_file
+items_dir="$script_dir/items" && readonly items_dir
+albums_file="$script_dir/albums" && readonly albums_file
+create_albums_result_file="$script_dir/result.create_albums" && readonly create_albums_result_file
+mode=si
+dummy="echo"
+args=()
+
+usage() {
+  cat <<EOF
+
+Add items to album by google photo api.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help           : Show this usage
+      -si|--search-items  : search items
+      -li|--list-items    : list items
+      -ca|--create-albums : Create albums
+      -aa|--add-albums    : Add items to album
+
+EOF
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      #-f*|--file*) file=${1#*=} ;;
+      #-f|--file) shift && file=$1 ;;
+      -si | --search-items) mode=si ;;
+      -li | --list-items) mode=li ;;
+      -ca | --create-albums) mode=ca ;;
+      -aa | --add-albums) mode=aa ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+  set -eo pipefail
+  set_json_path
+  load_variables
+  load_conf
+}
+check() {
+  hass curl jq rg open to_unicode_point
+}
+is_dummy() { [[ -n $dummy ]]; }
+add_args() { args+=("$@"); }
+hass() {
+  for arg in "$@"; do
+    has "$arg" && continue
+    error "No $arg command exist."
+  done
+}
+ink() {
+  local stdin=
+  if [[ -p /dev/stdin ]]; then
+    stdin="$(cat <&0)"
+  fi
+  if [[ $# -eq 0 && -z $stdin ]]; then
+    return
+  fi
+
+  local open="\033["
+  local close="${open}0m"
+  export black="0;30m"
+  export red="1;31m"
+  export green="1;32m"
+  export yellow="1;33m"
+  export blue="1;34m"
+  export purple="1;35m"
+  export cyan="1;36m"
+  export gray="0;37m"
+  export white="$close"
+
+  local text="$stdin$*"
+  local color="$close"
+
+  case $1 in
+    black | red | green | yellow | blue | purple | cyan | gray | white)
+      eval color="\$$1"
+      text="$stdin${*:2}"
+      ;;
+  esac
+
+  # shellcheck disable=SC2059
+  printf "${open}${color}${text}${close}\n" 1>&2
+}
+_log() {
+  # shellcheck disable=SC2145
+  echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"
+}
+log() { _log yellow "$*"; }
+error() {
+  _log red "$*"
+  exit 1
+}
+
+read_json_value() {
+  cat <"$json" | jq -r ".web.$1"
+}
+
+set_json_path() {
+  json=$(find "$script_dir"/secret/webclient/ -maxdepth 1 -mindepth 1 -type f -name "client_secret_*json" | head -1)
+  if [[ -z $json ]]; then
+    error "No cred json exist"
+  fi
+}
+
+load_variables() {
+  client_id=$(read_json_value client_id)
+  client_secret=$(read_json_value client_secret)
+  redirect_uri=http://127.0.0.1:8080
+}
+
+load_conf() {
+  # shellcheck disable=SC1090
+  source "$conf_file"
+}
+
+auth() {
+  if [[ -z $code ]]; then
+    log "=> Opening browser to auth code.."
+    auth_code
+    log "=> code Authed, set code=xxx env to $conf_file, and re-run!"
+    exit
+  fi
+  if [[ -z $refresh_token ]]; then
+    log "=> Generating refresh_token, and access_token.."
+    auth_token | update_cnf access_token refresh_token
+    load_conf
+    log "=> Refresh/Access Token Generated!"
+    return
+  fi
+  if [[ -z $access_token ]]; then
+    log "=> Generating access_token.."
+    refresh_token | update_cnf access_token
+    load_conf
+    log "=> Access Token Generated!"
+  fi
+}
+
+update_cnf() {
+  is_dummy && cat - && return
+  local i _stdin _query _args=("$@")
+  _query=$(echo "$*" | sed -e 's,\(^\| \),\,.,g' | sed -e 's,^\,,,g')
+  i=0
+  _stdin="$(cat <&0)"
+  log "==> Updating cnf by _args=${_args[*]} stdin=>>>>>"
+  echo -e "$_stdin"
+  log "<<<<<"
+  if echo -e "$_stdin" | grep error >&/dev/null; then
+    error "Failed to update_cnf"
+  fi
+  echo -e "$_stdin" | jq "$_query" |
+    while read -r val; do
+      [[ -z $val ]] && continue
+      [[ $val =~ ^#.* ]] && continue
+      k=${_args[$i]}
+      i=$((i + 1))
+      sed -i -e "/^$k=/d" "$conf_file"
+      echo "$k=$val" >>"$conf_file"
+    done
+}
+
+auth_code() {
+  scope=https://www.googleapis.com/auth/photoslibrary
+  $dummy open "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=$client_id&redirect_uri=$redirect_uri&scope=$scope&access_type=offline"
+}
+
+auth_token() {
+  # shellcheck disable=SC2154
+  $dummy curl \
+    --data "code=$code" \
+    --data "client_id=$client_id" \
+    --data "client_secret=$client_secret" \
+    --data "redirect_uri=$redirect_uri" \
+    --data "grant_type=authorization_code" \
+    --data "access_type=offline" \
+    https://www.googleapis.com/oauth2/v4/token
+  # {
+  #   "access_token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  #   "expires_in": 3599,
+  #   "refresh_token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  #   "scope": "https://www.googleapis.com/auth/photoslibrary",
+  #   "token_type": "Bearer"
+  # }%
+}
+
+refresh_token() {
+  # shellcheck disable=SC2154
+  $dummy curl \
+    --data "refresh_token=$refresh_token" \
+    --data "client_id=$client_id" \
+    --data "client_secret=$client_secret" \
+    --data "grant_type=refresh_token" \
+    https://www.googleapis.com/oauth2/v4/token
+}
+
+search_items() {
+  page_size="$1"
+  page_token="$2"
+  dstf="$3"
+  opt=
+  test -n "$page_token" && opt='?pageToken='$page_token
+  # shellcheck disable=SC2154
+  $dummy curl -s \
+    -X POST \
+    -H "Authorization: Bearer $access_token" \
+    -H "Content-type: application/json" \
+    -d "{ \"pageSize\": $page_size }" \
+    https://photoslibrary.googleapis.com/v1/mediaItems:search"$opt" |
+    if [[ -z $dstf ]]; then
+      cat -
+    else
+      cat - | tee -a "$dstf"
+    fi
+}
+
+items() {
+  page_token="$1"
+  opt=
+  test -n "$page_token" && opt='?pageToken='$page_token
+  $dummy curl -s \
+    -H "Authorization: Bearer $access_token" \
+    -H "Content-type: application/json" \
+    https://photoslibrary.googleapis.com/v1/mediaItems"$opt"
+}
+
+list_items() {
+  i=0
+  page_token=
+  while true; do
+    i=$((i + 1))
+    idx=$(printf "%04d" $i)
+    # echo "$idx"
+    dstf="$items_dir/$idx"
+    if [[ $i -ne 1 && $page_token == "null" ]]; then
+      break
+    fi
+    items "$page_token" |
+      if is_dummy; then
+        cat -
+      else
+        cat - | tee -a "$dstf"
+      fi
+    page_token=$(cat <"$dstf" | jq -r '.nextPageToken')
+    sleep 0.5
+    # break
+  done
+}
+
+divide_albums() {
+  files=$(rg filename ./items | grep filename)
+  cat <"$script_dir/albums" |
+    while read -r line; do
+      echo "${#line} $line"
+    done |
+    sort -nr |
+    while read -r c nm; do
+      [[ -z $c ]] && continue
+      [[ $c =~ ^#.* ]] && continue
+      local dstf
+      # shellcheck disable=SC2030
+      dstf="$script_dir/albums.existItems"
+      if ! echo -e "$files" | grep "$nm" >&/dev/null; then
+        dstf="$script_dir/albums.noItems"
+      fi
+      echo "$nm" >>"$dstf"
+    done
+}
+
+create_album() {
+  log "==> Creating album:$1"
+  album_nm=$(echo "$1" | to_unicode_point)
+  $dummy curl -s \
+    -X POST \
+    -H "Authorization: Bearer $access_token" \
+    -H "Content-type: application/json" \
+    -d "{ \"album\": { \"title\":\"$album_nm\" } }" \
+    https://photoslibrary.googleapis.com/v1/albums
+}
+
+create_albums() {
+  cat <"$albums_file" |
+    while read -r line; do
+      echo "${#line} $line"
+    done |
+    sort -nr | # アルバム名の長い順
+    while read -r c nm; do
+      [[ -z $c ]] && continue
+      [[ $c =~ ^#.* ]] && continue
+      create_album "$nm" |
+        if is_dummy; then
+          cat -
+        else
+          cat - | tee -a "$create_albums_result_file"
+        fi
+      sleep 0.5
+      # break
+    done
+}
+
+to_item_id_csv() {
+  IFS=$'\t'
+  grep "$album_nm" "$script_dir"/items.all |
+    sed -e 's,\t.*,,g' -e 's,^,",g' -e 's,$,",g' |
+    sed -z -e 's,\n,\,,g' -e 's,\,$,,g'
+}
+
+add_album() {
+  local album_id album_nm
+  album_id="$1"
+  album_nm="$2"
+  if ! grep "$album_nm" "$script_dir"/albums.existItems >&/dev/null; then
+    error "==> No item album name:$album_nm"
+  fi
+  item_id_csv=$(to_item_id_csv)
+  if [[ -z $item_id_csv ]]; then
+    error "==> No item csv album name:$album_nm"
+  fi
+  log "==> Adding items to Album name:$album_nm"
+  log "======> Album id:$album_id"
+  log "======> item ids:$item_id_csv"
+  $dummy curl -s \
+    -X POST \
+    -H "Authorization: Bearer $access_token" \
+    -H "Content-type: application/json" \
+    -d '{ "mediaItemIds": ['"$item_id_csv"'] }' \
+    https://photoslibrary.googleapis.com/v1/albums/"$album_id":batchAddMediaItems
+}
+
+# TODO !!!!! Fxck
+# > you can only add media items that have been uploaded by your application to albums that your application has created.
+# [rest - Google Photo returns "error 400: Request contains an invalid media item id. (INVALID_ARGUMENT)" when adding a media item into an existing album - Stack Overflow](https://stackoverflow.com/questions/56374316/google-photo-returns-error-400-request-contains-an-invalid-media-item-id-inv)
+add_albums() {
+  IFS=$'\t'
+  cat <"$script_dir/albums" |
+    # grep ' ' |
+    # head -1 |
+    while read -r nm id; do
+      add_album "$id" "$nm"
+      sleep 0.5
+    done
+}
+
+sub() {
+  case "$mode" in
+    li) list_items ;;
+    ca) create_albums ;;
+    aa) add_albums ;;
+    *) search_items 1 ;;
+  esac
+}
+
+main() {
+  log "Start"
+  initialize "$@"
+  auth
+  sub
+  log "Done"
+}
+main "$@" |& tee >(cat - | ink_off >>"$log_file")
