@@ -542,3 +542,9 @@ snippet	deepCopyyy
 
 snippet	count_field
 	reflect.TypeOf(Person{}).NumField()
+
+snippet	stdinnn
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
