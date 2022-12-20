@@ -1,0 +1,32 @@
+#!/usr/bin/env -S bash -e
+
+cat_sql() {
+  table_name="$1"
+  dstf="${table_name}.csv"
+  cat <<EOF
+SELECT * FROM $table_name INTO OUTFILE '$dstf' FIELDS TERMINATED BY ',' ENCLOSED BY '\"' ESCAPED BY '\"' LINES TERMINATED BY '\\r\\n';
+EOF
+}
+
+main() {
+  if [[ ! -p /dev/stdin && $# -eq 0 ]]; then
+    echo "Specify target table" 1>&2
+    exit 1
+  fi
+  {
+    if [[ -p /dev/stdin ]]; then
+      cat -
+    fi
+    if [[ $# -ne 0 ]]; then
+      for arg in "$@"; do
+        echo "$arg"
+      done
+    fi
+  } |
+    while read -r table_name; do
+      [[ -z $table_name ]] && continue
+      [[ $table_name =~ ^#.* ]] && continue
+      cat_sql "$table_name"
+    done
+}
+main "$@"
