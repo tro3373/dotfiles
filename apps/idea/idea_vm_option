@@ -1,0 +1,11 @@
+# [IntelliJ IDEAの動作が遅い時の対策 - a tomato](https://kzdev.hatenablog.com/entry/2017/09/03/213423)
+
+-Xms2G
+-Xmx4G
+-XX:+UseG1GC
+-XX:-UseParNewGC
+-XX:-UseConcMarkSweepGC
+-XX:ReservedCodeCacheSize=240m
+-XX:+UseCompressedOops
+-XX:+OmitStackTraceInFastThrow
+-Dsun.io.useCanonCaches=false
