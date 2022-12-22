@@ -377,7 +377,6 @@ alias	red
 snippet	initializzzz
 	command_name=$(basename "\$0") && readonly command_name
 	dummy="echo"
-	is_dummy() { [[ -n $dummy ]]; }
 	args=()
 	usage() {
 		cat <<EOF
@@ -390,10 +389,6 @@ snippet	initializzzz
 				-h|--help : Show this usage
 
 	EOF
-	}
-	add_args() { args+=("$@"); }
-	check() {
-		:
 	}
 	initialize() {
 		while true; do
@@ -408,6 +403,11 @@ snippet	initializzzz
 			shift
 		done
 		check
+	}
+	is_dummy() { [[ -n $dummy ]]; }
+	add_args() { args+=("$@"); }
+	check() {
+		:
 	}
 	main() {
 		initialize "$@"
