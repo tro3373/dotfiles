@@ -272,6 +272,7 @@ End Sub
 ```
 
 ## テーブル定義からSQL DDL生成(MySQL)
+
 ```
 Public row As Integer
 Public OutBookName As String
@@ -280,7 +281,7 @@ Public OutSheetName As String
 ' 入力ファイル選択
 Function getInputFilePath() As String
     Dim OpenFileName As String
-    ChDir ThisWorkbook.Path & "\"
+    ChDir ThisWorkbook.Path
     OpenFileName = Application.GetOpenFilename("Microsoft Excelブック,*.xls?", MultiSelect:=False)
     If OpenFileName = "False" Then
         OpenFileName = ""
@@ -339,95 +340,118 @@ Sub output2Sheet()
     Dim sht As Worksheet
 '    For Each sht In ThisWorkbook.Worksheets
     For Each sht In targetWb.Worksheets
-        If (sht.Name Like "m_*" Or sht.Name Like "t_*" Or sht.Name Like "MST_*" Or sht.Name Like "TRN_*") And Not sht.Name Like "*_データ" Then
-            tableName = LCase(sht.Name)
-            'tableName = LCase(sht.Cells(1, 23).Value)
-            Call output2Cell("DROP TABLE IF EXISTS `" & tableName & "`;")
-            Call output2Cell("CREATE TABLE `" & tableName & "` (")
-
-            n = sht.Cells(Rows.Count, 3).End(xlUp).row
-            pkeys = ""
-
-            ' ===============================================================
-            ' ！！！オプションキー指定！！！
-            ' ===============================================================
-            optKeys1 = sht.Cells(1, 54).Value
-            optKeys2 = sht.Cells(2, 54).Value
-            optKeys3 = sht.Cells(3, 54).Value
-            For i = 6 To n
-                ' カラム名
-                colId = sht.Cells(i, 3).Value
-                ' カラム日本語名
-                colName = Replace(sht.Cells(i, 11).Value, vbLf, "")
-                ' 型
-                colType = sht.Cells(i, 19).Value
-
-                autoIncrement = ""
-                If (colId = "id" Or colId = "ID") And (colName = "id" Or colName = "ID") And (colType Like "*INT") Then
-                    ' colTypeStr = "INT UNSIGNED"
-                    colTypeStr = colType
-                    autoIncrement = " AUTO_INCREMENT"
-                ' ElseIf colType = "INT" Then → INTEGER は INT のシノニム
-                '     colTypeStr = "INTEGER"
-                ElseIf colType = "DEC" Then
-                    colTypeStr = "DECIMAL"
-                Else
-                    colTypeStr = colType
-                End If
-
-                ' カラム桁
-                colLen1 = sht.Cells(i, 23).Value
-                ' カラム少数桁
-                colLen2 = sht.Cells(i, 25).Value
-                If colTypeStr = "TEXT" Or colTypeStr = "BLOB" Then
-                    ' 桁部分を無視
-                ElseIf colLen1 <> "" And Trim(colLen2) <> "" Then
-                    colTypeStr = colTypeStr & "(" & colLen1 & "," & colLen2 & ")"
-                ElseIf colLen1 <> "" Then
-                    colTypeStr = colTypeStr & "(" & colLen1 & ")"
-                End If
-                colTypeStr = colTypeStr & autoIncrement
-
-                ' NOT NULL の指定
-                nn = sht.Cells(i, 27).Value
-                If Trim(nn) <> "" Then
-                    nn = "NOT NULL"
-                End If
-
-                ' PKEY項目の収集
-                pkey = sht.Cells(i, 30).Value
-                If Trim(pkey) = "UK" Then
-                    colTypeStr = colTypeStr & " UNIQUE"
-                ElseIf Trim(pkey) <> "" Then
-                    If pkeys <> "" Then
-                        pkeys = pkeys & ","
-                    End If
-                    pkeys = pkeys & "`" & colId & "`"
-                End If
-
-                Call output2Cell("`" & colId & "` " & colTypeStr & " " & nn & " COMMENT '" & colName & "',")
-            Next i
-            If pkeys <> "" Then
-                tmpComma = ""
-                If optKeys1 <> "" Or optKeys2 <> "" Or optKeys3 <> "" Then
-                    tmpComma = ", "
-                End If
-                Call output2Cell("PRIMARY KEY (" & pkeys & ")" & tmpComma)
-            End If
-            If optKeys1 <> "" Then
-                Call output2Cell("" & optKeys1)
-            End If
-            If optKeys2 <> "" Then
-                Call output2Cell("" & optKeys2)
-            End If
-            If optKeys3 <> "" Then
-                Call output2Cell("" & optKeys3)
-            End If
-            Call output2Cell(") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci")
-            tableComment = sht.Cells(2, 23).Value
-            Call output2Cell("comment='" & tableComment & "';")
-            Call output2Cell("")
+        If Not LCase(sht.Name) Like "m_*" And Not LCase(sht.Name) Like "t_*" And Not LCase(sht.Name) Like "s_*" And Not LCase(sht.Name) Like "mst_*" And Not LCase(sht.Name) Like "trn_*" Then
+            GoTo Continue
         End If
+
+        If (sht.Name Like "*_データ") Then
+            GoTo Continue
+        End If
+
+        ' ===============================================================
+        ' ！！！オプションキー指定！！！
+        ' ===============================================================
+        optKeys1 = sht.Cells(1, 54).Value
+        optKeys2 = sht.Cells(2, 54).Value
+        optKeys3 = sht.Cells(3, 54).Value
+
+        If (optKeys1 = "NT") Then
+            GoTo Continue
+        End If
+
+        tableName = LCase(sht.Name)
+        'tableName = LCase(sht.Cells(1, 23).Value)
+
+        If (tableName Like "s_*") Then
+            Call output2Cell("CREATE TABLE `" & tableName & "` (id MEDIUMINT NOT NULL) ENGINE=MyISAM;")
+            Call output2Cell("INSERT INTO `" & tableName & "` VALUES (0);")
+            GoTo Continue
+        End If
+
+        Call output2Cell("DROP TABLE IF EXISTS `" & tableName & "`;")
+        Call output2Cell("CREATE TABLE `" & tableName & "` (")
+
+        n = sht.Cells(Rows.Count, 3).End(xlUp).row
+        pkeys = ""
+
+        For i = 6 To n
+            ' カラム名
+            colId = sht.Cells(i, 3).Value
+            ' カラム日本語名
+            colName = Replace(sht.Cells(i, 11).Value, vbLf, "")
+            ' 型
+            colType = sht.Cells(i, 19).Value
+
+            autoIncrement = ""
+            If (colId = "id" Or colId = "ID") And (colName = "id" Or colName = "ID") And (colType Like "*INT") Then
+                ' colTypeStr = "INT UNSIGNED"
+                colTypeStr = colType
+                autoIncrement = " AUTO_INCREMENT"
+            ' ElseIf colType = "INT" Then → INTEGER は INT のシノニム
+            '     colTypeStr = "INTEGER"
+            ElseIf colType = "DEC" Then
+                colTypeStr = "DECIMAL"
+            Else
+                colTypeStr = colType
+            End If
+
+            ' カラム桁
+            colLen1 = sht.Cells(i, 23).Value
+            ' カラム少数桁
+            colLen2 = sht.Cells(i, 25).Value
+            If colTypeStr = "TEXT" Or colTypeStr = "BLOB" Then
+                ' 桁部分を無視
+            ElseIf colLen1 <> "" And Trim(colLen2) <> "" Then
+                colTypeStr = colTypeStr & "(" & colLen1 & "," & colLen2 & ")"
+            ElseIf colLen1 <> "" Then
+                colTypeStr = colTypeStr & "(" & colLen1 & ")"
+            End If
+            colTypeStr = colTypeStr & autoIncrement
+
+            ' NOT NULL の指定
+            nn = sht.Cells(i, 27).Value
+            If Trim(nn) <> "" Then
+                nn = "NOT NULL"
+            End If
+
+            ' PKEY項目の収集
+            pkey = sht.Cells(i, 30).Value
+            If Trim(pkey) = "UK" Then
+                colTypeStr = colTypeStr & " UNIQUE"
+            ElseIf Trim(pkey) <> "" Then
+                If pkeys <> "" Then
+                    pkeys = pkeys & ","
+                End If
+                pkeys = pkeys & "`" & colId & "`"
+            End If
+
+            Call output2Cell("`" & colId & "` " & colTypeStr & " " & nn & " COMMENT '" & colName & "',")
+        Next i
+
+        If pkeys <> "" Then
+            tmpComma = ""
+            If optKeys1 <> "" Or optKeys2 <> "" Or optKeys3 <> "" Then
+                tmpComma = ", "
+            End If
+            Call output2Cell("PRIMARY KEY (" & pkeys & ")" & tmpComma)
+        End If
+        If optKeys1 <> "" Then
+            Call output2Cell("" & optKeys1)
+        End If
+        If optKeys2 <> "" Then
+            Call output2Cell("" & optKeys2)
+        End If
+        If optKeys3 <> "" Then
+            Call output2Cell("" & optKeys3)
+        End If
+
+        Call output2Cell(") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci")
+        tableComment = sht.Cells(2, 23).Value
+        Call output2Cell("comment='" & tableComment & "';")
+        Call output2Cell("")
+
+
+Continue:
     Next
     targetWb.Close SaveChanges:=False
 
