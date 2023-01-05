@@ -38,7 +38,7 @@ initialize() {
 main() {
   initialize "$@"
 
-  set -euo pipefail
+  set -eo pipefail
   local name="${args[*]}"
   if [[ -z $name ]]; then
     log "Specify repository name"
@@ -46,21 +46,26 @@ main() {
   fi
   local tmpd=/tmp/ghq_new/$name
 
-  mkdir -p $tmpd
-  cd $tmpd
+  mkdir -p "$tmpd"
+  cd "$tmpd"
 
   log "==> Creating repository $name .."
   git_init_allow_empty
-  local _opt_create=
+  local _opt_create
   [[ $private -eq 1 ]] && _opt_create="-p"
   hub create $_opt_create
   git push -u origin main
 
-  local _user_repo=$(git remote get-url origin | sed -e 's,^.*github.com.,,g' -e 's,.git,,g')
+  local _user_repo
+  _user_repo=$(git remote get-url origin | sed -e 's,^.*github.com.,,g' -e 's,.git,,g')
   # ghq get $_opt_create $_user_repo # -p option can clone via git protocol
-  ghq get -p $_user_repo # -p option can clone via git protocol
+  ghq get -p "$_user_repo" # -p option can clone via git protocol
 
+  cd -
   log "==> Removing $tmpd.."
-  rm -rf $tmpd
+  rm -rf "$tmpd"
+
+  log "==> Below path is created"
+  ghq list -p "$name"
 }
 main "$@"

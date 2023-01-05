@@ -23,6 +23,6 @@ setting_common() {
     if is_dry; then
       cat -
     else
-      cat - | tee $_hub_config >&/dev/null && chmod 600 $_hub_config
+      cat - | tee "$_hub_config" >&/dev/null && chmod 600 "$_hub_config"
     fi
 }
