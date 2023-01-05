@@ -1,6 +1,6 @@
 SERVICE := sample
 STAGE := dev
-CONTAINER := node:16-bullseye
+CONTAINER := node:19-bullseye
 NODE_CACHE_D := $(PWD)/node_modules
 .DEFAULT_GOAL := local
 local_ip=$$(ip route |grep kernel |awk 'END {print $$NF}')
