@@ -2,6 +2,6 @@
 
 main() {
   # ip route | grep 'eth0' | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
-  ip route |grep kernel |awk 'END {print $NF}'
+  ip route | grep kernel | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | awk 'END {print $NF}'
 }
 main "$@"
