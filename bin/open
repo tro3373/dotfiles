@@ -3,33 +3,47 @@
 current_dir=$(pwd)
 
 has() { command -v "${1}" >&/dev/null; }
-main() {
-  local args=("$@")
-  if [[ $# -eq 0 ]]; then
-    args=("$current_dir")
-  fi
-  # local _open=open
-  local _open=$(type -a open | grep -v $0 | head -1 | cut -d' ' -f3)
-  local _ostype=${OSTYPE}
+is_url() { [[ ${args[*]} =~ ^https?://.* ]]; }
+set_ostype() {
+  _ostype=${OSTYPE}
   os wsl && _ostype=wsl
+}
+set_open_command() {
+  _open=$(type -a open | grep -v "$0" | head -1 | cut -d' ' -f3)
   case "$_ostype" in
-    linux*) if has nautilus; then _open=nautilus; else _open=xdg-open; fi ;;
     cygwin*) _open=cygstart ;;
     msys*) _open=explorer ;;
     wsl*) _open=explorer.exe ;;
+    linux*)
+      _open=xdg-open
+      if ! is_url && has nautilus; then
+        _open=nautilus
+      fi
+      ;;
   esac
-  if [[ $_ostype == "wsl" ]]; then
-    # cmd.exe /C start http://localhost
-    if [[ ${args[*]} =~ ^https?://.* ]]; then
-      _open=cmd.exe
-      args=("/C" "start" "${args[@]}")
-    else
-      args=("$(wslpath -w "${args[@]}")")
-    fi
+}
+set_args() {
+  args=("$@")
+  if [[ $# -eq 0 ]]; then
+    args=("$current_dir")
   fi
-  if [[ $_ostype == "msys" || $_ostype == "cygwin" ]]; then
-    args=("$(cygpath -aw "${args[@]}")")
-  fi
+
+  case "$_ostype" in
+    cygwin | msys) args=("$(cygpath -aw "${args[@]}")") ;;
+    wsl)
+      if is_url; then
+        args=("/C" "start" "${args[@]}")
+      else
+        args=("$(wslpath -w "${args[@]}")")
+      fi
+      ;;
+  esac
+}
+main() {
+  local _ostype args _open
+  set_ostype
+  set_args "$@"
+  set_open_command
   echo "==> open ${args[*]}" 1>&2
   $_open "${args[@]}" &>/dev/null &
 }
