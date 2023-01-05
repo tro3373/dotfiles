@@ -4,7 +4,7 @@
 # @ see https://blog.ojisan.io/prettier-eslint-cli
 #-------------------------------------------------------
 
-command_name=$(basename $0)
+command_name=$(basename "$0")
 git_root=$(get_git_root)
 dummy="echo"
 vue=0
@@ -92,8 +92,8 @@ setup_vscode_extensions_recommendations() {
       log "==> Bellow content will be added to $target_f..."
       cat -
     else
-      $dummy mkdir -p $target_d
-      cat - >$target_f
+      $dummy mkdir -p "$target_d"
+      cat - >"$target_f"
     fi
 }
 
@@ -158,7 +158,7 @@ setup_eslint_js() {
       log "==> Bellow content will be added to $target..."
       cat -
     else
-      cat - >$target
+      cat - >"$target"
     fi
 }
 
@@ -186,7 +186,7 @@ setup_prettierrc() {
       log "==> Bellow content will be added to $target..."
       cat -
     else
-      cat - >$target
+      cat - >"$target"
     fi
 }
 
@@ -197,5 +197,10 @@ main() {
   setup_eslint_js
   setup_prettierrc
   setup_vscode_extensions_recommendations
+  if is_dummy; then
+    log
+    log "This is dummy mode. Specify -e option to exeucte"
+    usage
+  fi
 }
 main "$@"
