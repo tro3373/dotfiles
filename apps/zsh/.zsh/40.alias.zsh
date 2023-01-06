@@ -257,7 +257,7 @@ zle -N cd_src
 bindkey '^]' cd_src
 
 function _find_dirs() {
-  find . -type d -maxdepth 5 |
+  find . -type d -maxdepth 5 2>/dev/null |
     grep -E -v '/\.' |
     grep -v 'node_modules' |
     grep -v 'bower_components'
