@@ -9,6 +9,7 @@ args=()
 mode=
 src_fnm=default
 dst_fnm=
+dst_files=()
 
 usage() {
   cat <<EOF
@@ -26,6 +27,7 @@ Create new executable shell file.
       new make go
       new make sls
       new make tf
+      new make docker-compose
 
     Existing template is..
 $(if has tree; then tree "$lib_dir"; else find "$lib_dir"; fi | sed -e 's,^,      ,g')
@@ -34,6 +36,7 @@ EOF
 }
 
 initialize() {
+  set -eo pipefail
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
@@ -60,25 +63,30 @@ set_arg() {
 
   # Below is over 2 args length case
   mode="${args[0]}"
-  dst_fnm="${args[1]}"
-  if [[ $mode == "make" ]]; then
-    src_fnm="${args[1]}.Makefile"
-    dst_fnm=Makefile
+  if [[ $mode != "make" ]]; then
+    usage
+    error "Not supported mode $mode"
   fi
+  src_fnm="${args[1]}"
 }
 check() {
-  if [[ -z $dst_fnm ]]; then
-    usage
-    error "Specify create command name."
+  if is_mode_bash; then
+    if [[ -z $dst_fnm ]]; then
+      usage
+      error "Specify create command name."
+    fi
+    return
   fi
-  if ! is_mode_bash && [[ $to_bin -eq 1 ]]; then
+
+  if [[ $to_bin -eq 1 ]]; then
     usage
-    error "Not supported. Bin option only enable bash mode."
+    error "Not supported. Bin option enable only bash mode."
   fi
 }
 # is_dummy() { [[ -n $dummy ]]; }
 has() { command -v "${1}" >&/dev/null; }
 add_args() { args+=("$@"); }
+add_dst_files() { dst_files+=("$@"); }
 ink() {
   local stdin=
   if [[ -p /dev/stdin ]]; then
@@ -146,28 +154,53 @@ find_exist_path_first() {
 
 is_mode_bash() { [[ $mode == "bash" ]]; }
 
-generate_dst_f() {
-  local src_f rel_src_f
-  src_f=$(find_exist_path_first "$lib_dir/$mode/$src_fnm" "$lib_dir/$mode/default")
-  if [[ -z $src_f || ! -e $src_f ]]; then
-    if is_mode_bash; then
-      log "==> Generating bash default template.."
-      cat_template_bash_defualt >"$dst_f"
-      return
+generate_dst_files() {
+  local src_f_or_d src_files rel_src_f dst_f
+  src_f_or_d=$(find_exist_path_first "$lib_dir/$mode/$src_fnm" "$lib_dir/$mode/default")
+  if [[ -z $src_f_or_d || ! -e $src_f_or_d ]]; then
+    if ! is_mode_bash; then
+      error "No such mode source template exist. mode:$mode"
     fi
-    error "No such mode source template exist. mode:$mode"
+    src_f_or_d=$(mktemp)
+    cat_template_bash_defualt >"$src_f_or_d"
   fi
-  rel_src_f=${src_f/$lib_dir\//}
-  log "==> Generating template from $rel_src_f.."
-  cp "$src_f" "$dst_f"
+  src_files=$(fire_src_files)
+  for src_f in $src_files; do
+    dst_f=$out/$dst_fnm
+    if ! is_mode_bash; then
+      dst_f=$out/$(basename "$src_f")
+    fi
+    add_dst_files_with_check "$dst_f"
+    rel_src_f=${src_f/$lib_dir\//}
+    log "==> Generating template from $rel_src_f.."
+    cp "$src_f" "$dst_f"
+  done
+}
+
+add_dst_files_with_check() {
+  local _dst_f="$*"
+  if [[ -e $_dst_f ]]; then
+    error "$_dst_f is already exist."
+  fi
+  add_dst_files "$_dst_f"
+}
+
+fire_src_files() {
+  if [[ -d $src_f_or_d ]]; then
+    find "$src_f_or_d"/ -type f
+    return
+  fi
+  echo "$src_f_or_d"
 }
 
 generate() {
-  generate_dst_f
+  generate_dst_files
   if ! is_mode_bash; then
     return
   fi
-  chmod 775 "$dst_f"
+  for f in "${dst_files[@]}"; do
+    chmod 775 "$f"
+  done
 }
 
 main() {
@@ -176,12 +209,8 @@ main() {
   if [[ $to_bin -eq 1 ]]; then
     out=$dot_bin_dir
   fi
-  local dst_f=$out/$dst_fnm
-  if [[ -e $dst_f ]]; then
-    error "$dst_f is already exist."
-  fi
   generate
-  log "==> New shell template file generated to $dst_f."
+  log "==> New template file generated."
   log "==> Edit it?(Y/n)"
   read -r yes_i_edit
   if [[ $yes_i_edit =~ [nN] ]]; then
@@ -189,6 +218,6 @@ main() {
   fi
   local _vim=vim
   has nvim && _vim=nvim
-  "$_vim" "$dst_f"
+  "$_vim" -p "${dst_files[@]}"
 }
 main "$@"
