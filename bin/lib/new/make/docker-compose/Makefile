@@ -1,4 +1,4 @@
-app := sample
+app := app
 timestamp := $(shell date '+%Y%m%d.%H%M%S')
 .DEFAULT_GOAL := up
 
