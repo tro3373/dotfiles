@@ -126,6 +126,12 @@ setup_user() {
     cat <<EOF >>/etc/wsl.conf
 [user]
 default=$username
+# for work(vpc?...)
+[network]
+generateResolvConf = false
+# enable systemd!
+[boot]
+systemd=true
 EOF
   fi
 }

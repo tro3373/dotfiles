@@ -257,9 +257,9 @@ _initialize() {
     ${DOTPATH}/bin/start_xvfb
   elif [[ -z "${REMOTEHOST}${SSH_CONNECTION}" ]]; then
     ${DOTPATH}/bin/clip -d >&/dev/null &
-    if is_wsl && ! test -e /tmp/dockerd.log; then
-      ${DOTPATH}/bin/start_dockerd &
-    fi
+    # if is_wsl && ! test -e /tmp/dockerd.log; then
+    #   ${DOTPATH}/bin/start_dockerd &
+    # fi
   fi
   # ${DOTPATH}/bin/tmux_dog
   load_zsh ~/.works.zsh
