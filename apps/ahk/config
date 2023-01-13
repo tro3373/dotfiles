@@ -7,6 +7,7 @@ install_common() {
     return
   fi
   # github https://github.com/karakaram/alt-ime-ahk.git
+  # exe scoop install autohotkey@1.1.36.02
   exe scoop install autohotkey
 }
 install_wsl() {
