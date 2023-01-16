@@ -31,7 +31,7 @@ EOF
 }
 add_args() { args+=("$@"); }
 is_dummy() { [[ -n $dummy ]]; }
-is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
+is_wsl() { grep -qi microsoft /proc/version; }
 check() {
   if ! is_wsl; then
     echo "Not supported os." 1>&2

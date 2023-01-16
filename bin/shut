@@ -6,6 +6,7 @@
 
 main() {
   if os wsl; then
+    # TODO
     wsl.exe -t $WSL_DISTRO_NAME
     return
   fi

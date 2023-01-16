@@ -136,7 +136,7 @@ _clipd() {
   _start_clipd
 }
 
-is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
+is_wsl() { grep -qi microsoft /proc/version; }
 
 _clippp() {
   local _OSTYPE=$OSTYPE

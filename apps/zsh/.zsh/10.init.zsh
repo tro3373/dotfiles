@@ -1,6 +1,7 @@
 # is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
 is_vagrant() { pwd | grep /home/vagrant >&/dev/null; }
-is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
+#is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
+is_wsl() { grep -qi microsoft /proc/version; }
 _initialize_env() {
   # Inisialize
   export DOTPATH="$HOME/.dot"
@@ -14,7 +15,7 @@ _initialize_env() {
     export WINHOME=/c/Users/$(whoami)
     export MSYS=winsymlinks:nativestrict # enable symbolic link in admined msys
   fi
-  if [[ -n $WSL_DISTRO_NAME ]]; then
+  if is_wsl; then
     export WINHOME=/mnt/c/Users/$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
   fi
 }
