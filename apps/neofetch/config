@@ -11,10 +11,27 @@ install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 
 cat_neofetch_shell() {
-  cat <<EOF
-#!/usr/bin/env bash
+  cat <<'EOF'
+#!/usr/bin/env -S bash -e
 
-neofetch
+readonly neofetched_f=/tmp/neofetched
+
+is_tmux_runnning() { [[ -n $TMUX ]]; }
+do_neofetch() { neofetch --disable packages; }
+already_neofetched() { [[ -e $neofetched_f ]]; }
+
+main() {
+  if ! is_tmux_runnning; then
+    do_neofetch
+    return
+  fi
+  if already_neofetched; then
+    return
+  fi
+  do_neofetch
+  touch $neofetched_f
+}
+main "$@"
 EOF
 }
 setting_common() { no_settings; }
