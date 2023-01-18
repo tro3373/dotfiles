@@ -227,6 +227,7 @@ call plug#begin('$HOME/.vim/plugged')
 
   Plug 'tyru/open-browser.vim'                              " Open browser
   Plug 'rcmdnk/vim-markdown'                                " Markdown syntax
+  Plug 'mattn/vim-sqlfmt'                                   " SQL
 
   " Markdown Preview 関連
   " Plug 'kannokanno/previm'
