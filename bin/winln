@@ -35,7 +35,8 @@ add_dsts() {
   dsts+=("$@")
 }
 check() {
-  only win
+  # only win
+  only msys
   if [[ ! -e $src ]]; then
     echo "Specify exist path. src=$src" 1>&2
     exit 1
@@ -120,12 +121,20 @@ parse() {
   echo "$_res"
 }
 
+cat_bat() {
+  cat <<EOF
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+powershell.exe -ExecutionPolicy RemoteSigned -File "'$(parse "$winln_ps1")'" "'$(parse "$src")'" "'$(parse "$dst")'"
+EOF
+}
+
 main() {
-  # set -x
+  set -e
   initialize "$@"
   for dst in "${dsts[@]}"; do
     echo "==> Creating windows shortcut src:$src dst:$dst.."
-    powershell.exe -ExecutionPolicy RemoteSigned -File $winln_ps1 "$(parse "$src")" "$(parse "$dst")"
+    echo powershell.exe -ExecutionPolicy RemoteSigned -File "'$(parse "$winln_ps1")'" "'$(parse "$src")'" "'$(parse "$dst")'"
+    # cat_bat | exec_bat
   done
 }
 main "$@"

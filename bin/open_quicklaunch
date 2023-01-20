@@ -1,0 +1,6 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  open "$WINHOME/AppData/Roaming/Microsoft/Internet Explorer/Quick Launch"
+}
+main "$@"

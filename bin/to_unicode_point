@@ -8,12 +8,7 @@ hass() {
     exit 1
   done
 }
-main() {
-  hass iconv xxd
-  if [[ ! -p /dev/stdin ]]; then
-    echo "No stdin" 1>&2
-    exit 1
-  fi
+to_unicode() {
   cat - |
     while read -N1 c; do
       d=$(echo -n "$c" | iconv -t UCS-2BE | xxd -p)
@@ -26,5 +21,21 @@ main() {
         printf '\\u%s' "$d"
       fi
     done
+}
+from_unicode() {
+  local stdin="$(cat <&0)"
+  echo -n -e "$stdin"
+}
+main() {
+  hass iconv xxd
+  if [[ ! -p /dev/stdin ]]; then
+    echo "No stdin" 1>&2
+    exit 1
+  fi
+  if [[ $1 == "-r" ]]; then
+    from_unicode
+    return
+  fi
+  to_unicode
 }
 main "$@"
