@@ -133,6 +133,8 @@ call plug#begin('$HOME/.vim/plugged')
       Plug 'junegunn/fzf.vim'
   endif
   Plug 'rhysd/clever-f.vim'                               " f検索
+  " Plug 'easymotion/vim-easymotion'
+  Plug 'skanehira/jumpcursor.vim'
 
   " ソース解析
   Plug 'Shougo/unite-outline'                             " 関数一覧とかを表示
