@@ -88,6 +88,9 @@ alias d="docker"
 alias s="systemctl"
 alias cddot="cd $DOTPATH"
 alias history="history -i"
+if has speedtest; then
+  alias st="speedtest"
+fi
 if has mmv; then
   mmv() {
     if [[ $# -ne 0 ]]; then
