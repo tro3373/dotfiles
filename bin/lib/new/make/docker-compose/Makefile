@@ -5,19 +5,25 @@ timestamp := $(shell date '+%Y%m%d.%H%M%S')
 tag:
 	@tag="Release_${app}_${timestamp}" && git tag "$$tag" && echo "==> $$tag tagged."
 
+_compose:
+	@docker_user=$(docker_user) docker-compose $(CMD) $(ARG)
+
+build:
+	@make -s _compose CMD=build
+
 up: start logsf
 start:
-	@docker-compose up -d $(ARG)
+	@make -s _compose CMD="up -d"
 stop: down
 down:
-	@docker-compose down $(ARG)
+	@make -s _compose CMD=down
 restart:
-	@docker-compose restart $(ARG)
+	@make -s _compose CMD=restart
 
 logs:
-	@docker-compose logs $(ARG)
+	@make -s _compose CMD=logs
 logsf:
-	@docker-compose logs -f $(ARG)
+	@make -s _compose CMD="logs -f"
 
 console:
-	@docker exec -it $(app) /bin/sh --login
+	@docker exec -it $(app) /bin/bash --login
