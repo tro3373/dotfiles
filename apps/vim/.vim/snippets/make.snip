@@ -75,3 +75,6 @@ snippet	ifeqqqq
 snippet	variable_argssss
 	_subcommand-%:
 		_subcommand ${*}
+
+snippet	docker_user
+	docker_user := "$(shell id -u):$(shell id -g)"
