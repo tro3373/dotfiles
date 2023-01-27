@@ -23,12 +23,14 @@ function! s:find_rip_grep(q, d) abort
   call fzf#vim#grep(
       \   'rg --ignore-file ~/.ignore --column --line-number --no-heading --hidden --smart-case .+ ' . l:target_dir,
       \   1,
-      \   fzf#vim#with_preview({'options': '--query=' . a:q . ' --delimiter : --nth 4..'}, 'right:50%', '?'),
+      \   fzf#vim#with_preview({'options': '--query="' . a:q . '" --delimiter : --nth 4..'}, 'right:50%', '?'),
       \   0,
       \)
 endfunction
 nnoremap <silent> <Leader>g :<C-u>silent call <SID>find_rip_grep(expand('<cword>'), '')<CR>
 nnoremap <silent> <Leader>G :<C-u>silent call <SID>find_rip_grep(expand('<cword>'), expand('%:p:h'))<CR>
+vnoremap <silent> <Leader>g "zy:<C-u>silent call <SID>find_rip_grep(expand(@z), '')<CR>
+vnoremap <silent> <Leader>G "zy:<C-u>silent call <SID>find_rip_grep(expand(@z), expand('%:p:h'))<CR>
 
 function! s:find_rip_grep_files(q, d) abort
   let l:target_dir = GetGitRoot()
