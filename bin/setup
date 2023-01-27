@@ -188,11 +188,14 @@ setting_app() {
 }
 
 not_supported() {
+  # shellcheck disable=SC2317
   local _message="==> No setting exist."
+  # shellcheck disable=SC2317
   if [[ $for_setting -ne 1 ]]; then
     _message="==> Not supported."
     not_supported=1
   fi
+  # shellcheck disable=SC2317
   log "$_message"
 }
 
