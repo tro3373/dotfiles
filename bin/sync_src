@@ -1,41 +1,108 @@
 #!/usr/bin/env -S bash -e
 
-# current_dir=$(pwd) && readonly current_dir
+command_name=$(basename "$0") && readonly command_name
 wsl_src_root_d=$HOME/src && readonly wsl_src_root_d
 win_src_root_d=$HOME/win/works/src && readonly win_src_root_d
+dummy="echo"
 
+usage() {
+  cat <<EOF
+
+Sync modified code from win.
+Only support wsl.
+
+  $win_src_root_d
+    |
+    | copy/delete
+    +--------------> $wsl_src_root_d
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+      -e        : Execute sync
+
+EOF
+}
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -e) dummy= ;;
+      -h | --help) usage && exit ;;
+    esac
+  done
+}
+is_dummy() { [[ -n $dummy ]]; }
 is_wsl() { grep -qi microsoft /proc/version; }
 not_supported() { echo "Not supported." 1>&2 && exit 1; }
 error() { echo "$*" | ink red; }
+warn() { echo "$*" | ink yellow; }
 is_current_modified() {
   local c
   c=$(git status -s | wc -l)
-  test $c -ne 0
+  test "$c" -ne 0
+}
+is_current_win_d() { wslpath -a "$(pwd)" | grep /c/Users >&/dev/null; }
+_git() {
+  local _cmd=git
+  is_current_win_d && _cmd=git.exe
+  $_cmd "$@"
 }
 fire() {
-  cd $src_d
-  git.exe status -s
+  cd "$src_d"
+  _git status -s
 }
+is_match_hash() {
+  local src_hash dst_hash
+  src_hash=$(get_src_hash)
+  dst_hash=$(get_dst_hash)
+  test "$src_hash" == "$dst_hash"
+}
+get_head_hash() {
+  _git rev-parse HEAD
+}
+get_src_hash() {
+  cd "$src_d"
+  get_head_hash
+}
+get_dst_hash() {
+  cd "$dst_d"
+  get_head_hash
+}
+
 main() {
+  initialize "$@"
   is_wsl || not_supported
-  # if is_current_modified; then
-  #   error "==> Current directory is modified. cleanup before sync."
-  #   exit 1
-  # fi
-  local src_d dst_d rel_path
+  local src_d dst_d root_rel_path dst_f
   dst_d=$(get_git_root)
-  rel_path=${dst_d/$wsl_src_root_d\//}
-  src_d=$win_src_root_d/$rel_path
+  root_rel_path=${dst_d/$wsl_src_root_d\//}
+  src_d=$win_src_root_d/$root_rel_path
   if [[ ! -e $src_d ]]; then
     error "No such src_d:$src_d"
     exit 1
   fi
-  # echo wsl_src_root_d:$wsl_src_root_d
-  # echo win_src_root_d:$win_src_root_d
-  # echo current_dir:$current_dir
-  # echo src_d:$src_d
-  # echo dst_d:$dst_d
-  # echo rel_path:$rel_path
-  fire
+  if is_current_modified; then
+    warn "==> Current directory is modified. cleanup before sync."
+    echo "==> Press Enter to continue..(Cancel: Ctrl+C)"
+    read -r _
+  fi
+  if ! is_match_hash; then
+    warn "==> Different hash detected src and dst."
+    echo "==> Press Enter to continue..(Cancel: Ctrl+C)"
+    read -r _
+  fi
+  fire |
+    while read -r status rel_path; do
+      [[ -z $status ]] && continue
+      [[ $status =~ ^#.* ]] && continue
+      dst_f=$dst_d/$rel_path
+      if [[ $status == "D" ]]; then
+        $dummy rm -v "$dst_f"
+        continue
+      fi
+      src_f=$src_d/$rel_path
+      $dummy cp -v "$src_f" "$dst_f"
+    done
 }
 main "$@"

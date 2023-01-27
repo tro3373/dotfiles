@@ -79,6 +79,9 @@ alias gs="git status"
 if has git-sim; then
   alias gsm="git-sim"
 fi
+if has sync_src; then
+  alias ssn="sync_src"
+fi
 if has nvim; then
   alias vim="nvim"
 fi
