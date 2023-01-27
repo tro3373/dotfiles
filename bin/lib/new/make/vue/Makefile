@@ -18,7 +18,7 @@ clean_cache:
 _node:
 	@echo "==> Executing $(CMD)..." && \
 		docker run -it --rm \
-		-p 8080:8080 \
+		-p 3000:3000 \
 		-w /src \
 		--name node \
 		-v $(PWD):/src \
@@ -41,7 +41,7 @@ local: npmi_if_needed open_browser
 open_browser:
 	@command -v open >&/dev/null && \
 		command -v ipa >&/dev/null && \
-		open "http://$$(ipa):8080" &
+		open "http://$$(ipa):3000" &
 attach: console
 console:
 	docker exec -it node /bin/bash --login
