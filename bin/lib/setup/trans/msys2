@@ -23,5 +23,6 @@ post_setup() {
   # log "===> reboot maybe needed."
   exe winln -q $HOME/.dot/bin/lib/bootstrap/msys2/sudo_cmd.bat
   exe winln -q $HOME/.dot/bin/lib/bootstrap/msys2/sudo_zsh.bat
+  # [Osaka Regular-Mono: Download for free at JapaneseFonts : Japanese Fonts](https://japanesefonts.net/fonts/osaka-regular-mono)
   exe open $HOME/.dot/misc/Osaka-Mono.ttf
 }
