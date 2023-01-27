@@ -76,9 +76,9 @@ alias gt="git tag"
 alias gc="git commit"
 alias gr="git remote -v"
 alias gs="git status"
-# if has git-sim; then
-#   alias gs="git-sim"
-# fi
+if has git-sim; then
+  alias gsm="git-sim"
+fi
 if has nvim; then
   alias vim="nvim"
 fi
