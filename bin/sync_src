@@ -38,9 +38,10 @@ is_wsl() { grep -qi microsoft /proc/version; }
 not_supported() { echo "Not supported." 1>&2 && exit 1; }
 error() { echo "$*" | ink red; }
 warn() { echo "$*" | ink yellow; }
+info() { echo "$*" | ink green; }
 is_current_modified() {
   local c
-  c=$(git status -s | wc -l)
+  c=$(echo "$src_mod_files" | tee >(wc -l) 1>&2)
   test "$c" -ne 0
 }
 is_current_win_d() { wslpath -a "$(pwd)" | grep /c/Users >&/dev/null; }
@@ -49,8 +50,8 @@ _git() {
   is_current_win_d && _cmd=git.exe
   $_cmd "$@"
 }
-fire() {
-  cd "$src_d"
+git_status() {
+  cd "$1"
   _git status -s
 }
 is_match_hash() {
@@ -74,7 +75,7 @@ get_dst_hash() {
 main() {
   initialize "$@"
   is_wsl || not_supported
-  local src_d dst_d root_rel_path dst_f
+  local src_d dst_d root_rel_path dst_f src_mod_files dst_mod_files
   dst_d=$(get_git_root)
   root_rel_path=${dst_d/$wsl_src_root_d\//}
   src_d=$win_src_root_d/$root_rel_path
@@ -82,17 +83,31 @@ main() {
     error "No such src_d:$src_d"
     exit 1
   fi
+
+  src_mod_files=$(git_status "$src_d")
+  dst_mod_files=$(git_status "$dst_d")
+  if [[ -z $dst_mod_files ]]; then
+    warn "No file modied."
+    return
+  fi
+
+  info "==> Bellow files will be sync from win!"
+  info "-------------------------------------------------------"
+  echo -e "$src_mod_files" | ink blue
+  info "-------------------------------------------------------"
+
   if is_current_modified; then
-    warn "==> Current directory is modified. cleanup before sync."
-    echo "==> Press Enter to continue..(Cancel: Ctrl+C)"
+    warn "==> Current directory is modified."
+    echo -e "$dst_mod_files"
+    info "==> Press Enter to continue..(Cancel: Ctrl+C)"
     read -r _
   fi
   if ! is_match_hash; then
     warn "==> Different hash detected src and dst."
-    echo "==> Press Enter to continue..(Cancel: Ctrl+C)"
+    info "==> Press Enter to continue..(Cancel: Ctrl+C)"
     read -r _
   fi
-  fire |
+  echo -e "$src_mod_files" |
     while read -r status rel_path; do
       [[ -z $status ]] && continue
       [[ $status =~ ^#.* ]] && continue
