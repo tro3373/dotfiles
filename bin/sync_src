@@ -1,0 +1,41 @@
+#!/usr/bin/env -S bash -e
+
+# current_dir=$(pwd) && readonly current_dir
+wsl_src_root_d=$HOME/src && readonly wsl_src_root_d
+win_src_root_d=$HOME/win/works/src && readonly win_src_root_d
+
+is_wsl() { grep -qi microsoft /proc/version; }
+not_supported() { echo "Not supported." 1>&2 && exit 1; }
+error() { echo "$*" | ink red; }
+is_current_modified() {
+  local c
+  c=$(git status -s | wc -l)
+  test $c -ne 0
+}
+fire() {
+  cd $src_d
+  git.exe status -s
+}
+main() {
+  is_wsl || not_supported
+  # if is_current_modified; then
+  #   error "==> Current directory is modified. cleanup before sync."
+  #   exit 1
+  # fi
+  local src_d dst_d rel_path
+  dst_d=$(get_git_root)
+  rel_path=${dst_d/$wsl_src_root_d\//}
+  src_d=$win_src_root_d/$rel_path
+  if [[ ! -e $src_d ]]; then
+    error "No such src_d:$src_d"
+    exit 1
+  fi
+  # echo wsl_src_root_d:$wsl_src_root_d
+  # echo win_src_root_d:$win_src_root_d
+  # echo current_dir:$current_dir
+  # echo src_d:$src_d
+  # echo dst_d:$dst_d
+  # echo rel_path:$rel_path
+  fire
+}
+main "$@"
