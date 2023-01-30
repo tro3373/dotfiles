@@ -60,6 +60,7 @@ let g:ale_sh_shfmt_options = '-i 2 -ci -s'
 "\   'java': [],
 let g:ale_linters = {}
 let g:ale_linters['javascript'] = ['eslint']
+let g:ale_linters['typescript'] = ['eslint']
 let g:ale_linters['shell'] = ['shellcheck']
 let g:ale_linters['java'] = []
 let g:ale_linters['python'] = ['flake8']
@@ -71,6 +72,7 @@ let g:ale_fixers = {}
 let g:ale_fixers['*']          = ['trim_whitespace', 'remove_trailing_lines']
 " let g:ale_fixers['javascript'] = ['prettier-eslint', 'prettier', 'eslint']
 let g:ale_fixers['javascript'] = ['prettier', 'eslint']
+let g:ale_fixers['typescript'] = ['prettier', 'eslint']
 let g:ale_fixers['vue']        = ['prettier', 'eslint']
 let g:ale_fixers['json']       = ['prettier', 'fixjson', 'jq']
 let g:ale_fixers['scss']       = ['prettier', 'stylelint']
