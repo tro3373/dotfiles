@@ -107,6 +107,6 @@ let g:mkdp_markdown_css = expand('~/.vim/conf.d/libs/800_markdown-preview_markdo
 " " these filetypes will have MarkdownPreview... commands
 " let g:mkdp_filetypes = ['markdown']
 
-" let g:mkdp_theme = 'dark'
+let g:mkdp_theme = 'light'
 " let g:mkdp_auto_start = 1
 nmap <Space>s <Plug>MarkdownPreview
