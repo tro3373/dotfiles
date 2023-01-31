@@ -242,7 +242,7 @@ call plug#begin('$HOME/.vim/plugged')
   "   " Need chrome extension https://chrome.google.com/webstore/detail/cross-domain-cors/mjhpgnbimicffchbodmgfnemoghjakai/related?hl=ja
   "   Plug 'kat0h/bufpreview.vim'
   " endif
-  " Preview in browser.
+  " Preview in browser. via `:MarkdownPreview`
   Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm i'  }
 
   if g:is_windows

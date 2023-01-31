@@ -88,10 +88,10 @@ endif
 "    \ 'disable_filename': 0
 "    \ }
 "
-" " use a custom markdown style must be absolute path
-" " like '/Users/username/markdown.css' or expand('~/markdown.css')
-" let g:mkdp_markdown_css = ''
-"
+" use a custom markdown style must be absolute path
+" like '/Users/username/markdown.css' or expand('~/markdown.css')
+let g:mkdp_markdown_css = expand('~/.vim/conf.d/libs/800_markdown-preview_markdown.css')
+
 " " use a custom highlight style must absolute path
 " " like '/Users/username/highlight.css' or expand('~/highlight.css')
 " let g:mkdp_highlight_css = ''
@@ -106,3 +106,7 @@ endif
 " " recognized filetypes
 " " these filetypes will have MarkdownPreview... commands
 " let g:mkdp_filetypes = ['markdown']
+
+" let g:mkdp_theme = 'dark'
+" let g:mkdp_auto_start = 1
+nmap <Space>s <Plug>MarkdownPreview
