@@ -14,15 +14,15 @@ pre_setup() {
 
 load_update_arg_apps() {
   # shellcheck disable=SC2034
-  read -a args < <(
+  read -r -a args < <(
     echo "$(default_apps) ahk wt hackgen sakura vscode"
   )
 }
 
 post_setup() {
   # log "===> reboot maybe needed."
-  exe winln -q $HOME/.dot/bin/lib/bootstrap/msys2/sudo_cmd.bat
-  exe winln -q $HOME/.dot/bin/lib/bootstrap/msys2/sudo_zsh.bat
+  exe winln -q "$HOME/.dot/bin/lib/bootstrap/msys2/sudo_cmd.bat"
+  exe winln -q "$HOME/.dot/bin/lib/bootstrap/msys2/sudo_zsh.bat"
   # [Osaka Regular-Mono: Download for free at JapaneseFonts : Japanese Fonts](https://japanesefonts.net/fonts/osaka-regular-mono)
-  exe open $HOME/.dot/misc/Osaka-Mono.ttf
+  exe open "$HOME/.dot/misc/Osaka-Mono.otf"
 }
