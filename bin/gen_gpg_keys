@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # @see https://qiita.com/moutend/items/5c22d6e57a74845578f6
-readonly command_name=$(basename $0)
+command_name=$(basename "$0") && readonly command_name
 readonly conf_path=$0.conf
 
 usage() {
@@ -19,7 +19,7 @@ EOF
 }
 
 log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
-has() { command -v ${1} >&/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
 cat_conf() {
   cat <<EOF
 # Unattended GPG key generation - Using the GNU Privacy Guard
@@ -42,7 +42,7 @@ EOF
 }
 
 get_git_global_value() {
-  git config --global --get $1
+  git config --global --get "$1"
 }
 
 setup_from_git_config() {
@@ -63,21 +63,21 @@ setup_conf() {
     echo "Specify passphrase." 1>&2
     exit 1
   fi
-  cat_conf >$conf_path
+  cat_conf >"$conf_path"
   log "==> gpg config generated."
 }
 
 gen() {
-  if gpg -k | grep $name >&/dev/null; then
+  if gpg -k | grep "$name" >&/dev/null; then
     log "==> Already gpg key $name exist."
     gpg -k
   else
     log "==> Generating gpg key via $conf_path.."
-    gpg --gen-key --batch $conf_path
+    gpg --gen-key --batch "$conf_path"
   fi
-  gpg -o ./$name.public.gpg --export $name
-  gpg -o ./$name.private.gpg --export-secret-key $name
-  cat <./$name.public.gpg | base64 | tr -d '\n' >./$name.public.gpg.base64
+  gpg -o ./"$name.public.gpg" --export "$name"
+  gpg -o ./"$name.private.gpg" --export-secret-key "$name"
+  cat <./"$name.public.gpg" | base64 | tr -d '\n' >./"$name.public.gpg.base64"
 }
 
 main() {

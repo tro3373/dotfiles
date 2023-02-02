@@ -16,7 +16,8 @@ install_common() {
     log '  Install and execute `pass init {gpg mail}`.'
     return
   fi
-  local gpg_conf=$(which gen_gpg_keys).conf
+  local gpg_conf
+  gpg_conf=$(which gen_gpg_keys).conf
   if [[ ! -e $gpg_conf ]]; then
     log "gpg conf not generated. do gen_gpg_keys command"
     return
