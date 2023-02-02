@@ -1,0 +1,17 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  local arg dstd
+  if [[ $# -ne 0 ]]; then
+    arg=_$(echo "$*" | tr ' ' '_')
+  fi
+  dstd=$(date +%Y%m%d)$arg
+  if [[ -e $dstd ]]; then
+    echo "Already exist $dstd" 1>&2
+    exit 1
+  fi
+  mkdir -p "$dstd"
+  (cd "$dstd" && pwd | clip)
+  echo "==> $dstd created, and clipped" 1>&2
+}
+main "$@"
