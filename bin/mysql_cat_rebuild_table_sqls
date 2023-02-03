@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-readonly current_dir=$(pwd)
-readonly work_dir=$current_dir/tmp
-
 tables() {
-  grep -n DROP $input_f |
+  echo -e "$stdin" |
+    grep -n DROP |
     sed -e 's,:.* `, ,g' -e 's,`;,,g' |
     while read -r n table; do
       [[ -z $n ]] && continue
@@ -23,7 +21,8 @@ divide() {
       [[ $table =~ ^#.* ]] && continue
       # echo $table $sta $end
       local rows=$((end - sta))
-      tail -n +$sta $input_f |
+      echo -e "$stdin" |
+        tail -n +$sta |
         if [[ -z $end ]]; then
           cat -
         else
@@ -63,17 +62,20 @@ cat_rebuild_sqls() {
 }
 
 main() {
-  local input_f=$1
-  if [[ -z $input_f || ! -e $input_f ]]; then
-    echo "Specify valid input file"
+  local stdin
+  stdin=
+  if [[ -p /dev/stdin ]]; then
+    stdin="$(cat <&0)"
+  fi
+  if [[ -z $stdin && $# -ne 0 ]]; then
+    stdin="$(cat <"$*")"
+  fi
+  if [[ -z $stdin ]]; then
+    echo "Specify stdin or input file arg"
     exit 1
   fi
   set -euo pipefail
-  if [[ -e $work_dir ]]; then
-    read -p "Removing $work_dir: (Enter to continue)" _
-    rm -rfv $work_dir 1>&2
-  fi
-  mkdir -p $work_dir
+  work_dir=$(mktemp -d)
   divide
   cat_rebuild_sqls
 }
