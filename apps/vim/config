@@ -7,16 +7,16 @@ readonly kaoriya_scoop_dir=$WINHOME/scoop/apps/vim-kaoriya/current
 is_installed() {
   if is_arch; then
     # gvim で +clipboardを狙う
-    has gvim && return 0
+    hasp gvim && return 0
     return 1
   fi
   if ! is_win; then
     # shellcheck disable=SC2154
-    has $app && return 0
+    has "$app" && return 0
     return 1
   fi
   # for windows
-  if has $app; then
+  if has "$app"; then
     if [[ -e $kaoriya_scoop_dir ]]; then
       return 0
     fi
@@ -56,7 +56,7 @@ build_msys() {
   # install lua.
   dlog "===> Lua Building .."
   # shellcheck disable=SC2154
-  exe $def_install_cmd ncurses-devel libcrypt-devel gettext-devel gcc make
+  exe "$def_install_cmd" ncurses-devel libcrypt-devel gettext-devel gcc make
   if [[ ! -e /usr/local/src/lua ]]; then
     exe mkdir -p /usr/local/src/lua
   fi
@@ -73,7 +73,7 @@ build_msys() {
 
   # install vim.
   dlog "===> Vim Building .."
-  exe $def_install_cmd python3 ruby
+  exe "$def_install_cmd" python3 ruby
 
   dlog "===> Msys2 packages Cloning .."
   local msys2packages=/usr/local/src/Msys2-packages
@@ -86,7 +86,7 @@ build_msys() {
   local ver=92832fb441011827cfb93ec3208b86cecce05648
   exe git checkout $ver
   # shellcheck disable=SC2154
-  exe patch -p1 < $app_dir/vim_pkgbuild.patch
+  exe patch -p1 <$app_dir/vim_pkgbuild.patch
   exe cd vim
   exe makepkg
   # upgrade error will occur
@@ -100,8 +100,8 @@ build_msys() {
 }
 
 install_mac() {
-  exe $def_install_cmd lua
-  exe $def_install_cmd vim
+  exe "$def_install_cmd" lua
+  exe "$def_install_cmd" vim
 }
 
 install_ubuntu() {
@@ -172,7 +172,7 @@ install_arch() {
   if has vim; then
     exe sudo pacman -R vim --noconfirm
   fi
-  def_install gvim lua --noconfirm
+  def_install gvim lua
 }
 
 build_arch() {
@@ -182,7 +182,7 @@ build_arch() {
   fi
   exe cd vim
   exe "sed -i -e \"s/^pkgbase=vim/pkgbase=vim\ngroup=('modified')/g\" PKGBUILD"
-  exe "sed -i -e \"s/with-x=no/with-x=yes/g\" PKGBUILD"
+  exe 'sed -i -e "s/with-x=no/with-x=yes/g" PKGBUILD'
   exe makepkg --noconfirm -s
   exe sudo pacman --noconfirm -U vim-*tar.xz
 }

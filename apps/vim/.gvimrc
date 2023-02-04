@@ -12,7 +12,7 @@ source $VIMRUNTIME/delmenu.vim
 set langmenu=ja_jp.utf-8
 source $VIMRUNTIME/menu.vim
 " Removes the menubar.
-:set guioptions -=m
+" :set guioptions -=m
 " Removes the toolbar.
 set guioptions -=T
 set viminfo+=n~/.vim/_viminfo
@@ -23,8 +23,15 @@ source ~/.vim/conf.d/200_colorscheme.vim
 " 使用するフォントと大きさ
 " set guifont=HackGen\ Console:h13
 " set guifontwide=HackGen\ Console:h13
-set guifont=UDEV\ Gothic\ JPDOC:h13
-set guifontwide=UDEV\ Gothic\ JPDOC:h13
+" set guifont=UDEV\ Gothic\ JPDOC:h13
+" set guifontwide=UDEV\ Gothic\ JPDOC:h13
+if (has("gui_gtk2") || has("gui_gtk3"))
+  set guifont=Osaka-Mono\ 13
+  set guifontwide=Osaka-Mono\ 13
+else
+  set guifont=Osaka-Mono:h13
+  set guifontwide=Osaka-Mono:h13
+endif
 
 "if (has("win64") || has("win32"))
 "    "set encoding=utf-8

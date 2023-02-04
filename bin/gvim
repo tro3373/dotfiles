@@ -9,8 +9,8 @@ dlog() {
     echo "gvim debug: $*"
   fi
 }
-
-is_msys() { test ${OSTYPE} == "msys"; }
+hasp() { command -p -v "${1}" >&/dev/null; }
+is_msys() { test "${OSTYPE}" == "msys"; }
 is_win() { os wsl || is_msys; }
 change() {
   if is_msys; then
@@ -24,7 +24,7 @@ changes() {
   for v in "$@"; do
     tmp="$tmp $(change "$v")"
   done
-  echo $tmp
+  echo "$tmp"
 }
 winpath=
 add_winpath() {
@@ -34,7 +34,8 @@ add_winpath() {
   unset IFS
   local path
   for path in "${arr[@]}"; do
-    local tmp="$(change "$path")"
+    local tmp
+    tmp="$(change "$path")"
     winpath="$tmp;$winpath"
     dlog "$path ==> $tmp"
   done
@@ -65,19 +66,25 @@ set_win_env() {
   add_winpath "$WINHOME/bin" # local bin command path
 
   # HOME="$(change "$HOME")"
+  _tmp="$(change "$WINHOME/AppData/Local/Temp")"
+  _dotpath="$(change "$DOTPATH")"
   export HOME=
   export SHELL=
-  export TMP="$(change "$WINHOME/AppData/Local/Temp")"
+  export TMP="$_tmp"
   export TEMP="$TMP"
   export LANGUAGE=ja_JP.UTF-8
-  export DOTPATH="$(change "$DOTPATH")"
+  export DOTPATH="$_dotpath"
   export PATH="$winpath"
 }
 
 main() {
   set -eu
   if ! is_win; then
-    gvim "$@"
+    if ! hasp gvim; then
+      echo "No gvim command exist." 1>&2
+      exit 1
+    fi
+    command -p gvim "$@"
     return 0
   fi
 
@@ -87,7 +94,7 @@ main() {
     # args=$(pwd)
     args=$WINHOME
   fi
-  args="$(changes $args)"
+  args="$(changes "$args")"
 
   if [[ $use_msys_env -eq 1 ]]; then
     set_msys_env
@@ -96,6 +103,6 @@ main() {
   fi
   dlog "AllPath: ==> $winpath"
   dlog "Args: =====> $args"
-  $WINHOME/scoop/apps/vim-kaoriya/current/gvim.exe --remote-tab-silent $args &
+  "$WINHOME/scoop/apps/vim-kaoriya/current/gvim.exe" --remote-tab-silent "$args" &
 }
 main "$@"

@@ -74,6 +74,8 @@ snippet	readwhil
 
 snippet	has
 	has() { command -v "\${1}" >&/dev/null; }
+snippet	hasp
+	hasp() { command -p -v "\${1}" >&/dev/null; }
 snippet	hass
 	hass() {
 		for arg in "\$@"; do
