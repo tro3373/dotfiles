@@ -166,8 +166,7 @@ autoload zed                    # zsh editorを有効にする
 # colors: これ以降は${fg[色指定]}と${reset_color}で囲んだ部分がカラー表示になる。
 # -U: 呼び出し側のシェルで alias 設定を設定していたとしても、中の関数側ではその影響を受けなくなる
 # -z: 関数を zsh 形式で読み込む
-autoload -Uz colors
-colors
+autoload -Uz colors; colors
 case ${UID} in
 0)
   PROMPT="%{${fg[red]}%}$(echo ${HOST%%.*} | tr '[a-z]' '[A-Z]') %B%{${fg[red]}%}%/#%{${reset_color}%}%b "
@@ -182,7 +181,27 @@ case ${UID} in
   #PROMPT=$'%{\e[38;5;030m%}%m%(!.#.$)%{\e[m%} '
   # cyan
   #PROMPT=$'%{\e[38;5;030m%}%/$%{\e[m%} '
-  PROMPT=$'%{\e[38;5;%(?.012.013)m%}%* %/>%{\e[m%} '
+
+  # path>
+  # PROMPT=$'%{\e[38;5;%(?.012.013)m%}%* %/>%{\e[m%} '
+  # time>
+  # PROMPT="${fg[white]}%D{%H:%M:%S}>${reset_color} "
+
+  ## Use 256 color
+  # start: \e[38;5;詳細前景色m
+  #   end: \e[m
+  ## Use hard escape
+  # start: %{\e[38;5;詳細前景色m%}
+  #   end: %{\e[m%}
+  ## Use color name
+  # start: ${fg[white]}
+  #   end: ${reset_color}
+  # YYYY-MM-DD HH:mm:ss: %D{%Y-%m-%d %H:%M:%S}
+  # h:mm:ss: %*
+  # full path: %/
+  # current path from home: %~
+  # current directory: %c
+  PROMPT=$'%{\e[38;5;%(?.012.013)m%}%D{%H:%M:%S} %c>%{\e[m%} '
   PROMPT2=$'%{\e[38;5;%(?.012.013)m%}%_> %{\e[m%} '
   SPROMPT="%{${fg[red]}%}%r is correct? [n,y,a,e]:%{${reset_color}%} "
   [ -n "${REMOTEHOST}${SSH_CONNECTION}" ] &&
