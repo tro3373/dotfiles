@@ -149,7 +149,12 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'kana/vim-smartchr'                                " = 等の便利入力
   Plug 'kana/vim-smartinput'                              " () 等の入力補完
   " Plug 'mattn/vim-lexiv'                                " () 等の入力補完
+  " [posva/vim-vue: Syntax Highlight for Vue.js components](https://github.com/posva/vim-vue#nerdcommenter)
+  " > caw.vim features built-in support for file context through context_filetype.vim.
+  " > Just install both plugins and context-aware commenting will work in most files.
+  " > The fenced code is detected by predefined regular expressions.
   Plug 'tyru/caw.vim'                                     " コメントアウトプラグイン <Leader>+c
+  Plug 'Shougo/context_filetype.vim'
   Plug 'tpope/vim-surround'                               " 囲文字入力アシスト
   Plug 'vim-scripts/Align'                                " CSV,TSV整形
   Plug 'junegunn/vim-easy-align'                          " Align text
