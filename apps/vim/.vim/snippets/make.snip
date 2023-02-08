@@ -78,3 +78,6 @@ snippet	variable_argssss
 
 snippet	docker_user
 	docker_user := "$(shell id -u):$(shell id -g)"
+
+snippet	phony
+	.PHONY: ${1}
