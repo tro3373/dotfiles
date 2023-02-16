@@ -21,7 +21,7 @@ snippet	scriptdirrr
 	current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
 snippet	local_ip
-	local_ip := $(shell ip route |grep kernel|sed -e 's,.metric.*,,g' |awk 'END {print $$NF}')
+	local_ip := $(shell ip route |grep kernel |grep -v linkdown |grep -v 'br-' |sed -e 's,.metric.*,,g' |awk 'END {print $$NF}')
 
 snippet	docker_none_images
 	docker_none_images=$$(docker images | awk '/^<none>/ { print $$3 }')
