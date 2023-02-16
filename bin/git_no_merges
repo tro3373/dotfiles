@@ -1,0 +1,18 @@
+#!/usr/bin/env -S bash -e
+
+error() { echo "$*" | ink red; }
+main() {
+  if [[ $# -eq 0 ]]; then
+    error "Specify branch or hash"
+    exit 1
+  fi
+  local src dst
+  src=master
+  dst=$1
+  if [[ $# -gt 1 ]]; then
+    src=$1
+    dst=$2
+  fi
+  git log --no-merges $src..$dst
+}
+main "$@"
