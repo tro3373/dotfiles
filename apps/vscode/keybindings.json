@@ -1,6 +1,7 @@
 [
   {
     "key": "s p",
+    "when": "inputFocus && vim.mode == 'Normal'",
     "command": "workbench.action.previousEditor"
   },
   {
@@ -9,6 +10,7 @@
   },
   {
     "key": "s n",
+    "when": "inputFocus && vim.mode == 'Normal'",
     "command": "workbench.action.nextEditor"
   },
   {
@@ -16,15 +18,18 @@
     "command": "-workbench.action.nextEditor"
   },
   {
-    "key": "space q",
-    "command": "workbench.action.closeWindow"
-  },
-  {
-    "key": "alt+f4",
-    "command": "-workbench.action.closeWindow"
-  },
-  {
     "key": "s t",
-    "command": "explorer.newFile"
+    "when": "inputFocus && vim.mode == 'Normal'",
+    "command": "workbench.action.files.newUntitledFile"
+  },
+  {
+    "key": "space q",
+    "when": "inputFocus && vim.mode == 'Normal'",
+    "command": "workbench.action.closeActiveEditor"
+  },
+  {
+    "key": "space w",
+    "when": "inputFocus && vim.mode == 'Normal'",
+    "command": "workbench.action.files.save"
   }
 ]

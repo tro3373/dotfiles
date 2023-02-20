@@ -43,8 +43,10 @@
       "cursorHeight": 25,
       "cursorShape": "filledBox",
       "font": {
-        "face": "UDEV Gothic JPDOC",
-        "size": 13
+        // "face": "UDEV Gothic JPDOC",
+        // "face": "HackGen Console",
+        "face": "Osaka-Mono",
+        "size": 14
       },
       "padding": "10, 10, 10, 10",
       "useAcrylic": false
@@ -64,6 +66,7 @@
         "startingDirectory": "%USERPROFILE%"
       },
       {
+        "commandline": "cmd.exe /c set TERM=xterm-256color && set MSYS=winsymlinks:nativestrict && C:%HOMEPATH%/scoop/apps/msys2/current/msys2_shell.cmd -defterm -no-start -full-path -mingw64 -shell zsh",
         "guid": "{f464e147-d051-4335-93be-f850d455c552}",
         "hidden": false,
         "name": "MSYS2"
