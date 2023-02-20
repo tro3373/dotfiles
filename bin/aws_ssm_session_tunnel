@@ -275,6 +275,22 @@ start_ssm_session() {
     --parameters "{\"portNumber\":[\"22\"],\"localPortNumber\":[\"$local_ssh_port\"]}"
 }
 
+# FIXME: Cannnot share port to container(3306 cannnot access from container)
+# start_ssm_session_remote_forward_only() {
+#   log "==> Wating start ssm session..."
+#   local opt_prof="--profile $profile"
+#   [[ $wrap_aws =~ ^aws-vault.* ]] && opt_prof=
+#   # shellcheck disable=SC2154
+#   export GPG_TTY=$(tty)
+#   $wrap_aws aws \
+#     $opt_prof \
+#     --region $region \
+#     ssm start-session \
+#     --target $ec2_id \
+#     --document-name AWS-StartPortForwardingSessionToRemoteHost \
+#     --parameters host=$db_host,portNumber=3306,localPortNumber=3306
+# }
+
 start_wait_and_tunnel_if_needed() {
   [[ -z $mode ]] && return
   if [[ $mode == http ]]; then
