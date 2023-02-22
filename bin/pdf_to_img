@@ -1,0 +1,19 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  src=$1
+  if [[ -z $src || ! -e $src || ! $src =~ ^.*.pdf$ ]]; then
+    echo "Specify valid pdf src=$src" 1>&2
+    exit 1
+  fi
+  w=${2:-712}
+  h=${3:-1026}
+  fnm=${src%.*}
+  dst=$fnm.jpg
+  if [[ -e $dst ]]; then
+    echo "dst file already exist. dst=$dst" 1>&2
+    exit 1
+  fi
+  convert -geometry ${w}x${h} $src $dst
+}
+main "$@"

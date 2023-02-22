@@ -1,0 +1,27 @@
+#!/usr/bin/env -S bash -e
+
+hass() {
+  for arg in "$@"; do
+    has "$arg" && continue
+    echo "No $arg command exist." 1>&2
+    exit 1
+  done
+}
+
+main() {
+  hass pdftk
+  local src=$1 page=${2:-1} next fnm
+  if [[ -z $src || ! -e $src ]]; then
+    echo "Specify exist pdf" 1>&2
+    exit 1
+  fi
+  if [[ ! $page =~ ^[0-9]+$ ]]; then
+    echo "Specify valid divide number" 1>&2
+    exit 1
+  fi
+  fnm=${src%.*}
+  next=$((page + 1))
+  pdftk A="$1" cat A$page output ${fnm}_1.pdf
+  pdftk A="$1" cat A$next-end output ${fnm}_2.pdf
+}
+main "$@"
