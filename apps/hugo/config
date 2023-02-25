@@ -14,10 +14,11 @@ install_common() {
     exe git clone https://github.com/spf13/hugo
     exe cd hugo
   fi
-  local current_branch=$(exes git branch --show-current)
-  local latest_tag=$(exes git tag --list | tail -1)
+  local current_branch latest_tag
+  current_branch=$(exes git branch --show-current)
+  latest_tag=$(exes git tag --list | tail -1)
   if [[ $current_branch != "$latest_tag" ]]; then
-    exe git switch -c $latest_tag $latest_tag
+    exe git switch -c "$latest_tag" "$latest_tag"
   fi
   log "==> Installing via go install --tags extended.."
   exe go install --tags extended
