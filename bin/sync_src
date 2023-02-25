@@ -34,7 +34,7 @@ initialize() {
   done
 }
 is_dummy() { [[ -n $dummy ]]; }
-is_wsl() { grep -qi microsoft /proc/version; }
+is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
 not_supported() { echo "Not supported." 1>&2 && exit 1; }
 error() { echo "$*" | ink red; }
 warn() { echo "$*" | ink yellow; }

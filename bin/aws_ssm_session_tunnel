@@ -180,7 +180,7 @@ end() {
   fi
 }
 
-is_wsl() { grep -qi microsoft /proc/version; }
+is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
 is_mintty() { [[ $TERM_PROGRAM == mintty ]]; }
 tunnel_https() {
   # shellcheck disable=SC2154

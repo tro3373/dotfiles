@@ -46,8 +46,7 @@ is_arch() { [[ $DETECT_OS == "arch" ]]; }
 is_arm() { uname -m | grep arm >&/dev/null; }
 is_x86_64() { uname -m | grep x86_64 >&/dev/null; }
 is_msys() { [[ $DETECT_OS == "msys" ]]; }
-# is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
-is_wsl() { grep -qi microsoft /proc/version; }
+is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
 is_cygwin() { [[ $DETECT_OS == "cygwin" ]]; }
 is_mac() { [[ $DETECT_OS == "mac" ]]; }
 is_ubuntu() { [[ $DETECT_OS == "ubuntu" ]]; }

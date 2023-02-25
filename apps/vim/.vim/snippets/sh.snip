@@ -537,8 +537,10 @@ snippet	seteuxop
 snippet	isdummy
 	is_dummy() { [[ -n $dummy ]]; }
 
+# snippet	iswsl
+# 	is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
 snippet	iswsl
-	is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
+	is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
 
 snippet	onlyyy
 	only ${1} || exit 1
