@@ -85,50 +85,56 @@ endfunction
 " 通常 * レジスタはクリップボードとなっている(macなど)
 " が、ubuntu では + レジスタがクリップボードとなってる(ミソ)
 " じゃあ両方にコピーすべし
-function! CopyComm()
+function! ClipComm()
   let @+=@*
   if g:is_wsl && executable(g:winclip)
     call system(g:winclip, @*)
   endif
-  echo "Copy!=> ".@*
+  echo "Clip!=> ".@*
 endfunction
-function! CopyPath()
+function! ClipDir()
+  let @*=expand('%:h')
+  call ClipComm()
+endfunction
+function! ClipPath()
   let @*=expand('%:P')
-  call CopyComm()
+  call ClipComm()
 endfunction
-function! CopyFullPath()
+function! ClipFullPath()
   let @*=expand('%:p')
-  call CopyComm()
+  call ClipComm()
 endfunction
-function! CopyFileName()
+function! ClipFileName()
   let @*=expand('%:t')
-  call CopyComm()
+  call ClipComm()
 endfunction
-function! CopyFileNameNoExt()
+function! ClipFileNameNoExt()
   let @*=expand('%:t:r')
-  call CopyComm()
+  call ClipComm()
 endfunction
-function! CopyTimestamp()
+function! ClipTimestamp()
   let @*=strftime('%Y-%m-%d %H:%M:%S')
-  call CopyComm()
+  call ClipComm()
 endfunction
-function! CopyDate()
+function! ClipDate()
   let @*=strftime('%Y-%m-%d')
-  call CopyComm()
+  call ClipComm()
 endfunction
-function! CopyTime()
+function! ClipTime()
   let @*=strftime('%H:%M:%S')
-  call CopyComm()
+  call ClipComm()
 endfunction
 function! ShowPath()
   echo expand('%:p')
 endfunction
-command! CopyPath       call CopyPath()
-command! CopyFullPath   call CopyFullPath()
-command! CopyFileName   call CopyFileName()
-command! CopyTimestamp  call CopyTimestamp()
-command! CopyDate       call CopyDate()
-command! CopyTime       call CopyTime()
+command! ClipDir        call ClipDir()
+command! ClipPath       call ClipPath()
+command! Clip           call ClipFullPath()
+command! ClipFullPath   call ClipFullPath()
+command! ClipFileName   call ClipFileName()
+command! ClipTimestamp  call ClipTimestamp()
+command! ClipDate       call ClipDate()
+command! ClipTime       call ClipTime()
 command! ShowPath       call ShowPath()
 
 
