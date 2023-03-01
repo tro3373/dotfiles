@@ -674,3 +674,8 @@ function! MysqlDdlStripCols() abort
   %s/\(^.\{-}`\|`.*\)//g
 endfunction
 command! MysqlDdlStripCols call MysqlDdlStripCols()
+
+function! FormatXml()
+  %s/></>\r</g | filetype indent on | setf xml | normal gg=G
+endfunction
+command! FormatXml call FormatXml()
