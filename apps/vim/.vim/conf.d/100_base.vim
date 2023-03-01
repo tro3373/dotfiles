@@ -336,11 +336,15 @@ endif
 let g:winclip = '/mnt/c/Windows/System32/clip.exe'  " change this path according to your mount point
 let s:clip = $HOME.'/.dot/bin/clip'
 if executable(g:winclip)
-  augroup MyYankPost
-    autocmd!
-    autocmd TextYankPost * call system(g:winclip, @0)
-  augroup MyYankPost
-  augroup END
+  if $DISPLAY != ':0'
+    " DISPLAY :0 => wslg is running
+    " define only wsl(no define in wslg)
+    augroup MyYankPost
+      autocmd!
+      autocmd TextYankPost * call system(g:winclip, @0)
+    augroup MyYankPost
+    augroup END
+  endif
 elseif executable(s:clip)
   function! s:my_yank_post(event)
     let s:is_remote = $REMOTEHOST.$SSH_CONNECTION
