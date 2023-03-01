@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-readonly command_name=$(basename $0)
-readonly current_dir=$(pwd)
-readonly timestamp=$(date +%Y%m%d%H%M%S)
+command_name=$(basename "$0") && readonly command_name
+current_dir=$(pwd) && readonly current_dir
+timestamp=$(date +%Y%m%d.%H%M%S) && readonly timestamp
 args=()
 src=
 mode=deals
@@ -47,13 +47,13 @@ initialize() {
     esac
     shift
   done
-  src=$(find $current_dir/ -maxdepth 1 -mindepth 1 -type f -name "*.csv" |
+  src=$(find "$current_dir"/ -maxdepth 1 -mindepth 1 -type f -name "*.csv" |
     fzf --select-1 --exit-0)
   check
 }
 
 cat_src() {
-  cat <$src |
+  cat <"$src" |
     nkf -Lu -w -x --cp932 |
     if [[ $1 -eq 1 ]]; then
       cat - | head -1
@@ -72,8 +72,7 @@ header() {
   cat_src 1 |
     if [[ $mode == deals ]]; then
       # src: 収支区分,管理番号,発生日,決済期日,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,決済日,決済口座,決済金額
-      # dst: 収支区分,管理番号,発生日,支払期日,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,支払日,支払口座,支払金額
-      cat - | sed -e 's,決済,支払,g'
+      echo "収支区分,管理番号,発生日,決済期日,取引先コード,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,セグメント1,セグメント2,セグメント3,決済日,決済口座,決済金額"
     else
       # template: 収支区分,グループ名,テンプレート名,ショートカット,口座,取引先,管理番号,勘定科目,税区分,備考,金額,税計算区分,税額,品目,部門,メモタグ
       # matcher: 収支区分,取引口座,取引内容,マッチ条件,金額（最小値）,金額（最大値）,優先度,マッチ後のアクション,振替口座,取引テンプレート,勘定科目,税区分,取引先,品目,部門,メモタグ（複数指定可・カンマ区切り）,セグメント1,セグメント2,セグメント3,備考,消込を実行する際の差額
@@ -91,6 +90,8 @@ gen_deals_tag() {
 }
 
 handle_deals() {
+  # 1,       2,       3,     4,       5,     6,       7,     8,   9,         10,  11,  12,  13,  14,                                  15,    16,      17
+  # 収支区分,管理番号,発生日,支払期日,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,支払日,支払口座,支払金額
   while IFS=, read -r c01 c02 c03 c04 c05 c06 c07 c08 c09 c10 c11 c12 c13 c14 c15 c16 c17; do
     # [[ $c08 =~ ^-.* ]] && c10=-$c10
     c16= #登録銀行口座情報削除
@@ -98,8 +99,10 @@ handle_deals() {
       c16=事業主借
       [[ $c01 == 収入 ]] && c16=事業主貸
     fi
-    c14=$(gen_deals_tag $c14)
-    echo "$c01,$c02,$c03,$c04,$c05,$c06,$c07,$c08,$c09,$c10,$c11,$c12,$c13,$c14,$c15,$c16,$c17"
+    c14=$(gen_deals_tag "$c14")
+    # 収支区分,管理番号,発生日,支払期日,取引先      ,      ,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,           ,           ,           ,支払日,支払口座,支払金額
+    # 収支区分,管理番号,発生日,決済期日,取引先コード,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,セグメント1,セグメント2,セグメント3,決済日,決済口座,決済金額
+    echo "$c01,$c02,$c03,$c04,,$c05,$c06,$c07,$c08,$c09,$c10,$c11,$c12,$c13,$c14,,,,$c15,$c16,$c17"
   done
 }
 handle_template() {
@@ -134,6 +137,6 @@ gen() {
 main() {
   initialize "$@"
   local dst=${timestamp}_${mode}_gened.csv
-  gen | tee $dst
+  gen | tee "$dst"
 }
 main "$@"
