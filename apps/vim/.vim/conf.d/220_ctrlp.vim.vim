@@ -86,5 +86,5 @@ nnoremap <Leader>p :CtrlPMRU<CR>
 " カーソル配下の文字で CtrlP 検索
 " map <Leader>o <C-P><C-\>w
 " map <F3> <C-P><C-\>w
-nnoremap st <Nop>
-nnoremap st :<C-u>tabnew<CR>:CtrlPMRU<CR>
+" nnoremap st <Nop>
+" nnoremap st :<C-u>tabnew<CR>:CtrlPMRU<CR>
