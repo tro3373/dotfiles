@@ -13,6 +13,9 @@ umask 0002
 fpath=(~/.zsh/Completion(N-/) $fpath)
 fpath=(~/.zsh/functions/*(N-/) $fpath)
 fpath=(~/.zsh/plugins/zsh-completions(N-/) $fpath)
+if [[ -n "$ASDF_DIR" ]]; then
+  fpath=(${ASDF_DIR}/completions $fpath)
+fi
 #fpath=(/usr/local/share/zsh/site-functions(N-/) $fpath)
 #
 ## autoload

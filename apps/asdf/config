@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+asdf_d=$HOME/.asdf
+is_installed() { test -e $asdf_d; }
+install_common() {
+  exe git clone https://github.com/asdf-vm/asdf.git $asdf_d --branch v0.11.2
+}
+# install_wsl() { not_supported; }
+# install_arch() { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+# install_mac() { not_supported; }
+# install_ubuntu() { not_supported; }
+# install_redhat() { not_supported; }
+setting_common() {
+  if grep "asdf" ~/.works.zsh >&/dev/null; then
+    return
+  fi
+  exe "echo '. \${HOME}/.asdf/asdf.sh' >> ~/.works.zsh"
+  # # append completions to fpath
+  # fpath=(${ASDF_DIR}/completions $fpath)
+  # # initialise completions with ZSH's compinit
+  # autoload -Uz compinit && compinit
+}
+# setting_wsl() { no_settings; }
+# setting_arch() { no_settings; }
+setting_msys() { no_settings; }
+setting_cygwin() { no_settings; }
+# setting_mac() { no_settings; }
+# setting_ubuntu() { no_settings; }
+# setting_redhat() { no_settings; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#no_settings
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
+#sudo_tee
