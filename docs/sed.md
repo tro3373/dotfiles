@@ -19,3 +19,9 @@ sed '/^target_word/d' /path/to/file
 # Delete contain specify word(tail)
 sed '/target_word$/d' /path/to/file
 ```
+
+# Delete line matched
+
+```
+sed -i '/pattern to match/d' ./infile
+```

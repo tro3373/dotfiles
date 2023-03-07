@@ -8,6 +8,7 @@ main() {
   fi
   # shellcheck disable=SC2016
   local files=$(
+    # git ls-files --modified --deleted --others -z | xargs -0 vim
     git status -s |
       fzf -m $query --preview 'head -100 $(echo {} |cut -c4-)' -0 -1 |
       cut -c4-
