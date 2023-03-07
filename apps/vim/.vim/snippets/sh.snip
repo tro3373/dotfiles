@@ -30,7 +30,7 @@ snippet	fire
 	}
 
 snippet	cateof
-		cat <<'EOF'
+	cat <<'EOF'
 	EOF
 
 
@@ -555,3 +555,17 @@ alias	priorityyyyy
 snippet localll
 	local ${1}
 	$1=
+
+# \0: 対象全文
+snippet snake
+	sed -r 's/^./\L\0/; s/([A-Z])/_\1/g; s/.*/\L\0/g;'
+snippet camel
+	sed -r 's/.*/\L\0/g; s/_([a-z0-9])/\U\1/g;'
+snippet ucamel
+	sed -r 's/.*/\L\0/g; s/_([a-z0-9])/\U\1/g; s/^./\L\0/;'
+snippet snake_mthod
+	snake() { cat - | sed -r 's/^./\L\0/; s/([A-Z])/_\1/g; s/.*/\U\0/g;'; }
+snippet camel_method
+	camel() { cat - | sed -r 's/.*/\L\0/g; s/_([a-z0-9])/\U\1/g;'; }
+snippet ucamel_method
+	camel() { cat - | sed -r 's/.*/\L\0/g; s/_([a-z0-9])/\U\1/g; s/^./\U\0/;'; }
