@@ -89,6 +89,7 @@ let g:ale_fixers['go']         = ['gofmt', 'goimports']
 " let g:ale_fixers['markdown']   = ['prettier']
 " let g:ale_fixers['markdown'] = [{buffer, lines -> {'command': 'textlint -c ~/.config/textlintrc -o /dev/null --fix --no-color --quiet %t', 'read_temporary_file': 1}}]
 let g:ale_fixers['java']       = ['google_java_format']
+" let g:ale_fixers['dart']       = ['dart']
 
 " let g:ale_fix_on_save_ignore = ['sh', 'javascript']
 " let g:ale_fix_on_save_ignore = ['markdown', 'javascript']
