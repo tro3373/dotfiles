@@ -67,12 +67,12 @@ _pdfcpu() {
 
 main() {
   initialize "$@"
-  if has convert; then
-    _convert
-  elif has pdftk; then
+  if has pdftk; then
     _pdftk
   elif has pdfcpu; then
     _pdfcpu
+  elif has convert; then
+    _convert
   fi
   echo "Done! $out_file generated" | ink green
 }
