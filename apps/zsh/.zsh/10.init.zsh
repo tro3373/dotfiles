@@ -169,6 +169,7 @@ gen_path_file_ifneeded() {
 
   # add main env path
   add_path /usr/local/sbin
+  add_path /usr/local/bin
   add_path ${HOME}/.local/bin
   add_path ${DOTPATH}/bin
   add_path ${HOME}/bin

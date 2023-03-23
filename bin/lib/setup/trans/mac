@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+
+pre_setup() {
+  # log "=> pre setting up"
+  _setup_brew
+  _setup_apps
+}
+
+_setup_brew() {
+  # shellcheck disable=SC2016
+  exe '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+  # shellcheck disable=SC2016
+  exe 'export PATH=/usr/local/bin:$PATH'
+  exe "brew update"
+}
+
+_setup_apps() {
+  # MEMO: with-default-names: No prefix `g` command install option.
+  # brew install ed --with-default-names
+  # gnutls wdiff
+  # MEMO: with-readline: Enable interactive(enable handle cursor) option when install.
+  # brew install gpg --with-readline
+
+  # casc install
+  exe brew install bash git gnu-sed lua vim binutils coreutils diffutils findutils gawk gnu-tar grep gzip wget gnu-indent gnu-which gpg
+  exe brew tap caskroom/cask
+  exe brew cask install google-chrome
+}
+
+load_update_arg_apps() {
+  # XtraFinder
+  # shellcheck disable=SC2034
+  read -r -a args < <(
+    echo "$(default_apps) vscode scroll-reverser karabiner"
+  )
+}
+
+post_setup() {
+  _remove_localized
+  _setup_mac_settings
+  _setup_gui_apps
+}
+
+_remove_localized() {
+  # Delete Localized directory names, and to set eng name Setting.
+  del_if_exist ~/Applications/.localized
+  del_if_exist ~/Desktop/.localized
+  del_if_exist ~/Documents/.localized
+  del_if_exist ~/Downloads/.localized
+  del_if_exist ~/Movies/.localized
+  del_if_exist ~/Music/.localized
+  del_if_exist ~/Pictures/.localized
+  del_if_exist ~/Public/.localized
+  del_if_exist ~/Library/.localized
+}
+
+_setup_mac_settings() {
+  # https://qiita.com/soushiy/items/b56d4961d54972bc4b9e
+
+  # Schroll Bound animation off
+  # defaults write -g NSScrollViewRubberbanding -bool no
+
+  # ツールチップの表示
+  # defaults write -g NSInitialToolTipDelay -integer 100
+  # ダイアログの表示速度
+  # defaults write -g NSWindowResizeTime 0.001
+
+  # showing and hiding sheets, resizing preference windows, zooming windows
+  # float 0 doesn't work
+  # defaults write -g NSWindowResizeTime -float 0.001
+  # rubberband scrolling (doesn't affect web views)
+  # defaults write -g NSScrollViewRubberbanding -bool false
+  # resizing windows before and after showing the version browser
+  # also disabled by NSWindowResizeTime -float 0.001
+  # defaults write -g NSDocumentRevisionsWindowTransformAnimation -bool false
+
+  # メモリの解放
+  # sudo purge
+  # 通知センターをオフ
+  # launchctl unload -w /System/Library/LaunchAgents/com.apple.notificationcenterui.plist
+
+  # Do not create .DStore in Network drive
+  defaults write com.apple.desktopservices DSDontWriteNetworkStores true
+
+  # Delete background black in screen shot
+  # defaults write com.apple.screencapture disable-shadow -boolean true
+  # killall SystemUIServer
+
+  ########################################################################
+  # Dashborad
+  ########################################################################
+  # ダッシュボードを無効(DashboardからWidgetを削除)にしてメモリ節約と高速化。
+  # defaults write com.apple.dashboard mcx-disabled -boolean true
+
+  ########################################################################
+  # Dock
+  ########################################################################
+  # Dockアニメーション
+  # defaults write com.apple.dock autohide-time-modifier -float 0
+  # defaults write com.apple.dock autohide-time-modifier -float 0.12
+  # Dockが表示される時間を0に設定
+  # defaults write com.apple.dock autohide-delay -float 0
+  # アプリがデスクトップ間を移動する際の速度を変更
+  # defaults write com.apple.dock workspaces-edge-delay -float 0.2
+  # showing the Dock
+  # defaults write com.apple.dock autohide-time-modifier -float 0
+  # Dockにスペース(空白)を挿入
+  # mexe defaults write com.apple.dock persistent-others -array-add '{tile-data={}; tile-type="spacer-tile";}'
+  # Dockの隠しアニメーション「Suck」を有効にする
+  # mexe defaults write com.apple.dock mineffect suck
+  # launchpad animation off
+  # defaults write com.apple.dock springboard-show-duration -float 0
+  # defaults write com.apple.dock springboard-hide-duration -float 0
+  # defaults write com.apple.dock springboard-page-duration -float 0
+  # ミッションコントロールのアニメーション時間を変更
+  # defaults write com.apple.dock expose-animation-duration -float 0.1
+  # showing and hiding Mission Control, command+numbers
+  # defaults write com.apple.dock expose-animation-duration -float 0
+  # killall Dock
+
+
+  ########################################################################
+  # Finder
+  ########################################################################
+  # animation all off for finder
+  # defaults write com.apple.finder DisableAllAnimations -boolean true
+  # アイコンをドラッグした時のアニメーション
+  # defaults write com.apple.finder AnimateSnapToGrid -boolean false
+  # ファインダーのアニメーションを削除
+  # defaults write com.apple.finder AnimateInfoPanes -boolean false
+  # ?
+  # defaults write com.apple.finder FXEnableSlowAnimation -bool false
+  # クイックルックで表示したテキストをコピペ
+  # defaults write com.apple.finder QLEnableTextSelection -bool true
+  # 隠しファイルを表示
+  # defaults write com.apple.finder AppleShowAllFiles TRUE
+  # Finderのパス表示をホームフォルダを基準にする
+  # defaults write com.apple.finder PathBarRootAtHome -bool yes
+  # Finderのウィンドウタイトルにフルパスを表示
+  # defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
+  # Finderの音を消す
+  # mexe defaults write com.apple.finder FinderSounds -bool no
+  # killall Finder
+
+  ########################################################################
+  # Safari
+  ########################################################################
+  # Safariの表示速度、Webサイトのアイコンを非表示にする。
+  # defaults write com.apple.Safari WebKitInitialTimedLayoutDelay 0.25
+  # defaults write com.apple.Safari WebIconDatabaseEnabled -boolean false
+  # killall Safari
+}
+
+
+_setup_gui_apps() {
+  cat<<'EOF'
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  Do below
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++ 1. (SystemSettings) Change `caps lock` to `control`
++   - System Enviroments - Keyboard - keyboard shortcut - modification key - Change Caps Lock to Control
++ 2. (SystemSettings) Change Speed of KeyRepeat
++   - System Enviroments - Keyboard - KeyRepeat to fastest
++ 3. (SystemSettings) Change KeyMap for change window of same App
++   - System Enviroments - Keyboard - keyboard shortcut - keyboard - 次のウィンドウを操作対処にする
++ 4. (SystemSettings) Disable Mission Control
++   - System Enviroments - Keyboard - keyboard shortcut - Mission Control
++ 5. Install from App Store
++   - BetterSnapTool
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+EOF
+}
+
