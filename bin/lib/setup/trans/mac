@@ -24,7 +24,8 @@ _setup_apps() {
   # casc install
   exe brew install bash git gnu-sed lua vim binutils coreutils diffutils findutils gawk gnu-tar grep gzip wget gnu-indent gnu-which gpg
   exe brew tap caskroom/cask
-  exe brew cask install google-chrome
+  exe brew install --cask google-chrome
+  exe brew install --cask iterm2
 }
 
 load_update_arg_apps() {
