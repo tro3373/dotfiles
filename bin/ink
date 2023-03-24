@@ -27,7 +27,8 @@ _ink() {
   case $1 in
     black | red | green | yellow | blue | purple | cyan | gray | white)
       eval color="\$$1"
-      text="$stdin${*:2}"
+      # text="$stdin${*:2}"
+      text=$(echo -e "$stdin${*:2}" | sed -e 's,%,%%,g')
       ;;
   esac
 
