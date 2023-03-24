@@ -7,7 +7,7 @@ install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() {
   # Configure rust by running rustup-init
-  exe brew install rustup-init
+  def_install rustup-init
   # Configure rust by running rustup-init
   exe rustup-init
 }

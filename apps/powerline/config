@@ -21,8 +21,8 @@ install_common() {
     if ! test_cmd xcode-select; then
       exe xcode-select --install
     fi
-    exe brew install readline
-    brew link readline
+    def_install readline
+    exe brew link readline
   elif is_ubuntu; then
     exe sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev
   elif is_redhat; then
@@ -33,13 +33,15 @@ install_common() {
 
   # pip install powerline
   if [ ! -e ~/.local/lib/python2.7/site-packages/powerline ]; then
-    exe $cmd_pip install --user git+git://github.com/powerline/powerline
+    # shellcheck disable=SC2154
+    exe "$cmd_pip" install --user git+git://github.com/powerline/powerline
   fi
 
   # powerline settings
   if [ ! -e ~/.config/powerline ]; then
     exe mkdir -p ~/.config/powerline
     exe cp -R ~/.local/lib/python2.7/site-packages/powerline/config_files/* ~/.config/powerline/
+    # shellcheck disable=SC2154
     make_lnk_with_bkup $app_dir/default.json ~/.config/powerline/themes/tmux/default.json
     make_lnk_with_bkup $app_dir/powerline.json ~/.config/powerline/themes/powerline.json
   fi

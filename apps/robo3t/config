@@ -22,7 +22,7 @@ install_msys() {
 }
 install_cygwin() { not_supported; }
 install_mac() {
-  exe brew install --cask robo-3t
+  def_install --cask robo-3t
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }

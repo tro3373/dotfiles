@@ -1,7 +1,7 @@
 #!/bin/bash
 
 install_mac() {
-  exe brew install global --with-exuberant-ctags --with-pygments
+  def_install --with-exuberant-ctags --with-pygments global
 }
 
 install_ubuntu() {
@@ -37,4 +37,3 @@ download_global_src_and_build() {
   exe make
   exe sudo make install
 }
-

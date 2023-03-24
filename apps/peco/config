@@ -13,8 +13,7 @@ install_msys() {
 }
 
 install_mac() {
-  exe sudo brew tap peco/peco
-  exe sudo brew install peco
+  def_install peco
 }
 
 get_dl_url() {
@@ -31,6 +30,6 @@ setting_common() {
   if [ ! -e ${HOME}/.config/peco ]; then
     exe "mkdir -p \"${HOME}/.config/peco\""
   fi
+  # shellcheck disable=SC2154
   make_lnk_with_bkup "$app_dir/config.json" "${HOME}/.config/peco/config.json"
 }
-

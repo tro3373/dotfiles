@@ -7,7 +7,7 @@ install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() {
 
-  exe brew install postgresql
+  def_install postgresql
   # データベースの初期化 (文字コードはUTF-8)
   #  initdb /usr/local/var/postgres -E utf8
 

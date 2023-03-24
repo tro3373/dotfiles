@@ -18,7 +18,7 @@ install_mac() {
     return
   fi
   # Install CMake. Using homebrew: brew install cmake
-  exe brew install cmake
+  def_install cmake
   github https://github.com/neovide/neovide
   exe cd neovide
 

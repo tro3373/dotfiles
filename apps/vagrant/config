@@ -2,7 +2,7 @@
 
 is_installed() {
   if is_mac; then
-    if hascask virtualbox && hascask vagrant; then
+    if has_cask virtualbox && has_cask vagrant; then
       return 0
     fi
   fi
@@ -12,14 +12,6 @@ is_installed() {
     return 1
   fi
 }
-hascask() { brew list --cask | grep $1 >&/dev/null; }
-caskinstall() {
-  local pkg=$1
-  if hascask $pkg; then
-    return
-  fi
-  exe brew install --cask $pkg
-}
 install_common() { not_supported; }
 install_arch() { not_supported; }
 install_msys() {
@@ -27,8 +19,7 @@ install_msys() {
 }
 install_cygwin() { not_supported; }
 install_mac() {
-  caskinstall virtualbox
-  caskinstall vagrant
+  def_install --cask virtualbox vagrant
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }

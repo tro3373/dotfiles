@@ -32,7 +32,7 @@ _install_common() {
 }
 
 install_mac() {
-  def_install reattach-to-user-namespac
+  def_install reattach-to-user-namespace
   install_via_os_default
 }
 
