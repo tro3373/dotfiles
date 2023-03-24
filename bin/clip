@@ -144,7 +144,7 @@ _clippp() {
   local _val="$(cat -)"
   echo -n -e "$_val" |
     case "${_OSTYPE}" in
-      wsl) cat - | clip.exe ;;
+      wsl) cat - | iconv -t sjis | clip.exe ;;
       msys*) cat - >/dev/clipboard ;;
       darwin*) cat - | pbcopy ;;
       *) cat - | xsel -bi --display ${DISPLAY:-:0} ;;
