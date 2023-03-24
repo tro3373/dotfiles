@@ -14,6 +14,7 @@ setup_username() {
     log "  => Do Nothing for git user.name"
   fi
 }
+
 setup_email() {
   log "@@@@@ Input Your Git user.email"
   read gituseremail
@@ -23,6 +24,7 @@ setup_email() {
     log "  => Do Nothing for git user.email"
   fi
 }
+
 cat_git_configs() {
   cat_git_configs_dynamic
   cat_git_configs_fixed

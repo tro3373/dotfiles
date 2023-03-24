@@ -2,6 +2,9 @@
 is_vagrant() { pwd | grep /home/vagrant >&/dev/null; }
 #is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
 is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
+is_msys() { [[ ${OSTYPE} == "msys" ]]; }
+is_mac() { [[ ${OSTYPE} =~ ^darwin.*$ ]]; }
+
 _initialize_env() {
   # Inisialize
   export DOTPATH="$HOME/.dot"
@@ -11,7 +14,7 @@ _initialize_env() {
   if is_vagrant; then
     export IS_VAGRANT=1
   fi
-  if [[ ${OSTYPE} == "msys" ]]; then
+  if is_msys; then
     export WINHOME=/c/Users/$(whoami)
     export MSYS=winsymlinks:nativestrict # enable symbolic link in admined msys
   fi
@@ -57,7 +60,7 @@ source_pkgs() {
   source_pkg https://github.com/zsh-users/zsh-completions.git
   source_pkg https://github.com/zsh-users/zsh-history-substring-search.git 1
   source_pkg https://github.com/zsh-users/zsh-syntax-highlighting.git 1
-  [[ ${OSTYPE} != "msys" ]] && source_pkg https://github.com/zsh-users/zsh-autosuggestions.git 1
+  ! is_msys && source_pkg https://github.com/zsh-users/zsh-autosuggestions.git 1
   # zsh-autosuggestions settings
   # https://github.com/zsh-users/zsh-autosuggestions
   export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=236'
@@ -158,14 +161,13 @@ gen_path_file_ifneeded() {
   # add_path $HOME/win/tools/atom/resources/app/apm/bin
   add_path "${HOME}/win/scoop/shims" # scoop
 
-  # For Mac sed
-  add_path "/usr/local/opt/coreutils/libexec/gnubin"
-  add_path "/usr/local/opt/findutils/libexec/gnubin"
-  add_path "/usr/local/opt/gnu-sed/libexec/gnubin"
-  add_path "/usr/local/opt/gnu-tar/libexec/gnubin"
-  add_path "/usr/local/opt/grep/libexec/gnubin"
-  add_path "/usr/local/opt/gnu-indent/libexec/gnubin"
-  add_path "/usr/local/opt/gnu-which/libexec/gnubin"
+  # For Mac gnu command tools
+  if is_mac; then
+    find /opt/homebrew/opt/*/libexec/gnubin -type d 2>/dev/null |
+      while read -r line; do
+        add_path "$line"
+      done
+  fi
 
   # add main env path
   add_path /usr/local/sbin

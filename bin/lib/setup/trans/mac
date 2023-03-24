@@ -7,6 +7,9 @@ pre_setup() {
 }
 
 _setup_brew() {
+  if has brew; then
+    return
+  fi
   # shellcheck disable=SC2016
   exe '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
   # shellcheck disable=SC2016
@@ -22,8 +25,10 @@ _setup_apps() {
   # MEMO: with-readline: Enable interactive(enable handle cursor) option when install.
   # brew install gpg --with-readline
 
-  # casc install
-  def_install bash git gnu-sed lua vim binutils coreutils diffutils findutils gawk gnu-tar grep gzip wget gnu-indent gnu-which gpg
+  def_install bash git lua vim wget gpg
+  # Install gnu with-default-names
+  def_install grep gawk gzip gnu-sed gnu-tar gnu-indent gnu-which gnu-time gnu-getopt
+  def_install binutils coreutils diffutils findutils moreutils
   # exe brew tap caskroom/cask
   def_install --cask iterm2
   def_install --cask google-chrome
