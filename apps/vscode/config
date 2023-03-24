@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 
 # settings_d_msys="${WINHOME}/AppData/Roaming/Code/User"
-settings_d_msys="${WINHOME}/scoop/persist/vscode/data/user-data/User"
-settings_d_mac="${HOME}/Library/Application Support/Code/User"
-settings_d_ubuntu="$HOME/.config/Code/User"
+# settings_d_msys="${WINHOME}/scoop/persist/vscode/data/user-data/User"
+# settings_d_mac="${HOME}/Library/Application Support/Code/User"
+# settings_d_ubuntu="$HOME/.config/Code/User"
 
-is_installed() {
-  if is_msys; then
-    # test -e "$settings_d_msys"
-    has_scoop vscode
-  elif is_mac; then
-    test -e "$settings_d_mac"
-  elif is_ubuntu; then
-    test -e "$settings_d_ubuntu"
-  else
-    # shellcheck disable=SC2154
-    has "$app"
-  fi
-}
+# is_installed() {
+#   if is_msys; then
+#     # test -e "$settings_d_msys"
+#     has_scoop vscode
+#   elif is_mac; then
+#     test -e "$settings_d_mac"
+#   elif is_ubuntu; then
+#     test -e "$settings_d_ubuntu"
+#   else
+#     # shellcheck disable=SC2154
+#     has "$app"
+#   fi
+# }
 install_common() { not_supported; }
 install_arch() {
   def_install visual-studio-code-bin
@@ -26,23 +26,27 @@ install_msys() {
   exe scoop install vscode
 }
 install_cygwin() { not_supported; }
-install_mac() { not_supported; }
+install_mac() {
+  def_install --cask visual-studio-code
+}
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
 setting_arch() { no_settings; }
 setting_msys() {
-  _ln_jsons "$settings_d_msys"
-  _add_packages
+  # _ln_jsons "$settings_d_msys"
+  # _add_packages
   exe winln -q "$WINHOME/scoop/apps/vscode/current/Code.exe"
 }
 setting_cygwin() { no_settings; }
 setting_mac() {
-  _ln_jsons "$settings_d_mac"
-  _add_code_path "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+  # _ln_jsons "$settings_d_mac"
+  # _add_code_path "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+  :
 }
 setting_ubuntu() {
-  _ln_jsons "$settings_d_ubuntu"
+  # _ln_jsons "$settings_d_ubuntu"
+  :
 }
 setting_redhat() { no_settings; }
 _add_code_path() {
@@ -59,22 +63,23 @@ _add_code_path() {
       cat - | tee -a "$_target"
     fi
   del_if_exist "$HOME/.path"
-  _add_packages
+  # Use setting sync
+  # _add_packages
 }
-_add_packages() {
-  if is_dry; then
-    log "==> vscode packages is.."
-    # shellcheck disable=SC2154
-    while read -r p; do
-      [[ -z $p ]] && continue
-      [[ $p =~ ^#.* ]] && continue
-      echo "  - $p"
-    done <"$app_dir/extensions"
-  fi
-  log "==> vscode installing packages.."
-  export PATH="$_code_bin:$PATH"
-  exe "$app_dir/gen_extensions" 1
-}
+# _add_packages() {
+#   if is_dry; then
+#     log "==> vscode packages is.."
+#     # shellcheck disable=SC2154
+#     while read -r p; do
+#       [[ -z $p ]] && continue
+#       [[ $p =~ ^#.* ]] && continue
+#       echo "  - $p"
+#     done <"$app_dir/extensions"
+#   fi
+#   log "==> vscode installing packages.."
+#   export PATH="$_code_bin:$PATH"
+#   exe "$app_dir/gen_extensions" 1
+# }
 _ln_jsons() {
   # shellcheck disable=SC2154
   make_lnk_with_bkup "$app_dir/settings.json" "$1/settings.json"
