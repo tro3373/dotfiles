@@ -27,7 +27,7 @@ setting_mac() { default_called=1; }
 setting_ubuntu() { default_called=1; }
 setting_redhat() { default_called=1; }
 
-is_installed() { has $app; }
+is_installed() { has_or_local_package $app; }
 install_via_os_default() { def_install $app; }
 
 setconfig() { :; }

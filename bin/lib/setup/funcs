@@ -305,6 +305,11 @@ del_if_exist() {
   fi
 }
 
+has_cask() { brew list --cask | grep $1 >&/dev/null; }
+has_or_local_package() {
+  has "$*" || has_local_package "$*"
+}
+
 has_local_package() {
   local p=$1
   if is_arch || is_msys; then
@@ -313,22 +318,30 @@ has_local_package() {
     dpkg -l "$p" | grep -E '^ii' >&/dev/null && return 0
   elif is_redhat; then
     rpm -qi "$p" >&/dev/null && return 0
+  elif is_mac; then
+    echo -e "$_brew_installed_pkgs" | grep "$p" >&/dev/null && return 0
   else
     return 1
   fi
 }
 def_install() {
-  local _pkgs=()
+  local _brew_installed_pkgs _pkgs=() _opts=()
+  if is_mac && has brew; then
+    _brew_installed_pkgs=$(brew list -1 | grep -v '==')
+  fi
   for p in "$@"; do
+    if [[ $p =~ ^-.* ]]; then
+      _opts+=("$p")
+      continue
+    fi
     if ! is_force; then
-      has "$p" && continue
-      has_local_package "$p" && continue
+      has_or_local_package "$p" && continue
     fi
     _pkgs+=("$p")
   done
   [[ ${#_pkgs[@]} -eq 0 ]] && return
   # shellcheck disable=SC2154
-  exe "$def_install_cmd" "${_pkgs[*]}"
+  exe "$def_install_cmd" "${_opts[*]}" "${_pkgs[*]}"
 }
 make_work_if_needed() {
   make_dir_if_needed "$workdir"
