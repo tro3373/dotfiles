@@ -11,7 +11,8 @@ _setup_brew() {
   exe '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
   # shellcheck disable=SC2016
   exe 'export PATH=/usr/local/bin:$PATH'
-  exe "brew update"
+  exe brew update
+  exe brew tap brew/cask
 }
 
 _setup_apps() {
@@ -22,17 +23,22 @@ _setup_apps() {
   # brew install gpg --with-readline
 
   # casc install
-  exe brew install bash git gnu-sed lua vim binutils coreutils diffutils findutils gawk gnu-tar grep gzip wget gnu-indent gnu-which gpg
-  exe brew tap caskroom/cask
-  exe brew install --cask google-chrome
-  exe brew install --cask iterm2
+  def_install bash git gnu-sed lua vim binutils coreutils diffutils findutils gawk gnu-tar grep gzip wget gnu-indent gnu-which gpg
+  # exe brew tap caskroom/cask
+  def_install --cask iterm2
+  def_install --cask google-chrome
+
+  # Rosetta: To use app for intel in Apple silicone tip
+  # Google Japanese Ime is intel app
+  exe sudo softwareupdate --install-rosetta
+  def_install --cask google-japanese-ime
 }
 
 load_update_arg_apps() {
   # XtraFinder
   # shellcheck disable=SC2034
   read -r -a args < <(
-    echo "$(default_apps) vscode scroll-reverser karabiner"
+    echo "$(default_apps) vscode scroll-reverser Karabiner"
   )
 }
 
@@ -119,7 +125,6 @@ _setup_mac_settings() {
   # defaults write com.apple.dock expose-animation-duration -float 0
   # killall Dock
 
-
   ########################################################################
   # Finder
   ########################################################################
@@ -152,14 +157,13 @@ _setup_mac_settings() {
   # killall Safari
 }
 
-
 _setup_gui_apps() {
-  cat<<'EOF'
+  cat <<'EOF'
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   Do below
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 + 1. (SystemSettings) Change `caps lock` to `control`
-+   - System Enviroments - Keyboard - keyboard shortcut - modification key - Change Caps Lock to Control
++   - System Enviroments - Keyboard - keyboard shortcut - modification key - Change Caps Lock to Control(キーボード毎に設定)
 + 2. (SystemSettings) Change Speed of KeyRepeat
 +   - System Enviroments - Keyboard - KeyRepeat to fastest
 + 3. (SystemSettings) Change KeyMap for change window of same App
@@ -171,4 +175,3 @@ _setup_gui_apps() {
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
 }
-
