@@ -30,12 +30,12 @@ get_commit_id() {
 inisialize() {
   while [[ $name == "" ]]; do
     printf "==> Input name to convert: "
-    read name
+    read -e -i "$(git config user.name)" name
     echo
   done
   while [[ $mail == "" ]]; do
     printf "==> Input mail to convert: "
-    read mail
+    read -e -i "$(git config user.email)" mail
     echo
   done
   opt=
