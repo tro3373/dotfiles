@@ -1,6 +1,6 @@
 #!/bin/bash
 
-is_installed() { [[ -e /Applications/Karabiner-Elements.app ]]; }
+# is_installed() { [[ -e /Applications/Karabiner-Elements.app ]]; }
 install_common() { not_supported; }
 install_arch() { not_supported; }
 install_msys() { not_supported; }
