@@ -3,11 +3,16 @@
 # shellcheck disable=SC2154
 is_installed() { [[ -e "$workdir"/flutter ]]; }
 install_common() {
-  cd_work
-  if [[ ! -e flutter ]]; then
-    exe git clone https://github.com/flutter/flutter.git -b stable --depth 1
+  # cd_work
+  # if [[ ! -e flutter ]]; then
+  #   exe git clone https://github.com/flutter/flutter.git -b stable --depth 1
+  # fi
+  # def_install clang cmake ninja
+  if ! has asdf; then
+    log "asdf not installed"
+    return
   fi
-  def_install clang cmake ninja
+  exe asdf install flutter latest
 }
 # install_arch() { not_supported; }
 # install_msys() { not_supported; }
@@ -16,25 +21,29 @@ install_cygwin() { not_supported; }
 # install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() {
-  cd_work
-  local flutter_bin=$(pwd)/flutter/bin
-  if ! grep $flutter_bin ~/.works.zsh >&/dev/null; then
-    exe "echo 'add_path $flutter_bin' >> ~/.works.zsh"
-    rm_dotpath
-  fi
-  exe $flutter_bin/flutter precache
-  exe $flutter_bin/flutter doctor
+  # cd_work
+  # local flutter_bin=$(pwd)/flutter/bin
+  # if ! grep $flutter_bin ~/.works.zsh >&/dev/null; then
+  #   exe "echo 'add_path $flutter_bin' >> ~/.works.zsh"
+  #   rm_dotpath
+  # fi
+  # exe $flutter_bin/flutter precache
+  # exe $flutter_bin/flutter doctor
+
+  # Cache flutter tools
+  exe flutter precache
+  exe flutter doctor
 }
 # setting_arch() { no_settings; }
 # setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
 setting_mac() {
   setting_common
-  if [[ -e /Applications/Xcode.app ]]; then
-    exe sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
-    exe sudo xcodebuild -runFirstLaunch
-    exe sudo xcodebuild -license
-  fi
+  # if [[ -e /Applications/Xcode.app ]]; then
+  #   exe sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+  #   exe sudo xcodebuild -runFirstLaunch
+  #   exe sudo xcodebuild -license
+  # fi
 }
 # setting_ubuntu() { no_settings; }
 setting_redhat() { no_settings; }
