@@ -326,3 +326,29 @@ echo 'start' > $tmpfile/file1
 cat $tmpfile/file1
 ```
 $$
+
+## test -n
+```
+var=
+test -n $var && echo ng
+ng      <<<<<<<<<<<<<<<< ATTENTION!!
+test -n "$var" || echo ok
+ok
+var=hogehoge
+test -n $var && echo ok
+ok
+test -n "$var" && echo ok
+ok
+
+var=
+test -z $var && echo ok
+ok
+test -z "$var" && echo ok
+ok
+var=hogehoge
+test -z $var || echo ok
+ok
+test -z "$var" || echo ok
+ok
+
+```

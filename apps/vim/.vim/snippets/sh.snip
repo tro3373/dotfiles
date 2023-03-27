@@ -344,7 +344,7 @@ snippet	forarg
 
 snippet	dummyset
 	dummy="echo"
-	is_dummy() { [[ -n $dummy ]]; }
+	is_dummy() { [[ -n "$dummy" ]]; }
 	initialize() {
 		for arg in "$@"; do
 			case "$arg" in
@@ -406,7 +406,7 @@ snippet	initializzzz
 		done
 		check
 	}
-	is_dummy() { [[ -n $dummy ]]; }
+	is_dummy() { [[ -n "$dummy" ]]; }
 	add_args() { args+=("$@"); }
 	check() {
 		:
@@ -464,7 +464,7 @@ alias	tee_innnk_off
 
 snippet	exe
 	dummy="echo"
-	is_dummy() { [[ -n $dummy ]]; }
+	is_dummy() { [[ -n "$dummy" ]]; }
 	initialize() {
 		for arg in "$@"; do
 			case "$arg" in
@@ -536,10 +536,10 @@ snippet	seteuxop
 	set -euxo pipefail
 
 snippet	isdummy
-	is_dummy() { [[ -n $dummy ]]; }
+	is_dummy() { [[ -n "$dummy" ]]; }
 
 # snippet	iswsl
-# 	is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
+# 	is_wsl() { [[ -n "$WSL_DISTRO_NAME" ]]; }
 snippet	iswsl
 	is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
 
