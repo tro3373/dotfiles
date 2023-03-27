@@ -1,5 +1,6 @@
 #!/bin/bash
 
+is_installed() { has java && java -version >&/dev/null; }
 install_common() { not_supported; }
 install_arch() {
   # with install java8
@@ -9,7 +10,16 @@ install_arch() {
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
-install_mac() { not_supported; }
+install_mac() {
+  log "==> Installing openjdk latest.."
+  # Install latest
+  def_install openjdk
+  exe sudo ln -sfn "$(brew --prefix)"/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
+  log "==> Installing java8(temurin8).."
+  # Install java8
+  exe brew tap homebrew/cask-versions
+  def_install --cask temurin8
+}
 install_ubuntu() {
   sudo add-apt-repository ppa:webupd8team/java
   sudo apt-get update
@@ -28,6 +38,14 @@ EOF
 }
 setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
-setting_mac() { no_settings; }
+setting_mac() {
+  target=$HOME/.works.zsh
+  if grep 'export JAVA_HOME=' $target >&/dev/null; then
+    return
+  fi
+  cat <<'EOF' | cat_tee -a $target
+export JAVA_HOME=$(/usr/libexec/java_home)
+EOF
+}
 setting_ubuntu() { no_settings; }
 setting_redhat() { no_settings; }
