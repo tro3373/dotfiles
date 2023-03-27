@@ -15,6 +15,7 @@ setting_common() {
     return
   fi
   log "adding to $_workzsh.."
+  # shellcheck disable=SC2016
   echo 'eval "$(direnv hook zsh)"' |
     if is_dry; then
       cat -

@@ -5,7 +5,9 @@ install_wsl() { not_supported; }
 install_arch() { not_supported; }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
-install_mac() { not_supported; }
+install_mac() {
+  def_install --cask iterm2
+}
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { not_supported; }
@@ -13,7 +15,21 @@ setting_wsl() { not_supported; }
 setting_arch() { not_supported; }
 setting_msys() { not_supported; }
 setting_cygwin() { not_supported; }
-setting_mac() { not_supported; }
+setting_mac() {
+  cat <<'EOF'
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  Do below
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++ 1. Profile Settings
++   - Colors - Solorized + Change Background color
++   - Text - font - Osaka - Osaka-Mono 20
++   - Terminal - Notification - Check 'the SilenceBell'
++   - Terminal - Unlimited scroll
++ 1. General Settings
++   - General - Selection - Check 'Applications in terminal may access clipboard'
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+EOF
+}
 setting_ubuntu() { not_supported; }
 setting_redhat() { not_supported; }
 #is_installed

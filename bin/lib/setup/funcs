@@ -320,16 +320,15 @@ has_local_package() {
   elif is_redhat; then
     rpm -qi "$p" >&/dev/null && return 0
   elif is_mac; then
+    set_brew_installed_pkgs_if_needed
     echo -e "$_brew_installed_pkgs" | grep "$p" >&/dev/null && return 0
   else
     return 1
   fi
 }
 def_install() {
-  local _brew_installed_pkgs _pkgs=() _opts=()
-  if is_mac && has brew; then
-    _brew_installed_pkgs=$(brew list -1 | grep -v '==')
-  fi
+  local _pkgs=() _opts=()
+  set_brew_installed_pkgs_if_needed
   for p in "$@"; do
     if [[ $p =~ ^-.* ]]; then
       _opts+=("$p")
@@ -343,6 +342,12 @@ def_install() {
   [[ ${#_pkgs[@]} -eq 0 ]] && return
   # shellcheck disable=SC2154
   exe "$def_install_cmd" "${_opts[*]}" "${_pkgs[*]}"
+}
+set_brew_installed_pkgs_if_needed() {
+  if ! is_mac || ! has brew || test -n "$_brew_installed_pkgs"; then
+    return
+  fi
+  _brew_installed_pkgs=$(brew list -1 | grep -v '==')
 }
 make_work_if_needed() {
   make_dir_if_needed "$workdir"
@@ -518,6 +523,27 @@ cat_tee() {
 
 sudo_tee() {
   cat_do sudo tee "$@"
+}
+
+setup_brew() {
+  if ! has brew; then
+    # shellcheck disable=SC2016
+    exe '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+    # shellcheck disable=SC2016
+    exe 'eval "$(/opt/homebrew/bin/brew shellenv)"'
+  fi
+  local target=$HOME/.zprofile
+  if grep 'brew shellenv' $target >&/dev/null; then
+    return
+  fi
+  cat_zprofile_brewenv |
+    cat_tee -a $target
+}
+
+cat_zprofile_brewenv() {
+  cat <<'EOF'
+eval "$(/opt/homebrew/bin/brew shellenv)"
+EOF
 }
 
 clone_dot() {
