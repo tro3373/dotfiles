@@ -357,6 +357,16 @@ cd_work() {
   exe "cd \"$workdir\""
 }
 
+_github_latest_release_tag() {
+  local _repo="$1"
+  curl -fsSL https://github.com/$_repo/tags |
+    grep -E "href=\"/$_repo/releases/tag/" |
+    head -1 |
+    sed -e 's,^.*href=,,g' |
+    cut -d\" -f2 |
+    sed -e "s,/$_repo/releases/tag/,,g"
+}
+
 _github() {
   local dst="$1"
   local url="$2"
