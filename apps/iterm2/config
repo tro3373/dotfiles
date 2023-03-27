@@ -20,13 +20,16 @@ setting_mac() {
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   Do below
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++ 1. General Settings
++   - General - Selection - Check 'Applications in terminal may access clipboard'
++ 1. Appearance Settings
++   - General - Theme - Minimal
 + 1. Profile Settings
 +   - Colors - Solorized + Change Background color
 +   - Text - font - Osaka - Osaka-Mono 20
 +   - Terminal - Notification - Check 'the SilenceBell'
 +   - Terminal - Unlimited scroll
-+ 1. General Settings
-+   - General - Selection - Check 'Applications in terminal may access clipboard'
++   - Window - Style - Maximized
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
 }
