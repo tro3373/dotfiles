@@ -191,7 +191,7 @@ snippet	log
 snippet	logcolorrr
 	_log() {
 		# shellcheck disable=SC2145
-		echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"
+		echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "\$1"
 	}
 	log() { _log yellow "$*"; }
 	error() {
@@ -570,3 +570,14 @@ snippet camel_method
 	camel() { cat - | sed -r 's/.*/\L\0/g; s/_([a-z0-9])/\U\1/g;'; }
 snippet ucamel_method
 	camel() { cat - | sed -r 's/.*/\L\0/g; s/_([a-z0-9])/\U\1/g; s/^./\U\0/;'; }
+
+# [UTCからJST/JSTからUTCの変換をワンライナーで行う - ぶていのログでぶログ](https://tech.buty4649.net/entry/2022/02/07/124923)
+snippet to_utccc
+	to_utc() {
+		TZ=UTC date -d "$* JST" "+%Y/%m/%d %H:%M"
+	}
+
+snippet to_jsttt
+	to_jst() {
+		TZ=JST date -d "$* GMT" "+%Y/%m/%d %H:%M"
+	}
