@@ -1,56 +1,182 @@
 #!/usr/bin/env bash
 
+command_name=$(basename "$0") && readonly command_name
+default_key="START RequestId:" && readonly default_key
 profile=
 region=ap-northeast-1
-group=
-filter="START"
+groups=()
+keys=()
+key=
 sta=
 end=
 
-has() { command -v ${1} >&/dev/null; }
+usage() {
+  cat <<EOF
+
+Dump cloud watch logs
+  Usage:
+      $command_name [option] <key word>
+    Options
+      -h|--help : Show this usage
+      -p        : Specify profile
+      -r        : Specify region
+      -s        : Specify Start time JST (yyyy/MM/dd HH:mm)
+      -e        : Specify End time JST (yyyy/MM/dd HH:mm)
+      -g        : Specify cloud watch log group
+EOF
+}
 initialize() {
   if ! has awslogs; then
-    echo "No awslogs command exists." 1>&2
-    exit 1
+    error "No awslogs command exists."
+  fi
+  if [[ $# -eq 0 ]]; then
+    usage && exit 1
   fi
 
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
+      -h | --help) usage && exit 0 ;;
       -p) shift && profile="$1" ;;
       -r) shift && region="$1" ;;
-      -f) shift && filter="$1" ;;
       -s) shift && sta="$1" ;;
       -e) shift && end="$1" ;;
-      *) group="$1" ;;
+      -g) shift && add_groups "$1" ;;
+      *) add_keys "$1" ;;
     esac
     shift
   done
+  key="${keys[*]}"
 
-  if [[ -z $group ]]; then
-    echo "Specify loggroup" 1>&2
-    exit 1
+  if [[ ${#groups[*]} -eq 0 ]]; then
+    error "Specify loggroup"
   fi
-  if [[ -z $sta ]]; then
-    sta=$(date -d "-9 hour -1 min" "+%Y/%m/%d %H:%M")
+  if [[ -z $key ]]; then
+    key=$default_key
   fi
-  if [[ -z $end ]]; then
-    end=$(date -d "-9 hour" "+%Y/%m/%d %H:%M")
+  sta=$(to_utc "-1 hour" "$sta")
+  end=$(to_utc "-0 min" "$end")
+  log "==> sta:$sta, end:$end"
+}
+
+has() { command -v ${1} >&/dev/null; }
+add_groups() { groups+=("$@"); }
+add_keys() { keys+=("$@"); }
+_log() {
+  # shellcheck disable=SC2145
+  echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"
+}
+log() { _log yellow "$*"; }
+error() {
+  _log red "$*"
+  exit 1
+}
+ink() {
+  local stdin=
+  if [[ -p /dev/stdin ]]; then
+    stdin="$(cat <&0)"
   fi
+  if [[ $# -eq 0 && -z $stdin ]]; then
+    return
+  fi
+
+  local open="\033["
+  local close="${open}0m"
+  export black="0;30m"
+  export red="1;31m"
+  export green="1;32m"
+  export yellow="1;33m"
+  export blue="1;34m"
+  export purple="1;35m"
+  export cyan="1;36m"
+  export gray="0;37m"
+  export white="$close"
+
+  local text="$stdin$*"
+  local color="$close"
+
+  case $1 in
+    black | red | green | yellow | blue | purple | cyan | gray | white)
+      eval color="\$$1"
+      text=$(echo -e "$stdin${*:2}" | sed -e 's,%,%%,g')
+      ;;
+  esac
+
+  # shellcheck disable=SC2059
+  printf "${open}${color}${text}${close}\n" 1>&2
+}
+
+to_utc() {
+  local _def="$1"
+  local _val="$2"
+  if [[ -z $_val ]]; then
+    _val="$(date -d "$_def" "+%Y/%m/%d %H:%M")"
+  fi
+  TZ=UTC date -d "$_val JST" "+%Y/%m/%d %H:%M"
+}
+
+find_logs() {
+  f="$*"
+  if [[ -n $profile ]]; then
+    profile_opt="--profile $profile"
+  fi
+  # sta/end is GMT
+  awslogs get $group \
+    -s "$sta" \
+    -e "$end" \
+    -f "\"$f\"" \
+    --timestamp \
+    --aws-region $region $profile_opt
+}
+
+find_key_logs() {
+  log "==> Finding key:'$key' logs.. "
+  find_logs "$key"
+}
+
+find_req_id_logs() {
+  log "==> Finding req_id:$req_id logs.. "
+  find_logs "$req_id"
 }
 
 main() {
   initialize "$@"
-  # sta/end is GMT
+  local dstd req_id_idx=6
+  dstd=$(mktemp -d)
+
   profile_opt=
   if [[ -n $profile ]]; then
     profile_opt="--profile $profile"
   fi
-  awslogs get $group \
-    -s "$sta" \
-    -e "$end" \
-    -f "\"$filter\"" \
-    --aws-region $region $profile_opt &&
-    echo "Done"
+  if [[ $key != "$default_key" ]]; then
+    # MEMO:
+    # 1) key == default_key (SPACE)
+    #   ex) /aws/lambda/lambda_name YYYY/MM/DD/[$LATEST]xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx yyyy-MM-ddTHH:mm:ss.SSSZ START RequestId: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx ..
+    #       1                       2                                                    3                        4     5          6                                    7
+    # 2) key != default_key (TAB)
+    #   ex) /aws/lambda/lambda_name YYYY/MM/DD/[$LATEST]xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx yyyy-MM-ddTHH:mm:ss.SSSZ yyyy-MM-ddTHH:mm:ss.SSSZ	xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx	..
+    #       1                       2                                                    3                        4                         5
+    req_id_idx=5
+  fi
+  for group in "${groups[@]}"; do
+    lambda_name=$(basename $group)
+    log "$lambda_name"
+    find_key_logs |
+      grep -E "^$group" |
+      awk -F"[ \t]" '{print $3 " " $'$req_id_idx'}' |
+      sort -u |
+      tee $dstd/list |
+      while read -r ts req_id; do
+        [[ -z $ts ]] && continue
+        [[ $ts =~ ^#.* ]] && continue
+        dstf="$dstd/$ts.$lambda_name.$req_id.log"
+        find_req_id_logs | tee -a $dstf
+      done
+  done
+  log "Done. see dstd:$dstd"
+  if ! has open; then
+    return
+  fi
+  open $dstd
 }
 main "$@"
