@@ -169,6 +169,9 @@ _setup_gui_apps() {
 +   - System Enviroments - サウンド - 起動時にサウンドを再生
 + 1. (SystemSettings) 画面解像度
 +   - System Enviroments - Display - スペースを拡大
++ 1. (SystemSettings) コントロールセンター
++   - System Enviroments - コントロールセンター 以下を常に表示
++     - Wifi,Bluetooth,AirDrop,サウンド
 + 1. (SystemSettings) Disable Mission Control
 +   - System Enviroments - キーボード - キーボードショートカット - Mission Control
 + 1. Install from App Store
