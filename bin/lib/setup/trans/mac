@@ -107,7 +107,7 @@ _setup_mac_settings() {
   # Dockにスペース(空白)を挿入
   # exe defaults write com.apple.dock persistent-others -array-add '{tile-data={}; tile-type="spacer-tile";}'
   # Dockの隠しアニメーション「Suck」を有効にする
-  # exe defaults write com.apple.dock mineffect suck
+  exe defaults write com.apple.dock mineffect suck
   # launchpad animation off
   # exe defaults write com.apple.dock springboard-show-duration -float 0
   # exe defaults write com.apple.dock springboard-hide-duration -float 0
@@ -127,7 +127,9 @@ _setup_mac_settings() {
   exe defaults write com.apple.finder AnimateSnapToGrid -boolean false
   # ファインダーのアニメーションを削除
   exe defaults write com.apple.finder AnimateInfoPanes -boolean false
-  # ?
+  # Disable Slow motion effect(Hold down shift key)
+  # macos - How to disable slow motion effect in Mac OS X (shift key)? - Super User
+  # https://superuser.com/questions/121472/how-to-disable-slow-motion-effect-in-mac-os-x-shift-key
   exe defaults write com.apple.finder FXEnableSlowAnimation -bool false
   # クイックルックで表示したテキストをコピペ
   exe defaults write com.apple.finder QLEnableTextSelection -bool true
@@ -139,6 +141,19 @@ _setup_mac_settings() {
   exe defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
   # Finderの音を消す
   exe defaults write com.apple.finder FinderSounds -bool no
+  # 保存ダイアログボックスをデフォルトで詳細表示に設定
+  exe defaults write -g NSNavPanelExpandedStateForSaveMode -bool true
+  # 元に戻す defaults delete -g NSNavPanelExpandedStateForSaveMode;killall Finder
+  # 印刷ダイアログボックスをデフォルトで詳細表示に設定
+  exe defaults write -g PMPrintingExpandedStateForPrint -bool true
+  # 元に戻す defaults delete -g PMPrintingExpandedStateForPrint
+  # アイコンが非選択になってもプレビュー再生を継続
+  exe defaults write com.apple.finder AutoStopWhenSelectionChanges -bool false
+  # 元に戻す defaults delete com.apple.finder AutoStopWhenSelectionChanges
+  # スクロールしてもプレビュー再生を継続
+  exe defaults write com.apple.finder AutoStopWhenScrollingOffBounds -bool false
+  # アイコンサイズに関係なくプレビュー再生可能に
+  exe defaults write com.apple.finder QLInlinePreviewMinimumSupportedSize -int 0
   exe killall Finder
 
   ########################################################################
@@ -172,6 +187,8 @@ _setup_gui_apps() {
 + 1. (SystemSettings) コントロールセンター
 +   - System Enviroments - コントロールセンター 以下を常に表示
 +     - Wifi,Bluetooth,AirDrop,サウンド
++ 1. (SystemSettings) ワークスペース切り替え高速化
++   - System Enviroments - アクセシビリティ - 視差効果を減らす にチェック
 + 1. (SystemSettings) Disable Mission Control
 +   - System Enviroments - キーボード - キーボードショートカット - Mission Control
 + 1. Install from App Store
