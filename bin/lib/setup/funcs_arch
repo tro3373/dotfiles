@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
-readonly specify_keyserver=pool.sks-keyservers.net
+readonly specify_keyserver=keyserver.ubuntu.com
 # keyboard_layout=jp106
 readonly keyboard_layout=us
 readonly _additional_arch=(
   pacman-contrib # pacman cache clean
-  reflector # update mirrorlist tool
-  net-tools # deplicated. ifconfig, route, arp, netstat...
+  # reflector      # update mirrorlist tool
+  net-tools  # deplicated. ifconfig, route, arp, netstat...
   gnu-netcat # netcat
-  inetutils # ifconfig, hostname, ping...
+  inetutils  # ifconfig, hostname, ping...
   xsel
   xorg-server-xvfb # for clipboard
-  libxfont2 # x11 font rasterisation library
+  libxfont2        # x11 font rasterisation library
 )
 
 setup_keyboard() {
@@ -164,9 +164,12 @@ improve_pacman_millerlist() {
 }
 
 setup_pac_key() {
+  # システムに必要な鍵リングと、その鍵の一部を取得するためのサーバーの設定初期化
   exe pacman-key --init
   local populate_key=archlinux
   is_arm && populate_key=archlinuxarm
+  # Pacmanのキーリングを初期化
+  # Pacmanが使用する公開鍵の一覧をリポジトリから取得し、ローカルの鍵リングに追加
   exe pacman-key --populate $populate_key
 }
 
@@ -188,9 +191,13 @@ setup_gnupg_keyserver_settings() {
 }
 
 setup_gnupg() {
-  exe pacman -Sy gnupg --noconfirm
-  exe pacman -Sy archlinux-keyring --noconfirm
+  local keyring=archlinux-keyring
+  is_arm && keyring=archlinuxarm-keyring
+  exe pacman -Sy --noconfirm gnupg $keyring
   [[ $1 == norefresh ]] && return
+  exe rm -f /var/lib/pacman/sync/*
+  # exe pacman-mirrors --continent Japan
+  exe pacman -Syyu
   exe pacman-key --refresh-keys --keyserver $specify_keyserver
 }
 

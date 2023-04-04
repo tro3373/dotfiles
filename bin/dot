@@ -1,13 +1,42 @@
 #!/usr/bin/env bash
 
+url_https=https://github.com/tro3373/dotfiles.git && readonly url_https
+url_git=git@github.com:tro3373/dotfiles.git && readonly url_git
+
 to="$1"
-if [ -z $to ]; then
-  if [ $OSTYPE = "msys" ]; then
-    to="/c/Users/$(whoami)/.unxh/.dot"
-  else
-    to=$HOME/.dot
+has() { command -v "${1}" >&/dev/null; }
+_clone() {
+  for url in "$url_git" "$url_https"; do
+    echo "==> Cloning via $url.." 1>&2
+    git clone -q "$url" "$to" || {
+      echo "==> Failed to clone via $url.. next.. " 1>&2
+      continue
+    }
+    break
+  done
+  if [[ ! -e $to ]]; then
+    echo "==> Failed to clone" 1>&2
+    exit 1
   fi
-fi
-[ ! -e $to ] && git clone -q "$(curl -fsSLI git.io/tr3d | grep Location | grep "\.git" | awk '{print $2}')" "$to"
-echo "==> cloned to $to. "
-echo "==> done."
+  echo "==> cloned to $to"
+}
+main() {
+  if ! has git; then
+    echo "==> No git command exists" 1>&2
+    exit 1
+  fi
+  if [[ -z $to ]]; then
+    if [[ $OSTYPE == "msys" ]]; then
+      to="/c/Users/$(whoami)/.unxh/.dot"
+    else
+      to=$HOME/.dot
+    fi
+  fi
+  if [[ -e $to ]]; then
+    echo "==> Already $to exists" 1>&2
+    exit 1
+  fi
+  _clone
+  echo "==> done."
+}
+main "$@"

@@ -29,7 +29,7 @@ pre_setup() {
   # bcdedit /set hypervisorlaunchtype off
 
   # refresh_pacman_keys
-  exe sudo rm -r /etc/pacman.d/gnupg
+  # exe sudo rm -r /etc/pacman.d/gnupg
   setup_pac_key
   # > Error in vagrant arch.....
   # exe sudo pacman-key --refresh-keys
@@ -39,8 +39,8 @@ pre_setup() {
   #     ==> ERROR: A specified local key could not be updated from a keyserver.
   # permanently append
   # shellcheck disable=SC2119
-  setup_gnupg_keyserver_settings /home/vagrant
   setup_gnupg refresh
+  setup_gnupg_keyserver_settings /home/vagrant
   improve_pacman_conf
   improve_pacman_aria2
 

@@ -43,7 +43,7 @@ has_scoop_bucket() { scoop bucket list | grep "$1" &>/dev/null; }
 isexist() { find "$*" >&/dev/null; }
 
 is_arch() { [[ $DETECT_OS == "arch" ]]; }
-is_arm() { uname -m | grep arm >&/dev/null; }
+is_arm() { uname -m | grep -E "(arm|aarch64)" >&/dev/null; }
 is_x86_64() { uname -m | grep x86_64 >&/dev/null; }
 is_msys() { [[ $DETECT_OS == "msys" ]]; }
 is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
@@ -569,12 +569,7 @@ clone_dot() {
     _setup_args="${*}"
   fi
   if [[ ! -e $_dstd ]]; then
-    curl -fSsL git.io/tr3s |
-      if [[ $_own_dot -eq 1 ]]; then
-        cat - | cat_do bash -
-      else
-        cat - | cat_do sudo -u "$_user" bash -
-      fi
+    exe git clone https://github.com/tro3373/dotfiles.git "$_dstd"
   fi
   [[ -z $_setup_args ]] && return
   if [[ $_own_dot -eq 1 ]]; then

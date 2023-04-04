@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+main() {
+  pacman -S --noconfirm git
+  git clone https://github.com/tro3373/dotfiles.git ~/.dot
+  cd ~/.dot/bin/lib/bootstrap/arch
+  ./bootstrap -e
+}
+main "$@"
