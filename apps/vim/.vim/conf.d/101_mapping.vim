@@ -83,6 +83,8 @@ nnoremap <Leader>w :w<CR>
 nnoremap <Leader>q :q<CR>
 " alias reloead
 nnoremap <Leader>e :e<CR>
+nnoremap <Leader>' $
+nnoremap <Leader>m %
 " 行選択中に実行
 vnoremap <Space><CR> :!sh<CR>
 
