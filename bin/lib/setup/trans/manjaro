@@ -7,6 +7,7 @@ pre_setup() {
   _setup_visudo_editor
   _setup_home_dir_names
   _setup_mount_media_setting
+  _setup_suspend_hibernate
   _setup_custom_shortcut
   _setup_improve_monitor_scale
   _install_apps
@@ -63,6 +64,11 @@ _setup_home_dir_names() {
 _setup_mount_media_setting() {
   # Disable automount external media
   gsettings_if_needed org.gnome.desktop.media-handling automount false
+}
+
+_setup_suspend_hibernate() {
+  # Disable suspend if not log in
+  exe sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 }
 
 _setup_custom_shortcut() {
