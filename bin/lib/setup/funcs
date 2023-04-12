@@ -378,12 +378,19 @@ _github() {
   local repo_name="${url##*/}"
   repo_name="${repo_name%%\.git}"
   local _path="$dst/$repo_name"
+  if [[ -n $_sudo ]]; then
+    if ! git config --global --get-all safe.directory | grep -e "^$_path$" >&/dev/null; then
+      exe git config --global --add safe.directory "$_path"
+    fi
+  fi
   if [[ -e $_path ]]; then
     exe cd "$_path"
+    log "==> Git pull rebasing .."
     exe $_sudo git pull --rebase
   else
     # ignore depth 1 option because tag info not readable
     # exe $_sudo git clone --depth 1 "$url" $_path
+    log "==> Git cloning $url .."
     exe $_sudo git clone "$url" "$_path"
     exe cd "$_path"
   fi
@@ -401,6 +408,7 @@ _github() {
     now_branch=$(git branch | grep -E "\*" | tr -d "*" | tr -d " ")
   fi
   if [[ -n $now_branch && $now_branch != "$tag" ]]; then
+    log "==> Git check outing $tag .."
     exe $_sudo git checkout -b "$tag" "$tag"
   fi
 }

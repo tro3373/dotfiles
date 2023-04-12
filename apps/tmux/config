@@ -1,9 +1,9 @@
 #!/bin/bash
 
 install_ubuntu() {
-  # def_install autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev
-  # _install_common
-  install_via_os_default
+  def_install autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev
+  _install_common
+  # install_via_os_default
 }
 
 install_redhat() {
@@ -11,22 +11,30 @@ install_redhat() {
   _install_common
 }
 
+install_wsl() { not_supported; }
+install_arch() {
+  _install_common
+}
+
 _install_common() {
-  github_user_local "https://github.com/tmux/tmux.git"
+  github_user_local "https://github.com/z80oolong/tmux-eaw-fix.git"
+  local patchable_ver=
+  local patch_dir=/usr/local/src/tmux-eaw-fix
+  if [[ -e $patch_dir ]]; then
+    patchable_ver=$(find ./ -maxdepth 1 -mindepth 1 -type f -name '*.diff' | sort | grep -v HEAD | tail -1 | cut -d- -f2)
+  fi
+  github_user_local "https://github.com/tmux/tmux.git" "$patchable_ver"
   # local target_dir=/usr/local/src/tmux
-  # if [[ -e $target_dir ]]; then
-  #     exe cd $target_dir
-  #     exe sudo git pull --rebase
-  # else
-  #     exe sudo git clone https://github.com/tmux/tmux.git $target_dir
-  #     exe cd $target_dir
-  # fi
-  # local tag=$(git tag --list | tail -1)
-  # if [[ ! -z $tag ]]; then
-  #     exe sudo git checkout $tag
-  # fi
+  # exe cd "$target_dir"
+  if [[ -n $patchable_ver ]]; then
+    log "==> Patching tmux-eaw-fix.."
+    exe sudo patch -p1 <$patch_dir/"tmux-${patchable_ver}-fix.diff"
+  fi
+  log "==> Building tmux: ./autogen.sh .."
   exe sudo ./autogen.sh
+  log "==> Building tmux: ./configure .."
   exe sudo ./configure --prefix=/usr/local
+  log "==> Building tmux: make .."
   exe sudo make
   exe sudo make install
 }
@@ -64,7 +72,7 @@ build_msys() {
   exe make install
 }
 get_libevent_url() {
-  curl -fSsL http://libevent.org/ |grep latest |grep href |cut -d"\"" -f4
+  curl -fSsL http://libevent.org/ | grep latest | grep href | cut -d"\"" -f4
 }
 get_ncurses_url() {
   echo ftp://ftp.gnu.org/gnu/ncurses/ncurses-6.0.tar.gz
@@ -72,6 +80,5 @@ get_ncurses_url() {
 
 setting_common() {
   # shellcheck disable=SC2154
-  make_link_dot2home $app_dir
+  make_link_dot2home "$app_dir"
 }
-
