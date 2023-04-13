@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
 command_name=$(basename "$0") && readonly command_name
+current_dir=$(pwd) && readonly current_dir
+timestamp=$(date +%Y%m%d.%H%M%S) && readonly timestamp
+dstd="$current_dir/$command_name.logs.$timestamp"
 default_key="START RequestId:" && readonly default_key
 profile=
 region=ap-northeast-1
@@ -141,8 +144,8 @@ find_req_id_logs() {
 
 main() {
   initialize "$@"
-  local dstd req_id_idx=6
-  dstd=$(mktemp -d)
+  local req_id_idx=6
+  mkdir -p "$dstd"
 
   profile_opt=
   if [[ -n $profile ]]; then
