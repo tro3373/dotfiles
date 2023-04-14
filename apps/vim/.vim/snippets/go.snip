@@ -16,6 +16,10 @@ snippet	timeunixxx
 snippet	lognewww
 	log.New(os.Stderr, "", log.LstdFlags)
 
+snippet	loggg
+	import log "github.com/sirupsen/logrus"
+	log.Infof("==> File:%s", file)
+
 snippet	zapnewww
 	logger, err := zap.NewProduction()
 
