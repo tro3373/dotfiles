@@ -136,6 +136,15 @@ command! ClipTimestamp  call ClipTimestamp()
 command! ClipDate       call ClipDate()
 command! ClipTime       call ClipTime()
 command! ShowPath       call ShowPath()
+command! CopyDir        call ClipDir()
+command! CopyPath       call ClipPath()
+command! Copy           call ClipFullPath()
+command! CopyFullPath   call ClipFullPath()
+command! CopyFileName   call ClipFileName()
+command! CopyTimestamp  call ClipTimestamp()
+command! CopyDate       call ClipDate()
+command! CopyTime       call ClipTime()
+
 
 
 function! SetTabs(...)
