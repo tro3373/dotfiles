@@ -1,19 +1,21 @@
 #!/bin/bash
 
 install_ubuntu() {
-  def_install autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev
-  _install_common
-  # install_via_os_default
+  # def_install autoconf libtool pkg-config libevent-dev autotools-dev automake build-essential libncurses5-dev
+  # _install_common
+  install_via_os_default
 }
 
 install_redhat() {
-  def_install libevent libeventdevel automake ncursesdevel
-  _install_common
+  # def_install libevent libeventdevel automake ncursesdevel
+  # _install_common
+  install_via_os_default
 }
 
 install_wsl() { not_supported; }
 install_arch() {
-  _install_common
+  # _install_common
+  install_via_os_default
 }
 
 _install_common() {
@@ -45,7 +47,8 @@ install_mac() {
 }
 
 install_msys() {
-  def_install tmux
+  install_via_os_default
+  # def_install tmux
   # build_msys
 }
 

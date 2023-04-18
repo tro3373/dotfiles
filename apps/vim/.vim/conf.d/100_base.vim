@@ -206,7 +206,10 @@ set pumheight=10
 set display=lastline
 " ■Unicodeで行末が変になる問題を解決
 if &encoding == 'utf-8'
-  set ambiwidth=double
+  if exists('&ambw')
+    " set ambiwidth=double
+    set ambw=double
+  endif
 endif
 " 全角スペースを分かりやすく表示する
 highlight ZenkakuSpace cterm=underline ctermfg=lightmagenta guibg=lightmagenta
