@@ -4,7 +4,7 @@ current_dir=$(pwd) && readonly current_dir
 command_name=$(basename "$0") && readonly command_name
 
 ext=png
-dst_rootd=$HOME/Downloads
+dst_rootd=$current_dir
 dst_fnm=
 args=()
 usage() {
@@ -16,7 +16,7 @@ Save clipboard image to file
       $command_name [option]
     Options
       -h|--help : Show this usage
-      -d        : Specify output directory(Default is $dst_rootd)
+      -d        : Specify output directory(Default is current dir)
       -f        : Specify output fileName(Default is img.png, If exist img_00n.png)
 
 EOF
