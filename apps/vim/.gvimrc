@@ -32,6 +32,9 @@ else
   set guifont=Osaka-Mono:h13
   set guifontwide=Osaka-Mono:h13
 endif
+if &encoding == 'utf-8'
+  set ambiwidth=double
+endif
 
 "if (has("win64") || has("win32"))
 "    "set encoding=utf-8
