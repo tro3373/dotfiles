@@ -509,6 +509,7 @@ function! ToSnake() abort
   call SilentFExec(':%s/\([A-Z]\)/_\l\1/g')
 endfun
 command! ToSnake call ToSnake()
+" TODO selected
 
 " コマンドを実行し、バッファに書き込み
 function! s:cmd_capture(q_args) "{{{

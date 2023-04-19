@@ -279,19 +279,21 @@ call unite#custom_default_action('source/bookmark/directory' , 'vimfiler')
 
 
 " 開いているファイルのディレクトリをエクスプローラで開く
-if g:is_windows
-  " Windows
-  "map qn :!nautilus %:h<ENTER>
-elseif g:is_cygmsys2
-  " Cygwin/Msys2
-  "map qn :!nautilus %:h<ENTER>
-elseif g:is_mac
-  " Mac OS-X
-  map qn :!open %:h<ENTER>
-elseif g:is_linux
-  " BSD, Linux
-  map qn :!nautilus %:h<ENTER>
-else
-  " その他
-endif
+" if g:is_windows
+"   " Windows
+"   "map qn :!nautilus %:h<ENTER>
+" elseif g:is_cygmsys2
+"   " Cygwin/Msys2
+"   "map qn :!nautilus %:h<ENTER>
+" elseif g:is_mac
+"   " Mac OS-X
+"   map qn :!open %:h<ENTER>
+" elseif g:is_linux
+"   " BSD, Linux
+"   map qn :!nautilus %:h<ENTER>
+" else
+"   " その他
+" endif
+map qn :!open %:h<ENTER>
+
 " TODO ALT+P paste_img

@@ -1,29 +1,29 @@
-snippet	timeformattt
+snippet	time_formattt
 	"20060102_150405"
 
-snippet	timenowww
+snippet	time_nowww
 alias	nowww
 alias	timestamppp
 	now := time.Now().Format("20060102_150405")
 
-snippet	timefrommm
-alias	timeparseee
+snippet	time_frommm
+alias	time_parseee
 	t, _ := time.Parse("20060102_150405", "20141231_000000")
 
-snippet	timeunixxx
+snippet	time_unixxx
 	t := time.Unix(${1}, 0)
 
-snippet	lognewww
+snippet	log_newww
 	log.New(os.Stderr, "", log.LstdFlags)
 
 snippet	loggg
 	import log "github.com/sirupsen/logrus"
 	log.Infof("==> File:%s", file)
 
-snippet	zapnewww
+snippet	zap_newww
 	logger, err := zap.NewProduction()
 
-snippet	ifStringer
+snippet	if_stringer
 	if v, ok := ${1:interface}.(fmt.Stringer); ok {
 		${2}
 	}
@@ -43,7 +43,7 @@ snippet	context_with_timeout
 	ctx, cancel := context.WithTimeout(context.Background(), Timeout)
 	defer cancel()
 
-snippet	cancelcontext
+snippet	cancel_context
 	package  main
 	import (
 		"fmt"
@@ -162,7 +162,7 @@ alias	print_samplesss
 	// %g: lage index then %e else %f
 	// %G: lage index then %E else %F
 
-snippet	openfileee
+snippet	open_fileee
 	file, err := os.OpenFile(filepath.Clean(${1}), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)  //#nosec G306
 	// file, err := os.OpenFile(filepath.Clean($1), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0664)  //#nosec G306
 	if err != nil {
@@ -170,7 +170,7 @@ snippet	openfileee
 	}
 	defer file.Close()
 
-snippet	funcnewww
+snippet	func_newww
 	func New${1}() *$1 {
 		return &$1{}
 	}
@@ -185,17 +185,17 @@ snippet	custom_prefix_writerrr
 	}
 	logger := log.New(&customWriter{os.Stderr, "2006/01/02 15:04:05"}, ${1:prefix}, 0)
 
-snippet	strconvitoaaa
+snippet	strconv_itoaaa
 alias	itoaaa
 	strconv.Itoa(${1})
 
-snippet	execrun
+snippet	exec_run
 	err := exec.Command("ls", "-la").Run()
 
-snippet	execout
+snippet	exec_out
 	out, err := exec.Command("ls", "-la").Output()
 
-snippet	execstart
+snippet	exec_start
 	cmd := exec.Command("sleep", "5s")
 	cmd.Start()
 	fmt.Println("sleep中: ", time.Now().Format("15:04:05"))
@@ -207,7 +207,7 @@ snippet	existsss
 		return !os.IsNotExist(err)
 	}
 
-snippet	existsprefixxx
+snippet	exists_prefixxx
 	func existsPrefix(name string) (bool, error) {
 		matches, err := filepath.Glob(name + ".*")
 		if err != nil {
@@ -319,7 +319,7 @@ snippet	factoryyyy
 	}
 
 snippet	mutexxx
-alias	rwmutexxx
+alias	rw_mutexxx
 	var (
 		mu sync.RWMutex
 	)
@@ -328,10 +328,10 @@ alias	rwmutexxx
 	mu.RLock()
 	defer mu.RUnlock()
 
-snippet	floatstringgg
+snippet	float_stringgg
 	strconv.FormatFloat(target, 'f', -1, 64)
 
-snippet	lsdirrr
+snippet	ls_dirrr
 	files, err := ioutil.ReadDir(".")
 
 snippet	sorttt
@@ -339,10 +339,10 @@ snippet	sorttt
 		return files[i].Name() > files[j].Name()
 	})
 
-snippet	filepathhh
+snippet	file_pathhh
 	files, err := filepath.Glob("./*/*/*.md")
 
-snippet	filereaddd
+snippet	file_readdd
 	func useBufioScanner(fileName string) {
 		 fp, err := os.Open(filepath.Clean(fileName))
 		 if err != nil {
@@ -355,7 +355,7 @@ snippet	filereaddd
 			fmt.Println(scanner.Text())
 		}
 	}
-snippet	filesizeee
+snippet	file_sizeee
 	func getFileSize(filePath string) (int64, error) {
 		info, err := os.Stat(filePath)
 		if err != nil {
@@ -364,20 +364,30 @@ snippet	filesizeee
 		return info.Size(), nil
 	}
 
+snippet reggg
+	func reg(str string) *regexp.Regexp {
+		return regexp.MustCompile(str)
+	}
+	str = reg(\`^.*//(.*)/(.*)\`).ReplaceAllString(str, "\$2\$1")
+
 snippet	regexppp
 alias	matchstringgg
 	r := regexp.MustCompile(\`abc\`)
 	fmt.Println(r.MatchString("hello"))
 
+snippet	replace_all_regexppp
+	r := regexp.MustCompile(\`abc\`)
+	res := r.ReplaceAllString(str, "yyy")
+
 ###############################################################################
 # Error
 ###############################################################################
-snippet	iferrr
+snippet	if_errr
 	if err != nil {
 		return err
 	}
 	${0}
-snippet	ifexecerrr
+snippet	if_exec_errr
 	if err := ${1}; err != nil {
 		return fmt.Errorf("Failed to ${1:#do somthing} %s: %w", "${2}", err)
 	}
@@ -415,13 +425,13 @@ snippet	errors_cause_wrap_stackkk
 ###############################################################################
 # File
 ###############################################################################
-snippet mkDirrr
+snippet mk_dirrr
 	os.Mkdir(${1}, 0775) //#nosec G301
-snippet mkDirAlll
+snippet mk_diralll
 	os.MkdirAll(${1}, 0775) //#nosec G301
-snippet rmDirrr
+snippet rm_dirrr
 	err := os.Remove(${1})
-snippet rmDirAlll
+snippet rm_dir_alll
 	err := os.RemoveAll(${1})
 snippet touchhh
 	func touch(path string) error {
@@ -441,12 +451,12 @@ snippet touchhh
 		}
 		return nil
 	}
-snippet	fileWriteJsonnn
-alias		writeFileJsonnn
+snippet	file_write_jsonnn
+alias		write_file_jsonnn
 	file, _ := json.MarshalIndent(data, "", " ")
 	_ = ioutil.WriteFile("test.json", file, 0664) //#nosec G306
-snippet	fileReadJsonnn
-alias		readFileJsonnn
+snippet	file_read_jsonnn
+alias		read_file_jsonnn
 	raw, err := ioutil.ReadFile(filepath.Clean("test.json"))
 	if err != nil {
 		fmt.Println(err.Error())
@@ -454,13 +464,13 @@ alias		readFileJsonnn
 	}
 	var s SampleStruct
 	json.Unmarshal(raw, &s)
-snippet	fileWriteee
-alias		writeFileee
+snippet	file_writeee
+alias		write_fileee
 	func WriteFile(filePath, data string) error {
 		return ioutil.WriteFile(filePath, []byte(data), 0664) //#nosec G306
 	}
-snippet	fileReadIfExistttt
-alias		readFileIfExisttt
+snippet	file_read_if_existttt
+alias		read_file_if_existtt
 	func ReadFileIfExist(filePath string) (string, error) {
 		if len(filePath) == 0 || !Exists(filePath) {
 			return "", nil
@@ -471,21 +481,21 @@ alias		readFileIfExisttt
 		}
 		return string(raw), nil
 	}
-snippet	currentDirrr
+snippet	current_dirrr
 	pwd, err := os.GetWd()
 	if err != nil {
 		return err
 	}
-snippet	binDirrr
-alias	scriptDirrr
+snippet	bin_dirrr
+alias	script_dirrr
 	ex, err := os.Executable()
 	if err != nil {
 		return err
 	}
 	exPath := filepath.Dir(ex)
 
-snippet	isEmptyDirrr
-alias	emptyDirrr
+snippet	is_empty_dirrr
+alias	empty_dirrr
 	func IsEmptyDir(dirPath string) (bool, error) {
 		f, err := os.Open(filepath.Clean(dirPath))
 		if err != nil {
@@ -531,7 +541,7 @@ snippet	containsss
 snippet	ignoreee
 	//#nosec G301 G302 G306
 
-snippet	deepCopyyy
+snippet	deep_copyyy
 	func deepcopy(src interface{}, dst interface{}) (err error) {
 		b, err := json.Marshal(src)
 		if err != nil {
@@ -551,4 +561,106 @@ snippet	stdinnn
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		fmt.Println(scanner.Text())
+	}
+
+snippet loop_stucttt
+	p := Person{
+			Name:    "John",
+			Age:     30,
+			Address: "Tokyo",
+	}
+	// Age フィールドを更新する
+	pValue := reflect.ValueOf(&p).Elem()
+	ageField := pValue.FieldByName("Age")
+	ageField.SetInt(35)
+	// Personのフィールドをループで処理する
+	valueType := reflect.ValueOf(p)
+	valueTypeElem := valueType.Type()
+	for i := 0; i < valueType.NumField(); i++ {
+			field := valueType.Field(i)
+			fieldName := valueTypeElem.Field(i).Name
+			fieldValue := field.Interface()
+			fmt.Printf("%s: %v\n", fieldName, fieldValue)
+	}
+
+snippet merge_mappp
+	func mergeMap(map1, map2 map[string]interface{}) (map[string]interface{}, error) {
+		var err error
+		for key, val := range map2 {
+			switch val.(type) {
+			case map[string]interface{}:
+				if _, ok := map1[key]; !ok {
+					map1[key] = val
+				} else {
+					map1[key], err = mergeMap(map1[key].(map[string]interface{}), val.(map[string]interface{}))
+					if err != nil {
+						return nil, err
+					}
+				}
+			default:
+				map1[key] = val
+			}
+		}
+		return map1, err
+	}
+
+snippet	read_yamlsss
+	import (
+		"errors"
+		"io/ioutil"
+		"gopkg.in/yaml.v3"
+	)
+	type Config struct {
+		Sample struct {
+			Username          string \`yaml:"username"\`
+			Password          string \`yaml:"password"\`
+		} \`yaml:"sample"\`
+	}
+
+	func NewConfig(args []string) (*Config, error) {
+		merged, err := mergeYamls(args[1:])
+		if err != nil {
+			return nil, err
+		}
+		b, err := yaml.Marshal(merged)
+		if err != nil {
+			return nil, err
+		}
+		var config Config
+		err = yaml.Unmarshal(b, &config)
+		return &config, err
+	}
+
+	func mergeYamls(args []string) (map[string]interface{}, error) {
+		if len(args) == 0 {
+			return nil, errors.New("=> Specify yaml path")
+		}
+
+		var err error
+		var merged map[string]interface{}
+		for _, arg := range args {
+			data, err := readYaml(arg)
+			if err != nil {
+				return nil, err
+			}
+			if merged == nil {
+				merged = data
+				continue
+			}
+			merged, err = mergeMap(merged, data)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return merged, err
+	}
+
+	func readYaml(path string) (map[string]interface{}, error) {
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		var data map[string]interface{}
+		err = yaml.Unmarshal(b, &data)
+		return data, err
 	}
