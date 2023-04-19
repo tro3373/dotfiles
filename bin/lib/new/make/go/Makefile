@@ -15,7 +15,7 @@ clean:
 	@echo "[OK] clean ok!"
 
 run: check clean
-	@go run ./main.go
+	@go run .
 
 sec:
 	@gosec --color=false ./...
