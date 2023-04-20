@@ -689,3 +689,33 @@ function! FormatXml()
   %s/></>\r</g | filetype indent on | setf xml | normal gg=G
 endfunction
 command! FormatXml call FormatXml()
+
+function! ToMdTable() range
+  " Get the selected text
+  let lines = getline(a:firstline, a:lastline)
+
+  " Get the number of columns
+  let num_cols = len(split(lines[0], '\t'))
+
+  " Set the header row
+  let header = '| ' . join(map(range(1, num_cols), 'printf("Column %d", v:val)'), ' | ') . ' |'
+  let separator = '|:-' . repeat('-:|:', num_cols - 1) . '-:|'
+
+  " Convert each row to a table row
+  let rows = []
+  for line in lines
+    let cells = split(line, '\t')
+    let row = '| ' . join(cells, ' | ') . ' |'
+    call add(rows, row)
+  endfor
+
+  " Combine the header, separator, and rows into a table
+  let table = [header, separator] + rows
+
+  " Replace the selected lines with the table
+  execute a:firstline . ',' . a:lastline . 'delete'
+  call append(a:firstline - 1, table)
+endfunction
+" https://www.xmisao.com/2014/03/19/how-to-define-range-specific-command-in-vim.html
+command! -range ToMdTable <line1>,<line2>call ToMdTable()
+vnoremap <silent> <leader>m :ToMdTable<cr>

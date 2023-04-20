@@ -183,7 +183,7 @@ map sz :set lcs=tab:>.,trail:_,extends:\<Enter>
 " 開いているファイルのディレクトリをリスティング
 map sd :e %:h<Enter>
 " 開いているファイルのディレクトリをカレントにする
-map s\ :cd %:h<Enter><Enter>
+map s. :cd %:h<Enter><Enter>
 " " エンコード指定の再読み込みメニューの表示
 " map s9 <ALT-F>ere
 " " make実行
