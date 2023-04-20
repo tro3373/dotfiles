@@ -177,9 +177,9 @@ main() {
       done
   done
   log "Done. see dstd:$dstd"
-  if ! has open; then
-    return
-  fi
-  open $dstd
+  # if ! has open; then
+  #   return
+  # fi
+  # open $dstd
 }
 main "$@"
