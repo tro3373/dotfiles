@@ -500,16 +500,20 @@ command! ToUnix call Encode(1)
 
 " toCamel
 function! ToCamel() abort
-  call SilentFExec(':%s/_\(.\)/\u\1/g')
+  " call SilentFExec(':%s/_\(.\)/\u\1/g')
+  call SilentFExec(":'<,'>s/_\\(.\\)/\\u\\1/g")
 endfun
 command! ToCamel call ToCamel()
+vnoremap <silent> ,c :<c-u>call ToCamel()<cr>
 
 " toSnake
 function! ToSnake() abort
-  call SilentFExec(':%s/\([A-Z]\)/_\l\1/g')
+  " call SilentFExec(':%s/\([A-Z]\)/_\l\1/g')
+  " execute a:firstline . ',' . a:lastline . 's/\([A-Z]\)/_\l\1/g'
+  call SilentFExec(":'<,'>s/\\([A-Z]\\)/_\\l\\1/g")
 endfun
-command! ToSnake call ToSnake()
-" TODO selected
+command! ToSnake :<c-u>call ToSnake()
+vnoremap <silent> ,s :<c-u>call ToSnake()<cr>
 
 " コマンドを実行し、バッファに書き込み
 function! s:cmd_capture(q_args) "{{{
