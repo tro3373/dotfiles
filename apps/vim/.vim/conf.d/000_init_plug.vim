@@ -164,6 +164,8 @@ call plug#begin('$HOME/.vim/plugged')
   " Code Edit
   " =================================================================
   if empty($VIM_DISABLE_LINTER) || (!empty($VIM_DISABLE_LINTER) && $VIM_DISABLE_LINTER != 1)
+    Plug 'github/copilot.vim'
+
     Plug 'dense-analysis/ale'                                 " 構文解析(非同期)
     Plug 'editorconfig/editorconfig-vim'                      " Official editorconfig
     Plug 'mattn/sonictemplate-vim'
