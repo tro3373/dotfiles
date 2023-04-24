@@ -177,6 +177,8 @@ function! Ctags() abort
   endif
   let l:tags = l:gitroot . "/.git/tags"
   let l:execmd = l:ctags . " --tag-relative --recurse --sort=yes --append=no -f " . l:gitroot . "/.git/tags " . l:gitroot
+  " `execute system` は同期的に実行される
+  " `call system` は非同期的に実行される
   execute system(l:execmd)
   echo "Tags file Created to " . l:gitroot . "/.git/tags"
 endfunction
@@ -723,3 +725,15 @@ endfunction
 " https://www.xmisao.com/2014/03/19/how-to-define-range-specific-command-in-vim.html
 command! -range ToMdTable <line1>,<line2>call ToMdTable()
 vnoremap <silent> <leader>m :ToMdTable<cr>
+
+" ALT+P で paste_img 外部コマンドを実行
+function! PasteImage() abort
+  if ! executable("paste_img")
+    echo "paste_img not found."
+    return
+  endif
+  let dstf = Chomp(system('paste_img -d ' . expand('%:p:h')))
+  echo "==> " . dstf . " generated."
+endfunction
+command! PasteImage call PasteImage()
+nnoremap <silent> <M-p> :call PasteImage()<CR>

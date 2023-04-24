@@ -276,24 +276,5 @@ nnoremap sa :<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-na
 " UniteBookMarkAdd で追加したディレクトリを Unite bookmark で開くときのアクションのデフォルトを Vimfiler に
 call unite#custom_default_action('source/bookmark/directory' , 'vimfiler')
 
-
-
 " 開いているファイルのディレクトリをエクスプローラで開く
-" if g:is_windows
-"   " Windows
-"   "map qn :!nautilus %:h<ENTER>
-" elseif g:is_cygmsys2
-"   " Cygwin/Msys2
-"   "map qn :!nautilus %:h<ENTER>
-" elseif g:is_mac
-"   " Mac OS-X
-"   map qn :!open %:h<ENTER>
-" elseif g:is_linux
-"   " BSD, Linux
-"   map qn :!nautilus %:h<ENTER>
-" else
-"   " その他
-" endif
-map qn :!open %:h<ENTER>
-
-" TODO ALT+P paste_img
+map <silent> qn :!open %:h>&/dev/null<ENTER>

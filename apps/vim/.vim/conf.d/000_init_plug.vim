@@ -234,6 +234,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'cohama/vim-smartinput-endwise'                      " for ruby (end 補完)
   Plug 'digitaltoad/vim-pug'                                " pug
   Plug 'dart-lang/dart-vim-plugin'                          " dart
+  Plug 'udalov/kotlin-vim'                                  " kotlin
 
   Plug 'tyru/open-browser.vim'                              " Open browser
   Plug 'rcmdnk/vim-markdown'                                " Markdown syntax
