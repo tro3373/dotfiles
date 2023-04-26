@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+install_common() {
+  if ! has npm; then
+    log "npm not installed."
+    return
+  fi
+
+  # @see [sql-formatter-org/sql-formatter: A whitespace formatter for different query languages](https://github.com/sql-formatter-org/sql-formatter)
+  # "language": "mysql", //the SQL dialect to use (when using format()).
+  # "tabWidth": 2, //amount of indentation to use.
+  # "keywordCase": "upper", //uppercases or lowercases keywords.
+  # "linesBetweenQueries": 2 //how many newlines to insert between queries.
+  # "dialect" //the SQL dialect to use (when using formatDialect() since version 12).
+  # "useTabs" //to use tabs for indentation.
+  # "indentStyle" //defines overall indentation style.
+  # "logicalOperatorNewline" //newline before or after boolean operator (AND, OR, XOR).
+  # "tabulateAlias" //aligns column aliases vertically (deprecated!).
+  # "commaPosition" //where to place the comma in column lists (deprecated!).
+  # "expressionWidth" //maximum number of characters in parenthesized expressions to be kept on single line.
+  # "denseOperators" //packs operators densely without spaces.
+  # "newlineBeforeSemicolon" //places semicolon on separate line.
+  # "params" //collection of values for placeholder replacement.
+  # "paramTypes" //specifies parameter placeholders types to support.
+  exe npm i -g sql-formatter
+}
+# install_wsl() { not_supported; }
+# install_arch() { not_supported; }
+# install_msys() { not_supported; }
+# install_cygwin() { not_supported; }
+# install_mac() { not_supported; }
+# install_ubuntu() { not_supported; }
+# install_redhat() { not_supported; }
+setting_common() { no_settings; }
+setting_wsl() { no_settings; }
+setting_arch() { no_settings; }
+setting_msys() { no_settings; }
+setting_cygwin() { no_settings; }
+setting_mac() { no_settings; }
+setting_ubuntu() { no_settings; }
+setting_redhat() { no_settings; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#no_settings
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
+#sudo_tee
