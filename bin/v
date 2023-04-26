@@ -43,7 +43,12 @@ fire_files() {
     query="-q $query"
   fi
 
-  fire "$fire_ff_arg" | fzf -m $query --preview 'head -100 {}' --select-1 --exit-0
+  fire "$fire_ff_arg" |
+    fzf -m $query \
+      --preview 'head -100 {}' \
+      --select-1 \
+      --exit-0 \
+      --bind 'ctrl-l:toggle-all,ctrl-h:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
 }
 
 main() {
