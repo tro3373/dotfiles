@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-has() { command -v ${1} >&/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
 echo_if_valid() {
   [[ -z $f ]] && return
   [[ $f =~ ^#.* ]] && return
@@ -39,24 +39,23 @@ fire_files() {
     fi
   fi
 
-  if [[ -n $query ]]; then
-    query="-q $query"
-  fi
-
   fire "$fire_ff_arg" |
-    fzf -m $query \
-      --preview 'head -100 {}' \
+    fzf -m \
+      -q "$query" \
+      --preview 'echo {}; echo; head -100 {}' \
       --select-1 \
       --exit-0 \
-      --bind 'ctrl-l:toggle-all,ctrl-h:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
+      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
 }
 
 main() {
   ! has fzf && echo "No fzf exist" 1>&2 && exit 1
-  local files=$(fire_files "$@")
+  local files
+  files=$(fire_files "$@" | tr '\n' ' ')
   [[ -z $files ]] && return
   local _vim=vim
   has nvim && _vim=nvim
+  # shellcheck disable=SC2086
   $_vim -p $files </dev/tty
 }
 main "$@"
