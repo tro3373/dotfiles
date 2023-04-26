@@ -85,3 +85,10 @@ snippet	docker_user
 
 snippet	phony
 	.PHONY: ${1}
+
+snippet fzff
+	fzf -m "$query" \
+	--preview 'head -100 {}' \
+	--select-1 \
+	--exit-0 \
+	--bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'

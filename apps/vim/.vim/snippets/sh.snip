@@ -581,3 +581,10 @@ snippet to_jsttt
 	to_jst() {
 		TZ=JST date -d "$* GMT" "+%Y/%m/%d %H:%M"
 	}
+
+snippet fzff
+	fzf -m "$query" \
+	--preview 'head -100 {}' \
+	--select-1 \
+	--exit-0 \
+	--bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
