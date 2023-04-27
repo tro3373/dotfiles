@@ -298,5 +298,4 @@ function _paste_img() {
   zle reset-prompt # redraw prompt
 }
 zle -N _paste_img
-bindkey '^e' _paste_img
-# TODO ALT+P
+bindkey '^[p' _paste_img
