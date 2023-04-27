@@ -53,7 +53,15 @@ case "${OSTYPE}" in
 esac
 
 if has exa; then
-  alias ls="exa"
+  # alias ls="exa"
+  function my_ls() {
+    if [[ $* == "-ltra" ]]; then
+      command exa -las modified
+      return
+    fi
+    command exa "$@"
+  }
+  alias ls="my_ls"
 fi
 alias l="ls -lFh"
 alias ll="ls -laFh"
