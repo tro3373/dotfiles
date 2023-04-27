@@ -18,6 +18,10 @@ if [[ -n "$ASDF_DIR" ]]; then
 fi
 #fpath=(/usr/local/share/zsh/site-functions(N-/) $fpath)
 #
+# NOTE: autoload: load function when called
+# NOTE: autoload -X: load function when called, and execute once
+# NOTE: autoload +X: only load function when called, not execute
+# NOTE: autoload -U: No deploy alias in loaded function
 ## autoload
 autoload -U  run-help
 #autoload -Uz add-zsh-hook
