@@ -54,6 +54,8 @@ setting_common() {
   fi
 
   # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/sheldon" "${HOME}/.config/sheldon"
+
   # その他ドットファイルリンク作成
   make_link_dot2home "$app_dir"
   if is_msys; then
