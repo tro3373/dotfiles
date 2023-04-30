@@ -8,7 +8,7 @@ readonly _core_apps=(
 )
 readonly _core_apps_additional=(
   lsof neofetch anyenv netcat go goimports pt nvim nvr mmv gomi ghq shellcheck shfmt
-  htop hub exa bat nkf
+  htop hub exa bat nkf sheldon
 )
 readonly _core_apps_additional_arch=(
   yay

@@ -1,53 +1,22 @@
-## Environment variable configuration
-## Default shell configuration
+######################################################
+# Environment
+######################################################
+umask 0002                  # umask settnig
+#bindkey -d                  # デフォルト設定に戻す
+bindkey -v                  # <ESC>を押した時にvi風のキー操作ができるようにする
+setopt auto_cd              # 'cd'を打たなくてもディレクトリ名だけで移動できるようにする
+setopt auto_pushd           # 移動ディレクトリ管理 ex) cd -3 ex) cd -<TAB> で履歴
+setopt correct              # コマンドの打ち間違い(typo)を訂正してくれるようにする
+setopt list_packed          # TAB補完時の候補を詰めて表示(一度にたくさん表示)
+setopt noautoremoveslash    # パス名の最後につく'/'を自動的に削除しない
+setopt nolistbeep           # 補完機能実行時にビープ音を鳴らさない
+setopt complete_aliases     # エイリアスを展開してもとのコマンドをみつけて, そのコマンドに応じた補完
 
-# umask settnig
-umask 0002
-
-#limit coredumpsize 0
-#bindkey -d
-#
-# N-/ : means no add if not exist.
-# NOTE: set fpath before compinit
-# TODO FIXME init buggy...
-fpath=(~/.zsh/Completion(N-/) $fpath)
-fpath=(~/.zsh/functions/*(N-/) $fpath)
-fpath=(~/.zsh/plugins/zsh-completions(N-/) $fpath)
-if [[ -n "$ASDF_DIR" ]]; then
-  fpath=(${ASDF_DIR}/completions $fpath)
-fi
-#fpath=(/usr/local/share/zsh/site-functions(N-/) $fpath)
-#
-# NOTE: autoload: load function when called
-# NOTE: autoload -X: load function when called, and execute once
-# NOTE: autoload +X: only load function when called, not execute
-# NOTE: autoload -U: No deploy alias in loaded function
-## autoload
-autoload -U  run-help
-#autoload -Uz add-zsh-hook
-autoload -Uz cdr
-#autoload -Uz colors; colors
-autoload -Uz compinit; compinit -u
-#autoload -Uz is-at-least
-#autoload -Uz history-search-end
-#autoload -Uz modify-current-argument
-#autoload -Uz smart-insert-last-word
-#autoload -Uz terminfo
-# [[ ${OSTYPE} != "msys" ]] && autoload -Uz vcs_info
-#autoload -Uz zcalc
-#autoload -Uz zmv
-autoload     run-help-git
-autoload     run-help-svk
-autoload     run-help-svn
-
-# LANGUAGE must be set by en_US
-export LANGUAGE="en_US.UTF-8"
+# LANG
+######################################################
+export LANGUAGE="en_US.UTF-8" # LANGUAGE must be set by en_US
 # export LANGUAGE="ja_JP.UTF-8"
-case ${UID} in
-0)
-    LANGUAGE=C
-    ;;
-esac
+[[ $UID -eq 0 ]] && LANGUAGE=C
 export LANG="${LANGUAGE}"
 # export LC_CTYPE="${LANGUAGE}"
 # export LC_CTYPE=ja_JP.UTF-8
@@ -57,6 +26,7 @@ export LANG="${LANGUAGE}"
 export LC_COLLATE=C # for default sort
 
 # Editor
+######################################################
 export EDITOR=vim
 has nvim && export EDITOR=nvim
 export CVSEDITOR="${EDITOR}"
@@ -64,11 +34,11 @@ export SVN_EDITOR="${EDITOR}"
 export GIT_EDITOR="${GIT_EDITOR:-${EDITOR}}"
 
 # Pager
+######################################################
 export PAGER=less
 # Less status line
 export LESS='-R -f -X -i -P ?f%f:(stdin). ?lb%lb?L/%L.. [?eEOF:?pb%pb\%..]'
 export LESSCHARSET='utf-8'
-
 # LESS man page colors (makes Man pages more readable).
 export LESS_TERMCAP_mb=$'\E[01;31m'
 export LESS_TERMCAP_md=$'\E[01;31m'
@@ -78,51 +48,23 @@ export LESS_TERMCAP_so=$'\E[00;44;37m'
 export LESS_TERMCAP_ue=$'\E[0m'
 export LESS_TERMCAP_us=$'\E[01;32m'
 
-# ls command colors
-export LSCOLORS=exfxcxdxbxegedabagacad
-
-if grep -qE "(Microsoft | WSL)" /proc/version &> /dev/null ; then
-    export WSL=1
-    unsetopt BG_NICE
-fi
-
-# declare the environment variables
-# export CORRECT_IGNORE='_*'
-# export CORRECT_IGNORE_FILE='.*'
-#
-# export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
-# export WORDCHARS='*?.[]~&;!#$%^(){}<>'
-#
-# fzf - command-line fuzzy finder (https://github.com/junegunn/fzf)
-# export FZF_DEFAULT_OPTS="--extended --ansi --multi"
-#
-# Cask
-#export HOMEBREW_CASK_OPTS="--appdir=/Applications"
-#
-# available $INTERACTIVE_FILTER
-# export INTERACTIVE_FILTER="fzf:peco:percol:gof:pick"
-
-# keybind ^X^X
-# export ONELINER_FILE="$DOTPATH/doc/misc/commands.txt"
-
-setopt auto_cd              # 'cd'を打たなくてもディレクトリ名だけで移動できるようにする
-setopt auto_pushd           # 移動ディレクトリ管理 ex) cd -3 ex) cd -<TAB> で履歴
-setopt correct              # コマンドの打ち間違い(typo)を訂正してくれるようにする
-setopt list_packed          # TAB補完時の候補を詰めて表示(一度にたくさん表示)
-setopt noautoremoveslash    # パス名の最後につく'/'を自動的に削除しない
-setopt nolistbeep           # 補完機能実行時にビープ音を鳴らさない
-bindkey -v                  # <ESC>を押した時にvi風のキー操作ができるようにする
-
-## コマンド履歴
 # History
-# History file
-export HISTFILE=$HOME/.zsh_history
-# History size in memory
-export HISTSIZE=50000
-# The number of histsize
-export SAVEHIST=1000000
-# The size of asking history
-export LISTMAX=50
+######################################################
+setopt share_history            # コマンド履歴ファイルを複数のzshプロセス間で共有
+#setopt hist_ignore_dups         # 直前のコマンドの重複を削除する。
+#setopt hist_ignore_all_dups     # 重複するコマンドが記録される時、古い方を削除する。
+#setopt hist_save_no_dups        # 重複するコマンドが保存される時、古い方を削除する。
+#setopt hist_expire_dups_first   # 古い履歴を削除する必要がある場合、まず重複しているものから削除する。
+#setopt hist_find_no_dups        # 履歴検索で重複しているものを表示しない。
+setopt append_history           # 履歴を上書きしないで追加する。
+setopt inc_append_history       # Add comamnds as they are typed, don't wait until shell exit
+#setopt hist_no_store            # historyコマンドは除去する。
+setopt extended_history         # 履歴保存時に時刻情報も記録する。
+export HISTTIMEFORMAT='%Y-%M-%D %H:%M:%S '
+export HISTFILE=$HOME/.zsh_history  # History file
+export HISTSIZE=50000               # History size in memory
+export SAVEHIST=1000000             # The number of histsize
+export LISTMAX=50                   # The size of asking history
 ## Do not add in root
 #if [ $UID = 0 ]; then
 #    unset HISTFILE
@@ -137,31 +79,10 @@ bindkey "^n" history-beginning-search-forward-end
 bindkey "\\ep" history-beginning-search-backward-end
 bindkey "\\en" history-beginning-search-forward-end
 bindkey "\e[Z" reverse-menu-complete # <TAB>での補完候補の変更時に、<Shift-TAB>で逆順に変更する
-setopt share_history            # コマンド履歴ファイルを複数のzshプロセス間で共有
-#setopt hist_ignore_dups         # 直前のコマンドの重複を削除する。
-#setopt hist_ignore_all_dups     # 重複するコマンドが記録される時、古い方を削除する。
-#setopt hist_save_no_dups        # 重複するコマンドが保存される時、古い方を削除する。
-#setopt hist_expire_dups_first   # 古い履歴を削除する必要がある場合、まず重複しているものから削除する。
-#setopt hist_find_no_dups        # 履歴検索で重複しているものを表示しない。
-setopt append_history           # 履歴を上書きしないで追加する。
-setopt inc_append_history       # Add comamnds as they are typed, don't wait until shell exit
-#setopt hist_no_store            # historyコマンドは除去する。
-setopt extended_history         # 履歴保存時に時刻情報も記録する。
-export HISTTIMEFORMAT='%Y-%M-%D %H:%M:%S '
 
 
-## 補完機能
-setopt complete_aliases         # エイリアスを展開してもとのコマンドをみつけて, そのコマンドに応じた補完
-autoload zed                    # zsh editorを有効にする
-# fpath=(${HOME}/.zsh/functions/Completion ${fpath})
-# autoload -U compinit            # 補完機能を有効にする
-# compinit
-## 先方予測によるコマンド補完機能の設定
-#autoload predict-on
-#predict-off
-
-
-## プロンプト
+# プロンプト
+######################################################
 # 使用できる色は以下で確認できる
 # ('\e[38;5;詳細前景色コードm'と'\e[m'で文字を囲むと文字が256色の設定ができる
 # 文字色を変える場合は最初の数字を 38、背景の場合は 48を利用する)
@@ -228,45 +149,10 @@ case ${UID} in
   ;;
 esac
 
-## ターミナル
-case "${TERM}" in
-screen)
-    TERM=xterm
-    ;;
-esac
-
-case "${TERM}" in
-xterm|xterm-color)
-    export LSCOLORS=exfxcxdxbxegedabagacad
-    export LS_COLORS='di=34:ln=35:so=32:pi=33:ex=31:bd=46;34:cd=43;34:su=41;30:sg=46;30:tw=42;30:ow=43;30'
-    # zstyle ':completion:*' list-colors 'di=34' 'ln=35' 'so=32' 'ex=31' 'bd=46;34' 'cd=43;34'
-    # zshの補完にも同じ色を設定
-    zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
-    ;;
-kterm-color)
-    stty erase '^H'
-    export LSCOLORS=exfxcxdxbxegedabagacad
-    export LS_COLORS='di=34:ln=35:so=32:pi=33:ex=31:bd=46;34:cd=43;34:su=41;30:sg=46;30:tw=42;30:ow=43;30'
-    zstyle ':completion:*' list-colors 'di=34' 'ln=35' 'so=32' 'ex=31' 'bd=46;34' 'cd=43;34'
-    ;;
-kterm)
-    stty erase '^H'
-    ;;
-cons25)
-    unset LANG
-    export LSCOLORS=ExFxCxdxBxegedabagacad
-    export LS_COLORS='di=01;34:ln=01;35:so=01;32:ex=01;31:bd=46;34:cd=43;34:su=41;30:sg=46;30:tw=42;30:ow=43;30'
-    zstyle ':completion:*' list-colors 'di=;34;1' 'ln=;35;1' 'so=;32;1' 'ex=31;1' 'bd=46;34' 'cd=43;34'
-    ;;
-jfbterm-color)
-    export LSCOLORS=gxFxCxdxBxegedabagacad
-    export LS_COLORS='di=01;36:ln=01;35:so=01;32:ex=01;31:bd=46;34:cd=43;34:su=41;30:sg=46;30:tw=42;30:ow=43;30'
-    zstyle ':completion:*' list-colors 'di=;36;1' 'ln=;35;1' 'so=;32;1' 'ex=31;1' 'bd=46;34' 'cd=43;34'
-    ;;
-esac
-
+# Colors
+######################################################
+export LSCOLORS=exfxcxdxbxegedabagacad
 # dircolors 設定
-#
 if [[ -L ${HOME}/.dircolors || -e ${HOME}/.dircolors ]]; then
     if type dircolors > /dev/null 2>&1; then
         eval $(dircolors ${HOME}/.dircolors)
@@ -275,18 +161,56 @@ if [[ -L ${HOME}/.dircolors || -e ${HOME}/.dircolors ]]; then
     fi
 fi
 
-# ターミナルの時はタイトル部分にカレントディレクトリを表示する
-#
-case "${TERM}" in
-xterm|xterm-color|kterm|kterm-color)
-    precmd() {
-        echo -ne "\033]0;${USER}@${HOST%%.*}:${PWD}\007"
-    }
-    ;;
-esac
+# Completion
+######################################################
+## 先方予測によるコマンド補完機能の設定
+#autoload predict-on
+#predict-off
+# NOTE:
+# - set fpath before compinit
+# - fpath N-/ : meanings no add if not exist.
+# - autoload: load function when called
+#     - autoload -X: load function when called, and execute once
+#     - autoload +X: only load function when called, not execute
+#     - autoload -U: load function as undefined until called
+#     - autoload -z: disable ksh style autoloading, and enable zsh style autoloading
+# TODO FIXME init buggy...
+fpath=(~/.zsh/Completion(N-/) $fpath)
+fpath=(~/.zsh/functions/*(N-/) $fpath)
+# fpath=(~/.zsh/plugins/zsh-completions(N-/) $fpath)
+fpath=(~/.asdf/completions(N-/) $fpath)
+#fpath=(/usr/local/share/zsh/site-functions(N-/) $fpath)
+# Load plugins
+if has sheldon; then
+  eval "$(sheldon source)"
+fi
+autoload -Uz compinit
+compinit -u
 
-# --------------------------------------------------------
-# zsh powerline 設定
-# --------------------------------------------------------
-#zshpowerline=${HOME}/.local/lib/python2.7/site-packages/powerline/bindings/zsh/powerline.zsh
-#[ -f ${zshpowerline} ] && source ${zshpowerline}
+
+# Load Functions
+######################################################
+autoload -U run-help
+#autoload -Uz add-zsh-hook
+autoload -Uz cdr
+#autoload -Uz colors; colors
+# autoload -Uz compinit; compinit -u
+#autoload -Uz is-at-least
+#autoload -Uz history-search-end
+#autoload -Uz modify-current-argument
+#autoload -Uz smart-insert-last-word
+#autoload -Uz terminfo
+# [[ ${OSTYPE} != "msys" ]] && autoload -Uz vcs_info
+#autoload -Uz zcalc
+#autoload -Uz zmv
+autoload run-help-git
+autoload run-help-svk
+autoload run-help-svn
+
+
+# Plugin zsh-autosuggestions
+######################################################
+# https://github.com/zsh-users/zsh-autosuggestions
+export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=236'
+export ZSH_AUTOSUGGEST_USE_ASYNC=1
+# bindkey '^ ' autosuggest-accept # ctrl + space

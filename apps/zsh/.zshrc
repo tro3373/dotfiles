@@ -34,16 +34,25 @@ if [[ $LOADDEBUG -eq 1 ]]; then
   debug_load ".zshrc load start"
 fi
 
-export TERM=xterm-256color
-if [ -d ~/.zsh ]; then
-  debug_load ".zsh/ load start"
-  for z in $(find ~/.zsh/??\.*\.zsh -type f); do
-    debug_load "$z load start"
-    source $z
-  done
-  load_zsh ~/.fzf.zsh
-  debug_load ".zsh/ load end"
-fi
+load_zsh() {
+  [[ ! -e $1 ]] && return
+  _zcompile_ifneeded $1
+  source $1
+}
+_zcompile_ifneeded() {
+  if [[ ! -e $1.zwc || $1 -nt $1.zwc ]]; then
+    echo "==> zcompiling $1 .."
+    zcompile $1
+  fi
+}
+_zcompile_ifneeded ~/.zshrc
+
+debug_load ".zsh/ load start"
+for z in $(find ~/.zsh/??\.*\.zsh -type f); do
+  debug_load "$z load start"
+  load_zsh $z
+done
+debug_load ".zsh/ load end"
 
 [[ $ZPOFDEBUG -eq 1 ]] && zprof | less
 debug_load "done"

@@ -12,9 +12,59 @@
 
 shell = "zsh"
 
+[templates]
+defer = "{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}"
+
 [plugins]
 
 # For example:
 #
 # [plugins.base16]
 # github = "chriskempson/base16-shell"
+
+######################################################
+# Deferring plugins
+######################################################
+[plugins.zsh-defer]
+github = "romkatv/zsh-defer"
+
+# # Enhance cd command
+# [plugins.enhancd]
+# github = "b4b4r07/enhancd"
+
+######################################################
+# Theme
+######################################################
+[plugins.zsh-syntax-highlighting]
+github = 'zsh-users/zsh-syntax-highlighting'
+apply = ["defer"]
+# [plugins.pure]
+# github = "sindresorhus/pure"
+# use = ["async.zsh", "pure.zsh"]
+# [plugins.spaceship]
+# github = "spaceship-prompt/spaceship-prompt"
+
+######################################################
+# Search
+######################################################
+[plugins.zsh-history-substring-search]
+github = 'zsh-users/zsh-history-substring-search'
+apply = ["defer"]
+
+######################################################
+# Suggestions
+######################################################
+[plugins.zsh-autosuggestions]
+github = 'zsh-users/zsh-autosuggestions'
+apply = ["defer"]
+
+######################################################
+# Completion
+######################################################
+[plugins.zsh-completions]
+github = 'zsh-users/zsh-completions'
+apply = ["defer"]
+
+[plugins.kubectl-completion]
+remote = "https://raw.githubusercontent.com/nnao45/zsh-kubectl-completion/master/_kubectl"
+apply = ["fpath"]
