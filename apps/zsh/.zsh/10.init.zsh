@@ -1,14 +1,10 @@
 _initialize() {
+  debug_load "===> start 10.init.zsh _initialize"
   # Inisialize
   export DOTPATH="$HOME/.dot"
   export GENPATHF=$HOME/.path
   export GENMANPATHF=$HOME/.manpath
   export WORKPATHF=$HOME/.work.path
-  export TERM=xterm-256color
-  if grep -qE "(Microsoft | WSL)" /proc/version &>/dev/null; then
-    export WSL=1
-    unsetopt BG_NICE
-  fi
   if is_vagrant; then
     export IS_VAGRANT=1
   fi
@@ -17,18 +13,23 @@ _initialize() {
     export MSYS=winsymlinks:nativestrict # enable symbolic link in admined msys
   fi
   if is_wsl; then
+    export WSL=1
+    unsetopt BG_NICE
     export WINHOME=/mnt/c/Users/$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
   fi
 
+  debug_load "===> start 10.init.zsh export PATH"
   if [[ ! -e $GENPATHF ]]; then
     _gen_path_file
   fi
   export PATH="$(cat <$GENPATHF)"
 
+  debug_load "===> start 10.init.zsh export MANPATH"
   if [[ ! -e $GENMANPATHF ]]; then
     _gen_manpath_file
   fi
   export MANPATH="$(cat <$GENMANPATHF)"
+  debug_load "===> start 10.init.zsh done"
 }
 
 _gen_path_file() {
@@ -127,12 +128,5 @@ _uniq_path() {
     done
   echo "$_path"
 }
-
-# is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
-is_vagrant() { pwd | grep /home/vagrant >&/dev/null; }
-#is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
-is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
-is_msys() { [[ ${OSTYPE} == "msys" ]]; }
-is_mac() { [[ ${OSTYPE} =~ ^darwin.*$ ]]; }
 
 _initialize

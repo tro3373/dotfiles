@@ -10,6 +10,6 @@ main() {
     echo ">> Generating anyenv init cache.." 1>&2
     anyenv init - >$cache
   fi
-  echo "source $cache"
+  source $cache
 }
 main "$@"

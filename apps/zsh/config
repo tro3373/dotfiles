@@ -53,10 +53,8 @@ setting_common() {
     exe git clone --depth 1 https://github.com/mavnn/mintty-colors-solarized.git "$workdir/mintty-colors-solarized"
   fi
 
-  # shellcheck disable=SC2154
-  make_lnk_with_bkup "$app_dir/sheldon" "${HOME}/.config/sheldon"
-
   # その他ドットファイルリンク作成
+  # shellcheck disable=SC2154
   make_link_dot2home "$app_dir"
   if is_msys; then
     # その他ドットファイルリンク作成

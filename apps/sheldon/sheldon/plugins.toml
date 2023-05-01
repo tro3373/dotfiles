@@ -65,6 +65,14 @@ apply = ["defer"]
 github = 'zsh-users/zsh-completions'
 apply = ["defer"]
 
-[plugins.kubectl-completion]
-remote = "https://raw.githubusercontent.com/nnao45/zsh-kubectl-completion/master/_kubectl"
+# [plugins.my-fpath]
+# remote = 'https://raw.githubusercontent.com/tro3373/dotfiles/master/apps/zsh/.zsh/Completion/_jq'
+# apply = ["fpath"]
+
+[plugins.asdf-completion]
+remote = "https://raw.githubusercontent.com/asdf-vm/asdf/master/completions/_asdf"
 apply = ["fpath"]
+
+[plugins.zsh-kubectl-completion]
+github = 'nnao45/zsh-kubectl-completion'
+apply = ["defer"]

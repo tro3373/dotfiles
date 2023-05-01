@@ -21,7 +21,8 @@ _start_process() {
   fi
 
   if ! test -e /tmp/clipd.pid; then
-    nohup ${DOTPATH}/bin/clip -d >&/dev/null &
+    # nohup ${DOTPATH}/bin/clip -d >&/dev/null &
+    ${DOTPATH}/bin/clip -d >&/dev/null &
   fi
   # ${DOTPATH}/bin/tmux_dog
 }
