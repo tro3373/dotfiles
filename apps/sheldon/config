@@ -5,8 +5,8 @@ install_common() {
     log "cargo not installed."
     return
   fi
-  exe cargo binstall sheldon
-  # cargo install sheldon --locked
+  # exe cargo binstall sheldon
+  exe cargo install sheldon --locked
 }
 # install_wsl() { not_supported; }
 # install_arch() { not_supported; }
