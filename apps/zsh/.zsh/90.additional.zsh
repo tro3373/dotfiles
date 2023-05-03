@@ -2,8 +2,9 @@ _additional() {
   load_zsh ~/.works.zsh
   load_zsh ~/.fzf.zsh
   #[ -f ~/.secret ] && . ~/.secret
-  _start_process
 }
+_additional
+
 _start_process() {
   if is_vagrant; then
     # is_vagrant && source ${DOTPATH}/bin/start_xvfb
@@ -26,4 +27,4 @@ _start_process() {
   fi
   # ${DOTPATH}/bin/tmux_dog
 }
-_additional
+_start_process

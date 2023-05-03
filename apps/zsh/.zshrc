@@ -6,14 +6,14 @@
 ## /___|___/_| |_|_|  \___|
 ##
 ###############################################################################
-use_cache=1
-export zshrcc=~/.zshrcc
-has() { command -v ${1} >&/dev/null; }
-log() { echo "$*" 1>&2; }
-[[ $use_cache -eq 1 ]] && [[ -e $zshrcc ]] && source $zshrcc && return
+# use_cache=1
+# zshrcc=~/.zshrcc
+# [[ $use_cache -eq 1 ]] && [[ -e $zshrcc ]] && source $zshrcc && return
 
 zprof_debug=0
 load_debug=0
+has() { command -v ${1} >&/dev/null; }
+log() { echo "$*" 1>&2; }
 # is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
 is_vagrant() { pwd | grep /home/vagrant >&/dev/null; }
 #is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
@@ -26,7 +26,7 @@ debug_load() {
   [[ $load_debug -ne 1 ]] && return
   [[ -z $LOADST ]] && return
   local t=$(($(now_msec) - LOADST))
-  log "==> $(printf "%05d" $t) msec $1"
+  log "==> $(printf "%05d" $t) msec: $*"
 }
 load_zsh() {
   [[ ! -e $1 ]] && return
@@ -34,8 +34,8 @@ load_zsh() {
   source $1
 }
 _zcompile_ifneeded() {
-  [[ -e $1.zwc ]] && return
-  [[ ! $1 -nt $1.zwc ]] && return
+  [[ ! -e $1 ]] && return
+  [[ -e $1.zwc && $1 -ot $1.zwc ]] && return
   log "==> zcompiling $1 .."
   zcompile $1
 }
@@ -50,19 +50,22 @@ _zshrc() {
   #===========================================
   if [[ $load_debug -eq 1 ]]; then
     export LOADST=$(now_msec)
-    debug_load ".zshrc load start"
+    debug_load "START .zshrc"
   fi
 
   _zcompile_ifneeded ~/.zshrc
 
-  debug_load ".zsh/ load start"
+  debug_load "START .zsh/"
   for z in $(find ~/.zsh/??\.*\.zsh -type f); do
-    debug_load "$z load start"
+    debug_load "START $z"
     load_zsh $z
+    debug_load "  END $z"
   done
-  debug_load ".zsh/ load end"
+  debug_load "  END .zsh/"
 
   [[ $zprof_debug -eq 1 ]] && zprof | less
-  debug_load "done"
+
+  # _zcompile_ifneeded $zshrcc
+  debug_load "DONE"
 }
 _zshrc

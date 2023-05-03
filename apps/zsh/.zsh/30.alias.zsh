@@ -299,3 +299,7 @@ function _paste_img() {
 }
 zle -N _paste_img
 bindkey '^[p' _paste_img
+
+rm_cache_zsh() {
+  rm -rf ~/.cache/zsh
+}
