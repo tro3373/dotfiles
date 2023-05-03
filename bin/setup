@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
 
-readonly command_name=$(basename $0)
-readonly script_dir=$(
-  cd "$(dirname $0)"
-  pwd
-)
-readonly apps_dir=$(
-  cd "$script_dir/../apps"
-  pwd
-)
+command_name=$(basename "$0") && readonly command_name
+script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
+apps_dir=$(cd "$script_dir/../apps" && pwd) && readonly apps_dir
 
 usage() {
   cat <<EOF
@@ -34,14 +28,14 @@ Setup my dev env.
 Installable Apps is ..
 $(installable_apps | usage_format)
 Default Apps is..
-$(for arg in $(default_apps); do echo $arg; done | usage_format)
+$(for arg in $(default_apps); do echo "$arg"; done | usage_format)
 Trans Setup is..
 $(find_trans -l | usage_format)
 EOF
 }
 
 installable_apps() {
-  find $apps_dir/ -maxdepth 1 -mindepth 1 -type d -exec basename {} \;
+  find "$apps_dir"/ -maxdepth 1 -mindepth 1 -type d -exec basename {} \;
 }
 
 usage_format() {
@@ -51,7 +45,7 @@ usage_format() {
     while read -r _app_name; do
       local _space=" "
       [[ $_start -eq 1 ]] && _space="  " && _start=0
-      printf "$_space$_app_name"
+      printf "%s%s" "$_space" "$_app_name"
       _line="$_line$_space$_app_name"
       _n=$(echo -n "$_line" | wc -c)
       [[ $_n -lt 100 ]] && continue
@@ -60,14 +54,15 @@ usage_format() {
 }
 
 initialize() {
-  source $script_dir/lib/setup/funcs "" $USER
+  # shellcheck disable=SC1091
+  source "$script_dir/lib/setup/funcs" "" "$USER"
   initialize_args "$@"
 
   tran_srouce=$(find_trans "${args[@]}")
   if [[ -n $tran_srouce ]]; then
     ilog "=> tran settings"
     tran=1
-    source $tran_srouce
+    source "$tran_srouce"
     load_update_arg_apps
   fi
 
@@ -113,7 +108,8 @@ make_setup_dirs() {
       is_msys && WINHOME="$(cd "/c/Users/$(whoami)" && pwd)"
       # is_wsl && WINHOME=/mnt/c/Users/$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | sed -e 's,\r,,g')
       if is_wsl; then
-        local _u=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
+        local _u
+        _u=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
         WINHOME=$(echo /mnt/c/Users/$_u | tr -d '\r' | tr -d '\n')
       fi
     fi
