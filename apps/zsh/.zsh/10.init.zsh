@@ -155,5 +155,12 @@ _init() {
       # fi
       ;;
   esac
+
+  # Plugin zsh-autosuggestions
+  ######################################################
+  # https://github.com/zsh-users/zsh-autosuggestions
+  export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=236'
+  export ZSH_AUTOSUGGEST_USE_ASYNC=1
+  # bindkey '^ ' autosuggest-accept # ctrl + space
 }
 _init

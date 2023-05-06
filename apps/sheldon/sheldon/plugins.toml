@@ -14,6 +14,7 @@ shell = "zsh"
 
 [templates]
 defer = "{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}"
+fpath-list = "{% for file in files %}fpath=(\"{{ file }}\" $fpath)\n{% endfor %}"
 
 [plugins]
 
@@ -61,13 +62,27 @@ apply = ["defer"]
 ######################################################
 # Completion
 ######################################################
+[plugins.zsh]
+github = 'zsh-users/zsh'
+use = [
+  'Completion/Linux/Command',
+  'Completion/Unix/Command',
+  'Completion/Zsh/Command'
+]
+apply = ["fpath-list"]
+
 [plugins.zsh-completions]
 github = 'zsh-users/zsh-completions'
 apply = ["defer"]
 
-# [plugins.my-fpath]
-# remote = 'https://raw.githubusercontent.com/tro3373/dotfiles/master/apps/zsh/.zsh/Completion/_jq'
-# apply = ["fpath"]
+[plugins.my-fpath]
+local = "~/.dot/apps/zsh/.zsh/Completion"
+apply = ["fpath"]
+
+[plugins.fzf]
+local = "~/.fzf"
+use = ["shell/key-bindings.zsh", "shell/completion.zsh"]
+apply = ["defer"]
 
 [plugins.asdf-completion]
 remote = "https://raw.githubusercontent.com/asdf-vm/asdf/master/completions/_asdf"
@@ -76,3 +91,41 @@ apply = ["fpath"]
 [plugins.zsh-kubectl-completion]
 github = 'nnao45/zsh-kubectl-completion'
 apply = ["defer"]
+
+[plugins.brew-completion]
+inline = 'command -v brew &>/dev/null && fpath=( "$(brew --prefix)/share/zsh/site-functions" $fpath )'
+
+# NOTE:
+# - set fpath before compinit
+# - fpath N-/ : meanings no add if not exist.
+# - autoload: load function when called
+#     - autoload -X: load function when called, and execute once
+#     - autoload +X: only load function when called, not execute
+#     - autoload -U: load function as undefined until called
+#     - autoload -z: disable ksh style autoloading, and enable zsh style autoloading
+# fpath=(~/.zsh/Completion(N-/) $fpath)
+# fpath=(~/.zsh/functions/*(N-/) $fpath)
+# fpath=(~/.zsh/plugins/zsh-completions(N-/) $fpath)
+# fpath=(~/.asdf/completions(N-/) $fpath)
+#fpath=(/usr/local/share/zsh/site-functions(N-/) $fpath)
+# autoload -U run-help
+# #autoload -Uz add-zsh-hook
+# autoload -Uz cdr
+# #autoload -Uz colors; colors
+# # autoload -Uz compinit; compinit -u
+# #autoload -Uz is-at-least
+# #autoload -Uz history-search-end
+# #autoload -Uz modify-current-argument
+# #autoload -Uz smart-insert-last-word
+# #autoload -Uz terminfo
+# # [[ ${OSTYPE} != "msys" ]] && autoload -Uz vcs_info
+# #autoload -Uz zcalc
+# #autoload -Uz zmv
+# autoload run-help-git
+# autoload run-help-svk
+# autoload run-help-svn
+[plugins.compinit]
+inline = """
+autoload -Uz compinit
+zsh-defer compinit -u
+"""

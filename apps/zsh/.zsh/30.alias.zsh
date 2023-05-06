@@ -161,9 +161,25 @@ fi
 # --------------------------------------------------------
 if has rg; then
   alias rg='rg -S'
-  function rgf() {
+  rgf() {
     local args="$@"
     rg --files | rg -S "$args"
+  }
+fi
+
+if has rga; then
+  rga-fzf() {
+    RG_PREFIX="rga --files-with-matches"
+    local file
+    file="$(
+      FZF_DEFAULT_COMMAND="$RG_PREFIX '$1'" \
+        fzf --sort --preview="[[ ! -z {} ]] && rga --pretty --context 5 {q} {}" \
+        --phony -q "$1" \
+        --bind "change:reload:$RG_PREFIX {q}" \
+        --preview-window="70%:wrap"
+    )" &&
+      echo "opening $file" &&
+      xdg-open "$file"
   }
 fi
 
@@ -300,6 +316,17 @@ function _paste_img() {
 zle -N _paste_img
 bindkey '^[p' _paste_img
 
-rm_cache_zsh() {
-  rm -rf ~/.cache/zsh
+rm_cache() {
+  # rm -rf ~/.cache/zsh
+  find ~/.cache/zsh/ -type f |
+    fzf -m \
+      --preview 'echo {}; echo "----------------------------------------"; head -100 {}' \
+      --select-1 \
+      --exit-0 \
+      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview' |
+    xargs rm -v
+}
+
+fpath() {
+  echo "${fpath[@]}" | tr ' ' '\n'
 }

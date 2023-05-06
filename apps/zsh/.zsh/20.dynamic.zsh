@@ -16,63 +16,13 @@ _dynamic() {
   export GEN_MANPATH_F=$CACHE_D/manpath
   _cache_load manpath
 
-  # dircolors 設定
-  _cache_load lscolors
-
-  # Completion
-  ######################################################
-  ## 先方予測によるコマンド補完機能の設定
-  #autoload predict-on
-  #predict-off
-  # NOTE:
-  # - set fpath before compinit
-  # - fpath N-/ : meanings no add if not exist.
-  # - autoload: load function when called
-  #     - autoload -X: load function when called, and execute once
-  #     - autoload +X: only load function when called, not execute
-  #     - autoload -U: load function as undefined until called
-  #     - autoload -z: disable ksh style autoloading, and enable zsh style autoloading
-  # TODO FIXME init buggy...
-  # fpath=(~/.zsh/Completion(N-/) $fpath)
-  # fpath=(~/.zsh/functions/*(N-/) $fpath)
-  # fpath=(~/.zsh/plugins/zsh-completions(N-/) $fpath)
-  # fpath=(~/.asdf/completions(N-/) $fpath)
-  #fpath=(/usr/local/share/zsh/site-functions(N-/) $fpath)
-  # Load plugins
+  # plugins
   if has sheldon; then
     _cache_load sheldon
   fi
-  if has gh; then
-    _cache_load gh
-  fi
-  autoload -Uz compinit
-  compinit -u
 
-  # Load Functions
-  ######################################################
-  autoload -U run-help
-  #autoload -Uz add-zsh-hook
-  autoload -Uz cdr
-  #autoload -Uz colors; colors
-  # autoload -Uz compinit; compinit -u
-  #autoload -Uz is-at-least
-  #autoload -Uz history-search-end
-  #autoload -Uz modify-current-argument
-  #autoload -Uz smart-insert-last-word
-  #autoload -Uz terminfo
-  # [[ ${OSTYPE} != "msys" ]] && autoload -Uz vcs_info
-  #autoload -Uz zcalc
-  #autoload -Uz zmv
-  autoload run-help-git
-  autoload run-help-svk
-  autoload run-help-svn
-
-  # Plugin zsh-autosuggestions
-  ######################################################
-  # https://github.com/zsh-users/zsh-autosuggestions
-  export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=236'
-  export ZSH_AUTOSUGGEST_USE_ASYNC=1
-  # bindkey '^ ' autosuggest-accept # ctrl + space
+  # dircolors 設定
+  _cache_load lscolors
 
   if has direnv; then
     _cache_load direnv
@@ -144,6 +94,7 @@ _cat_path() {
   add_path /opt/bin              # for docker-machine
   add_path /usr/local/heroku/bin # for heroku
 
+  add_path ${HOME}/.fzf/bin
   add_path ${HOME}/.anyenv/bin
   add_path $GOPATH/bin
   add_path ${HOME}/.cargo/bin
@@ -206,11 +157,7 @@ _cat_lscolors() {
 }
 
 _cat_sheldon() {
-  eval "$(sheldon source)"
-}
-
-_cat_gh() {
-  gh completion -s zsh
+  sheldon source
 }
 
 _cat_direnv() {

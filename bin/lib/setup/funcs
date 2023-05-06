@@ -4,7 +4,7 @@ bootstrapped_path=/etc/bootstrapped && readonly bootstrapped_path
 _timestamp=$(date +%Y%m%d.%H%M%S) && readonly _timestamp
 
 readonly _core_apps=(
-  git ssh tig curl bc tree tmux zsh vim ag rg ctags fzf
+  git ssh tig curl bc tree tmux fzf zsh vim ag rg ctags
 )
 readonly _core_apps_additional=(
   lsof neofetch anyenv netcat go goimports pt nvim nvr mmv gomi ghq shellcheck shfmt

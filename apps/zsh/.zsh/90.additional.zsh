@@ -1,6 +1,6 @@
 _additional() {
   load_zsh ~/.works.zsh
-  load_zsh ~/.fzf.zsh
+  # load_zsh ~/.fzf.zsh
   #[ -f ~/.secret ] && . ~/.secret
 }
 _additional
