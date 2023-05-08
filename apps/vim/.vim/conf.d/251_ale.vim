@@ -69,7 +69,8 @@ let g:ale_linters['vue'] = ['eslint']
 let g:ale_linters['json'] = ['jsonlint']
 
 let g:ale_fixers = {}
-let g:ale_fixers['*']          = ['trim_whitespace', 'remove_trailing_lines']
+" let g:ale_fixers['*']          = ['trim_whitespace', 'remove_trailing_lines']
+let g:ale_fixers['(?!markdown)'] = ['trim_whitespace', 'remove_trailing_lines']
 " let g:ale_fixers['javascript'] = ['prettier-eslint', 'prettier', 'eslint']
 let g:ale_fixers['javascript'] = ['prettier', 'eslint']
 let g:ale_fixers['typescript'] = ['prettier', 'eslint']
