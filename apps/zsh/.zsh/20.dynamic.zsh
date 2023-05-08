@@ -72,9 +72,9 @@ _cat_path() {
   #------------------------------------------------------
 
   # For Win.
-  add_path "/mingw64/bin" # for silver searcher ag
-  add_path "/c/Program Files (x86)/Google/Chrome/Application"
-  add_path "/c/Program Files/Google/Chrome/Application"
+  add_path "/mingw64/bin" # for silver searcher ag in msys
+  add_path "/mnt/c/Program Files (x86)/Google/Chrome/Application"
+  add_path "/mnt/c/Program Files/Google/Chrome/Application"
   # add_path $HOME/win/tools/sublime-text-3
   # add_path $HOME/win/tools/atom/resources/app/apm/bin
   add_path "${HOME}/win/scoop/shims" # scoop
@@ -104,7 +104,9 @@ _cat_path() {
 
   add_path ${HOME}/Library/Android/sdk/platform-tools # for Android Mac.
   add_path ${HOME}/Android/Sdk/platform-tools         # for Android Linux.
-  add_path ${HOME}/android-studio/bin                 # for android
+  add_path ${HOME}/win/AppData/Local/Android/Sdk/platform-tools
+  add_path ${HOME}/Android/Sdk/cmdline-tools/latest/bin
+  add_path ${HOME}/android-studio/bin # for android
   # add_path ${JAVA_HOME}/bin # for java
   # add_path ${M2_HOME}/bin # for maven
 
