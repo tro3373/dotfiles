@@ -283,7 +283,7 @@ endfunction
 function! SaveMemoInner(outdir, createDirectory, withHugolize) abort
   let dir = a:outdir
   if !isdirectory(expand(dir))
-    call mkdir(expand(dir))
+    call mkdir(expand(dir), "p")
   endif
   let now = localtime()
   let strnow = strftime("%Y-%m-%d", now)
@@ -295,7 +295,7 @@ function! SaveMemoInner(outdir, createDirectory, withHugolize) abort
   let name = strnow.title
   if a:createDirectory == 1
     let dir = dir."/".name
-    call mkdir(expand(dir))
+    call mkdir(expand(dir), "p")
     let name = "index"
   endif
   exe ":w ".dir."/".name.".md"
