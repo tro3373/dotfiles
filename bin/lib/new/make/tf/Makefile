@@ -75,6 +75,8 @@ refresh:
 	@make CMD=refresh _tf
 show:
 	@make CMD=show _tf
+list-state:
+	@make CMD='state list' _tf
 output:
 	@make CMD=output _tf
 
