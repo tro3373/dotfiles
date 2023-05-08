@@ -5,21 +5,32 @@ ym=$(date +%Y%m)
 timestamp=$(date +%Y%m%d_%H%M%S)
 dst="${backup_root}/$ym"
 
+has() { command -v "${1}" >&/dev/null; }
+
 ls_bkup() {
-  ls -la $backup_root
+  ls -la "$backup_root"
 }
 
-main() {
+_trash() {
   set -eu
   if [[ $# -eq 0 ]]; then
     ls_bkup
     return
   fi
-  [ ! -e $dst ] && mkdir -p $dst
+  [ ! -e "$dst" ] && mkdir -p "$dst"
   for f in "$@"; do
     [[ ! -e $f ]] && continue
-    local fname="$(basename "$f")"
+    local fname
+    fname="$(basename "$f")"
     mv -v "$f" "$dst/${timestamp}.$fname"
   done
+}
+
+main() {
+  if ! has gomi; then
+    _trash "$@"
+    return
+  fi
+  gomi "$@"
 }
 main "$@"
