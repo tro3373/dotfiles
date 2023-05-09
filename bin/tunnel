@@ -1,34 +1,81 @@
 #!/usr/bin/env bash
 
-readonly command_name=$(basename $0)
+command_name=$(basename "$0") && readonly command_name
 remote=vag
-args=()
+default_forward_port=27017
+default_reverse_port=10022
+reverse=0
+ports=()
 pids=()
 usage() {
   cat <<EOF
 
-  Tunneling port of vagrant client
+  Tunneling command that to easily to port forwarding to remote host via ssh.
 
     Usage:
-      $command_name [option] <port> <port> ..
-      <port>: Specify tunneling port.
-              If different port mapping in remote and local,
-              specify ':' mapping.
-              ex) 8080:8081 means remote 8080 port forward to local 8081 port.
+      $command_name [option] <remote> <port> <port> ..
+      <remote> : Specify remote host which keyword is not contain [0-9:] (default: $remote)
+      <port>   : Specify tunneling port. (default: $default_forward_port(=mongodb))
+                 If you would specify different port mapping in remote and local,
+                 use ':' keyword.
+                 ex) 8080:8081 means remote 8080 port forward to local 8081 port.
+                    └┬┘└┬┘
+                      │    └─remote port
+                      └─ local port
+                 ex) 8022:22 with \`-r\` option means, local 22 port reverse port forward to remote 8022 port.
     Options
       -h|--help : Show this usage
+      -r        : Reverse tunneling
 
 EOF
 }
 
 add_pid() { pids+=("$@"); }
-add_args() { args+=("$@"); }
-handle_args() {
-  if [[ $1 =~ ^[0-9:]+$ ]]; then
-    add_args "$1"
+add_ports() { ports+=("$@"); }
+is_reverse() { [[ $reverse -eq 1 ]]; }
+ink() {
+  local stdin=
+  if [[ -p /dev/stdin ]]; then
+    stdin="$(cat <&0)"
+  fi
+  if [[ $# -eq 0 && -z $stdin ]]; then
     return
   fi
-  remote="$1"
+
+  local open="\033["
+  local close="${open}0m"
+  export black="0;30m"
+  export red="1;31m"
+  export green="1;32m"
+  export yellow="1;33m"
+  export blue="1;34m"
+  export purple="1;35m"
+  export cyan="1;36m"
+  export gray="0;37m"
+  export white="$close"
+
+  local text="$stdin$*"
+  local color="$close"
+
+  case $1 in
+    black | red | green | yellow | blue | purple | cyan | gray | white)
+      eval color="\$$1"
+      # text="$stdin${*:2}"
+      text=$(echo -e "$stdin${*:2}" | sed -e 's,%,%%,g')
+      ;;
+  esac
+
+  # shellcheck disable=SC2059
+  printf "${open}${color}${text}${close}\n" 1>&2
+}
+_log() {
+  # shellcheck disable=SC2145
+  echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"
+}
+log() { _log yellow "$*"; }
+error() {
+  _log red "$*"
+  exit 1
 }
 
 initialize() {
@@ -38,37 +85,77 @@ initialize() {
       -h | --help) usage && exit 0 ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
+      -r) reverse=1 ;;
       *) handle_args "$1" ;;
     esac
     shift
   done
-  if [[ ${#args[*]} -eq 0 ]]; then
+  if [[ ${#ports[*]} -eq 0 ]]; then
+    local default_port=$default_forward_port
+    is_reverse && default_port="$default_reverse_port:22"
     # usage && exit 1
-    add_args 27017
+    add_ports $default_port
+  fi
+  if is_reverse; then
+    if [[ ${#ports[*]} -ne 1 ]]; then
+      error ">> Reverse tunneling can specify only one port mapping."
+    fi
+    if [[ ! ${ports[0]} =~ : ]]; then
+      ports=("${ports[0]}:22")
+    fi
   fi
 }
 
-tunnel() {
+handle_args() {
+  if [[ $1 =~ ^[0-9:]+$ ]]; then
+    add_ports "$1"
+    return
+  fi
+  remote="$1"
+}
+
+_tunnel() {
   local lp=$p
   local rp=$p
-  if echo $p | grep ":" >/dev/null; then
+  if echo "$p" | grep ":" >/dev/null; then
     lp=${p##*:}
     rp=${p%%:*}
   fi
-  echo ">> Tunneling localhost:$lp <=== $remote:$rp .." 1>&2
-  ssh -g -L $lp:localhost:$rp $remote -N &
+  # see [Reverse ssh tunnel を安定運用する - Qiita](https://qiita.com/syoyo/items/d31e9db6851dfee3ef82)
+  #
+  # -N: Do not execute a remote command.
+  # -g: Allows remote hosts to connect to local forwarded ports.
+  # -f: Requests ssh to go to background just before command execution.
+  # -T: Disable pseudo-tty allocation.
+  # -t: Force pseudo-tty allocation.
+  # -v: Verbose mode.
+  # -vvv: Debug mode.
+  # -L: Specifies that the given port on the local (client) host is to be forwarded to the given host and port on the remote side.
+  # -R: Specifies that the given port on the remote (server) host is to be forwarded to the given host and port on the local side.
+  # -D: Specifies a local “dynamic” application-level port forwarding.
+  # -C: Requests compression of all data.
+  # opt="-N -g -o ServerAliveInterval=60"
+  opt="-N -g -o ServerAliveInterval=60 -o ExitOnForwardFailure=yes -o TCPKeepAlive=no"
+  # shellcheck disable=SC2086
+  if is_reverse; then
+    log ">> Reverse Tunneling localhost:$lp ===> $remote:$rp .."
+    ssh $opt -R "$rp:localhost:$lp" "$remote" &
+  else
+    log ">> Tunneling localhost:$lp <=== $remote:$rp .."
+    ssh $opt -L "$lp:localhost:$rp" "$remote" &
+  fi
   add_pid $!
 }
 
 is_exist_pid() {
-  kill -s 0 $pid >&/dev/null
+  kill -s 0 "$pid" >&/dev/null
 }
 
 kill_tunnel() {
-  for pid in ${pids[*]}; do
+  for pid in "${pids[@]}"; do
     is_exist_pid || continue
-    echo ">> killing $pid .."
-    kill $pid
+    log ">> killing $pid .."
+    kill "$pid"
   done
 }
 
@@ -76,7 +163,7 @@ wait_loop() {
   while true; do
     sleep 1
     local _exist=0
-    for pid in ${pids[*]}; do
+    for pid in "${pids[@]}"; do
       if is_exist_pid; then
         _exist=1
         break
@@ -84,16 +171,15 @@ wait_loop() {
     done
     [[ $_exist -eq 1 ]] && continue
     # ps aux |grep ssh |grep localhost |awk '{print $2}'
-    echo "> Done."
+    log "> Done."
     exit
   done
 }
 
 main() {
   initialize "$@"
-  local ports="${args[*]}"
-  for p in $ports; do
-    tunnel
+  for p in "${ports[@]}"; do
+    _tunnel
   done
   trap kill_tunnel 0 1 2 3 15
   wait_loop
