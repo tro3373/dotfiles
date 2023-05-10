@@ -33,7 +33,11 @@ if g:is_windows
 else
   set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.exe
 endif
-if executable('ag')
+if executable('rg')
+  let g:ctrlp_use_caching = 0
+  set grepprg=rg\ --vimgrep\ --no-heading\ --smart-case
+  let g:ctrlp_user_command = 'rg --files --hidden --color=never --glob "!.git/*" %s'
+elseif executable('ag')
   let g:ctrlp_use_caching = 0
   set grepprg=ag\ --nogroup\ --nocolor
   let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
