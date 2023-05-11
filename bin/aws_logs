@@ -62,7 +62,7 @@ initialize() {
   log "==> sta:$sta, end:$end"
 }
 
-has() { command -v ${1} >&/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
 add_groups() { groups+=("$@"); }
 add_keys() { keys+=("$@"); }
 _log() {
@@ -124,12 +124,12 @@ find_logs() {
     profile_opt="--profile $profile"
   fi
   # sta/end is GMT
-  awslogs get $group \
+  awslogs get "$group" \
     -s "$sta" \
     -e "$end" \
     -f "\"$f\"" \
     --timestamp \
-    --aws-region $region $profile_opt
+    --aws-region "$region" "$profile_opt"
 }
 
 find_key_logs() {
@@ -162,18 +162,18 @@ main() {
     req_id_idx=5
   fi
   for group in "${groups[@]}"; do
-    lambda_name=$(basename $group)
+    lambda_name=$(basename "$group")
     log "$lambda_name"
     find_key_logs |
       grep -E "^$group" |
       awk -F"[ \t]" '{print $3 " " $'$req_id_idx'}' |
       sort -u |
-      tee $dstd/list |
+      tee "$dstd"/list |
       while read -r ts req_id; do
         [[ -z $ts ]] && continue
         [[ $ts =~ ^#.* ]] && continue
         dstf="$dstd/$ts.$lambda_name.$req_id.log"
-        find_req_id_logs | tee -a $dstf
+        find_req_id_logs | tee -a "$dstf"
       done
   done
   log "Done. see dstd:$dstd"
