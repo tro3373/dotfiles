@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
-is_installed() {
-  false
-}
 install_common() { not_supported; }
-install_arch() { not_supported; }
+install_arch() {
+  def_install android-studio
+}
 # install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() {
@@ -27,15 +26,15 @@ install_ubuntu() {
 }
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
-setting_arch() { no_settings; }
+# setting_arch() { no_settings; }
 setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
-setting_mac() {
-  if grep Android/sdk/platform-tools ~/.works.zsh >&/dev/null; then
-    return
-  fi
-  exe "echo 'add_path \$HOME/Library/Android/sdk/platform-tools' >> ~/.works.zsh"
-}
+# setting_mac() {
+#   if grep Android/sdk/platform-tools ~/.works.zsh >&/dev/null; then
+#     return
+#   fi
+#   exe "echo 'add_path \$HOME/Library/Android/sdk/platform-tools' >> ~/.works.zsh"
+# }
 setting_ubuntu() { no_settings; }
 setting_redhat() { no_settings; }
 #install_via_os_default

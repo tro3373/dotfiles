@@ -3,7 +3,7 @@
 scoop_idea=IntelliJ-IDEA
 
 is_installed() {
-  if is_msys || is_wsl; then
+  if is_msys; then
     has_scoop $scoop_idea
   else
     # shellcheck disable=SC2154
@@ -12,11 +12,13 @@ is_installed() {
 }
 install_common() { not_supported; }
 install_wsl() {
-  exe scoop install $scoop_idea
+  install_arch
 }
-install_arch() { not_supported; }
+install_arch() {
+  def_install intellij-idea-community-edition
+}
 install_msys() {
-  install_wsl
+  exe scoop install $scoop_idea
 }
 install_cygwin() { not_supported; }
 install_mac() { not_supported; }
@@ -26,6 +28,7 @@ setting_common() { no_settings; }
 setting_wsl() {
   # shellcheck disable=SC2154
   make_lnk_with_bkup "$app_dir/_ideavimrc" "$WINHOME/_ideavimrc"
+  make_lnk_with_bkup "$app_dir/_ideavimrc" "$HOME/_ideavimrc"
 }
 setting_arch() { no_settings; }
 setting_msys() {
