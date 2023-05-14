@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # shellcheck disable=SC2154
-is_installed() { [[ -e "$workdir"/flutter ]]; }
+# is_installed() { [[ -e "$workdir"/flutter ]]; }
 install_common() {
   # cd_work
   # if [[ ! -e flutter ]]; then
@@ -9,12 +9,21 @@ install_common() {
   # fi
   # def_install clang cmake ninja
   if ! has asdf; then
-    log "asdf not installed"
+    add_dependency_args asdf sdkmanager
     return
   fi
+  if ! asdf plugin-list | grep flutter >&/dev/null; then
+    exe asdf plugin-add flutter
+  fi
   exe asdf install flutter latest
+  if ! flutter version >&/dev/null; then
+    exe asdf global flutter "$(asdf list flutter | tail -n 1)"
+  fi
 }
-# install_arch() { not_supported; }
+install_arch() {
+  def_install cmake ninja
+  install_common
+}
 # install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 # install_mac() { not_supported; }
@@ -34,7 +43,14 @@ setting_common() {
   exe flutter precache
   exe flutter doctor
 }
-# setting_arch() { no_settings; }
+setting_arch() {
+  if has google-chrome-stable; then
+    cat <<EOF | tee_to_works_zsh
+export CHROME_EXECUTABLE=$(which google-chrome-stable)
+EOF
+  fi
+  setting_common
+}
 # setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
 setting_mac() {

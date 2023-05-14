@@ -11,20 +11,21 @@ get_latest_url() {
     cut -d\" -f2
 }
 
-is_installed() {
-  if has sdkmanager || test -e $ANDROID_SDK_BIN; then
-    return 0
-  fi
-  return 1
-}
+# is_installed() {
+#   if has sdkmanager || test -e "$ANDROID_SDK_BIN"; then
+#     return 0
+#   fi
+#   return 1
+# }
 
 install_common() {
   local target_dir url
   target_dir=$ANDROID_SDK_HOME/cmdline-tools
   url=$(get_latest_url)
-  exe mkdir -p $target_dir
-  dl_unzip $url
-  exe mv cmdline-tools $target_dir/latest
+  exe mkdir -p "$target_dir"
+  dl_unzip "$url"
+  exe mv cmdline-tools "$target_dir"/latest
+  exe "export PATH=$ANDROID_SDK_BIN:\$PATH"
 }
 # install_wsl()    { not_supported; }
 # install_arch()   { not_supported; }
@@ -34,14 +35,9 @@ install_mac() { not_supported; }
 # install_ubuntu() { not_supported; }
 # install_redhat() { not_supported; }
 setting_common() {
-  local target
-  target=$HOME/.works.zsh
-  if grep 'ANDROID_HOME=' $target >&/dev/null; then
-    return
-  fi
-  cat <<EOF | cat_tee -a $target
+  cat <<EOF | tee_to_works_zsh ANDROID_HOME=
 export ANDROID_HOME=$ANDROID_SDK_HOME
-add_path $ANDROID_SDK_BIN
+# add_path $ANDROID_SDK_BIN
 EOF
   rm_dotpath
 }
