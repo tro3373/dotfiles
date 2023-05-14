@@ -21,15 +21,19 @@ rm_dstd_ifneeded() {
   fi
   rm "$dst_d"
 }
+_get_src_d() {
+  ghq list --full-path $repo
+}
 main() {
   if ! has ghq; then
     log "=> No ghq command exist."
     exit 1
   fi
   local src_d
-  src_d=$(ghq list --full-path $repo)
+  src_d=$(_get_src_d)
   if [[ -z $src_d ]]; then
     ghq get git@github.com:$repo.git
+    src_d=$(_get_src_d)
   fi
   # src_d=$src_d/.md
   rm_dstd_ifneeded
