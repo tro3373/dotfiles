@@ -22,9 +22,16 @@ export additional=0
 export minimal=0
 export view=0
 args=()
+# shellcheck disable=SC2034
+dependency_args=()
 _funcs_initialized=0
 
 add_args() { args+=("$@"); }
+add_dependency_args() {
+  # shellcheck disable=SC2001,SC2207,SC2154
+  log "===> Adding dependency args $* for $app.."
+  dependency_args+=("$@" "$app")
+}
 is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
 is_additional() { [[ $additional -eq 1 ]]; }
@@ -306,7 +313,7 @@ del_if_exist() {
   fi
 }
 
-has_cask() { brew list --cask | grep $1 >&/dev/null; }
+has_cask() { brew list --cask | grep "$1" >&/dev/null; }
 has_or_local_package() {
   has "$*" || has_local_package "$*"
 }
@@ -359,7 +366,7 @@ cd_work() {
 
 _github_latest_release_tag() {
   local _repo="$1"
-  curl -fsSL https://github.com/$_repo/tags |
+  curl -fsSL "https://github.com/$_repo/tags" |
     grep -E "href=\"/$_repo/releases/tag/" |
     head -1 |
     sed -e 's,^.*href=,,g' |
@@ -474,7 +481,7 @@ dl_untar() {
   local strip=${3:-1}
   [[ -z $_fname ]] && _fname=dl.tgz
   cd_work
-  dl "$url" $_fname
+  dl "$url" "$_fname"
   if [[ ! -e $dst ]]; then
     exe $_sudo mkdir -p "$dst"
   fi
@@ -500,9 +507,10 @@ tool_env() {
 }
 
 rm_dotpath() {
-  if [[ -e ~/.path ]]; then
-    log "==> Removing ~/.path .."
-    exe rm ~/.path
+  local _target=~/.cache/zsh/path
+  if [[ -e $_target ]]; then
+    log "==> Removing $_target .."
+    exe rm "$_target"
   fi
 }
 
@@ -543,6 +551,17 @@ sudo_tee() {
   cat_do sudo tee "$@"
 }
 
+tee_to_works_zsh() {
+  local key="$*"
+  local target="$HOME"/.works.zsh
+  if [[ -n $key ]]; then
+    if grep "$key" "$target" >&/dev/null; then
+      return
+    fi
+  fi
+  cat_do tee -a "$target"
+}
+
 setup_brew() {
   if ! has brew; then
     # shellcheck disable=SC2016
@@ -551,11 +570,11 @@ setup_brew() {
     exe 'eval "$(/opt/homebrew/bin/brew shellenv)"'
   fi
   local target=$HOME/.zprofile
-  if grep 'brew shellenv' $target >&/dev/null; then
+  if grep 'brew shellenv' "$target" >&/dev/null; then
     return
   fi
   cat_zprofile_brewenv |
-    cat_tee -a $target
+    cat_tee -a "$target"
 }
 
 cat_zprofile_brewenv() {

@@ -62,12 +62,14 @@ initialize() {
   if [[ -n $tran_srouce ]]; then
     ilog "=> tran settings"
     tran=1
+    # shellcheck disable=SC1090
     source "$tran_srouce"
     load_update_arg_apps
   fi
 
   if [[ ${#args[@]} -eq 0 ]]; then
     # args+=("$(default_apps)")
+    # shellcheck disable=SC2162
     read -a args < <(default_apps)
   fi
 
@@ -97,20 +99,20 @@ handle_view_if_needed() {
       cat -
     else
       cat - | grep -E "$filter_keys"
-    fi | xargs -n 1 -I{} echo $apps_dir/{}/config | v
+    fi | xargs -n 1 -I{} echo "$apps_dir"/{}/config | v
   exit 0
 }
 
 make_setup_dirs() {
   local works_home=$HOME
   if is_msys || is_wsl; then
-    if [ -z $WINHOME ]; then
+    if [ -z "$WINHOME" ]; then
       is_msys && WINHOME="$(cd "/c/Users/$(whoami)" && pwd)"
       # is_wsl && WINHOME=/mnt/c/Users/$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | sed -e 's,\r,,g')
       if is_wsl; then
         local _u
         _u=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
-        WINHOME=$(echo /mnt/c/Users/$_u | tr -d '\r' | tr -d '\n')
+        WINHOME=$(echo /mnt/c/Users/"$_u" | tr -d '\r' | tr -d '\n')
       fi
     fi
     works_home=$WINHOME
@@ -121,11 +123,11 @@ make_setup_dirs() {
   if ! is_msys && ! is_wsl; then
     return
   fi
-  make_lnk_with_bkup $WINHOME $HOME/win
+  make_lnk_with_bkup "$WINHOME" "$HOME"/win
   # make_lnk_with_bkup $WINHOME/bin $HOME/bin
-  make_lnk_with_bkup $WINHOME/tools $HOME/tools
-  make_lnk_with_bkup $WINHOME/works $HOME/works
-  make_lnk_with_bkup $WINHOME/Downloads $HOME/Downloads
+  make_lnk_with_bkup "$WINHOME"/tools "$HOME"/tools
+  make_lnk_with_bkup "$WINHOME"/works "$HOME"/works
+  make_lnk_with_bkup "$WINHOME"/Downloads "$HOME"/Downloads
 }
 
 # suggest_install_brew() {
@@ -214,20 +216,29 @@ setup_for_app() {
 
 main_setup() {
   make_setup_dirs
+  setup_args "${args[@]}"
+  if [[ ${#dependency_args} -eq 0 ]]; then
+    return
+  fi
+  log "> Start setup depencency apps.."
+  # shellcheck disable=SC2154
+  setup_args "${dependency_args[@]}"
+}
 
-  for ((i = 0; i < ${#args[@]}; i++)); do
-    # ディレクトリ名＝アプリ名の前提
-    local app=${args[i]}
-
+setup_args() {
+  # ディレクトリ名＝アプリ名の前提
+  for app in "$@"; do
     app_dir=$apps_dir/$app
     if [[ ! -e $app_dir ]]; then
       log "=> No such app $app"
       continue
     fi
-    source $script_dir/lib/setup/default
+    # shellcheck disable=SC1091
+    source "$script_dir"/lib/setup/default
     local script_path=$app_dir/config
     if [[ -e $script_path ]]; then
-      source $script_path
+      # shellcheck disable=SC1090
+      source "$script_path"
     fi
     setup_for_app
   done
@@ -235,7 +246,7 @@ main_setup() {
 
 start_setup() {
   set -e
-  cd $DOT_PATH
+  cd "$DOT_PATH"
   if [[ $tran -eq 1 ]]; then
     ilog "> Prev Setup"
     pre_setup
