@@ -42,7 +42,9 @@ function! s:on_lsp_buffer_enabled() abort
   " ------------------------------------------------------------------------------------------------------------------
   let g:lsp_format_sync_timeout = 1000        " disable timeout in format sync. (default is -1(disabled))
   autocmd! BufWritePre *.rs,*.go,*.yml call execute('LspDocumentFormatSync')
-  autocmd! BufWritePre *.java call execute(['LspCodeActionSync source.organizeImports', 'LspDocumentFormatSync'])
+  " MEMO: Buggy!! LspCodeActionSync source.organizeImports
+  " autocmd! BufWritePre *.java call execute(['LspCodeActionSync source.organizeImports', 'LspDocumentFormatSync'])
+  autocmd! BufWritePre *.java call execute('LspDocumentFormatSync')
 endfunction
 
 augroup lsp_install
