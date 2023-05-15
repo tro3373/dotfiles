@@ -115,6 +115,12 @@ if has mmv; then
   }
 fi
 
+if has android-studio; then
+  studio() {
+    nohup android-studio "$@" >&/tmp/android-studio.log &
+  }
+fi
+
 gm() {
   [[ -z $* ]] && echo "Specify commit message" 1>&2 && return
   git commit -m "$*"
