@@ -95,9 +95,10 @@ main() {
     cat /etc/issue
     return
   fi
-  local os="$(detect_os)"
+  local os
+  os="$(detect_os)"
   if [[ $# -eq 0 ]]; then
-    echo $os
+    echo "$os"
     return
   fi
   handle_args "$@"
