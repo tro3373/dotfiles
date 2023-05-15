@@ -17,8 +17,13 @@ _start_process() {
     return
   fi
 
-  if is_wsl && ! test -e /tmp/dockerd.log; then
-    ${DOTPATH}/bin/start_dockerd &
+  if is_wsl; then
+    if ! test -e /tmp/dockerd.log; then
+      ${DOTPATH}/bin/start_dockerd &
+    fi
+    if [[ $ENALBLE_SSHD == 1 ]]; then
+      ${DOTPATH}/bin/start_sshd
+    fi
   fi
 
   if ! test -e /tmp/clipd.pid; then

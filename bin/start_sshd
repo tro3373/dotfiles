@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+works_zsh=$HOME/.works.zsh
+
+has() { command -v "${1}" >&/dev/null; }
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
+not_supported() { log "Not supported." && exit 1; }
+main() {
+  if ! os wsl || ! os arch; then
+    not_supported
+  fi
+  if ! has sshd; then
+    log "No sshd command exist."
+    exit 1
+  fi
+  if [[ $1 == enable ]]; then
+    if test -e "$works_zsh" && grep -q "ENABLE_SSHD=" "$works_zsh"; then
+      log "=> Already enabled."
+      return
+    fi
+    echo "export ENABLE_SSHD=1" >>"$works_zsh"
+  fi
+  local pid
+  pid=$(pgrep sshd)
+  if [[ $1 == stop ]]; then
+    if [[ -z $pid ]]; then
+      log "=> sshd Not running."
+      return
+    fi
+    log "=> Killing sshd($pid).."
+    sudo kill "$pid"
+    return
+  fi
+  if [[ -n $pid ]]; then
+    log "=> Already running in pid:$pid"
+    return
+  fi
+  log "=> Starting sshd.."
+  local sshd_path
+  sshd_path=$(which sshd)
+  nohup sudo "$sshd_path" -D >&/tmp/sshd.log &
+}
+main "$@"

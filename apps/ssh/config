@@ -4,10 +4,15 @@ install_common() {
   def_install openssh
 }
 
+install_wsl() {
+  install_common
+  exe sudo ssh-keygen -A
+}
+
 setting_common() {
   # exchange.key setting
   # shellcheck disable=SC2154
-  make_lnk_with_bkup $app_dir/.exchange.key ~/.exchange.key
+  make_lnk_with_bkup "$app_dir"/.exchange.key ~/.exchange.key
 
   # .ssh directory setting
   # link .ssh not work
@@ -19,19 +24,20 @@ setting_common() {
 
 change_to_right_permission() {
   local ssh_dir=${HOME}/.ssh
-  if [ ! -e ${ssh_dir} ]; then
+  if [ ! -e "${ssh_dir}" ]; then
     # exe mkdir -p ${ssh_dir}
     echo "No .ssh directory exists."
     return 0
   fi
-  if ! stat -c "%a %n" ${ssh_dir} | grep 755 >/dev/null 2>&1; then
-    exe chmod 755 ${ssh_dir}
+  if ! stat -c "%a %n" "${ssh_dir}" | grep 755 >/dev/null 2>&1; then
+    exe chmod 755 "${ssh_dir}"
   fi
 
-  local files=$(find ${ssh_dir}/ -type f)
+  local files
+  files=$(find "${ssh_dir}"/ -type f)
   for file in $files; do
-    if stat -c "%a %n" ${file} | grep -v 600 >/dev/null 2>&1; then
-      exe chmod 600 ${file}
+    if stat -c "%a %n" "${file}" | grep -v 600 >/dev/null 2>&1; then
+      exe chmod 600 "${file}"
     fi
   done
 }
