@@ -120,6 +120,11 @@ if has android-studio; then
     nohup android-studio "$@" >&/tmp/android-studio.log &
   }
 fi
+if has idea; then
+  idea() {
+    nohup idea "$@" >&/tmp/idea.log &
+  }
+fi
 
 gm() {
   [[ -z $* ]] && echo "Specify commit message" 1>&2 && return
