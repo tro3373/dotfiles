@@ -6,14 +6,24 @@ build_flavor := development
 dart_flavor := development
 # google_service_info_plist := ./ios/Runner/Firebase/$(build_flavor)/GoogleService-Info.plist
 
-.DEFAULT_GOAL := build-apk
+.DEFAULT_GOAL := run
 
 devices:
 	@flutter devices
-run:
-	@flutter run
+run: run-android
 run-linux:
 	@flutter run -d linux
+	@make _run target=linux
+run-chrome:
+	@make _run target=web-javascript
+run-ios:
+	@make _run target=ios
+run-android:
+	@make _run target=android
+_run: #_build_prepare
+	@export device_id=$$(flutter devices --machine| jq -r '.[]|select(.targetPlatform |startswith("$(target)"))|.id') && \
+		echo "==> Running on $$device_id .." && \
+		flutter run -d $$device_id --$(mode) --flavor $(build_flavor) --dart-define=FLAVOR=$(dart_flavor)
 
 pub-get:
 	@flutter pub get
@@ -59,13 +69,3 @@ logcat-app:
 	@app_id=$$(grep applicationId android/app/build.gradle |head -1 |cut -d\" -f2) && \
 		adb logcat | grep $${app_id} --color
 
-run-chrome:
-	@make _run target=web-javascript
-run-ios:
-	@make _run target=ios
-run-android:
-	@make _run target=android
-_run: #_build_prepare
-	@export device_id=$$(flutter devices --machine| jq -r '.[]|select(.targetPlatform |startswith("$(target)"))|.id') && \
-		echo "==> Running on $$device_id .." && \
-		flutter run -d $$device_id --$(mode) --flavor $(build_flavor) --dart-define=FLAVOR=$(dart_flavor)

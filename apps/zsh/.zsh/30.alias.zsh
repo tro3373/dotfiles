@@ -125,6 +125,9 @@ if has idea; then
     nohup idea "$@" >&/tmp/idea.log &
   }
 fi
+if has flutter; then
+  alias fl="flutter"
+fi
 
 gm() {
   [[ -z $* ]] && echo "Specify commit message" 1>&2 && return
@@ -190,7 +193,7 @@ if has rga; then
         --preview-window="70%:wrap"
     )" &&
       echo "opening $file" &&
-      xdg-open "$file"
+      open "$file"
   }
 fi
 
