@@ -60,6 +60,14 @@ set helplang=ja,en
 
 " 元のファイルの変更を Vim が検知し、かつバッファが変更されていなかった場合、バッファは自動的に再読み込み
 set autoread
+" 以下タイミングで、ファイルの変更を Vim が検知するさせるよう、checktime を実行
+" WinEnter: ウィンドウがアクティブになった時
+" FocusGained: ウィンドウがアクティブになった時
+" BufEnter: バッファがアクティブになった時
+augroup auto-checktime
+  autocmd!
+  autocmd WinEnter,FocusGained,BufEnter * checktime
+augroup END
 
 
 " インクリメンタルサーチを有効にする
