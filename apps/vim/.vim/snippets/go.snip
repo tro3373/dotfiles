@@ -18,6 +18,11 @@ snippet	log_newww
 
 snippet	loggg
 	import log "github.com/sirupsen/logrus"
+	# initConfigInner
+	level, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
+	if err == nil {
+		log.SetLevel(level)
+	}
 	log.Infof("==> File:%s", file)
 
 snippet	zap_newww

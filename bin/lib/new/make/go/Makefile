@@ -21,20 +21,29 @@ sec:
 	@gosec --color=false ./...
 	@echo "[OK] Go security check was completed!"
 
-build:
-	@pre_env="env GOOS=linux " make _build
-
+build: build-linux
+build-linux:
+	@make GOOS=linux GOARCH=amd64 _build
+build-mac:
+	@make GOOS=darwin GOARCH=arm64 _build
+build-windows:
+	@make GOOS=windows GOARCH=amd64 _build
 build-android:
-	@pre_env="env GOOS=android GOARCH=arm64" make _build
-
+	@make GOOS=android GOARCH=arm64 _build
 _build: check clean sec
-	@$(pre_env) go build -ldflags="-s -w"
+	@env GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-s -w"
 
 deps:
 	@go list -m all
 
+update:
+	@go get -u ./...
+
 tidy:
 	@go mod tidy
+
+tidy-go:
+	@ver=$(shell go version|awk '{print $$3}' |sed -e 's,go\(.*\)\..*,\1,g') && go mod tidy -go=$${ver}
 
 gr_check:
 	@goreleaser check
