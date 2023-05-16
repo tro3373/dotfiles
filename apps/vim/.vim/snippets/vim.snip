@@ -6,3 +6,6 @@ options	head
 
 snippet	commandddd
 	command! -nargs=1 ${1:#CommandName} call ${2:#CallCommandName}(<f-args>)
+
+snippet	current_timestamp
+	strftime("%Y%m%d%H%M%S")
