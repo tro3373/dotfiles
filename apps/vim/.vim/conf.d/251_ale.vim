@@ -99,11 +99,11 @@ let g:ale_fixers['sql']       = [ { buffer -> {'command': 'command -v sql-format
 
 
 " Ctrl k+j でエラー間移動
-nmap <silent> <C-k> <Plug>(ale_previous_wrap)
-nmap <silent> <C-j> <Plug>(ale_next_wrap)
-" " alt k & j to jump through errors
-" nmap <silent> <M-k> <Plug>(ale_previous_wrap)
-" nmap <silent> <M-j> <Plug>(ale_next_wrap)
+" nmap <silent> <C-k> <Plug>(ale_previous_wrap)
+" nmap <silent> <C-j> <Plug>(ale_next_wrap)
+" alt k & j to jump through errors
+nmap <silent> <M-k> <Plug>(ale_previous_wrap)
+nmap <silent> <M-j> <Plug>(ale_next_wrap)
 
 " nmap <silent> <Subleader>p <Plug>(ale_previous)
 " nmap <silent> <Subleader>n <Plug>(ale_next)
