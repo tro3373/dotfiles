@@ -21,7 +21,7 @@ _start_process() {
     if ! test -e /tmp/dockerd.log; then
       ${DOTPATH}/bin/start_dockerd &
     fi
-    if [[ $ENALBLE_SSHD == 1 ]]; then
+    if ! test -e /tmp/sshd.log && [[ $ENABLE_SSHD == 1 ]]; then
       ${DOTPATH}/bin/start_sshd
     fi
   fi
