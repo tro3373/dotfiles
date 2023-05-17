@@ -67,14 +67,8 @@ let g:ctrlp_prompt_mappings = {
     \ 'AcceptSelection("e")': ['<Space>', '<cr>', '<2-LeftMouse>'],
     \ }
 
-" Not work in manjaro
-" let g:ctrlp_buffer_func = { 'enter': 'BrightHighlightOn', 'exit':  'BrightHighlightOff', }
-" function BrightHighlightOn()
-"   hi CursorLine guibg=darkred
-" endfunction
-" function BrightHighlightOff()
-"   hi CursorLine guibg=#191919
-" endfunction
+" CtrlP line mapping(Fix highlight for manjaro)
+highlight CtrlPLinePre ctermbg=gray guibg=gray50
 
 nnoremap <Leader>p :CtrlPMRU<CR>
 " nnoremap <Leader>m :CtrlPMixed<CR>
