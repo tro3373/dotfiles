@@ -10,6 +10,16 @@ let g:unite_enable_start_insert = 1
 "ヒストリー/ヤンク機能を有効化
 let g:unite_source_history_yank_enable =1
 
+if executable('rg')
+  let g:unite_source_grep_command = 'rg'
+  let g:unite_source_grep_default_opts = '-n --no-heading --color never'
+  let g:unite_source_grep_recursive_opt = ''
+  " " Hit件数制御したいなら以下
+  " let g:unite_source_grep_max_candidates = 200
+  " Windowsなら
+  let g:unite_source_grep_encoding='utf-8'
+endif
+
 function! s:unite_my_settings()
   " 単語単位からパス単位で削除するように変更
   imap <buffer> <C-w> <Plug>(unite_delete_backward_path)
