@@ -67,8 +67,27 @@ let g:ctrlp_prompt_mappings = {
     \ 'AcceptSelection("e")': ['<Space>', '<cr>', '<2-LeftMouse>'],
     \ }
 
+" ColorCode Sample
+"   - #87afaf
+"   - #6495ed
+" Normal         xxx ctermfg=250 ctermbg=235 guifg=#bcbcbc guibg=#262626
+" CursorLine     xxx ctermbg=236 guibg=#262626
+" CursorLine     xxx ctermbg=236 guibg=#303030
+" Visual         xxx cterm=reverse ctermfg=110 ctermbg=235 gui=reverse guifg=#87afd7 guibg=#262626
+" Search         xxx ctermfg=238 ctermbg=109 guifg=#646d75 guibg=#87afaf
+
 " CtrlP line mapping(Fix highlight for manjaro)
-highlight CtrlPLinePre ctermbg=gray guibg=gray50
+highlight CtrlPLinePre ctermbg=gray guibg=#303030
+
+" FIXME: with vimrc-auto-cursorline behavior is Buggy
+" let g:ctrlp_buffer_func = { 'enter': 'BrightHighlightOn', 'exit':  'BrightHighlightOff', }
+" function BrightHighlightOn()
+"   hi CursorLine guibg=#646D75
+" endfunction
+" function BrightHighlightOff()
+"   " hi Normal
+"   hi CursorLine guibg=#303030
+" endfunction
 
 nnoremap <Leader>p :CtrlPMRU<CR>
 " nnoremap <Leader>m :CtrlPMixed<CR>
