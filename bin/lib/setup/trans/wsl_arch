@@ -26,7 +26,17 @@ improve_tmp_mount() {
   echo "tmpfs   /tmp    tmpfs   exec,defaults,nodev,nosuid,noatime,size=256m  0 0" | sudo_tee
 }
 
+set_wslconfig() {
+  local target=$WINHOME/.wslconfig
+  cat <<EOF >>"$target"
+[wsl2]
+memory=4GB
+swap=0
+EOF
+}
+
 post_setup() {
   improve_tmp_mount
+  set_wslconfig
   log "===> reboot maybe needed."
 }
