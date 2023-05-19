@@ -1,6 +1,27 @@
 #!/usr/bin/env -S bash -e
 
+readonly key_server=keyserver.ubuntu.com
+update_key_servers_ifneeded() {
+  fire_gpg_confs |
+    while read -r f; do
+      [[ -z $f ]] && continue
+      [[ $f =~ ^#.* ]] && continue
+      [[ ! -e $f ]] && continue
+      grep -E "^keyserver $key_server" "$f" >&/dev/null && continue
+      echo "==> updating $f .."
+      echo "keyserver $key_server" |
+        sudo tee -a "$f"
+    done
+}
+fire_gpg_confs() {
+  cat <<'EOF'
+/etc/pacman.d/gnupg/gpg.conf
+~/.gnupg/gpg.conf
+EOF
+}
 main() {
+  update_key_servers_ifneeded
+  sudo pacman-key --refresh-keys --keyserver $key_server
   sudo pacman -Sy --noconfirm --needed archlinux-keyring
 }
 main "$@"
