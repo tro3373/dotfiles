@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-readonly _script_dir=$(
-  cd "$(dirname ${BASH_SOURCE:-$0})"
-  pwd
-)
-source $_script_dir/../funcs_arch
+_script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly _script_dir
+# shellcheck disable=SC1091
+source "$_script_dir/../funcs_arch"
 
 pre_setup() {
   log "=> pre setting up"
@@ -51,7 +49,7 @@ pre_setup() {
 }
 
 load_update_arg_apps() {
-  # shellcheck disable=SC2034
+  # shellcheck disable=SC2034,SC2162
   read -a args < <(
     echo "$(default_apps) systemd-timesyncd"
   )
@@ -197,12 +195,12 @@ EOF
 }
 
 gen_vag_eth1_rules() {
-  local net_rule=/etc/udev/rules.d/66-persistent-net.rules
+  local net_rule=/etc/udev/rules.d/66-persistent-net.rules mac
   if sudo grep eth1 $net_rule >/dev/null; then
     return
   fi
   backup $net_rule
-  local mac=$(cat /sys/class/net/enp0s8/address)
+  mac=$(cat /sys/class/net/enp0s8/address)
   cat <<EOF | sudo_tee -a $net_rule
 # from enp0s8 to eth1
 SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="$mac", NAME="eth1"

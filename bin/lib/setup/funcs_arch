@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-readonly specify_keyserver=keyserver.ubuntu.com
+readonly key_server=keyserver.ubuntu.com
 # keyboard_layout=jp106
 readonly keyboard_layout=us
 readonly _additional_arch=(
@@ -180,13 +180,14 @@ setup_gnupg_keyserver_settings() {
     if [[ -e $local_gpg_settings ]]; then
       continue
     fi
-    exe mkdir -p "$(dirname $local_gpg_settings)"
-    exe cp /etc/pacman.d/gnupg/gpg.conf $local_gpg_settings
-    echo "keyserver $specify_keyserver" |
-      cat_tee -a $local_gpg_settings
+    exe mkdir -p "$(dirname "$local_gpg_settings")"
+    exe cp /etc/pacman.d/gnupg/gpg.conf "$local_gpg_settings"
+    echo "keyserver $key_server" |
+      cat_tee -a "$local_gpg_settings"
     [[ $d =~ /home/.* ]] || continue
-    local _u=$(basename $d)
-    exe chown $_u.$_u -R "$(dirname $local_gpg_settings)"
+    local _u
+    _u=$(basename "$d")
+    exe chown "$_u.$_u" -R "$(dirname "$local_gpg_settings")"
   done
 }
 
@@ -198,7 +199,7 @@ setup_gnupg() {
   exe rm -f /var/lib/pacman/sync/*
   # exe pacman-mirrors --continent Japan
   exe pacman -Syyu
-  exe pacman-key --refresh-keys --keyserver $specify_keyserver
+  exe pacman-key --refresh-keys --keyserver $key_server
 }
 
 # refresh_pacman_keys() {

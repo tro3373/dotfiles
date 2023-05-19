@@ -1,33 +1,34 @@
-SERVICE=android
-CONTAINER=gradle:7.3.3-jdk11
-PKG := com.example.app.dev.debug
+svc := android
+container := gradle:7.3.3-jdk11
+pkg := com.example.app.dev.debug
+
 .DEFAULT_GOAL := inpect
 
 tag:
 	@export tag=v$$(grep "versionName " app/build.gradle |cut -d\" -f2) && git tag "$$tag" && echo "==> $$tag tagged."
 
 zip:
-	@zip -r ${SERVICE}.signingConfigs.zip ./app/signingConfigs
+	@zip -r ${svc}.signingConfigs.zip ./app/signingConfigs
 
 log:
-	@adb shell run-as $(PKG) cat /data/data/$(PKG)/files/logs/app.log
+	@adb shell run-as $(pkg) cat /data/data/$(pkg)/files/logs/app.log
 logs:
-	@for d in /data/data/$(PKG)/files/logs{,/archives}; do \
+	@for d in /data/data/$(pkg)/files/logs{,/archives}; do \
 		echo "==> $$d"; \
-		adb shell run-as $(PKG) ls -lah $$d; \
+		adb shell run-as $(pkg) ls -lah $$d; \
 	done
 log_tailf:
-	@adb shell run-as $(PKG) tail -F /data/data/$(PKG)/files/logs/app.log
+	@adb shell run-as $(pkg) tail -F /data/data/$(pkg)/files/logs/app.log
 log_rm:
-	@adb shell run-as $(PKG) rm -rfv /data/data/$(PKG)/files/logs/archives
+	@adb shell run-as $(pkg) rm -rfv /data/data/$(pkg)/files/logs/archives
 
 db_file_name := app_db
 pull_db:
-	@adb shell "run-as $(PKG) chmod 666 /data/data/$(PKG)/databases/$(db_file_name)"
-	@adb exec-out run-as $(PKG) cat databases/$(db_file_name) >$(db_file_name)
-	@adb exec-out run-as $(PKG) cat databases/$(db_file_name)-shm >$(db_file_name)-shm
-	@adb exec-out run-as $(PKG) cat databases/$(db_file_name)-wal >$(db_file_name)-wal
-	@adb shell "run-as $(PKG) chmod 600 /data/data/$(PKG)/databases/$(db_file_name)"
+	@adb shell "run-as $(pkg) chmod 666 /data/data/$(pkg)/databases/$(db_file_name)"
+	@adb exec-out run-as $(pkg) cat databases/$(db_file_name) >$(db_file_name)
+	@adb exec-out run-as $(pkg) cat databases/$(db_file_name)-shm >$(db_file_name)-shm
+	@adb exec-out run-as $(pkg) cat databases/$(db_file_name)-wal >$(db_file_name)-wal
+	@adb shell "run-as $(pkg) chmod 600 /data/data/$(pkg)/databases/$(db_file_name)"
 
 # For wireless debug
 # 1. connect device to pc
@@ -49,7 +50,7 @@ _gradle:
 		-v $${ANDROID_HOME}:/android-sdk \
 		-v $(PWD):/src \
 		-w /src \
-		$(CONTAINER) \
+		$(container) \
 		./gradlew $(TASK)
 
 task_list:
@@ -65,7 +66,7 @@ release-aab:
 	@make TARGET_DIR=$(PWD)/app/build/outputs/bundle/sunwiseFullRelease open_dir
 
 inpect:
-	@docker inspect $(CONTAINER)
+	@docker inspect $(container)
 
 open_dir:
 	@command -v open >&/dev/null
