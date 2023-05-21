@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-readonly command_name=$(basename $0)
+command_name=$(basename "$0") && readonly command_name
 readonly port=5556
 readonly direct=0
 readonly pidf=/tmp/clipd.pid
@@ -26,11 +26,11 @@ EOF
 }
 
 logmsg() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*"; }
-log() { logmsg "$*" | tee >(if [[ $log_enable -eq 1 ]]; then cat - | tee -a $logf >&/dev/null; fi) || :; }
-has() { command -v ${1} >&/dev/null; }
+log() { logmsg "$*" | tee >(if [[ $log_enable -eq 1 ]]; then cat - | tee -a "$logf" >&/dev/null; fi) || :; }
+has() { command -v "${1}" >&/dev/null; }
 hass() {
   for arg in "$@"; do
-    has $arg && continue
+    has "$arg" && continue
     log "No such command $arg exist."
     exit 1
   done
@@ -139,15 +139,15 @@ _clipd() {
 is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
 
 _clippp() {
-  local _OSTYPE=$OSTYPE
+  local _OSTYPE=$OSTYPE _val
   is_wsl && _OSTYPE=wsl
-  local _val="$(cat -)"
+  _val="$(cat -)"
   echo -n -e "$_val" |
     case "${_OSTYPE}" in
       wsl) cat - | iconv -t sjis | clip.exe ;;
       msys*) cat - >/dev/clipboard ;;
       darwin*) cat - | pbcopy ;;
-      *) cat - | xsel -bi --display ${DISPLAY:-:0} ;;
+      *) cat - | xsel -bi --display "${DISPLAY:-:0}" ;;
     esac
   log "==> clipped."
   if [[ $log_enable_content -eq 1 ]]; then
