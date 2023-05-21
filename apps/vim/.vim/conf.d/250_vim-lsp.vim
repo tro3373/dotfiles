@@ -202,3 +202,12 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
 " \    'disabled': v:false,
 " \  },
 "\}
+
+" Color scheme settings
+" set termguicolors
+
+hi LspErrorHighlight         guifg=White guibg=DarkRed
+hi LspWarningHighlight       guifg=Black guibg=DarkOrange
+hi LspInformationHighlight   guifg=White guibg=#87afd7
+hi LspHintHighlight          guifg=White guibg=Green
+" let g:lsp_document_highlight_enabled = 0

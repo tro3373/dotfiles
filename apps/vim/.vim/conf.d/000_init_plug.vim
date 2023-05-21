@@ -195,6 +195,7 @@ call plug#begin('$HOME/.vim/plugged')
     Plug 'prabirshrestha/vim-lsp'                             " Vim Language Server Protocol
     Plug 'mattn/vim-lsp-settings'                             " use `:LspInstallServer`
     Plug 'mattn/vim-lsp-icons'
+    Plug 'halkn/lightline-lsp'                                " Display the diagnostic result of vim-lsp in the statusline of lightline.vim
 
     " Async complete is needed
     Plug 'prabirshrestha/asyncomplete.vim'

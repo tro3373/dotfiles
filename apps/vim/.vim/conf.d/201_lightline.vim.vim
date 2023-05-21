@@ -13,37 +13,57 @@ endif
 "\ }
 
 let g:lightline = {
-\     'colorscheme': 'seoul256',
-\     'mode_map': {'c': 'NORMAL'},
-\     'active': {
-\       'left': [
-\         ['mode', 'paste'],
-\         ['fugitive', 'pwd', 'filename', 'gitgutter'],
-\       ],
-\       'right': [
-\         ['lineinfo', 'syntastic'],
-\         ['percent'],
-\         ['fileformat', 'fileencoding', 'filetype'],
-\       ]
-\     },
-\     'component_function': {
-\       'pwd': 'MyPwd',
-\       'modified': 'MyModified',
-\       'readonly': 'MyReadonly',
-\       'fugitive': 'MyFugitive',
-\       'filename': 'MyFilename',
-\       'fileformat': 'MyFileformat',
-\       'filetype': 'MyFiletype',
-\       'fileencoding': 'MyFileencoding',
-\       'mode': 'MyMode',
-\       'syntastic': 'SyntasticStatuslineFlag',
-\       'charcode': 'MyCharCode',
-\       'gitgutter': 'MyGitGutter',
-\     }
+\   'colorscheme': 'seoul256',
+\   'mode_map': {'c': 'NORMAL'},
+\   'active': {
+\     'left': [
+\       ['mode', 'paste'],
+\       ['fugitive', 'pwd', 'filename', 'gitgutter'],
+\     ],
+\     'right': [
+\       ['lineinfo', 'syntastic'],
+\       ['percent'],
+\       ['fileformat', 'fileencoding', 'filetype'],
+\       ['lsp_errors', 'lsp_warnings', 'lsp_ok', 'lineinfo'],
+\     ]
+\   },
+\   'component_function': {
+\     'pwd': 'MyPwd',
+\     'modified': 'MyModified',
+\     'readonly': 'MyReadonly',
+\     'fugitive': 'MyFugitive',
+\     'filename': 'MyFilename',
+\     'fileformat': 'MyFileformat',
+\     'filetype': 'MyFiletype',
+\     'fileencoding': 'MyFileencoding',
+\     'mode': 'MyMode',
+\     'syntastic': 'SyntasticStatuslineFlag',
+\     'charcode': 'MyCharCode',
+\     'gitgutter': 'MyGitGutter',
+\   },
+\   'component_expand': {
+\     'lsp_warnings': 'lightline_lsp#warnings',
+\     'lsp_errors':   'lightline_lsp#errors',
+\     'lsp_ok':       'lightline_lsp#ok',
+\   },
+\   'component_type': {
+\     'lsp_warnings': 'warning',
+\     'lsp_errors':   'error',
+\     'lsp_ok':       'middle',
+\   },
 \ }
 
+function! GetRefPath(...)
+  let l:res = a:1
+  let l:home = expand("$HOME")
+  if stridx(l:res, l:home) == -1
+    return a:1
+  endif
+  return substitute(a:1, l:home, "~", "")
+endfunction
+
 function! MyPwd()
-  return getcwd()
+  return GetRefPath(getcwd())
 endfunction
 
 function! MyModified()
@@ -55,11 +75,12 @@ function! MyReadonly()
 endfunction
 
 function! MyFilename()
+  let l:current_file_path = GetRefPath(expand('%:p'))
   return ('' != MyReadonly() ? MyReadonly() . ' ' : '') .
         \ (&ft == 'vimfiler' ? vimfiler#get_status_string() :
         \  &ft == 'unite' ? unite#get_status_string() :
         \  &ft == 'vimshell' ? substitute(b:vimshell.current_dir,expand('~'),'~','') :
-        \ '' != expand('%:t') ? expand('%:p') : '[No Name]') .
+        \ '' != expand('%:t') ? l:current_file_path : '[No Name]') .
         \ ('' != MyModified() ? ' ' . MyModified() : '')
 endfunction
 
