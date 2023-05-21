@@ -1,4 +1,6 @@
-# compdef setup
+#
+# NOTE: Ignored `compdef setup`
+#
 
 # # zsh completion for setup                                -*- shell-script -*-
 
