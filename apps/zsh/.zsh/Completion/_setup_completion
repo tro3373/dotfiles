@@ -1,12 +1,8 @@
-#
-# NOTE: Ignored `compdef setup`
-#
-
-# # zsh completion for setup                                -*- shell-script -*-
+#compdef setup
 
 # [zsh の補完関数の自作導入編 · GitHub](https://gist.github.com/hassaku63/3cc561d67992f7f02d6fa76099418727)
 # [Zsh: 自作コマンドで補完できるようにする](https://zenn.dev/noraworld/articles/self-made-command-zsh-completion)
-__setup() {
+_setup_completion() {
   local -a _apps=()
   while IFS= read -r -d $'\0'; do
     [[ $REPLY =~ .nouse ]] && continue
@@ -15,10 +11,4 @@ __setup() {
 
   _values 'apps' "${_apps[@]}"
 }
-
-# don't run the completion function when being source-ed or eval-ed
-if [ "$funcstack[1]" = "_setup" ]; then
-  compdef __setup setup
-  # NOTE: Use _files fn ver
-  # compdef 'cd ~/.dot/apps/ && _files -g "*/"' setup
-fi
+_setup_completion
