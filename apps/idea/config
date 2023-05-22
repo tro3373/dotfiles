@@ -30,7 +30,9 @@ setting_wsl() {
   make_lnk_with_bkup "$app_dir/_ideavimrc" "$WINHOME/_ideavimrc"
   make_lnk_with_bkup "$app_dir/_ideavimrc" "$HOME/_ideavimrc"
 }
-setting_arch() { no_settings; }
+setting_arch() {
+  make_lnk_with_bkup "$app_dir/_ideavimrc" "$HOME/_ideavimrc"
+}
 setting_msys() {
   setting_wsl
 }
