@@ -289,19 +289,21 @@ function _find_src_root() {
     ghq list --full-path 2>/dev/null
   } | tac
 }
-function cd_src() {
+function cd_src_root() {
   supported fzf || return
   supported ghq || return
+  preview_cmd="ls -laF {}"
+  has onefetch && preview_cmd="onefetch --no-art {}"
   # LBUFFER: 現在のカーソル位置よりも左のバッファ
   # RBUFFER: 現在のカーソル位置を含む右のバッファ
   local src=$(
     _find_src_root |
-      fzf --query "$LBUFFER" --preview "ls -laF {}"
+      fzf --query "$LBUFFER" --preview "$preview_cmd"
   )
   cd_dir "$src"
 }
-zle -N cd_src
-bindkey '^]' cd_src
+zle -N cd_src_root
+bindkey '^]' cd_src_root
 
 function _find_dirs() {
   find . -type d -maxdepth 5 2>/dev/null |
