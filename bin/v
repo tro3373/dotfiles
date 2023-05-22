@@ -39,10 +39,19 @@ fire_files() {
     fi
   fi
 
+  # bat
+  # --theme=
+  #   - Visual Studio Dark+
+  #   - Nord
+  # --style=
+  #   - numbers
+  #   - changes
+  #   - header
+  #   - grid
   fire "$fire_ff_arg" |
     fzf -m \
       -q "$query" \
-      --preview 'echo {}; echo; head -100 {}' \
+      --preview 'bat --color=always --theme="Visual Studio Dark+" --line-range=:500 {}' \
       --select-1 \
       --exit-0 \
       --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
