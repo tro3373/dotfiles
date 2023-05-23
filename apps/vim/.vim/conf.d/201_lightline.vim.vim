@@ -24,7 +24,7 @@ let g:lightline = {
 \       ['lineinfo', 'syntastic'],
 \       ['percent'],
 \       ['fileformat', 'fileencoding', 'filetype'],
-\       ['lsp_errors', 'lsp_warnings', 'lsp_ok', 'lineinfo'],
+\       ['lsp_errors', 'lsp_warnings', 'lsp_ok'],
 \     ]
 \   },
 \   'component_function': {
