@@ -68,6 +68,15 @@ let g:ale_linters['go'] = ['gometalinter', 'gobuild']
 let g:ale_linters['vue'] = ['eslint']
 let g:ale_linters['json'] = ['jsonlint']
 
+
+" function! MyShellCheckFixer(buffer) abort
+"   " 'command': 'shellcheck -f diff %s |patch -p1'
+"   return {
+"\   'command': 'shellcheck -f diff %s | (cd / && patch -p1 >&/dev/null)',
+"\}
+" endfunction
+" execute ale#fix#registry#Add('shellcheck_fixer', 'MyShellCheckFixer', ['shell'], 'shellcheck fixer for shell')
+
 let g:ale_fixers = {}
 " let g:ale_fixers['*']          = ['trim_whitespace', 'remove_trailing_lines']
 let g:ale_fixers['(?!markdown)'] = ['trim_whitespace', 'remove_trailing_lines']
