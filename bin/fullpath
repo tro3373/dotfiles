@@ -1,0 +1,19 @@
+#!/usr/bin/env -S bash -e
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
+# script_dir=$(cd "$(dirname "$(readlink -f "$0")")" && pwd) && readonly script_dir
+
+error() { echo "$*" 1>&2 && exit 1; }
+main() {
+  [[ $# -eq 0 ]] && error "Specify args"
+  local arg
+  arg="$*"
+  if [[ ! $arg =~ ^/.*$ ]]; then
+    arg="$script_dir/$arg"
+  fi
+  if [[ ! -e $arg ]]; then
+    error "Not found: $arg"
+  fi
+  readlink -f "$arg"
+}
+main "$@"
