@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
 
-readonly command_name=$(basename $0)
-readonly dst_rootd=$(
-  cd $HOME/works/src
-  pwd
-)
-readonly src_rootd=$(
-  cd $HOME/src
-  pwd
-)
+command_name=$(basename "$0") && readonly command_name
+dst_rootd=$(cd "$HOME"/works/src && pwd) && readonly dst_rootd
+src_rootd=$(cd "$HOME"/src && pwd) && readonly src_rootd
 
 dummy="echo"
 reverse=0
@@ -63,7 +57,7 @@ initialize() {
   # local _rel=$(echo $src | sed -e "s,$src_rootd,,g")
   local _rel=${src//$src_rootd/}
   dst=$dst_rootd$_rel
-  [[ ! -e $dst ]] && $dummy mkdir -p $dst
+  [[ ! -e $dst ]] && $dummy mkdir -p "$dst"
 }
 
 _rsync() {
@@ -104,7 +98,7 @@ _rsync() {
 }
 
 _manual_sync() {
-  cd $src
+  cd "$src" || exit
   if [[ $ls_syncfiles -eq 1 ]]; then
     git ls-files
     return
@@ -113,21 +107,22 @@ _manual_sync() {
     while read -r _path; do
       [[ -z $_path ]] && continue
       [[ $_path =~ ^#.* ]] && continue
-      $dummy cp --parent -t $dst/ -rf
+      $dummy cp --parent -t "$dst"/ -rf
     done
 }
 
 _manual_sync2() {
-  cd $src
+  cd "$src" || exit
   git status -s |
     while read -r _s _path; do
       [[ -z $_s ]] && continue
       [[ $_s =~ ^#.* ]] && continue
-      [[ $_s == D ]] && $dummy rm $dst/$_path && continue
-      local _dst=$dst/$_path
-      local _dstd=$(dirname $_dst)
-      [[ ! -e $_dstd ]] && $dummy mkdir -p $_dstd
-      $dummy cp -rf $src/$_path $_dst
+      [[ $_s == D ]] && $dummy rm "$dst"/"$_path" && continue
+      local _dst _dstd
+      _dst=$dst/$_path
+      _dstd=$(dirname "$_dst")
+      [[ ! -e $_dstd ]] && $dummy mkdir -p "$_dstd"
+      $dummy cp -rf "$src"/"$_path" "$_dst"
     done
 }
 
