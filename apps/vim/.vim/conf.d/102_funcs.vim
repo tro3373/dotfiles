@@ -613,10 +613,10 @@ function! DiffTable() abort
 endfun
 command! DiffTable call DiffTable()
 
-noremap <F5> <ESC>:call RUN()<ENTER>
-function! RUN()
-  :w|!./%;read
-endfunction
+" noremap <F5> <ESC>:call RUN()<ENTER>
+" function! RUN()
+"   :w|!./%;read
+" endfunction
 
 function! ToCsv() abort
   call TrimLine()

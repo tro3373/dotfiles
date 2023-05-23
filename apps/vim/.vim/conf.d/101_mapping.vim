@@ -233,6 +233,7 @@ imap <F5> <C-R>=strftime("%Y-%m-%dT%H:%M:%S%z")<CR>
 " 2022-01-04T09:13:45+0900
 noremap <F3> <ESC>:call append(line(".")-1, "# ".strftime("%Y-%m-%d"))<CR>
 noremap <F4> <ESC>:call append(line(".")-1, "- ".strftime("%Y%m%d_%H%M%S"))<CR>
+noremap <F5> <ESC>:call append(line(".")-1, "- ".strftime("%Y-%m-%dT%H:%M:%S%z"))<CR>
 
 " 画面分割(縦分割)
 nnoremap ss :<C-u>sp<CR>
