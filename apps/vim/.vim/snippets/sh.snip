@@ -455,7 +455,7 @@ snippet	innnk
 		esac
 
 		# shellcheck disable=SC2059
-		printf "%s%s%s%s\n" "${open}" "${color}" "${text}" "${close}" 1>&2
+		printf "${open}${color}${text}${close}\n" 1>&2
 	}
 
 snippet	innnk_off
