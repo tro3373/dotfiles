@@ -1,3 +1,14 @@
+# 最短一致
+
+`[^A]*`
+
+```
+$ less test.txt
+{"hoge":"fuga","piyo":"foobar"}
+$ less test.txt | sed -r "s/^.*?\"hoge\":\"([^\"]*)\".*$/\1/"
+fuga
+```
+
 # Lower/Upper
 
 ```
