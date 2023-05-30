@@ -53,13 +53,19 @@ let g:lightline = {
 \   },
 \ }
 
-function! GetRefPath(...)
-  let l:res = a:1
-  let l:home = expand("$HOME")
-  if stridx(l:res, l:home) == -1
-    return a:1
+function! GetRefPath(targetPath, fromPath = '')
+  let l:src = a:targetPath
+  let l:from = a:fromPath
+  let l:to = ''
+  if l:from == ''
+    let l:from = expand("$HOME")
+    let l:to = '~'
   endif
-  return substitute(a:1, l:home, "~", "")
+  let l:from = l:from . '/'
+  if stridx(l:src, l:from) == -1
+    return l:src
+  endif
+  return substitute(l:src, l:from, l:to, "")
 endfunction
 
 function! MyPwd()
@@ -75,7 +81,7 @@ function! MyReadonly()
 endfunction
 
 function! MyFilename()
-  let l:current_file_path = GetRefPath(expand('%:p'))
+  let l:current_file_path = GetRefPath(expand('%:p'), GetGitRoot())
   return ('' != MyReadonly() ? MyReadonly() . ' ' : '') .
         \ (&ft == 'vimfiler' ? vimfiler#get_status_string() :
         \  &ft == 'unite' ? unite#get_status_string() :

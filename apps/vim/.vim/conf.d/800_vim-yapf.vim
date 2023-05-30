@@ -7,4 +7,4 @@ endif
 "=============================================
 let g:yapf_style = "pep8"
 " let g:yapf_style = "google"
-nnoremap <leader>f :call Yapf()<cr>
+" nnoremap <leader>f :call Yapf()<cr>
