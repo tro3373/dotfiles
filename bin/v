@@ -41,8 +41,7 @@ fire_files() {
 
   # bat
   # --theme=
-  #   - Visual Studio Dark+
-  #   - Nord
+  #   - Specified env variable BAT_THEME in 10.init.zsh
   # --style=
   #   - numbers
   #   - changes
@@ -51,7 +50,7 @@ fire_files() {
   fire "$fire_ff_arg" |
     fzf -m \
       -q "$query" \
-      --preview 'bat --color=always --theme="Visual Studio Dark+" --line-range=:500 {}' \
+      --preview 'bat --color=always --line-range=:500 {}' \
       --select-1 \
       --exit-0 \
       --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'

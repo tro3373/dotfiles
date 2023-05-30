@@ -162,5 +162,9 @@ _init() {
   export ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=236'
   export ZSH_AUTOSUGGEST_USE_ASYNC=1
   # bindkey '^ ' autosuggest-accept # ctrl + space
+
+  # For bat command
+  export BAT_THEME="Visual Studio Dark+"
+  # export BAT_THEME="Nord"
 }
 _init
