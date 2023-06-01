@@ -46,7 +46,7 @@
         // "face": "UDEV Gothic JPDOC",
         // "face": "HackGen Console",
         "face": "Osaka-Mono",
-        "size": 14
+        "size": 15
       },
       "padding": "10, 10, 10, 10",
       "useAcrylic": false
@@ -75,7 +75,6 @@
         // "commandline": "cmd.exe /c \"set MSYS=winsymlinks:nativestrict&& %USERPROFILE%/AppData/Local/Msys64/usr/bin/zsh.exe --login\"",
         // "commandline": "cmd.exe /c \"set TERM=xterm-256color&& set MSYS=winsymlinks:nativestrict&& %USERPROFILE%/AppData/Local/Msys64/usr/bin/bash.exe --login -i\"",
         // "commandline": "cmd.exe /c \"set TERM=xterm-256color&& set MSYS=winsymlinks:nativestrict&& %USERPROFILE%/AppData/Local/Msys64/usr/bin/bash.exe --login -i\"",
-
         // MSYS=winsymlinks:nativestrict: lnでコピーではなくシンボリックリンクを作る
         // -mingw64: デフォルトのmsysでも良い気もしますが、開発ツールへのパスがあってもそこまで困らなさそうなので追加
         // -defterm: minttyを使わないことを明示
@@ -101,7 +100,7 @@
       {
         "guid": "{f9ceaf27-504c-58d7-927c-d1d6a7ac7d3c}",
         "hidden": false,
-        "name": "Ubuntu 22.04.1 LTS",
+        "name": "Ubuntu 22.04.2 LTS",
         "colorScheme": "One Half Dark",
         "source": "CanonicalGroupLimited.Ubuntu22.04LTS_79rhkp1fndgsc"
       }
