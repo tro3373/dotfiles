@@ -559,13 +559,26 @@ endfun
 command! TestScript call TestScript()
 
 " JavaBean クラス定義項目リスト化
-function! LsJavaBeanFields() abort
+function! JavaBeanToList() abort
+  if executable('sed')
+    " 全行格納
+    let lines = getline(1,"$")
+    " システムコマンドへ渡す
+    let output = system("grep -E '(private|public|protected).*;' |sed -e 's,^.*\\(private\\|public\\|protected\\).*[ \\t]\\+\\(\\w\\+\\);,\\2,g'", lines)
+    " 結果がそのままだとNULL文字で張り付く為、配列へ格納
+    let output_lines = split(output, "\n")
+    " '%'        => すべての行を指定
+    " 'delete _' => `_`(ブラックホールレジスタ("_))を指定して、削除を行う
+    silent execute ':%delete _'
+    " 1行目から貼り付け
+    call setline(1, output_lines)
+    return
+  endif
   call SilentFExec(':%v/private/d')
   call SilentFExec(':%s/;//g')
   call Strip(3)
 endfun
-command! LsJavaBeanFields call LsJavaBeanFields()
-command! JavaBeanToList call LsJavaBeanFields()
+command! JavaBeanToList call JavaBeanToList()
 
 " Table
 function! Table() abort
