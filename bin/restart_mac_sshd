@@ -1,0 +1,8 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  # sshd再起動
+  echo "=> Restarting sshd..."
+  sudo launchctl stop com.openssh.sshd
+}
+main "$@"

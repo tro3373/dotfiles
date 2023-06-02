@@ -1,0 +1,39 @@
+#!/usr/bin/env -S bash -e
+
+not_supported() { echo "Not supported." 1>&2 && exit 1; }
+set_log_level() {
+  if ! mod_sshd_config; then
+    return
+  fi
+  restart_mac_sshd
+}
+mod_sshd_config() {
+  local t=/etc/ssh/sshd_config
+  if grep -E "^LogLevel DEBUG" "$t" >&/dev/null; then
+    return 1
+  fi
+  if grep -E "^LogLevel" "$t" >&/dev/null; then
+    sudo sed -i -e "s/^LogLevel.*/LogLevel DEBUG/" "$t"
+    return 0
+  fi
+  if grep -E "^#LogLevel" "$t" >&/dev/null; then
+    sudo sed -i -e "s/^#LogLevel.*/LogLevel DEBUG/" "$t"
+    return 0
+  fi
+  echo "LogLevel DEBUG" | sudo tee -a "$t"
+  return 0
+}
+main() {
+  if ! os mac; then
+    not_supported
+  fi
+  set_log_level
+
+  # # logコマンドの設定もsshdだけdebugレベルまで出力するように変更
+  # sudo log config --mode "level:debug" --subsystem com.openssh.sshd
+  # logコマンドの設定を元に戻す
+  # sudo log config --mode "level:default" --subsystem com.openssh.sshd
+  # # ログを /tmp/logs.outに書き出す
+  # sudo log stream --level debug 2>&1 |grep sshd | tee /tmp/logs.out
+}
+main "$@"
