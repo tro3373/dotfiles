@@ -59,7 +59,7 @@ function! GetRefPath(targetPath, fromPath = '')
   let l:to = ''
   if l:from == ''
     let l:from = expand("$HOME")
-    let l:to = '~'
+    let l:to = '~/'
   endif
   let l:from = l:from . '/'
   if stridx(l:src, l:from) == -1
@@ -81,7 +81,8 @@ function! MyReadonly()
 endfunction
 
 function! MyFilename()
-  let l:current_file_path = GetRefPath(expand('%:p'), GetGitRoot())
+  " let l:current_file_path = GetRefPath(expand('%:p'), GetGitRoot())
+  let l:current_file_path = GetRefPath(expand('%:p'), getcwd())
   return ('' != MyReadonly() ? MyReadonly() . ' ' : '') .
         \ (&ft == 'vimfiler' ? vimfiler#get_status_string() :
         \  &ft == 'unite' ? unite#get_status_string() :
