@@ -1,0 +1,26 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  set -e
+  if ! get_git_root >&/dev/null; then
+    echo "Not in git repo" >&2
+    exit 1
+  fi
+  local opt
+  opt=$(
+    cat <<EOF | fzf
+--ours
+--theirs
+EOF
+  )
+  git status -s |
+    fzf --ansi \
+      --no-sort \
+      --reverse \
+      -m \
+      --preview="echo {} | cut -c4- | xargs git diff --color=always" \
+      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {}|cut -c4-|clip)+abort' |
+    cut -c4- |
+    xargs -n 1 echo git checkout "$opt"
+}
+main "$@"
