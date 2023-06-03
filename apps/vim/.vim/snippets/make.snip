@@ -20,10 +20,12 @@ snippet	scriptdirrr
 	# $(patsubst PATTERN,REPLACEMENT,TEXT)
 	current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
+# snippet	local_ip
+# 	export local_ip := $(shell ip route |grep kernel |grep -v linkdown |grep -v 'br-' |sed -e 's,.metric.*,,g' |awk 'END {print $$NF}')
 snippet	local_ip
-	export local_ip := $(shell ip route |grep kernel |grep -v linkdown |grep -v 'br-' |sed -e 's,.metric.*,,g' |awk 'END {print $$NF}')
-snippet local_ip_if_exist
-	export local_ip := $(shell if command -v ip >/dev/null; then ip route |grep kernel |grep -v linkdown |grep -v 'br-' |sed -e 's,.metric.*,,g' |awk 'END {print $$NF}'; else echo localhost; fi)
+	export local_ip := $(shell (ip route 2>/dev/null |grep kernel |grep -v linkdown |grep -v 'br-' || echo localhost) |sed -e 's,.metric.*,,g' |awk 'END {print $$NF}')
+# snippet local_ip_if_exist
+# 	export local_ip := $(shell if command -v ip >/dev/null; then ip route |grep kernel |grep -v linkdown |grep -v 'br-' |sed -e 's,.metric.*,,g' |awk 'END {print $$NF}'; else echo localhost; fi)
 snippet local_ip_in_host
 	export local_ip := $(shell if [ ! -e /.dockerenv ]; then ip route |grep kernel |grep -v linkdown |grep -v 'br-' |sed -e 's,.metric.*,,g' |awk 'END {print $$NF}'; else echo localhost; fi)
 
