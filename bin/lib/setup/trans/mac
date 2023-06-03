@@ -16,7 +16,7 @@ _setup_apps() {
   #   handl by path priority
   def_install bash git lua vim wget gpg jq
   def_install grep gawk gzip gnu-sed gnu-tar gnu-indent gnu-which gnu-time gnu-getopt
-  def_install binutils coreutils diffutils findutils moreutils
+  def_install binutils coreutils diffutils findutils moreutils iproute2mac
 
   # Rosetta: To use app for intel in Apple silicone tip
   # ex) Google Japanese Ime
