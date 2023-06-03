@@ -9,10 +9,13 @@ main() {
   # shellcheck disable=SC2016
   local file=$(
     git status -s |
-      fzf $query --preview 'head -100 $(echo {} |cut -c4-)' -0 -1 |
+      fzf $query --preview 'echo {} |cut -c4-' -0 -1 |
       cut -c4-
   )
-  local d=$(dirname $file)
-  echo cd $d | clip
+  local d="./$file"
+  if [[ -f $file ]]; then
+    d=$(dirname $file)
+  fi
+  echo "cd $d" | clip
 }
 main "$@"
