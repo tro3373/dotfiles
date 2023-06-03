@@ -44,6 +44,7 @@ Host *
   IdentityFile /path/to/your/identity/file
   ServerAliveInterval 30
   GSSAPIAuthentication no
+  SendEnv LANG LC_*
   # ForwardX11 yes
   # ForwardX11Trusted yes
   # disable because tunnel to vag not work
