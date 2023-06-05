@@ -1,0 +1,60 @@
+#!/usr/bin/env -S bash -e
+
+_log() {
+  # shellcheck disable=SC2145
+  echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"
+}
+log() { _log yellow "$*"; }
+error() {
+  _log red "$*"
+  exit 1
+}
+
+target_files() {
+  git status -s |
+    grep -E '^ M ' |
+    cut -c4-
+}
+
+fire_files() {
+  echo -e "$files"
+}
+
+create_bakcups() {
+  fire_files |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      cp -fv "$line" "$line".bk
+    done
+}
+
+recovery_bakcups() {
+  fire_files |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      mv -fv "$line".bk "$line"
+    done
+}
+
+main() {
+  set -e
+  log "==> Backupping files..."
+  git_bk -e
+  local files
+  files=$(target_files)
+  create_bakcups
+  log "==> Resetting and Opening files via v... Format it! Press Enter to continue..(Cancel: Ctrl+C)"
+  read -r _
+  fire_files | xargs git checkout --
+  fire_files | v
+  log "==> Ready? format commit will be created! Press Enter to continue..(Cancel: Ctrl+C)"
+  read -r _
+  fire_files | xargs git add
+  git commit -m "style: format commit"
+  log "==> Recovering files..."
+  recovery_bakcups
+  log "==> Done!"
+}
+main "$@"
