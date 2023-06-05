@@ -172,9 +172,9 @@ call plug#begin('$HOME/.vim/plugged')
     Plug 'mattn/sonictemplate-vim'
 
     " Code Formatter
-    " Plug 'google/vim-maktaba'                               " GoogleCodeFormatter depends
-    " Plug 'google/vim-codefmt'                               " GoogleCodeFormatter
-    " Plug 'google/vim-glaive'                                " GoogleCodeFormatter depends
+    " Plug 'google/vim-maktaba'                                 " vimscript plugin library(GoogleCodeFormatter depends)
+    " Plug 'google/vim-glaive'                                  " utility for configuring maktaba plugins(GoogleCodeFormatter depends)
+    " Plug 'google/vim-codefmt'                                 " GoogleCodeFormatter
     " Plug 'sgur/vim-editorconfig'                              " Not Official editorconfig(less depends)
 
     " Complete

@@ -44,7 +44,7 @@ function! s:on_lsp_buffer_enabled() abort
   autocmd! BufWritePre *.rs,*.go,*.yml call execute('LspDocumentFormatSync')
   " MEMO: Buggy!! LspCodeActionSync source.organizeImports
   " autocmd! BufWritePre *.java call execute(['LspCodeActionSync source.organizeImports', 'LspDocumentFormatSync'])
-  autocmd! BufWritePre *.java call execute('LspDocumentFormatSync')
+  " autocmd! BufWritePre *.java call execute('LspDocumentFormatSync')
 endfunction
 
 augroup lsp_install
