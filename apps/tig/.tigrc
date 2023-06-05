@@ -155,17 +155,17 @@ bind status  x      ?git clean -d -f
 bind refs    x      ?sh -c "git branch --merged | grep -vE '^\\*|master$|develop$' | xargs -I % git branch -d %"
 
 # ` でファイルパスをクリップボードにコピー (Mac用)
-bind stage   `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
-bind status  `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
-bind tree    `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
-bind blob    `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
-bind diff    `      @bash -c "echo -n '%(file)' | ~/.dot/bin/clip"
+bind stage   `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
+bind status  `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
+bind tree    `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
+bind blob    `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
+bind diff    `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
 
 # Copy commit id
-bind generic 0      @sh -c "echo %(commit) | ~/.dot/bin/clip"
-bind refs    0      @sh -c "echo %(tag)%(branch) | ~/.dot/bin/clip"
+bind generic 0      +@sh -c "echo %(commit) | tee >(~/.dot/bin/clip >&/dev/null)"
+bind refs    0      +@sh -c "echo %(tag)%(branch) | tee >(~/.dot/bin/clip >&/dev/null)"
 # Copy commit title to clipboard:
-bind generic 9      @sh -c "git show -s --format=%s %(commit) | ~/.dot/bin/clip"
+bind generic 9      +@sh -c "git show -s --format=%s %(commit) | tee >(~/.dot/bin/clip >&/dev/null)"
 
 # Open the version in vim
 bind diff    O      !bash -c "git show %(commit):%(file) | ~/.dot/bin/tovim >&/dev/null"
