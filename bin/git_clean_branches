@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-exclude_branches='develop|master|release'
+exclude_branches='develop|master|release|integration|staging|^origin$'
 dummy="echo"
 initialize() {
   for arg in "$@"; do
@@ -22,16 +22,32 @@ clean_local() {
     while read -r branch; do
       [[ -z $branch ]] && continue
       [[ $branch =~ ^#.* ]] && continue
-      exe git branch -d $branch
+      exe git branch -d "$branch"
     done
 }
 clean_local_remote() {
-  exe git fetch --prune
+  exe git fetch --prune # 削除されたリモートブランチをローカルでも削除
+}
+clean_remote() {
+  local preview="git log --color=always --graph --pretty=format:'%Cred%h %Cgreen(%cd)%Creset -%C(yellow)%d%Creset %s %C(bold blue)<%an>%Creset' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S' {}"
+  git branch --format '%(refname:short)' -r --merged |
+    grep -v -E "$exclude_branches" |
+    fzf -m \
+      --preview "$preview" \
+      --preview-window=down,border-top,60% \
+      --exit-0 \
+      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' |
+    while read -r branch; do
+      [[ -z $branch ]] && continue
+      [[ $branch =~ ^#.* ]] && continue
+      exe echo git push origin ":$branch"
+    done
 }
 main() {
   initialize "$@"
   clean_local
   clean_local_remote
+  clean_remote
   [[ -n $dummy ]] && echo "This is dummy mode. specify -e option." 1>&2
 }
 main "$@"

@@ -1,18 +1,30 @@
-#!/usr/bin/env -S bash -e
+#!/usr/bin/env bash
 
-error() { echo "$*" | ink red; }
 main() {
-  if [[ $# -eq 0 ]]; then
-    error "Specify branch or hash"
-    exit 1
+  set -e
+  local main_branch target_branch preview
+  # shellcheck disable=SC2089
+  local git_opt="log --color=always --graph --pretty=format:'%Cred%h %Cgreen(%cd)%Creset -%C(yellow)%d%Creset %s %C(bold blue)<%an>%Creset' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S'"
+  if [[ $# -ge 2 ]]; then
+    main_branch="$1"
+    target_branch="$2"
+  elif [[ $# -eq 1 ]]; then
+    main_branch=$(git_main_branch)
+    target_branch="$1"
+  else
+    main_branch=$(git_main_branch)
+    # preview="git log --color=always --oneline --no-merges '$main_branch..{}'"
+    preview="git $git_opt --no-merges '$main_branch..{}'"
+    target_branch=$(
+      git for-each-ref --format='%(refname:short)' --no-merged |
+        fzf --prompt="Select branch to compare: " \
+          --preview "$preview" \
+          --preview-window=down,border-top,50% \
+          --select-1 \
+          --exit-0 \
+          --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
+    )
   fi
-  local src dst
-  src=master
-  dst=$1
-  if [[ $# -gt 1 ]]; then
-    src=$1
-    dst=$2
-  fi
-  git log --no-merges $src..$dst
+  eval git "$git_opt" --no-merges "$main_branch..$target_branch"
 }
 main "$@"

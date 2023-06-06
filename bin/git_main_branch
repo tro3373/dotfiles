@@ -1,0 +1,13 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  set -e
+  if ! get_git_root >&/dev/null; then
+    # test current is in git repository
+    echo "Not in git repository" >&2
+    exit 1
+  fi
+  git_branches | grep -E '^main$|^origin/main$' >&/dev/null && echo "main" && return
+  echo "master"
+}
+main "$@"

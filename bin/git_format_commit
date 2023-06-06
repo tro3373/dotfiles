@@ -25,7 +25,7 @@ create_bakcups() {
     while read -r line; do
       [[ -z $line ]] && continue
       [[ $line =~ ^#.* ]] && continue
-      cp -fv "$line" "$line".bk
+      cp -f "$line" "$line".bk
     done
 }
 
@@ -34,25 +34,34 @@ recovery_bakcups() {
     while read -r line; do
       [[ -z $line ]] && continue
       [[ $line =~ ^#.* ]] && continue
-      mv -fv "$line".bk "$line"
+      mv -f "$line".bk "$line"
     done
 }
 
 main() {
   set -e
-  log "==> Backupping files..."
-  git_bk -e
   local files
   files=$(target_files)
+  if [[ -z $files ]]; then
+    log "==> No files to format!"
+    return
+  fi
+
+  log "==> Backing up files..."
+  git_bk -e
   create_bakcups
+
   log "==> Resetting and Opening files via v... Format it! Press Enter to continue..(Cancel: Ctrl+C)"
   read -r _
   fire_files | xargs git checkout --
   fire_files | v
+
   log "==> Ready? format commit will be created! Press Enter to continue..(Cancel: Ctrl+C)"
+  git status -s
   read -r _
   fire_files | xargs git add
-  git commit -m "style: format commit"
+  git commit -m "style: format"
+
   log "==> Recovering files..."
   recovery_bakcups
   log "==> Done!"
