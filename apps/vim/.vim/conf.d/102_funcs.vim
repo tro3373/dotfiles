@@ -751,8 +751,8 @@ endfunction
 command! PasteImage call PasteImage()
 nnoremap <silent> <M-p> :call PasteImage()<CR>
 
-function! ShellCheckApply() abort
+function! FixShellCheckError() abort
   execute system('shellcheck -f diff '.expand('%:p').' | (cd / && patch -p1 >&/dev/null)')
   execute 'checktime'
 endfunction
-command! ShellCheckApply call ShellCheckApply()
+command! FixShellCheckError call FixShellCheckError()
