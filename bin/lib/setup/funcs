@@ -329,7 +329,7 @@ has_local_package() {
     rpm -qi "$p" >&/dev/null && return 0
   elif is_mac; then
     set_brew_installed_pkgs_if_needed
-    echo -e "$_brew_installed_pkgs" | grep "$p" >&/dev/null && return 0
+    echo -e "$_brew_installed_pkgs" | grep -E "^$p$" >&/dev/null && return 0
   else
     return 1
   fi
