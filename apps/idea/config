@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 
 scoop_idea=IntelliJ-IDEA
+mac_cmd="/Applications/IntelliJ IDEA CE.app/Contents/MacOS/idea"
 
-is_installed() {
-  if is_msys; then
-    has_scoop $scoop_idea
-  else
-    # shellcheck disable=SC2154
-    has "$app"
-  fi
+create_bin_cmd() {
+  # shellcheck disable=SC2154
+  local _dst="$HOME/bin/$app"
+  cat_bin_cmd |
+    cat_tee "$_dst"
+  exe chmod +x "$_dst"
+}
+
+cat_bin_cmd() {
+  cat <<EOF
+#!/usr/bin/env -S bash -e
+
+nohup "$mac_cmd" "\$@" >&/tmp/$app.log &
+EOF
 }
 install_common() { not_supported; }
 install_wsl() {
@@ -21,7 +29,10 @@ install_msys() {
   exe scoop install $scoop_idea
 }
 install_cygwin() { not_supported; }
-install_mac() { not_supported; }
+install_mac() {
+  def_install --cask intellij-idea-ce
+  create_bin_cmd
+}
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
@@ -37,7 +48,9 @@ setting_msys() {
   setting_wsl
 }
 setting_cygwin() { no_settings; }
-setting_mac() { no_settings; }
+setting_mac() {
+  make_lnk_with_bkup "$app_dir/_ideavimrc" "$HOME/_ideavimrc"
+}
 setting_ubuntu() { no_settings; }
 setting_redhat() { no_settings; }
 #is_installed

@@ -1,5 +1,22 @@
 #!/usr/bin/env bash
 
+mac_cmd="/Applications/Android Studio.app/Contents/MacOS/studio"
+create_bin_cmd() {
+  # shellcheck disable=SC2154
+  local _dst="$HOME/bin/$app"
+  cat_bin_cmd |
+    cat_tee "$_dst"
+  exe chmod +x "$_dst"
+}
+
+cat_bin_cmd() {
+  cat <<EOF
+#!/usr/bin/env -S bash -e
+
+nohup "$mac_cmd" "\$@" >&/tmp/$app.log &
+EOF
+}
+
 install_common() { not_supported; }
 install_arch() {
   def_install android-studio
@@ -7,7 +24,9 @@ install_arch() {
 # install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() {
-  exe open 'https://developer.android.com/studio'
+  # exe open 'https://developer.android.com/studio'
+  def_install --cask android-studio
+  create_bin_cmd
 }
 install_ubuntu() {
   not_supported
