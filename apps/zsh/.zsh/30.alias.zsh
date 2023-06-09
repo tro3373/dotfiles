@@ -115,16 +115,6 @@ if has mmv; then
   }
 fi
 
-if has android-studio; then
-  studio() {
-    nohup android-studio "$@" >&/tmp/android-studio.log &
-  }
-fi
-if has idea; then
-  idea() {
-    nohup idea "$@" >&/tmp/idea.log &
-  }
-fi
 if has flutter; then
   alias fl="flutter"
 fi

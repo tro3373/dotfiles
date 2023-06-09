@@ -11,6 +11,8 @@ _dynamic() {
     export WINHOME=/mnt/c/Users/$WHOAMI
   fi
 
+  _dynamic_exports
+
   export GEN_PATH_F=$CACHE_D/path
   _cache_load path
   export GEN_MANPATH_F=$CACHE_D/manpath
@@ -54,6 +56,22 @@ _cat_whoami() {
   echo "export WHOAMI=$_me"
 }
 
+_dynamic_exports() {
+  _dynamic_exports_android
+}
+
+_dynamic_exports_android() {
+  local _android_homes=("Android/Sdk" "Library/Android/sdk")
+  echo "${_android_homes[@]}" |
+    tr " " "\n" |
+    while read -r line; do
+      local _android_home=${HOME}/$line
+      [[ ! -e $_android_home ]] && continue
+      export ANDROID_HOME=$_android_home
+      return
+    done
+}
+
 add_path() {
   # for .works.zsh
   [[ -e $GEN_PATH_F ]] && return
@@ -87,6 +105,19 @@ _cat_path() {
       done
   fi
 
+  # add_path ${JAVA_HOME}/bin # for java
+  # add_path ${M2_HOME}/bin # for maven
+
+  # For Android
+  if [[ -n $ANDROID_HOME ]]; then
+    add_path ${ANDROID_HOME}/tools
+    add_path ${ANDROID_HOME}/tools/bin
+    add_path ${ANDROID_HOME}/platform-tools
+    add_path ${ANDROID_HOME}/cmdline-tools/latest/bin
+  fi
+  add_path ${HOME}/win/AppData/Local/Android/Sdk/platform-tools # for Android Win. Use adb command in windows
+  add_path ${HOME}/android-studio/bin                           # for android
+
   # add main env path
   add_path /usr/local/sbin
   add_path /usr/local/bin
@@ -102,17 +133,10 @@ _cat_path() {
   add_path ${DOTPATH}/bin
   add_path ${HOME}/bin
 
-  add_path ${HOME}/Library/Android/sdk/platform-tools # for Android Mac.
-  add_path ${HOME}/Android/Sdk/platform-tools         # for Android Linux.
-  add_path ${HOME}/win/AppData/Local/Android/Sdk/platform-tools
-  add_path ${HOME}/Android/Sdk/cmdline-tools/latest/bin
-  add_path ${HOME}/android-studio/bin # for android
-  # add_path ${JAVA_HOME}/bin # for java
-  # add_path ${M2_HOME}/bin # for maven
-
   # NOTE: Load .works.zsh to execute add_path.
   # 90.additional.zsh load .works.zsh again.
   load_zsh ~/.works.zsh
+
   echo "export PATH=$(echo "$PATH" | _uniq_path)"
 }
 
