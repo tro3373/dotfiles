@@ -13,6 +13,7 @@ noremap <Up> gk
 inoremap <silent> jj <ESC>
 " inoremap <silent> <C-j> j
 inoremap <silent> kk <ESC>
+inoremap <silent> jk <ESC>
 " inoremap <silent> <C-k> k
 " 挿入モードでのカーソル移動
 " inoremap <C-j> <Down>
