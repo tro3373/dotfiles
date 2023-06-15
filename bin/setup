@@ -159,13 +159,13 @@ debug_options() {
 
 install_app() {
   default_called=0
-  is_wsl && install_wsl
-  is_arch && install_arch
-  is_msys && install_msys
-  is_cygwin && install_cygwin
-  is_mac && install_mac
-  is_ubuntu && install_ubuntu
-  is_redhat && install_redhat
+  is_wsl && install_wsl && return
+  is_arch && install_arch && return
+  is_msys && install_msys && return
+  is_cygwin && install_cygwin && return
+  is_mac && install_mac && return
+  is_ubuntu && install_ubuntu && return
+  is_redhat && install_redhat && return
   if [[ $default_called -eq 1 ]]; then
     install_common
   fi
@@ -173,13 +173,13 @@ install_app() {
 
 setting_app() {
   default_called=0
-  is_wsl && setting_wsl
-  is_arch && setting_arch
-  is_msys && setting_msys
-  is_cygwin && setting_cygwin
-  is_mac && setting_mac
-  is_ubuntu && setting_ubuntu
-  is_redhat && setting_redhat
+  is_wsl && setting_wsl && return
+  is_arch && setting_arch && return
+  is_msys && setting_msys && return
+  is_cygwin && setting_cygwin && return
+  is_mac && setting_mac && return
+  is_ubuntu && setting_ubuntu && return
+  is_redhat && setting_redhat && return
   if [[ $default_called -eq 1 ]]; then
     setting_common
   fi
