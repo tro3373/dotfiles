@@ -2,19 +2,27 @@
 
 install_common() { not_supported; }
 install_wsl() {
-  if is_arch; then
-    def_install fuse2 google-chrome
-  elif is_ubuntu; then
-    def_install libfuse2 google-chrome
-  fi
-  github git@github.com:nagygergo/jetbrains-toolbox-install.git
-  exe jetbrains-toolbox.sh
+  # if is_arch; then
+  #   def_install fuse2 google-chrome
+  # elif is_ubuntu; then
+  #   def_install libfuse2 google-chrome
+  # fi
+  # github git@github.com:nagygergo/jetbrains-toolbox-install.git
+  # exe jetbrains-toolbox.sh
+  install_arch
 }
-install_arch() { not_supported; }
+install_arch() {
+  def_install fuse2 google-chrome
+  install_via_os_default
+}
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() { not_supported; }
-install_ubuntu() { not_supported; }
+install_ubuntu() {
+  def_install libfuse2 google-chrome
+  github git@github.com:nagygergo/jetbrains-toolbox-install.git
+  exe jetbrains-toolbox.sh
+}
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
 setting_wsl() { no_settings; }
