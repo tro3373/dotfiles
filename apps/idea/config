@@ -12,10 +12,14 @@ create_bin_cmd() {
 }
 
 cat_bin_cmd() {
+  local _cmd=$mac_cmd
+  if ! is_mac; then
+    _cmd="$(command -v -p "$app")"
+  fi
   cat <<EOF
 #!/usr/bin/env -S bash -e
 
-nohup "$mac_cmd" "\$@" >&/tmp/$app.log &
+nohup "$_cmd" "\$@" >&/tmp/$app.log &
 EOF
 }
 install_common() { not_supported; }
@@ -23,7 +27,8 @@ install_wsl() {
   install_arch
 }
 install_arch() {
-  def_install intellij-idea-community-edition
+  # def_install intellij-idea-community-edition
+  create_bin_cmd
 }
 install_msys() {
   exe scoop install $scoop_idea
