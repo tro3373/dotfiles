@@ -1,7 +1,20 @@
-# debug/release ビルド
+# [Flutterで環境ごとにビルド設定を切り替える — iOS編. モバイルアプリ開発において、環境ごとに設定を変えてビルド・配信することはほぼ必須… | by mono  | Flutter 🇯🇵 | Medium](https://medium.com/flutter-jp/flavor-b952f2d05b5d)
+
+# ビルドモード
+#	- debug
+#		Debug: ホットリロードあり、パフォーマンス低下
+#	- release
+#		Release: ホットリロードなし、パフォーマンス高速
 mode := debug
+
+# 環境設定(ネイティブへの伝達)
 # バンドルID、パッケージ名を変更(XCodeのConfig,AndroidのproductFlavorsに紐づく)
+# 	- development
+# 	- staging
+# 	- production
 build_flavor := development
+
+# 環境設定(Dartへの伝達)
 # APIの向き先を変更する
 dart_flavor := development
 # google_service_info_plist := ./ios/Runner/Firebase/$(build_flavor)/GoogleService-Info.plist
