@@ -280,3 +280,6 @@ call unite#custom_default_action('source/bookmark/directory' , 'vimfiler')
 
 " 開いているファイルのディレクトリをエクスプローラで開く
 map <silent> qn :!open %:h>&/dev/null<ENTER>
+
+" diffthis
+nnoremap <Leader>d :diffthis<CR>
