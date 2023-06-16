@@ -1,7 +1,30 @@
 #!/usr/bin/env bash
 
 scoop_idea=IntelliJ-IDEA
+def_cmd="$HOME/.local/share/JetBrains/Toolbox/scripts/idea"
 mac_cmd="/Applications/IntelliJ IDEA CE.app/Contents/MacOS/idea"
+
+is_installed() {
+  if is_mac; then
+    test -e "$mac_cmd"
+  else
+    test -e "$def_cmd"
+  fi
+}
+
+install_common() { not_supported; }
+install_wsl() {
+  install_arch
+}
+install_arch() {
+  # def_install intellij-idea-community-edition
+  if ! has jetbrains-toolbox; then
+    add_dependency_args jetbrains-toolbox
+    return
+  fi
+  log "==> Install via jetbrains-toolbox"
+  exe jetbrains-toolbox
+}
 
 create_bin_cmd() {
   # shellcheck disable=SC2154
@@ -14,7 +37,8 @@ create_bin_cmd() {
 cat_bin_cmd() {
   local _cmd=$mac_cmd
   if ! is_mac; then
-    _cmd="$(command -v -p "$app")"
+    # _cmd="$(command -v -p "$app")"
+    _cmd="$def_cmd"
   fi
   cat <<EOF
 #!/usr/bin/env -S bash -e
@@ -22,41 +46,36 @@ cat_bin_cmd() {
 nohup "$_cmd" "\$@" >&/tmp/$app.log &
 EOF
 }
-install_common() { not_supported; }
-install_wsl() {
-  install_arch
-}
-install_arch() {
-  # def_install intellij-idea-community-edition
-  create_bin_cmd
-}
+
 install_msys() {
   exe scoop install $scoop_idea
 }
 install_cygwin() { not_supported; }
 install_mac() {
   def_install --cask intellij-idea-ce
-  create_bin_cmd
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
-setting_common() { no_settings; }
-setting_wsl() {
+setting_common() {
   # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/_ideavimrc" "$HOME/_ideavimrc"
+  create_bin_cmd
+}
+setting_wsl() {
   make_lnk_with_bkup "$app_dir/_ideavimrc" "$WINHOME/_ideavimrc"
-  make_lnk_with_bkup "$app_dir/_ideavimrc" "$HOME/_ideavimrc"
+  setting_common
 }
-setting_arch() {
-  make_lnk_with_bkup "$app_dir/_ideavimrc" "$HOME/_ideavimrc"
-}
+# setting_arch() {
+#   setting_common
+# }
 setting_msys() {
   setting_wsl
 }
 setting_cygwin() { no_settings; }
-setting_mac() {
-  make_lnk_with_bkup "$app_dir/_ideavimrc" "$HOME/_ideavimrc"
-}
-setting_ubuntu() { no_settings; }
+# setting_mac() {
+#   setting_common
+# }
+# setting_ubuntu() { no_settings; }
 setting_redhat() { no_settings; }
 #is_installed
 #install_via_os_default

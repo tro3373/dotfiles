@@ -1,24 +1,14 @@
 #!/usr/bin/env bash
 
+def_cmd="$HOME/.local/share/JetBrains/Toolbox/scripts/studio"
 mac_cmd="/Applications/Android Studio.app/Contents/MacOS/studio"
-create_bin_cmd() {
-  # shellcheck disable=SC2154
-  local _dst="$HOME/bin/$app"
-  cat_bin_cmd |
-    cat_tee "$_dst"
-  exe chmod +x "$_dst"
-}
 
-cat_bin_cmd() {
-  local _cmd=$mac_cmd
-  if ! is_mac; then
-    _cmd="$(command -v -p "$app")"
+is_installed() {
+  if is_mac; then
+    test -e "$mac_cmd"
+  else
+    test -e "$def_cmd"
   fi
-  cat <<EOF
-#!/usr/bin/env -S bash -e
-
-nohup "$mac_cmd" "\$@" >&/tmp/$app.log &
-EOF
 }
 
 install_common() { not_supported; }
@@ -26,14 +16,19 @@ install_wsl() {
   install_arch
 }
 install_arch() {
-  def_install android-studio
+  # def_install android-studio
+  if ! has jetbrains-toolbox; then
+    add_dependency_args jetbrains-toolbox
+    return
+  fi
+  log "==> Install via jetbrains-toolbox"
+  exe jetbrains-toolbox
 }
 # install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() {
   # exe open 'https://developer.android.com/studio'
   def_install --cask android-studio
-  create_bin_cmd
 }
 install_ubuntu() {
   not_supported
@@ -51,8 +46,33 @@ install_ubuntu() {
   # exe sudo apt-get install lib32z1
 }
 install_redhat() { not_supported; }
-setting_common() { no_settings; }
+
+setting_common() {
+  create_bin_cmd
+}
 # setting_arch() { no_settings; }
+#
+create_bin_cmd() {
+  # shellcheck disable=SC2154
+  local _dst="$HOME/bin/$app"
+  cat_bin_cmd |
+    cat_tee "$_dst"
+  exe chmod +x "$_dst"
+}
+
+cat_bin_cmd() {
+  local _cmd=$mac_cmd
+  if ! is_mac; then
+    # _cmd="$(command -v -p "$app")"
+    _cmd="$def_cmd"
+  fi
+  cat <<EOF
+#!/usr/bin/env -S bash -e
+
+nohup "$_cmd" "\$@" >&/tmp/$app.log &
+EOF
+}
+
 setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
 # setting_mac() {
