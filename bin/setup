@@ -198,26 +198,35 @@ setup_for_app() {
   ilog "=> $app"
 
   not_supported=0
+  # shellcheck disable=SC2154
+  before_dependency_args_count=${#dependency_args[@]}
   if [[ $force -eq 1 ]] || ! is_installed; then
     for_setting=0
     install_app
+    after_dependency_args_count=${#dependency_args[@]}
   fi
-  if [[ $not_supported -ne 1 ]]; then
-    if is_dry || is_installed; then
-      for_setting=1
-      setting_app
-    fi
+  if [[ $not_supported -eq 1 ]]; then
+    return
+  fi
+
+  if [[ $before_dependency_args_count -ne $after_dependency_args_count ]]; then
+    return
+  fi
+
+  if is_dry || is_installed; then
+    for_setting=1
+    setting_app
   fi
 }
 
 main_setup() {
   make_setup_dirs
   setup_args "${args[@]}"
+  # shellcheck disable=SC2154
   if [[ ${#dependency_args} -eq 0 ]]; then
     return
   fi
   log "> Start setup depencency apps.."
-  # shellcheck disable=SC2154
   setup_args "${dependency_args[@]}"
 }
 
