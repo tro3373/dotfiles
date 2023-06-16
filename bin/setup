@@ -159,30 +159,26 @@ debug_options() {
 
 install_app() {
   default_called=0
-  is_wsl && install_wsl && return
-  is_arch && install_arch && return
-  is_msys && install_msys && return
-  is_cygwin && install_cygwin && return
-  is_mac && install_mac && return
-  is_ubuntu && install_ubuntu && return
-  is_redhat && install_redhat && return
-  if [[ $default_called -eq 1 ]]; then
-    install_common
-  fi
+  is_wsl && install_wsl && test $default_called -eq 0 && return
+  is_arch && install_arch && test $default_called -eq 0 && return
+  is_msys && install_msys && test $default_called -eq 0 && return
+  is_cygwin && install_cygwin && test $default_called -eq 0 && return
+  is_mac && install_mac && test $default_called -eq 0 && return
+  is_ubuntu && install_ubuntu && test $default_called -eq 0 && return
+  is_redhat && install_redhat && test $default_called -eq 0 && return
+  install_common
 }
 
 setting_app() {
   default_called=0
-  is_wsl && setting_wsl && return
-  is_arch && setting_arch && return
-  is_msys && setting_msys && return
-  is_cygwin && setting_cygwin && return
-  is_mac && setting_mac && return
-  is_ubuntu && setting_ubuntu && return
-  is_redhat && setting_redhat && return
-  if [[ $default_called -eq 1 ]]; then
-    setting_common
-  fi
+  is_wsl && setting_wsl && test $default_called -eq 0 && return
+  is_arch && setting_arch && test $default_called -eq 0 && return
+  is_msys && setting_msys && test $default_called -eq 0 && return
+  is_cygwin && setting_cygwin && test $default_called -eq 0 && return
+  is_mac && setting_mac && test $default_called -eq 0 && return
+  is_ubuntu && setting_ubuntu && test $default_called -eq 0 && return
+  is_redhat && setting_redhat && test $default_called -eq 0 && return
+  setting_common
 }
 
 not_supported() {
