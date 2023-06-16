@@ -154,7 +154,7 @@ tunnel_db() {
   log "==> PortForwarding $db_host:$r_port to localhost:$l_port via $remote.. Press Ctrl+C to exit"
   log
   # shellcheck disable=SC2154
-  ssh -g -N -L "$l_port":"$db_host":"$r_port" ssm-user@"$remote" -p 2222 -i "$key" -oStrictHostKeyChecking=no -oServerAliveInterval=30
+  ssh -g -N -L "$l_port":"$db_host":"$r_port" ssm-user@"$remote" -p 2222 -i "$key" -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -oServerAliveInterval=30
 }
 
 start_ssm_session() {
