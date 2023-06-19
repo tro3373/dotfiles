@@ -29,6 +29,9 @@ install_arch() {
 create_bin_cmd() {
   # shellcheck disable=SC2154
   local _dst="$HOME/bin/$app"
+  if [[ -e $_dst ]]; then
+    return
+  fi
   cat_bin_cmd |
     cat_tee "$_dst"
   exe chmod +x "$_dst"
