@@ -234,6 +234,9 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'hashivim/vim-terraform'                             " Terraform syntax
   Plug 'posva/vim-vue'                                      " vue syntax
   Plug 'mindriot101/vim-yapf'                               " for python
+  if has('python3')
+    Plug 'davidhalter/jedi-vim'                               " for python completion
+  endif
   Plug 'cohama/vim-smartinput-endwise'                      " for ruby (end 補完)
   Plug 'digitaltoad/vim-pug'                                " pug
   Plug 'dart-lang/dart-vim-plugin'                          " dart
