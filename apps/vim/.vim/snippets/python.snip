@@ -40,3 +40,19 @@ options	head
 
 	if __name__ == '__main__':
 		${0:pass}
+
+snippet	classmethoddd
+	@classmethod
+	def ${1:method_name}(cls, ${2:arg}):
+		${0:pass}
+
+snippet	expand_argssss
+	def expand_args(*args):
+		print(args)
+	expand_args(1, 2, 3) # (1, 2, 3)
+
+snippet	expand_keyword_argssss
+	def expand_args(**kwargs):
+		print(kwargs)
+	expand_args(foo="bar", baz="baz") # {'foo': 'bar', 'baz': 'baz'}
+
