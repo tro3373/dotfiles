@@ -168,6 +168,7 @@ call plug#begin('$HOME/.vim/plugged')
     Plug 'github/copilot.vim'
 
     Plug 'dense-analysis/ale'                                 " 構文解析(非同期)
+    Plug 'maximbaz/lightline-ale'                             " ALE indicator for the lightline vim plugin.
     Plug 'editorconfig/editorconfig-vim'                      " Official editorconfig
     Plug 'mattn/sonictemplate-vim'
 

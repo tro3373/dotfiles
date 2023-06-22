@@ -34,7 +34,7 @@ let g:ale_echo_msg_info_str = 'I'
 let g:ale_echo_msg_error_str = 'E'
 let g:ale_echo_msg_warning_str = 'W'
 " let g:ale_echo_msg_format = '[%linter%] [%severity%] %code: %%s'
-let g:ale_echo_msg_format = '[ALE:%linter%] %code: %%s'
+let g:ale_echo_msg_format = '[ALE:%linter%] [%severity%] [%code]: %%s'
 
 
 " ローカルの設定ファイルを考慮する

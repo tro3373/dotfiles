@@ -55,9 +55,13 @@ command! LspDebug let lsp_log_verbose=1 | let lsp_log_file = expand('$HOME/vim_l
 command! LspDebugAsyncComplete let g:asyncomplete_log_file = expand('$HOME/vim_asyncomplete.log')
 
 " let g:lsp_signs_enabled = 1
+" let g:lsp_signs_information = {'text': 'i'}
 " let g:lsp_signs_error = {'text': '✗'}
-" let g:lsp_signs_warning = {'text': '‼', 'icon': '/path/to/some/icon'}
+" let g:lsp_signs_warning = {'text': '‼'}
+" let g:lsp_signs_hint = {'text': 'H'}
 " let g:lsp_signs_hint = {'text': 'h', 'icon': '/path/to/some/other/icon'}
+
+" let g:lsp_diagnostics_virtual_text_enabled = 0 " 行末にエラー表示するかどうか
 
 let g:lsp_diagnostics_enabled = 1           " ファイルの変更に伴いリアルタイムにエラー表示
 let g:lsp_diagnostics_echo_cursor = 1       " enable echo under cursor when in normal mode
@@ -206,7 +210,7 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
 " Color scheme settings
 " set termguicolors
 
-hi LspErrorHighlight         guifg=White guibg=DarkRed
+" hi LspErrorHighlight         guifg=White guibg=DarkRed
 hi LspWarningHighlight       guifg=Black guibg=DarkOrange
 hi LspInformationHighlight   guifg=White guibg=#87afd7
 hi LspHintHighlight          guifg=White guibg=Green
