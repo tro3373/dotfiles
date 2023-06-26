@@ -1,0 +1,27 @@
+#!/usr/bin/env -S bash -e
+
+# [bash - How to exclude files from list - Stack Overflow](https://stackoverflow.com/questions/65666990/how-to-exclude-files-from-list)
+# > find /20210111/ -type f -iname '*.zip' -print0 \
+# | grep -zvFf Exclude.list - \
+# | xargs -0 rm
+excludes() {
+  cat <"$1" |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      printf '|grep -vF "%s"' "$line"
+    done
+}
+main() {
+  if [[ ! -p /dev/stdin ]]; then
+    echo "No stdin" >&2
+    exit 1
+  fi
+  if [[ $# -ne 1 || ! -e $1 ]]; then
+    echo "Specify exclude files" >&2
+    exit 1
+  fi
+  cmd=$(eval 'echo "cat - $(excludes "$1")"')
+  eval "$cmd"
+}
+main "$@"
