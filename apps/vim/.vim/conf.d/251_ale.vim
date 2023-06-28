@@ -25,8 +25,6 @@ highlight clear ALEErrorSign
 highlight clear ALEWarningSign
 " ALE completion
 let g:ale_completion_enabled = 1
-
-
 " シンボル変更
 let g:ale_sign_error = '!!'
 let g:ale_sign_warning = '=='
@@ -35,48 +33,21 @@ let g:ale_echo_msg_error_str = 'E'
 let g:ale_echo_msg_warning_str = 'W'
 " let g:ale_echo_msg_format = '[%linter%] [%severity%] %code: %%s'
 let g:ale_echo_msg_format = '[ALE:%linter%] [%severity%] [%code]: %%s'
-
-
 " ローカルの設定ファイルを考慮する
 let g:ale_javascript_prettier_use_local_config = 1
 
-let g:ale_go_gofmt_options = '-s'
-let g:ale_go_gometalinter_options = '--enable=gosimple --enable=staticcheck'
-
-" Ignore shellcheck error
-let g:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162'
-" shfmt see .editorconfig?(not working... so specify option)
-let g:ale_sh_shfmt_options = '-i 2 -ci -s'
-
-" let g:ale_python_flake8_options = '--ignore=E501,E402,F401,E701' " ignore long-lines, import on top of the file, unused modules and statement with colon
-" let g:ale_python_autopep8_options = '--ignore=E501'              " ignore long-lines for autopep8 fixer
-
-" let g:ale_linters = {
-"\   'javascript': ['eslint'],
-"\   'shell': ['shellcheck'],
-"\   'java': [],
-"\   'python': ['flake8'],
-"\}                                " 特定の言語のみチェック
-"\   'java': [],
+" Linter
 let g:ale_linters = {}
 let g:ale_linters['javascript'] = ['eslint']
 let g:ale_linters['typescript'] = ['eslint']
 let g:ale_linters['shell'] = ['shellcheck']
 let g:ale_linters['java'] = []
-let g:ale_linters['python'] = ['flake8']
+let g:ale_linters['python'] = ['black', 'flake8']
 let g:ale_linters['go'] = ['gometalinter', 'gobuild']
 let g:ale_linters['vue'] = ['eslint']
 let g:ale_linters['json'] = ['jsonlint']
 
-
-" function! MyShellCheckFixer(buffer) abort
-"   " 'command': 'shellcheck -f diff %s |patch -p1'
-"   return {
-"\   'command': 'shellcheck -f diff %s | (cd / && patch -p1 >&/dev/null)',
-"\}
-" endfunction
-" execute ale#fix#registry#Add('shellcheck_fixer', 'MyShellCheckFixer', ['shell'], 'shellcheck fixer for shell')
-
+" Fixer
 let g:ale_fixers = {}
 " let g:ale_fixers['*']          = ['trim_whitespace', 'remove_trailing_lines']
 let g:ale_fixers['(?!markdown)'] = ['trim_whitespace', 'remove_trailing_lines']
@@ -92,7 +63,9 @@ let g:ale_fixers['stylus']     = ['stylelint']
 let g:ale_fixers['c']          = ['clang-format']
 let g:ale_fixers['cpp']        = ['clang-format']
 let g:ale_fixers['rust']       = ['rustfmt']
-let g:ale_fixers['python']     = ['autopep8', 'yapf', 'isort']
+" let g:ale_fixers['python']     = ['autopep8', 'yapf', 'isort']
+" let g:ale_fixers['python']     = ['autoflake', 'black', 'isort']
+" let g:ale_fixers['python']     = [ { buffer -> {'command': 'command -v task >&/dev/null && task fix'} } ]
 let g:ale_fixers['zsh']        = ['shfmt']
 let g:ale_fixers['sh']         = ['shfmt']
 let g:ale_fixers['go']         = ['gofmt', 'goimports']
@@ -101,13 +74,51 @@ let g:ale_fixers['go']         = ['gofmt', 'goimports']
 " let g:ale_fixers['java']       = ['google_java_format']
 let g:ale_fixers['java']       = [ { buffer -> {'command': 'command -v google-java-format>&/dev/null && google-java-format -a %s'} } ]
 " let g:ale_fixers['dart']       = ['dart']
-let g:ale_fixers['sql']       = [ { buffer -> {'command': 'command -v sql-formatter >&/dev/null && sql-formatter --config ~/.dot/apps/sql-formatter/config.json'} } ]
+let g:ale_fixers['sql']        = [ { buffer -> {'command': 'command -v sql-formatter >&/dev/null && sql-formatter --config ~/.dot/apps/sql-formatter/config.json'} } ]
+" function! MyShellCheckFixer(buffer) abort
+"   " 'command': 'shellcheck -f diff %s |patch -p1'
+"   return {
+"\   'command': 'shellcheck -f diff %s | (cd / && patch -p1 >&/dev/null)',
+"\}
+" endfunction
+" execute ale#fix#registry#Add('shellcheck_fixer', 'MyShellCheckFixer', ['shell'], 'shellcheck fixer for shell')
+
+
+" 各言語毎のオプション設定
+" Go
+let g:ale_go_gofmt_options = '-s'
+let g:ale_go_gometalinter_options = '--enable=gosimple --enable=staticcheck'
+" Shell
+let g:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162' " Ignore shellcheck error
+let g:ale_sh_shfmt_options = '-i 2 -ci -s' " shfmt see .editorconfig?(not working... so specify option)
+" Python
+" let g:ale_python_flake8_options = '--ignore=E501,E402,F401,E701' " ignore long-lines, import on top of the file, unused modules and statement with colon
+" let g:ale_python_autopep8_options = '--ignore=E501'              " ignore long-lines for autopep8 fixer
+let g:ale_python_flake8_options = '--max-line-length=120'
+" let g:ale_python_autopep8_options = ''
+" let g:ale_python_isort_options = ''
+" let g:ale_python_black_options = ''
+
+
 
 " let g:ale_fix_on_save_ignore = ['sh', 'javascript']
 " let g:ale_fix_on_save_ignore = ['markdown', 'javascript']
 " let g:ale_fix_on_save_ignore = ['vue']
 
 
+"" Disable for minified code and enable whitespace trimming
+let g:ale_pattern_options = {
+\   '\.min\.js$': {'ale_linters': [], 'ale_fixers': []},
+\   '\.min\.css$': {'ale_linters': [], 'ale_fixers': []},
+\}
+"\ 'pattern': {'ale_linters': [], 'ale_fixers': []},
+"\ '\.*': {'ale_fixers': ['trim_whitespace', 'remove_trailing_lines']}}
+
+" @see more https://wonderwall.hatenablog.com/entry/2017/03/01/223934
+" @see more https://git.redbrick.dcu.ie/butlerx/dotfiles/src/commit/a2a016568fe534242589dbd9e476db8861d2f592/vimrc.d/ale.vim
+
+
+" Mapping
 " Ctrl k+j でエラー間移動
 " nmap <silent> <C-k> <Plug>(ale_previous_wrap)
 " nmap <silent> <C-j> <Plug>(ale_next_wrap)
@@ -131,13 +142,3 @@ nmap <silent> <M-j> <Plug>(ale_next_wrap)
 " if dein#tap('lightline.vim')
 "   autocmd MyAutoGroup User ALELint call lightline#update()
 " endif
-
-
-"" Disable for minified code and enable whitespace trimming
-let g:ale_pattern_options = {
-  \ '\.min\.js$': {'ale_linters': [], 'ale_fixers': []},
-  \ '\.min\.css$': {'ale_linters': [], 'ale_fixers': []}}",
-  "\ '\.*': {'ale_fixers': ['trim_whitespace', 'remove_trailing_lines']}}
-
-" @see more https://wonderwall.hatenablog.com/entry/2017/03/01/223934
-" @see more https://git.redbrick.dcu.ie/butlerx/dotfiles/src/commit/a2a016568fe534242589dbd9e476db8861d2f592/vimrc.d/ale.vim
