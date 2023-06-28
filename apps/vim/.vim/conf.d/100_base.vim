@@ -395,3 +395,29 @@ endif
 
 " Update `lastmod` date for markdown for hugo
 autocmd BufWritePost index*.md call HugoHelperLastModIsNow()
+
+"==============================================================================
+" Read local vimrc settings
+" @see [vim-jp » Hack #112: 場所ごとに設定を用意する](https://vim-jp.org/vim-users-jp/2009/12/27/Hack-112.html)
+" @see [HiPhish's Workshop](https://hiphish.github.io/blog/2020/02/08/project-local-vim-settings-the-right-way/)
+" Load settings for each location.
+augroup vimrc-local
+  autocmd!
+  " autocmd BufNewFile,BufReadPost * call s:vimrc_local(expand('<afile>:p:h'))
+  autocmd BufNewFile,BufReadPost * call s:vimrc_local()
+augroup END
+function! s:vimrc_local()
+  let l:rc = getcwd() . '/.vimrc.local'
+  if ! filereadable(l:rc)
+    return
+  endif
+  let l:rc_yes = l:rc . '.yes'
+  if filereadable(l:rc_yes) || input('Do you wish to load ' . l:rc . ' ? (Input yes)') == 'yes'
+    if ! filereadable(l:rc_yes)
+      execute system('touch ' . l:rc_yes)
+      echo 'Touched ' . l:rc_yes
+    endif
+    " source `=l:rc`
+    execute 'source' l:rc
+  endif
+endfunction
