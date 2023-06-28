@@ -7,10 +7,11 @@ install_common() {
   fi
   exe sudo -E pip install flake8 hacking flake8-import-order flake8-docstrings pep8-naming flake8-double-quotes yapf isort
 }
-install_msys()   { not_supported; }
-setting_common() {
-  # shellcheck disable=SC2154
-  make_lnk_with_bkup "$app_dir/flake8" "$HOME/.config/flake8"
-}
-setting_msys()   { no_settings; }
-
+install_msys() { not_supported; }
+# XDG config file not supppored
+# [Drop support for Home and XDG config files by sigmavirus24 · Pull Request #1404 · PyCQA/flake8](https://github.com/pycqa/flake8/pull/1404)
+# setting_common() {
+#   # shellcheck disable=SC2154
+#   make_lnk_with_bkup "$app_dir/flake8" "$HOME/.config/flake8"
+# }
+setting_msys() { no_settings; }
