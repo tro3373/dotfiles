@@ -236,7 +236,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'mindriot101/vim-yapf'                               " for python
   " NOTE: So slow `has('python3')`
   " if has('python3')
-  Plug 'davidhalter/jedi-vim'                               " for python completion
+  " Plug 'davidhalter/jedi-vim'                               " for python completion
   " endif
   Plug 'cohama/vim-smartinput-endwise'                      " for ruby (end 補完)
   Plug 'digitaltoad/vim-pug'                                " pug
