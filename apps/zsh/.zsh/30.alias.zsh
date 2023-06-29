@@ -336,3 +336,9 @@ rm_cache() {
 fpath() {
   echo "${fpath[@]}" | tr ' ' '\n'
 }
+
+insert-date() {
+  LBUFFER+=$(date +%Y%m%d)
+}
+zle -N insert-date
+bindkey '^;' insert-date
