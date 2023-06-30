@@ -560,6 +560,7 @@ command! TestScript call TestScript()
 
 " JavaBean クラス定義項目リスト化
 function! JavaBeanToList() abort
+  call CloneBufferToNewTab()
   if executable('sed')
     " 全行格納
     let lines = getline(1,"$")
@@ -579,6 +580,13 @@ function! JavaBeanToList() abort
   call Strip(3)
 endfun
 command! JavaBeanToList call JavaBeanToList()
+
+function! CloneBufferToNewTab()
+  normal! ggVGy
+  tabnew
+  normal! ggP
+endfunction
+command! CloneBufferToNewTab call CloneBufferToNewTab()
 
 " Table
 function! Table() abort

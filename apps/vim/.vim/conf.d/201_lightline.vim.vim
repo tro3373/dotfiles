@@ -23,7 +23,7 @@ let g:lightline = {
 \     'right': [
 \       ['lineinfo', 'syntastic'],
 \       ['percent'],
-\       ['fileformat', 'fileencoding', 'filetype'],
+\       ['filetype', 'fileencoding', 'fileformat'],
 \       ['lsp_errors', 'lsp_warnings', 'lsp_ok', 'linter_checking', 'linter_errors', 'linter_warnings', 'linter_infos', 'linter_ok'],
 \     ]
 \   },
