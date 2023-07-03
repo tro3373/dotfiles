@@ -286,3 +286,6 @@ nnoremap <Leader>d :diffthis<CR>
 
 " Remove search highlight
 nmap <Leader><Enter> :%s///g<CR>
+" 検索結果を置換する際のショートカット(:s+Space)
+" see Vim での一括置換を楽に行う裏技 https://zenn.dev/vim_jp/articles/2023-06-30-vim-substitute-tips
+cnoreabbrev <expr> s getcmdtype() .. getcmdline() ==# ':s' ? [getchar(), ''][1] .. "%s///g<Left><Left>" : 's'

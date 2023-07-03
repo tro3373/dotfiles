@@ -421,3 +421,19 @@ function! s:vimrc_local()
     execute 'source' l:rc
   endif
 endfunction
+
+"==============================================================================
+" SQL auto uppercase
+augroup sql-auto-uppercase
+  autocmd!
+  autocmd FileType sql iabbrev <buffer> select SELECT
+  autocmd FileType sql iabbrev <buffer> update UPDATE
+  autocmd FileType sql iabbrev <buffer> delete DELETE
+  autocmd FileType sql iabbrev <buffer> from FROM
+  autocmd FileType sql iabbrev <buffer> where WHERE
+  autocmd FileType sql iabbrev <buffer> order ORDER
+  autocmd FileType sql iabbrev <buffer> by BY
+  autocmd FileType sql iabbrev <buffer> join JOIN
+  autocmd FileType sql iabbrev <buffer> on ON
+  autocmd FileType sql iabbrev <buffer> set SET
+augroup END
