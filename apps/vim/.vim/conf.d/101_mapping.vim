@@ -283,3 +283,6 @@ map <silent> qn :!open %:h>&/dev/null<ENTER>
 
 " diffthis
 nnoremap <Leader>d :diffthis<CR>
+
+" Remove search highlight
+nmap <Leader><Enter> :%s///g<CR>
