@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 exclude_branches='develop|master|release|integration|staging|^origin$'
+preview_opt="git log --color=always --graph --pretty=format:'%Cred%h %Cgreen(%cd)%Creset -%C(yellow)%d%Creset %s %C(bold blue)<%an>%Creset' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S' {}"
 dummy="echo"
 initialize() {
   for arg in "$@"; do
@@ -16,24 +17,37 @@ exe() {
   [[ -n $dummy ]] && return
   eval "$*"
 }
+# clean_local() {
+#   git branch --format '%(refname:short)' --merged |
+#     grep -v -E "$exclude_branches" |
+#     while read -r branch; do
+#       [[ -z $branch ]] && continue
+#       [[ $branch =~ ^#.* ]] && continue
+#       exe git branch -d "$branch"
+#     done
+# }
 clean_local() {
   git branch --format '%(refname:short)' --merged |
     grep -v -E "$exclude_branches" |
+    fzf -m \
+      --preview "$preview_opt" \
+      --preview-window=down,border-top,60% \
+      --exit-0 \
+      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' |
     while read -r branch; do
       [[ -z $branch ]] && continue
       [[ $branch =~ ^#.* ]] && continue
       exe git branch -d "$branch"
     done
 }
-clean_local_remote() {
+fetch_deleted_remote() {
   exe git fetch --prune # 削除されたリモートブランチをローカルでも削除
 }
 clean_remote() {
-  local preview="git log --color=always --graph --pretty=format:'%Cred%h %Cgreen(%cd)%Creset -%C(yellow)%d%Creset %s %C(bold blue)<%an>%Creset' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S' {}"
   git branch --format '%(refname:short)' -r --merged |
     grep -v -E "$exclude_branches" |
     fzf -m \
-      --preview "$preview" \
+      --preview "$preview_opt" \
       --preview-window=down,border-top,60% \
       --exit-0 \
       --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' |
@@ -45,9 +59,9 @@ clean_remote() {
 }
 main() {
   initialize "$@"
+  fetch_deleted_remote
   clean_local
-  clean_local_remote
-  clean_remote
+  # clean_remote
   [[ -n $dummy ]] && echo "This is dummy mode. specify -e option." 1>&2
 }
 main "$@"
