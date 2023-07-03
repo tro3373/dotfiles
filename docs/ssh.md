@@ -1,5 +1,15 @@
 # SSH use cli tips.
 
+## SSHコンテキスト中の `~`
+
+`~` をタイプすることでローカルPC側でコマンド実施する為のエスケープ文字(`~` はエスケープ文字)の動作となる
+
+- 注意点としては、新しい行の最初に入力する必要がある。
+  またはSSHセッションが他のプログラムに制御を渡している時（エディタなど）には機能しない
+- `~Ctrl+Z`: SSHセッション一時停止
+- `~Ctrl+.`: SSHセッション終了
+- `~C`: 新しいSSHセッション開始
+
 ## Compressed file transfer
 ```sh
 tar czf - /home/localuser/filefolder | ssh remote-machine@ip.address.of.remote.machine tar -xvzf -C /home/remoteuser/
