@@ -57,6 +57,7 @@ git config --global color.ui auto
 git config --global http.sslverify false
 git config --global push.default simple
 git config --global pull.rebase true
+git config --global fetch.prune true
 git config --global --add merge.ff false
 git config --global rebase.autostash true
 git config --global init.defaultbranch main
