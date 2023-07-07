@@ -7,7 +7,7 @@ install_arch() {
 
 setup_username() {
   log "@@@@@ Input Your Git user.name"
-  read gitusername
+  read -r gitusername
   if [ ! "$gitusername" = "" ]; then
     exe git config --global user.name "$gitusername"
   else
@@ -17,7 +17,7 @@ setup_username() {
 
 setup_email() {
   log "@@@@@ Input Your Git user.email"
-  read gituseremail
+  read -r gituseremail
   if [ ! "$gituseremail" = "" ]; then
     exe git config --global user.email "$gituseremail"
   else
@@ -83,15 +83,15 @@ EOF
 
 setting_common() {
   # shellcheck disable=SC2154
-  make_link_dot2home $app_dir
-  local usrn=0
-  local mail=0
-  local list="$(git config --list --global 2>/dev/null)"
+  make_link_dot2home "$app_dir"
+  local usrn=0 mail=0 list
+  list="$(git config --list --global 2>/dev/null)"
   while read -r line; do
     [[ -z $line ]] && continue
     [[ $line =~ ^#.* ]] && continue
 
-    local key=$(echo "$line" | sed -e 's,^.\+global ,,g' -e 's,--add ,,g' -e 's, .\+,,g')
+    local key
+    key=$(echo "$line" | sed -e 's,^.\+global ,,g' -e 's,--add ,,g' -e 's, .\+,,g')
     # echo "$(printf "% -20s" $key) <== $line"
     if echo -e "$list" | grep "$key=" >&/dev/null; then
       # already configed.
@@ -134,7 +134,7 @@ setting_msys() {
   setting_common
   [[ -e $HOME/win/.gitconfig ]] && return
   # for gitbash/scoop
-  make_link $HOME/.gitconfig $HOME/win/.gitconfig
+  make_link "$HOME"/.gitconfig "$HOME"/win/.gitconfig
 }
 
 # setting_common() {
