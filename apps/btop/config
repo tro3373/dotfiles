@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+_get_latest_url() {
+  local _latest_tag _arch
+  _latest_tag=$(github_latest_release_tag aristocratos/btop)
+  _arch=$(uname -m)
+  echo "https://github.com/aristocratos/btop/releases/download/$_latest_tag/btop-${_arch}-linux-musl.tbz"
+}
+
+install_common() {
+  local _url
+  _url=$(_get_latest_url)
+  dl_untar "$_url" #/usr/local/bin
+  exe cd btop-"$(uname -m)"-linux-musl/btop
+  exe sudo make install
+  # make_link_dot2home "$HOME/.local/bin/btop"
+}
+# install_wsl() { not_supported; }
+# install_arch() { }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() {
+  install_via_os_default
+}
+# install_ubuntu() { not_supported; }
+# install_redhat() { not_supported; }
+
+# setting_common() { no_settings; }
+# setting_wsl() { no_settings; }
+# setting_arch() { no_settings; }
+# setting_msys() { no_settings; }
+# setting_cygwin() { no_settings; }
+# setting_mac() { no_settings; }
+# setting_ubuntu() { no_settings; }
+# setting_redhat() { no_settings; }
