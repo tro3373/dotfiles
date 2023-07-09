@@ -4,7 +4,7 @@ asdf_d=$HOME/.asdf
 is_installed() { test -e "$asdf_d"; }
 install_common() {
   local _latest_tag
-  _latest_tag=$(_github_latest_release_tag asdf-vm/asdf)
+  _latest_tag=$(github_latest_release_tag asdf-vm/asdf)
   exe git clone "https://github.com/asdf-vm/asdf.git" "$asdf_d" --branch "$_latest_tag"
 }
 # install_wsl() { not_supported; }

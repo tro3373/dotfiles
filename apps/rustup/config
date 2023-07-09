@@ -6,7 +6,7 @@ _install_common() {
   exe 'export PATH="$HOME/.cargo/bin:$PATH'
   # exe cargo install cargo-binstall
   local _latest_tag=v0.22.0
-  # _latest_tag=$(_github_latest_release_tag cargo-bins/cargo-binstall)
+  # _latest_tag=$(github_latest_release_tag cargo-bins/cargo-binstall)
   exe cargo install cargo-binstall --git https://github.com/cargo-bins/cargo-binstall.git --tag "$_latest_tag"
 }
 install_wsl() { not_supported; }
