@@ -472,14 +472,15 @@ is_empty_dir() {
   test "$_count" -eq 1
 }
 dl_untar() {
-  local url="$1"
-  local _fname="${url##*/}"
-  local dst="${2:-$workdir/${_fname%%.*}}"
-  local _sudo=""
+  local url dst strip _fname _sudo _tar_opts
+  url="$1"
+  _fname="${url##*/}"
+  dst="${2:-$workdir/${_fname%%.*}}"
+  _sudo=""
   if ! is_win && [[ $dst =~ /usr/local/?.* ]]; then
     _sudo="sudo"
   fi
-  local strip=${3:-1}
+  strip=${3:-1}
   [[ -z $_fname ]] && _fname=dl.tgz
   cd_work
   dl "$url" "$_fname"
@@ -487,7 +488,16 @@ dl_untar() {
     exe $_sudo mkdir -p "$dst"
   fi
   if is_empty_dir "$dst"; then
-    exe "$_sudo tar xvfpz $_fname -C \"$dst\" --strip-components $strip"
+    _tar_opts=xvfpz
+    [[ $_fname =~ \.tbz$ ]] && _tar_opts=xvfpj
+    # [[ $_fname =~ \.tgz$ ]] && _tar_opts=xvfpz
+    # [[ $_fname =~ \.tar$ ]] && _tar_opts=xvf
+    # [[ $_fname =~ \.tar\.gz$ ]] && _tar_opts=xvfpz
+    # [[ $_fname =~ \.tar\.bz2$ ]] && _tar_opts=xvjfp
+    # [[ $_fname =~ \.tar\.xz$ ]] && _tar_opts=xvJfp
+    # [[ $_fname =~ \.tar\.Z$ ]] && _tar_opts=xvZfp
+    # [[ $_fname =~ \.zip$ ]] && _tar_opts=xvfp
+    exe "$_sudo tar $_tar_opts $_fname -C \"$dst\" --strip-components $strip"
   fi
 }
 dl_unzip() {
