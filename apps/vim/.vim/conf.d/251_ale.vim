@@ -106,10 +106,12 @@ let g:ale_python_flake8_options = '--max-line-length=120'
 " let g:ale_fix_on_save_ignore = ['vue']
 
 
-"" Disable for minified code and enable whitespace trimming
+" Disable for minified code and enable whitespace trimming
+" Disable md linter because so slow.
 let g:ale_pattern_options = {
 \   '\.min\.js$': {'ale_linters': [], 'ale_fixers': []},
 \   '\.min\.css$': {'ale_linters': [], 'ale_fixers': []},
+\   'md$': {'ale_linters': []},
 \}
 "\ 'pattern': {'ale_linters': [], 'ale_fixers': []},
 "\ '\.*': {'ale_fixers': ['trim_whitespace', 'remove_trailing_lines']}}
