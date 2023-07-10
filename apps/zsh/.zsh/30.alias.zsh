@@ -100,6 +100,7 @@ alias j="jobs -l"
 alias g="git"
 alias d="docker"
 alias s="systemctl"
+alias m="make"
 alias cddot="cd $DOTPATH"
 alias history="history -i"
 if has speedtest; then
