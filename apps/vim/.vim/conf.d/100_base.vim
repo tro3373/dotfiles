@@ -123,9 +123,20 @@ set cindent
 set autoindent
 " 賢いインデント
 set smartindent
-"フォーマット揃えをコメント以外有効にする
-set formatoptions-=c
-" setglobal formatoptions+=mb
+" 改行時にコメントを続けるか等の自動整形オプション
+" ex) formatoptions-=c
+"     - jcroql (in java,vim)
+"     - tqj (in python)
+" c: (textwidth の値を超える)長いコメント行を入力した場合に自動で改行
+" t: (textwidth の値を超える)長いテキスト行を入力した場合に自動で改行
+" l: インサートモード時(textwidth の値を超える)長い行入力中に改行しない
+" r: Enter 入力時にコメントリーダーを挿入する。
+" o: o あるいは O で行を挿入した場合にコメントリーダーを挿入する。
+" j: 結合時にコメントリーダーを削除する
+" q: gq コマンドで選択部分をコメント整形する。
+" set formatoptions-=c
+" " setglobal formatoptions+=mb
+set formatoptions=jcroql
 
 " ts  = tabstop     ファイル中の<TAB>を見た目x文字に展開する(既に存在する<TAB>の見た目の設定)
 " sts = softtabstop TABキーを押した際に挿入される空白の量を設定
