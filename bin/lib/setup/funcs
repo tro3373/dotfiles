@@ -355,7 +355,7 @@ set_brew_installed_pkgs_if_needed() {
   if ! is_mac || ! has brew || test -n "$_brew_installed_pkgs"; then
     return
   fi
-  _brew_installed_pkgs=$(brew list -1 | grep -v '==')
+  _brew_installed_pkgs=$(brew list -1 | grep -v '==' || :)
 }
 make_work_if_needed() {
   make_dir_if_needed "$workdir"
