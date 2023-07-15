@@ -165,12 +165,12 @@ improve_pacman_millerlist() {
 
 setup_pac_key() {
   # システムに必要な鍵リングと、その鍵の一部を取得するためのサーバーの設定初期化
-  exe pacman-key --init
+  exe sudo pacman-key --init
   local populate_key=archlinux
   is_arm && populate_key=archlinuxarm
   # Pacmanのキーリングを初期化
   # Pacmanが使用する公開鍵の一覧をリポジトリから取得し、ローカルの鍵リングに追加
-  exe pacman-key --populate $populate_key
+  exe sudo pacman-key --populate $populate_key
 }
 
 setup_gnupg_keyserver_settings() {
