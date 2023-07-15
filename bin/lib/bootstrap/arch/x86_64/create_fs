@@ -27,7 +27,7 @@ setup_network_for_live() {
 }
 
 setup_timedate_for_live() {
-  timedatectl set-ntp true
+  sudo timedatectl set-ntp true
   date
   # Thu Jan 27 09:27:47 PM UTC 2022
 }

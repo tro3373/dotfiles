@@ -6,7 +6,7 @@ is_installed() {
 
 install_common() { not_supported; }
 install_arch() {
-  exe timedatectl set-ntp true
+  exe sudo timedatectl set-ntp true
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
