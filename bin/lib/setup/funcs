@@ -6,10 +6,10 @@ _timestamp=$(date +%Y%m%d.%H%M%S) && readonly _timestamp
 readonly _core_apps=(
   git ssh tig curl bc tree tmux fzf zsh vim rg ctags
 )
-# ag pt anyenv
+# ag pt anyenv nkf
 readonly _core_apps_additional=(
   go cargo asdf lsof neofetch netcat nvim nvr mmv gomi ghq shellcheck shfmt
-  htop hub exa bat sheldon goimports gosec nkf
+  htop hub exa bat sheldon goimports gosec
 )
 readonly _core_apps_additional_arch=(
   yay
