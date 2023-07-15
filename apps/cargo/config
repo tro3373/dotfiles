@@ -2,8 +2,10 @@
 
 install_common() { not_supported; }
 _install_common() {
-  # shellcheck disable=SC2016
-  exe 'export PATH="$HOME/.cargo/bin:$PATH'
+  if ! is_dry; then
+    export PATH="$HOME/.cargo/bin:$PATH"
+  fi
+
   # exe cargo install cargo-binstall
   local _latest_tag=v0.22.0
   # _latest_tag=$(github_latest_release_tag cargo-bins/cargo-binstall)
