@@ -620,12 +620,12 @@ clone_dot() {
 
 default_apps() {
   local _apps=()
+  if is_arch; then
+    _apps+=("${_core_apps_additional_arch[@]}")
+  fi
   _apps+=("${_core_apps[@]}")
   if [[ $minimal -ne 1 ]]; then
     _apps+=("${_core_apps_additional[@]}")
-  fi
-  if is_arch; then
-    _apps+=("${_core_apps_additional_arch[@]}")
   fi
   echo "${_apps[@]}"
 }
