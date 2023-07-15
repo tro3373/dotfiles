@@ -11,7 +11,7 @@ pre_setup() {
 
   improve_pacman_millerlist
   #  setup_pac_key
-  setup_gnupg refresh
+  setup_gnupg norefresh
   setup_gnupg_keyserver_settings "$HOME"
   improve_pacman_conf
   improve_pacman_aria2
