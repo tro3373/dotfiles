@@ -6,13 +6,11 @@ source "$_script_dir/../funcs_arch"
 
 pre_setup() {
   log "=> pre setting up"
-  # setup_keyboard
-
   setup_timezone
   setup_locale
 
   improve_pacman_millerlist
-  setup_pac_key
+  #  setup_pac_key
   setup_gnupg refresh
   setup_gnupg_keyserver_settings "$HOME"
   improve_pacman_conf
