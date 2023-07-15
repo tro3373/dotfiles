@@ -194,12 +194,12 @@ setup_gnupg_keyserver_settings() {
 setup_gnupg() {
   local keyring=archlinux-keyring
   is_arm && keyring=archlinuxarm-keyring
-  exe pacman -Sy --noconfirm gnupg $keyring
+  exe sudo pacman -Sy --noconfirm gnupg $keyring
   [[ $1 == norefresh ]] && return
-  exe rm -f /var/lib/pacman/sync/*
+  exe sudo rm -f /var/lib/pacman/sync/*
   # exe pacman-mirrors --continent Japan
-  exe pacman -Syyu
-  exe pacman-key --refresh-keys --keyserver $key_server
+  exe sudo pacman -Syyu
+  exe sudo pacman-key --refresh-keys --keyserver $key_server
 }
 
 # refresh_pacman_keys() {
@@ -209,11 +209,11 @@ setup_gnupg() {
 # }
 
 update_and_add_pacman_packages() {
-  exe pacman -Syyu --noconfirm
+  exe sudo pacman -Syyu --noconfirm
   if [[ $# -ne 0 ]]; then
-    exe pacman -S "$@" --noconfirm
+    exe sudo pacman -S "$@" --noconfirm
   fi
-  exe pacman -Sc --noconfirm # delete all packages that not installed
+  exe sudo pacman -Sc --noconfirm # delete all packages that not installed
 }
 
 improve_pacman_conf() {
