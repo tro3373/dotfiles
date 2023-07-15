@@ -3,6 +3,10 @@
 install_common() { not_supported; }
 install_wsl() { not_supported; }
 install_arch() {
+  if ! has cargo; then
+    add_dependency_args cargo
+    return
+  fi
   # not_supported;
   github https://github.com/neovide/neovide
   exe cd neovide

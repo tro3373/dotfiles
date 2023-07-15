@@ -2,7 +2,7 @@
 
 install_common() {
   if ! has cargo; then
-    log "cargo not installed."
+    add_dependency_args cargo
     return
   fi
   # exe cargo binstall sheldon
