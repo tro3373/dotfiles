@@ -754,6 +754,8 @@ function! PasteImage() abort
     return
   endif
   let dstf = Chomp(system('paste_img -d ' . expand('%:p:h')))
+  let filename = fnamemodify(dstf, ":t") " :t 指定でファイル名のみを取得
+  call append('.', '!['..filename..']('..filename..')')
   echo "==> " . dstf . " generated."
 endfunction
 command! PasteImage call PasteImage()
