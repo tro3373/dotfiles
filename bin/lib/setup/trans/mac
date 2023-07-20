@@ -14,7 +14,7 @@ _setup_apps() {
   # MEMO:
   #   with-default-names: (No prefix `g` command install option) is no more exists!
   #   handl by path priority
-  def_install bash git lua vim wget gpg jq
+  def_install bash git lua vim wget gpg jq gcc
   def_install grep gawk gzip gnu-sed gnu-tar gnu-indent gnu-which gnu-time gnu-getopt
   def_install binutils coreutils diffutils findutils moreutils iproute2mac
 
@@ -170,33 +170,28 @@ _setup_gui_apps() {
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   Do below
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-+ 1. (SystemSettings) Change Speed of KeyRepeat
-+   - System Enviroments - キーボード - KeyRepeat to fastest
-+ 1. (SystemSettings) Change `caps lock` to `control`
-+   - System Enviroments - キーボード - キーボードショートカット - modification key - Change Caps Lock to Control(キーボード毎に設定)
-+ 1. (SystemSettings) Change KeyMap for change window of same App
-+   - System Enviroments - キーボード - キーボードショートカット - キーボード - 次のウィンドウを操作対処にする
-+ 1. (SystemSettings) F1,F2などのキーを標準のファンクションキーとして使用する
-+   - System Enviroments - キーボード - キーボードショートカット - ファンクションキー - F1,F2などのキーを標準のファンクションキーとして使用する
-+ 1. (SystemSettings) 入力ソースの切り替えショートカット
-+   - System Enviroments - キーボード - キーボードショートカット - 入力ソース - 前の入力ソースを選択、入力メニューの次のソースを選択
-+ 1. (SystemSettings) 起動時の音を消す
-+   - System Enviroments - サウンド - 起動時にサウンドを再生
-+ 1. (SystemSettings) 画面解像度
-+   - System Enviroments - Display - スペースを拡大
-+ 1. (SystemSettings) コントロールセンター
-+   - System Enviroments - コントロールセンター 以下を常に表示
-+     - Wifi,Bluetooth,AirDrop,サウンド
-+ 1. (SystemSettings) ワークスペース切り替え高速化
-+   - System Enviroments - アクセシビリティ - 視差効果を減らす にチェック
-+ 1. (SystemSettings) Disable Mission Control
-+   - System Enviroments - キーボード - キーボードショートカット - Mission Control
-+ 1. Install from App Store
-+   - BetterSnapTool
-+   - XCode
-+ 1. Install from Web
-+   - Google Chrome
-+   - Google Japanese IME
+1. キーボード設定
+  - System Enviroments - キーボード - KeyRepeat to fastest
+  - System Enviroments - キーボード - キーボードショートカット - modification key - Change Caps Lock to Control(キーボード毎に設定)
+  - System Enviroments - キーボード - キーボードショートカット - キーボード - 次のウィンドウを操作対処にする
+  - System Enviroments - キーボード - キーボードショートカット - ファンクションキー - F1,F2などのキーを標準のファンクションキーとして使用する
+  - System Enviroments - キーボード - キーボードショートカット - 入力ソース - 前の入力ソースを選択、入力メニューの次のソースを選択
+  - System Enviroments - キーボード - キーボードショートカット - スクリーンショット - 選択部分のピクチャをクリップボードにコピー - `Shift-コマンド(⌘)-S`
+1. (SystemSettings) 起動時の音を消す
+  - System Enviroments - サウンド - 起動時にサウンドを再生
+1. (SystemSettings) 画面解像度
+  - System Enviroments - Display - スペースを拡大
+1. (SystemSettings) コントロールセンター
+  - System Enviroments - コントロールセンター 以下を常に表示
+    - Wifi,Bluetooth,AirDrop,サウンド
+1. (SystemSettings) ワークスペース切り替え高速化
+  - System Enviroments - アクセシビリティ - 視差効果を減らす にチェック
+1. Install from App Store
+  - BetterSnapTool
+  - XCode
+1. Install from Web
+  - Google Chrome
+  - Google Japanese IME
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 EOF
 }

@@ -55,6 +55,16 @@ fix_dst_fnm() {
     fnm=img_$(printf "%03d" $n).$ext
   done
 }
+paste_for_mac() {
+  # macos - How to save PNG clipboard contents to file on Mac - Stack Overflow
+  # https://stackoverflow.com/questions/47142470/how-to-save-png-clipboard-contents-to-file-on-mac
+  osascript <<EOF
+set png_data to the clipboard as 束class PNGf損
+set the_file to open for access POSIX path of (POSIX file "$dst") with write permission
+write png_data to the_file
+close access the_file
+EOF
+}
 out() {
   if [[ -z $dst_rootd ]]; then
     dst_rootd=$current_dir
@@ -67,6 +77,8 @@ out() {
   dst=$dst_rootd/$dst_fnm
   dstd=$(dirname "$dst")
   [[ ! -e $dstd ]] && mkdir -p "$dstd"
+  # if [[ $(uname) == "Darwin" ]]; then
+  #   paste_for_mac
   if has gclip; then
     gclip -paste -f "$dst"
   else
