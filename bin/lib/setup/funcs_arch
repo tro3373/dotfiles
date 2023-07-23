@@ -79,18 +79,17 @@ EOF
 }
 
 setup_hostname() {
-  local _hostname="$*"
-  local target=/etc/hostname
-  if grep $_hostname $target >&/dev/null; then
+  local _hostname="$*" target=/etc/hostname _old_host
+  if grep "$_hostname" $target >&/dev/null; then
     return
   fi
-  local _old_host=$(cat </etc/hostname | head -1)
+  _old_host=$(cat </etc/hostname | head -1)
   backup $target
-  exe hostnamectl set-hostname $_hostname
+  exe hostnamectl set-hostname "$_hostname"
   exe hostnamectl
   target=/etc/hosts
   backup $target
-  if getent hosts | grep $_old_host >&/dev/null; then
+  if getent hosts | grep "$_old_host" >&/dev/null; then
     exe sed -i -e "s,$_old_host,$_hostname,g" /etc/hosts
   else
     cat_hosts | sudo_tee -a $target
@@ -237,14 +236,14 @@ improve_pacman_aria2() {
   # fast pacman install
   exe sudo pacman -S aria2 --noconfirm
   local settings_aria2c='XferCommand = /usr/bin/aria2c --allow-overwrite=true --continue=true --file-allocation=none --log-level=error --max-tries=2 --max-connection-per-server=2 --max-file-not-found=5 --min-split-size=5M --no-conf --remote-time=true --summary-interval=60 --timeout=5 --dir=/ --out %o %u'
-  exe 'sudo sed -i -e "s,^\(HoldPkg.*\),\1\n'$settings_aria2c',g" /etc/pacman.conf'
+  exe 'sudo sed -i -e "s,^\(HoldPkg.*\),\1\n'"$settings_aria2c"',g" /etc/pacman.conf'
 }
 
 create_user() {
   local _user=$1
   if [[ ! -e /home/$_user ]]; then
     log "=> Adding user $_user .."
-    exe useradd -m -G wheel $_user
+    exe useradd -m -G wheel "$_user"
   fi
   local _pass="$2"
   [[ -z $_pass ]] && return
@@ -257,12 +256,12 @@ change_passwd() {
   [[ -z $_pass ]] && elog "==> invalid args. cannot set password for user $_user" && return
   log "=> Changing user password for $_user .."
   echo -e "$_pass\n$_pass" |
-    cat_do passwd $_user
+    cat_do passwd "$_user"
 }
 
 del_user() {
   local _username=$1
-  exe userdel -r $_username
+  exe userdel -r "$_username"
 }
 
 setup_user_authorized_keys() {
@@ -273,7 +272,7 @@ setup_user_authorized_keys() {
     return
   fi
   if [[ -f $_pubkey ]]; then
-    _pubkey=$(cat <$_pubkey)
+    _pubkey=$(cat <"$_pubkey")
   fi
   local _dstd=/home/$_user/.ssh
   local _dstf=$_dstd/authorized_keys
@@ -281,16 +280,16 @@ setup_user_authorized_keys() {
     return
   fi
   if [[ ! -e $_dstd ]]; then
-    exe sudo -u $_user mkdir -p $_dstd
+    exe sudo -u "$_user" mkdir -p "$_dstd"
   fi
-  exe chmod 700 $_dstd
+  exe chmod 700 "$_dstd"
   exe "echo $_pubkey | sudo -u $_user tee $_dstf"
-  exe chmod 600 $_dstf
+  exe chmod 600 "$_dstf"
 }
 
 setup_sudoers() {
   local _user=$1
-  if grep $_user /etc/sudoers >&/dev/null; then
+  if grep "$_user" /etc/sudoers >&/dev/null; then
     return
   fi
   log "=> Setupping visudo.."
@@ -303,10 +302,10 @@ setup_login_shell() {
   local _user=$1
   log "==> setupping login shell for $_user .."
   ! has zsh && return
-  if cat </etc/passwd | grep $_user | grep zsh >&/dev/null; then
+  if cat </etc/passwd | grep "$_user" | grep zsh >&/dev/null; then
     return
   fi
-  exe sudo chsh $_user -s /usr/bin/zsh
+  exe sudo chsh "$_user" -s /usr/bin/zsh
 }
 
 cat_netctl_static() {
@@ -348,8 +347,8 @@ gen_netctl_static() {
   if [[ -z $_dnses ]]; then
     _dnses="'$_gw'"
   fi
-  backup $target
-  cat_netctl_static | cat_tee $target
+  backup "$target"
+  cat_netctl_static | cat_tee "$target"
 }
 
 cat_network_eth0() {
@@ -372,7 +371,7 @@ gen_network_eth0() {
   local _dnses=$5
   # local target=/etc/netctl/$_if
   local target=/etc/systemd/network/$_if.network
-  if [[ -e $target ]] && grep $_ip $target >&/dev/null; then
+  if [[ -e $target ]] && grep "$_ip" "$target" >&/dev/null; then
     return
   fi
   local ip_prefix=${_ip%\.*}
@@ -382,8 +381,8 @@ gen_network_eth0() {
   if [[ -z $_dnses ]]; then
     _dnses="$_gw"
   fi
-  backup $target
-  cat_network_eth0 | cat_tee $target
+  backup "$target"
+  cat_network_eth0 | cat_tee "$target"
 }
 
 [[ $0 != "${BASH_SOURCE[0]}" ]] && return 0
