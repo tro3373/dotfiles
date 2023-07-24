@@ -234,6 +234,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'hashivim/vim-terraform'                             " Terraform syntax
   Plug 'posva/vim-vue'                                      " vue syntax
   Plug 'mindriot101/vim-yapf'                               " for python
+  Plug 'leafgarland/typescript-vim'                         " for typescript
   " NOTE: So slow `has('python3')`
   " if has('python3')
   " Plug 'davidhalter/jedi-vim'                               " for python completion
