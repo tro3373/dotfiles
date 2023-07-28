@@ -766,3 +766,16 @@ function! FixShellCheckError() abort
   execute 'checktime'
 endfunction
 command! FixShellCheckError call FixShellCheckError()
+
+function! ReplaceMdList2Csv(arr) range
+  let lines = getline(a:firstline, a:lastline)
+  let csv = join(map(lines, {key, val-> substitute(val, '^\s*-\s*', '', '')}), ", ")
+  if a:arr == "array"
+    let csv = "["..csv.."]"
+  endif
+  " Replace the selected lines with the table
+  execute a:firstline . ',' . a:lastline . 'delete'
+  call append(a:firstline - 1, csv)
+endfunction
+command! -range ReplaceMdList2Csv <line1>,<line2>call ReplaceMdList2Csv('csv')
+command! -range ReplaceMdList2Array <line1>,<line2>call ReplaceMdList2Csv('array')
