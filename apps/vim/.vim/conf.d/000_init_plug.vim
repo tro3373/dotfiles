@@ -260,7 +260,9 @@ call plug#begin('$HOME/.vim/plugged')
   "   Plug 'kat0h/bufpreview.vim'
   " endif
   " Preview in browser. via `:MarkdownPreview`
-  Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm i'  }
+  " Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm i'  }
+  Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && yarn install' }
+  " Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 
   if g:is_windows
     " Plug 'mattn/webapi-vim'                               " vim interface to Web API
