@@ -116,7 +116,18 @@ function! MyFugitive()
 endfunction
 
 function! MyFileformat()
-  return winwidth('.') > 70 ? &fileformat : ''
+  " return winwidth('.') > 70 ? &fileformat : ''
+  if winwidth('.') < 70
+    return ''
+  endif
+  if &fileformat == 'unix'
+    return 'LF'
+  elseif &fileformat == 'dos'
+    return 'CRLF'
+  elseif &fileformat == 'mac'
+    return 'CR'
+  endif
+  return &fileformat
 endfunction
 
 function! MyFiletype()
