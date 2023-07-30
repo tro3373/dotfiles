@@ -3,8 +3,14 @@ root = true
 
 [*]
 indent_style = space
-end_of_line = lf
-charset = utf-8
+# =============================================================================
+# MEMO:
+# end_of_line,charset settings is optional.
+# Because Always orverrided by .editorconfig and
+# Always show utf-8/unix in lightline in vim, if cp932/crlf file opened.
+# =============================================================================
+# end_of_line = lf
+# charset = utf-8
 trim_trailing_whitespace = true
 indent_size = 2
 insert_final_newline = true
@@ -14,6 +20,7 @@ indent_style = tab
 indent_size = 2
 
 [*.md]
+trim_trailing_whitespace = false
 indent_style = space
 indent_size = 4
 
