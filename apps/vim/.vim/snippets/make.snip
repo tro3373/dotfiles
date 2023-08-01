@@ -97,3 +97,16 @@ snippet fzff
 
 snippet path
 	export PATH := $(PWD)/bin:$(PATH)
+
+
+snippet	ngrok
+	ngrok-url:
+		@curl -s localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
+	ngrok-start:
+		@(pgrep ngrok >& /dev/null && echo ">> ngrok already running") || (echo ">> Starting ngrok.." && (nohup ngrok http 3000 >& /dev/null &) && (sleep 2))
+	ngrok-stop:
+		@pgrep ngrok || (echo ">> ngrok not running" && exit 1)
+		@echo ">> Stopping ngrok.."
+		@pgrep ngrok | xargs kill -9
+		@echo ">> ngrok stopped"
+	ngrok: ngrok-start ngrok-url
