@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
+# see: Arch on WSLを構築する https://zenn.dev/kyoh86/articles/4bf6513aabe517
 
-readonly _script_dir=$(
-  cd "$(dirname ${BASH_SOURCE:-$0})"
-  pwd
-)
-source $_script_dir/../funcs_arch
+_script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly _script_dir
+# shellcheck disable=SC1091
+source "$_script_dir/../funcs_arch"
 
 pre_setup() {
   log "=> pre setting up"
@@ -15,7 +14,7 @@ pre_setup() {
 
 load_update_arg_apps() {
   # shellcheck disable=SC2034
-  read -a args < <(default_apps)
+  read -r -a args < <(default_apps)
 }
 
 improve_tmp_mount() {
@@ -26,17 +25,34 @@ improve_tmp_mount() {
   echo "tmpfs   /tmp    tmpfs   exec,defaults,nodev,nosuid,noatime,size=256m  0 0" | sudo_tee
 }
 
+set_wslconf() {
+  local target=/etc/wsl.conf
+  cat <<EOF >>"$target"
+# Buggy?
+# [boot]
+# systemd = true  # For docker, sshd, etc.
+
+[wsl2]
+localhostForwarding = true  # Enable localhost forwarding to Windows.
+memory=4GB # How much memory to assign to the WSL2 VM.
+swap=0
+
+# [user]
+# default=archuser
+EOF
+}
+
 set_wslconfig() {
   local target=$WINHOME/.wslconfig
   cat <<EOF >>"$target"
-[wsl2]
-memory=4GB
-swap=0
+[interop]
+appendWindowsPath = true  # Append Windows path to $PATH.
 EOF
 }
 
 post_setup() {
   improve_tmp_mount
+  set_wslconf
   set_wslconfig
   log "===> reboot maybe needed."
 }
