@@ -16,7 +16,7 @@ install_common() {
   fi
   local current_branch latest_tag
   current_branch=$(exes git branch --show-current)
-  latest_tag=$(exes git tag --list | tail -1)
+  latest_tag=$(exes git tag --list | sort -V | tail -1)
   if [[ $current_branch != "$latest_tag" ]]; then
     exe git switch -c "$latest_tag" "$latest_tag"
   fi
