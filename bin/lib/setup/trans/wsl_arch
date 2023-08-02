@@ -22,7 +22,7 @@ improve_tmp_mount() {
   if grep tmpfs $target >&/dev/null; then
     return
   fi
-  echo "tmpfs   /tmp    tmpfs   exec,defaults,nodev,nosuid,noatime,size=256m  0 0" | sudo_tee
+  echo "tmpfs   /tmp    tmpfs   exec,defaults,nodev,nosuid,noatime,size=256m  0 0" | sudo_tee -a $target
 }
 
 set_wslconf() {
