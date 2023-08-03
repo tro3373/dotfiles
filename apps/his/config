@@ -5,8 +5,7 @@ install_common() {
     log "No golang installed"
     exit 2
   fi
-  github https://github.com/tro3373/his
-  exe make install
+  exe go install github.com/tro3373/his@latest
 }
 # install_wsl()    { not_supported; }
 # install_arch()   { not_supported; }
