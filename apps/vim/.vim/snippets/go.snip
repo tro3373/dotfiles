@@ -684,3 +684,28 @@ snippet	to_lowerrr
 	strings.ToLower($1)
 snippet	to_upperrr
 	strings.ToUpper($1)
+
+snippet read_csvvv
+	import "encoding/csv"
+	func readTsv(filePath string) error {
+		file, err := os.Open(filePath)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		reader := csv.NewReader(file)
+		reader.Comma = '\t'
+		reader.Comment = '#'
+		for {
+			record, err := reader.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return err
+			}
+			fmt.Println(record)
+		}
+	}
+
