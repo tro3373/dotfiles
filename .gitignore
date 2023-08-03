@@ -13,3 +13,4 @@ tmp
 
 bin/slk.conf
 bin/gen_gpg_keys.conf
+bin/remos.conf

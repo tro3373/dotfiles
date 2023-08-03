@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+
+command_name=$(basename "$0") && readonly command_name
+cnf=$0.conf && readonly cnf
+
+dummy="echo"
+reverse=0
+list_sync_files=0
+src=
+dst=
+
+# MEMO: rsync can --include=PATTERN
+excludes=("node_modules" "bower_components" ".tmp")
+readonly depends=(git rsync)
+args=()
+
+usage() {
+  cat <<EOF
+
+  Rsync easily command.
+
+  Usage:
+    $command_name [option] [Additional rsync options]
+
+  Options
+     -h : Show this usage
+     -e : Excute sync. (default is dry run mode)
+          sync local to remote
+     -r : Reverse sync.
+          sync remote to local
+     -l : List sync file via rsync dry-run mode
+    -ex pattern : exclude pattern
+
+  $command_name.conf
+    ex)
+      /path/to/repository remote:/path/to/sync/directory exclude exclude ..
+         |                  |      |                      |- Exclude patterns
+         |                  |      |- remote sync root path
+         |                  |- Remote name defined in ~/.ssh/config
+         |- Local target sync directory
+
+EOF
+}
+
+_ink() {
+  cat - |
+    if has ink; then
+      cat - | ink "$@"
+    else
+      cat -
+    fi
+}
+_log() {
+  # shellcheck disable=SC2145
+  echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"
+}
+log() { _log yellow "$*"; }
+error() {
+  _log red "$*"
+  exit 1
+}
+has() { command -v "${1}" >&/dev/null; }
+hass() {
+  for arg in "$@"; do
+    has "$arg" && continue
+    error "No $arg command exist."
+  done
+}
+add_args() { args+=("$@"); }
+add_excludes() { excludes+=("$@"); }
+get_src_root() { git rev-parse --show-toplevel; }
+check_cnf() {
+  if [[ ! -e $cnf ]]; then
+    usage
+    error "No $cnf file exist."
+  fi
+}
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      -r) reverse=1 ;;
+      -l) list_sync_files=1 ;;
+      -ex) shift && add_excludes "$1" ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+
+  hass "${depends[@]}"
+  check_cnf
+
+  src=$(get_src_root)
+  if [[ -z $src || ! -e $src ]]; then
+    error "You Not in git repository. $src"
+  fi
+
+  read -r _src dst _excludes < <(cat <"$cnf" | grep -E "^${src}[ 	]" | head -1)
+  [[ -z $dst ]] && error "No dst path defined for $src in $cnf"
+  [[ -n $_excludes ]] &&
+    for _exclude in $_excludes; do
+      add_excludes "$_exclude"
+    done
+  [[ $reverse -eq 1 ]] && local _tmp=$src && src=$dst && dst=$_tmp
+  set -eo pipefail
+}
+
+_rsync() {
+  # -a: -rlptgoD --no-H --no-A --no-X
+  # -v: --verbose         動作内容を表示する
+  # -q: --quiet           動作中のメッセージを抑制する
+  # -n: --dry-run         試験モード。実際には動作せず、動作内容だけ表示する（「-v」や「--stats」を一緒に指定する）
+  #     --stats           ファイル数や転送サイズを表示する
+  #     --list-only       コピーする代わりにファイルのリストを作成する
+  # -I  --ignore-times    サイズとタイムスタンプが同じファイルも処理する
+  #     --size-only       サイズが同じファイルは処理しない
+  # -c: --checksum        更新日とサイズではなく、チェックサムで変更の有無をチェックする
+  #     --daemon          デーモンとして動作（「--daemon --help」でデーモン時に使用できるオプションが確認できる）
+  # -r: --recursive       ディレクトリを再帰的に処理する
+  # -l: --links           シンボリックリンクをシンボリックリンクのままコピーする
+  # -p: --perms           パーミッションを保持する
+  # -t: --times           タイムスタンプを保持する
+  # -g: --group           所有グループをそのまま保持する
+  # -o: --owner           所有者をそのまま保持する（自分以外の所有者を保持するにはroot権限が必要）
+  # -D:                   デバイスファイルや特殊ファイルを保持する（「--devices --specials」相当）
+  #     --devices         デバイスファイルを保持する（root権限が必要）
+  #     --specials        特殊ファイルを保持する
+  # -z: --compress        転送中のデータを圧縮する
+  # -u: --update          同期先のファイルの方が新しい場合はスキップする
+  # local _cmd="rsync -rtuzzv --size-only --no-H --no-A --no-X --delete"
+  local _cmd="rsync -rtuzzv --no-H --no-A --no-X --delete"
+  if [[ $list_sync_files -eq 1 ]]; then
+    dummy=
+    _cmd="$_cmd -n"
+  fi
+  _cmd="$dummy $_cmd"
+  for _ex in "${excludes[@]}"; do
+    _cmd="$_cmd --exclude \"$_ex\""
+  done
+  # MEMO:
+  # /あり: src/配下のファイルをdst/にコピー
+  # /なし: srcをコピー(src/配下のファイルをdst/src/にコピー)
+  _cmd="$_cmd $src/ $dst/"
+  [[ -z $dummy ]] && echo "Excute: $_cmd" | _ink cyan
+  eval "$_cmd"
+}
+
+main() {
+  initialize "$@"
+  _rsync
+}
+main "$@"
