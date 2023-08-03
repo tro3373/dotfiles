@@ -596,3 +596,15 @@ snippet find_result_to_array
 	while IFS=  read -r -d $'\0'; do
 		array+=("$REPLY")
 	done < <(find . -name "${input}" -print0)
+
+snippet dependsss
+	readonly depends=()
+	has() { command -v "\${1}" >&/dev/null; }
+	hass() {
+		for arg in "$@"; do
+			has "$arg" && continue
+			echo "No $arg command exist." >&2
+			exit 1
+		done
+	}
+	hass "${depends[@]}"
