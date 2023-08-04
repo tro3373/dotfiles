@@ -1,5 +1,11 @@
 # git tips.
 
+## 直前のコミットメッセージをエディタで開く
+
+```
+git commit -c ORIG_HEAD
+```
+
 ## Gitの設定をリポジトリにより自動で切り替える
 
 .gitconfig
