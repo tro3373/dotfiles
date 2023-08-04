@@ -21,6 +21,7 @@ Create new executable shell file.
     Options
       -h|--help : Show this usage
       -b|--bin : Create new command file in $dot_bin_dir
+      -q|--quiet : Quiet mode
 
     ex)
       new bash command_name
@@ -45,6 +46,7 @@ initialize() {
       #-f|--file) shift && file=$1 ;;
       -h | --help) usage && exit 0 ;;
       -b | --bin) to_bin=1 ;;
+      -q | --quiet) quiet=1 ;;
       *) add_args "$1" ;;
     esac
     shift
@@ -210,6 +212,7 @@ main() {
     out=$dot_bin_dir
   fi
   generate
+  [[ $quiet -eq 1 ]] && return
   log "==> New template file generated."
   log "==> Edit it?(Y/n)"
   read -r yes_i_edit

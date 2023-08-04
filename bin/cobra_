@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-readonly pkg=example
+readonly pkg=github.com/user/command_name
 main() {
   cat <<EOF
 go mod init $pkg

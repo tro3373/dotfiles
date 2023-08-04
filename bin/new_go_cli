@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-readonly command_name=$(basename $0)
+command_name=$(basename "$0") && readonly command_name
 name=
 dummy="echo"
 
@@ -9,21 +9,43 @@ args=()
 usage() {
   cat <<EOF
 
-Description for this command.
+  Setup go cli project via cobra
 
-Usage:
-  $command_name [option] <command_name>
-Options
-  -h|--help : Show this usage
-  -e : Execute command(default is dummy mode)
+    Usage:
+      $command_name [option] <command_name>
+    Options
+      -h|--help : Show this usage
+      -e : Execute command(default is dummy mode)
 
 EOF
 }
 add_args() { args+=("$@"); }
+_log() {
+  # shellcheck disable=SC2145
+  echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"
+}
+log() { _log yellow "$*"; }
+error() {
+  _log red "$*"
+  exit 1
+}
+has() { command -v "${1}" >&/dev/null; }
+hass() {
+  for arg in "$@"; do
+    has "$arg" && continue
+    error "No $arg command exist."
+  done
+}
 check() {
+  hass cobra
   if [[ -z $name ]]; then
-    echo "Specify command name" 1>&2
-    exit 1
+    error "Specify command name"
+  fi
+  if [[ -e go.mod ]]; then
+    error "Already go.mod exist."
+  fi
+  if [[ -e Makefile ]]; then
+    error "Already Makefile exist."
   fi
 }
 initialize() {
@@ -40,78 +62,17 @@ initialize() {
   done
   name="${args[0]}"
   check
-}
-
-cat_makefile() {
-  cat <<EOF
-NAME := $name
-VERSION := v0.0.1
-# REVISION := \$(shell git rev-parse --short HEAD)
-# OSARCH := "darwin/amd64 linux/amd64"
-PACKAGE := github.com/tro3373/\$(NAME)
-.DEFAULT_GOAL := run
-
-ifndef GOBIN
-GOBIN := \$(shell echo "\$\${GOPATH%%:*}/bin")
-endif
-
-COBRA := \$(GOBIN)/cobra
-
-\$(COBRA): ; @go get -v -u github.com/spf13/cobra/cobra
-
-.PHONY: get
-get:
-	@go get github.com/mitchellh/go-homedir \
-		go get github.com/spf13/viper
-
-.PHONY: deps
-deps:
-	@go list -m all
-
-.PHONY: tidy
-tidy:
-	@go mod tidy
-
-.PHONY: build
-build:
-	@env GOOS=linux go build -ldflags="-s -w"
-
-.PHONY: install
-build:
-	@go install
-
-.PHONY: clean
-clean:
-	rm -rf ./\$(NAME)
-
-.PHONY: help
-help:
-	@go run ./main.go --help
-
-.PHONY: run
-run:
-	@go run ./main.go
-EOF
+  if is_dummy; then
+    echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  fi
 }
 
 main() {
   initialize "$@"
-  local user=$(git config --global --get user.name)
-  $dummy go mod init github.com/$user/$name
-  $dummy cobra init --pkg-name github.com/$user/$name
+  local pkg="github.com/tro3373/$name"
+  $dummy go mod init "$pkg"
+  $dummy cobra init --pkg-name "$pkg"
   $dummy go mod tidy
-  if [[ -e Makefile ]]; then
-    echo "Already Makefile exist." 1>&2
-  else
-    cat_makefile |
-      if is_dummy; then
-        echo "Bellow Makefile will be create" | ink yellow
-        cat -
-      else
-        cat - >Makefile
-      fi
-  fi
-
-  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  $dummy new make go -q
 }
 main "$@"
