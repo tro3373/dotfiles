@@ -54,10 +54,10 @@ setting_common() {
   fi
 
   # その他ドットファイルリンク作成
-  # shellcheck disable=SC2154
-  make_link_dot2home "$app_dir"
+  make_link_dot2home
   if is_msys; then
     # その他ドットファイルリンク作成
+    # shellcheck disable=SC2154
     make_link_dot2home "$app_dir/win"
   fi
 }

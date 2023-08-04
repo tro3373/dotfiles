@@ -86,7 +86,7 @@ build_msys() {
   local ver=92832fb441011827cfb93ec3208b86cecce05648
   exe git checkout $ver
   # shellcheck disable=SC2154
-  exe patch -p1 <$app_dir/vim_pkgbuild.patch
+  exe patch -p1 <"$app_dir"/vim_pkgbuild.patch
   exe cd vim
   exe makepkg
   # upgrade error will occur
@@ -188,7 +188,7 @@ build_arch() {
 }
 
 setting_common() {
-  make_link_dot2home $app_dir
+  make_link_dot2home
 }
 
 setting_msys() {
@@ -196,7 +196,7 @@ setting_msys() {
   make_lnk_with_bkup "$app_dir/.vimrc" "${WINHOME}/_vimrc"
   make_lnk_with_bkup "$app_dir/.gvimrc" "${WINHOME}/_gvimrc"
   make_lnk_with_bkup "$app_dir/.vim" "${WINHOME}/.vim"
-  exe winln -q $WINHOME/scoop/apps/vim-kaoriya/current/gvim.exe
+  exe winln -q "$WINHOME"/scoop/apps/vim-kaoriya/current/gvim.exe
   # make_lnk_with_bkup "$app_dir/gvim.bat" "${WINHOME}/bin/gvim.bat"
   # local buildvim=/usr/local/src/Msys2-packages/vim/pkg/vim/usr/bin/vim.exe
   # if [ -e $buildvim ]; then

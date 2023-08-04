@@ -10,8 +10,7 @@ install_mac() {
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() {
-  # shellcheck disable=SC2154
-  make_link_dot2home $app_dir
+  make_link_dot2home
 }
 # setting_arch()   { not_supported; }
 # setting_msys()   { not_supported; }

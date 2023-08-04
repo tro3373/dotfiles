@@ -83,8 +83,7 @@ EOF
 }
 
 setting_common() {
-  # shellcheck disable=SC2154
-  make_link_dot2home "$app_dir"
+  make_link_dot2home
   local usrn=0 mail=0 list
   list="$(git config --list --global 2>/dev/null)"
   while read -r line; do
@@ -139,7 +138,7 @@ setting_msys() {
 }
 
 # setting_common() {
-#     make_link_dot2home $app_dir
+#     make_link_dot2home
 #     local list="$(git config --list)"
 #     if ! is_exists_setting "$list" "user.name"; then
 #         log "@@@@@ Input Your Git user.name"

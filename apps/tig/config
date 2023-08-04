@@ -11,8 +11,9 @@ install_ubuntu() {
   # ソースコード取得
   cd_work
   if [[ ! -e tig ]]; then
-    local v="$(get_latest_version)"
-    exe git clone --depth 1 -b $v https://github.com/$tig_path.git
+    local v
+    v="$(get_latest_version)"
+    exe git clone --depth 1 -b "$v" "https://github.com/$tig_path.git"
   fi
   exe "cd tig"
 
@@ -53,6 +54,5 @@ install_redhat() {
 }
 
 setting_common() {
-  # shellcheck disable=SC2154
-  make_link_dot2home $app_dir
+  make_link_dot2home
 }

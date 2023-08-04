@@ -11,16 +11,16 @@ install_msys() {
   cd_work
   if [ "$type" = "zip" ]; then
     # shellcheck disable=SC2154
-    if [ ! -e $workdir/ag.zip ]; then
+    if [ ! -e "$workdir"/ag.zip ]; then
       exe wget https://kjkpub.s3.amazonaws.com/software/the_silver_searcher/rel/0.29.1-1641/ag.zip
     fi
     exe unzip ag.zip
-    exe mv ag/ag.exe $HOME/bin
+    exe mv ag/ag.exe "$HOME"/bin
     exe "cd -"
     return 0
   fi
   # for build
-  exe $def_install_cmd base-devel mingw-w64-x86_64-gcc mingw-w64-x86_64-pcre mingw-w64-x86_64-xz
+  exe "$def_install_cmd" base-devel mingw-w64-x86_64-gcc mingw-w64-x86_64-pcre mingw-w64-x86_64-xz
   if [ ! -e the_silver_searcher/.git ]; then
     exe git clone --depth 1 $url
   fi
@@ -56,7 +56,5 @@ install_redhat() {
 }
 
 setting_common() {
-  # shellcheck disable=SC2154
-  make_link_dot2home $app_dir
+  make_link_dot2home
 }
-

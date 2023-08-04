@@ -10,6 +10,6 @@ install_common() {
 
 # setting_common() {
 #   # shellcheck disable=SC2154
-#   make_link_dot2home $app_dir
+#   make_link_dot2home
 # }
 #
