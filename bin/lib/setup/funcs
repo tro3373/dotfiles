@@ -197,6 +197,8 @@ readlink_path() {
 # $* ディレクトリ配下の dot file をHOMEへリンクを作成する
 make_link_dot2home() {
   local dir="$*"
+  # shellcheck disable=SC2154
+  [[ -z $dir ]] && dir="$app_dir"
   for file in $(
     find "$dir" -maxdepth 1 -mindepth 1 -name "\.*" -exec basename {} \; |
       grep -v "^.git$" |
