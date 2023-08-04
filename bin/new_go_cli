@@ -9,7 +9,7 @@ args=()
 usage() {
   cat <<EOF
 
-  Setup go cli project via cobra
+  Setup go cli project via cobra-cli
 
     Usage:
       $command_name [option] <command_name>
@@ -37,7 +37,7 @@ hass() {
   done
 }
 check() {
-  hass cobra
+  hass cobra-cli
   if [[ -z $name ]]; then
     error "Specify command name"
   fi
@@ -71,7 +71,7 @@ main() {
   initialize "$@"
   local pkg="github.com/tro3373/$name"
   $dummy go mod init "$pkg"
-  $dummy cobra init --pkg-name "$pkg"
+  $dummy cobra-cli init # --pkg-name "$pkg"
   $dummy go mod tidy
   $dummy new make go -q
 }

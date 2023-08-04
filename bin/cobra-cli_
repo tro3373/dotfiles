@@ -4,8 +4,8 @@ readonly pkg=github.com/user/command_name
 main() {
   cat <<EOF
 go mod init $pkg
-cobra init --pkg-name $pkg
-cobra add sub
+cobra-cli init #--pkg-name $pkg
+cobra-cli add sub
 go get github.com/mitchellh/go-homedir
 go get github.com/spf13/cobra
 go get github.com/spf13/viper

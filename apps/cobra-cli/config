@@ -7,3 +7,7 @@ install_common() {
   fi
   exe go install github.com/spf13/cobra-cli@latest
 }
+
+setting_common() {
+  make_link_dot2home
+}
