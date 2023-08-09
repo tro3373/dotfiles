@@ -7,7 +7,7 @@ current_dir=$(pwd) && readonly current_dir
 dot_bin_dir=${DOTPATH:-~/.dot}/bin && readonly dot_bin_dir
 args=()
 mode=
-src_fnm=default
+type=default
 dst_fnm=
 dst_files=()
 
@@ -69,7 +69,7 @@ set_arg() {
     usage
     error "Not supported mode $mode"
   fi
-  src_fnm="${args[1]}"
+  type="${args[1]}"
 }
 check() {
   if is_mode_bash; then
@@ -125,7 +125,7 @@ ink() {
 }
 _log() {
   # shellcheck disable=SC2145
-  echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink ""
+  echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"
 }
 log() { _log yellow "$*"; }
 error() {
@@ -157,8 +157,8 @@ find_exist_path_first() {
 is_mode_bash() { [[ $mode == "bash" ]]; }
 
 generate_dst_files() {
-  local src_f_or_d src_files rel_src_f dst_f
-  src_f_or_d=$(find_exist_path_first "$lib_dir/$mode/$src_fnm" "$lib_dir/$mode/default")
+  local src_f_or_d src_files rel_src_f rel_src_f_for_log dst_f
+  src_f_or_d=$(find_exist_path_first "$lib_dir/$mode/$type" "$lib_dir/$mode/default")
   if [[ -z $src_f_or_d || ! -e $src_f_or_d ]]; then
     if ! is_mode_bash; then
       error "No such mode source template exist. mode:$mode"
@@ -170,21 +170,25 @@ generate_dst_files() {
   for src_f in $src_files; do
     dst_f=$out/$dst_fnm
     if ! is_mode_bash; then
-      dst_f=$out/$(basename "$src_f")
+      # dst_f=$out/$(basename "$src_f")
+      rel_src_f=${src_f/$src_f_or_d\//}
+      dst_f="$out/$rel_src_f"
     fi
-    add_dst_files_with_check "$dst_f"
-    rel_src_f=${src_f/$lib_dir\//}
-    log "==> Generating template from $rel_src_f.."
+    if [[ -e $dst_f ]]; then
+      log "==> Already dst file exist skipping.. dst: $dst_f"
+      continue
+    fi
+    mkdir_if_needed "$(dirname "$dst_f")"
+    add_dst_files "$dst_f"
+    rel_src_f_for_log=${src_f/$lib_dir\//}
+    log "==> Generating template from $rel_src_f_for_log.."
     cp "$src_f" "$dst_f"
   done
 }
 
-add_dst_files_with_check() {
-  local _dst_f="$*"
-  if [[ -e $_dst_f ]]; then
-    error "$_dst_f is already exist."
-  fi
-  add_dst_files "$_dst_f"
+mkdir_if_needed() {
+  [[ -e $1 ]] && return
+  mkdir -p "$1"
 }
 
 fire_src_files() {
