@@ -234,6 +234,15 @@ snippet	ppp
 		fmt.Println(a...)
 	}
 
+snippet debuggg
+	const DEBUG = true
+	func debug(a ...any) {
+		if !DEBUG {
+			return
+		}
+		fmt.Fprintln(os.Stderr, a...)
+	}
+
 snippet	factoryyyy
 	package factory
 
@@ -419,7 +428,7 @@ snippet	errors_new_fmt
 # - stacktraceが必要な場合
 #   - pkg/errors.Wrapでラップし、pkg/errors.Causeで判定する
 #   - log.Printf("%+v", err)でstacktraceを出力する
-#   - 新しいエラーを返す時はpkg/errors.Neworpkg/errors.Errorfを使う
+#   - 新しいエラーを返す時はpkg/errors.New or pkg/errors.Errorfを使う
 snippet	errors_wrap_no_stackkk
 	fmt.Errorf("Failed to ${1:#do somthing} %s: %w", "${2}", err)
 
@@ -576,6 +585,18 @@ snippet	stdinnn
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		fmt.Println(scanner.Text())
+	}
+
+snippet	pipe_or_nottt
+	fi, _ := os.Stdin.Stat()
+	if (fi.Mode() & os.ModeCharDevice) == 0 {
+		// pipe (if stdin is not charactor device(like keyboard, etc))
+		scanner = :bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			fmt.Println(scanner.Text())
+		}
+	} else {
+		// not pipe
 	}
 
 snippet loop_stucttt
