@@ -163,3 +163,4 @@ fi
 # shellcheck disable=SC1090
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 [ -f ~/.asdf/asdf.sh ] && source ~/.asdf/asdf.sh
+[ -f ~/.cargo/env ] && source ~/.cargo/env

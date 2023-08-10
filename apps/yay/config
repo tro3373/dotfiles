@@ -11,6 +11,7 @@ install_arch() {
     exe cd yay
   fi
   exe makepkg -si --noconfirm
+  exe export def_install_cmd="yay -S --noconfirm"
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
