@@ -704,6 +704,15 @@ function! Open()
 endfunction
 command! Open call Open()
 
+function! ReOpenUtf8()
+  exe "e ++enc=utf-8"
+endfunction
+function! ReOpenShiftJis()
+  exe "e ++enc=shift-jis"
+endfunction
+command! -nargs=0 ReOpenUtf8 call ReOpenUtf8()
+command! -nargs=0 ReOpenShiftJis call ReOpenShiftJis()
+
 " Strip column list from mysql ddl sql
 "   ex) src: ^___`target_col_name`___
 "       dst: target_col_name

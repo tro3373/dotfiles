@@ -18,12 +18,29 @@ snippet	log_newww
 
 snippet	loggg
 	import log "github.com/sirupsen/logrus"
-	# initConfigInner
+	// initConfigInner
 	level, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
 	if err == nil {
 		log.SetLevel(level)
 	}
 	log.Infof("==> File:%s", file)
+
+snippet	ppp
+	func p(a ...interface{}) {
+		// fmt.Println(a...)
+		log.Infof("%+v", a...)
+	}
+
+snippet debuggg
+	const DEBUG = true
+	func debug(a ...any) {
+		if !DEBUG {
+			return
+		}
+		// fmt.Fprintln(os.Stderr, a...)
+		log.Debugf("%+v", a...)
+	}
+
 
 snippet	zap_newww
 	logger, err := zap.NewProduction()
@@ -227,20 +244,6 @@ snippet	getenvvv
 				return value
 		}
 		return fallback
-	}
-
-snippet	ppp
-	func p(a ...interface{}) {
-		fmt.Println(a...)
-	}
-
-snippet debuggg
-	const DEBUG = true
-	func debug(a ...any) {
-		if !DEBUG {
-			return
-		}
-		fmt.Fprintln(os.Stderr, a...)
 	}
 
 snippet	factoryyyy
