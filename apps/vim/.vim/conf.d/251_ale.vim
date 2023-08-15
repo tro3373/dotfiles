@@ -45,7 +45,7 @@ let g:ale_linters['typescriptreact'] = ['eslint']
 let g:ale_linters['shell'] = ['shellcheck']
 let g:ale_linters['java'] = []
 let g:ale_linters['python'] = ['black', 'flake8']
-let g:ale_linters['go'] = ['gometalinter', 'gobuild']
+let g:ale_linters['go'] = ['golangci-lint', 'gobuild']
 let g:ale_linters['vue'] = ['eslint']
 let g:ale_linters['json'] = ['jsonlint']
 
@@ -72,7 +72,7 @@ let g:ale_fixers['rust']       = ['rustfmt']
 " let g:ale_fixers['python']     = [ { buffer -> {'command': 'command -v task >&/dev/null && task fix'} } ]
 let g:ale_fixers['zsh']        = ['shfmt']
 let g:ale_fixers['sh']         = ['shfmt']
-let g:ale_fixers['go']         = ['gofmt', 'goimports']
+let g:ale_fixers['go']         = ['golangci-lint', 'gofmt', 'goimports']
 " let g:ale_fixers['markdown']   = ['prettier']
 " let g:ale_fixers['markdown'] = [{buffer, lines -> {'command': 'textlint -c ~/.config/textlintrc -o /dev/null --fix --no-color --quiet %t', 'read_temporary_file': 1}}]
 " let g:ale_fixers['java']       = ['google_java_format']
@@ -90,6 +90,7 @@ let g:ale_fixers['sql']        = [ { buffer -> {'command': 'command -v sql-forma
 
 " 各言語毎のオプション設定
 " Go
+let g:ale_go_golangci_lint_package = 1 "When set to `1`, the whole Go package will be checked instead of only the current file.
 let g:ale_go_gofmt_options = '-s'
 let g:ale_go_gometalinter_options = '--enable=gosimple --enable=staticcheck'
 " Shell
