@@ -48,6 +48,7 @@ let g:ale_linters['python'] = ['black', 'flake8']
 let g:ale_linters['go'] = ['golangci-lint', 'gobuild']
 let g:ale_linters['vue'] = ['eslint']
 let g:ale_linters['json'] = ['jsonlint']
+let g:ale_linters['terraform'] = ['tflint']
 
 " Fixer
 let g:ale_fixers = {}
@@ -73,6 +74,7 @@ let g:ale_fixers['rust']       = ['rustfmt']
 let g:ale_fixers['zsh']        = ['shfmt']
 let g:ale_fixers['sh']         = ['shfmt']
 let g:ale_fixers['go']         = ['golangci-lint', 'gofmt', 'goimports']
+let g:ale_fixers['terraform'] = ['tflint']
 " let g:ale_fixers['markdown']   = ['prettier']
 " let g:ale_fixers['markdown'] = [{buffer, lines -> {'command': 'textlint -c ~/.config/textlintrc -o /dev/null --fix --no-color --quiet %t', 'read_temporary_file': 1}}]
 " let g:ale_fixers['java']       = ['google_java_format']
