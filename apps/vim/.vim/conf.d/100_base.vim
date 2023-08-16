@@ -110,7 +110,9 @@ set fileencoding=utf-8
 "   その文字コードを試行した時点で、「 encoding と同じ」→「文字コード変換の必要無し」→「常に変換成功」→「fencに採用」となる。
 " set fileencodings=ucs-bom,iso-2022-jp-3,iso-2022-jp,eucjp-ms,euc-jisx0213,euc-jp,cp932,sjis,utf-8
 " © Only File Not working see [.vimrc | 暇人専用](http://himajin-senyo.com/conf/vimrc/)
-set fileencodings=iso-2022-jp,euc-jp,sjis,utf-8
+" set fileencodings=iso-2022-jp,euc-jp,sjis,utf-8
+" [Vim – 文字コードを自動認識して判定/判別する方法 | Howpon[ハウポン]](https://howpon.com/20630)
+set fileencodings=utf-8,iso-2022-jp,ucs-bom,utf-8,euc-jp,cp932,sjis,default,latin1
 " setglobal fileformat=unix
 " 新規、読込時の改行設定(複数で自動判定)
 set fileformats=unix,dos,mac
