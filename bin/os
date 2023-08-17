@@ -3,6 +3,7 @@
 # is_wsl() { [[ -f /proc/sys/fs/binfmt_misc/WSLInterop ]]; }
 # is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
 is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
+is_orb() { uname -r | grep -qi orbstack; }
 
 # TODO indent
 detect_os() {
@@ -82,6 +83,8 @@ handle_args() {
     esac
   elif [[ $arg == "wsl" ]]; then
     is_wsl && result=true
+  elif [[ $arg == "orb" ]]; then
+    is_orb && result=true
   elif [[ $os == "$arg" ]]; then
     result=true
   fi

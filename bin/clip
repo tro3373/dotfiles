@@ -137,14 +137,17 @@ _clipd() {
 }
 
 is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
+is_orb() { uname -r | grep -qi orbstack; }
 
 _clippp() {
   local _OSTYPE=$OSTYPE _val
   is_wsl && _OSTYPE=wsl
+  is_orb && _OSTYPE=orb
   _val="$(cat -)"
   echo -n -e "$_val" |
     case "${_OSTYPE}" in
       wsl) cat - | iconv -t sjis | clip.exe ;;
+      orb) cat - | iconv -t sjis | /opt/orbstack-guest/bin/pbcopy ;;
       msys*) cat - >/dev/clipboard ;;
       darwin*) cat - | pbcopy ;;
       *) cat - | xsel -bi --display "${DISPLAY:-:0}" ;;

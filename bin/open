@@ -8,6 +8,7 @@ is_url() { [[ $_is_url -eq 1 ]]; }
 set_ostype() {
   _ostype=${OSTYPE}
   os wsl && _ostype=wsl
+  os orb && _ostype=orb
 }
 set_open_command() {
   _open=$(type -a open | grep -v "$0" | head -1 | cut -d' ' -f3)
@@ -20,6 +21,7 @@ set_open_command() {
         _open=cmd.exe
       fi
       ;;
+    orb*) _open=/opt/orbstack-guest/bin/open ;;
     linux*)
       _open=xdg-open
       if ! is_url && has nautilus; then

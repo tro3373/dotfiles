@@ -7,6 +7,9 @@ _init() {
   if is_vagrant; then
     export IS_VAGRANT=1
   fi
+  if is_orb; then
+    export IS_ORB=1
+  fi
   export TERM=xterm-256color
   umask 0002 # umask settnig
   #bindkey -d                  # デフォルト設定に戻す

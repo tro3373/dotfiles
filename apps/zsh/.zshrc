@@ -16,6 +16,7 @@ has() { command -v ${1} >&/dev/null; }
 log() { echo "$*" 1>&2; }
 # is_vagrant() { hostname |grep archlinux.vagrant |grep -v grep >& /dev/null; }
 is_vagrant() { pwd | grep /home/vagrant >&/dev/null; }
+is_orb() { uname -r | grep -qi orbstack; }
 #is_wsl() { [[ -n $WSL_DISTRO_NAME ]]; }
 # is_wsl() { [[ -e /proc/version ]] && grep -qE "(Microsoft | WSL)" /proc/version; }
 is_wsl() { [[ -e /proc/version ]] && grep -qi microsoft /proc/version; }
