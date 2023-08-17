@@ -25,7 +25,7 @@ setting_mac() {
 + 1. Appearance Settings
 +   - General - Theme - Minimal
 + 1. Profile Settings
-+   - Colors - Solorized + Change Background color
++   - Import hybrid.itermcolors Color Presets and Select `hybrid`
 +   - Text - font - Osaka - Osaka-Mono 20
 +   - Terminal - Notification - Check 'the SilenceBell'
 +   - Terminal - Unlimited scroll
