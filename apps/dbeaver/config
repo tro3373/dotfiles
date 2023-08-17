@@ -5,10 +5,15 @@ is_installed() {
     scoop info dbeaver | grep Version >&/dev/null
     return
   fi
-  if ! is_arch; then
-    return 1
+  if is_arch; then
+    pacman -Qi dbeaver >&/dev/null
+    return
   fi
-  pacman -Qi dbeaver >&/dev/null
+  if is_mac; then
+    has_cask dbeaver-community
+    return
+  fi
+  return 1
 }
 install_common() { not_supported; }
 install_wsl() {
@@ -21,7 +26,9 @@ install_msys() {
   install_wsl
 }
 install_cygwin() { not_supported; }
-install_mac() { not_supported; }
+install_mac() {
+  exe brew install --cask dbeaver-community
+}
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
