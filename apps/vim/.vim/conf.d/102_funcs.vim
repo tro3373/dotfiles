@@ -307,7 +307,7 @@ function! SaveMemoInner(outdir, createDirectory, withHugolize) abort
 endfun
 
 function! SaveMemo() abort
-  call SaveMemoInner("~/works/00_memos", 0, 0)
+  call SaveMemoInner("~/.mo", 0, 0)
 endfun
 command! SaveMemo call SaveMemo()
 
