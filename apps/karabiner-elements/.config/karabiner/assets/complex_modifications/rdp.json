@@ -2,7 +2,7 @@
   "title": "Remote Desktop",
   "rules": [
     {
-      "description": "Swap command and control",
+      "description": "[Microsoft RDP] Swap command and control",
       "manipulators": [
         {
           "type": "basic",
@@ -23,7 +23,7 @@
             {
               "type": "frontmost_application_if",
               "bundle_identifiers": [
-                "com\\.microsoft\\.rdc\\.mac"
+                "com\\.microsoft\\.rdc\\.macos"
               ]
             }
           ]
@@ -47,7 +47,7 @@
             {
               "type": "frontmost_application_if",
               "bundle_identifiers": [
-                "com\\.microsoft\\.rdc\\.mac"
+                "com\\.microsoft\\.rdc\\.macos"
               ]
             }
           ]
@@ -71,7 +71,7 @@
             {
               "type": "frontmost_application_if",
               "bundle_identifiers": [
-                "com\\.microsoft\\.rdc\\.mac"
+                "com\\.microsoft\\.rdc\\.macos"
               ]
             }
           ]
@@ -95,12 +95,11 @@
             {
               "type": "frontmost_application_if",
               "bundle_identifiers": [
-                "com\\.microsoft\\.rdc\\.mac"
+                "com\\.microsoft\\.rdc\\.macos"
               ]
             }
           ]
         }
-
       ]
     }
   ]

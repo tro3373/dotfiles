@@ -1,0 +1,65 @@
+{
+  "title": "RDP Custom Behavior",
+  "rules": [
+    {
+      "description": "RDPアプリ使用中は、左のcommandキーがWindowsにおけるControlキーとして動作する",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "left_command",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "left_control"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_if",
+              "bundle_identifiers": [
+                "^com\\.2X\\.Client\\.Mac$",
+                "^com\\.microsoft\\.rdc\\.macos$"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "RDPアプリ使用中は、右のoptionキーがWindowsにおけるWindowsキーとして動作する",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "right_option",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "right_gui"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_if",
+              "bundle_identifiers": [
+                "^com\\.2X\\.Client\\.Mac$",
+                "^com\\.microsoft\\.rdc\\.macos$"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
