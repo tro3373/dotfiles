@@ -186,6 +186,8 @@ _setup_gui_apps() {
     - Wifi,Bluetooth,AirDrop,サウンド
 1. (SystemSettings) ワークスペース切り替え高速化
   - System Enviroments - アクセシビリティ - 視差効果を減らす にチェック
+1. キーチェーンのロックまでの時間変更
+  - キーチェーン - 編集 - キーチェーンログインの設定変更 - 操作しない状態が... をチェック
 1. Install from App Store
   - BetterSnapTool
   - XCode
