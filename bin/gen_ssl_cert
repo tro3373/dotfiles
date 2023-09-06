@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-readonly current_dir=$(pwd)
+current_dir=$(pwd) && readonly current_dir
 readonly outd=$current_dir/ssl
 readonly server_conf=$current_dir/server.conf
 
@@ -32,7 +32,7 @@ gen_crt_old() {
   openssl dhparam -out dhparam.pem $key_length
 }
 gen_crt() {
-  openssl req -x509 -nodes -days $key_expired -newkey rsa:$key_length -keyout server.key -out server.crt -config $server_conf
+  openssl req -x509 -nodes -days $key_expired -newkey rsa:$key_length -keyout server.key -out server.crt -config "$server_conf"
 }
 cat_server_conf() {
   cat <<EOF
@@ -77,18 +77,18 @@ gen_server_conf_if_needed() {
     return
   fi
   echo "$server_conf not exist. Generating. Press Enter. (cancel Ctrl+C)."
-  read
-  cat_server_conf >$server_conf
+  read -r
+  cat_server_conf >"$server_conf"
 }
 main() {
   gen_server_conf_if_needed
   if [[ -e $outd ]]; then
     echo "$outd Already exist. Delete and Re-Generating. Press Enter. (cancel Ctrl+C)."
-    read
-    rm -r $outd
+    read -r
+    rm -r "$outd"
   fi
-  mkdir -p $outd
-  cd $outd
+  mkdir -p "$outd"
+  cd "$outd" || exit 1
   gen_crt
 }
 main "$@"
