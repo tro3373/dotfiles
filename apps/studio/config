@@ -1,21 +1,18 @@
 #!/usr/bin/env bash
 
-def_cmd="$HOME/.local/share/JetBrains/Toolbox/scripts/studio"
-mac_cmd="/Applications/Android Studio.app/Contents/MacOS/studio"
+def_cmd=".local/share/JetBrains/Toolbox/scripts/studio"
+# mac_cmd="/Applications/Android Studio.app/Contents/MacOS/studio"
+mac_cmd="Applications/Android Studio.app/Contents/MacOS/studio"
 
 is_installed() {
   if is_mac; then
-    test -e "$mac_cmd"
+    test -e "$HOME/$mac_cmd"
   else
-    test -e "$def_cmd"
+    test -e "$HOME/$def_cmd"
   fi
 }
 
-install_common() { not_supported; }
-install_wsl() {
-  install_arch
-}
-install_arch() {
+install_common() {
   # def_install android-studio
   if ! has jetbrains-toolbox; then
     add_dependency_args jetbrains-toolbox
@@ -24,11 +21,18 @@ install_arch() {
   log "==> Install via jetbrains-toolbox"
   exe jetbrains-toolbox
 }
+install_wsl() {
+  install_common
+}
+install_arch() {
+  install_common
+}
 # install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() {
-  # exe open 'https://developer.android.com/studio'
-  def_install --cask android-studio
+  # # exe open 'https://developer.android.com/studio'
+  # def_install --cask android-studio
+  install_common
 }
 install_ubuntu() {
   not_supported
@@ -64,15 +68,18 @@ create_bin_cmd() {
 }
 
 cat_bin_cmd() {
-  local _cmd=$mac_cmd
-  if ! is_mac; then
-    # _cmd="$(command -v -p "$app")"
-    _cmd="$def_cmd"
-  fi
   cat <<EOF
-#!/usr/bin/env -S bash -e
+#!/bin/bash
 
-nohup "$_cmd" "\$@" >&/tmp/$app.log &
+set -e
+
+_cmd="\$HOME/$def_cmd"
+if os mac; then
+  _cmd="\$HOME/$mac_cmd"
+elif os orb; then
+  _cmd="\$HOME/mac/$mac_cmd"
+fi
+nohup "\$_cmd" "\$@" >&/tmp/$app.log &
 EOF
 }
 

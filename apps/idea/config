@@ -1,22 +1,19 @@
 #!/usr/bin/env bash
 
 scoop_idea=IntelliJ-IDEA
-def_cmd="$HOME/.local/share/JetBrains/Toolbox/scripts/idea"
-mac_cmd="/Applications/IntelliJ IDEA CE.app/Contents/MacOS/idea"
+def_cmd=".local/share/JetBrains/Toolbox/scripts/idea"
+# mac_cmd="/Applications/IntelliJ IDEA CE.app/Contents/MacOS/idea"
+mac_cmd="Applications/IntelliJ IDEA Community Edition.app/Contents/MacOS/idea"
 
 is_installed() {
   if is_mac; then
-    test -e "$mac_cmd"
+    test -e "$HOME/$mac_cmd"
   else
-    test -e "$def_cmd"
+    test -e "$HOME/$def_cmd"
   fi
 }
 
-install_common() { not_supported; }
-install_wsl() {
-  install_arch
-}
-install_arch() {
+install_common() {
   # def_install intellij-idea-community-edition
   if ! has jetbrains-toolbox; then
     add_dependency_args jetbrains-toolbox
@@ -25,6 +22,23 @@ install_arch() {
   log "==> Install via jetbrains-toolbox"
   exe jetbrains-toolbox
 }
+install_wsl() {
+  install_common
+}
+install_arch() {
+  install_common
+}
+
+install_msys() {
+  exe scoop install $scoop_idea
+}
+install_cygwin() { not_supported; }
+install_mac() {
+  # def_install --cask intellij-idea-ce
+  install_common
+}
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
 
 create_bin_cmd() {
   # shellcheck disable=SC2154
@@ -38,27 +52,21 @@ create_bin_cmd() {
 }
 
 cat_bin_cmd() {
-  local _cmd=$mac_cmd
-  if ! is_mac; then
-    # _cmd="$(command -v -p "$app")"
-    _cmd="$def_cmd"
-  fi
   cat <<EOF
-#!/usr/bin/env -S bash -e
+#!/bin/bash
 
-nohup "$_cmd" "\$@" >&/tmp/$app.log &
+set -e
+
+_cmd="\$HOME/$def_cmd"
+if os mac; then
+  _cmd="\$HOME/$mac_cmd"
+elif os orb; then
+  _cmd="\$HOME/mac/$mac_cmd"
+fi
+nohup "\$_cmd" "\$@" >&/tmp/$app.log &
 EOF
 }
 
-install_msys() {
-  exe scoop install $scoop_idea
-}
-install_cygwin() { not_supported; }
-install_mac() {
-  def_install --cask intellij-idea-ce
-}
-install_ubuntu() { not_supported; }
-install_redhat() { not_supported; }
 setting_common() {
   # shellcheck disable=SC2154
   make_lnk_with_bkup "$app_dir/_ideavimrc" "$HOME/_ideavimrc"

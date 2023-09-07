@@ -17,7 +17,9 @@ install_arch() {
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
-install_mac() { not_supported; }
+install_mac() {
+  exe brew install --cask jetbrains-toolbox
+}
 install_ubuntu() {
   def_install libfuse2 google-chrome
   github git@github.com:nagygergo/jetbrains-toolbox-install.git
