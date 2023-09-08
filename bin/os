@@ -7,7 +7,7 @@ is_orb() { uname -r | grep -qi orbstack; }
 
 # TODO indent
 detect_os() {
-  local result=
+  local result="Unkown distribution"
   if [[ -e /etc/debian_version ]] ||
     [[ -e /etc/debian_release ]]; then
     # Check Ubuntu or Debian
@@ -56,9 +56,6 @@ detect_os() {
   elif [[ $OSTYPE == "msys" ]]; then
     # mac
     result="msys"
-  else
-    # Other
-    result="Unkown distribution"
   fi
   echo "$result"
 }
