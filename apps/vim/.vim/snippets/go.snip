@@ -170,6 +170,8 @@ alias	print_samplesss
 	fmt.Printf("%#+v\n", ${1}) // Output with field name and type spec
 	fmt.Printf("%T\n", ${1}) // Output The type
 	fmt.Printf("%%\n", ${1}) // Output '%'
+	// %s: string
+	// %p: pointer or channel
 	// %t: bool
 	// %d: decimal number
 	// %b: binary number
@@ -402,29 +404,6 @@ snippet	replaceeee
 ###############################################################################
 # Error
 ###############################################################################
-snippet	if_errr
-	if err != nil {
-		return errors.WithStack(err)
-	}
-snippet	if_errrf
-	if err != nil {
-		return fmt.Errorf("Failed to ${1:#do somthing}: %w", err)
-	}
-snippet	if_error_with_stackkk
-	if err != nil {
-		return errors.WithStack(err)
-	}
-snippet	if_exec_errr
-	if err := ${1}; err != nil {
-		return fmt.Errorf("Failed to ${1:#do somthing} %s: %w", "${2}", err)
-	}
-
-snippet	errors_new
-	errors.New("Error")
-
-snippet	errors_new_fmt
-	errors.Errorf("Error: %s", "${1}")
-
 # See [今goのエラーハンドリングを無難にしておく方法（2021.09現在）](https://zenn.dev/nekoshita/articles/097e00c6d3d1c9)
 # - stacktraceが不要な場合
 #   - fmt.Errorfでラップし、errors.Isで判定する
@@ -432,22 +411,28 @@ snippet	errors_new_fmt
 #   - pkg/errors.Wrapでラップし、pkg/errors.Causeで判定する
 #   - log.Printf("%+v", err)でstacktraceを出力する
 #   - 新しいエラーを返す時はpkg/errors.New or pkg/errors.Errorfを使う
-snippet	errors_wrap_no_stackkk
-	fmt.Errorf("Failed to ${1:#do somthing} %s: %w", "${2}", err)
 
-snippet	errors_wrap_withstackkk
+snippet	iferrr
+	if err != nil {
+		return errors.Wrapf(err, "Failed to %s", "${1:#do somthing}")
+	}
+
+snippet	iferrr_exec
+	if err := ${1}; err != nil {
+		return errors.Wrapf(err, "Failed to %s", "${2:#do somthing}")
+	}
+
+snippet	errors_samplesss
+	# With Stack
+	errors.New("Error")
+	errors.Errorf("Error: %s", "${1}")
+	# With Stack and Wrap
 	errors.WithStack(err)
-
-snippet	errors_wrap_stackkk
-	errors.Wrapf(err, "Failed to ${1:#do somthing} %s", "${2}")
-
-snippet	errors_cause_wrap_no_stackkk
-	fmt.Errorf("Failed to ${1:#do somthing} %s: %w", "${2}", err)
-	if errors.Is(err, SampleError) { }
-
-snippet	errors_cause_wrap_stackkk
-	errors.Wrapf(err, "Failed to ${1:#do somthing} %s", "${2}")
-	if errors.Cause(err) == SampleError { }
+	errors.Wrapf(err, "Failed to somthing %s", "arg")
+		if errors.Cause(err) == SampleError { }
+	# No Stack
+	fmt.Errorf("Failed to somthing. Error: %w", err)
+		if errors.Is(err, SampleError) { }
 
 ###############################################################################
 # File
@@ -584,7 +569,22 @@ snippet	deep_copyyy
 snippet	count_field
 	reflect.TypeOf(Person{}).NumField()
 
+snippet	for_each_field
+	v := reflect.ValueOf($1)
+	t := v.Type()
+	for i := 0; i< v.NumField(); i++ {
+			fmt.Printf("Field: %s\tValue: %v\n", t.Field(i).Name, v.Field(i).Interface())
+	}
+
 snippet	stdinnn
+	stdin := os.Stdin
+	stat, err := stdin.Stat()
+	if err != nil {
+		return err
+	}
+	if stat.Size() == 0 {
+		return fmt.Errorf("stdin is empty")
+	}
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		fmt.Println(scanner.Text())
