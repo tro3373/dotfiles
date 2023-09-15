@@ -69,11 +69,11 @@ EOF
 
 setting_common() {
   # shellcheck disable=SC2154
-  make_lnk_with_bkup "$app_dir/_ideavimrc" "$HOME/.ideavimrc"
+  make_lnk_with_bkup "$app_dir/.ideavimrc" "$HOME/.ideavimrc"
   create_bin_cmd
 }
 setting_wsl() {
-  make_lnk_with_bkup "$app_dir/_ideavimrc" "$WINHOME/_ideavimrc"
+  make_lnk_with_bkup "$app_dir/.ideavimrc" "$WINHOME/_ideavimrc"
   setting_common
 }
 # setting_arch() {
