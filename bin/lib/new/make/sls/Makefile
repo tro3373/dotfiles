@@ -111,6 +111,11 @@ init:
 		exit 1; \
 	fi;
 
+ngrok-url:
+	@$(GET_NGROK_URL)
+ngrok: init
+	@((pgrep ngrok >& /dev/null) || (echo ">> Starting ngrok.." && (ngrok http 3000 >& /dev/null &) && (sleep 2))) && $(GET_NGROK_URL)
+
 _lib_cmd:
 	@${PREV_COMMANDS} && ${VAULT} ./src/__tests__/lib/${CMD}
 front_user:
