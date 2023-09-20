@@ -312,7 +312,7 @@ endfun
 command! SaveMemo call SaveMemo()
 
 function! SaveMd() abort
-  call SaveMemoInner("~/.md/content/post", 1, 1)
+  call SaveMemoInner("~/.md/content/posts", 1, 1)
 endfun
 command! SaveMd call SaveMd()
 
