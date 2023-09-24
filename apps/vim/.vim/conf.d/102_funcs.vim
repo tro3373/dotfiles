@@ -246,7 +246,8 @@ function! Hugolize() abort
   " slug form dirname with remove `yyyy-mm-dd-`
   " TODO Support not in target md directory case
   let slug = expand('%:h:t')[11:]
-  " TODO title from h1
+  " Move cursor to top for search
+  norm! gg
   let title = getline(search("^#"))[2:]
 
   let list = [
@@ -254,19 +255,17 @@ function! Hugolize() abort
   \ 'draft: true',
   \ 'date: '.strnow,
   \ 'lastmod: '.strnow,
-  \ 'cover: img.png',
-  \ 'useRelativeCover: true',
-  \ 'comments: true      # set false to hide Disqus comments',
-  \ 'share: true         # set false to share buttons',
-  \ 'menu: ""            # set "main" to add this content to the main menu',
-  \ 'slug: '.slug,
-  \ 'title: '.title,
+  \ 'cover:',
+  \ '    image: img.png',
+  \ 'title: "'.title.'"',
   \ 'categories:',
   \ '  - tech',
   \ 'tags:',
   \ '  - golang',
+  \ '# showToc: false',
   \ '---',
   \ ]
+
   let i = 0
   for row in list
     call append(i, row)
@@ -292,13 +291,13 @@ function! SaveMemoInner(outdir, createDirectory, withHugolize) abort
   if title != ""
     let title = "-" . title
   endif
-  let name = strnow.title
+  let name = strnow . title
   if a:createDirectory == 1
-    let dir = dir."/".name
+    let dir = dir . "/" . name
     call mkdir(expand(dir), "p")
     let name = "index"
   endif
-  exe ":w ".dir."/".name.".md"
+  exe ":w " . dir . "/" . name . ".md"
   if a:withHugolize == 1
     call Hugolize()
     exe ":w"
