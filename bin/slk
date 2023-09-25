@@ -143,11 +143,11 @@ lchannel() {
   case "${channel}" in
     @*)
       local _user=$(
-        curl -s -X POST https://slack.com/api/users.list --data-urlencode "token=${token}" 2>&1 |
+        curl -k -s -X POST https://slack.com/api/users.list --data-urlencode "token=${token}" 2>&1 |
           jq -r ".members | map(select(.name == \"${channel/@/}\" or .profile.display_name == \"${channel/@/}\")) | .[0].id"
       )
       local _channel=$(
-        curl -s -X POST https://slack.com/api/im.list --data-urlencode "token=${token}" 2>&1 |
+        curl -k -s -X POST https://slack.com/api/im.list --data-urlencode "token=${token}" 2>&1 |
           jq -r ".ims | map(select(.user == \"${_user}\")) | .[].id"
       )
       if [[ -z $_channel ]]; then
@@ -168,7 +168,7 @@ send() {
     local _filename=$(basename $upload_file_path)
     # ${filetype:+ --form "filetype=${filetype}"} \
     # ${title:+ --form "title=${title}"} \
-    $dummy curl -fSsL -X POST https://slack.com/api/files.upload \
+    $dummy curl -k -fSsL -X POST https://slack.com/api/files.upload \
       ${channel:+ --form-string "channels=$(lchannel)"} \
       ${upload_file_path:+ --form "file=@${upload_file_path}"} \
       ${_filename:+ --form "filename=${_filename}"} \
@@ -182,7 +182,7 @@ send() {
     # ${filetype:+ --data-urlencode "filetype=${filetype}"} \
     # ${title:+ --data-urlencode "title=${title}"} \
     echo -e "$message" |
-      $dummy curl -fSsL -X POST https://slack.com/api/files.upload \
+      $dummy curl -k -fSsL -X POST https://slack.com/api/files.upload \
         ${channel:+ --data-urlencode "channels=$(lchannel)"} \
         ${icon:+ --data-urlencode "icon_emoji=$icon"} \
         ${name:+ --data-urlencode "username=$name"} \
@@ -193,7 +193,7 @@ send() {
 
   dlog "==> Sending message"
   echo -e "$message" |
-    $dummy curl -fSsL -X POST https://slack.com/api/chat.postMessage \
+    $dummy curl -k -fSsL -X POST https://slack.com/api/chat.postMessage \
       ${channel:+ --data-urlencode "channel=$(lchannel)"} \
       ${icon:+ --data-urlencode "icon_emoji=$icon"} \
       ${name:+ --data-urlencode "username=$name"} \
