@@ -1,31 +1,26 @@
 #!/usr/bin/env bash
 
 main() {
-  local owner=$1
-  local repo=$2
-  local grep_key=${3}
-  local tag=${4:-latest}
+  local owner repo grep_key url_checksum url assets
+  owner=$1
+  repo=$2
+  grep_key=${3:-.}
+  # local tag=${4:-latest}
   if [[ -z $owner || -z $repo ]]; then
     echo "Specify owner and repo" 1>&2
     exit 1
   fi
   # shellcheck disable=SC2155
-  local url=$(
-    curl -fSsL "https://api.github.com/repos/$owner/$repo/releases/$tag" |
-      grep browser_download_url |
-      if [[ -z $grep_key ]]; then
-        cat - | grep -v checksums
-      else
-        cat - | grep -E "$grep_key"
-      fi |
-      head -1 |
-      awk '{print $2}' |
-      sed -e 's,",,g'
+  url_checksum=$(
+    curl -s "https://api.github.com/repos/$owner/$repo/releases" |
+      jq -r '.[0].assets[0].browser_download_url'
   )
-  if [[ -z $url ]]; then
+  if [[ -z $url_checksum ]]; then
     echo "No target is filtered." 1>&2
     exit 1
   fi
+  assets=$(curl -fSsL "$url_checksum" | grep -E "$grep_key" | head -1 | awk '{print $2}')
+  url=${url_checksum/checksums.txt/$assets}
   echo "==> Downloding from $url.." 1>&2
   curl -fSsLO "$url"
   echo "==> Done" 1>&2

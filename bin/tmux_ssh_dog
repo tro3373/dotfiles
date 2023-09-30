@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-readonly command_name=$(basename $0)
+command_name=$(basename "$0") && readonly command_name
 readonly enable_servers=${TMUX_SSH_PREFIX_DOG_ENABLE_SERVERS:-vag}
 is_prev=0
 server=
@@ -38,7 +38,7 @@ initialize() {
       -h | --help) usage && exit 0 ;;
       -p) is_prev=1 ;;
       -r) shift && restore_window_name=$1 ;;
-      -e) shift && add_enable_server $1 && exit 0 ;;
+      -e) shift && add_enable_server "$1" && exit 0 ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
@@ -54,24 +54,25 @@ initialize() {
 }
 change_tmux_key() {
   local _opt=C-$1
-  if tmux show-options -g prefix | grep $_opt >&/dev/null; then
+  if tmux show-options -g prefix | grep "$_opt" >&/dev/null; then
     # echo "==> Already tmux prefix $_opt"
     return
   fi
   echo "==> Change tmux prefix to $_opt" 1>&2
-  tmux set-option -g prefix $_opt
+  tmux set-option -g prefix "$_opt"
 }
 add_enable_server() {
-  local add=$1
+  local add export_prefix target current dst
+  add=$1
   [[ -z $add ]] && echo "Specify add server name" 1>&2 && exit 1
-  local export_prefix='export TMUX_SSH_PREFIX_DOG_ENABLE_SERVERS'
-  local target=$HOME/.works.zsh
-  local current=$(sed -n -e "s,$export_prefix=,,p" $target)
-  local dst=$(echo "vag,$add,$current" | tr , '\n' | sort -u | tr '\n' ',')
-  sed -i -e "/$export_prefix=/d" $target
-  echo "$export_prefix=$dst" >>$target
+  export_prefix='export TMUX_SSH_PREFIX_DOG_ENABLE_SERVERS'
+  target=$HOME/.works.zsh
+  current=$(sed -n -e "s,$export_prefix=,,p" "$target")
+  dst=$(echo "vag,$add,$current" | tr , '\n' | sort -u | tr '\n' ',')
+  sed -i -e "/$export_prefix=/d" "$target"
+  echo "$export_prefix=$dst" >>"$target"
   echo "==> Bellow settings now enabled." 1>&2
-  grep "$export_prefix=" $target
+  grep "$export_prefix=" "$target"
 }
 before() {
   is_dog_enable_server && change_tmux_key b
