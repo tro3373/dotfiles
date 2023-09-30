@@ -171,7 +171,7 @@ _setup_gui_apps() {
   Do below
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 1. キーボード設定
-  - System Enviroments - キーボード - KeyRepeat to fastest
+  - System Enviroments - キーボード - KeyRepeat to fastest, Delay to shortest
   - System Enviroments - キーボード - キーボードショートカット - modification key - Change Caps Lock to Control(キーボード毎に設定)
   - System Enviroments - キーボード - キーボードショートカット - キーボード - 次のウィンドウを操作対処にする
   - System Enviroments - キーボード - キーボードショートカット - ファンクションキー - F1,F2などのキーを標準のファンクションキーとして使用する
