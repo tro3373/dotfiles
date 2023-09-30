@@ -4,6 +4,8 @@ usage() {
   cat <<'EOF'
 # Generate public key from private key
 ssh-keygen -y -f /path/to/file
+# Show fingerprint
+ssh-keygen -lf /path/to/file
 EOF
 }
 main() {
