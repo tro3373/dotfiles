@@ -112,10 +112,19 @@ set fileencoding=utf-8
 " © Only File Not working see [.vimrc | 暇人専用](http://himajin-senyo.com/conf/vimrc/)
 " set fileencodings=iso-2022-jp,euc-jp,sjis,utf-8
 " [Vim – 文字コードを自動認識して判定/判別する方法 | Howpon[ハウポン]](https://howpon.com/20630)
-set fileencodings=iso-2022-jp,ucs-bom,utf-8,euc-jp,cp932,sjis,default,latin1
+" set fileencodings=iso-2022-jp,ucs-bom,utf-8,euc-jp,cp932,sjis,default,latin1
+"[Vimの文字コードの認識の仕組みと、文字化けを減らすための設定 - Qiita](https://qiita.com/aikige/items/12ffa2574199cc740a44)
+set fileencodings=ucs-bom,utf-8,iso-2022-jp,cp932,euc-jp,default,latin
 " setglobal fileformat=unix
 " 新規、読込時の改行設定(複数で自動判定)
 set fileformats=unix,dos,mac
+" ■Unicodeで行末が変になる問題を解決
+if &encoding == 'utf-8'
+  if exists('&ambw')
+    " set ambiwidth=double
+    set ambw=double
+  endif
+endif
 
 "-----------------------------------------------------
 " インデント設定
@@ -226,13 +235,6 @@ au BufNewFile,BufRead * if &syntax == '' | set syntax=sh | endif
 set pumheight=10
 " 長い行も表示
 set display=lastline
-" ■Unicodeで行末が変になる問題を解決
-if &encoding == 'utf-8'
-  if exists('&ambw')
-    " set ambiwidth=double
-    set ambw=double
-  endif
-endif
 " 全角スペースを分かりやすく表示する
 highlight ZenkakuSpace cterm=underline ctermfg=lightmagenta guibg=lightmagenta
 match ZenkakuSpace /　/

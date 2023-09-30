@@ -102,10 +102,12 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'suy/vim-ctrlp-commandline'                        " Plugins for ctrlp.vim command line history navigation
   Plug 'sgur/ctrlp-extensions.vim'                        " Plugins for ctrlp.vim cmdline : cmdline history,
                                                           " yankring : yank history, menu : extension selector menu
-
-
-  Plug 'banyan/recognize_charcode.vim'                    " 文字コード判定
   Plug 'vim-scripts/sudo.vim'                             " sudo
+
+  " =================================================================
+  " Buggy
+  " Plug 'banyan/recognize_charcode.vim'                    " 文字コード判定
+  " =================================================================
 
   " =================================================================
   " Feature/Funcs Operation
@@ -130,7 +132,7 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'rking/ag.vim'                                     " SilverSearcher
   if !g:is_windows && !g:is_cygmsys2
       Plug 'junegunn/fzf', { 'dir': '$HOME/.fzf',
-        \ 'do': './install --all' }                       " FZF
+       \ 'do': './install --all' }                       " FZF
       Plug 'junegunn/fzf.vim'
   endif
   Plug 'rhysd/clever-f.vim'                               " f検索
