@@ -103,6 +103,8 @@ alias s="systemctl"
 alias m="make"
 alias cddot="cd $DOTPATH"
 alias history="history -i"
+alias codeimg="germanium"
+alias germ="germanium"
 if has speedtest; then
   alias st="speedtest"
 fi
