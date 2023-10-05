@@ -163,6 +163,12 @@ _setup_mac_settings() {
   # exe defaults write com.apple.Safari WebKitInitialTimedLayoutDelay 0.25
   # exe defaults write com.apple.Safari WebIconDatabaseEnabled -boolean false
   # exe killall Safari
+
+  ########################################################################
+  # Android Studio for IdeaVim Fix key repeat popup dialog
+  ########################################################################
+  # [ideavim - Android Studio key repeat - Stack Overflow](https://stackoverflow.com/questions/27004507/android-studio-key-repeat)
+  exe defaults write -g ApplePressAndHoldEnabled -bool false
 }
 
 _setup_gui_apps() {
