@@ -1,0 +1,20 @@
+#!/usr/bin/env -S bash -e
+
+current_dir=$(pwd) && readonly current_dir
+command_name=$(basename "$0") && readonly command_name
+
+error() { echo "$*" 1>&2; }
+main() {
+  if [[ $# -eq 0 ]]; then
+    error "Usage: $command_name <alias> <key.jks>"
+    exit 1
+  fi
+  alias="$1"
+  dst="${2:-$current_dir/key.jks}"
+  if [[ -e $dst ]]; then
+    error "File already exists. $dst"
+    exit 1
+  fi
+  keytool -genkey -v -keystore "$dst" -keyalg RSA -keysize 2048 -validity 10000 -alias "$alias"
+}
+main "$@"
