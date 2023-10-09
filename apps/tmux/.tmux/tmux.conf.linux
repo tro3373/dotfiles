@@ -9,7 +9,8 @@ unbind -T copy-mode-vi y
 # コピー後にカーソル位置をクリアしたくないので、cancelは呼びたくないが、ゴミがでるため、強制リフレッシュを行う
 # bind-key -T copy-mode-vi y     send -X copy-pipe "xsel -bi --display :0" \; send -X clear-selection \; send -X refresh-client \; display "copied."
 # bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "xsel -bi --display \${DISPLAY:-:0}" \; display "copied."
-bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "cat - | ~/.dot/bin/clip" \; display "copied."
+# bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "cat - | ~/.dot/bin/clip" \; display "copied."
+bind-key -T copy-mode-vi y send-keys -X copy-pipe "cat - | ~/.dot/bin/clip" \; display "copied."
 # Enter はキャンセルに使う為バインドしない
 # unbind -T copy-mode-vi Enter
 # bind-key -T copy-mode-vi Enter send -X copy-pipe "xsel -bi" \; send -X clear-selection \; send -X refresh-client \; display "copied."
