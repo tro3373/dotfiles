@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env -S bash -e
 
 readonly _FF_OPT_F=${_FF_OPT_F:-f}
 readonly ignored=(.git node_modules bower_components)
 
-has() { command -v ${1} >&/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
 
 findf() {
   local cmd=(find)
@@ -23,11 +23,12 @@ findf() {
   cmd+=("-print")
   # cmd+=("-ls")
   # echo -e "${cmd[@]}"
+  # shellcheck disable=SC2294
   eval "${cmd[@]}"
 }
 
 rgf() {
-  rg --files |
+  rg --files . |
     if [[ $# -eq 0 ]]; then
       cat -
     else
@@ -53,7 +54,7 @@ main() {
   if [[ -d $arg1 ]]; then
     # if fist argument is exist directory,
     # we execute command in the directory.
-    cd $arg1
+    cd "$arg1" || return
     rel_path=${arg1%/}
     args=("${@:2}")
   fi
