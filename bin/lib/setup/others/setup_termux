@@ -60,14 +60,16 @@ alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -l'
 export PATH=~/bin:$PATH
+command -v nvim >/dev/null && alias vim=nvim
 EOF
+  export PATH=~/bin:$PATH
 }
 
 setup_pkgs() {
   log "==> Update & Upgradeing pkgs...(termux-change-repo needed...)"
   apt update -y
   apt upgrade -y
-  pkg install -y proot jq
+  pkg install -y proot jq which
 }
 
 setup_ssh_auth_keys() {
@@ -127,7 +129,7 @@ setup_ydl() {
   setup_ghdl
   cd ~/bin
   ghdl tro3373 ydl Android
-  tar xvfpz ydl_android*tar.gz
+  tar xvfpz ydl_Android*tar.gz
 }
 
 setup_start_ydl() {
