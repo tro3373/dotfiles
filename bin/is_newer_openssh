@@ -2,8 +2,9 @@
 
 readonly threshold_ver=7.8
 main() {
-  local v=$(opensshv)
-  local result=$(echo "$v >= $threshold_ver" | bc)
-  test $result -eq 1
+  local v result
+  v=$(opensshv)
+  result=$(echo "$v >= $threshold_ver" | bc)
+  test "$result" -eq 1
 }
 main "$@"
