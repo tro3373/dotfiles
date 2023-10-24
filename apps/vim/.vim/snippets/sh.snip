@@ -185,8 +185,15 @@ snippet	readuser
 snippet	readpass
 	read -sp "pass: " pass
 
-snippet	log
+snippet	logggg
 	log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
+
+snippet	logsettt
+	log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
+	error() {
+		log "$*"
+		exit 1
+	}
 
 snippet	logcolorrr
 	_log() {
