@@ -110,3 +110,11 @@ snippet	ngrok
 		@pgrep ngrok | xargs kill -9
 		@echo ">> ngrok stopped"
 	ngrok: ngrok-start ngrok-url
+
+snippet	help
+	help: ## display this help screen
+		@echo $(MAKEFILE_LIST) |tr ' ' '\n' |xargs grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' |sort |awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+snippet	includeee
+	-include $(wildcard ${1})
+
