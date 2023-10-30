@@ -1,0 +1,206 @@
+#!/usr/bin/bash
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
+pub_key="$script_dir/pub"
+
+ink() {
+  local stdin=
+  if [[ -p /dev/stdin ]]; then
+    stdin="$(cat <&0)"
+  fi
+  if [[ $# -eq 0 && -z $stdin ]]; then
+    return
+  fi
+
+  local open="\033["
+  local close="${open}0m"
+  export black="0;30m"
+  export red="1;31m"
+  export green="1;32m"
+  export yellow="1;33m"
+  export blue="1;34m"
+  export purple="1;35m"
+  export cyan="1;36m"
+  export gray="0;37m"
+  export white="$close"
+
+  local text="$stdin$*"
+  local color="$close"
+
+  case $1 in
+    black | red | green | yellow | blue | purple | cyan | gray | white)
+      eval color="\$$1"
+      text="$stdin${*:2}"
+      ;;
+  esac
+
+  # shellcheck disable=SC2059
+  printf "${open}${color}${text}${close}\n" 1>&2
+}
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink red; }
+log_skip() { log "===> Already setupped."; }
+has() { command -v "${1}" >&/dev/null; }
+
+setup_bin() {
+  [[ -e ~/bin ]] && return
+  mkdir -p ~/bin
+}
+
+setup_bashrc() {
+  local target=~/.bashrc
+  log "==> Setting up $target..."
+  grep 'local/bin' $target >&/dev/null && log_skip && return
+  cat <<'EOF' >>$target
+alias ll='ls -alF --color=auto'
+alias la='ls -A --color=auto'
+alias l='ls -l --color=auto'
+export PATH=~/bin:~/.local/bin:$PATH
+command -v nvim >/dev/null && alias vim=nvim
+EOF
+  export PATH=~/bin:$PATH
+}
+
+setup_pkgs() {
+  log "==> Update & Upgradeing pkgs..."
+  sudo pacman -Syyuu --noconfirm
+  sudo pacman -S --noconfirm jq vim neovim
+}
+
+setup_ssh_auth_keys() {
+  local target=~/.ssh
+  log "==> Setting up $target..."
+  [[ -e $target ]] && log_skip && return
+  mkdir -p $target
+  touch $target/authorized_keys
+  chmod 700 $target
+  chmod 600 $target/authorized_keys
+  [[ ! -e $pub_key ]] && return
+  cat "$pub_key" >>$target/authorized_keys
+}
+
+setup_ssh() {
+  log "==> Setting up ssh..."
+  setup_ssh_auth_keys
+}
+
+setup_python() {
+  log "==> Setup python..."
+  has python && log_skip && return
+  sudo pacman -S --noconfirm python python-pip python-pipx
+}
+
+setup_ffmpeg() {
+  # pkg install libicu?
+  log "==> Setup ffmpeg..."
+  has ffmpeg && log_skip && return
+  sudo pacman -S --noconfirm ffmpeg
+}
+
+setup_ytdlp() {
+  log "==> Setup yt-dlp..."
+  has yt-dlp && log_skip && return
+  pipx install yt-dlp
+}
+
+setup_ydl() {
+  log "==> Setup ydl..."
+  has ydl && log_skip && return
+  setup_ghdl
+  cd ~/bin
+  ghdl tro3373 ydl Android
+  tar xvfpz ydl_Android*tar.gz
+}
+
+setup_start_ydl() {
+  local target=start_ydl
+  log "==> Setup $target..."
+  has $target && log_skip && return
+  # echo 'nohup ~/bin/ydl |& tee ~/bin/ydl.log &' >>~/bin/$target
+  echo 'pgrep ydl || (nohup ~/bin/ydl |& tee ~/bin/ydl.log &)' >>~/bin/$target
+  chmod 755 ~/bin/$target
+}
+
+cat_url_opener_old() {
+  # -f, --format FORMAT :  Video format code, see the "FORMAT SELECTION" for all the info
+  #       bestvideo[height<=1280][ext=mp4]+bestaudio[ext=m4a]
+  #       bestvideo[ext=mp4][height<=720]+bestaudio
+  # --no-mtime          : Do not use the Last-modified header to set the file modification time
+  # --restrict-filenames: Restrict filenames to only ASCII characters, and avoid "&" and spaces in filenames
+  # -x, --extract-audio
+  #       Convert video files to audio-only files (requires ffmpeg/avconv and ffprobe/avprobe)
+  # --audio-format FORMAT
+  #       Specify audio format: "best", "aac", "flac", "mp3", "m4a", "opus", "vorbis", or "wav"; "best" by default; No effect without -x
+  cat <<'EOF'
+
+  # --no-mtime \
+  # --restrict-filenames \
+  # -f 'bestvideo[height<=1280][ext=mp4]+bestaudio[ext=m4a]' \
+  # youtube-dl \
+yt-dlp \
+  -f 'bestvideo[ext=mp4][height<=720]+bestaudio' \
+  -x --audio-format mp3 \
+  -o '~/storage/downloads/%(id)s-%(title)s.%(ext)s' \
+  $1
+EOF
+}
+
+setup_ydl_env() {
+  log "==> Setup ydl..."
+  setup_python
+  setup_ffmpeg
+  setup_ytdlp
+  setup_ydl
+  setup_start_ydl
+}
+
+setup_ghdl() {
+  local target=ghdl
+  log "==> Setup $target..."
+  has $target && log_skip && return
+  cat_ghdl >~/bin/$target
+  chmod 755 ~/bin/$target
+}
+
+cat_ghdl() {
+  cat <<'EOF'
+#!/bin/bash
+
+main() {
+  local owner repo grep_key url_checksum url assets
+  owner=$1
+  repo=$2
+  grep_key=${3:-.}
+  # local tag=${4:-latest}
+  if [[ -z $owner || -z $repo ]]; then
+    echo "Specify owner and repo" 1>&2
+    exit 1
+  fi
+  # shellcheck disable=SC2155
+  url_checksum=$(
+    curl -s "https://api.github.com/repos/$owner/$repo/releases" |
+      jq -r '.[0].assets[0].browser_download_url'
+  )
+  if [[ -z $url_checksum ]]; then
+    echo "No target is filtered." 1>&2
+    exit 1
+  fi
+  assets=$(curl -fSsL "$url_checksum" | grep -E "$grep_key" | head -1 | awk '{print $2}')
+  url=${url_checksum/checksums.txt/$assets}
+  echo "==> Downloding from $url.." 1>&2
+  curl -fSsLO "$url"
+  echo "==> Done" 1>&2
+}
+main "$@"
+EOF
+}
+
+main() {
+  set -e
+  setup_bin
+  setup_bashrc
+  setup_pkgs
+  setup_ssh
+  setup_ydl_env
+  log "Done!"
+}
+main "$@"
