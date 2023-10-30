@@ -104,6 +104,7 @@ setup_python() {
 }
 
 setup_ffmpeg() {
+  # pkg install libicu?
   log "==> Setup ffmpeg..."
   has ffmpeg && log_skip && return
   apt install ffmpeg -y
@@ -136,7 +137,7 @@ setup_start_ydl() {
   local target=start_ydl
   log "==> Setup $target..."
   has $target && log_skip && return
-  echo 'termux-chroot /home/bin/ydl' >>~/bin/$target
+  echo 'termux-chroot /home/bin/ydl |& tee /data/data/com.termux/files/home/bin/ydl.log' >>~/bin/$target
   chmod 755 ~/bin/$target
 }
 
