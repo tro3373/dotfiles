@@ -1,0 +1,6 @@
+#!/usr/bin/env -S bash -eu
+
+main() {
+  git config --global --get user.name
+}
+main "$@"
