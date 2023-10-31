@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -16,6 +16,10 @@ func main() {
 	app.Name = "Hello xxxx"
 	app.Usage = "Make `Hello xxx` for arbitrary text"
 	app.Version = "0.1.0"
+	app.Action = func(c *cli.Context) error {
+		log.Infof("main called")
+		return nil
+	}
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -39,14 +43,16 @@ func main() {
 				},
 			},
 			Action: func(c *cli.Context) error {
-				fmt.Printf("Hello %s %s\n", c.String("text"), suffix)
+				// fmt.Printf("Hello %s %s\n", c.String("text"), suffix)
+				log.Infof("Hello %s %s\n", c.String("text"), suffix)
 				return nil
 			},
 		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		// fmt.Fprintln(os.Stderr, err)
+		log.Error("==> Error occured: %w", err)
 		os.Exit(1)
 	}
 }
