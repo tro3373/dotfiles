@@ -110,12 +110,12 @@ do_clone() {
     git checkout .
   else
     echo "==> git svn initializing to dir:$dst url:$url opt:$rev_option sopt:$s_option .."
-    echo git svn init --prefix=svn/ $s_option "$url" "$dst"
+    git svn init --prefix=svn/ $s_option "$url" "$dst"
     cd "$dst" || exit
     echo "==> git svn fetching $rev_option to dir:$dst .."
     u=$(whoami)
     # shellcheck disable=SC2086
-    echo git svn --username=$u fetch $rev_option
+    git svn --username=$u fetch $rev_option
   fi
   echo "==> Done."
 }
