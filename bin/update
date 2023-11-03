@@ -49,6 +49,7 @@ update_arch() {
     local _cmd=yay
   fi
   log "=> Updating.."
+  # shellcheck disable=SC2086
   $dummy $_cmd -Syyu --noconfirm "${args[@]}"
 }
 update_ubuntu() {

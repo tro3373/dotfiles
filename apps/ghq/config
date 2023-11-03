@@ -20,7 +20,7 @@ EOF
 
 setting_common() {
   local _gitconfig=$HOME/.gitconfig
-  if grep ghq $_gitconfig >&/dev/null; then
+  if grep ghq "$_gitconfig" >&/dev/null; then
     return
   fi
   cat_add_config |
@@ -29,6 +29,6 @@ setting_common() {
       echo
       cat -
     else
-      cat - | tee -a $_gitconfig >/dev/null
+      cat - | tee -a "$_gitconfig" >/dev/null
     fi
 }

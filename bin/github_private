@@ -15,8 +15,8 @@ sub() {
   reponm=$(basename "$repod")
   cd "$repod" || return
   $dummy git remote remove origin
-  $dummy hub create -p "$reponm"
-  $dummy git push origin master
+  $dummy gh repo create "$reponm" --private --source .
+  # $dummy git push origin master
 }
 
 main() {

@@ -51,10 +51,10 @@ main() {
 
   log "==> Creating repository $name .."
   git_init_allow_empty
-  local _opt_create
-  [[ $private -eq 1 ]] && _opt_create="-p"
-  hub create $_opt_create
-  git push -u origin main
+  local _opt_create="--public"
+  [[ $private -eq 1 ]] && _opt_create="--private"
+  gh repo create "$name" $_opt_create --push --source .
+  # git push -u origin main
 
   local _user_repo
   _user_repo=$(git remote get-url origin | sed -e 's,^.*github.com.,,g' -e 's,.git,,g')

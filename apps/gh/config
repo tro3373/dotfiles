@@ -1,12 +1,23 @@
 #!/usr/bin/env bash
 
-install_common() { not_supported; }
-install_arch() {
+# install_common() { not_supported; }
+# install_common() {
+#   if ! has go; then
+#     log "golang not installed."
+#     return
+#   fi
+#   # Not work
+#   exe go install github.com/cli/cli/cmd/gh@latest
+# }
+install_arch_by_snap() {
   if ! has snap; then
     log "No snap command exist. install snap first." 1>&2
     return
   fi
   exe sudo snap install gh --edge
+}
+install_arch() {
+  def_install github-cli
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
@@ -16,7 +27,7 @@ install_mac() {
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() {
-  if grep 'gh ' ~/.works.zsh >&/dev/null; then
+  if grep 'gh completion -s zsh' ~/.works.zsh >&/dev/null; then
     return
   fi
   exe "echo 'eval \"\$(gh completion -s zsh)\"' >> ~/.works.zsh"
