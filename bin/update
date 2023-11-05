@@ -17,7 +17,7 @@ Options
 EOF
 }
 
-log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink red; }
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink cyan; }
 has() { command -v "${1}" >&/dev/null; }
 add_args() { args+=("$@"); }
 
@@ -117,6 +117,6 @@ main() {
   if os wsl; then
     update_scoop
   fi
-  ink yellow "Done!"
+  log "Done!"
 }
 main "$@"
