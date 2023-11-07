@@ -200,7 +200,7 @@ snippet	logcolorrr
 		# shellcheck disable=SC2145
 		echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "\$1"
 	}
-	log() { _log yellow "$*"; }
+	log() { _log cyan "$*"; }
 	error() {
 		_log red "$*"
 		exit 1
