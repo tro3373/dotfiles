@@ -1,0 +1,36 @@
+#!/usr/bin/env -S bash -e
+
+command_name=$(basename "$0") && readonly command_name
+usage() {
+  cat <<EOF
+
+Execute tar cvfpz
+
+Usage:
+    $command_name [option] [dst.tgz] <archive_target>
+Options:
+  -h|--help : Show this usage
+
+EOF
+}
+_log() {
+  # shellcheck disable=SC2145
+  echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"
+}
+log() { _log cyan "$*"; }
+error() {
+  _log red "$*"
+  exit 1
+}
+main() {
+  if [[ $# -eq 0 ]]; then
+    usage
+    error "Specify target"
+  fi
+  opt=
+  if [[ $# -eq 1 ]]; then
+    opt=$(basename $1).tgz
+  fi
+  tar cvfpz $opt "$@"
+}
+main "$@"
