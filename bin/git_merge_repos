@@ -1,0 +1,85 @@
+#!/usr/bin/env -S bash -e
+
+# [How do you merge two Git repositories? - Stack Overflow](https://stackoverflow.com/questions/1425892/how-do-you-merge-two-git-repositories)
+# git remote add -f Bproject /path/to/B
+# git merge -s ours --allow-unrelated-histories --no-commit Bproject/master
+# git read-tree --prefix=dir-B/ -u Bproject/master
+# git commit -m "Merge B project as our subdirectory"
+# git pull -s subtree Bproject master
+# 了解しました。ご指定のGitコマンドについて、以下のように日本語で説明します。
+#
+# 1. `git remote add -f Bproject /path/to/B`:
+#    - このコマンドは、現在のGitリポジトリに新しいリモートを追加します。このリモートを`Bproject`と命名します。
+#    - `-f`フラグは、リモートを追加した直後に、すべてのオブジェクトをフェッチします。
+#    - `/path/to/B`は、現在のリポジトリにマージしたいBプロジェクトのリポジトリへのパスです。
+#
+# 2. `git merge -s ours --allow-unrelated-histories --no-commit Bproject/master`:
+#    - このコマンドは、`Bproject`の`master`ブランチを現在のブランチにマージするプロセスを開始します。
+#    - `-s ours`は、マージ戦略を`ours`に設定します。これは、マージは実行されますが、現在のブランチのファイルは影響を受けないことを意味します。これは、現在の作業ディレクトリの内容を変更せずに、次のコマンドの準備をするのに役立ちます。
+#    - `--allow-unrelated-histories`は、共通のコミット履歴を共有していない二つのプロジェクトをマージすることを許可します。
+#    - `--no-commit`はGitによる自動コミットを防ぎ、マージを確定する前にさらなる調整を行うチャンスを与えます。
+#
+# 3. `git read-tree --prefix=dir-B/ -u Bproject/master`:
+#    - このコマンドは、`Bproject`の`master`ブランチのツリー構造を読み取り、現在のワーキングツリーに統合します。
+#    - `--prefix=dir-B/`は、`Bproject`からのファイルを現在のプロジェクトの`dir-B/`というサブディレクトリに配置することを指定します。
+#    - `-u`は、次のコミットのためにステージングされたコンテンツを準備するためにインデックスを更新します。
+#
+# 4. `git commit -m "Merge B project as our subdirectory"`:
+#    - このコマンドは、`read-tree`によって行われた変更をリポジトリにコミットします。
+#    - `-m`フラグを使用すると、コマンドラインで直接コミットメッセージを追加できます。
+#
+# 5. `git pull -s subtree Bproject master`:
+#    - このコマンドは、将来的に`Bproject`リモートからサブプロジェクトの更新を取り込むために使用されます。
+#    - `-s subtree`は、マージ戦略を`subtree`に設定します。これは、サブディレクトリとしてマージされたプロジェクトからの更新を取り込む際に役立つ戦略です。
+#
+# これらのコマンドを使用することで、一方のプロジェクトが他方のサブディレクトリとなるように二つのプロジェクトを組み合わせることができ、それぞれが独自の履歴と構造を維持することができます。これは、マイクロサービスアーキテクチャや、ライブラリや別のプロジェクトをより大きなプロジェクト内に組み込
+#
+# む際に特に便利です。
+
+_log() {
+  # shellcheck disable=SC2145
+  echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"
+}
+log() { _log cyan "$*"; }
+error() {
+  _log red "$*"
+  exit 1
+}
+by_read_tree() {
+  git remote add -f "$repo" "$_path"
+  git merge -s ours --allow-unrelated-histories --no-commit "$repo/$br"
+  git read-tree --prefix="$repo"/ -u "$repo/$br"
+  git commit -m "Merge $repo project as $repo"
+  # git pull -s subtree "$repo" "$br"
+}
+by_subtree() {
+  # git subtree add --prefix="$repo"/ --squash "$_path" $br
+  git subtree add --prefix="$repo"/ "$_path" "$br"
+}
+by_mv() {
+  git remote add -f "$repo" "$_path"
+  # git fetch "$repo"
+  git checkout -b "$repo" "$repo/main"
+  git filter-branch -f --tree-filter "mkdir __temp__ && git mv -k {,.[!.],..[!.]}* __temp__/ && mkdir $repo && git mv -k __temp__/{,.[!.],..[!.]}* $repo/"
+  git checkout main
+  git merge "$repo" --allow-unrelated-histories -m "Merge $repo project to $repo"
+}
+main() {
+  if ! git rev-parse --is-inside-work-tree >&/dev/null; then
+    error "Not in git repository"
+  fi
+  if [[ ! -p /dev/stdin ]]; then
+    error "Specify exisiting repo path as stdin"
+  fi
+  cat - |
+    while read -r _path; do
+      [[ -z $_path ]] && continue
+      [[ $_path =~ ^#.* ]] && continue
+      local repo br=main
+      repo=$(basename "$_path")
+      # by_read_tree
+      # by_subtree
+      by_mv
+    done
+}
+main "$@"
