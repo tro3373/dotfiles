@@ -85,7 +85,7 @@ EOF
 setting_common() {
   make_link_dot2home
   local usrn=0 mail=0 list
-  list="$(git config --list --global 2>/dev/null)"
+  list="$(_current_git_config_list_global)"
   while read -r line; do
     [[ -z $line ]] && continue
     [[ $line =~ ^#.* ]] && continue
@@ -128,6 +128,13 @@ setting_common() {
       setup_email
     fi
   fi
+}
+
+_current_git_config_list_global() {
+  if [[ ! -e $HOME/.gitconfig ]]; then
+    return
+  fi
+  git config --list --global 2>/dev/null
 }
 
 setting_msys() {

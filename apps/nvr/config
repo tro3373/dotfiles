@@ -5,7 +5,8 @@ install_common() {
     log "No pip installed"
     return
   fi
-  exe pip install neovim-remote
+  # TODO setup pipx needed
+  exe echo pipx install neovim-remote
 }
 install_msys()   { not_supported; }
 setting_common() {

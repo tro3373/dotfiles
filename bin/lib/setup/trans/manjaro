@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
 
+manjaro_user=archuser && readonly manjaro_user
+
 pre_setup() {
   log "=> pre setting up"
 
   _setup_user_group
+  _install_apps
   _setup_visudo_editor
   _setup_home_dir_names
+  _setup_custom_shortcut
+  _setup_key_delay_repeat
   _setup_mount_media_setting
   _setup_suspend_hibernate
-  _setup_custom_shortcut
   _setup_improve_monitor_scale
-  _install_apps
 }
 
 load_update_arg_apps() {
+  # cargo order bug?
   # shellcheck disable=SC2034
   read -r -a args < <(
     echo "$(default_apps) xclip snap fcitx5-mozc hackgen udev-gothic gnome-font-viewer"
@@ -21,16 +25,47 @@ load_update_arg_apps() {
 }
 
 post_setup() {
+  exe yay -S --noconfirm hardinfo google-chrome numix-gtk-theme numix-icon-theme numix-circle-icon-theme-git
+  _setup_gnome_extension
+  # TODO
+  #   - Dark Theme
+  log "===> In Settings"
+  log "       Date and Time - Enable Set auto Date & Time"
+  log "===> In Tweaks"
+  log "       Change to Numix-Circle-Light Icon in Appearance - Icon"
+  log "===> In GNOME Terminal"
+  log "       Change Paste to Shift-Insert from Ctlr+Shift+V"
+  log "===> In Fcitx Settings"
+  log "       Change Key Bindings"
+  log "         Enable Input Method: Right Alt"
+  log "         Disable Input Method: Left Alt"
+  log "       Disable Zenkaku space"
+  log "===> Enable in https://extensions.gnome.org/extension/307/dash-to-dock/"
+  log "       Update setting: Set Dock to Top, etc.."
   log "===> reboot maybe needed."
 }
 
+_setup_gnome_extension() {
+  # install org.gnome.shell.extensions & dash-to-dock
+  exe git clone https://aur.archlinux.org/gnome-browser-connector.git ~/gnome-browser-connector
+  exe pushd ~/gnome-browser-connector
+  exe makepkg -si --noconfirm
+  exe popd
+}
+
 _setup_user_group() {
-  if id | grep wheel >&/dev/null; then
-    return
+  if ! id | grep wheel >&/dev/null; then
+    exe sudo gpasswd -a "$(whoami)" wheel
   fi
-  exe sudo gpasswd -a "$(whoami)" wheel
   # shellcheck disable=SC2154
-  exe sudo mv /etc/sudoers.d/10-installer "$_backup_root"/
+  # exe sudo mv /etc/sudoers.d/10-installer "$_backup_root"/
+  local target=/etc/sudoers.d/20-$manjaro_user
+  echo "$manjaro_user ALL=(ALL) NOPASSWD: ALL" |
+    if is_dry; then
+      cat -
+    else
+      cat - | sudo tee $target
+    fi
 }
 
 _setup_cronie() {
@@ -61,6 +96,13 @@ _setup_home_dir_names() {
   exe env LANGUAGE=C LC_MESSAGES=C xdg-user-dirs-gtk-update
 }
 
+_setup_key_delay_repeat() {
+  # gsettings get org.gnome.desktop.peripherals.keyboard repeat-interval
+  # gsettings get org.gnome.desktop.peripherals.keyboard delay
+  gsettings_if_needed org.gnome.desktop.peripherals.keyboard repeat-interval 20
+  gsettings_if_needed org.gnome.desktop.peripherals.keyboard delay 200
+}
+
 _setup_mount_media_setting() {
   # Disable automount external media
   gsettings_if_needed org.gnome.desktop.media-handling automount false
@@ -74,50 +116,50 @@ _setup_suspend_hibernate() {
 _setup_custom_shortcut() {
   # MEMO
   #   @see [command line - How to set custom keyboard shortcuts from terminal? - Ask Ubuntu](https://askubuntu.com/questions/597395/how-to-set-custom-keyboard-shortcuts-from-terminal)
-  #
-  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings
-  #   ['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/']
-  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name
-  #   'Paste into terminal'
-  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding
-  #   '<Primary><Shift>Insert'
-  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command
-  #   'xdotool key --clearmodifiers ctrl+shift+v'
-  #   > gsettings get org.gnome.desktop.wm.keybindings switch-applications
 
-  # TODO test
-  # MEMO Shift+Insert paste primary not clipboard. wont be change it, but not work..
-  : gsettings_add_custom_keybind custom1 name "'Paste into terminal'"
-  : gsettings_add_custom_keybind custom1 binding "'<Primary><Shift>Insert'"
-  : gsettings_add_custom_keybind custom1 command "'xdotool key --clearmodifiers ctrl+shift+v'"
-  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name
-  #   'terminal'
-  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding
-  #   '<Primary><Alt>t'
-  #   > gsettings get org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command
-  #   'gnome-terminal'
-  : gsettings_add_custom_keybind custom1 name "'terminal'"
-  : gsettings_add_custom_keybind custom1 binding "'<Primary><Alt>t'"
-  : gsettings_add_custom_keybind custom1 command "'gnome-terminal'"
+  # gsettings list-recursively org.gnome.settings-daemon.plugins.media-keys |grep custom-keybindings
 
-  : gsettings_add_custom_keybind custom1 name "'open'"
-  : gsettings_add_custom_keybind custom1 binding "'<Super>e'"
-  : gsettings_add_custom_keybind custom1 command "'nautilus Downloads'"
+  # gsettings_add_custom_keybind 1 "Paste into Terminal" "<Primary><Shift>Insert" "xdotool key --clearmodifiers ctrl+shift+v"
+  # gsettings_add_custom_keybind 1 "Paste into Terminal" "<Shift>Insert" "xsel -bo" # Not work
+  gsettings_add_custom_keybind 2 "Open Terminal" "<Primary><Alt>t" "gnome-terminal"
+  gsettings_add_custom_keybind 3 "Open Downloads" "<Super>e" "nautilus Downloads"
 
+  # List current keybindings
+  # gsettings list-recursively org.gnome.desktop.wm.keybindings
   # [MYN - 2021/01/12 14:52 / gnome-shell で Alt-tab で group ベースの window switch (swith-application)をしない](https://myn.meganecco.org/1610430720.html)
-  : gsettings_if_needed org.gnome.desktop.wm.keybindings switch-applications "['<Super>Tab']"
-  : gsettings_if_needed org.gnome.desktop.wm.keybindings switch-windows "['<Alt>Tab']"
+  gsettings_if_needed org.gnome.desktop.wm.keybindings switch-applications "\"['<Super>Tab']\""
+  gsettings_if_needed org.gnome.desktop.wm.keybindings switch-windows "\"['<Alt>Tab']\""
 }
 
 gsettings_add_custom_keybind() {
-  s=org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/$1/
-  n=$2
-  v=$3
-  gsettings_if_needed "$s" "$n" "$v"
+  id=$1
+  name=$2
+  binding=$3
+  cmd=$4
+  # gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']"
+  # gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'suspend'
+  # gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Super>s'
+  # gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'systemctl suspend'
+  scheme_1=org.gnome.settings-daemon.plugins.media-keys
+  key="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom$id/"
+  name_ck="custom-keybindings"
+  keys="$(get_keys)"
+  gsettings_if_needed "$scheme_1" "$name_ck" "\"[$keys]\""
+  scheme_2="$scheme_1.custom-keybinding:$key"
+  gsettings_if_needed "$scheme_2" name "\"$name\""
+  gsettings_if_needed "$scheme_2" binding "\"$binding\""
+  gsettings_if_needed "$scheme_2" command "\"$cmd\""
+}
+
+get_keys() {
+  {
+    echo $key
+    gsettings get "$scheme_1" "$name_ck" | tr "'" '\n' | grep org
+  } | sort -u | sed -e "s,^,',g" -e "s,$,',g" | tr '\n' ',' | sed -e 's/,$//g'
 }
 
 _setup_improve_monitor_scale() {
-  gsettings_if_needed org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
+  gsettings_if_needed org.gnome.mutter experimental-features "\"['scale-monitor-framebuffer']\""
 }
 
 _install_apps() {
@@ -138,11 +180,6 @@ net-tools
 dnsutils
 gparted
 smartmontools
-hardinfo
-google-chrome
-numix-gtk-theme
-numix-icon-theme
-numix-circle-icon-theme-git
 meld
 gnome-tweaks
 # for nautilus smb:// access
@@ -160,11 +197,12 @@ EOF
     # Server = http://ftp.tsukuba.wide.ad.jp/Linux/manjaro/stable/$repo/$arch
     # Server = http://ftp.riken.jp/Linux/manjaro/stable/$repo/$arch
   fi
-  exe sudo pacman -Syyu
+  local keyring=archlinux-keyring key_server=keyserver.ubuntu.com
+  exe sudo pacman -Sy --noconfirm gnupg $keyring
+  exe sudo pacman-key --refresh-keys --keyserver $key_server
+  exe sudo pacman -Syyu --noconfirm
 
   # shellcheck disable=SC2154
   exe "$def_install_cmd" "${apps[@]}"
 
-  # TODO install org.gnome.shell.extensions & dash-to-dock
-  # https://extensions.gnome.org/extension/307/dash-to-dock/
 }

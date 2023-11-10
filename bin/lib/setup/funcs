@@ -466,7 +466,7 @@ gsettings_if_needed() {
   if [[ $_current == "$_val" ]]; then
     return
   fi
-  exe gsettings set _scheme _path _val
+  exe gsettings set "$_scheme" "$_path" "$_val"
 }
 
 is_empty_dir() {
