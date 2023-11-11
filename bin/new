@@ -155,10 +155,7 @@ generate_additional_for_go() {
   # $dummy new make go -q
 }
 
-main() {
-  initialize "$@"
-  # local out=$current_dir
-  generate
+edit_if_needed() {
   [[ -n $dummy ]] && return
   [[ $quiet -eq 1 ]] && return
   log "==> New template file generated."
@@ -170,5 +167,12 @@ main() {
   local _vim=vim
   has nvim && _vim=nvim
   "$_vim" -p "${dst_files[@]}"
+}
+
+main() {
+  initialize "$@"
+  # local out=$current_dir
+  generate
+  edit_if_needed
 }
 main "$@"
