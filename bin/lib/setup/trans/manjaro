@@ -100,7 +100,7 @@ _setup_key_delay_repeat() {
   # gsettings get org.gnome.desktop.peripherals.keyboard repeat-interval
   # gsettings get org.gnome.desktop.peripherals.keyboard delay
   gsettings_if_needed org.gnome.desktop.peripherals.keyboard repeat-interval 20
-  gsettings_if_needed org.gnome.desktop.peripherals.keyboard delay 200
+  gsettings_if_needed org.gnome.desktop.peripherals.keyboard delay 300
 }
 
 _setup_mount_media_setting() {
@@ -197,10 +197,12 @@ EOF
     # Server = http://ftp.tsukuba.wide.ad.jp/Linux/manjaro/stable/$repo/$arch
     # Server = http://ftp.riken.jp/Linux/manjaro/stable/$repo/$arch
   fi
-  local keyring=archlinux-keyring key_server=keyserver.ubuntu.com
-  exe sudo pacman -Sy --noconfirm gnupg $keyring
-  exe sudo pacman-key --refresh-keys --keyserver $key_server
-  exe sudo pacman -Syyu --noconfirm
+  #exe sudo pacman -Sy --noconfirm gnupg archlinux-keyring
+  #exe sudo pacman-key --refresh-keys --keyserver keyserver.ubuntu.com
+  exe sudo pacman-key --refresh-keys
+  exe sudo pacman -Rsu --noconfirm manjaro-gdm-theme firefox-gnome-theme-maia adwaita-maia
+  exe sudo pacman -Syu --noconfirm glibc-locales --overwrite /usr/lib/locale/\*/\*
+  # exe sudo pacman -Syyu --noconfirm
 
   # shellcheck disable=SC2154
   exe "$def_install_cmd" "${apps[@]}"
