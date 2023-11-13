@@ -111,6 +111,10 @@ _setup_mount_media_setting() {
 _setup_suspend_hibernate() {
   # Disable suspend if not log in
   exe sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+  # Timeout for blanking the screen (seconds; 0 = never):
+  gsettings_if_needed org.gnome.desktop.session idle-delay 900 # Change 5min to 1h
+  # Timeout for locking the screen after blanking (seconds; 0 = instant):
+  gsettings_if_needed org.gnome.desktop.screensaver lock-delay 0
 }
 
 _setup_custom_shortcut() {
@@ -127,8 +131,9 @@ _setup_custom_shortcut() {
   # List current keybindings
   # gsettings list-recursively org.gnome.desktop.wm.keybindings
   # [MYN - 2021/01/12 14:52 / gnome-shell で Alt-tab で group ベースの window switch (swith-application)をしない](https://myn.meganecco.org/1610430720.html)
-  gsettings_if_needed org.gnome.desktop.wm.keybindings switch-applications "\"['<Super>Tab']\""
-  gsettings_if_needed org.gnome.desktop.wm.keybindings switch-windows "\"['<Alt>Tab']\""
+  gsettings_if_needed org.gnome.desktop.wm.keybindings maximize "\"['<Super>Up']\""             # Window最大化
+  gsettings_if_needed org.gnome.desktop.wm.keybindings switch-applications "\"['<Super>Tab']\"" # アプリ切り替え
+  gsettings_if_needed org.gnome.desktop.wm.keybindings switch-windows "\"['<Alt>Tab']\""        # ウィンドウ切り替え
 }
 
 gsettings_add_custom_keybind() {
