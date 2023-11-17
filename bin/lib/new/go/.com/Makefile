@@ -6,10 +6,11 @@ SHELL := bash
 DOTENV := $(PWD)/.env
 # -: means ignore error
 -include $(DOTENV)
-export
 
 name := $(shell grep module ./go.mod|head -1|sed -e 's,^.*/,,g')
 depends_cmds := go gosec goreleaser #statik
+
+export
 
 tag:
 	@v=$$(git tag --list |sort -V |tail -1) && nv="$${v%.*}.$$(($${v##*.}+1))" && echo "==> New tag: $${nv}" && git tag $${nv}

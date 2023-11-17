@@ -87,10 +87,6 @@ set_arg() {
   fi
   # Below is over 2 args length case
   mode="${args[0]}"
-  if [[ $len -eq 2 ]]; then
-    name="${args[1]}"
-    return
-  fi
   type="${args[1]}"
   name="${args[2]}"
 }
@@ -115,9 +111,11 @@ generate() {
 }
 
 fire_src_dirs() {
-  local src_dirs=("$lib_dir/$mode/.com" "$lib_dir/$mode/$type")
-  echo "${src_dirs[@]}" |
-    tr ' ' '\n'
+  cat <<EOF
+$lib_dir/$mode/.com
+$lib_dir/$mode/$type/.com
+$lib_dir/$mode/$type
+EOF
 }
 
 generate_for_dir() {
