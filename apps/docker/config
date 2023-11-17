@@ -79,6 +79,10 @@ install_via_curl() {
   log "===> Installing... $_command_name"
   exe "sudo curl -L $url -o /tmp/$_command_name"
   exe sudo install /tmp/$_command_name /usr/local/bin/$_command_name
+  if [[ $m == "compose" ]]; then
+    exe sudo mkdir -p /usr/local/lib/docker/cli-plugins
+    exe sudo install /tmp/$_command_name /usr/local/lib/docker/cli-plugins/$_command_name
+  fi
   exe $_command_name --version
 }
 
@@ -90,7 +94,7 @@ install_arch() {
     exe sudo systemctl enable docker # ログイン時にデーモン実行
     exe sudo systemctl restart docker
   fi
-  install_via_curl machine
+  # install_via_curl machine
   install_via_curl compose
 }
 install_msys() { not_supported; }
@@ -99,7 +103,7 @@ install_mac() { not_supported; }
 install_ubuntu() {
   install_docker_via_repository
   def_install docker-scan-plugin
-  install_via_curl machine
+  # install_via_curl machine
   install_via_curl compose
 }
 install_redhat() { not_supported; }
