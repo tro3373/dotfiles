@@ -118,3 +118,7 @@ snippet	help
 snippet	includeee
 	-include $(wildcard ${1})
 
+snippet	open_browserrr
+	open_browser:
+		@local_url="http://$(shell ipa 2>/dev/null || echo localhost):3000" && \
+			open "$${local_url}" 2>/dev/null || echo "==> Open $${local_url} in your browser."
