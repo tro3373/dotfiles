@@ -237,7 +237,11 @@ function! HugoHelperLastModIsNow()
   " MEMO no move cursor
   " [macvim - How to run a search and replace command without cursor moving in Vim? - Stack Overflow](https://stackoverflow.com/questions/10468324/how-to-run-a-search-and-replace-command-without-cursor-moving-in-vim)
   let strnow = GetHugoNowDate()
+  let pos = getpos(".")
+  let v = winsaveview()
   exe 'g/^lastmod: /s/.*/lastmod: '.strnow.'/|norm!``'
+  call winrestview(v)
+  call setpos(".", pos)
 endfun
 command! HugoHelperLastModIsNow call HugoHelperLastModIsNow()
 
