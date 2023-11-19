@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 services:
   app:
     image: nginx
@@ -19,3 +19,30 @@ services:
     #   - app
     # depends_on:
     #   - app
+  client:
+    container_name: ${app}-${svc_client}
+    image: node:21-bullseye
+    # image: ${app}-${svc_client}
+    # build:
+    #   context: ./
+    #   args:
+    #     img_name: node
+    #     img_ver: 21-bullseye
+    #     docker_uid: ${docker_uid}
+    #     docker_gid: ${docker_gid}
+    user: ${docker_user}
+    # restart: always
+    init: true
+    tty: true
+    entrypoint: /bin/bash
+    volumes:
+      - ./client/front:/app
+    ports:
+      - 3000:3000
+    working_dir: /app
+    environment:
+      TZ: Asia/Tokyo
+    # extra_hosts:
+    #   - server:${local_ip}
+    # links:
+    #   - server:${local_ip}
