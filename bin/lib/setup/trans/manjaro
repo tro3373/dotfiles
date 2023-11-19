@@ -42,6 +42,9 @@ post_setup() {
   log "       Disable Zenkaku space"
   log "===> Enable in https://extensions.gnome.org/extension/307/dash-to-dock/"
   log "       Update setting: Set Dock to Top, etc.."
+  log "===> Insatall Gnome Shell Extensions"
+  log "       Dash to dock        : https://extensions.gnome.org/extension/307/dash-to-dock/"
+  log "       Input method Popup  : https://extensions.gnome.org/extension/261/kimpanel/"
   log "===> reboot maybe needed."
 }
 
