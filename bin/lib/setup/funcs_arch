@@ -6,7 +6,8 @@ readonly keyboard_layout=us
 readonly _additional_arch=(
   pacman-contrib # pacman cache clean
   # reflector      # update mirrorlist tool
-  net-tools  # deplicated. ifconfig, route, arp, netstat...
+  net-tools # deplicated. ifconfig, route, arp, netstat...
+  traceroute
   gnu-netcat # netcat
   inetutils  # ifconfig, hostname, ping...
   xsel
