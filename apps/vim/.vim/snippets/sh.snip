@@ -190,10 +190,7 @@ snippet	logggg
 
 snippet	logsettt
 	log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
-	error() {
-		log "$*"
-		exit 1
-	}
+	error() { log "$*" && exit 1; }
 
 snippet	logcolorrr
 	_log() {
@@ -201,10 +198,7 @@ snippet	logcolorrr
 		echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "\$1"
 	}
 	log() { _log cyan "$*"; }
-	error() {
-		_log red "$*"
-		exit 1
-	}
+	error() { log "$*" && exit 1; }
 
 snippet	dlog
 	dlog() {
