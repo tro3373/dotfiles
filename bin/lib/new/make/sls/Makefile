@@ -1,83 +1,108 @@
-SERVICE := api
-APP := sample
-STAGE := dev
-PROFILE_DEV := t${APP}
-PROFILE_PRD := ${APP}
-SLS_CONTAINER := sls_aws
-SLS_VERSION := 16-3.21.0
-TEST_API_PREFIX_DEV := https://example.com/dev/api/v1
-TEST_API_PREFIX_PRD := https://example.com/prd/api/v1
-TEST_API_PREFIX := ${TEST_API_PREFIX_DEV}
-PREV_COMMANDS=([[ ! -e node_modules ]] && npm i || :) && \
-	if [[ ${STAGE} == "prd" ]]; then export PROFILE=${PROFILE_PRD}; else export PROFILE=${PROFILE_DEV}; fi && \
-	export SLS_DEBUG=*
-PREV_COMMANDS_CURLTEST=if [[ ${STAGE} == "prd" ]]; then export TEST_API_PREFIX=${TEST_API_PREFIX_PRD}; else export TEST_API_PREFIX=${TEST_API_PREFIX_DEV}; fi
-VAULT=export GPG_TTY=$$(tty); aws-vault exec $${PROFILE} --
-TIMESTAMP := $(shell date '+%Y%m%d.%H%M%S')
-GET_NGROK_URL := curl -s localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
-
+SHELL := bash
+.SHELLFLAGS := -eu -o pipefail -c # -c: Needed in .SHELLFLAGS. Default is -c.
 .DEFAULT_GOAL := tunnel
 
+dotenv := $(PWD)/.env
+-include $(dotenv)
+
+app := sample
+service := api
+stage := dev
+profile_dev := t${app}
+profile_prd := ${app}
+sls_container := sls_aws
+sls_version := 16-3.21.0
+
+test_api_prefix_dev := https://example.com/dev/api/v1
+test_api_prefix_prd := https://example.com/prd/api/v1
+test_api_prefix := ${test_api_prefix_dev}
+prev_commands := ([[ ! -e node_modules ]] && npm i || :) && \
+	if [[ ${stage} == "prd" ]]; then export PROFILE=${profile_prd}; else export PROFILE=${profile_dev}; fi && \
+	export SLS_DEBUG=*
+prev_commands_curltest := if [[ ${stage} == "prd" ]]; then export test_api_prefix=${test_api_prefix_prd}; else export test_api_prefix=${test_api_prefix_dev}; fi
+vault := export GPG_TTY=$$(tty); aws-vault exec $${PROFILE} --
+timestamp := $(shell date '+%Y%m%d.%H%M%S')
+get_ngrok_url := curl -s localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url'
+
+export
+
 tag:
-	@tag="Release_${SERVICE}_${TIMESTAMP}" && git tag "$$tag" && echo "==> $$tag tagged."
+	@tag="Release_${service}_${timestamp}" && git tag "$$tag" && echo "==> $$tag tagged."
 zip:
-	@zip -r sls.${SERVICE}.keys.zip envs/*.yml
+	@zip -r envs.zip envs/*.yml
+unzip:
+	@test -e envs.zip
+	@unzip envs.zip
+
 
 npmi-%:
 	npm i -g ${*}
 .PHONY: setup
 setup: npmi-serverless npmi-eslint npmi-prettier npmi-eslint-config-prettier
 
+
+check_aws:
+	@make _aws cmd='s3 ls'
+check_env:
+	@make _sh cmd='-c "env"'
+session:
+	@make _sh cmd='-c "exit"'
+check: check_aws check_env
+_aws:
+	@make _vault_cmd ENTRYPOINT='--entrypoint aws'
+_sh:
+	@make _vault_cmd ENTRYPOINT='--entrypoint /bin/sh'
+_sls:
+	@make _vault_cmd ENTRYPOINT='--entrypoint sls' cmd='${cmd} --stage ${stage} --verbose'
 _vault_cmd:
-	${PREV_COMMANDS} \
+	${prev_commands} \
  		&& docker run -it --rm \
 			-v ${PWD}:/app \
 			-w /app \
-			--env-file <(${VAULT} env | grep ^AWS_) \
+			--env-file <(${vault} env | grep ^AWS_) \
 			${ENTRYPOINT} \
-			${SLS_CONTAINER}:${SLS_VERSION} \
-			${CMD} \
+			${sls_container}:${sls_version} \
+			${cmd} \
 		&& echo "Done!"
 
-_aws:
-	@make ENTRYPOINT='--entrypoint aws' _vault_cmd
-_sh:
-	@make ENTRYPOINT='--entrypoint /bin/sh' _vault_cmd
-_sls:
-	@make ENTRYPOINT='--entrypoint sls' CMD='${CMD} --stage ${STAGE} --verbose' _vault_cmd
 
-check_aws:
-	@make CMD='s3 ls' _aws
-check_env:
-	@make CMD='-c "env"' _sh
-session:
-	@make CMD='-c "exit"' _sh
-check: check_aws check_env
-
-sls_list_functions:
-	@make CMD='deploy list functions' _sls
-sls_list:
-	@make CMD='deploy list' _sls
-sls_info:
-	@make CMD=info _sls
 
 deploy:
-	@make CMD=deploy _sls
+	@make _sls cmd=deploy
 remove:
-	@make CMD=remove _sls
+	@make _sls cmd=remove
+sls_list_functions:
+	@make _sls cmd='deploy list functions'
+sls_list:
+	@make _sls cmd='deploy list'
+sls_info:
+	@make _sls cmd=info
 
-tunnel:
-	@cd $(PWD)/../terraform && make tunnel
-pub:
-	@cd $(PWD)/swagger && make pub
 
+tests:
+	@make _test cmd=tests
+test:
+	@make _test cmd=test
+test-%:
+	@make _test cmd=test-${*}
+testt-%:
+	@make _test cmd="testt -- ${*}"
+test_util: test-util
+delete_user:
+	@make _test cmd="testt -- backend\ deleteUser"
+front_user:
+	@make _lib_cmd cmd=cognito_create_user
+front_token:
+	@make _lib_cmd cmd=cognito_auth_token
+_lib_cmd:
+	@${prev_commands} && ${vault} ./src/__tests__/lib/${cmd}
 # MEMO:
 #	FORCE_COLOR=true: For jest output color force with pipe tee log setting
 # FOR ESMODULE
 # && export NODE_OPTIONS=--experimental-vm-modules
 _test:
-	@${PREV_COMMANDS} \
-		&& export STAGE=${STAGE} \
+	@${prev_commands} \
+		&& export stage=${stage} \
 		&& export FORCE_COLOR=true \
 		&& export LOCAL_TEST=1 \
 		&& export DEBUG_LAMBDA=true \
@@ -89,20 +114,15 @@ _test:
 			-e 's,LAMBDA_REGION,REGION,g' \
 			-e 's,^,export ,g' | \
 		tr '\n' ';')" \
-		&& ${VAULT} npm run ${CMD} |& tee test.log
+		&& ${vault} npm run ${cmd} |& tee test.log
 
-tests:
-	@make CMD=tests _test
-test:
-	@make CMD=test _test
-test-%:
-	@make CMD=test-${*} _test
-testt-%:
-	@make CMD="testt -- ${*}" _test
-test_util: test-util
-delete_user:
-	@make CMD="testt -- backend\ deleteUser" _test
 
+
+
+ngrok-url:
+	@$(get_ngrok_url)
+ngrok: init
+	@((pgrep ngrok >& /dev/null) || (echo ">> Starting ngrok.." && (ngrok http 3000 >& /dev/null &) && (sleep 2))) && $(get_ngrok_url)
 init:
 	@if ! command -v ngrok >&/dev/null; then \
 		echo "======================================= "; \
@@ -111,14 +131,8 @@ init:
 		exit 1; \
 	fi;
 
-ngrok-url:
-	@$(GET_NGROK_URL)
-ngrok: init
-	@((pgrep ngrok >& /dev/null) || (echo ">> Starting ngrok.." && (ngrok http 3000 >& /dev/null &) && (sleep 2))) && $(GET_NGROK_URL)
+tunnel:
+	@cd $(PWD)/../terraform && make tunnel
+pub:
+	@cd $(PWD)/swagger && make pub
 
-_lib_cmd:
-	@${PREV_COMMANDS} && ${VAULT} ./src/__tests__/lib/${CMD}
-front_user:
-	@make _lib_cmd CMD=cognito_create_user
-front_token:
-	@make _lib_cmd CMD=cognito_auth_token

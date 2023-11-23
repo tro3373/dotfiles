@@ -1,112 +1,122 @@
-SERVICE := tf
-APP := sample
-REGION := ap-northeast-1
-STAGE := dev
-PROFILE_DEV := t${APP}
-PROFILE_PRD := ${APP}
-TF_CONTAINER := tf_aws
-TF_VERSION := 1.2.5
-BUCKET_TFSTATE := ${APP}-${STAGE}-tfstate
-VALIDATE_CD := ([[ ! -e envs/${STAGE} ]] && echo 'No such stage:envs/${STAGE} exist.' && exit 1) || \
-	cd envs/${STAGE} && \
-	if [[ ${STAGE} == "prd" ]]; then export PROFILE=${PROFILE_PRD}; else export PROFILE=${PROFILE_DEV}; fi
-# VAULT=export AWS_PROFILE="$${PROFILE}"; export AWS_DEFAULT_PROFILE="$${PROFILE}";
-# VAULT := export GPG_TTY=$$(tty); aws-vault exec $${PROFILE} -n --
-VAULT := export GPG_TTY=$$(tty); aws-vault exec $${PROFILE} --
-TIMESTAMP := $(shell date '+%Y%m%d.%H%M%S')
-
+SHELL := bash
+.SHELLFLAGS := -eu -o pipefail -c # -c: Needed in .SHELLFLAGS. Default is -c.
 .DEFAULT_GOAL := plan
 
+dotenv := $(PWD)/.env
+-include $(dotenv)
+
+app := sample
+svc := tf
+region := ap-northeast-1
+stage := dev
+profile_dev := t${app}
+profile_prd := ${app}
+tf_container := tf_aws
+tf_version := 1.2.5
+bucket_tfstate := ${app}-${stage}-tfstate
+validate_cd := ([[ ! -e envs/${stage} ]] && echo 'No such stage:envs/${stage} exist.' && exit 1) || \
+	cd envs/${stage} && \
+	if [[ ${stage} == "prd" ]]; then export PROFILE=${profile_prd}; else export PROFILE=${profile_dev}; fi
+# vault=export AWS_PROFILE="$${PROFILE}"; export AWS_DEFAULT_PROFILE="$${PROFILE}";
+# vault := export GPG_TTY=$$(tty); aws-vault exec $${PROFILE} -n --
+vault := export GPG_TTY=$$(tty); aws-vault exec $${PROFILE} --
+timestamp := $(shell date '+%Y%m%d.%H%M%S')
+
+export
+
 tag:
-	@tag="Release_${SERVICE}_${TIMESTAMP}" && git tag "$$tag" && echo "==> $$tag tagged."
+	@tag="Release_${svc}_${timestamp}" && git tag "$$tag" && echo "==> $$tag tagged."
 zip:
-	@zip -r terraform.keys.zip envs/{dev,prd}/{.env,keys,terraform.tfvars}
+	@zip -r envs.zip envs/{dev,prd}/{.env,keys,terraform.tfvars}
+unzip:
+	@test -e envs.zip
+	@unzip envs.zip
 
-_vault_cmd:
-	${VALIDATE_CD} \
- 		&& docker run -it --rm \
-			-v ${PWD}:/app \
-			-w /app/envs/${STAGE} \
-			--env-file <(${VAULT} env | grep ^AWS_) \
-			${ENTRYPOINT} \
-			${TF_CONTAINER}:${TF_VERSION} \
-			${CMD}
 
+session:
+	@make _sh cmd='-c "exit"'
+check_aws:
+	@make _aws cmd='s3 ls'
+check_env:
+	@make _sh cmd='-c "env"'
+check: check_aws check_env
 _aws:
-	@make ENTRYPOINT='--entrypoint aws' _vault_cmd
+	@make _vault_cmd entrypoint='--entrypoint aws'
 _tf:
 	@make _vault_cmd
 _sh:
-	@make ENTRYPOINT='--entrypoint /bin/sh' _vault_cmd
+	@make _vault_cmd entrypoint='--entrypoint /bin/sh'
+_vault_cmd:
+	${validate_cd} \
+ 		&& docker run -it --rm \
+			-v ${PWD}:/app \
+			-w /app/envs/${stage} \
+			--env-file <(${vault} env | grep ^AWS_) \
+			${entrypoint} \
+			${tf_container}:${tf_version} \
+			${cmd}
 
-session:
-	@make CMD='-c "exit"' _sh
-check_aws:
-	@make CMD='s3 ls' _aws
-check_env:
-	@make CMD='-c "env"' _sh
-check: check_aws check_env
 
 init_tfstate_s3:
-	@if make CMD='s3 ls |grep ${BUCKET_TFSTATE}' _aws &>/dev/null; then \
+	@if make _aws cmd='s3 ls |grep ${bucket_tfstate}' &>/dev/null; then \
 		echo '> Already bucket exist'; \
 	else \
 		echo '> No tf bucket exist. creating...'; \
-		make CMD='s3 mb s3://${BUCKET_TFSTATE} --region ${REGION}' _aws && \
-		make CMD='s3api put-bucket-versioning --bucket "${BUCKET_TFSTATE}" --versioning-configuration "Status=Enabled"' _aws && \
+		make _aws cmd='s3 mb s3://${bucket_tfstate} --region ${region}' && \
+		make _aws cmd='s3api put-bucket-versioning --bucket "${bucket_tfstate}" --versioning-configuration "Status=Enabled"' && \
 		echo '> Bucket created.'; \
 	fi
-
 fmt:
-	@make CMD=fmt _tf
+	@make _tf cmd=fmt
 init: init_tfstate_s3
-	@make CMD=init _tf
+	@make _tf cmd=init
 init_upgrade:
-	@make CMD='init -upgrade=true' _tf
+	@make _tf cmd='init -upgrade=true'
 plan:
-	@make CMD=plan _tf
+	@make _tf cmd=plan
 apply:
-	@make CMD=apply _tf
+	@make _tf cmd=apply
 apply-refresh:
-	@make CMD='apply -refresh-only' _tf
+	@make _tf cmd='apply -refresh-only'
 destroy:
-	@make CMD=destroy _tf
+	@make _tf cmd=destroy
 refresh:
-	@make CMD=refresh _tf
+	@make _tf cmd=refresh
 show:
-	@make CMD=show _tf
+	@make _tf cmd=show
 list-state:
-	@make CMD='state list' _tf
+	@make _tf cmd='state list'
 output:
-	@make CMD=output _tf
+	@make _tf cmd=output
 
 
-_asm_get:
-	@make CMD='secretsmanager get-secret-value --secret-id ${SECRET_ID}' _aws
-_asm_put:
-	@make CMD='secretsmanager put-secret-value --secret-id ${SECRET_ID} --secret-string "${SECRET_STRING}"' _aws
-_asm_remove_force:
-	@make CMD='secretsmanager delete-secret --secret-id ${SECRET_ID} --force-delete-without-recovery' _aws
 
 asm_get_db_auth:
-	make SECRET_ID=${STAGE}-${APP}-secret-db-auth _asm_get
+	make _asm_get SECRET_ID=${stage}-${app}-secret-db-auth
 asm_put_db_auth:
-	@${VALIDATE_CD} && \
+	@${validate_cd} && \
 		export h=$$(grep db_proxy .env |cut -d= -f2 |tr -d '"' |tr -d ' ') && \
 		export d=$$(grep database_name terraform.tfvars |cut -d= -f2 |tr -d '"' |tr -d ' ') && \
 		export u=$$(grep database_username terraform.tfvars |cut -d= -f2 |tr -d '"' |tr -d ' ') && \
 		export p=$$(grep database_password terraform.tfvars |cut -d= -f2 |tr -d '"' |tr -d ' ') && \
-		@make SECRET_ID=${STAGE}-${APP}-secret-db-auth \
+		@make SECRET_ID=${stage}-${app}-secret-db-auth \
 			SECRET_STRING='{\"host\":\"$$h\", \"database\":\"$$d\", \"username\":\"$$u\", \"password\":\"$$p\"}' \
 			_asm_put
 asm_remove_db_auth:
-	make SECRET_ID=${STAGE}-${APP}-secret-db-auth _asm_remove_force
+	make _asm_remove_force SECRET_ID=${stage}-${app}-secret-db-auth
+_asm_get:
+	@make _aws cmd='secretsmanager get-secret-value --secret-id ${SECRET_ID}'
+_asm_put:
+	@make _aws cmd='secretsmanager put-secret-value --secret-id ${SECRET_ID} --secret-string "${SECRET_STRING}"'
+_asm_remove_force:
+	@make _aws cmd='secretsmanager delete-secret --secret-id ${SECRET_ID} --force-delete-without-recovery'
+
 
 bastion_status:
-	@${VALIDATE_CD} && bash -c '. .env && ${VAULT} aws ec2 describe-instance-status --instance-ids $$ec2_id | jq ".InstanceStatuses[] | {InstanceId, InstanceState: .InstanceState.Name, SystemStatus: .SystemStatus.Status, InstanceStatus: .InstanceStatus.Status}"'
+	@${validate_cd} && bash -c '. .env && ${vault} aws ec2 describe-instance-status --instance-ids $$ec2_id | jq ".InstanceStatuses[] | {InstanceId, InstanceState: .InstanceState.Name, SystemStatus: .SystemStatus.Status, InstanceStatus: .InstanceStatus.Status}"'
 bastion_start:
-	@${VALIDATE_CD} && bash -c '. ./.env && ${VAULT} aws ec2 start-instances --instance-ids $$ec2_id'
+	@${validate_cd} && bash -c '. ./.env && ${vault} aws ec2 start-instances --instance-ids $$ec2_id'
 bastion_stop:
-	@${VALIDATE_CD} && bash -c '. ./.env && ${VAULT} aws ec2 stop-instances --instance-ids $$ec2_id'
+	@${validate_cd} && bash -c '. ./.env && ${vault} aws ec2 stop-instances --instance-ids $$ec2_id'
 tunnel: session
-	@${VALIDATE_CD} && bash -c '. ./.env && echo "==> Tunneling $$db_proxy via $$bastion..." && ssh -g -N -L 3306:$$db_proxy:3306 $$bastion'
+	@${validate_cd} && bash -c '. ./.env && echo "==> Tunneling $$db_proxy via $$bastion..." && ssh -g -N -L 3306:$$db_proxy:3306 $$bastion'

@@ -1,14 +1,24 @@
+SHELL := bash
+.SHELLFLAGS := -eu -o pipefail -c # -c: Needed in .SHELLFLAGS. Default is -c.
+.DEFAULT_GOAL := inpect
+
+dotenv := $(PWD)/.env
+-include $(dotenv)
+
 svc := android
 container := gradle:7.3.3-jdk11
 pkg := com.example.app.dev.debug
 
-.DEFAULT_GOAL := inpect
+export
 
 tag:
 	@export tag=v$$(grep "versionName " app/build.gradle |cut -d\" -f2) && git tag "$$tag" && echo "==> $$tag tagged."
 
 zip:
 	@zip -r ${svc}.signingConfigs.zip ./app/signingConfigs
+unzip:
+	@test -e ${svc}.signingConfigs.zip
+	@unzip ${svc}.signingConfigs.zip
 
 log:
 	@adb shell run-as $(pkg) cat /data/data/$(pkg)/files/logs/app.log
@@ -41,29 +51,26 @@ tcpip:
 connect:
 	@adb connect $(arg)
 
+task_list:
+	@TASK=tasks make _gradle
+apk:
+	@TASK=:app:assembleDevDemoDebug make _gradle
+	@make TARGET_DIR=$(PWD)/app/build/outputs/apk/devDemo/debug open_dir
+release-aab:
+	@TASK=:app:bundleSunwiseFullRelease make _gradle
+	@make TARGET_DIR=$(PWD)/app/build/outputs/bundle/sunwiseFullRelease open_dir
 _gradle:
 	@test -n "$${ANDROID_HOME}" || (echo "=> No env ANDROID_HOME is defined." 1>&2 && exit 1)
 	@docker run -it --rm \
 		--name gradle \
-		-e GRADLE_USER_HOME=/src/.gradle_docker \
+		-e GRADLE_USER_HOME=/app/.gradle_docker \
 		-e ANDROID_HOME=/android-sdk \
 		-v $${ANDROID_HOME}:/android-sdk \
-		-v $(PWD):/src \
-		-w /src \
+		-v $(PWD):/app \
+		-w /app \
 		$(container) \
 		./gradlew $(TASK)
 
-task_list:
-	@TASK=tasks make _gradle
-
-
-apk:
-	@TASK=:app:assembleDevDemoDebug make _gradle
-	@make TARGET_DIR=$(PWD)/app/build/outputs/apk/devDemo/debug open_dir
-
-release-aab:
-	@TASK=:app:bundleSunwiseFullRelease make _gradle
-	@make TARGET_DIR=$(PWD)/app/build/outputs/bundle/sunwiseFullRelease open_dir
 
 inpect:
 	@docker inspect $(container)

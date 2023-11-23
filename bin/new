@@ -129,8 +129,9 @@ generate_for_dir() {
       dst_f=$current_dir/$name
     fi
     if [[ -e $dst_f ]]; then
-      warn "==> Already dst file exist skipping.. dst: $dst_f"
-      continue
+      timestamp=$(date +%Y%m%d.%H%M%S)
+      warn "==> Already dst file exist Adding timestamp.. $dst_f ==> $dst_f.$timestamp"
+      dst_f="$dst_f.$timestamp"
     fi
     mkdir_if_needed "$(dirname "$dst_f")"
     add_dst_files "$dst_f"

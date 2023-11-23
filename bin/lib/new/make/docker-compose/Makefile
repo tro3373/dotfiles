@@ -2,8 +2,8 @@ SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c # -c: Needed in .SHELLFLAGS. Default is -c.
 .DEFAULT_GOAL := up
 
-DOTENV := $(PWD)/.env
--include $(DOTENV)
+dotenv := $(PWD)/.env
+-include $(dotenv)
 
 app := sample
 svc_client := client

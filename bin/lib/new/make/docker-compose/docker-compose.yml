@@ -1,12 +1,12 @@
-version: '3.9'
+version: "3.9"
 services:
   app:
     image: nginx
     container_name: nginx
     restart: always
     ports:
-      - 80:80
-      - 443:443
+      - "80:80"
+      - "443:443"
     environment:
       TZ: Asia/Tokyo
     # volumes:
@@ -38,7 +38,7 @@ services:
     volumes:
       - ./client/front:/app
     ports:
-      - 3000:3000
+      - "3000:3000"
     working_dir: /app
     environment:
       TZ: Asia/Tokyo

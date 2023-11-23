@@ -2,8 +2,10 @@ SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c # -c: Needed in .SHELLFLAGS. Default is -c.
 .DEFAULT_GOAL := run
 
-DOTENV := $(PWD)/.env
--include $(DOTENV)
+dotenv := $(PWD)/.env
+-include $(dotenv)
+
+export
 
 npmi:
 	@npm i
@@ -13,9 +15,6 @@ npmi_if_needed:
 	@if [[ ! -e node_modules ]]; then \
 		make npmi; \
 	fi
-
-run: npmi_if_needed open_browser
-	@npm run dev
 
 clean:
 	@rm -rf node_modules
@@ -27,6 +26,9 @@ build-prd:
 	@make _build opt=-prd
 build: npmi_if_needed
 	@npm run build$(opt)
+
+run: npmi_if_needed open_browser
+	@npm run dev
 
 open_browser:
 	@local_url="http://$(shell ipa 2>/dev/null || echo localhost):3000" && \
