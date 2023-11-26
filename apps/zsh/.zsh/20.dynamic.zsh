@@ -43,12 +43,13 @@ _cache_load() {
   local _src=$1
   local target="$CACHE_D/$_src"
   local cat_fn="_cat_$_src"
-  if [[ ! -e $target ]]; then
-    echo "===> calling $cat_fn.." 1>&2
-    eval "$cat_fn" >$target.tmp
-    mv $target.tmp $target
+  if [[ -e $target ]]; then
+    source $target
+    return
   fi
-  source $target
+  echo "===> calling $cat_fn.." 1>&2
+  eval "$cat_fn" >$target.tmp
+  mv $target.tmp $target
 }
 
 _cat_whoami() {
@@ -128,10 +129,12 @@ _cat_path() {
   add_path ${HOME}/.fzf/bin
   add_path ${HOME}/.anyenv/bin
   add_path $GOPATH/bin
+  add_path $CARGO_HOME/bin
   add_path ${HOME}/.cargo/bin
   add_path ${HOME}/.local/bin
   add_path ${DOTPATH}/bin
   add_path ${HOME}/bin
+  add_path $BUN_INSTALL/bin
 
   # NOTE: Load .works.zsh to execute add_path.
   # 90.additional.zsh load .works.zsh again.

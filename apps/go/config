@@ -7,7 +7,7 @@ is_installed() {
     test -e $usr_local_go
   else
     # shellcheck disable=SC2154
-    has $app
+    has "$app"
   fi
 }
 
@@ -20,13 +20,14 @@ install_common() {
     echo "No goenv exist. install it." 1>&2
     return
   fi
-  local version=$(_go_latest)
+  local version
+  version=$(_go_latest)
   if [[ -z $version ]]; then
     log "No version exist"
     exit 1
   fi
-  exe goenv install $version
-  exe goenv global $version
+  exe goenv install "$version"
+  exe goenv global "$version"
   exe goenv rehash
   exe go version
 }
@@ -53,8 +54,9 @@ install_ubuntu() {
     fi
     exe rm -rf $usr_local_go
   fi
-  local _url="https://dl.google.com/go/$(curl -fSsL https://golang.org/VERSION?m=text).linux-amd64.tar.gz"
-  dl_untar $_url $usr_local_go 1
+  local _url
+  _url="https://dl.google.com/go/$(curl -fSsL https://golang.org/VERSION?m=text).linux-amd64.tar.gz"
+  dl_untar "$_url" $usr_local_go 1
 }
 
 install_msys() {
@@ -67,13 +69,21 @@ install_cygwin() {
 
 setting_common() {
   local _gobin=$HOME/go/bin
-  make_dir_if_needed $_gobin
-  if grep "GOPATH" ~/.works.zsh >&/dev/null; then
-    return
-  fi
-  exe "echo 'export GOPATH=\$HOME/go' >> ~/.works.zsh"
-  exe "echo 'add_path \$GOPATH/bin' >> ~/.works.zsh"
-  rm_dotpath
+  make_dir_if_needed "$_gobin"
+  # if grep "GOPATH" ~/.works.zsh >&/dev/null; then
+  #   return
+  # fi
+  # exe "echo 'export GOPATH=\$HOME/go' >> ~/.works.zsh"
+  # exe "echo 'add_path \$GOPATH/bin' >> ~/.works.zsh"
+  # rm_dotpath
+  _cat_add_settings | cat_you_need_to ~/.works.zsh
+}
+
+_cat_add_settings() {
+  cat <<'EOF'
+export GOPATH=$HOME/go
+add_path $GOPATH/bin
+EOF
 }
 
 # install_common() { not_supported; }

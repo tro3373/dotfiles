@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+_fnm=
+install_common() {
+  log "==> Install from https://cursor.sh/"
+  local _bin
+  _bin=$(_find_binary)
+  if [[ -z $_bin ]]; then
+    log "==> No binary found"
+    return
+  fi
+  _fnm=$(basename "$_bin")
+  exe mv "$_bin" ~/tools/
+  local target=~/bin/cursor
+  if [[ -e $target ]]; then
+    log "==> $target already exists"
+    return
+  fi
+  cat_cursor |
+    cat_tee $target
+  exe chmod +x "$target"
+}
+
+_find_binary() {
+  find ~/Downloads/ -maxdepth 1 -mindepth 1 -name 'cursor-*.AppImage' -type f |
+    fzf -1 -0 || :
+}
+
+cat_cursor() {
+  cat <<EOF
+#!/usr/bin/env -S bash -e
+
+main() {
+  ~/tools/$_fnm >&"\$0".log &
+}
+main "\$@"
+EOF
+}
+
+# install_wsl() { not_supported; }
+# install_arch() {
+#   # def_install cursor-bin
+# }
+# install_msys() { not_supported; }
+# install_cygwin() { not_supported; }
+# install_mac() { not_supported; }
+# install_ubuntu() { not_supported; }
+# install_redhat() { not_supported; }
+setting_common() { no_settings; }
+setting_wsl() { no_settings; }
+setting_arch() { no_settings; }
+setting_msys() { no_settings; }
+setting_cygwin() { no_settings; }
+setting_mac() { no_settings; }
+setting_ubuntu() { no_settings; }
+setting_redhat() { no_settings; }
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#no_settings
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
+#sudo_tee

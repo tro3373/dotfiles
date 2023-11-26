@@ -557,6 +557,12 @@ cat_do() {
   fi
 }
 
+cat_you_need_to() {
+  log "===> Add below to '$*' if needed"
+  cat -
+  log "------------------------------------"
+}
+
 cat_tee() {
   cat_do tee "$@"
 }

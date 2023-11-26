@@ -15,20 +15,17 @@ install_cygwin() { not_supported; }
 # install_ubuntu() { not_supported; }
 # install_redhat() { not_supported; }
 setting_common() {
-  _setup_target ~/.works.zsh
-  _setup_target ~/.bashrc
+  _cat_add_settings | cat_you_need_to ~/.works.zsh
+  _cat_add_settings | cat_you_need_to ~/.bashrc
   # # append completions to fpath
   # fpath=(${ASDF_DIR}/completions $fpath)
   # # initialise completions with ZSH's compinit
   # autoload -Uz compinit && compinit
 }
 
-_setup_target() {
-  local target="$*"
-  if grep "asdf" "$target" >&/dev/null; then
-    return
-  fi
-  exe "echo '. \${HOME}/.asdf/asdf.sh' >> $target"
+_cat_asdf_settings() {
+  # shellcheck disable=SC2016
+  echo '. ${HOME}/.asdf/asdf.sh'
 }
 
 # setting_wsl() { no_settings; }

@@ -3,7 +3,6 @@ _init() {
   ######################################################
   export DOTPATH="$HOME/.dot"
   export CACHE_D="$HOME/.cache/zsh"
-  export GOPATH=$HOME/go
   if is_vagrant; then
     export IS_VAGRANT=1
   fi
@@ -166,8 +165,11 @@ _init() {
   export ZSH_AUTOSUGGEST_USE_ASYNC=1
   # bindkey '^ ' autosuggest-accept # ctrl + space
 
+  export GOPATH=$HOME/go
+  export CARGO_HOME=$HOME/.cargo
   # For bat command
   export BAT_THEME="Visual Studio Dark+"
   # export BAT_THEME="Nord"
+  export BUN_INSTALL="$HOME/.bun"
 }
 _init

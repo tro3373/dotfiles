@@ -30,12 +30,20 @@ install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 
 setting_common() {
-  if [[ -e ~/.works.zsh ]]; then
-    if grep 'CARGO_HOME=' ~/.works.zsh >&/dev/null; then
-      return
-    fi
-  fi
-  exe "echo 'export CARGO_HOME=\$HOME/.cargo' >> ~/.works.zsh"
-  exe "echo 'add_path \$CARGO_HOME/bin' >> ~/.works.zsh"
-  rm_dotpath
+  # if [[ -e ~/.works.zsh ]]; then
+  #   if grep 'CARGO_HOME=' ~/.works.zsh >&/dev/null; then
+  #     return
+  #   fi
+  # fi
+  # exe "echo 'export CARGO_HOME=\$HOME/.cargo' >> ~/.works.zsh"
+  # exe "echo 'add_path \$CARGO_HOME/bin' >> ~/.works.zsh"
+  # rm_dotpath
+  _cat_add_settings | cat_you_need_to ~/.works.zsh
+}
+
+_cat_add_settings() {
+  cat <<'EOF'
+export CARGO_HOME=$HOME/.cargo
+add_path $CARGO_HOME/bin
+EOF
 }
