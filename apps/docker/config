@@ -11,24 +11,26 @@ is_exist_docker_group() {
 }
 
 is_in_docker_group() {
-  groups $USER | grep docker >&/dev/null
+  groups "$USER" | grep docker >&/dev/null
 }
 
 mod_user() {
   log "===> add $USER to docker group... "
   # ユーザーを docker グループに追加
-  exe sudo usermod -aG docker $USER
+  exe sudo usermod -aG docker "$USER"
 }
 
 get_dist_version() {
-  local version="$(cat </etc/lsb-release | grep RELEASE)"
+  local version
+  version="$(cat </etc/lsb-release | grep RELEASE)"
   version=${version##*=}
-  echo $version
+  echo "$version"
 }
 
 is_supported_ub_release() {
-  local version=$(get_dist_version)
-  local res=$(echo "$version > $min_ub_release" | bc)
+  local version res
+  version=$(get_dist_version)
+  res=$(echo "$version > $min_ub_release" | bc)
   if [[ $res -eq 1 ]]; then
     # using distribution is higher than min_ub_release.
     # should use package.
@@ -51,7 +53,8 @@ install_docker_via_repository() {
   exe 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -'
   # verify
   exe sudo apt-key fingerprint 0EBFCD88
-  local use_version_name=$(lsb_release -cs)
+  local use_version_name
+  use_version_name=$(lsb_release -cs)
   exe sudo add-apt-repository "\"deb [arch=amd64] https://download.docker.com/linux/ubuntu ${use_version_name} stable\""
   exe sudo apt-get -y update
   exe sudo apt-get -y install docker-ce
@@ -61,7 +64,7 @@ install_docker_via_repository() {
 get_latest_version() {
   local p=${1:-compose}
   local _key=/docker/$p/releases/tag/
-  curl -fSsL https://github.com/docker/$p/releases |
+  curl -fSsL https://github.com/docker/"$p"/releases |
     grep "$_key" |
     sed -e "s,^.*$_key,,g" -e 's,".*,,g' |
     head -1
@@ -74,37 +77,38 @@ install_via_curl() {
     log "===> Command already exist /usr/local/bin/$_command_name"
     return
   fi
-  local v="$(get_latest_version $m)"
-  local url="https://github.com/docker/$m/releases/download/$v/docker-$m-$(uname -s)-$(uname -m)"
+  local v url
+  v="$(get_latest_version "$m")"
+  url="https://github.com/docker/$m/releases/download/$v/docker-$m-$(uname -s)-$(uname -m)"
   log "===> Installing... $_command_name"
   exe "sudo curl -L $url -o /tmp/$_command_name"
-  exe sudo install /tmp/$_command_name /usr/local/bin/$_command_name
+  exe sudo install /tmp/"$_command_name" /usr/local/bin/"$_command_name"
   if [[ $m == "compose" ]]; then
     exe sudo mkdir -p /usr/local/lib/docker/cli-plugins
-    exe sudo install /tmp/$_command_name /usr/local/lib/docker/cli-plugins/$_command_name
+    exe sudo install /tmp/"$_command_name" /usr/local/lib/docker/cli-plugins/"$_command_name"
   fi
-  exe $_command_name --version
+  exe "$_command_name" --version
 }
 
 install_common() { not_supported; }
 install_arch() {
   install_via_os_default
-  def_install docker-scan
+  def_install docker-compose docker-scan
   if ! is_wsl; then
     exe sudo systemctl enable docker # ログイン時にデーモン実行
     exe sudo systemctl restart docker
   fi
   # install_via_curl machine
-  install_via_curl compose
+  # install_via_curl compose
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() { not_supported; }
 install_ubuntu() {
   install_docker_via_repository
-  def_install docker-scan-plugin
+  def_install docker-compose-plugin docker-scan-plugin
   # install_via_curl machine
-  install_via_curl compose
+  # install_via_curl compose
 }
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
@@ -115,7 +119,7 @@ setting_arch() {
   if is_in_docker_group; then
     return
   fi
-  exe sudo gpasswd -a $USER docker
+  exe sudo gpasswd -a "$USER" docker
 }
 setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
