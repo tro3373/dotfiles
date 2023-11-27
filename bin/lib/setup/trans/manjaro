@@ -137,6 +137,9 @@ _setup_custom_shortcut() {
   gsettings_if_needed org.gnome.desktop.wm.keybindings maximize "\"['<Super>Up']\""             # Window最大化
   gsettings_if_needed org.gnome.desktop.wm.keybindings switch-applications "\"['<Super>Tab']\"" # アプリ切り替え
   gsettings_if_needed org.gnome.desktop.wm.keybindings switch-windows "\"['<Alt>Tab']\""        # ウィンドウ切り替え
+
+  # Change screenshot keybind
+  gsettings_if_needed org.gnome.shell.keybindings show-screenshot-ui "\"['Print', '<Super><Shift>S']\""
 }
 
 gsettings_add_custom_keybind() {
