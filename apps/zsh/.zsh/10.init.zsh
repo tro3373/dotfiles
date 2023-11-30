@@ -170,6 +170,6 @@ _init() {
   # For bat command
   export BAT_THEME="Visual Studio Dark+"
   # export BAT_THEME="Nord"
-  export BUN_INSTALL="$HOME/.bun"
+  # export BUN_INSTALL="$HOME/.bun" # install via asdf
 }
 _init

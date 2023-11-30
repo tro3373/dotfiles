@@ -1,25 +1,33 @@
 #!/usr/bin/env bash
 
 install_common() {
-  local _zshrc="$HOME"/.dot/apps/zsh/.zshrc
-  _setup_bunsh || :
-  exe chmod u+w "$_zshrc"
+  # local _zshrc="$HOME"/.dot/apps/zsh/.zshrc
+  # _setup_bunsh || :
+  # exe chmod u+w "$_zshrc"
+  if ! has asdf; then
+    add_dependency_args asdf
+    return
+  fi
+  if ! asdf plugin-list | grep bun >&/dev/null; then
+    exe asdf plugin-add bun
+  fi
+  exe asdf install bun latest
 }
 
-_setup_bunsh() {
-  # Disabled auto merge zshrc if .zshrc writable in bun.sh/install
-  exe chmod u-w "$_zshrc"
-  if is_dry; then
-    log "==> Install via https://bun.sh/install | bash"
-  else
-    curl -fsSL https://bun.sh/install | bash
-    # Manually add the directory to ~/.zshrc (or similar):
-    #   export BUN_INSTALL="$HOME/.bun"
-    #   export PATH="$BUN_INSTALL/bin:$PATH"
-    # ==> Path already added in 10.init.zsh, 20.dynamic.zsh
-    rm_dotpath
-  fi
-}
+# _setup_bunsh() {
+#   # Disabled auto merge zshrc if .zshrc writable in bun.sh/install
+#   exe chmod u-w "$_zshrc"
+#   if is_dry; then
+#     log "==> Install via https://bun.sh/install | bash"
+#   else
+#     curl -fsSL https://bun.sh/install | bash
+#     # Manually add the directory to ~/.zshrc (or similar):
+#     #   export BUN_INSTALL="$HOME/.bun"
+#     #   export PATH="$BUN_INSTALL/bin:$PATH"
+#     # ==> Path already added in 10.init.zsh, 20.dynamic.zsh
+#     rm_dotpath
+#   fi
+# }
 
 # install_wsl() { not_supported; }
 # install_arch() {

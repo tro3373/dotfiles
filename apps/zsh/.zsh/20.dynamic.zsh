@@ -134,7 +134,7 @@ _cat_path() {
   add_path ${HOME}/.local/bin
   add_path ${DOTPATH}/bin
   add_path ${HOME}/bin
-  add_path $BUN_INSTALL/bin
+  # add_path $BUN_INSTALL/bin # install via asdf
 
   # NOTE: Load .works.zsh to execute add_path.
   # 90.additional.zsh load .works.zsh again.
