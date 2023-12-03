@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+install_common() {
+  if ! has dart; then
+    log "dart not installed."
+    return
+  fi
+  exe dart pub global activate flutterfire_cli
+  if ! is_dry; then
+    export PATH="$HOME/.pub-cache/bin:$PATH"
+  fi
+}
+
+setting_common() {
+  exe "echo 'add_path \$HOME/.pub-cache/bin' >> ~/.works.zsh"
+  rm_dotpath
+}

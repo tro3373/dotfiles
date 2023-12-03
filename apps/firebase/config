@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+install_common() {
+  if ! has npm; then
+    log "npm not installed."
+    return
+  fi
+  exe npm i -g firebase-tools
+}
