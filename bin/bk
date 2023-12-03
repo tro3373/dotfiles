@@ -21,8 +21,8 @@ main() {
       continue
     fi
     log "> Backup coping $src to $dst .."
-    # cp -rf $src $dst
-    mv -v $src $dst
+    cp -rf $src $dst
+    # mv -v $src $dst
   done
   log "Done!"
 }
