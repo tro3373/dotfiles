@@ -2,7 +2,7 @@
 
 install_common() {
   if ! has npm; then
-    log "No npm command exist. install node first." 1>&2
+    log "npm not installed."
     return
   fi
   exe npm i -g monaca
