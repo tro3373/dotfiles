@@ -12,7 +12,7 @@ timestamp := $(shell date '+%Y%m%d.%H%M%S')
 local_ip := $(shell (ip route 2>/dev/null |grep kernel |grep -v linkdown |grep -v 'br-' || echo localhost) |sed -e 's,.metric.*,,g' |awk 'END {print $$NF}')
 docker_uid := $(shell id -u)
 docker_gid := $(shell id -g)
-docker_user := "$(docker_uid):$(docker_gid)"
+docker_user := $(docker_uid):$(docker_gid)
 
 export
 
@@ -39,7 +39,11 @@ logsf:
 build-image:
 	@make -s _compose cmd=build
 _compose:
-	@docker_user=$(docker_user) docker-compose $(cmd) $(arg)
+	docker compose $(cmd) $(opt)
+_compose_exec:
+	docker compose exec -it $(svc) $(cmd) $(opt)
+_compose_run:
+	docker compose run --rm -it $(svc) '$(cmd) $(opt)'
 
 build-all:
 	@make -C ./client/front build
@@ -48,10 +52,7 @@ console: console-client
 console-client:
 	@make _client cmd='bash --login'
 _client:
-	@make _exec svc=$(svc_client)
-_exec:
-	@echo "==> Executing $(cmd) in $(svc)..." && \
-		make _compose cmd="exec -it $(svc) $(cmd)"
+	@make _compose_exec svc=$(svc_client)
 
 open_browser:
 	make -C ./client/front open_browser
