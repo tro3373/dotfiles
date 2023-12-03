@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+timestamp=$(date +%Y%m%d.%H%M%S) && readonly timestamp
+
 log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
 main() {
   if [[ $# -eq 0 ]]; then
@@ -17,8 +19,7 @@ main() {
     # log "> $src .."
     local dst=$src.bk
     if [[ -e $dst ]]; then
-      log "> $dst already exist"
-      continue
+      dst=$src.bk.$timestamp
     fi
     log "> Backup coping $src to $dst .."
     cp -rf $src $dst
