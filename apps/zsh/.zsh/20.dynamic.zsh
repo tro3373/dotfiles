@@ -132,6 +132,7 @@ _cat_path() {
   add_path $CARGO_HOME/bin
   add_path ${HOME}/.cargo/bin
   add_path ${HOME}/.local/bin
+  add_path ${HOME}/.ldot/bin
   add_path ${DOTPATH}/bin
   add_path ${HOME}/bin
   # add_path $BUN_INSTALL/bin # install via asdf
