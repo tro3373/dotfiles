@@ -31,7 +31,7 @@ Create new executable shell file.
       new make go           : Create new make go
       new make sls
       new make tf
-      new make docker-compose
+      new make docker compose
 
     Existing template is..
 $(if has tree; then tree "$lib_dir"; else find "$lib_dir"; fi | sed -e 's,^,      ,g')

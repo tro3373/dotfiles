@@ -14,15 +14,15 @@ local_ip=$$(ip route |awk 'END {print $$NF}')
 restart: stop start
 start: up
 up:
-	EXTERNAL_IP=$(local_ip) docker-compose up -d && docker-compose logs -f
+	EXTERNAL_IP=$(local_ip) docker compose up -d && docker compose logs -f
 stop: down
 down:
-	EXTERNAL_IP=$(local_ip) docker-compose down
+	EXTERNAL_IP=$(local_ip) docker compose down
 
 logs:
-	docker-compose logs
+	docker compose logs
 logsf:
-	docker-compose logs -f
+	docker compose logs -f
 
 console: attach
 attach:

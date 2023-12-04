@@ -11,20 +11,20 @@ local_ip=$$(ip route |awk 'END {print $$NF}')
 .DEFAULT_GOAL := up
 
 build:
-	docker-compose build
+	docker compose build
 
 up: start
 start:
-	docker-compose up -d && docker-compose logs -f
+	docker compose up -d && docker compose logs -f
 stop: down
 down:
-	docker-compose down
+	docker compose down
 restart: stop start
 
 logs:
-	docker-compose logs
+	docker compose logs
 logsf:
-	docker-compose logs -f
+	docker compose logs -f
 
 console: attach1
 attach1:

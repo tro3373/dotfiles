@@ -9,7 +9,7 @@ images=`docker images | awk '/^<none>/ { print $$3 }'`
 default: up
 start: up
 up: init_dirs
-	docker-compose up -d && docker-compose logs
+	docker compose up -d && docker compose logs
 
 init_dirs:
 	@if [ ! -e ./volume_ftp ] ; then \
@@ -23,14 +23,14 @@ init_dirs:
 
 stop: down
 down:
-	docker-compose down -v
+	docker compose down -v
 
 restart: stop start
 
 logs:
-	docker-compose logs
+	docker compose logs
 logsf:
-	docker-compose logs -f
+	docker compose logs -f
 
 console_ftp: attach_ftp
 attach_ftp:
