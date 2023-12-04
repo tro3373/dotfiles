@@ -1,0 +1,6 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  make -C "$DOTPATH"/apps/itp
+}
+main "$@"

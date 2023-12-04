@@ -1,0 +1,25 @@
+version: "3.9"
+services:
+  interpreter:
+    image: interpreter
+    container_name: interpreter
+    build:
+      context: ./
+      args:
+        img_name: python
+        img_ver: 3.12.0-bookworm
+        docker_uid: ${docker_uid}
+        docker_gid: ${docker_gid}
+    # restart: always
+    init: true
+    tty: true
+    # ports:
+    #   - "80:80"
+    #   - "443:443"
+    volumes:
+      - ./.bashrc:/root/.bashrc
+      - ./tmp/.config:/root/.config # for cache llm data store
+      - ./tmp/.local:/root/.local # for cache llm data store
+    # user: $docker_user
+    # entrypoint: bash -i -c
+    # working_dir: /app
