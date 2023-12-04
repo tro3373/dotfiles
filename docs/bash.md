@@ -1,3 +1,25 @@
+# Sample .bashrc color PS1
+
+```
+col() {
+  red="1;31m"
+  blue="1;34m"
+  green="1;32m"
+  cyan="1;36m"
+  gray="0;37m"
+  case "$(hostname)" in
+    *huba01) echo $red ;;
+    *huba02) echo $blue ;;
+    *huba03) echo $green ;;
+    *bsta01) echo $cyan ;;
+    *) echo $gray ;;
+  esac
+}
+open="\033["
+close="${open}0m"
+PS1="[\t \u@${open}$(col)\h${close}@AWS \W]\$ "
+```
+
 # Parameter Expansion
 
 ```
