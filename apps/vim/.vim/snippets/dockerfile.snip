@@ -1,0 +1,6 @@
+snippet     aptttt
+	RUN apt update && \
+			apt install -y curl build-essential gcc make && \
+			apt clean && \
+			rm -rf /var/lib/apt/lists/*
+
