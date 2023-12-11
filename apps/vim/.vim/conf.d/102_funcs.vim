@@ -266,8 +266,12 @@ function! Hugolize() abort
   \ '  - tech',
   \ 'tags:',
   \ '  - golang',
-  \ '# showToc: false',
   \ '---',
+  \ '## はじめに',
+  \ '## 問題 疑問',
+  \ '## まとめ 結果 解決方法',
+  \ '## 以下詳細',
+  \ '## Refs',
   \ ]
 
   let i = 0
