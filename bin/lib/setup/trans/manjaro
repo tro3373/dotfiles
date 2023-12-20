@@ -25,7 +25,7 @@ load_update_arg_apps() {
 }
 
 post_setup() {
-  exe yay -S --noconfirm hardinfo google-chrome numix-gtk-theme numix-icon-theme numix-circle-icon-theme-git
+  exe yay -S --noconfirm hardinfo google-chrome numix-gtk-theme numix-icon-theme numix-circle-icon-theme-git slack-desktop
   _setup_gnome_extension
   # TODO
   #   - Dark Theme
@@ -164,7 +164,7 @@ gsettings_add_custom_keybind() {
 
 get_keys() {
   {
-    echo $key
+    echo "$key"
     gsettings get "$scheme_1" "$name_ck" | tr "'" '\n' | grep org
   } | sort -u | sed -e "s,^,',g" -e "s,$,',g" | tr '\n' ',' | sed -e 's/,$//g'
 }
