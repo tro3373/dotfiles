@@ -1,17 +1,26 @@
 #!/usr/bin/env bash
 
-install_common() { not_supported; }
+install_common() {
+  if ! has asdf; then
+    add_dependency_args asdf
+    return
+  fi
+  if ! asdf plugin-list | grep deno >&/dev/null; then
+    exe asdf plugin-add deno
+  fi
+  exe asdf install deno latest
+}
 # install_wsl() { not_supported; }
-install_arch() {
-  install_via_os_default
-}
-install_msys() { not_supported; }
-install_cygwin() { not_supported; }
-install_mac() {
-  install_via_os_default
-}
-install_ubuntu() { not_supported; }
-install_redhat() { not_supported; }
+# install_arch() {
+#   install_via_os_default
+# }
+# install_msys() { not_supported; }
+# install_cygwin() { not_supported; }
+# install_mac() {
+#   install_via_os_default
+# }
+# install_ubuntu() { not_supported; }
+# install_redhat() { not_supported; }
 setting_common() { no_settings; }
 setting_wsl() { no_settings; }
 setting_arch() { no_settings; }
