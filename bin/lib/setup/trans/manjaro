@@ -25,7 +25,7 @@ load_update_arg_apps() {
 }
 
 post_setup() {
-  exe yay -S --noconfirm hardinfo google-chrome numix-gtk-theme numix-icon-theme numix-circle-icon-theme-git slack-desktop
+  exe yay -S --noconfirm hardinfo google-chrome numix-gtk-theme numix-icon-theme numix-circle-icon-theme-git slack-desktop ristretto
   _setup_gnome_extension
   # TODO
   #   - Dark Theme
