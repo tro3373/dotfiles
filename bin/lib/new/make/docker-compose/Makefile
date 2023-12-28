@@ -1,4 +1,5 @@
 SHELL := bash
+PATH := $(PWD)/bin:$(PATH)
 .SHELLFLAGS := -eu -o pipefail -c # -c: Needed in .SHELLFLAGS. Default is -c.
 .DEFAULT_GOAL := up
 
