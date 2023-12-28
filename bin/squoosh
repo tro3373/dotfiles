@@ -1,0 +1,18 @@
+#!/usr/bin/env -S bash -e
+
+current_dir=$(pwd) && readonly current_dir
+has() { command -v "${1}" >&/dev/null; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"; }
+log() { _log cyan "$*"; }
+error() { log "$*" && exit 1; }
+main() {
+  if ! has squoosh-cli; then
+    error "squoosh-cli not found"
+  fi
+  if [[ $# -eq 0 ]]; then
+    error "==> Specify files"
+  fi
+  squoosh-cli --webp auto -d "$current_dir"/ "$@"
+}
+main "$@"
