@@ -193,10 +193,8 @@ snippet	logsettt
 	error() { log "$*" && exit 1; }
 
 snippet	logcolorrr
-	_log() {
-		# shellcheck disable=SC2145
-		echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "\$1"
-	}
+	# shellcheck disable=SC2145
+	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "\$1"; }
 	log() { _log cyan "$*"; }
 	error() { log "$*" && exit 1; }
 
