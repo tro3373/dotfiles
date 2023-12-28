@@ -5,6 +5,10 @@ install_common() {
   exe sudo ./aws/install
 }
 
+install_arch() {
+  def_install aws-cli-v2
+}
+
 install_mac() {
   dl_unzip https://awscli.amazonaws.com/AWSCLIV2.pkg
   exe sudo installer -pkg AWSCLIV2.pkg -target /
