@@ -1,79 +1,66 @@
 #!/usr/bin/env bash
 
 command_name=$(basename "$0") && readonly command_name
-cnf=$0.conf && readonly cnf
+current_dir=$(pwd) && readonly current_dir
+error_log=$current_dir/$command_name.error.log && readonly error_log
+confs=("$0.conf" "$HOME/.$command_name")
+cnf=
 
-dummy="echo"
-reverse=0
-list_sync_files=0
+dry=0
+mode=
 src=
 dst=
 
 # MEMO: rsync can --include=PATTERN
-excludes=("node_modules" "bower_components" ".tmp")
+# excludes=("node_modules" "bower_components" ".tmp")
+excludes=()
 readonly depends=(git rsync)
 args=()
+cmds=()
 
 usage() {
   cat <<EOF
 
-  Rsync easily command.
+Rsync easily.
 
-  Usage:
-    $command_name [option] [Additional rsync options]
+Usage:
+  $command_name <push|pull> [option] [Additional rsync options]
 
-  Options
-     -h : Show this usage
-     -e : Excute sync. (default is dry run mode)
-          sync local to remote
-     -r : Reverse sync.
-          sync remote to local
-     -l : List sync file via rsync dry-run mode
-    -ex pattern : exclude pattern
+Options
+           -h : Show this usage
+           -d : dry-run
+  -ex pattern : exclude pattern
 
-  $command_name.conf
-    ex)
-      /path/to/repository remote:/path/to/sync/directory exclude exclude ..
-         |                  |      |                      |- Exclude patterns
-         |                  |      |- remote sync root path
-         |                  |- Remote name defined in ~/.ssh/config
-         |- Local target sync directory
+$command_name.conf
+  ex)
+    /path/to/repository remote:/path/to/sync/directory exclude exclude ..
+       |                  |      |                      |- Exclude patterns
+       |                  |      |- remote sync root path
+       |                  |- Remote name defined in ~/.ssh/config
+       |- Local target sync directory
 
 EOF
 }
 
-_ink() {
-  cat - |
-    if has ink; then
-      cat - | ink "$@"
-    else
-      cat -
-    fi
-}
-_log() {
-  # shellcheck disable=SC2145
-  echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"
-}
-log() { _log yellow "$*"; }
-error() {
-  _log red "$*"
-  exit 1
-}
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"; }
+log() { _log cyan "$*"; }
+error() { _log red "$*" && exit 1; }
 has() { command -v "${1}" >&/dev/null; }
 hass() {
   for arg in "$@"; do
     has "$arg" && continue
-    error "No $arg command exist."
+    error "==> No $arg command exist."
   done
 }
 add_args() { args+=("$@"); }
+add_cmds() { cmds+=("$@"); }
 add_excludes() { excludes+=("$@"); }
 get_src_root() { git rev-parse --show-toplevel; }
 check_cnf() {
-  if [[ ! -e $cnf ]]; then
-    usage
-    error "No $cnf file exist."
-  fi
+  [[ -n $cnf && -e $cnf ]] && return
+  usage
+  error "==> No $cnf file exist."
 }
 
 initialize() {
@@ -81,31 +68,41 @@ initialize() {
     [[ -z $1 ]] && break
     case "$1" in
       -h | --help) usage && exit 0 ;;
-      -e) dummy= ;;
-      -r) reverse=1 ;;
-      -l) list_sync_files=1 ;;
+      -d) dry=1 ;;
       -ex) shift && add_excludes "$1" ;;
+      push) mode=push ;;
+      pull) mode=pull ;;
       *) add_args "$1" ;;
     esac
     shift
   done
 
   hass "${depends[@]}"
+  cnf=$(find_first_cnf)
   check_cnf
 
   src=$(get_src_root)
   if [[ -z $src || ! -e $src ]]; then
-    error "You Not in git repository. $src"
+    error "==> You Not in git repository. $(pwd)"
+  fi
+  if [[ -z $mode ]]; then
+    error "==> Specify push or pull."
   fi
 
-  read -r _src dst _excludes < <(cat <"$cnf" | grep -E "^${src}[ 	]" | head -1)
+  read -r _ dst _excludes < <(cat <"$cnf" | grep -E "^${src}[ 	]" | head -1)
   [[ -z $dst ]] && error "No dst path defined for $src in $cnf"
   [[ -n $_excludes ]] &&
     for _exclude in $_excludes; do
       add_excludes "$_exclude"
     done
-  [[ $reverse -eq 1 ]] && local _tmp=$src && src=$dst && dst=$_tmp
+  [[ $mode == "pull" ]] && local _tmp=$src && src=$dst && dst=$_tmp
   set -eo pipefail
+}
+
+find_first_cnf() {
+  for conf in "${confs[@]}"; do
+    [[ -e $conf ]] && echo "$conf" && break
+  done
 }
 
 _rsync() {
@@ -130,22 +127,50 @@ _rsync() {
   #     --specials        特殊ファイルを保持する
   # -z: --compress        転送中のデータを圧縮する
   # -u: --update          同期先のファイルの方が新しい場合はスキップする
-  # local _cmd="rsync -rtuzzv --size-only --no-H --no-A --no-X --delete"
-  local _cmd="rsync -rtuzzv --no-H --no-A --no-X --delete"
-  if [[ $list_sync_files -eq 1 ]]; then
-    dummy=
-    _cmd="$_cmd -n"
+  # if has sudo; then
+  #   add_cmds "sudo"
+  # fi
+  add_cmds "rsync" "-rtzzv" "--no-H" "--no-A" "--no-X" "--delete"
+  if [[ $dry -ne 0 ]]; then
+    add_cmds "-n"
   fi
-  _cmd="$dummy $_cmd"
+  # if [[ $mode == "pull" ]]; then
+  #   add_cmds '--rsync-path="sudo rsync"' # remote rsync path
+  # fi
   for _ex in "${excludes[@]}"; do
-    _cmd="$_cmd --exclude \"$_ex\""
+    add_cmds "--exclude" "\"$_ex\""
   done
+  # # '-e ssh' is not needed if you have ~/.ssh/config
+  # add_cmds "-e" "ssh -F $HOME/.ssh/config"
   # MEMO:
   # /あり: src/配下のファイルをdst/にコピー
   # /なし: srcをコピー(src/配下のファイルをdst/src/にコピー)
-  _cmd="$_cmd $src/ $dst/"
-  [[ -z $dummy ]] && echo "Excute: $_cmd" | _ink cyan
-  eval "$_cmd"
+  add_cmds "$src/" "$dst/"
+
+  tmpf=$(mktemp)
+  # 0 プロセス終了時に、プロセスが自分自身に対して送出する EXIT シグナル。
+  # 1 XWindow のクローズや、デーモンのリセットに使用されるハングアップシグナル。
+  # 2 Ctrl+C や Del キーを押したときに発生する割り込みシグナル。
+  # 3 Ctrl+\ を押したときに発生するクイットシグナル。
+  # 9 プロセスを強制終了するためのキルシグナル。強制終了なので当然、trap はできない。
+  #15 プロセスを終了させるための終了シグナル。kill コマンドはデフォルトでこのシグナルを使用する (つまり kill PID は kill -15 PID と同じ結果になる)。
+  trap 'rm -rf $tmpf' 0 1 2 3 15
+
+  log "==> Excuting: ${cmds[*]}"
+  # "${cmds[@]}" 2>(tee "$tmpf" >&2) || :
+  "${cmds[@]}" 2>"$tmpf" || :
+  # tmpf に何か書き込まれていたらカレントに移動
+  if [[ ! -s $tmpf ]]; then
+    return
+  fi
+  # only error to error_log
+  mv "$tmpf" "$error_log"
+  cat <<EOF | ink yellow
+==> Below error exist. See $error_log
+
+$(cat "$error_log")
+EOF
+  exit 1
 }
 
 main() {
