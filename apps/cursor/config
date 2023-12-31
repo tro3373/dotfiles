@@ -27,13 +27,15 @@ _find_binary() {
 }
 
 cat_cursor() {
-  cat <<EOF
+  cat <<'EOF'
 #!/usr/bin/env -S bash -e
 
 main() {
-  ~/tools/$_fnm >&"\$0".log &
+  local cursor_bin
+  cursor_bin=$(find ~/tools -name "cursor-*.AppImage" | sort -r | head -1)
+  $cursor_bin >&"$0".log &
 }
-main "\$@"
+main "$@"
 EOF
 }
 
