@@ -3,49 +3,51 @@
 rules=/etc/udev/rules.d/51-android.rules
 cat_rules() {
   cat <<'EOF'
-# adb protocol on passion (Nexus One)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e12", MODE="0600", OWNER="paul"
-# fastboot protocol on passion (Nexus One)
-SUBSYSTEM=="usb", ATTR{idVendor}=="0bb4", ATTR{idProduct}=="0fff", MODE="0600", OWNER="paul"
-# adb protocol on crespo/crespo4g (Nexus S)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e22", MODE="0600", OWNER="paul"
-# fastboot protocol on crespo/crespo4g (Nexus S)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e20", MODE="0600", OWNER="paul"
-# adb protocol on stingray/wingray (Xoom)
-SUBSYSTEM=="usb", ATTR{idVendor}=="22b8", ATTR{idProduct}=="70a9", MODE="0600", OWNER="paul"
-# fastboot protocol on stingray/wingray (Xoom)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="708c", MODE="0600", OWNER="paul"
-# adb protocol on maguro/toro (Galaxy Nexus)
-SUBSYSTEM=="usb", ATTR{idVendor}=="04e8", ATTR{idProduct}=="6860", MODE="0600", OWNER="paul"
-# fastboot protocol on maguro/toro (Galaxy Nexus)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e30", MODE="0600", OWNER="paul"
-# adb protocol on panda (PandaBoard)
-SUBSYSTEM=="usb", ATTR{idVendor}=="0451", ATTR{idProduct}=="d101", MODE="0600", OWNER="paul"
-# adb protocol on panda (PandaBoard ES)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="d002", MODE="0600", OWNER="paul"
-# fastboot protocol on panda (PandaBoard)
-SUBSYSTEM=="usb", ATTR{idVendor}=="0451", ATTR{idProduct}=="d022", MODE="0600", OWNER="paul"
-# usbboot protocol on panda (PandaBoard)
-SUBSYSTEM=="usb", ATTR{idVendor}=="0451", ATTR{idProduct}=="d00f", MODE="0600", OWNER="paul"
-# usbboot protocol on panda (PandaBoard ES)
-SUBSYSTEM=="usb", ATTR{idVendor}=="0451", ATTR{idProduct}=="d010", MODE="0600", OWNER="paul"
-# adb protocol on grouper/tilapia (Nexus 7)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e42", MODE="0600", OWNER="paul"
-# fastboot protocol on grouper/tilapia (Nexus 7)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e40", MODE="0600", OWNER="paul"
-# adb protocol on manta (Nexus 10)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee2", MODE="0600", OWNER="paul"
-# fastboot protocol on manta (Nexus 10)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee0", MODE="0600", OWNER="paul"
-# adb protocol on panda (sc02e)
-SUBSYSTEM=="usb", ATTR{idVendor}=="04e8", ATTR{idProduct}=="04e8", MODE="0600", OWNER="paul"
-# adb for so01f
-SUBSYSTEM=="usb", ATTR{idVendor}=="0fce", ATTR{idProduct}=="0198", MODE="0600", OWNER="paul"
-#SUBSYSTEM=="usb", SYSFS{idVendor}=="0fce", MODE="0666"
-# adb protocol on bullhead (Nexus 5X)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="d00d", MODE="0600", OWNER="TOBEFILLED"
-# adb protocol on angler (Nexus 6P)
-SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee7", MODE="0600", OWNER="paul"
+## adb protocol on passion (Nexus One)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e12", MODE="0600", OWNER="paul"
+## fastboot protocol on passion (Nexus One)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="0bb4", ATTR{idProduct}=="0fff", MODE="0600", OWNER="paul"
+## adb protocol on crespo/crespo4g (Nexus S)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e22", MODE="0600", OWNER="paul"
+## fastboot protocol on crespo/crespo4g (Nexus S)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e20", MODE="0600", OWNER="paul"
+## adb protocol on stingray/wingray (Xoom)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="22b8", ATTR{idProduct}=="70a9", MODE="0600", OWNER="paul"
+## fastboot protocol on stingray/wingray (Xoom)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="708c", MODE="0600", OWNER="paul"
+## adb protocol on maguro/toro (Galaxy Nexus)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="04e8", ATTR{idProduct}=="6860", MODE="0600", OWNER="paul"
+## fastboot protocol on maguro/toro (Galaxy Nexus)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e30", MODE="0600", OWNER="paul"
+## adb protocol on panda (PandaBoard)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="0451", ATTR{idProduct}=="d101", MODE="0600", OWNER="paul"
+## adb protocol on panda (PandaBoard ES)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="d002", MODE="0600", OWNER="paul"
+## fastboot protocol on panda (PandaBoard)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="0451", ATTR{idProduct}=="d022", MODE="0600", OWNER="paul"
+## usbboot protocol on panda (PandaBoard)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="0451", ATTR{idProduct}=="d00f", MODE="0600", OWNER="paul"
+## usbboot protocol on panda (PandaBoard ES)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="0451", ATTR{idProduct}=="d010", MODE="0600", OWNER="paul"
+## adb protocol on grouper/tilapia (Nexus 7)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e42", MODE="0600", OWNER="paul"
+## fastboot protocol on grouper/tilapia (Nexus 7)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4e40", MODE="0600", OWNER="paul"
+## adb protocol on manta (Nexus 10)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee2", MODE="0600", OWNER="paul"
+## fastboot protocol on manta (Nexus 10)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee0", MODE="0600", OWNER="paul"
+## adb protocol on panda (sc02e)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="04e8", ATTR{idProduct}=="04e8", MODE="0600", OWNER="paul"
+## adb for so01f
+#SUBSYSTEM=="usb", ATTR{idVendor}=="0fce", ATTR{idProduct}=="0198", MODE="0600", OWNER="paul"
+##SUBSYSTEM=="usb", SYSFS{idVendor}=="0fce", MODE="0666"
+## adb protocol on bullhead (Nexus 5X)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="d00d", MODE="0600", OWNER="TOBEFILLED"
+## adb protocol on angler (Nexus 6P)
+#SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee7", MODE="0600", OWNER="paul"
+# adb protocol for Pixel 8pro
+SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee7", MODE="0666", GROUP="plugdev"
 EOF
 }
 
@@ -73,7 +75,8 @@ main() {
       echo
       echo ">> above rules will be setted to $rules"
     fi
-  $dummy sudo service udev restart
-  echo done
+  # $dummy sudo service udev restart
+  $dummy sudo udevadm control --reload-rules
+  echo "done"
 }
 main "$@"
