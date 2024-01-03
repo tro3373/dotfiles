@@ -19,9 +19,10 @@ install_redhat() { not_supported; }
 setting_common() {
   local src=$HOME/.vimrc
   local dst=${HOME}/.config/nvim/init.vim
-  local dstd=$(dirname $dst)
+  local dstd
+  dstd=$(dirname "$dst")
   if [[ ! -e $dstd ]]; then
-    exe mkdir -p $dstd
+    exe mkdir -p "$dstd"
   fi
   make_lnk_with_bkup "$src" "$dst"
 }
