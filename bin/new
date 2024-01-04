@@ -5,7 +5,7 @@ lib_dir="$script_dir/lib/new" && readonly lib_dir
 command_name=$(basename "$0") && readonly command_name
 current_dir=$(pwd) && readonly current_dir
 args=()
-dummy="echo"
+dummy=
 mode=bash
 type=def
 name=sample
@@ -21,7 +21,7 @@ Create new executable shell file.
     Options
       -h|--help     : Show this usage
       -q|--quiet    : Quiet mode
-      -e|--execute  : Execute. Default is dry-run
+      -d|--dry-run  : dry-run
 
     ex)
       new command_name      : Create new bash command_name
@@ -70,7 +70,7 @@ initialize() {
       #-f|--file) shift && file=$1 ;;
       -h | --help) usage && exit 0 ;;
       -q | --quiet) quiet=1 ;;
-      -e | --execute) dummy= ;;
+      -d | --dry-run) dummy="echo" ;;
       *) add_args "$1" ;;
     esac
     shift
