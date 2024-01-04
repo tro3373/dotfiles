@@ -22,7 +22,7 @@ main() {
       dst=$src.bk.$timestamp
     fi
     log "> Backup coping $src to $dst .."
-    cp -rf $src $dst
+    cp -rf "$src" "$dst"
     # mv -v $src $dst
   done
   log "Done!"
