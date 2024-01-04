@@ -9,7 +9,7 @@ _init() {
   if is_orb; then
     export IS_ORB=1
   fi
-  export TERM=xterm-256color
+  # export TERM=xterm-256color
   umask 0002 # umask settnig
   #bindkey -d                  # デフォルト設定に戻す
   bindkey -v               # <ESC>を押した時にvi風のキー操作ができるようにする
