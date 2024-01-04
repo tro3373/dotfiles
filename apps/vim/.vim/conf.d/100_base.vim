@@ -29,7 +29,7 @@ set scrolloff=5
 " 閉じ括弧が入力されたとき、対応する括弧を表示する
 set showmatch
 " vim -p で開ける最大タブ数
-set tabpagemax=20
+set tabpagemax=99
 " コマンド補完機能
 set wildmenu
 " zsh like な補完に
