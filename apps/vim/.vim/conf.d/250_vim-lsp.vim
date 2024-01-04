@@ -138,8 +138,16 @@ let g:lsp_settings = {
   \       }
   \     }
   \   },
+  \   'sumneko-lua-language-server': {
+  \     'workspace_config': {
+  \       'Lua': {
+  \         'diagnostics': {
+  \           'globals': ["vim"]
+  \         }
+  \       }
+  \     }
+  \   },
 \}
-
 
 " 補完表示時のEnterで改行をしない
 inoremap <expr> <cr> pumvisible() ? "\<c-y>\<cr>" : "\<cr>"
