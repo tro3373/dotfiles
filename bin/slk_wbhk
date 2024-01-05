@@ -1,0 +1,15 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  local url=$1
+  if [[ -z $url ]]; then
+    echo "==> Specify slack webhook url" >&2
+    exit 1
+  fi
+  if [[ ! -p /dev/stdin ]]; then
+    echo "==> Specify stdin to send" >&2
+    exit 1
+  fi
+  curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"$(cat <&0 | sed -z -e 's,\n$,,g' -e 's,\n,\\n,g')\"}" "$url"
+}
+main "$@"
