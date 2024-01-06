@@ -263,6 +263,8 @@ highlight SpecialKey cterm=NONE ctermfg=cyan guifg=cyan
 
 " 行番号を表示する
 set number
+" " 相対行番号を表示する
+" set relativenumber
 " ルーラを表示
 set ruler
 
@@ -380,32 +382,38 @@ endif
 " autocmd TextYankPost * call system(s:clip, @0)
 let g:winclip = '/mnt/c/Windows/System32/clip.exe'  " change this path according to your mount point
 let s:clip = $HOME.'/.dot/bin/clip'
-if executable(g:winclip)
-  if $DISPLAY != ':0'
+function! s:set_yank_post_for_win()
+  if $DISPLAY == ':0'
     " DISPLAY :0 => wslg is running
     " define only wsl(no define in wslg)
-    augroup MyYankPost
-      autocmd!
-      autocmd TextYankPost * call system(g:winclip, @0)
-    augroup MyYankPost
-    augroup END
+    return
   endif
-elseif executable(s:clip)
-  function! s:my_yank_post(event)
-    let s:is_remote = $REMOTEHOST.$SSH_CONNECTION
-    if empty(s:is_remote) || $IS_VAGRANT == '1'
-      return
-    endif
+  augroup my-yank-post
+    autocmd!
+    autocmd TextYankPost * call system(g:winclip, @0)
+  augroup END
+endfunction
+function! s:set_yank_post_in_remote_not_vagrant()
+  let s:is_remote = $REMOTEHOST..$SSH_CONNECTION
+  if empty(s:is_remote) || $IS_VAGRANT == '1'
+    return
+  endif
+  function! s:yank_post_in_remote_not_vagrant()
     let s:cliptmp = $HOME.'/.vim/.clip.tmp'
     call writefile(split(getreg('0'), '\n'), s:cliptmp)
-    call system('cat <'.s:cliptmp.'|'.s:clip)
+    call system('cat <'..s:cliptmp..'|'..s:clip)
     " echo system(s:clip, @0)
   endfunction
-  augroup MyYankPost
+  augroup my-yank-post
     autocmd!
-    autocmd TextYankPost * call s:my_yank_post(v:event)
-  augroup MyYankPost
+    autocmd TextYankPost * call s:yank_post_in_remote_not_vagrant(v:event)
   augroup END
+endfunction
+
+if executable(g:winclip)
+  call s:set_yank_post_for_win()
+elseif executable(s:clip)
+  call s:set_yank_post_in_remote_not_vagrant()
 endif
 
 " augroup LargeFile
@@ -432,26 +440,30 @@ endif
 " @see [vim-jp » Hack #112: 場所ごとに設定を用意する](https://vim-jp.org/vim-users-jp/2009/12/27/Hack-112.html)
 " @see [HiPhish's Workshop](https://hiphish.github.io/blog/2020/02/08/project-local-vim-settings-the-right-way/)
 " Load settings for each location.
-augroup vimrc-local
+augroup local-rc
   autocmd!
-  " autocmd BufNewFile,BufReadPost * call s:vimrc_local(expand('<afile>:p:h'))
-  autocmd BufNewFile,BufReadPost * call s:vimrc_local()
+  autocmd BufNewFile,BufReadPost * call s:load_local_rc()
 augroup END
-function! s:vimrc_local()
-  let l:rc = getcwd() . '/.vimrc.local'
+function! s:get_local_rc_path()
+  return $HOME .. "/.ldot/vim/additional" .. getcwd() .. '/local.vimrc'
+endfunction
+function! s:load_local_rc()
+  let l:rc = s:get_local_rc_path()
   if ! filereadable(l:rc)
     return
   endif
-  let l:rc_yes = l:rc . '.yes'
-  if filereadable(l:rc_yes) || input('Do you wish to load ' . l:rc . ' ? (Input yes)') == 'yes'
-    if ! filereadable(l:rc_yes)
-      execute system('touch ' . l:rc_yes)
-      echo 'Touched ' . l:rc_yes
-    endif
-    " source `=l:rc`
-    execute 'source' l:rc
-  endif
+  echo '==> Loading local vimrc settings ' .. l:rc .. ' ...'
+  " source `=l:rc`
+  execute 'source' l:rc
 endfunction
+function! OpenLocalRc()
+  let l:rc = s:get_local_rc_path()
+  if ! filereadable(l:rc)
+    return
+  endif
+  exe "tabe" l:rc
+endfunction
+command! OpenLocalRc call OpenLocalRc()
 
 "==============================================================================
 " SQL auto uppercase
