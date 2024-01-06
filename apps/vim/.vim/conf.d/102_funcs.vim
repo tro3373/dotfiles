@@ -244,6 +244,8 @@ function! HugoHelperLastModIsNow()
   call setpos(".", pos)
 endfun
 command! HugoHelperLastModIsNow call HugoHelperLastModIsNow()
+" Update `lastmod` date for markdown for hugo
+autocmd BufWritePost index*.md call HugoHelperLastModIsNow()
 
 function! Hugolize() abort
   let strnow = GetHugoNowDate()

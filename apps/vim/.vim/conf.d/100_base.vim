@@ -427,9 +427,6 @@ endif
 "    \ endif
 " augroup END
 
-" Update `lastmod` date for markdown for hugo
-autocmd BufWritePost index*.md call HugoHelperLastModIsNow()
-
 "==============================================================================
 " Read local vimrc settings
 " @see [vim-jp » Hack #112: 場所ごとに設定を用意する](https://vim-jp.org/vim-users-jp/2009/12/27/Hack-112.html)
