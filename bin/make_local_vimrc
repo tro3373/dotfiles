@@ -1,0 +1,17 @@
+#!/usr/bin/env -S bash -e
+
+current_dir=$(pwd) && readonly current_dir
+
+main() {
+  target_dir="${1:-$current_dir}"
+  additional_dir="$HOME/.ldot/vim/additional"
+  file_name="local.vimrc"
+  dst_file="${additional_dir}${target_dir}/$file_name"
+  dst_dir=$(dirname "$dst_file")
+  [[ ! -e $dst_dir ]] && mkdir -p "$dst_dir"
+  touch "$dst_file"
+  echo "$dst_file" | v
+}
+main "$@"
+
+# vi: ft=sh
