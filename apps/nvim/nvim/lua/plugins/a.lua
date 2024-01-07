@@ -1,0 +1,521 @@
+-- luacheck: ignore 112 113
+return {
+  {
+    "romainl/Apprentice",
+    config = function()
+      vim.api.nvim_create_autocmd("ColorScheme", {
+        group = vim.api.nvim_create_augroup("my-colors", {}),
+        pattern = "*",
+        callback = function()
+          vim.cmd("hi Search ctermfg=238 ctermbg=109 guifg=#646D75 guibg=#87afaf") -- 検索結果ハイライト色設定
+          vim.cmd("hi SpecialKey cterm=NONE ctermfg=cyan guifg=cyan") -- 特殊キー
+        end,
+      })
+      vim.cmd("colorscheme apprentice")
+    end,
+  },
+  -- TODO Ignore long line warining
+  -- luacheck: ignore 614 631
+  -- TODO Ignore long line warining
+  -- TODO hack this
+  -- ~/ghq/github.com/sisi0808/dotfiles/config/nvim/init.lua
+  -- ~/ghq/github.com/craftzdog/dotfiles-public/.config/nvim/lua/config/lazy.lua
+  -- ~/ghq/github.com/nvim-lua/kickstart.nvim/init.lua
+
+  -- "folke/neodev.nvim",
+  -- "folke/which-key.nvim",
+  -- { "folke/neoconf.nvim", cmd = "Neoconf" },
+  ----------------------------------------------------------------------------------------------------------------------
+  -- [📜Neovimのプラグインマネージャーをpacker.nvimからlazy.nvimに移行してみた - Minerva](https://minerva.mamansoft.net/Notes/%F0%9F%93%9CNeovim%E3%81%AE%E3%83%97%E3%83%A9%E3%82%B0%E3%82%A4%E3%83%B3%E3%83%9E%E3%83%8D%E3%83%BC%E3%82%B8%E3%83%A3%E3%83%BC%E3%82%92packer.nvim%E3%81%8B%E3%82%89lazy.nvim%E3%81%AB%E7%A7%BB%E8%A1%8C%E3%81%97%E3%81%A6%E3%81%BF%E3%81%9F)
+  ----------------------------------------------------------------------------------------------------------------------
+  -- 'ellisonleao/gruvbox.nvim',
+  -- 'tpope/vim-commentary', -- コメントアウト
+  -- 'kana/vim-textobj-user', -- text-objectのユーザーカスタマイズ
+  -- -- 'kana/vim-textobj-entire', -- 全体が範囲のtext-object / エラーになる
+  -- 'kshenoy/vim-signature', -- マークの可視化
+  -- 'nvim-tree/nvim-web-devicons', -- アイコンの表示
+  -- -- ブラックホールレジスト+putの省略
+  -- {
+  --   'vim-scripts/ReplaceWithRegister',
+  --   keys = {
+  --     {'_', '<Plug>ReplaceWithRegisterOperator'}
+  --   }
+  -- },
+  -- -- バッファ・タブバーをかっこよく
+  -- {
+  --   'romgrk/barbar.nvim',
+  --   dependencies = {'nvim-web-devicons'},
+  --   event = {'BufNewFile', 'BufRead'},
+  -- },
+  -- -- 囲まれているものの操作
+  -- {
+  --   'machakann/vim-sandwich',
+  --   config = function()
+  --     vim.cmd("runtime macros/sandwich/keymap/surround.vim")
+  --   end
+  -- },
+  -- -- キャメルケースモーション
+  -- {
+  --   'bkad/CamelCaseMotion',
+  --   config = function()
+  --     vim.g.camelcasemotion_key = "]"
+  --   end
+  -- },
+  -- -- 画面内瞬間移動
+  -- {
+  --   'phaazon/hop.nvim',
+  --   branch = 'v2',
+  --   keys = {
+  --     { 's', ':HopChar2MW<CR>' }
+  --   },
+  --   config = function()
+  --     require'hop'.setup { keys = 'etovxqpdygfblzhckisuran' }
+  --   end
+  -- },
+  -- -- yankハイライト
+  -- {
+  --   'machakann/vim-highlightedyank',
+  --   config = function()
+  --     vim.g.highlightedyank_highlight_duration = 300
+  --   end
+  -- },
+  -- -- マルチカーソル
+  -- {
+  --   'mg979/vim-visual-multi',
+  --   init = function()
+  --     t = {}
+  --     t["Find Under"] = "<C-k>"
+  --     vim.g.VM_maps = t
+  --   end
+  -- },
+  -- -- ステータスライン
+  -- {
+  --   'nvim-lualine/lualine.nvim',
+  --   dependencies = { 'nvim-web-devicons', opt = true },
+  --   event = {'BufNewFile', 'BufRead'},
+  --   options = { theme = 'gruvbox' },
+  --   config = 'require("lualine").setup()'
+  -- },
+  -- -- Fuzzy finder
+  -- {
+  --   'nvim-telescope/telescope.nvim',
+  --   tag = '0.1.1',
+  --   dependencies = { 'nvim-lua/plenary.nvim', "nvim-telescope/telescope-frecency.nvim", "kkharji/sqlite.lua" },
+  --   keys = {
+  --     { '<C-j>f', ':Telescope find_files find_command=rg,--files,--hidden,--glob,!*.git <CR>' },
+  --     { '<C-j>e', ':Telescope frecency<CR>' },
+  --     { '<C-j>g', ':Telescope live_grep<CR>' },
+  --     { '<C-j>l', ':Telescope current_buffer_fuzzy_find<CR>' }
+  --   },
+  --   config = function()
+  --     local actions = require("telescope.actions")
+  --     require("telescope").setup {
+  --         defaults = {
+  --             mappings = {
+  --                 i = {
+  --                   ["<esc>"] = actions.close,
+  --                   ["<F12>"] = actions.select_vertical,
+  --                 },
+  --                 n = { ["q"] = actions.close },
+  --             },
+  --             layout_strategy = 'vertical'
+  --         },
+  --         extensions = {
+  --           frecency = {
+  --             show_scores = true
+  --           }
+  --         }
+  --     }
+  --     require("telescope").load_extension("frecency")
+  --
+  --
+  --     local home = os.getenv("USERPROFILE")
+  --     vim.g.sqlite_clib_path = home .. "/lib/sqlite3.dll"
+  --   end
+  -- },
+  -- -- エクスプローラー
+  -- {
+  --   'nvim-tree/nvim-tree.lua',
+  --   dependencies = {
+  --     'nvim-tree/nvim-web-devicons'
+  --   },
+  --   keys = {
+  --     { '<M-w>', ':NvimTreeToggle<CR>' },
+  --     { '<C-j>w', ':NvimTreeFindFile<CR>' }
+  --   },
+  --   config = function()
+  --     require("nvim-tree").setup()
+  --   end
+  -- },
+  -- -- Gitの行表示
+  -- {
+  --   'lewis6991/gitsigns.nvim',
+  --   event = {'BufNewFile', 'BufRead'},
+  --   keys = {
+  --     { '<C-j>d', ':Gitsigns preview_hunk<CR>' },
+  --     { '<C-j>D', ':Gitsigns diffthis<CR>' },
+  --     { '<C-j><C-u>', ':Gitsigns reset_hunk<CR>' },
+  --     { '<Space>s', ':Gitsigns stage_hunk<CR>' },
+  --     { '<Space>j', ':Gitsigns next_hunk<CR>' },
+  --     { '<Space>k', ':Gitsigns prev_hunk<CR>' },
+  --   },
+  --   config = function()
+  --     require('gitsigns').setup()
+  --   end
+  -- },
+  -- -- VSCode like
+  -- {
+  --   'neoclide/coc.nvim',
+  --   branch = "release",
+  --   event = "InsertEnter",
+  --   keys = {
+  --     -- 定義に移動
+  --     { '<C-]>', '<Plug>(coc-definition)' },
+  --     -- 呼び出し元に移動
+  --     { '<C-j>h', '<Plug>(coc-references)' },
+  --     -- 実装に移動
+  --     { '<C-j>i', '<Plug>(coc-implementation)' },
+  --     -- 配下の定義を表示
+  --     { '<M-s>', ':call CocActionAsync(\'doHover\')<CR>' },
+  --     { '<C-P>', '<C-\\><C-O>:call CocActionAsync(\'showSignatureHelp\')<CR>', mode = "i" },
+  --     -- 前後のエラーや警告に移動
+  --     { '<M-k>', '<Plug>(coc-diagnostic-prev)' },
+  --     { '<M-j>', '<Plug>(coc-diagnostic-next)' },
+  --     -- Enterキーで決定
+  --     { "<cr>", [[coc#pum#visible() ? coc#pum#confirm() : "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"]], mode = "i", expr = true, replace_keycodes = false },
+  --     -- code action
+  --     { '<M-CR>', '<Plug>(coc-codeaction-cursor)' },
+  --     -- Find symbol of current document
+  --     { '<C-j>o', ':<C-u>CocList outline<cr>' },
+  --     -- Search workspace symbols
+  --     { '<C-j>s', ':<C-u>CocList -I symbols<cr>' },
+  --     -- Rename
+  --     { '<S-M-r>', '<Plug>(coc-rename)' },
+  --     -- Auto complete
+  --     { "<F5>", "coc#refresh()" },
+  --   },
+  --   config = function()
+  --     vim.g.coc_global_extensions = {
+  --       "coc-json",
+  --       "coc-tsserver",
+  --       "coc-css",
+  --       "coc-yaml",
+  --       "coc-rust-analyzer",
+  --       "coc-sh",
+  --       "coc-prettier",
+  --       "coc-pyright",
+  --       "@yaegassy/coc-volar"
+  --     }
+  --   end
+  -- },
+  -- -- Markdown preview
+  -- {
+  --     "iamcco/markdown-preview.nvim",
+  --     keys = {
+  --       { '<M-p>', ':MarkdownPreviewToggle<CR>' }
+  --     },
+  --     build = function() vim.fn["mkdp#util#install"]() end,
+  -- }
+  ----------------------------------------------------------------------------------------------------------------------
+  -- [Neovimを完全にLuaLuaさせた | 点と接線。](https://riq0h.jp/2023/01/20/210601/)
+  ----------------------------------------------------------------------------------------------------------------------
+  -- {'windwp/nvim-autopairs', event = 'InsertEnter'}, --文字の挿入を伴うプラグインは'InsertEnter'を指定する。
+  -- {'j-hui/fidget.nvim', event = 'LspAttach'}, --LSPと連動するプラグインは'LspAttach'を指定する。
+  -- {'nvim-telescope/telescope.nvim', cmd = 'Telescope'}, --特定のコマンドを入力するまで不要なプラグインはcmd = 'cammand'で対応する。
+  -- {'vim-jp/vimdoc-ja', ft = 'help'}, --特定のファイルタイプでのみ必要なプラグインはft = 'filetype'で対応する。
+  -- {'lewis6991/gitsigns.nvim', event = 'BufNewFile, BufRead'}, --ファイルを読み込んだ後に装飾を加えるプラグインは'BufNewFile'と'BufRead'が有力。
+  -- {'echasnovski/mini.surround', event = 'ModeChanged'}, --モードの切り替え時に発動させたいプラグインは'ModeChanged'が適切。
+  -- {'nvim-lualine/lualine.nvim', event = 'VeryLazy'}, --他の設定でうまく動かなかったものは一律に'VeryLazy'で対処する。（VimEnter相当らしい）
+  -- {'vim-denops/denops.vim', lazy = false}, --即時読み込んでくれないと不都合なプラグインは逆に遅延を無効化する。（config.default.lazy = falseの場合）
+  --
+  -- {'hrsh7th/nvim-cmp', event = 'InsertEnter, CmdlineEnter'},
+  -- {'hrsh7th/cmp-nvim-lsp', event = 'InsertEnter'},
+  -- {'hrsh7th/cmp-buffer', event = 'InsertEnter'},
+  -- {'hrsh7th/cmp-path', event = 'InsertEnter'},
+  -- {'hrsh7th/cmp-vsnip', event = 'InsertEnter'},
+  -- {'hrsh7th/cmp-cmdline', event = 'ModeChanged'}, --これだけは'ModeChanged'でなければまともに動かなかった。
+  -- {'hrsh7th/cmp-nvim-lsp-signature-help', event = 'InsertEnter'},
+  -- {'hrsh7th/cmp-nvim-lsp-document-symbol', event = 'InsertEnter'},
+  -- {'hrsh7th/cmp-calc', event = 'InsertEnter'},
+  -- {'onsails/lspkind.nvim', event = 'InsertEnter'},
+  -- {'hrsh7th/vim-vsnip', event = 'InsertEnter'},
+  -- {'hrsh7th/vim-vsnip-integ', event = 'InsertEnter'},
+  -- {'rafamadriz/friendly-snippets', event = 'InsertEnter'},
+
+  ----------------------------------------------------------------------------------------------------------------------
+  -- [folke/lazy.nvim: 💤 A modern plugin manager for Neovim](https://github.com/folke/lazy.nvim)
+  ----------------------------------------------------------------------------------------------------------------------
+  -- -- Example using a list of specs with the default options
+  -- vim.g.mapleader = " " -- Make sure to set `mapleader` before lazy so your mappings are correct
+  --
+  -- require("lazy").setup({
+  --   "folke/which-key.nvim",
+  --   { "folke/neoconf.nvim", cmd = "Neoconf" },
+  --   "folke/neodev.nvim",
+  -- })
+  ----------------------------------------------------------------------------------------------------------------------
+  -- [Neovimを完全にLuaLuaさせた | 点と接線。](https://riq0h.jp/2023/01/20/210601/)
+  ----------------------------------------------------------------------------------------------------------------------
+  -- -- set hidden --Vim script
+  -- vim.opt.hidden = true --大半の設定はこのパターンで書ける。
+  -- -- set helplang='ja', 'en' --Vim script
+  -- vim.opt.helplang = 'ja', 'en' --設定部分によっては値も変わる。
+  -- -- set cmdheight=2 --Vim script
+  -- vim.opt.cmdheight = 2 --元の値が数値ならここも数値で指定する。
+  -- -- set signcolumn=yes --Vim script
+  -- vim.opt.signcolumn = 'yes' --数値でもboolean型でもない設定も稀にある。
+  -- -- set mapleader='/<Space>' --Vim scriptの場合はエスケープ処理と文字コードが必要。
+  -- vim.g.mapleader = ' ' --この設定は構文が異なりエスケープ処理も文字コードも不要。
+  -- -- set clipboard+=unnamedplus --Vim script
+  -- vim.opt.clipboard:append{'unnamedplus'} --特別な指定方法の一つ。
+  -- -- set list listchars=tab:»-,trail:-,eol:↲,extends:»,precedes:«,nbsp:% --Vim script
+  -- vim.opt.listchars = {tab='»-', trail='-', eol='↲', extends='»', precedes='«', nbsp='%'} --特別な指定方法の一つ。
+  -- -- set shortmess+=I --Vim script
+  -- vim.cmd('set shortmess+=I') --代替しうる構文が見つからない時はvim.cmdを利用してVim scriptで書く。
+  -- -- set noundofile --Vim script
+  -- vim.opt.undofile = false --init.luaに否定形の構文はないため、この場合は指定すべき真偽値が逆になることに注意されたし。
+  -- -- nnoremap <silent> sv :<C-u>vsplit<CR> --Vim script
+  -- vim.keymap.set('n', 'sv', ':<C-u>vsplit<CR>', {silent = true}) --<silent>などもboolean型で指定する。
+  -- --やっている人が多そうなカーソル位置の保存設定をLua化したもの。
+  -- vim.api.nvim_create_autocmd({ 'BufReadPost' }, {
+  --     pattern = { '*' },
+  --     callback = function()
+  --         vim.api.nvim_exec('silent! normal! g`"zv', false)
+  --     end,
+  -- })
+
+  -- [Neovim+LSPをなるべく簡単な設定で構築する](https://zenn.dev/botamotch/articles/21073d78bc68bf)
+  -- [dotfiles/nvim/init.lua at master · botamotch/dotfiles](https://github.com/botamotch/dotfiles/blob/master/nvim/init.lua)
+  -- [ibhagwan/fzf-lua: Improved fzf.vim written in lua](https://github.com/ibhagwan/fzf-lua)
+  --
+  --
+  -- {
+  --   "rcarriga/nvim-notify",
+  --   opts = {
+  --     timeout = 5000,
+  --   },
+  -- },
+  -- {
+  --   -- Extensible UI for Neovim notifications and LSP progress messages.
+  --   "j-hui/fidget.nvim",
+  --   opts = {
+  --     -- options
+  --   },
+  -- }
+
+  --  'itchyny/lightline.vim'                  ,          -- status-line
+  --  'norcalli/nvim-colorizer.lua'            ,          -- A high-performance color highlighter for Neovim which has no external dependencies!
+  --  'nathanaelkane/vim-indent-guides'        ,          -- indent guide
+  --  'airblade/vim-gitgutter'                 ,          -- Shows a git diff in the gutter!!!!!
+  --  'tpope/vim-fugitive'                     ,          -- Git wrapper so awesome
+  --
+  --  -- =================================================================
+  --  -- Filer
+  --  -- =================================================================
+  --  -- 'mattn/ctrlp-filer'                   ,             -- Plugins for ctrlp.vim Filer (After start, Ctrl+D will not work bug occure.)
+  --  -- 'Shougo/vimfiler'                     ,             -- :VimFiler
+  --  'cocopon/vaffle.vim'                     ,          -- SimpleFiler nouse
+  --  -- 'scrooloose/nerdtree', {
+  --  --   \ 'on':  ['NERDTreeToggle'] }       ,                  -- NERDTree tree view コマンド実行時に読み込む
+  --
+  --  -- =================================================================
+  --  -- Feature/Funcs Base
+  --  -- =================================================================
+  --  -- Unite関連
+  --  function! BuildVimproc(info) abort
+  --    -- info is a dictionary with 3 fields
+  --    -- - name:   name of the plugin
+  --    -- - status: 'installed', 'updated', or 'unchanged'
+  --    -- - force:  set on PlugInstall! or PlugUpdate!
+  --    if a:info.status == 'installed' || a:info.force
+  --        if g:is_windows
+  --            !make -f make_mingw64.mak
+  --        elseif g:is_cygmsys2
+  --            !make -f make_mingw64.mak
+  --            -- !make -f make_cygwin.mak
+  --        elseif g:is_mac
+  --            !make
+  --        elseif g:is_linux
+  --            !make
+  --        else
+  --            !gmake
+  --        endif
+  --    endif
+  --  endfunction
+  --  'Shougo/vimproc.vim',
+  --      \ { 'do': function('BuildVimproc') }
+  -- "Shougo/unite.vim", -- ユーザインタフェース統合
+  --  'Shougo/neomru.vim'                                -- 最近使用したファイルの一覧管理
+  --
+  --  -- Fuzzy Finder
+  --  'ctrlpvim/ctrlp.vim'                               -- Fuzzy file, buffer, mru, tag, etc finder.
+  --  -- if !g:is_windows
+  --  --   'nixprime/cpsm' , {'do': './install.sh' }        -- Plugins for ctrlp.vim A CtrlP matcher, specialized for paths.
+  --  -- endif
+  --  'vim-scripts/ctrlp-funky'                          -- Plugins for ctrlp.vim Jump to a function
+  --  'suy/vim-ctrlp-commandline'                        -- Plugins for ctrlp.vim command line history navigation
+  --  'sgur/ctrlp-extensions.vim'                        -- Plugins for ctrlp.vim cmdline : cmdline history,
+  --                                                          -- yankring : yank history, menu : extension selector menu
+  --  'vim-scripts/sudo.vim'                             -- sudo
+  --
+  --  -- =================================================================
+  --  -- Buggy
+  --  -- 'banyan/recognize_charcode.vim'                    -- 文字コード判定
+  --  -- =================================================================
+  --
+  --  -- =================================================================
+  --  -- Feature/Funcs Operation
+  --  -- =================================================================
+  --  'thinca/vim-quickrun'                              -- 現在のファイルを実行して quickfix に表示
+  --  'osyo-manga/shabadou.vim'                          -- quick-run 用プラグイン
+  --
+  "kana/vim-submode", -- vim-submode(キーマップ plugin)
+  --  'rhysd/accelerated-jk'                             -- Accelareted-jk
+  --  'terryma/vim-expand-region'                        -- visually select increasingly larger regions of text via `v`
+  --  'iberianpig/tig-explorer.vim'                      -- vimからtig
+  --  -- 'iberianpig/ranger-explorer.vim'                   -- vimからranger
+  --
+  --  'thinca/vim-ambicmd'                               -- 長いコマンド名を個別の設定なしで入力するためのプラグイン
+  --  -- 'terryma/vim-multiple-cursors'                     -- MultiCursor
+  --  'ujihisa/unite-colorscheme'                        -- カラースキーム変更
+  --  't9md/vim-quickhl'                                 -- quick highlight
+  --
+  --  -- =================================================================
+  --  -- Feature/Funcs Search/Finds/Analyze
+  --  -- =================================================================
+  --  -- 'rking/ag.vim'                                     -- SilverSearcher
+  --  if !g:is_windows && !g:is_cygmsys2
+  --      'junegunn/fzf', { 'dir': '$HOME/.fzf',
+  --       \ 'do': './install --all' }                       -- FZF
+  --      'junegunn/fzf.vim'
+  --  endif
+  --  'rhysd/clever-f.vim'                               -- f検索
+  --  -- 'easymotion/vim-easymotion'
+  --  'skanehira/jumpcursor.vim'
+  --
+  --  -- ソース解析
+  --  'Shougo/unite-outline'                             -- 関数一覧とかを表示
+  --  -- 'vim-scripts/gtags.vim'                            -- GNU Global
+  --  if !g:is_windows
+  --      'vim-scripts/taglist.vim'                      -- ソースコードブラウザ
+  --  endif
+  --
+  --  -- =================================================================
+  --  -- Feature/Funcs Edit
+  --  -- =================================================================
+  --  -- 'kana/vim-smartchr'                                -- = 等の便利入力
+  --  'kana/vim-smartinput'                              -- () 等の入力補完
+  --  -- 'mattn/vim-lexiv'                                -- () 等の入力補完
+  --  -- [posva/vim-vue: Syntax Highlight for Vue.js components](https://github.com/posva/vim-vue#nerdcommenter)
+  --  -- > caw.vim features built-in support for file context through context_filetype.vim.
+  --  -- > Just install both plugins and context-aware commenting will work in most files.
+  --  -- > The fenced code is detected by predefined regular expressions.
+  --  'tyru/caw.vim'                                     -- コメントアウトプラグイン <Leader>+c
+  --  'Shougo/context_filetype.vim'
+  --  'tpope/vim-surround'                               -- 囲文字入力アシスト
+  --  'vim-scripts/Align'                                -- CSV,TSV整形
+  --  'junegunn/vim-easy-align'                          -- Align text
+  --
+  --
+  --  -- =================================================================
+  --  -- Code Edit
+  --  -- =================================================================
+  --  if empty($VIM_DISABLE_LINTER) || (!empty($VIM_DISABLE_LINTER) && $VIM_DISABLE_LINTER != 1)
+  --    'github/copilot.vim'
+  --
+  --    'dense-analysis/ale'                                 -- 構文解析(非同期)
+  --    'maximbaz/lightline-ale'                             -- ALE indicator for the lightline vim plugin.
+  --    'editorconfig/editorconfig-vim'                      -- Official editorconfig
+  --    'mattn/sonictemplate-vim'
+  --
+  --    -- Code Formatter
+  --    -- 'google/vim-maktaba'                                 -- vimscript plugin library(GoogleCodeFormatter depends)
+  --    -- 'google/vim-glaive'                                  -- utility for configuring maktaba plugins(GoogleCodeFormatter depends)
+  --    -- 'google/vim-codefmt'                                 -- GoogleCodeFormatter
+  --    -- 'sgur/vim-editorconfig'                              -- Not Official editorconfig(less depends)
+  --
+  --    -- Complete
+  --    -- 'Shougo/neocomplcache.vim'                         -- 補完候補を自動でポップアップ(old)
+  --    -- 'Shougo/neocomplete.vim'                           -- Next generation completion framework after neocomplcache
+  --    -- if has('nvim')
+  --    --   'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+  --    -- else
+  --    --   'Shougo/deoplete.nvim'
+  --    --   'roxma/nvim-yarp'
+  --    --   'roxma/vim-hug-neovim-rpc', { 'do': 'pip install pynvim' }
+  --    -- endif
+  --
+  --    'prabirshrestha/async.vim'                           -- NoNeeded?
+  --
+  --    -- Vim LSP!
+  --    -- @see https://mattn.kaoriya.net/?page=3
+  --    'prabirshrestha/vim-lsp'                             -- Vim Language Server Protocol
+  --    'mattn/vim-lsp-settings'                             -- use `:LspInstallServer`
+  --    'mattn/vim-lsp-icons'
+  --    'halkn/lightline-lsp'                                -- Display the diagnostic result of vim-lsp in the statusline of lightline.vim
+  --
+  --    -- Async complete is needed
+  --    'prabirshrestha/asyncomplete.vim'
+  --
+  --    -- Snip
+  --    'hrsh7th/vim-vsnip'                                  -- 穴あき形式補完候補用？
+  --    'hrsh7th/vim-vsnip-integ'
+  --
+  --    'Shougo/neosnippet'                                -- Ctrl+k でスニペットを用意
+  --    'Shougo/neosnippet-snippets'                       -- 基本スニペット for neosnippet
+  --    'honza/vim-snippets'                               -- snipMate UltiSnip Snippets
+  --
+  --    'prabirshrestha/asyncomplete-lsp.vim'
+  --    'prabirshrestha/asyncomplete-neosnippet.vim'
+  --    -- 'prabirshrestha/asyncomplete-buffer.vim'
+  --    'akaimo/asyncomplete-around.vim'
+  --    'prabirshrestha/asyncomplete-file.vim'
+  --
+  --    -- -- TODO
+  --    -- 'SirVer/ultisnips' | 'honza/vim-snippets'
+  --    -- -- This plugin integrates neosnippet.vim in vim-lsp to provide Language Server Protocol snippets.
+  --    -- 'thomasfaingnaert/vim-lsp-snippets'
+  --    -- 'thomasfaingnaert/vim-lsp-neosnippet'
+  --
+  --    -- 'Shougo/neco-syntax'
+  --    -- 'prabirshrestha/asyncomplete-necosyntax.vim'
+  --    -- 'Shougo/neco-vim'
+  --    -- 'prabirshrestha/asyncomplete-necovim.vim'            -- for neco-vim
+  --  endif
+  --
+  --  -- =================================================================
+  --  -- Langs or Others
+  --  -- =================================================================
+  --  'cespare/vim-toml', { 'branch': 'main' }             -- Toml syntax
+  --  'hashivim/vim-terraform'                             -- Terraform syntax
+  --  'posva/vim-vue'                                      -- vue syntax
+  --  'mindriot101/vim-yapf'                               -- for python
+  --  'leafgarland/typescript-vim'                         -- for typescript
+  --  -- NOTE: So slow `has('python3')`
+  --  -- if has('python3')
+  --  -- 'davidhalter/jedi-vim'                               -- for python completion
+  --  -- endif
+  --  'cohama/vim-smartinput-endwise'                      -- for ruby (end 補完)
+  --  'digitaltoad/vim-pug'                                -- pug
+  --  'dart-lang/dart-vim-plugin'                          -- dart
+  --  'udalov/kotlin-vim'                                  -- kotlin
+  --
+  --  'tyru/open-browser.vim'                              -- Open browser
+  --  'rcmdnk/vim-markdown'                                -- Markdown syntax
+  --  'mattn/vim-sqlfmt'                                   -- SQL
+  --
+  --  -- Markdown Preview 関連
+  --  -- 'kannokanno/previm'
+  --  -- 'plasticboy/vim-markdown'
+  --  -- MEMO: Not work all. render quit in the middle
+  --  -- 'skanehira/preview-markdown.vim'                   -- Preview in buffer. depends MichaelMure/mdr
+  --  -- MEMO: deno is cool, but layout is..
+  --  -- if executable('deno')
+  --  --   'vim-denops/denops.vim'
+  --  --   -- Need chrome extension https://chrome.google.com/webstore/detail/cross-domain-cors/mjhpgnbimicffchbodmgfnemoghjakai/related?hl=ja
+  --  --   'kat0h/bufpreview.vim'
+  --  -- endif
+  --  -- Preview in browser. via `:MarkdownPreview`
+  --  -- 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npm i'  }
+  --  'iamcco/markdown-preview.nvim', { 'do': 'cd app && yarn install' }
+}
