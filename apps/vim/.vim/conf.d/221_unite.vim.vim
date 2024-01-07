@@ -20,6 +20,9 @@ if executable('rg')
   let g:unite_source_grep_encoding='utf-8'
 endif
 
+" UniteBookMarkAdd で追加したディレクトリを Unite bookmark で開くときのアクションのデフォルトを Vimfiler に
+call unite#custom_default_action('source/bookmark/directory' , 'vimfiler')
+
 function! s:unite_my_settings()
   " 単語単位からパス単位で削除するように変更
   imap <buffer> <C-w> <Plug>(unite_delete_backward_path)

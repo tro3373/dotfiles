@@ -159,14 +159,6 @@ nnoremap s= <C-w>=
 nnoremap sw <C-w>w
 nnoremap so <C-w>_<C-w>|
 nnoremap sO <C-w>=
-call submode#enter_with('bufmove', 'n', '', 's>', '<C-w>>')
-call submode#enter_with('bufmove', 'n', '', 's<', '<C-w><')
-call submode#enter_with('bufmove', 'n', '', 's+', '<C-w>+')
-call submode#enter_with('bufmove', 'n', '', 's-', '<C-w>-')
-call submode#map('bufmove', 'n', '', '>', '<C-w>>')
-call submode#map('bufmove', 'n', '', '<', '<C-w><')
-call submode#map('bufmove', 'n', '', '+', '<C-w>+')
-call submode#map('bufmove', 'n', '', '-', '<C-w>-')
 " タブ移動
 nnoremap sn gt
 nnoremap sp gT
@@ -275,8 +267,6 @@ nnoremap sa :<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-na
 "nnoremap <silent> <Leader>c :<C-u>Unite -direction=botright -auto-resize bookmark<CR>
 "" ブックマークに追加
 "nnoremap <silent> <Leader>a :<C-u>UniteBookmarkAdd<CR>
-" UniteBookMarkAdd で追加したディレクトリを Unite bookmark で開くときのアクションのデフォルトを Vimfiler に
-call unite#custom_default_action('source/bookmark/directory' , 'vimfiler')
 
 " 開いているファイルのディレクトリをエクスプローラで開く
 map <silent> qn :!open %:h>&/dev/null<ENTER>

@@ -1,21 +1,28 @@
 #!/usr/bin/env -S bash -e
 
-timestamp=$(date +%Y%m%d.%H%M%S) && readonly timestamp
+# timestamp=$(date +%Y%m%d.%H%M%S) && readonly timestamp
 main() {
   local nvim_config_dst_dir="$HOME/.config/nvim"
   local nvim_config_src_dir="$HOME/.dot/apps/nvim/nvim"
-  if [[ -e $nvim_config_dst_dir && ! -L $nvim_config_dst_dir ]]; then
-    mv -v "$nvim_config_dst_dir" "$nvim_config_dst_dir.$timestamp"
-  fi
-  if [[ ! -e $nvim_config_dst_dir ]]; then
-    ln -sv "$nvim_config_src_dir" "$nvim_config_dst_dir"
-  fi
+  # if [[ -e $nvim_config_dst_dir && ! -L $nvim_config_dst_dir ]]; then
+  #   mv -v "$nvim_config_dst_dir" "$nvim_config_dst_dir.$timestamp"
+  # fi
+  # if [[ ! -e $nvim_config_dst_dir ]]; then
+  #   ln -sv "$nvim_config_src_dir" "$nvim_config_dst_dir"
+  # fi
 
-  cd "$nvim_config_src_dir"
+  cd "$nvim_config_dst_dir"
   local v=_init.vim n=_init.lua dstv=init.vim dstn=init.lua
   if [[ ! -e $v ]]; then
     ln -sv "$HOME/.vimrc" "$v"
   fi
+  if [[ ! -e $n ]]; then
+    ln -sv "$nvim_config_src_dir/init.lua" "$n"
+  fi
+  if [[ ! -e lua ]]; then
+    ln -sv "$nvim_config_src_dir/lua" "lua"
+  fi
+
   if [[ -e $dstn ]]; then
     rm -v "$dstn"
     ln -sv "$v" "$dstv"
