@@ -393,12 +393,13 @@ function! s:set_yank_post_for_win()
     autocmd TextYankPost * call system(g:winclip, @0)
   augroup END
 endfunction
-function! s:set_yank_post_in_remote_not_vagrant()
+function! s:set_yank_post_in_remote()
   let s:is_remote = $REMOTEHOST..$SSH_CONNECTION
+  " if empty(s:is_remote) || $IS_VAGRANT == '1' || $IS_ORB == '1'
   if empty(s:is_remote) || $IS_VAGRANT == '1'
     return
   endif
-  function! s:yank_post_in_remote_not_vagrant()
+  function! s:yank_post_in_remote()
     let s:cliptmp = $HOME.'/.vim/.clip.tmp'
     call writefile(split(getreg('0'), '\n'), s:cliptmp)
     call system('cat <'..s:cliptmp..'|'..s:clip)
@@ -406,14 +407,14 @@ function! s:set_yank_post_in_remote_not_vagrant()
   endfunction
   augroup my-yank-post
     autocmd!
-    autocmd TextYankPost * call s:yank_post_in_remote_not_vagrant(v:event)
+    autocmd TextYankPost * call s:yank_post_in_remote()
   augroup END
 endfunction
 
 if executable(g:winclip)
   call s:set_yank_post_for_win()
 elseif executable(s:clip)
-  call s:set_yank_post_in_remote_not_vagrant()
+  call s:set_yank_post_in_remote()
 endif
 
 " augroup LargeFile

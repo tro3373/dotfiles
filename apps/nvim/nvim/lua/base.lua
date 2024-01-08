@@ -359,7 +359,8 @@ local function set_yank_post_for_win()
 end
 
 -- リモート接続時のクリップボードフォワード設定
-local function set_yank_post_in_remote_not_vagrant()
+local function set_yank_post_in_remote()
+  -- if vim.fn.getenv("IS_VAGRANT") == "1" or vim.fn.getenv("IS_ORB") == "1" then
   if vim.fn.getenv("IS_VAGRANT") == "1" then
     return
   end
@@ -367,7 +368,7 @@ local function set_yank_post_in_remote_not_vagrant()
   if vim.fn.empty(remote_state) then
     return
   end
-  local function yank_post_in_remote_not_vagrant()
+  local function yank_post_in_remote()
     local cliptmp = vim.fn.getenv("HOME") .. "/.vim/.clip.tmp"
     local clip_content = vim.fn.split(vim.fn.getreg("0"), "\n")
     vim.fn.writefile(clip_content, cliptmp)
@@ -376,13 +377,13 @@ local function set_yank_post_in_remote_not_vagrant()
   aumg({
     events = { "TextYankPost" },
     group = "my-yank-post",
-    cb = yank_post_in_remote_not_vagrant,
+    cb = yank_post_in_remote,
   })
 end
 if vim.fn.executable(winclip) then
   set_yank_post_for_win()
 else
-  set_yank_post_in_remote_not_vagrant()
+  set_yank_post_in_remote()
 end
 
 local function get_local_rc_path()
