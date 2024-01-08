@@ -194,6 +194,8 @@ _setup_gui_apps() {
   - System Enviroments - アクセシビリティ - 視差効果を減らす にチェック
 1. キーチェーンのロックまでの時間変更
   - キーチェーン - 編集 - キーチェーンログインの設定変更 - 操作しない状態が... をチェック
+1. ホットコーナー設定
+  - 設定 - デスクトップとDock - ホットコーナー - 右上 - ディスプレイをスリープ
 1. Install from App Store
   - BetterSnapTool
   - XCode
