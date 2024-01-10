@@ -28,6 +28,8 @@ snippet	local_ip
 # 	local_ip := $(shell if command -v ip >/dev/null; then ip route |grep kernel |grep -v linkdown |grep -v 'br-' |sed -e 's,.metric.*,,g' |awk 'END {print $$NF}'; else echo localhost; fi)
 snippet local_ip_in_host
 	local_ip := $(shell if [ ! -e /.dockerenv ]; then ip route |grep kernel |grep -v linkdown |grep -v 'br-' |sed -e 's,.metric.*,,g' |awk 'END {print $$NF}'; else echo localhost; fi)
+snippet	local_ip_ipa
+	local_ip := $(shell ipa 2>/dev/null || echo localhost)
 
 snippet	docker_none_images
 	docker_none_images=$$(docker images | awk '/^<none>/ { print $$3 }')
