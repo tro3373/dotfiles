@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-readonly command_name=$(basename $0)
+command_name=$(basename "$0") && readonly command_name
 readonly port_mysql=3306
 readonly port_mongo=27017
 
@@ -75,14 +75,13 @@ setup_wrap_aws() {
 }
 
 detect_local_ssh_port() {
-  local ssh_cnf=$HOME/.ssh/config
-  local key="Host $remote"
-  local n=$(grep -E -n "^$key$" $ssh_cnf | cut -d: -f1)
+  local ssh_cnf=$HOME/.ssh/config key="Host $remote" n p
+  n=$(grep -E -n "^$key$" "$ssh_cnf" | cut -d: -f1)
   if [[ -z $n ]]; then
     log "No ssh config settings for $remote exist."
     exit 1
   fi
-  local p=$(tail -n +$n $ssh_cnf | grep Port | head -1 | awk '{print $2}')
+  p=$(tail -n +"$n" "$ssh_cnf" | grep Port | head -1 | awk '{print $2}')
   if [[ -z $p ]]; then
     log "No ssh config for 'Port' settings for $remote exist."
     exit 1
@@ -104,7 +103,7 @@ check() {
     exit 1
   fi
   # shellcheck disable=SC2154
-  if is_port_useing $local_ssh_port; then
+  if is_port_useing "$local_ssh_port"; then
     log "Aready $local_ssh_port used."
     exit 1
   fi
@@ -121,7 +120,7 @@ check() {
 }
 
 add_args() { args+=("$@"); }
-has() { command -v ${1} >&/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
 ink() {
   local stdin=
   if [[ -p /dev/stdin ]]; then
@@ -153,19 +152,20 @@ ink() {
       ;;
   esac
 
+  # shellcheck disable=SC2059
   printf "${open}${color}${text}${close}\n" 1>&2
 }
 log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
 is_port_useing() { netstat -ano | grep LISTEN | grep ":$1" >&/dev/null; }
 
 wait_and_tunnel_https() {
-  wait_until_port_used $local_ssh_port
+  wait_until_port_used "$local_ssh_port"
   tunnel_https
 }
 
 wait_until_port_used() {
   while true; do
-    is_port_useing $1 && break
+    is_port_useing "$1" && break
     # log "=> Waiting 2s for forwarding port $1.."
     sleep 2
   done
@@ -173,10 +173,10 @@ wait_until_port_used() {
 
 end() {
   if [[ -n $pid_443 ]]; then
-    kill $pid_443 2>/dev/null && log "==> Killed PID($pid_443) use port 443.."
+    kill "$pid_443" 2>/dev/null && log "==> Killed PID($pid_443) use port 443.."
   fi
   if [[ -n $pid_80 ]]; then
-    kill $pid_80 2>/dev/null && log "==> Killed PID($pid_80) use port 80.."
+    kill "$pid_80" 2>/dev/null && log "==> Killed PID($pid_80) use port 80.."
   fi
 }
 
@@ -189,13 +189,13 @@ tunnel_https() {
   log
   if is_mintty; then
     # shellcheck disable=SC2154
-    ssh -g -N -C -L 443:localhost:443 $remote &
-    ssh -g -N -C -L 80:localhost:80 $remote &
+    ssh -g -N -C -L 443:localhost:443 "$remote" &
+    ssh -g -N -C -L 80:localhost:80 "$remote" &
     return
   fi
 
   {
-    ssh -g -N -C -L 1443:localhost:443 $remote &
+    ssh -g -N -C -L 1443:localhost:443 "$remote" &
     if is_wsl; then
       netsh 443 1443
     fi
@@ -204,7 +204,7 @@ tunnel_https() {
   pid_443=$!
 
   {
-    ssh -g -N -C -L 18080:localhost:80 $remote &
+    ssh -g -N -C -L 18080:localhost:80 "$remote" &
     if is_wsl; then
       netsh 80 18080
     fi
@@ -230,19 +230,19 @@ find_not_used_local_port() {
   while true; do
     count=$((count + 1))
     [[ $count -gt $max ]] && break
-    is_port_useing $port || break
+    is_port_useing "$port" || break
     log "Aready $port used. Checking other port.."
     port=$((port + 1))
   done
-  echo $port
+  echo "$port"
 }
 
 wait_and_tunnel_db() {
-  local r_port=$1
+  local r_port=$1 l_port
   local scan_from_port=$r_port
-  wait_until_port_used $local_ssh_port
-  local l_port=$(find_not_used_local_port $scan_from_port)
-  tunnel_db $r_port $l_port
+  wait_until_port_used "$local_ssh_port"
+  l_port=$(find_not_used_local_port "$scan_from_port")
+  tunnel_db "$r_port" "$l_port"
 }
 
 tunnel_db() {
@@ -257,7 +257,7 @@ tunnel_db() {
   log "==> PortForwarding ${log_db_host}$r_port to localhost:$l_port via $remote.. Press Ctrl+C to exit"
   log
   # shellcheck disable=SC2154
-  ssh -g -N -L $l_port:$db_host:$r_port $remote
+  ssh -g -N -L "$l_port":"$db_host":"$r_port" "$remote"
 }
 
 start_ssm_session() {
@@ -265,12 +265,13 @@ start_ssm_session() {
   local opt_prof="--profile $profile"
   [[ $wrap_aws =~ ^aws-vault.* ]] && opt_prof=
   # shellcheck disable=SC2154
-  export GPG_TTY=$(tty)
+  GPG_TTY=$(tty)
+  export GPG_TTY
   $wrap_aws aws \
-    $opt_prof \
-    --region $region \
+    "$opt_prof" \
+    --region "$region" \
     ssm start-session \
-    --target $ec2_id \
+    --target "$ec2_id" \
     --document-name AWS-StartPortForwardingSession \
     --parameters "{\"portNumber\":[\"22\"],\"localPortNumber\":[\"$local_ssh_port\"]}"
 }
