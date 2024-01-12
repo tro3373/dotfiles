@@ -1,0 +1,25 @@
+#!/usr/bin/env -S bash -e
+
+has() { command -v "${1}" >&/dev/null; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log cyan "$*"; }
+error() { _log "$*" red && exit 1; }
+is_port_useing() { netstat -ano | grep LISTEN | grep ":$1" >&/dev/null; }
+main() {
+  local port=$1
+  local max=5
+  local count=0
+  while true; do
+    count=$((count + 1))
+    if [[ $count -gt $max ]]; then
+      error "==> Could not find not used port."
+    fi
+    is_port_useing "$port" || break
+    log "==> Aready $port used. Checking other port.."
+    port=$((port + 1))
+  done
+  echo "$port"
+}
+main "$@"
