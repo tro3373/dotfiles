@@ -10,6 +10,7 @@ readonly _core_apps=(
 readonly _core_apps_additional=(
   go cargo asdf lsof neofetch netcat nvim nvr mmv gomi ghq shellcheck shfmt
   htop gh exa bat gclip sheldon goimports gosec stylua luarocks luacheck
+  yamlfmt
 )
 readonly _core_apps_additional_arch=(
   yay
