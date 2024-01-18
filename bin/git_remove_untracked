@@ -1,0 +1,7 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  git_select_untracked |
+    xargs rm -rfv
+}
+main "$@"
