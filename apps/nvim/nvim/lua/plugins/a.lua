@@ -1,6 +1,7 @@
 -- luacheck: ignore 112 113
 return {
   {
+    -- colorscheme
     "romainl/Apprentice",
     config = function()
       vim.api.nvim_create_autocmd("ColorScheme", {
@@ -12,6 +13,35 @@ return {
         end,
       })
       vim.cmd("colorscheme apprentice")
+    end,
+  },
+  {
+    -- vim-submode(キーマップ plugin)
+    "kana/vim-submode",
+    config = function()
+      vim.cmd("call submode#enter_with('bufmove', 'n', '', 's>', '<C-w>>')")
+      vim.cmd("call submode#enter_with('bufmove', 'n', '', 's<', '<C-w><')")
+      vim.cmd("call submode#enter_with('bufmove', 'n', '', 's+', '<C-w>+')")
+      vim.cmd("call submode#enter_with('bufmove', 'n', '', 's-', '<C-w>-')")
+      vim.cmd("call submode#map('bufmove', 'n', '', '>', '<C-w>>')")
+      vim.cmd("call submode#map('bufmove', 'n', '', '<', '<C-w><')")
+      vim.cmd("call submode#map('bufmove', 'n', '', '+', '<C-w>+')")
+      vim.cmd("call submode#map('bufmove', 'n', '', '-', '<C-w>-')")
+    end,
+  },
+  {
+    -- git blame line
+    "tveskag/nvim-blame-line",
+    config = function()
+      -- vim.api.nvim_set_keymap("n", "<leader>b", ":ToggleBlameLine<CR>", { noremap = true, silent = true })
+      -- vim.keymap.set('n', '<leader>b', ':ToggleBlameLine<CR>', { silent = true })
+      nmap("<leader>b", ":ToggleBlameLine<CR>")
+      au({
+        events = { "BufEnter" },
+        cb = function()
+          vim.cmd("EnableBlameLine")
+        end,
+      })
     end,
   },
   -- TODO Ignore long line warining
@@ -88,14 +118,17 @@ return {
   --     vim.g.VM_maps = t
   --   end
   -- },
-  -- -- ステータスライン
-  -- {
-  --   'nvim-lualine/lualine.nvim',
-  --   dependencies = { 'nvim-web-devicons', opt = true },
-  --   event = {'BufNewFile', 'BufRead'},
-  --   options = { theme = 'gruvbox' },
-  --   config = 'require("lualine").setup()'
-  -- },
+  -- ステータスライン
+  {
+    "nvim-tree/nvim-web-devicons",
+  },
+  {
+    "nvim-lualine/lualine.nvim",
+    dependencies = { "nvim-web-devicons", opt = true },
+    event = { "BufNewFile", "BufRead" },
+    options = { theme = "gruvbox" },
+    config = 'require("lualine").setup()',
+  },
   -- -- Fuzzy finder
   -- {
   --   'nvim-telescope/telescope.nvim',
@@ -369,7 +402,6 @@ return {
   --  'thinca/vim-quickrun'                              -- 現在のファイルを実行して quickfix に表示
   --  'osyo-manga/shabadou.vim'                          -- quick-run 用プラグイン
   --
-  "kana/vim-submode", -- vim-submode(キーマップ plugin)
   --  'rhysd/accelerated-jk'                             -- Accelareted-jk
   --  'terryma/vim-expand-region'                        -- visually select increasingly larger regions of text via `v`
   --  'iberianpig/tig-explorer.vim'                      -- vimからtig

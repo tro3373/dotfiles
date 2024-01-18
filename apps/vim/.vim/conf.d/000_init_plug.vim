@@ -53,6 +53,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'norcalli/nvim-colorizer.lua'                      " A high-performance color highlighter for Neovim which has no external dependencies!
   Plug 'nathanaelkane/vim-indent-guides'                  " indent guide
   Plug 'airblade/vim-gitgutter'                           " Shows a git diff in the gutter!!!!!
+  Plug 'tveskag/nvim-blame-line'                          " Show git blame info inline
   Plug 'tpope/vim-fugitive'                               " Git wrapper so awesome
 
   " =================================================================
