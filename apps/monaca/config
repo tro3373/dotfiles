@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 
 install_common() {
-  if ! has npm; then
-    log "npm not installed."
-    return
-  fi
+  has_npm || return
   exe npm i -g monaca
 }
 # install_arch()   { not_supported; }

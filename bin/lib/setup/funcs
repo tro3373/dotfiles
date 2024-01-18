@@ -47,6 +47,13 @@ hasp() { command -p -v "${1}" >&/dev/null; } # -p: Search command in default PAT
 has_exclude_dot() { type -a "$1" 2>/dev/null | grep -v '.dot/bin/' | grep -q "$1"; }
 has_scoop() { scoop list "$1" | grep -v matching | grep "$1" >&/dev/null; }
 has_scoop_bucket() { scoop bucket list | grep "$1" &>/dev/null; }
+has_npm() {
+  if ! has npm; then
+    elog "==> Install node required(npm not installed)."
+    return 1
+  fi
+  return 0
+}
 
 # TODO change func name
 isexist() { find "$*" >&/dev/null; }

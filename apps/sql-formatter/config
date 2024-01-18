@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 
 install_common() {
-  if ! has npm; then
-    log "npm not installed."
-    return
-  fi
+  has_npm || return
 
   # @see [sql-formatter-org/sql-formatter: A whitespace formatter for different query languages](https://github.com/sql-formatter-org/sql-formatter)
   # "language": "mysql", //the SQL dialect to use (when using format()).

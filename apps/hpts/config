@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 install_common() {
-  ! has npm && elog "No npm command exist" && return
+  has_npm || return
   exe npm install -g http-proxy-to-socks
 }
 # install_arch()   { not_supported; }
