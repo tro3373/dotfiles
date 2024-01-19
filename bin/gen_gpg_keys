@@ -7,19 +7,23 @@ readonly conf_path=$0.conf
 usage() {
   cat <<EOF
 
-  Generate gpg keys
+Generate gpg keys via gen config
 
-    Usage:
-      $command_name [option]
-    Options
-      -h : Show this usage
-      -g [passphrase] : Gen config
+Usage:
+  $command_name [option]
+Options
+  -h : Show this usage
+  -g <passphrase> : Gen config
 
 EOF
 }
 
-log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
 has() { command -v "${1}" >&/dev/null; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log cyan "$*"; }
+error() { _log red "$*" && exit 1; }
 cat_conf() {
   cat <<EOF
 # Unattended GPG key generation - Using the GNU Privacy Guard
@@ -64,7 +68,7 @@ setup_conf() {
     exit 1
   fi
   cat_conf >"$conf_path"
-  log "==> gpg config generated."
+  log "==> gpg config generated. Re-Run"
 }
 
 gen() {
@@ -83,12 +87,15 @@ gen() {
 main() {
   [[ $1 == -h ]] && usage && exit
   setup_from_git_config
-  if [[ ! -e $conf_path ]]; then
+  if [[ $1 == -g ]]; then
     log "==> Generating gpg config.. $conf_path"
     pass=$2
     setup_conf
-  else
-    log "==> Generating via existin config $conf_path."
+    return
+  fi
+  if [[ ! -e $conf_path ]]; then
+    usage
+    error "No $conf_path. Execute with -g option."
   fi
   gen
 }
