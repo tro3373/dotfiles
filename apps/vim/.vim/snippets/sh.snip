@@ -198,7 +198,7 @@ snippet	logcolorrr
 	# shellcheck disable=SC2145
 	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "\$1"; }
 	log() { _log cyan "$*"; }
-	error() { _log "$*" red && exit 1; }
+	error() { _log red "$*" && exit 1; }
 
 snippet	dlog
 	dlog() {
