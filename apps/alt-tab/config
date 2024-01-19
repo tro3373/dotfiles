@@ -19,6 +19,8 @@ setting_cygwin() { no_settings; }
 setting_mac() {
   log "alt-tab - 環境設定 - コントロール - ショートカット1"
   log "  command - tab を設定"
+  log "alt-tab - 環境設定 - 表示場所"
+  log "  メニューバーのあるスクリーン を設定"
 }
 setting_ubuntu() { no_settings; }
 setting_redhat() { no_settings; }
