@@ -7,7 +7,6 @@ dotenv := $(PWD)/.env
 -include $(dotenv)
 
 app := sample
-svc_client := client
 stage := dev
 timestamp := $(shell date '+%Y%m%d.%H%M%S')
 local_ip := $(shell ipa 2>/dev/null || echo localhost)
@@ -25,6 +24,17 @@ unzip:
 	@test -e envs.zip
 	@unzip envs.zip
 
+_compose:
+	docker compose $(cmd) $(opt)
+_compose_run:
+	docker compose run --rm -it $(compose_opt) $(svc) '$(cmd) $(opt)'
+_compose_run-%:
+	@make -s _compose_run svc=$(*)
+_compose_exec:
+	docker -s compose exec -it $(compose_opt) $(svc) $(cmd) $(opt)
+_compose_exec-%:
+	@make -s _compose_exec svc=$(*)
+
 up: start logsf
 start:
 	@make -s _compose cmd="up -d"
@@ -37,23 +47,15 @@ logs:
 	@make -s _compose cmd=logs
 logsf:
 	@make -s _compose cmd="logs -f"
-build-image:
-	@make -s _compose cmd=build
-_compose:
-	docker compose $(cmd) $(opt)
-_compose_exec:
-	docker compose exec -it $(svc) $(cmd) $(opt)
-_compose_run:
-	docker compose run --rm -it $(svc) '$(cmd) $(opt)'
 
+build-images:
+	@make -s _compose cmd=build
 build-all:
 	@make -C ./client/front build
 
 console: console-client
 console-client:
-	@make _client cmd='bash --login'
-_client:
-	@make _compose_exec svc=$(svc_client)
+	@make -s _compose_exec-client cmd='bash --login'
 
 open_browser:
 	make -C ./client/front open_browser
