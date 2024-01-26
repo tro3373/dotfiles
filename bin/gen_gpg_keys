@@ -4,6 +4,14 @@
 command_name=$(basename "$0") && readonly command_name
 readonly conf_path=$0.conf
 
+mode=
+gen_pub_pri_keys=0
+
+name=
+email=
+pass=
+args=()
+
 usage() {
   cat <<EOF
 
@@ -14,6 +22,7 @@ Usage:
 Options
   -h : Show this usage
   -g <passphrase> : Gen config
+  -p : Gen public and private keys
 
 EOF
 }
@@ -24,6 +33,40 @@ _ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
 _log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
 log() { _log cyan "$*"; }
 error() { _log red "$*" && exit 1; }
+add_args() { args+=("$@"); }
+get_git_global_value() { git config --global --get "$1"; }
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -p) gen_pub_pri_keys=1 ;;
+      -g | --gen)
+        mode=gen_config
+        shift
+        [[ $1 == -* ]] && continue
+        pass=$1
+        ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  load_from_git_config
+  check
+}
+
+load_from_git_config() {
+  name=$(get_git_global_value user.name)
+  email=$(get_git_global_value user.email)
+}
+
+check() {
+  if [[ -z $name || -z $email ]]; then
+    error "==> Setup git config global. user.name,user.email."
+  fi
+}
+
 cat_conf() {
   cat <<EOF
 # Unattended GPG key generation - Using the GNU Privacy Guard
@@ -45,30 +88,20 @@ Passphrase: $pass
 EOF
 }
 
-get_git_global_value() {
-  git config --global --get "$1"
-}
-
-setup_from_git_config() {
-  name=$(get_git_global_value user.name)
-  email=$(get_git_global_value user.email)
-  if [[ -z $name || -z $email ]]; then
-    echo "Setup git config global. user.name,user.email." 1>&2
-    exit 1
-  fi
-}
-
-setup_conf() {
+gen_conf() {
   if [[ -e $conf_path ]]; then
-    echo "Already setupped $conf_path"
+    log "==> Already setupped $conf_path"
     return
   fi
   if [[ -z $pass ]]; then
-    echo "Specify passphrase." 1>&2
-    exit 1
+    log "==> Imput passphrase:"
+    read -r -s pass
+    if [[ -z $pass ]]; then
+      error "==> Error empty passphrase."
+    fi
   fi
   cat_conf >"$conf_path"
-  log "==> gpg config generated. Re-Run"
+  log "==> gpg config generated."
 }
 
 gen() {
@@ -79,24 +112,25 @@ gen() {
     log "==> Generating gpg key via $conf_path.."
     gpg --gen-key --batch "$conf_path"
   fi
+}
+
+gen_pub_pri_keys() {
   gpg -o ./"$name.public.gpg" --export "$name"
   gpg -o ./"$name.private.gpg" --export-secret-key "$name"
   cat <./"$name.public.gpg" | base64 | tr -d '\n' >./"$name.public.gpg.base64"
 }
 
 main() {
-  [[ $1 == -h ]] && usage && exit
-  setup_from_git_config
-  if [[ $1 == -g ]]; then
+  initialize "$@"
+  if [[ $mode == gen_config || ! -e $conf_path ]]; then
     log "==> Generating gpg config.. $conf_path"
-    pass=$2
-    setup_conf
-    return
-  fi
-  if [[ ! -e $conf_path ]]; then
-    usage
-    error "No $conf_path. Execute with -g option."
+    gen_conf
+    if [[ $mode == gen_config ]]; then
+      return
+    fi
   fi
   gen
+  [[ $gen_pub_pri_keys == 0 ]] && return
+  gen_pub_pri_keys
 }
 main "$@"

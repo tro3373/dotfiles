@@ -7,30 +7,32 @@
 
 install_common() {
   if ! has gpg; then
-    log "gpg command not installed."
+    log "==> Installing gpg"
+    def_install gpg
     return
   fi
   if ! has pass; then
-    log "pass command not installed."
-    # shellcheck disable=SC2016
-    log '  Install and execute `pass init {gpg mail}`.'
+    add_dependency_args pass
     return
   fi
-  local gpg_conf
-  gpg_conf=$(which gen_gpg_keys).conf
-  if [[ ! -e $gpg_conf ]]; then
-    log "gpg conf not generated. do gen_gpg_keys command"
-    return
-  fi
+  exe gen_gpg_keys
   install_via_os_default
 }
-# install_wsl() { not_supported; }
-# install_arch() { not_supported; }
-# install_msys() { not_supported; }
-# install_cygwin() { not_supported; }
-# install_mac() { not_supported; }
-# install_ubuntu() { not_supported; }
-# install_redhat() { not_supported; }
+
+setting_common() {
+  setup_work_env
+  setup_gpg_agent
+  cheat_aws_vault
+}
+
+setup_work_env() {
+  local target=~/.works.zsh
+  if grep AWS_VAULT_PASS_PREFIX $target >&/dev/null; then
+    return
+  fi
+  cat_add_vault_export_env |
+    cat_tee -a $target
+}
 
 cat_add_vault_export_env() {
   cat <<'EOF'
@@ -40,14 +42,7 @@ export AWS_VAULT_PASS_PREFIX=aws-vault
 export AWS_SESSION_TOKEN_TTL=3h
 EOF
 }
-setup_work_env() {
-  local target=~/.works.zsh
-  if grep AWS_VAULT_PASS_PREFIX $target >&/dev/null; then
-    return
-  fi
-  cat_add_vault_export_env |
-    cat_tee -a $target
-}
+
 setup_gpg_agent() {
   local target=~/.gnupg/gpg-agent.conf
   if [[ -e $target ]]; then
@@ -65,45 +60,41 @@ cheat_aws_vault() {
 ==> No need aws credentials. (~/.aws/credentials)
 ==> Only config settings is needed. (~/.aws/config)
 ==> Sample mfa settings is bellow
-  [profile example_user]
-  include_profile=common
-  [profile example]
-  source_profile = example_user
-  mfa_serial = arn:aws:iam::xxxxx:mfa/xxxxx-user-name
+  [profile profile_switch_from]
+  # Save access key and secret key to aws-vault with
+  # profile name `profile_switch_from`
+
+  [profile common]
+  source_profile = profile_switch_from
+  region = ap-northeast-1
+  output = json
+  mfa_serial = arn:aws:iam::xxxxx:mfa/xxxxx-iam-user-name
+  role_session_name = xxxxx-iam-user-name
+
+  [profile profile_switch_to]
+  include_profile = common
   role_arn = arn:aws:iam::xxxxx:role/xxxxx-role-name
+
+==> Or Use credential_process ver(Use aws command with no aws-vault exec)
+==> see aws-vaultでcliとterraformをいい感じにしてみる | DevelopersIO
+==>   https://dev.classmethod.jp/articles/awsvault_config/
+  [profile profile_switch_from]
+  mfa_serial = arn:aws:iam::xxxxx:mfa/xxxxx-iam-user-name
+  region = ap-northeast-1
+  output = json
+
+  [profile common]
+  credential_process = aws-vault --prompt terminal export profile_switch_from --duration 12h --format=json
+
+  [profile profile_switch_to]
+  source_profile = common
+  region = ap-northeast-1
+  output = json
+  role_session_name = xxxxx-iam-user-name
+  role_arn = arn:aws:iam::xxxxx:role/xxxxx-role-name
+
 ==> If you have no mfa device, `--no-session` option can be used.
 ==> You need this first. `export GPG_TTY=$(tty)`
 ------------------------------------------------------------------
 EOF
 }
-
-setting_common() {
-  setup_work_env
-  setup_gpg_agent
-  cheat_aws_vault
-}
-# setting_wsl() { not_supported; }
-# setting_arch() { not_supported; }
-# setting_msys() { not_supported; }
-# setting_cygwin() { not_supported; }
-# setting_mac() { not_supported; }
-# setting_ubuntu() { not_supported; }
-# setting_redhat() { not_supported; }
-#is_installed
-#install_via_os_default
-#def_install
-#is_debug
-#is_dry
-#log
-#dlog
-#not_supported
-#make_link_dot2home
-#make_lnk_with_bkup
-#cd_work
-#make_work_if_needed
-#dl
-#dl_unzip
-#dl_untar
-#github
-#github_user_local
-#sudo_tee
