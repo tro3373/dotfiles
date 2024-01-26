@@ -50,6 +50,8 @@ logsf:
 
 build-images:
 	@make -s _compose cmd=build
+build-images-force:
+	@make -s build-images arg=--no-cache
 build-all:
 	@make -C ./client/front build
 
