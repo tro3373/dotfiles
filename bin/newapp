@@ -55,6 +55,7 @@ setting_cygwin() { no_settings; }
 setting_mac()    { no_settings; }
 setting_ubuntu() { no_settings; }
 setting_redhat() { no_settings; }
+#add_dependency_args
 #is_installed
 #install_via_os_default
 #def_install
