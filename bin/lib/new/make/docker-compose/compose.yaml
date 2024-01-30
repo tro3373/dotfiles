@@ -1,27 +1,9 @@
 version: "3.9"
 services:
-  app:
-    image: nginx
-    container_name: nginx
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    environment:
-      TZ: Asia/Tokyo
-    # volumes:
-    #   - ./server/nginx/conf.d/app.dev.conf:/etc/nginx/conf.d/default.conf
-    #   - ./server/nginx/nginx.conf:/etc/nginx/nginx.conf
-    #   - ./server/nginx/proxy.conf:/etc/nginx/proxy.conf
-    #   - ./server/nginx/mime.types:/etc/nginx/conf/mime.types
-    #   - ./data/work:/usr/share/nginx/html/resource
-    # links:
-    #   - app
-    # depends_on:
-    #   - app
   client:
-    container_name: ${app}-${svc_client}
     image: node:21-bullseye
+    container_name: ${app}-${svc_client}
+    platform: linux/x86_64
     # image: ${app}-${svc_client}
     # build:
     #   context: ./
@@ -42,7 +24,119 @@ services:
     working_dir: /app
     environment:
       TZ: Asia/Tokyo
-    # extra_hosts:
-    #   - server:${local_ip}
-    # links:
-    #   - server:${local_ip}
+      # extra_hosts:
+      #   - server:${local_ip}
+      # links:
+      #   - server:${local_ip}
+  app:
+    image: nginx
+    container_name: nginx
+    platform: linux/x86_64
+    user: ${docker_user}
+    restart: always
+    init: true
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      TZ: Asia/Tokyo
+      # volumes:
+      #   - ./server/nginx/conf.d/app.dev.conf:/etc/nginx/conf.d/default.conf
+      #   - ./server/nginx/nginx.conf:/etc/nginx/nginx.conf
+      #   - ./server/nginx/proxy.conf:/etc/nginx/proxy.conf
+      #   - ./server/nginx/mime.types:/etc/nginx/conf/mime.types
+      #   - ./data/work:/usr/share/nginx/html/resource
+      # links:
+      #   - app
+      # depends_on:
+      #   - app
+  redoc:
+    image: redocly/redoc
+    container_name: ${app}-redoc
+    platform: linux/x86_64
+    volumes:
+      - ./server/api/schema/dist:/usr/share/nginx/html/api
+    environment:
+      SPEC_URL: api/swagger.yaml
+    ports:
+      - "8080:80"
+  redoc-watcher:
+    image: ${app}-redoc-watcher
+    container_name: ${app}-redoc-watcher
+    platform: linux/x86_64
+    build:
+      context: ./server/api/schema
+    init: true
+    user: ${docker_user}
+    volumes:
+      - ./server/api/schema:/app
+      # restart: always
+  # Edit via studio?
+  # - [本当に使ってよかったOpenAPI (Swagger) ツール | フューチャー技術ブログ](https://future-architect.github.io/articles/20191008/)
+  # - https://stoplight.io/studio/
+  swagger-editor:
+    # image: swaggerapi/swagger-editor:next-v5
+    image: swaggerapi/swagger-editor
+    container_name: ${app}-swagger-editor
+    platform: linux/x86_64
+    init: true
+    ports:
+      # - "8080:80"
+      - "8081:8080"
+    volumes:
+      - ./server/api/schema:/app
+      # - ./server/api/schema/dist/swagger.yaml:/usr/share/nginx/html/swagger.yaml
+      # - ./server/api/schema/dist:/public/static
+    environment:
+      SWAGGER_FILE: /app/dist/swagger.yaml
+      # PUBLIC_URL: /usr/share/nginx/html
+      # REACT_APP_DEFINITION_FILE: /swagger.yaml
+      # REACT_APP_DEFINITION_URL: http://localhost/swagger.yaml
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: ${app}-swagger-ui
+    platform: linux/x86_64
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./server/api/schema:/app
+    environment:
+      SWAGGER_JSON: /app/src/index.yaml
+  mock:
+    image: stoplight/prism
+    container_name: ${app}-mock
+    platform: linux/x86_64
+    volumes:
+      - ./server/api/schema:/app
+    command: >
+      mock -h 0.0.0.0 /app/dist/swagger.yaml
+
+    ports:
+      - "4010:4010"
+  codegen-openapi:
+    profiles:
+      - gen
+    image: openapitools/openapi-generator-cli
+    container_name: ${app}-codegen-openapi
+    platform: linux/x86_64
+    volumes:
+      - ./server/api/schema:/app
+    tty: true
+    user: ${docker_user}
+    command: bash
+    working_dir: /app
+  codegen-kiota:
+    profiles:
+      - gen
+    image: mcr.microsoft.com/openapi/kiota
+    container_name: ${app}-codegen-kiota
+    platform: linux/x86_64
+    # kiota use /app as working_dir as default
+    volumes:
+      - ./server/api/schema/dist/swagger.yaml:/app/openapi.yaml
+      - ./server/api/schema/dist/codegen/kiota:/app/output
+    user: ${docker_user}
+    tty: true
+    command: -h
+    working_dir: /app
