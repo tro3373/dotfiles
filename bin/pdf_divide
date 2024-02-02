@@ -21,7 +21,7 @@ main() {
   fi
   fnm=${src%.*}
   next=$((page + 1))
-  pdftk A="$1" cat A$page output ${fnm}_1.pdf
-  pdftk A="$1" cat A$next-end output ${fnm}_2.pdf
+  pdftk A="$1" cat A1-"$page" output "${fnm}"_1.pdf
+  pdftk A="$1" cat A$next-end output "${fnm}"_2.pdf
 }
 main "$@"
