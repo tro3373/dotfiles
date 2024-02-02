@@ -57,6 +57,7 @@ install_mac() {
 
 setting_common() {
   make_link_dot2home
+  show_usage
 }
 # setting_wsl() { no_settings; }
 # setting_arch() { no_settings; }
