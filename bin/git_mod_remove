@@ -1,13 +1,12 @@
 #!/usr/bin/env -S bash -e
 
 main() {
-  git status -s |
-    grep '^??' |
-    awk '{print $2}' |
+  git_mod |
     fzf -m \
       --preview 'echo {}; echo "----------------------------------------"; bat --color=always {}' \
       --select-1 \
       --exit-0 \
-      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview'
+      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview' |
+    xargs rm -rfv
 }
 main "$@"

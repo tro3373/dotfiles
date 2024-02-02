@@ -1,0 +1,15 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  git status -s |
+    cut -c4- |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      [[ -f $line ]] && echo "$line" && continue
+      if [[ -d $line ]]; then
+        find "$line" -type f
+      fi
+    done
+}
+main "$@"
