@@ -351,7 +351,7 @@ snippet	float_stringgg
 	strconv.FormatFloat(target, 'f', -1, 64)
 
 snippet	ls_dirrr
-	files, err := ioutil.ReadDir(".")
+	files, err := os.ReadDir(".")
 
 snippet	sorttt
 	sort.Slice(files, func(i, j int) bool {
