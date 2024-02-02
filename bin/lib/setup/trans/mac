@@ -182,7 +182,7 @@ _setup_gui_apps() {
   - System Enviroments - キーボード - キーボードショートカット - キーボード - 次のウィンドウを操作対処にする
   - System Enviroments - キーボード - キーボードショートカット - ファンクションキー - F1,F2などのキーを標準のファンクションキーとして使用する
   - System Enviroments - キーボード - キーボードショートカット - 入力ソース - 前の入力ソースを選択、入力メニューの次のソースを選択
-  - System Enviroments - キーボード - キーボードショートカット - スクリーンショット - 選択部分のピクチャをクリップボードにコピー - `Shift-コマンド(⌘)-S`
+  - System Enviroments - キーボード - キーボードショートカット - スクリーンショット - 選択部分のピクチャをクリップボードにコピー - `Shift-Opt-S`
 1. (SystemSettings) 起動時の音を消す
   - System Enviroments - サウンド - 起動時にサウンドを再生
 1. (SystemSettings) 画面解像度
@@ -198,6 +198,7 @@ _setup_gui_apps() {
   - 設定 - デスクトップとDock - ホットコーナー - 右上 - ディスプレイをスリープ
 1. Install from App Store
   - BetterSnapTool
+    - システム立ち上げ時に起動するにチェック
   - XCode
 1. Install from Web
   - Google Chrome
