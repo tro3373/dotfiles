@@ -44,7 +44,7 @@ let g:ale_linters['javascriptreact'] = ['eslint']
 let g:ale_linters['typescriptreact'] = ['eslint']
 let g:ale_linters['shell'] = ['shellcheck']
 let g:ale_linters['java'] = []
-let g:ale_linters['python'] = ['black', 'flake8']
+let g:ale_linters['python'] = ['black', 'flake8', 'mypy']
 let g:ale_linters['go'] = ['golangci-lint', 'gobuild']
 let g:ale_linters['vue'] = ['eslint']
 let g:ale_linters['json'] = ['jsonlint']
@@ -70,7 +70,7 @@ let g:ale_fixers['c']          = ['clang-format']
 let g:ale_fixers['cpp']        = ['clang-format']
 let g:ale_fixers['rust']       = ['rustfmt']
 " let g:ale_fixers['python']     = ['autopep8', 'yapf', 'isort']
-" let g:ale_fixers['python']     = ['autoflake', 'black', 'isort']
+let g:ale_fixers['python']     = ['autoflake', 'black', 'isort']
 " let g:ale_fixers['python']     = [ { buffer -> {'command': 'command -v task >&/dev/null && task fix'} } ]
 let g:ale_fixers['zsh']        = ['shfmt']
 let g:ale_fixers['sh']         = ['shfmt']
@@ -108,7 +108,7 @@ let g:ale_python_flake8_options = '--max-line-length=120'
 " let g:ale_python_autopep8_options = ''
 " let g:ale_python_isort_options = ''
 " let g:ale_python_black_options = ''
-
+let g:ale_python_mypy_options = '--ignore-missing-imports --follow-imports=skip'
 
 
 " let g:ale_fix_on_save_ignore = ['sh', 'javascript']

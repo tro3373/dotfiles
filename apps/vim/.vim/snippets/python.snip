@@ -56,3 +56,7 @@ snippet	expand_keyword_argssss
 		print(kwargs)
 	expand_args(foo="bar", baz="baz") # {'foo': 'bar', 'baz': 'baz'}
 
+snippet	enable_sqlalchemy_debuggg
+	import logging
+	logging.basicConfig()
+	logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
