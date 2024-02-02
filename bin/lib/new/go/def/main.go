@@ -1,8 +1,9 @@
 package main
 
 import (
-	"errors"
 	"os"
+
+	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -18,8 +19,8 @@ func main() {
 		log.SetLevel(level)
 	}
 	log.Infof("==> Start")
-	if err := sub; err != nil {
-		log.Error("==> Error occured: %w", err)
+	if err := sub(); err != nil {
+		log.Error("==> Error occured: %v", err)
 		panic(err)
 	}
 }
