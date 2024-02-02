@@ -93,7 +93,8 @@ cheat_aws_vault() {
   role_session_name = xxxxx-iam-user-name
   role_arn = arn:aws:iam::xxxxx:role/xxxxx-role-name
 
-==> If you have no mfa device, `--no-session` option can be used.
+==> If you have no mfa device, `-n/--no-session` option can be used.
+      aws-vault exec -n <profile> -- env
 ==> You need this first. `export GPG_TTY=$(tty)`
 ------------------------------------------------------------------
 EOF
