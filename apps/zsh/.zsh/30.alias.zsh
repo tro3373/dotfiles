@@ -63,9 +63,8 @@ if has exa; then
   }
   alias ls="my_ls"
 fi
-alias l="ls -lFh"
-alias ll="ls -laFh"
-alias lla="ls -laFh"
+alias l="ls -lhF"
+alias ll="ls -lahF"
 alias la="ls -a"
 alias lf="ls -F"
 alias du="du -h"
