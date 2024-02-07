@@ -30,52 +30,52 @@ _compose:
 _compose_run:
 	docker compose run --rm -it $(compose_opt) $(svc) '$(cmd) $(opt)'
 _compose_run-%:
-	@make -s _compose_run svc=$(*)
+	@make _compose_run svc=$(*)
 _compose_exec:
 	docker -s compose exec -it $(compose_opt) $(svc) $(cmd) $(opt)
 _compose_exec-%:
-	@make -s _compose_exec svc=$(*)
+	@make _compose_exec svc=$(*)
 
 
 up: start logsf
 start:
-	@make -s _compose cmd="up -d"
+	@make _compose cmd="up -d"
 stop: down
 down:
-	@make -s _compose cmd=down
+	@make _compose cmd=down
 restart:
-	@make -s _compose cmd=restart
+	@make _compose cmd=restart
 logs:
-	@make -s _compose cmd=logs
+	@make _compose cmd=logs
 logsf:
-	@make -s _compose cmd="logs -f"
+	@make _compose cmd="logs -f"
 
 
 build-images:
-	@make -s _compose cmd=build
+	@make _compose cmd=build
 build-images-redocly:
-	@make -s build-images arg="--no-cache redoc-watcher"
+	@make build-images arg="--no-cache redoc-watcher"
 build-images-force:
-	@make -s build-images arg=--no-cache
+	@make build-images arg=--no-cache
 build-all:
 	@make -C ./client/front build
 
 
 console: console-app
 console-app:
-	@make -s _compose_exec-app cmd='bash --login'
+	@make _compose_exec-app cmd='bash --login'
 console-client:
-	@make -s _compose_exec-client cmd='bash --login'
+	@make _compose_exec-client cmd='bash --login'
 console-redoc-watcher:
-	@make -s _compose_exec-redoc-watcher cmd='sh'
+	@make _compose_exec-redoc-watcher cmd='sh'
 console-codegen-openapi:
-	@make -s _compose_exec-codegen-openapi cmd='bash'
+	@make _compose_exec-codegen-openapi cmd='bash'
 
 
 codegen-openapi:
-	@make -s _compose_run-codegen-openapi cmd='docker-entrypoint.sh generate -i /app/dist/swagger.yaml -g go -o /app/dist/codegen/openapi'
+	@make _compose_run-codegen-openapi cmd='docker-entrypoint.sh generate -i /app/dist/swagger.yaml -g go -o /app/dist/codegen/openapi'
 codegen-kiota:
-	@make -s _compose_run-codegen-kiota cmd='generate --language go -n namespace-prefix'
+	@make _compose_run-codegen-kiota cmd='generate --language go -n namespace-prefix'
 
 open_browser:
 	@make -C ./client/front open_browser
