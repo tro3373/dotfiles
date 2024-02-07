@@ -53,7 +53,8 @@ logsf:
 
 build-images:
 	@make _compose cmd=build
-build-images-redocly:
+update-redocly:
+	@make down
 	@make build-images arg="--no-cache redoc-watcher"
 build-images-force:
 	@make build-images arg=--no-cache
