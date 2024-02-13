@@ -179,6 +179,7 @@ _setup_gui_apps() {
 1. キーボード設定
   - System Enviroments - キーボード - KeyRepeat to fastest, Delay to shortest
   - System Enviroments - キーボード - キーボードショートカット - modification key - Change Caps Lock to Control(キーボード毎に設定)
+  - System Enviroments - キーボード - キーボードショートカット - Mission Control - アプリケーションウィンドウのチェックを外す(for RDP RLogin Control+Fn+Down)
   - System Enviroments - キーボード - キーボードショートカット - キーボード - 次のウィンドウを操作対処にする
   - System Enviroments - キーボード - キーボードショートカット - ファンクションキー - F1,F2などのキーを標準のファンクションキーとして使用する
   - System Enviroments - キーボード - キーボードショートカット - 入力ソース - 前の入力ソースを選択、入力メニューの次のソースを選択
