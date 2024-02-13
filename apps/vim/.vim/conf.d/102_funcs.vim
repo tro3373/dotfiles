@@ -90,6 +90,10 @@ function! ClipComm()
   if g:is_wsl && executable(g:winclip)
     call system(g:winclip, @*)
   endif
+  if g:is_orb
+    let @0 = getreg('*')
+    call PassThroughClip()
+  endif
   echo "Clip!=> ".@*
 endfunction
 function! ClipDir()

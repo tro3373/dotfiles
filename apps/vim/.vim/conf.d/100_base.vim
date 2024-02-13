@@ -393,21 +393,21 @@ function! s:set_yank_post_for_win()
     autocmd TextYankPost * call system(g:winclip, @0)
   augroup END
 endfunction
+function! PassThroughClip()
+  let s:cliptmp = $HOME.'/.vim/.clip.tmp'
+  call writefile(split(getreg('0'), '\n'), s:cliptmp)
+  call system('cat <'..s:cliptmp..'|'..s:clip)
+  " echo system(s:clip, @0)
+endfunction
 function! s:set_yank_post_in_remote()
   let s:is_remote = $REMOTEHOST..$SSH_CONNECTION
   " if empty(s:is_remote) || $IS_VAGRANT == '1' || $IS_ORB == '1'
   if empty(s:is_remote) || $IS_VAGRANT == '1'
     return
   endif
-  function! s:yank_post_in_remote()
-    let s:cliptmp = $HOME.'/.vim/.clip.tmp'
-    call writefile(split(getreg('0'), '\n'), s:cliptmp)
-    call system('cat <'..s:cliptmp..'|'..s:clip)
-    " echo system(s:clip, @0)
-  endfunction
   augroup my-yank-post
     autocmd!
-    autocmd TextYankPost * call s:yank_post_in_remote()
+    autocmd TextYankPost * call PassThroughClip()
   augroup END
 endfunction
 
