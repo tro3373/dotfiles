@@ -12,11 +12,12 @@ error() {
 }
 
 main() {
-  local changes
+  local changes msg="$*"
+  [[ -z $msg ]] && msg='update'
   changes=$(git status -s | wc -l)
   if [[ $changes -ne 0 ]]; then
     git add -A
-    git commit -m 'update'
+    git commit -m "$msg"
   fi
   git push
 }
