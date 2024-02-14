@@ -37,6 +37,17 @@ _compose_exec-%:
 	@make _compose_exec svc=$(*)
 
 
+build-images:
+	@make _compose cmd=build
+update-redocly:
+	@make down
+	@make build-images arg="--no-cache redoc-watcher"
+build-images-force:
+	@make build-images arg=--no-cache
+build-all:
+	@make -C ./client/front build
+
+
 up: start logsf
 start:
 	@make _compose cmd="up -d"
@@ -49,17 +60,6 @@ logs:
 	@make _compose cmd=logs
 logsf:
 	@make _compose cmd="logs -f"
-
-
-build-images:
-	@make _compose cmd=build
-update-redocly:
-	@make down
-	@make build-images arg="--no-cache redoc-watcher"
-build-images-force:
-	@make build-images arg=--no-cache
-build-all:
-	@make -C ./client/front build
 
 
 console: console-app
