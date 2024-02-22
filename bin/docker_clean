@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-command_name=$(basename $0)
+command_name=$(basename "$0")
 dummy="echo"
 is_dummy() { [[ -n $dummy ]]; }
 args=()
@@ -54,8 +54,8 @@ find_not_active_containers() {
     while read -r id; do
       [[ -z $id ]] && continue
       [[ $id =~ ^#.* ]] && continue
-      docker ps -q | grep $id >&/dev/null && continue
-      echo $id
+      docker ps -q | grep "$id" >&/dev/null && continue
+      echo "$id"
     done
 }
 clean_not_active_containers() {
@@ -64,15 +64,17 @@ clean_not_active_containers() {
     while read -r id; do
       [[ -z $id ]] && continue
       [[ $id =~ ^#.* ]] && continue
-      echo "==> Cleaning $(docker ps -a | grep $id) .."
-      $dummy docker rm $id
-      docker ps -a | grep $id >&/dev/null || echo "==> Cleaned $id."
+      echo "==> Cleaning $(docker ps -a | grep "$id") .."
+      $dummy docker rm "$id"
+      docker ps -a | grep "$id" >&/dev/null || echo "==> Cleaned $id."
     done
 }
 main() {
   initialize "$@"
   clean_not_active_containers
   clean_none_images
-  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  if is_dummy; then
+    echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  fi
 }
 main "$@"
