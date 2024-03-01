@@ -6,6 +6,7 @@ timestamp=$(date +%Y%m%d.%H%M%S) && readonly timestamp
 args=()
 src=
 mode=deals
+banks_key_file="$current_dir/banks.key" && readonly banks_key_file
 exclude_regexp=
 # dummy="echo"
 
@@ -21,6 +22,7 @@ Generate freee importable csv
       -ex | --excude : Specify exclude regexp
       -t | --template : Gen mode template
       -m | --matcher : Gen mode matcher
+      -b | --banks : Gen mode banks
 
 EOF
 }
@@ -41,6 +43,7 @@ initialize() {
       -ex | --excude) shift && exclude_regexp=$1 ;;
       -t | --template) mode=template ;;
       -m | --matcher) mode=matcher ;;
+      -b | --banks) mode=banks ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
@@ -73,11 +76,30 @@ header() {
     if [[ $mode == deals ]]; then
       # src: 収支区分,管理番号,発生日,決済期日,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,決済日,決済口座,決済金額
       echo "収支区分,管理番号,発生日,決済期日,取引先コード,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,セグメント1,セグメント2,セグメント3,決済日,決済口座,決済金額"
+    elif [[ $mode == banks ]]; then
+      echo -e "取引日_出金額	取引内容"
     else
       # template: 収支区分,グループ名,テンプレート名,ショートカット,口座,取引先,管理番号,勘定科目,税区分,備考,金額,税計算区分,税額,品目,部門,メモタグ
       # matcher: 収支区分,取引口座,取引内容,マッチ条件,金額（最小値）,金額（最大値）,優先度,マッチ後のアクション,振替口座,取引テンプレート,勘定科目,税区分,取引先,品目,部門,メモタグ（複数指定可・カンマ区切り）,セグメント1,セグメント2,セグメント3,備考,消込を実行する際の差額
       cat -
     fi
+}
+
+gen_deals_biko() {
+  local at amount val
+  at="${1//\//-}"
+  amount="$2"
+  val="${3//\"/}"
+  # t="$4"
+  # || $t =~ ^(|)$
+  if [[ -n $val ]]; then
+    echo -e "$val"
+    return
+  fi
+  local key="${at}_$amount"
+  echo "key=$key" 1>&2
+  val=$(grep "$key" "$banks_key_file" | head -1 | awk -F'	' '{print $2}' | grep -oE '^.{1,255}')
+  echo -e "\"$val\""
 }
 
 gen_deals_tag() {
@@ -99,11 +121,35 @@ handle_deals() {
       c16=事業主借
       [[ $c01 == 収入 ]] && c16=事業主貸
     fi
-    c14=$(gen_deals_tag "$c14")
+    if [[ -e $banks_key_file ]]; then
+      c11=$(gen_deals_biko "$c03" "$c08" "$c11") # 備考
+    fi
+    c14=$(gen_deals_tag "$c14") # メモタグ
     # 収支区分,管理番号,発生日,支払期日,取引先      ,      ,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,           ,           ,           ,支払日,支払口座,支払金額
     # 収支区分,管理番号,発生日,決済期日,取引先コード,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,セグメント1,セグメント2,セグメント3,決済日,決済口座,決済金額
     echo "$c01,$c02,$c03,$c04,,$c05,$c06,$c07,$c08,$c09,$c10,$c11,$c12,$c13,$c14,,,,$c15,$c16,$c17"
   done
+}
+handle_banks() {
+  # 1,     2,3,4, 5,     6,       7,     8,     9,   10,  11,    12,    13
+  # _,口座名, , , 取引日,取引内容,入金額,出金額,残高,状態,更新日,取得日,_
+  to_tsv |
+    to_banks_key_value_with_remove_quote |
+    remove_amazon_order_number
+}
+to_tsv() {
+  sed -e 's/","/	/g' -e 's,^",,g' -e 's/"$//g'
+}
+to_banks_key_value_with_remove_quote() {
+  awk -F'\t' '{
+    if ($8>0) {
+      gsub(/,/,"",$8)
+      print $5 "_" $8 "\t" $6
+    }
+  }'
+}
+remove_amazon_order_number() {
+  sed -e 's,\t・,\t,g' -e 's,・注文番号.*,,g'
 }
 handle_template() {
   while IFS=, read -r c01 c02 c03 c04 c05 c06 c07 c08 c09 c10 c11 c12 c13 c14 c15 c16; do
@@ -126,6 +172,8 @@ gen() {
   cat_src |
     if [[ $mode == deals ]]; then
       cat - | handle_deals
+    elif [[ $mode == banks ]]; then
+      cat - | handle_banks
     elif [[ $mode == template ]]; then
       cat - | handle_template
     else
@@ -137,6 +185,7 @@ gen() {
 main() {
   initialize "$@"
   local dst=${timestamp}_${mode}_gened.csv
+  [[ $mode == banks ]] && dst=$banks_key_file
   gen | tee "$dst"
 }
 main "$@"
