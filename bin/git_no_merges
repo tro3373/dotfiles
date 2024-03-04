@@ -9,10 +9,10 @@ main() {
     main_branch="$1"
     target_branch="$2"
   elif [[ $# -eq 1 ]]; then
-    main_branch=$(git_main_branch)
+    main_branch=$(git_branch)
     target_branch="$1"
   else
-    main_branch=$(git_main_branch)
+    main_branch=$(git_branch)
     # preview="git log --color=always --oneline --no-merges '$main_branch..{}'"
     preview="git $git_opt --no-merges '$main_branch..{}'"
     target_branch=$(
@@ -25,6 +25,6 @@ main() {
           --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
     )
   fi
-  eval git "$git_opt" --no-merges "$main_branch..$target_branch"
+  tig --no-merges "$main_branch..$target_branch"
 }
 main "$@"

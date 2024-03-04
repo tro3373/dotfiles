@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-command_name=$(basename $0)
+command_name=$(basename "$0") && readonly command_name
 args=()
 is_inside_repo() { git rev-parse --is-inside-work-tree >/dev/null 2>&1; }
 add_args() { args+=("$@"); }
@@ -35,5 +35,6 @@ main() {
   initialize "$@"
   # shellcheck disable=SC2046
   git grep "${args[@]}" $(git rev-list --all)
+  # git log --all --name-status --pretty=short --graph -G"検索したい文字列の正規表現"
 }
 main "$@"

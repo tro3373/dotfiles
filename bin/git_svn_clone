@@ -85,7 +85,11 @@ contain_trunk_url() {
 # -s: -s is for --stdlayout which presumes the svn recommended layout for tags, trunk, and branches.
 do_clone() {
   local url="$1"
-  local dst="${2:-repo}"
+  # local dst="${2:-repo}"
+  local dst="$2"
+  if [[ -z $dst ]]; then
+    dst=$(basename "$url")
+  fi
   # set -eu
 
   local rev_option=

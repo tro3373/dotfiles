@@ -60,9 +60,10 @@ by_mv() {
   git remote add -f "$repo" "$_path"
   # git fetch "$repo"
   git checkout -b "$repo" "$repo/main"
-  git filter-branch -f --tree-filter "mkdir __temp__ && git mv -k {,.[!.],..[!.]}* __temp__/ && mkdir $repo && git mv -k __temp__/{,.[!.],..[!.]}* $repo/"
-  git checkout main
-  git merge "$repo" --allow-unrelated-histories -m "Merge $repo project to $repo"
+  repod=$repo
+  git filter-branch -f --tree-filter "mkdir __temp__ && git mv -k {,.[!.],..[!.]}* __temp__/ && mkdir -p $repod && git mv -k __temp__/{,.[!.],..[!.]}* $repod/"
+  git checkout "$br" origin/"$br"
+  git merge "$repo" --allow-unrelated-histories -m "Merge $repo project to $repod/"
 }
 main() {
   if ! git rev-parse --is-inside-work-tree >&/dev/null; then

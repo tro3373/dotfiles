@@ -1,16 +1,11 @@
 #!/usr/bin/env bash
 
-# readonly current_dir=$(pwd)
-# readonly script_dir=$(
-#   cd "$(dirname ${BASH_SOURCE:-$0})"
-#   pwd
-# )
-readonly command_name=$(basename $0)
+command_name=$(basename "$0") && readonly command_name
 readonly conf=$HOME/.vpn
 server=0
 with_proxy=1
 
-has() { command -v ${1} >&/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
 
 # args=()
 usage() {
@@ -42,7 +37,7 @@ initialize() {
 }
 
 check() {
-  ! test -e $conf && echo "No conf exists. path=$conf" 1>&2 && exit 1
+  ! test -e "$conf" && echo "No conf exists. path=$conf" 1>&2 && exit 1
   if [[ $server -eq 1 ]]; then
     ! has docker && echo "No docker exists." 1>&2 && exit 1
   else
@@ -51,8 +46,8 @@ check() {
 }
 
 gen_conf() {
-  test -e $conf && echo "Already conf exists. path=$conf" 1>&2 && exit 1
-  cat <<EOF >$conf
+  test -e "$conf" && echo "Already conf exists. path=$conf" 1>&2 && exit 1
+  cat <<EOF >"$conf"
 vpn_srv=example.com
 vpn_usr=example_user
 vpn_pwd=example_pwd
@@ -68,7 +63,7 @@ run_server() {
   # shellcheck disable=SC2154
   docker run -it --rm --privileged \
     -p 127.0.0.1:22222:22 \
-    -e SSH_PUB="$(cat <$HOME/.ssh/id_rsa.pub)" \
+    -e SSH_PUB="$(cat <"$HOME"/.ssh/id_rsa.pub)" \
     -e SERVER="$vpn_srv" \
     -e OPTIONS="-u $vpn_usr $vpn_opt" \
     -e PASSWORD="$vpn_pwd" \
@@ -78,14 +73,15 @@ run_server() {
 run_local() {
   # --passwd-on-stdin \
   echo "$vpn_pwd" |
-    sudo openconnect -u $vpn_usr $vpn_opt $vpn_srv
+    sudo openconnect -u "$vpn_usr" "$vpn_opt" "$vpn_srv"
 }
 
 run_proxy() {
   ! has gost && return
   [[ $with_proxy -ne 1 ]] && return
-  local _ip=$(ipeth0)
-  echo $_ip | clip &>/dev/null
+  local _ipp
+  _ip=$(ipeth0)
+  echo "$_ip" | clip &>/dev/null
   local _port=5963
   echo "==> Running proxy $_ip:$_port .." | ink yellow
   # gost -L=localhost:$_port #|& ink yellow
@@ -94,7 +90,8 @@ run_proxy() {
 
 main() {
   initialize "$@"
-  source $conf
+  # shellcheck disable=SC1090
+  source "$conf"
   run_proxy &
   if [[ $server -eq 1 ]]; then
     run_server
