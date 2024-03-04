@@ -200,6 +200,8 @@ _setup_gui_apps() {
 1. Install from App Store
   - BetterSnapTool
     - システム立ち上げ時に起動するにチェック
+    - ショートカット登録
+      - 上下左右にウィンドウをFitさせる
   - XCode
 1. Install from Web
   - Google Chrome
