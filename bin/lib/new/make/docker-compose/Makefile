@@ -48,11 +48,14 @@ build-all:
 	@make -C ./client/front build
 
 
+clean-docker:
+	@clean_docker -e
+
+
 up: start logsf
 start:
 	@make _compose cmd="up -d"
-stop: down
-down:
+down: stop clean-docker
 	@make _compose cmd=down
 restart:
 	@make _compose cmd=restart
