@@ -94,6 +94,9 @@ let g:asyncomplete_auto_completeopt = 0     " 自動で入力補完ポップア�
 set completeopt=menuone,noinsert,noselect
 
 " pylsp: [vim-lsp の pyls が重いのをなんとかする - Qiita](https://qiita.com/CutBaum/items/f8b8582db5d64fae11c7)
+" pycodestyle
+"
+" E501 line too long
 let g:lsp_settings = {
   \  'yaml-language-server': {
   \     'workspace_config': {
@@ -134,6 +137,9 @@ let g:lsp_settings = {
   \             'follow_imports': v:true,
   \             'follow_builtin_imports': v:true,
   \           },
+  \           'pycodestyle': {
+  \             'ignore': ["E501"],
+  \           }
   \         },
   \       }
   \     }
