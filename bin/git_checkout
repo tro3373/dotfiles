@@ -1,0 +1,21 @@
+#!/usr/bin/env -S bash -e
+
+has() { command -v "${1}" >&/dev/null; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log cyan "$*"; }
+error() { _log red "$*" && exit 1; }
+
+main() {
+  local branch="$1" remote="${2:-origin}"
+  if [[ -z $branch ]]; then
+    error "==> Specify a branch to checkout"
+  fi
+  if git_branchs | grep -q -E "^$branch$"; then
+    git checkout "$branch"
+    return
+  fi
+  git switch -c "$branch" "$remote/$branch"
+}
+main "$@"
