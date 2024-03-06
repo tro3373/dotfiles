@@ -197,7 +197,8 @@ snippet	logcolorrr
 	_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
 	# shellcheck disable=SC2145
 	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "\$1"; }
-	log() { _log cyan "$*"; }
+	info() { _log cyan "$*"; }
+	log() { _log white "$*"; }
 	error() { _log red "$*" && exit 1; }
 
 snippet	dlog
@@ -582,7 +583,7 @@ snippet to_jsttt
 	}
 
 snippet fzff
-	fzf -m "$query" \
+	fzf -m -q "$query" \
 	--preview 'head -100 {}' \
 	--select-1 \
 	--exit-0 \
