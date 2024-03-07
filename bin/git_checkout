@@ -12,7 +12,7 @@ main() {
   if [[ -z $branch ]]; then
     error "==> Specify a branch to checkout"
   fi
-  if git_branchs | grep -q -E "^$branch$"; then
+  if git_branches | grep -q -E "^$branch$"; then
     git checkout "$branch"
     return
   fi
