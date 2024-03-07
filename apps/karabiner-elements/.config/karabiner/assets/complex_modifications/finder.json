@@ -2,6 +2,30 @@
   "title": "Finder",
   "rules": [
     {
+      "description": "option-EでFinder(Downloads)を開く",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "e",
+            "modifiers": {
+              "mandatory": [
+                "left_option"
+              ],
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "shell_command": "open ~/Downloads"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "description": "Use Return as Open",
       "manipulators": [
         {
@@ -9,13 +33,17 @@
           "from": {
             "key_code": "return_or_enter",
             "modifiers": {
-              "optional": ["any"]
+              "optional": [
+                "any"
+              ]
             }
           },
           "to": [
             {
               "key_code": "o",
-              "modifiers": ["right_command"]
+              "modifiers": [
+                "right_command"
+              ]
             }
           ],
           "conditions": [
@@ -64,7 +92,9 @@
           "to": [
             {
               "key_code": "o",
-              "modifiers": ["right_command"]
+              "modifiers": [
+                "right_command"
+              ]
             }
           ],
           "conditions": [
@@ -110,13 +140,17 @@
           "from": {
             "key_code": "delete_forward",
             "modifiers": {
-              "optional": ["any"]
+              "optional": [
+                "any"
+              ]
             }
           },
           "to": [
             {
               "key_code": "delete_or_backspace",
-              "modifiers": ["left_command"]
+              "modifiers": [
+                "left_command"
+              ]
             }
           ],
           "conditions": [
@@ -146,7 +180,9 @@
           "to": [
             {
               "key_code": "delete_or_backspace",
-              "modifiers": ["left_command"]
+              "modifiers": [
+                "left_command"
+              ]
             }
           ],
           "conditions": [
@@ -171,7 +207,9 @@
           "to": [
             {
               "key_code": "semicolon",
-              "modifiers": ["left_command"]
+              "modifiers": [
+                "left_command"
+              ]
             }
           ],
           "conditions": [
