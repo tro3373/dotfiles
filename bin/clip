@@ -147,7 +147,8 @@ _clippp() {
   echo -n -e "$_val" |
     case "${_OSTYPE}" in
       wsl) cat - | iconv -t cp932 | clip.exe ;;
-      orb) cat - | iconv -t cp932 | /opt/orbstack-guest/bin/pbcopy ;;
+      # orb) cat - | iconv -t cp932 | /opt/orbstack-guest/bin/pbcopy ;;
+      orb) cat - | /opt/orbstack-guest/bin/pbcopy ;;
       msys*) cat - >/dev/clipboard ;;
       darwin*) cat - | pbcopy ;;
       *) cat - | xsel -bi --display "${DISPLAY:-:0}" ;;
