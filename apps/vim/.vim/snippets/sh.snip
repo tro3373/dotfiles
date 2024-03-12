@@ -610,3 +610,13 @@ snippet dependsss
 snippet ifsss
 	IFS='	'
 	IFS=$' \t\n'
+
+snippet curl_jsonnn
+	curl -fSsL -H "Content-Type: application/json" -X POST --data '{"key":"value"}' "${url}"
+snippet curl_json_eof
+	curl -fSsL -H "Content-Type: application/json" -X POST -d @- "${url}" <<EOF
+	{
+		"key": "value"
+	}
+snippet curl_json_fileee
+	curl -fSsL -H "Content-Type: application/json" -X POST -d @/path/to/data.json "${url}"
