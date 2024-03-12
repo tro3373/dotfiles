@@ -37,7 +37,7 @@ dlog() { _log "$*" | ink yellow; }
 ilog() { _log "$*" | ink red; }
 find_none_images() {
   docker images |
-    grep -E '^<none>'
+    grep -E '<none>'
 }
 clean_none_images() {
   ilog "=> Cleaning <none> images.."
