@@ -39,14 +39,14 @@ swap=0
 
 # [user]
 # default=archuser
+[interop]
+appendWindowsPath = true  # Append Windows path to $PATH.
 EOF
 }
 
 set_wslconfig() {
   local target=$WINHOME/.wslconfig
   cat <<EOF >>"$target"
-[interop]
-appendWindowsPath = true  # Append Windows path to $PATH.
 EOF
 }
 
