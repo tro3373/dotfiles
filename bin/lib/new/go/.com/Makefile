@@ -1,11 +1,12 @@
 SHELL := bash
+PATH := $(PWD)/bin:$(PATH)
 .SHELLFLAGS := -eu -o pipefail -c # -c: Needed in .SHELLFLAGS. Default is -c.
 .DEFAULT_GOAL := run
 
 # Makefile覚書: Goアプリ開発に役立ちそうな基礎知識 | フューチャー技術ブログ https://future-architect.github.io/articles/20231012a/
-DOTENV := $(PWD)/.env
+dotenv := $(PWD)/.env
 # -: means ignore error
--include $(DOTENV)
+-include $(dotenv)
 
 name := $(shell grep module ./go.mod|head -1|sed -e 's,^.*/,,g')
 depends_cmds := go gosec goreleaser #statik
@@ -13,7 +14,7 @@ depends_cmds := go gosec goreleaser #statik
 export
 
 tag:
-	@v=$$(git tag --list |sort -V |tail -1) && nv="$${v%.*}.$$(($${v##*.}+1))" && echo "==> New tag: $${nv}" && git tag $${nv}
+	@v=$$(ver -n) && echo "==> New tag: $${v}" && git tag $${v}
 tagp: tag
 	@git push --tags
 
@@ -35,17 +36,28 @@ sec:
 	@gosec --color=false ./...
 	@echo "[OK] Go security check was completed!"
 
-build: build-linux
-build-linux:
-	@make GOOS=linux GOARCH=amd64 _build
-build-mac:
-	@make GOOS=darwin GOARCH=arm64 _build
-build-windows:
-	@make GOOS=windows GOARCH=amd64 _build
-build-android:
-	@make GOOS=android GOARCH=arm64 _build
-_build: check clean sec
-	@env GOOS=$(GOOS) GOARCH=$(GOARCH) go build -ldflags="-s -w"
+build-linux-arm: _build-linux-arm64
+build-linux-amd: _build-linux-amd64
+build-android-arm: _build-android-arm64
+build-android-amd: _build-android-amd64
+build-darwin-arm: _build-darwin-arm64
+build-darwin-amd: _build-darwin-amd64
+build-windows-arm: _build-windows-arm64
+build-windows-amd: _build-windows-amd64
+# CGO_ENABLED=0: Disable CGO
+# -trimpath: Remove all file system paths from the resulting executable.
+# -s: Omit the symbol table and debug information.
+# -w: Omit the DWARF symbol table.
+_build-%: check clean sec
+	$(eval goos=$(firstword $(subst -, ,$*)))
+	$(eval goarch=$(word 2, $(subst -, ,$*)))
+	$(eval mainver=$(shell ver))
+	@env GOOS=$(goos) GOARCH=$(goarch) CGO_ENABLED=0 \
+		go build \
+			-trimpath \
+			-ldflags="-s -w -X main.version=$(mainver)" \
+			-o $(name) \
+			.
 
 deps:
 	@go list -m all

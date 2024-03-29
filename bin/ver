@@ -1,0 +1,49 @@
+#!/usr/bin/env -S bash -e
+
+command_name=$(basename "$0") && readonly command_name
+next=0
+latest=0
+args=()
+usage() {
+  cat <<EOF
+
+Show version from git state.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+      -n|--next : Show Next version
+      -l|--latest : Show Latest version
+
+EOF
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -n | --next) next=1 ;;
+      -l | --latest) latest=1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+}
+add_args() { args+=("$@"); }
+main() {
+  initialize "$@"
+  local ver_curr ver_latest
+  ver_curr=$(git describe --tags --always --dirty)
+  ver_latest=$(git describe --tags --always --abbrev=0)
+  if [[ $next -eq 1 ]]; then
+    echo "${ver_latest%.*}.$((${ver_latest##*.} + 1))"
+    return
+  fi
+  if [[ $latest -eq 1 ]]; then
+    echo "$ver_latest"
+    return
+  fi
+  echo "$ver_curr"
+}
+main "$@"
