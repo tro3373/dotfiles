@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+install_common() {
+  exe 'curl -fsSL https://tailscale.com/install.sh | sh'
+}
+install_mac() {
+  exe brew install tailscale
+}
