@@ -452,12 +452,17 @@ command! DeleteSelected call DeleteSelected()
 
 " 検索結果の存在する行を削除
 function! DeleteSelectedLine() abort
-  call SilentFExec(':%g//d')
+  " call SilentFExec(':%g//d')
+  let search = @/
+  call ReplaceAllWithSystemCmdResult("grep -v '".search."'")
 endfun
 command! DeleteSelectedLine call DeleteSelectedLine()
 " 検索結果の存在しない行を削除
 function! DeleteSelectedLineInvert() abort
-  call SilentFExec(':%v//d')
+  " call SilentFExec(':%v//d')
+  " let search = histget('/', -1)
+  let search = @/
+  call ReplaceAllWithSystemCmdResult("grep '".search."'")
 endfun
 command! DeleteSelectedLineInvert call DeleteSelectedLineInvert()
 function! TrimSelectedLine() abort
@@ -513,22 +518,29 @@ command! ToDos call Encode(0)
 command! Unixlize call Encode(1)
 command! ToUnix call Encode(1)
 
-" toCamel
-function! ToCamel() abort
-  " call SilentFExec(':%s/_\(.\)/\u\1/g')
-  call SilentFExec(":'<,'>s/_\\(.\\)/\\u\\1/g")
-endfun
-command! ToCamel call ToCamel()
-vnoremap <silent> ,c :<c-u>call ToCamel()<cr>
-
-" toSnake
-function! ToSnake() abort
-  " call SilentFExec(':%s/\([A-Z]\)/_\l\1/g')
-  " execute a:firstline . ',' . a:lastline . 's/\([A-Z]\)/_\l\1/g'
-  call SilentFExec(":'<,'>s/\\([A-Z]\\)/_\\l\\1/g")
-endfun
-command! ToSnake :<c-u>call ToSnake()
-vnoremap <silent> ,s :<c-u>call ToSnake()<cr>
+function! ToCamelOrSnake(camel) range
+  " 選択範囲またはファイル全体の各行に対して処理
+  let lines = getline(a:firstline, a:lastline)
+  let convertedLines = []
+  for line in lines
+    if a:camel
+      " 最初の文字を小文字に変換（camelCaseでは最初の文字は小文字であるべき）
+      let line = substitute(line, '^\(\u\)', '\l\1', '')
+      " アンダースコアに続く文字を大文字に変換
+      let convertedLine = substitute(line, '_\(\w\)', '\u\1', 'g')
+    else
+      " 大文字をアンダースコアに変換し、大文字を小文字にする
+      let convertedLine = substitute(line, '\(\u\)', '_\l\1', 'g')
+      " 文字列の先頭がアンダースコアの場合は削除
+      let convertedLine = substitute(convertedLine, '^_', '', '')
+    endif
+    call add(convertedLines, convertedLine)
+  endfor
+  " 変換したテキストを元の位置に置換
+  call setline(a:firstline, convertedLines)
+endfunction
+command! -range=% ToCamel <line1>,<line2>call ToCamelOrSnake(1)
+command! -range=% ToSnake <line1>,<line2>call ToCamelOrSnake(0)
 
 " コマンドを実行し、バッファに書き込み
 function! s:cmd_capture(q_args) "{{{
@@ -571,27 +583,32 @@ function! TestScript() abort
 endfun
 command! TestScript call TestScript()
 
+function! ReplaceAllWithSystemCmdResult(command) abort
+  " 全行格納
+  let lines = getline(1,"$")
+  " システムコマンドへ渡す
+  let output = system(a:command, lines)
+  " 結果がそのままだとNULL文字で張り付く為、配列へ格納
+  let output_lines = split(output, "\n")
+  " '%'        => すべての行を指定
+  " 'delete _' => `_`(ブラックホールレジスタ("_))を指定して、削除を行う
+  silent execute ':%delete _'
+  " 1行目から貼り付け
+  call setline(1, output_lines)
+endfun
+
 " JavaBean クラス定義項目リスト化
 function! JavaBeanToList() abort
   call CloneBufferToNewTab()
   if executable('sed')
-    " 全行格納
-    let lines = getline(1,"$")
-    " システムコマンドへ渡す
-    let output = system("grep -E '(private|public|protected).*;' |sed -e 's,^.*\\(private\\|public\\|protected\\).*[ \\t]\\+\\(\\w\\+\\);,\\2,g'", lines)
-    " 結果がそのままだとNULL文字で張り付く為、配列へ格納
-    let output_lines = split(output, "\n")
-    " '%'        => すべての行を指定
-    " 'delete _' => `_`(ブラックホールレジスタ("_))を指定して、削除を行う
-    silent execute ':%delete _'
-    " 1行目から貼り付け
-    call setline(1, output_lines)
+    call ReplaceAllWithSystemCmdResult("grep -E '(private|public|protected).*;' |sed -e 's,^.*\\(private\\|public\\|protected\\).*[ \\t]\\+\\(\\w\\+\\);,\\2,g'")
     return
   endif
   call SilentFExec(':%v/private/d')
   call SilentFExec(':%s/;//g')
   call Strip(3)
 endfun
+
 command! JavaBeanToList call JavaBeanToList()
 
 function! CloneBufferToNewTab()
