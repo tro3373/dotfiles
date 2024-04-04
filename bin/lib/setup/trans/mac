@@ -202,6 +202,12 @@ _setup_gui_apps() {
     - システム立ち上げ時に起動するにチェック
     - ショートカット登録
       - 上下左右にウィンドウをFitさせる
+        - maximize: Option+Top
+        - left half: Option+Left
+        - right half: Option+Right
+        - center: Option+Down
+      - 次のディスプレイに移動
+        - maximize next monitor: Option+Shift+Left
   - XCode
 1. Install from Web
   - Google Chrome
