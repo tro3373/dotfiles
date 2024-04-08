@@ -102,6 +102,10 @@ update_mac() {
   log "=> Checking.."
   $dummy brew doctor
 }
+update_rust() {
+  log "=> Updating rustup.."
+  $dummy rustup update stable
+}
 main() {
   initialize "$@"
   set -e
@@ -117,6 +121,7 @@ main() {
   if os wsl; then
     update_scoop
   fi
+  update_rust
   log "Done!"
 }
 main "$@"
