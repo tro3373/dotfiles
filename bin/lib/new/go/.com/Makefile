@@ -19,7 +19,7 @@ tagp: tag
 	@git push --tags
 
 check:
-	@for cmd in ${depends_cmds}; do command -v $$cmd >&/dev/null || (echo "No $$cmd command" && exit 1); done
+	@for _cmd in ${depends_cmds}; do command -v $$_cmd >&/dev/null || (echo "No $$_cmd command" && exit 1); done
 	@echo "[OK] check ok!"
 
 clean:
