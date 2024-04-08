@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+install_common() {
+  if ! has cargo; then
+    add_dependency_args cargo
+    return
+  fi
+  exe cargo install jnv --locked
+}
