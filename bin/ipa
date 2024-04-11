@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
 main() {
+  if [[ $(uname) == "Darwin" ]]; then
+    ipconfig getifaddr en0
+    return
+  fi
   # ip route | grep 'eth0' | grep -Eo '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
   ip route |
     grep kernel |
