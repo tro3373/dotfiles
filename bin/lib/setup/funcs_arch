@@ -103,7 +103,8 @@ cat_pacman_mirrorlist_x86_64() {
 ###########################
 ## Japan
 Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch
-Server = https://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
+Server = http://ftp.tsukuba.ac.jp/Linux/archlinux/$repo/os/$arch
+#Server = https://ftp.tsukuba.wide.ad.jp/Linux/archlinux/$repo/os/$arch
 ###########################
 Server = https://mirrors.neusoft.edu.cn/archlinux/$repo/os/$arch
 Server = https://asia.mirror.pkgbuild.com/$repo/os/$arch
@@ -142,11 +143,12 @@ EOF
 }
 
 cat_pacman_mirrorlist() {
-  if is_arm; then
-    cat_pacman_mirrorlist_arm
-  else
-    cat_pacman_mirrorlist_x86_64
-  fi
+  # if is_arm; then
+  #   cat_pacman_mirrorlist_arm
+  # else
+  #   cat_pacman_mirrorlist_x86_64
+  # fi
+  cat_pacman_mirrorlist_x86_64
 }
 
 improve_pacman_millerlist() {
