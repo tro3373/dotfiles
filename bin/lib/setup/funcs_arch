@@ -129,8 +129,13 @@ Server = https://ftp.halifax.rwth-aachen.de/archlinux/$repo/os/$arch
 EOF
 }
 
+# Mirrors | Arch Linux ARM
+# https://archlinuxarm.org/about/mirrors
 cat_pacman_mirrorlist_arm() {
   cat <<'EOF'
+###########################
+## Japan
+Server = http://jp.mirror.archlinuxarm.org/$arch/$repo
 ###########################
 ## Taiwan
 ## New Taipei City
@@ -143,12 +148,11 @@ EOF
 }
 
 cat_pacman_mirrorlist() {
-  # if is_arm; then
-  #   cat_pacman_mirrorlist_arm
-  # else
-  #   cat_pacman_mirrorlist_x86_64
-  # fi
-  cat_pacman_mirrorlist_x86_64
+  if is_arm; then
+    cat_pacman_mirrorlist_arm
+  else
+    cat_pacman_mirrorlist_x86_64
+  fi
 }
 
 improve_pacman_millerlist() {

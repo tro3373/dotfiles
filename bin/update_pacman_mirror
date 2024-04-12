@@ -1,5 +1,8 @@
 #!/usr/bin/env -S bash -e
 
+## No need to arch arm?
+#- Support Reflector on ARM: JSON mirror status
+#   - https://archlinuxarm.org/forum/viewtopic.php?f=8&t=14662
 main() {
   sudo reflector --country 'Japan' --age 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
   # 0 3 * * 0 ~/.dot/bin/update_pacman_mirror
