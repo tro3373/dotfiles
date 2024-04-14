@@ -130,6 +130,7 @@ _setup_custom_shortcut() {
   # gsettings_add_custom_keybind 1 "Paste into Terminal" "<Shift>Insert" "xsel -bo" # Not work
   gsettings_add_custom_keybind 2 "Open Terminal" "<Primary><Alt>t" "gnome-terminal"
   gsettings_add_custom_keybind 3 "Open Downloads" "<Super>e" "nautilus Downloads"
+  # gsettings_add_custom_keybind 4 "Paste option v" "<Alt>v" "xsel -bo" # Not work?
 
   # List current keybindings
   # gsettings list-recursively org.gnome.desktop.wm.keybindings
@@ -137,6 +138,7 @@ _setup_custom_shortcut() {
   gsettings_if_needed org.gnome.desktop.wm.keybindings maximize "\"['<Super>Up']\""             # Window最大化
   gsettings_if_needed org.gnome.desktop.wm.keybindings switch-applications "\"['<Super>Tab']\"" # アプリ切り替え
   gsettings_if_needed org.gnome.desktop.wm.keybindings switch-windows "\"['<Alt>Tab']\""        # ウィンドウ切り替え
+  # gsettings_if_needed org.gnome.desktop.wm.keybindings paste "['<Alt>v']" # Not work?
 
   # Change screenshot keybind
   gsettings_if_needed org.gnome.shell.keybindings show-screenshot-ui "\"['Print', '<Super><Shift>S']\""
