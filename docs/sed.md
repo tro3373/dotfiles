@@ -45,3 +45,8 @@ sed '/^target_word/d' /path/to/file
 sed '/target_word$/d' /path/to/file
 ```
 
+## Change in specify keyword
+
+```
+sed -e "/keyword/s/old/new/" "$config_file"
+```
