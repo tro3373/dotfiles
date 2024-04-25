@@ -1,0 +1,31 @@
+#!/usr/bin/env -S bash -e
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
+current_dir=$(pwd) && readonly current_dir
+url="https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar"
+jar="$script_dir/AXMLPrinter2.jar"
+
+has() { command -v "${1}" >&/dev/null; }
+dl_if_needed() {
+  [[ -e $jar ]] && return
+  curl -fSsL -o "$jar" "$url"
+}
+main() {
+  if ! has java; then
+    echo "==> No java found" >&2
+    exit 1
+  fi
+  if [[ $# -eq 0 ]]; then
+    echo "==> Specify apk" >&2
+    exit 1
+  fi
+  local apk_name
+  apk_name=$(basename "$1")
+  local tmpd="$current_dir/tmp_$apk_name"
+  if [[ ! -e $tmpd ]]; then
+    unzip -q "$1" -d "$tmpd"
+  fi
+  dl_if_needed
+  java -jar "$jar" "$tmpd/AndroidManifest.xml"
+}
+main "$@"
