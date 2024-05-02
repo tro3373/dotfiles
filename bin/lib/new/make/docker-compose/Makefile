@@ -1,5 +1,7 @@
 SHELL := bash
-PATH := $(PWD)/bin:$(PATH)
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+mkfile_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+PATH := $(mkfile_dir)/bin:$(PATH)
 .SHELLFLAGS := -eu -o pipefail -c # -c: Needed in .SHELLFLAGS. Default is -c.
 .DEFAULT_GOAL := up
 
@@ -16,6 +18,8 @@ docker_user := $(docker_uid):$(docker_gid)
 
 export
 
+vault_envs := $(shell vault_envs -n)
+
 tag:
 	@tag="Release_${app}_${timestamp}" && git tag "$$tag" && echo "==> $$tag tagged."
 zip:
@@ -26,22 +30,20 @@ unzip:
 
 
 _compose:
-	docker compose $(compose_opt) $(cmd) $(opt)
-_compose_run:
-	docker compose run --rm -it $(compose_opt) $(svc) '$(cmd) $(opt)'
+	docker compose $(compose_opt) $(cmd) $(svc) $(opt) $(arg)
 _compose_run-%:
-	@make _compose_run svc=$(*)
-_compose_exec:
-	docker -s compose exec -it $(compose_opt) $(svc) $(cmd) $(opt)
+	docker compose run --rm -it $(vault_envs) $(compose_opt) $(*) $(cmd) $(opt)
 _compose_exec-%:
-	@make _compose_exec svc=$(*)
+	docker compose exec -it $(vault_envs) $(compose_opt) $(*) $(cmd) $(opt)
+_compose_exec_or_run-%:
+	@if docker ps | grep -q $(app)-; then make _compose_exec-$(*); else make _compose_run-$(*); fi
 
 
 build-images:
 	@make _compose cmd=build
 update-redocly:
-	@make down
-	@make build-images arg="--no-cache redoc-watcher"
+	@make build-images opt="--no-cache redoc-watcher"
+	@if docker ps | grep -q $(app)-redoc-watcher; then make down && make up; fi
 build-images-force:
 	@make build-images arg=--no-cache
 build-all:
@@ -52,10 +54,10 @@ clean-docker:
 	@clean_docker -e
 
 
-up: start logsf
-start:
+up: upd logsf
+upd:
 	@make _compose cmd="up -d"
-down: stop clean-docker
+down: clean-docker
 	@make _compose cmd=down
 restart:
 	@make _compose cmd=restart
