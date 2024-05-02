@@ -55,7 +55,7 @@ install_ubuntu() {
     exe rm -rf $usr_local_go
   fi
   local _url
-  _url="https://dl.google.com/go/$(curl -fSsL https://golang.org/VERSION?m=text).linux-amd64.tar.gz"
+  _url="https://dl.google.com/go/$(curl -fSsL "https://golang.org/VERSION?m=text" | head -1).linux-amd64.tar.gz"
   dl_untar "$_url" $usr_local_go 1
 }
 
