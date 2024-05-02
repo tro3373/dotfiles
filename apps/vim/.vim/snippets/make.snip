@@ -1,24 +1,19 @@
 # https://qiita.com/Syoitu/items/8e7e3215fb7ac9dabc3a
 # https://qiita.com/keitakn/items/f46347f871083356149b
-snippet	mkfile_path
+# https://qiita.com/chibi929/items/b8c5f36434d5d3fbfa4a
+snippet	mkfile_pathhh
+alias	script_pathhh
 	mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 
-snippet	current_dir
+snippet	mkfile_dirrr
+alias	script_dirrr
 	mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
-	current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+	# $(patsubst PATTERN,REPLACEMENT,TEXT)
+	mkfile_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
 snippet	go_module_name
 alias	nameeee
-	name := $(shell grep module $(current_dir)/go.mod|head -1|sed -e 's,^.*/,,g')
-
-# https://qiita.com/chibi929/items/b8c5f36434d5d3fbfa4a
-snippet	scriptpathhh
-	$(abspath $(lastword $(MAKEFILE_LIST)))
-
-snippet	scriptdirrr
-	mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
-	# $(patsubst PATTERN,REPLACEMENT,TEXT)
-	current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+	name := $(shell grep module $(mkfile_dir)/go.mod|head -1|sed -e 's,^.*/,,g')
 
 # snippet	local_ip
 # 	local_ip := $(shell ip route |grep kernel |grep -v linkdown |grep -v 'br-' |sed -e 's,.metric.*,,g' |awk 'END {print $$NF}')
