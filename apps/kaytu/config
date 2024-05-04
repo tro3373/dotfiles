@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+install_common() {
+  # if ! has go; then
+  #   log "golang not installed."
+  #   return
+  # fi
+  # exe go install github.com/kaytu-io/kaytu/cmd@latest
+  exe 'curl -fsSL https://raw.githubusercontent.com/kaytu-io/kaytu/main/scripts/install.sh | sh'
+}
