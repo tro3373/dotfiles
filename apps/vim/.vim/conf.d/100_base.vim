@@ -461,9 +461,10 @@ function! s:load_local_rc()
 endfunction
 function! OpenLocalRc()
   let l:rc = s:get_local_rc_path()
-  if ! filereadable(l:rc)
-    return
-  endif
+  call system('mkdir -p "' .. fnamemodify(l:rc, ':h') .. '"')
+  " if ! filereadable(l:rc)
+  "   return
+  " endif
   exe "tabe" l:rc
 endfunction
 command! OpenLocalRc call OpenLocalRc()
