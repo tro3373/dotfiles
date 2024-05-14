@@ -25,7 +25,8 @@ load_update_arg_apps() {
 }
 
 post_setup() {
-  exe yay -S --noconfirm hardinfo google-chrome numix-gtk-theme numix-icon-theme numix-circle-icon-theme-git slack-desktop ristretto
+  local show_webp_in_gnome="webp-pixbuf-loader"
+  exe yay -S --noconfirm hardinfo google-chrome numix-gtk-theme numix-icon-theme numix-circle-icon-theme-git slack-desktop ristretto $show_webp_in_gnome
   _setup_gnome_extension
   # TODO
   #   - Dark Theme
