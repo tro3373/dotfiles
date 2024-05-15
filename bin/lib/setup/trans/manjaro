@@ -14,13 +14,15 @@ pre_setup() {
   _setup_mount_media_setting
   _setup_suspend_hibernate
   _setup_improve_monitor_scale
+  _setup_cronie
+  _setup_sshd
 }
 
 load_update_arg_apps() {
   # cargo order bug?
   # shellcheck disable=SC2034
   read -r -a args < <(
-    echo "$(default_apps) xclip snap fcitx5-mozc hackgen udev-gothic gnome-font-viewer code"
+    echo "$(default_apps) xclip snap fcitx5-mozc hackgen udev-gothic gnome-font-viewer code font"
   )
 }
 
@@ -42,6 +44,9 @@ post_setup() {
   log "         Enable Input Method: Right Alt"
   log "         Disable Input Method: Left Alt"
   log "       Disable Zenkaku space"
+  log "===> In Mozc Settings"
+  log "       Change Space input style to Halfwidth"
+  log "       Import dictionary from drive backup"
   log "===> Enable in https://extensions.gnome.org/extension/307/dash-to-dock/"
   log "       Update setting: Set Dock to Top, etc.."
   log "===> Insatall Gnome Shell Extensions"
@@ -75,6 +80,14 @@ _setup_user_group() {
 
 _setup_cronie() {
   local target=cronie
+  if sudo systamctl status $target | grep Active | grep active >&/dev/null; then
+    return
+  fi
+  exe sudo systamctl enable $target
+}
+
+_setup_sshd() {
+  local target=sshd
   if sudo systamctl status $target | grep Active | grep active >&/dev/null; then
     return
   fi
@@ -117,7 +130,7 @@ _setup_suspend_hibernate() {
   # Disable suspend if not log in
   exe sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
   # Timeout for blanking the screen (seconds; 0 = never):
-  gsettings_if_needed org.gnome.desktop.session idle-delay 900 # Change 5min to 1h
+  gsettings_if_needed org.gnome.desktop.session idle-delay 0
   # Timeout for locking the screen after blanking (seconds; 0 = instant):
   gsettings_if_needed org.gnome.desktop.screensaver lock-delay 0
 }
@@ -215,8 +228,11 @@ EOF
   #exe sudo pacman -Sy --noconfirm gnupg archlinux-keyring
   #exe sudo pacman-key --refresh-keys --keyserver keyserver.ubuntu.com
   exe sudo pacman-key --refresh-keys
-  exe sudo pacman -Rsu --noconfirm manjaro-gdm-theme firefox-gnome-theme-maia adwaita-maia
-  exe sudo pacman -Syu --noconfirm glibc-locales --overwrite /usr/lib/locale/\*/\*
+  # Disable for No such app error
+  #   exe sudo pacman -Rsu --noconfirm manjaro-gdm-theme firefox-gnome-theme-maia adwaita-maia
+  # Fix error
+  #  exe sudo pacman -Syu --noconfirm glibc-locales --overwrite /usr/lib/locale/\*/\*
+  exe sudo pacman -Syu --noconfirm glibc-locales
   # exe sudo pacman -Syyu --noconfirm
 
   # shellcheck disable=SC2154
