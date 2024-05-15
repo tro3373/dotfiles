@@ -172,7 +172,7 @@ install_arch() {
   if has vim; then
     exe sudo pacman -R vim --noconfirm
   fi
-  def_install gvim lua
+  def_install gvim vim lua
 }
 
 build_arch() {
