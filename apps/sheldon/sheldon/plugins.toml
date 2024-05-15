@@ -127,5 +127,6 @@ inline = 'command -v brew &>/dev/null && fpath=( "$(brew --prefix)/share/zsh/sit
 [plugins.compinit]
 inline = """
 autoload -Uz compinit
-zsh-defer compinit -u
+#zsh-defer compinit -u
+compinit -u
 """
