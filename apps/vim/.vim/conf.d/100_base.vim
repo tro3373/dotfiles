@@ -448,7 +448,9 @@ augroup local-rc
   autocmd BufNewFile,BufReadPost * call s:load_local_rc()
 augroup END
 function! s:get_local_rc_path()
-  return $HOME .. "/.ldot/vim/additional" .. getcwd() .. '/local.vimrc'
+  let l:gitroot = GetGitRoot()
+  " return $HOME .. "/.ldot/vim/additional" .. getcwd() .. '/local.vimrc'
+  return $HOME .. "/.ldot/vim/additional" .. l:gitroot .. '/local.vimrc'
 endfunction
 function! s:load_local_rc()
   let l:rc = s:get_local_rc_path()
