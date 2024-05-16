@@ -1,0 +1,73 @@
+#!/usr/bin/env -S bash -e
+
+fire() {
+  find ./ -maxdepth 1 -mindepth 1 -type f -name '*sql'
+}
+
+get_col() {
+  echo "${col//\`/}"
+}
+
+get_pk() {
+  if echo "$pk_line" | grep "$col" >&/dev/null; then
+    echo "$pk_line" | tr ',' '\n' | grep -n "$col" | cut -d: -f1
+    return
+  fi
+  echo
+}
+
+get_nn() {
+  if [[ $nn == "O" ]]; then
+    echo "○"
+  else
+    echo
+  fi
+}
+
+get_table_name_from_drop_sql_line() {
+  sed -e 's,^.* ,,' -e 's,[`;],,g'
+}
+
+get_table_jp_name() {
+  echo "$comment_line" | cut -d\' -f2
+}
+
+get_type() {
+  # echo "$type"
+  echo "$type" |
+    sed -e 's,),,g' -e 's,(, ,' -e 's/,/ /g' |
+    while read -r t digit point; do
+      _t=${t//INT_UNSIGNED/INT UNSIGNED}
+      echo -e "$_t				$digit		$point		"
+    done
+}
+
+for_f() {
+  local pk_line comment_line
+  pk_line=$(cat <"$f" | grep "PRIMARY KEY")
+  comment_line=$(cat <"$f" | grep "comment=")
+  table_name=$(head -1 "$f" | get_table_name_from_drop_sql_line)
+  table_jp_name=$(get_table_jp_name)
+  echo -e "==> $table_name\t$table_jp_name"
+  cat <"$f" |
+    grep -E -v "(DROP|CREATE|ENGINE=InnoDB|PRIMARY KEY|comment=)" |
+    sed -e 's,NOT NULL,O,g' -e 's,  COMMENT, X COMMENT,g' |
+    sed -e "s,',,g" -e 's/,$//g' -e 's,COMMENT,,g' -e 's,UNSIGNED AUTO_INCREMENT,,g' -e 's,INT UNSIGNED,INT_UNSIGNED,g' |
+    while read -r col type nn comment; do
+      [[ -z $col ]] && continue
+      [[ $col =~ ^#.* ]] && continue
+      # col								カラム名								VARCHAR				10				○			1
+      echo -e "$(get_col)								$comment								$(get_type)$(get_nn)			$(get_pk)"
+    done
+}
+
+main() {
+  fire |
+    # head -1 |
+    while read -r f; do
+      [[ -z $f ]] && continue
+      [[ $f =~ ^#.* ]] && continue
+      for_f
+    done
+}
+main "$@"
