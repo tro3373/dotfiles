@@ -3,7 +3,8 @@
 install_common() { not_supported; }
 install_wsl() { not_supported; }
 install_arch() {
-  def_install yubico-authenticator-bin
+  # pcsc-tools: pcsc_scan check tool
+  def_install yubico-authenticator-bin pcsc-tools
   exe sudo systemctl enable pcscd
   exe sudo systemctl start pcscd
 }
