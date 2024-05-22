@@ -14,6 +14,6 @@ main() {
     echo "dst file already exist. dst=$dst" 1>&2
     exit 1
   fi
-  convert -geometry ${w}x${h} $src $dst
+  convert -geometry "${w}x${h}" "$src" "$dst"
 }
 main "$@"
