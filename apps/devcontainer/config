@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+install_common() {
+  exe npm install -g @devcontainers/cli
+}
