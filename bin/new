@@ -158,11 +158,11 @@ edit_if_needed() {
   [[ -n $dummy ]] && return
   [[ $quiet -eq 1 ]] && return
   log "==> New template file generated."
-  log "==> Edit it?(Y/n)"
-  read -r yes_i_edit
-  if [[ $yes_i_edit =~ [nN] ]]; then
-    return
-  fi
+  # log "==> Edit it?(Y/n)"
+  # read -r yes_i_edit
+  # if [[ $yes_i_edit =~ [nN] ]]; then
+  #   return
+  # fi
   local _vim=vim
   has nvim && _vim=nvim
   "$_vim" -p "${dst_files[@]}"
