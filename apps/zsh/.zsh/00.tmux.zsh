@@ -4,6 +4,7 @@
 
 # add_usr_local_bin_path() { if ! has tmux; then export PATH=/usr/local/bin:$PATH; fi; }
 is_tmux_runnning() { [ ! -z "$TMUX" ]; }
+is_vscode() { [[ -n $VSCODE_INJECTION ]]; }
 shell_has_started_interactively() { [ ! -z "$PS1" ]; }
 is_enabled() {
   local _enabled=~/.tmux_enabled
@@ -26,6 +27,8 @@ tmux_automatically_attach_session() {
   # add_usr_local_bin_path
   ! shell_has_started_interactively && return 0
   ! is_enabled && return 0
+  is_vscode && return 0
+
   # is_screen_running && log "This is on screen." && return 1
   ! has tmux && log 'Error: tmux command not found' && return 1
 
