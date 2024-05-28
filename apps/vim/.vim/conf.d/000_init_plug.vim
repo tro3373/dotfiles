@@ -274,6 +274,8 @@ call plug#begin('$HOME/.vim/plugged')
       Plug 'mattn/startmenu-vim'
   endif
 
+  " ================================== todo
+  " Plug 'amitds1997/remote-nvim.nvim'                      " Remote development plugin for neovim
   " ================================== memo
   " Plug 'othree/html5.vim'                                 " For erb tab indent
   " Plug 'vim-scripts/nginx.vim'                            " Nginx Syntax
