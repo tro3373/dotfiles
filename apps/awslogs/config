@@ -2,14 +2,8 @@
 
 install_common() {
   if ! has pip; then
-    log "No pip installed"
+    log "pip not installed."
     return
   fi
-  exe sudo pip install awslogs
+  exe pip install awslogs
 }
-install_msys()   { not_supported; }
-setting_common() {
-  :
-}
-setting_msys()   { no_settings; }
-
