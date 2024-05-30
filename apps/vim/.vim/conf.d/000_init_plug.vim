@@ -234,6 +234,7 @@ call plug#begin('$HOME/.vim/plugged')
   " =================================================================
   " Langs or Others
   " =================================================================
+  Plug 'ekalinin/Dockerfile.vim'                            " Dockerfile syntax
   Plug 'cespare/vim-toml', { 'branch': 'main' }             " Toml syntax
   Plug 'hashivim/vim-terraform'                             " Terraform syntax
   Plug 'posva/vim-vue'                                      " vue syntax
