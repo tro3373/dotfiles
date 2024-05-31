@@ -131,6 +131,7 @@ let g:lsp_settings = {
   \         'plugins': {
   \           'flake8': {
   \             'enabled': v:true,
+  \             'ignore': ["E501"],
   \           },
   \           'jedi_definition': {
   \             'enabled': v:true,
@@ -139,6 +140,9 @@ let g:lsp_settings = {
   \           },
   \           'pycodestyle': {
   \             'ignore': ["E501"],
+  \           },
+  \           'pylsp_mypy': {
+  \             'enabled': v:true,
   \           }
   \         },
   \       }
