@@ -201,6 +201,7 @@ call plug#begin('$HOME/.vim/plugged')
     Plug 'mattn/vim-lsp-settings'                             " use `:LspInstallServer`
     Plug 'mattn/vim-lsp-icons'
     Plug 'halkn/lightline-lsp'                                " Display the diagnostic result of vim-lsp in the statusline of lightline.vim
+    Plug 'mfussenegger/nvim-jdtls'
 
     " Async complete is needed
     Plug 'prabirshrestha/asyncomplete.vim'

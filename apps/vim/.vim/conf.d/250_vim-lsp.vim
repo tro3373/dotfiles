@@ -98,6 +98,16 @@ set completeopt=menuone,noinsert,noselect
 "
 " E501 line too long
 let g:lsp_settings = {
+  \  'eclipse-jdt-ls': {
+  \     'initialization_options': {
+  \       'bundles': [
+  \         '/home/archuser/.local/share/vim-lsp-settings/servers/eclipse-jdt-ls/plugins/dg.jdt.ls.decompiler.cfr-0.0.3.jar',
+  \         '/home/archuser/.local/share/vim-lsp-settings/servers/eclipse-jdt-ls/plugins/dg.jdt.ls.decompiler.common-0.0.3.jar',
+  \         '/home/archuser/.local/share/vim-lsp-settings/servers/eclipse-jdt-ls/plugins/dg.jdt.ls.decompiler.fernflower-0.0.3.jar',
+  \         '/home/archuser/.local/share/vim-lsp-settings/servers/eclipse-jdt-ls/plugins/dg.jdt.ls.decompiler.procyon-0.0.3.jar'
+  \       ],
+  \     },
+  \   },
   \  'yaml-language-server': {
   \     'workspace_config': {
   \       'yaml': {
