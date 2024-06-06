@@ -734,6 +734,15 @@ function! Open()
 endfunction
 command! Open call Open()
 
+function! Code(opts)
+let l:path = expand('%:p')
+  if a:opts =~# 'r'
+    let l:path = GetGitRoot()
+  endif
+call system('code ' . l:path)
+endfunction
+command! -nargs=* Code call Code(<q-args>)
+
 function! ReOpenUtf8()
   exe "e ++enc=utf-8"
 endfunction

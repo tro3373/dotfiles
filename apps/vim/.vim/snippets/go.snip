@@ -494,7 +494,7 @@ alias		read_file_if_existtt
 		return string(raw), nil
 	}
 snippet	current_dirrr
-	pwd, err := os.GetWd()
+	pwd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
@@ -733,3 +733,52 @@ snippet read_csvvv
 		}
 	}
 
+snippet cast_structtt
+	type Common struct {
+		Gender int
+		From   string
+		To     string
+	}
+	type Foo struct {
+		Id    string
+		Name  string
+		Extra Common
+	}
+	type Bar struct {
+		Id    string
+		Name  string
+		Extra Common
+	}
+	foo := Foo{Id: "123", Name: "Joe"}
+	bar := Bar(foo)
+	fmt.Println(bar)
+
+snippet cast_pointerrr
+	package main
+	type mypint *int
+	func set(a *mypint) {
+			i := int(5)
+			*a = &i
+	}
+	func main() {
+			var k *int
+			set((*mypint)(&k))
+			print(*k)
+	}
+	// or
+	package main
+	type myint int
+	func set(a *myint) *myint {
+			i := myint(5)
+			a = &i
+			return a
+	}
+	func main() {
+			var k *int
+			k = (*int)(set((*myint)(k)))
+			print(*k)
+	}
+
+snippet cast_anyyy
+alias cast_interfaceee
+	v, ok = i.(T)
