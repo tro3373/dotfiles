@@ -128,6 +128,8 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'ujihisa/unite-colorscheme'                        " カラースキーム変更
   Plug 't9md/vim-quickhl'                                 " quick highlight
 
+  Plug 'j-hui/fidget.nvim'                                " Extensible UI for Neovim notifications and LSP progress messages.
+
   " =================================================================
   " Feature/Funcs Search/Finds/Analyze
   " =================================================================
