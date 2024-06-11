@@ -1,5 +1,11 @@
 # sed tips
 
+## Replace not match keyword
+
+```bash
+sed -e "/keyword/!s/old/new/" hoge.txt
+```
+
 ## Add `hoge` after match keyword
 
 ```bash
