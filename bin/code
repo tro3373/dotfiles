@@ -1,0 +1,10 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  if os orb; then
+    command -p code --remote ssh-remote+orb /home/"$(whoami)"
+    return
+  fi
+  command -p code "$@"
+}
+main "$@"
