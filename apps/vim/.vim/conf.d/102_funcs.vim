@@ -734,6 +734,20 @@ function! Open()
 endfunction
 command! Open call Open()
 
+function! OpenChangePath()
+  " 現在のファイルパスを取得
+  let current_path = expand('%:p')
+  " プロンプトを表示し、ユーザーにパスを入力してもらう
+  let user_path = input('Enter file path: ', current_path, 'file')
+  " ユーザーがEnterを押したら、新しいタブを開いてそのパスのファイルを開く
+  if !empty(user_path)
+      execute 'tabnew ' . user_path
+  endif
+endfunction
+
+" OpenChangePathコマンドを定義
+command! OpenChangePath call OpenChangePath()
+
 function! Code(opts)
 let l:path = expand('%:p')
   if a:opts =~# 'r'

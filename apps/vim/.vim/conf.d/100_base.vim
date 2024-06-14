@@ -64,9 +64,10 @@ set autoread
 " WinEnter: ウィンドウがアクティブになった時
 " FocusGained: ウィンドウがアクティブになった時
 " BufEnter: バッファがアクティブになった時
+" CursorHold: カーソルが一定時間以上静止した時
 augroup auto-checktime
   autocmd!
-  autocmd WinEnter,FocusGained,BufEnter * checktime
+  autocmd WinEnter,FocusGained,BufEnter,CursorHold * checktime
 augroup END
 
 
