@@ -1,8 +1,12 @@
 #!/usr/bin/env -S bash -e
 
+# current_dir=$(pwd) && readonly current_dir
 main() {
   if os orb; then
-    command -p code --remote ssh-remote+orb /home/"$(whoami)"
+    # command /opt/orbstack-guest/bin/code --remote ssh-remote+orb "$current_dir"
+    command /opt/orbstack-guest/bin/code --remote ssh-remote+orb "$HOME"
+    # echo "${current_dir/$HOME\//}"
+    # command /opt/orbstack-guest/bin/code --remote ssh-remote+orb "~\/${current_dir/$HOME\//}"
     return
   fi
   command -p code "$@"
