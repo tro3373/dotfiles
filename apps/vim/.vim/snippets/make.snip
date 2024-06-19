@@ -124,8 +124,8 @@ snippet	dotenvvv
 	dotenv := $(PWD)/.env
 	-include $(dotenv)
 
-snippet	env_templateee
-	env-template:
+snippet	gen_env_templateee
+	gen-env-template:
 		@$(eval target=.env.template)
-		@sed -e '/^#/!s/=.*/=/g' .env |tee $(target)
+		@sed -e '/^#/!s/=.*/=/g' .env >$(target)
 		@echo "==> Generated $(target)"
