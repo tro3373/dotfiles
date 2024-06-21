@@ -1,3 +1,223 @@
+###############################################################################
+# Log
+###############################################################################
+# snippet	loglnnn
+# 	fmt.Println("${1}", ${2})
+# snippet	logfff
+# 	fmt.Printf("${1}\n")
+# snippet	logvvv
+# 	fmt.Printf("%#+v\n", ${1})
+# snippet	logerrr
+# 	fmt.Printf("Failed to ${2}. Err:%+v\n", err)
+# snippet debuggg
+# 	const DEBUG = true
+# 	func debug(a ...any) {
+# 		if !DEBUG {
+# 			return
+# 		}
+# 		// fmt.Fprintln(os.Stderr, a...)
+# 		log.Debugf("%+v", a...)
+# 	}
+# snippet	custom_prefix_writerrr
+# 	type customWriter struct {
+# 		io.Writer
+# 		timeFormat string
+# 	}
+# 	func (w customWriter) Write(b []byte) (n int, err error) {
+# 		return w.Writer.Write(append([]byte(time.Now().Format(w.timeFormat)), b...))
+# 	}
+# 	logger := log.New(&customWriter{os.Stderr, "2006/01/02 15:04:05"}, ${1:prefix}, 0)
+
+# snippet	log_newww
+# 	log.New(os.Stderr, "", log.LstdFlags)
+snippet	log_newww
+	// [Goのslog使い方まとめ #AdventCalendar2023 - Qiita](https://qiita.com/Imamotty/items/3fbe8ce6da4f1a653fae)
+	// # Set level
+	// var lvl = new(slog.LevelVar)
+	// lvl.Set(slog.LevelDebug)
+	// logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: lvl}))
+	// // change level
+	// lvl.Set(slog.LevelDebug)
+	// # With attributes
+	// logger := slog.New(slog.NewJSONHandler(os.Stdout, nil)).With("url", "https://example.com")
+	// req := slog.Group("request", "method", "GET", "url", "https://example.com")
+	// logger := slog.New(slog.NewJSONHandler(os.Stdout, nil)).With(req)
+	// // 多段の階層構造
+	// attrs := slog.Group("attrs", slog.Group("attr1", "hoge", "fuga"), slog.Group("attr2", "hoge", "fuga"))
+	// Infoメソッドに直接渡す
+	// logger.Info("Hello, World!", attrs)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+
+snippet	ppp
+	func p(a ...interface{}) {
+		// fmt.Println(a...)
+		log.Infof("%+v", a...)
+	}
+
+snippet	zap_newww
+	logger, err := zap.NewProduction()
+
+snippet	logrus_newww
+	import log "github.com/sirupsen/logrus"
+	// initConfigInner
+	level, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
+	if err == nil {
+		log.SetLevel(level)
+	}
+	log.Infof("==> File:%s", file)
+
+###############################################################################
+# Error
+###############################################################################
+# See [今goのエラーハンドリングを無難にしておく方法（2021.09現在）](https://zenn.dev/nekoshita/articles/097e00c6d3d1c9)
+# - stacktraceが不要な場合
+#   - fmt.Errorfでラップし、errors.Isで判定する
+# - stacktraceが必要な場合
+#   - pkg/errors.Wrapでラップし、pkg/errors.Causeで判定する
+#   - log.Printf("%+v", err)でstacktraceを出力する
+#   - 新しいエラーを返す時はpkg/errors.New or pkg/errors.Errorfを使う
+
+snippet	ifee
+	if err != nil {
+		return errors.Wrap(err, "Failed to ${1:#do somthing}")
+	}
+
+snippet	ifeexxx
+	if err := ${1}; err != nil {
+		return errors.Wrap(err, "Failed to ${2:#do somthing}")
+	}
+
+snippet	ifeefff
+	if err != nil {
+		return errors.Wrapf(err, "Failed to ${1:#do somthing}. %s", slog.String("${2:#key}", "${3:#value}"))
+	}
+
+snippet	errors_newww
+alias	new_errorsss
+	errors.New("Error")
+
+snippet	errors_samplesss
+	# With Stack
+	errors.New("Error")
+	errors.Errorf("Error: %s", "${1}")
+	# With Stack and Wrap
+	errors.WithStack(err)
+	errors.Wrapf(err, "Failed to somthing %s", "arg")
+		if errors.Cause(err) == SampleError { }
+	# No Stack
+	fmt.Errorf("Failed to somthing. Error: %w", err)
+		if errors.Is(err, SampleError) { }
+
+snippet	defer_wrappp
+	func Wrap(errp *error, format string, args ...any) {
+		if *errp != nil {
+				*errp = fmt.Errorf("%s: %w", fmt.Sprintf(format, args...), *errp)
+		}
+	}
+	var ErrNotFound = errors.New("not found")
+	func f(input int) (err error) {
+			defer Wrap(&err, "f(%d)", input)
+			if input == 0 {
+					return ErrNotFound
+			}
+			return nil
+	}
+
+
+###############################################################################
+# File
+###############################################################################
+snippet mk_dirrr
+	os.Mkdir(${1}, 0775) //#nosec G301
+snippet mk_diralll
+	os.MkdirAll(${1}, 0775) //#nosec G301
+snippet rm_dirrr
+	err := os.Remove(${1})
+snippet rm_dir_alll
+	err := os.RemoveAll(${1})
+snippet touchhh
+	func touch(path string) error {
+		_, err := os.Stat(path)
+		if os.IsNotExist(err) {
+			file, err := os.Create(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+			return nil
+		}
+		currentTime := time.Now().Local()
+		err = os.Chtimes(path, currentTime, currentTime)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+snippet	file_write_jsonnn
+alias		write_file_jsonnn
+	file, _ := json.MarshalIndent(data, "", " ")
+	_ = ioutil.WriteFile("test.json", file, 0664) //#nosec G306
+snippet	file_read_jsonnn
+alias		read_file_jsonnn
+	raw, err := ioutil.ReadFile(filepath.Clean("test.json"))
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exist(1)
+	}
+	var s SampleStruct
+	json.Unmarshal(raw, &s)
+snippet	file_writeee
+alias		write_fileee
+	func WriteFile(filePath, data string) error {
+		return ioutil.WriteFile(filePath, []byte(data), 0664) //#nosec G306
+	}
+snippet	file_read_if_existttt
+alias		read_file_if_existtt
+	func ReadFileIfExist(filePath string) (string, error) {
+		if len(filePath) == 0 || !Exists(filePath) {
+			return "", nil
+		}
+		raw, err := ioutil.ReadFile(filepath.Clean(filePath))
+		if err != nil {
+			return "", err
+		}
+		return string(raw), nil
+	}
+snippet	current_dirrr
+	pwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+snippet	bin_dirrr
+alias	script_dirrr
+	ex, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	exPath := filepath.Dir(ex)
+
+snippet	is_empty_dirrr
+alias	empty_dirrr
+	func IsEmptyDir(dirPath string) (bool, error) {
+		f, err := os.Open(filepath.Clean(dirPath))
+		if err != nil {
+			return false, err
+		}
+		defer f.Close()
+		_, err = f.Readdirnames(1)
+		if err == io.EOF {
+			return true, nil
+		}
+		if err != nil {
+			return false, err
+		}
+		return false, nil
+	}
+###############################################################################
+
+
 snippet	time_formattt
 	"20060102_150405"
 
@@ -12,38 +232,6 @@ alias	time_parseee
 
 snippet	time_unixxx
 	t := time.Unix(${1}, 0)
-
-snippet	log_newww
-	log.New(os.Stderr, "", log.LstdFlags)
-
-snippet	loggg
-	import log "github.com/sirupsen/logrus"
-	// initConfigInner
-	level, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
-	if err == nil {
-		log.SetLevel(level)
-	}
-	log.Infof("==> File:%s", file)
-
-snippet	ppp
-	func p(a ...interface{}) {
-		// fmt.Println(a...)
-		log.Infof("%+v", a...)
-	}
-
-snippet debuggg
-	const DEBUG = true
-	func debug(a ...any) {
-		if !DEBUG {
-			return
-		}
-		// fmt.Fprintln(os.Stderr, a...)
-		log.Debugf("%+v", a...)
-	}
-
-
-snippet	zap_newww
-	logger, err := zap.NewProduction()
 
 snippet	if_stringer
 	if v, ok := ${1:interface}.(fmt.Stringer); ok {
@@ -151,15 +339,6 @@ snippet	struct_jsonnn
 	 	${2} string \`json:"${3},string"\`
 	}
 
-snippet	loglnnn
-	fmt.Println("${1}", ${2})
-snippet	logfff
-	fmt.Printf("${1}\n")
-snippet	logvvv
-	fmt.Printf("%#+v\n", ${1})
-snippet	logerrr
-	fmt.Printf("Failed to ${2}. Err:%+v\n", err)
-
 snippet	fmtprint_samplesss
 alias	print_samplesss
 	// https://qiita.com/rock619/items/14eb2b32f189514b5c3c
@@ -198,16 +377,6 @@ snippet	func_newww
 	func New${1}() *$1 {
 		return &$1{}
 	}
-
-snippet	custom_prefix_writerrr
-	type customWriter struct {
-		io.Writer
-		timeFormat string
-	}
-	func (w customWriter) Write(b []byte) (n int, err error) {
-		return w.Writer.Write(append([]byte(time.Now().Format(w.timeFormat)), b...))
-	}
-	logger := log.New(&customWriter{os.Stderr, "2006/01/02 15:04:05"}, ${1:prefix}, 0)
 
 snippet	strconv_itoaaa
 alias	itoaaa
@@ -400,129 +569,6 @@ snippet	replace_all_regexppp
 
 snippet	replaceeee
 	strings.Replace(str, "Src", "Dst", -1)
-
-###############################################################################
-# Error
-###############################################################################
-# See [今goのエラーハンドリングを無難にしておく方法（2021.09現在）](https://zenn.dev/nekoshita/articles/097e00c6d3d1c9)
-# - stacktraceが不要な場合
-#   - fmt.Errorfでラップし、errors.Isで判定する
-# - stacktraceが必要な場合
-#   - pkg/errors.Wrapでラップし、pkg/errors.Causeで判定する
-#   - log.Printf("%+v", err)でstacktraceを出力する
-#   - 新しいエラーを返す時はpkg/errors.New or pkg/errors.Errorfを使う
-
-snippet	iferrr
-	if err != nil {
-		return errors.Wrapf(err, "Failed to %s", "${1:#do somthing}")
-	}
-
-snippet	iferrr_exec
-	if err := ${1}; err != nil {
-		return errors.Wrapf(err, "Failed to %s", "${2:#do somthing}")
-	}
-
-snippet	errors_samplesss
-	# With Stack
-	errors.New("Error")
-	errors.Errorf("Error: %s", "${1}")
-	# With Stack and Wrap
-	errors.WithStack(err)
-	errors.Wrapf(err, "Failed to somthing %s", "arg")
-		if errors.Cause(err) == SampleError { }
-	# No Stack
-	fmt.Errorf("Failed to somthing. Error: %w", err)
-		if errors.Is(err, SampleError) { }
-
-###############################################################################
-# File
-###############################################################################
-snippet mk_dirrr
-	os.Mkdir(${1}, 0775) //#nosec G301
-snippet mk_diralll
-	os.MkdirAll(${1}, 0775) //#nosec G301
-snippet rm_dirrr
-	err := os.Remove(${1})
-snippet rm_dir_alll
-	err := os.RemoveAll(${1})
-snippet touchhh
-	func touch(path string) error {
-		_, err := os.Stat(path)
-		if os.IsNotExist(err) {
-			file, err := os.Create(path)
-			if err != nil {
-				return err
-			}
-			defer file.Close()
-			return nil
-		}
-		currentTime := time.Now().Local()
-		err = os.Chtimes(path, currentTime, currentTime)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-snippet	file_write_jsonnn
-alias		write_file_jsonnn
-	file, _ := json.MarshalIndent(data, "", " ")
-	_ = ioutil.WriteFile("test.json", file, 0664) //#nosec G306
-snippet	file_read_jsonnn
-alias		read_file_jsonnn
-	raw, err := ioutil.ReadFile(filepath.Clean("test.json"))
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exist(1)
-	}
-	var s SampleStruct
-	json.Unmarshal(raw, &s)
-snippet	file_writeee
-alias		write_fileee
-	func WriteFile(filePath, data string) error {
-		return ioutil.WriteFile(filePath, []byte(data), 0664) //#nosec G306
-	}
-snippet	file_read_if_existttt
-alias		read_file_if_existtt
-	func ReadFileIfExist(filePath string) (string, error) {
-		if len(filePath) == 0 || !Exists(filePath) {
-			return "", nil
-		}
-		raw, err := ioutil.ReadFile(filepath.Clean(filePath))
-		if err != nil {
-			return "", err
-		}
-		return string(raw), nil
-	}
-snippet	current_dirrr
-	pwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-snippet	bin_dirrr
-alias	script_dirrr
-	ex, err := os.Executable()
-	if err != nil {
-		return err
-	}
-	exPath := filepath.Dir(ex)
-
-snippet	is_empty_dirrr
-alias	empty_dirrr
-	func IsEmptyDir(dirPath string) (bool, error) {
-		f, err := os.Open(filepath.Clean(dirPath))
-		if err != nil {
-			return false, err
-		}
-		defer f.Close()
-		_, err = f.Readdirnames(1)
-		if err == io.EOF {
-			return true, nil
-		}
-		if err != nil {
-			return false, err
-		}
-		return false, nil
-	}
 
 snippet	containsss
 	func Contains(list interface{}, target interface{}) bool {
@@ -782,3 +828,4 @@ snippet cast_pointerrr
 snippet cast_anyyy
 alias cast_interfaceee
 	v, ok = i.(T)
+
