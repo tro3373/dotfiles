@@ -206,7 +206,17 @@ endfunction
 command! -nargs=? Doc call Doc(<f-args>)
 
 nmap <Leader>0 :Settings<CR>
-nmap <Leader>9 :tabe $HOME/.vim/snippets<CR>
+" nmap <Leader>9 :tabe $HOME/.vim/snippets<CR>
+function! OpenSnippetFile()
+  let l:snippet_dir = expand('$HOME/.vim/snippets')
+  let l:snippet_file = l:snippet_dir . '/' . &filetype . '.snip'
+  let l:target = l:snippet_dir
+  if filereadable(l:snippet_file)
+    let l:target = l:snippet_file
+  endif
+  execute 'tabe ' . l:target
+endfunction
+nmap <Leader>9 :call OpenSnippetFile()<CR>
 nmap <Leader>8 :Doc<CR>
 nmap <Leader>7 :tabe $HOME/.vim/plugged<CR>
 nmap <Leader>6 :tabe $HOME/.vim/backup<CR>
