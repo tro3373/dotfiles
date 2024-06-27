@@ -79,17 +79,12 @@ snippet	logrus_newww
 #   - log.Printf("%+v", err)でstacktraceを出力する
 #   - 新しいエラーを返す時はpkg/errors.New or pkg/errors.Errorfを使う
 
-snippet	ifee
+snippet	iferrwww
 	if err != nil {
 		return errors.Wrap(err, "Failed to ${1:#do somthing}")
 	}
 
-snippet	ifeexxx
-	if err := ${1}; err != nil {
-		return errors.Wrap(err, "Failed to ${2:#do somthing}")
-	}
-
-snippet	ifeefff
+snippet	iferrwwwf
 	if err != nil {
 		return errors.Wrapf(err, "Failed to ${1:#do somthing}. %s", slog.String("${2:#key}", "${3:#value}"))
 	}
@@ -829,3 +824,16 @@ snippet cast_anyyy
 alias cast_interfaceee
 	v, ok = i.(T)
 
+# From Go 1.0
+# Go1.10まではNamed typeと呼ばれていたが、Go1.11から言語仕様上はDefined typeと呼ばれるようになった。
+# 別の型なので明示的にキャストしないと互換性がない
+# 新しいメソッドを追加できる
+# Defined typeはプリミティブな型に対しても利用することができる。
+# Defined typeで宣言した新しい型と元になった型には互換性がないため、Value Object的に利用することができる。
+snippet defined_typeeee
+	type Name string
+# From Go 1.9
+# キャストせずに同じ型として利用できる
+# エイリアスに新しいメソッドは定義できない。
+snippet type_aliasss
+	type Name = string
