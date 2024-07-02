@@ -5,4 +5,5 @@ install_common() {
 }
 install_mac() {
   exe brew install tailscale
+  exe sudo brew services start tailscale
 }
