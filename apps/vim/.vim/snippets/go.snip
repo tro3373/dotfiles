@@ -91,7 +91,11 @@ snippet	iferrwwwf
 
 snippet	errors_newww
 alias	new_errorsss
-	errors.New("Error")
+	errors.New("Failed to ${1:#do somthing}")
+
+snippet	errors_newwwf
+alias	new_errorsssf
+	errors.Errorf("Failed to ${1:#do somthing}. %s", slog.String("${2:#key}", "${3:#value}"))
 
 snippet	errors_samplesss
 	# With Stack
@@ -180,6 +184,42 @@ alias		read_file_if_existtt
 		}
 		return string(raw), nil
 	}
+snippet	open_fileee
+	file, err := os.OpenFile(filepath.Clean(${1}), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)  //#nosec G306
+	// file, err := os.OpenFile(filepath.Clean($1), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0664)  //#nosec G306
+	if err != nil {
+		return fmt.Errorf("Failed to OpenFile %s, %w", $1, err)
+	}
+	defer file.Close()
+
+snippet	ls_dirrr
+	files, err := os.ReadDir(".")
+
+snippet	file_pathhh
+	files, err := filepath.Glob("./*/*/*.md")
+
+snippet	file_readdd
+	func useBufioScanner(fileName string) {
+		 fp, err := os.Open(filepath.Clean(fileName))
+		 if err != nil {
+		 	panic(err)
+		 }
+		 defer fp.Close()
+
+		scanner := bufio.NewScanner(fp)
+		for scanner.Scan() {
+			fmt.Println(scanner.Text())
+		}
+	}
+snippet	file_sizeee
+	func getFileSize(filePath string) (int64, error) {
+		info, err := os.Stat(filePath)
+		if err != nil {
+			return -1, err
+		}
+		return info.Size(), nil
+	}
+
 snippet	current_dirrr
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -210,6 +250,106 @@ alias	empty_dirrr
 		}
 		return false, nil
 	}
+snippet	existsss
+	func exists(filename string) bool {
+		_, err := os.Stat(filename)
+		return !os.IsNotExist(err)
+	}
+
+snippet	exists_prefixxx
+	func existsPrefix(name string) (bool, error) {
+		matches, err := filepath.Glob(name + ".*")
+		if err != nil {
+				return false, err
+		}
+		return len(matches) > 0, nil
+	}
+
+snippet	read_yamlsss
+	import (
+		"errors"
+		"io/ioutil"
+		"gopkg.in/yaml.v3"
+	)
+	type Config struct {
+		Sample struct {
+			Username          string \`yaml:"username"\`
+			Password          string \`yaml:"password"\`
+		} \`yaml:"sample"\`
+	}
+
+	func NewConfig(args []string) (*Config, error) {
+		merged, err := mergeYamls(args[1:])
+		if err != nil {
+			return nil, err
+		}
+		b, err := yaml.Marshal(merged)
+		if err != nil {
+			return nil, err
+		}
+		var config Config
+		err = yaml.Unmarshal(b, &config)
+		return &config, err
+	}
+
+	func mergeYamls(args []string) (map[string]interface{}, error) {
+		if len(args) == 0 {
+			return nil, errors.New("=> Specify yaml path")
+		}
+
+		var err error
+		var merged map[string]interface{}
+		for _, arg := range args {
+			data, err := readYaml(arg)
+			if err != nil {
+				return nil, err
+			}
+			if merged == nil {
+				merged = data
+				continue
+			}
+			merged, err = mergeMap(merged, data)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return merged, err
+	}
+
+	func readYaml(path string) (map[string]interface{}, error) {
+		b, err := ioutil.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		var data map[string]interface{}
+		err = yaml.Unmarshal(b, &data)
+		return data, err
+	}
+
+snippet read_csvvv
+	import "encoding/csv"
+	func readTsv(filePath string) error {
+		file, err := os.Open(filePath)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		reader := csv.NewReader(file)
+		reader.Comma = '\t'
+		reader.Comment = '#'
+		for {
+			record, err := reader.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return err
+			}
+			fmt.Println(record)
+		}
+	}
+
 ###############################################################################
 
 
@@ -360,14 +500,6 @@ alias	print_samplesss
 	// %g: lage index then %e else %f
 	// %G: lage index then %E else %F
 
-snippet	open_fileee
-	file, err := os.OpenFile(filepath.Clean(${1}), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)  //#nosec G306
-	// file, err := os.OpenFile(filepath.Clean($1), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0664)  //#nosec G306
-	if err != nil {
-		return fmt.Errorf("Failed to OpenFile %s, %w", $1, err)
-	}
-	defer file.Close()
-
 snippet	func_newww
 	func New${1}() *$1 {
 		return &$1{}
@@ -388,21 +520,6 @@ snippet	exec_start
 	cmd.Start()
 	fmt.Println("sleep中: ", time.Now().Format("15:04:05"))
 	cmd.Wait()
-
-snippet	existsss
-	func exists(filename string) bool {
-		_, err := os.Stat(filename)
-		return !os.IsNotExist(err)
-	}
-
-snippet	exists_prefixxx
-	func existsPrefix(name string) (bool, error) {
-		matches, err := filepath.Glob(name + ".*")
-		if err != nil {
-				return false, err
-		}
-		return len(matches) > 0, nil
-	}
 
 snippet	getenvvv
 	func getEnv(key, fallback string) string {
@@ -514,38 +631,10 @@ alias	rw_mutexxx
 snippet	float_stringgg
 	strconv.FormatFloat(target, 'f', -1, 64)
 
-snippet	ls_dirrr
-	files, err := os.ReadDir(".")
-
 snippet	sorttt
 	sort.Slice(files, func(i, j int) bool {
 		return files[i].Name() > files[j].Name()
 	})
-
-snippet	file_pathhh
-	files, err := filepath.Glob("./*/*/*.md")
-
-snippet	file_readdd
-	func useBufioScanner(fileName string) {
-		 fp, err := os.Open(filepath.Clean(fileName))
-		 if err != nil {
-		 	panic(err)
-		 }
-		 defer fp.Close()
-
-		scanner := bufio.NewScanner(fp)
-		for scanner.Scan() {
-			fmt.Println(scanner.Text())
-		}
-	}
-snippet	file_sizeee
-	func getFileSize(filePath string) (int64, error) {
-		info, err := os.Stat(filePath)
-		if err != nil {
-			return -1, err
-		}
-		return info.Size(), nil
-	}
 
 snippet reggg
 	func reg(str string) *regexp.Regexp {
@@ -595,7 +684,7 @@ snippet	ignoreee
 	//#nosec G301 G302 G306
 
 snippet	deep_copyyy
-	func deepcopy(src interface{}, dst interface{}) (err error) {
+	func DeepCopy(src interface{}, dst interface{}) (err error) {
 		b, err := json.Marshal(src)
 		if err != nil {
 				return err
@@ -684,95 +773,10 @@ snippet merge_mappp
 		return map1, err
 	}
 
-snippet	read_yamlsss
-	import (
-		"errors"
-		"io/ioutil"
-		"gopkg.in/yaml.v3"
-	)
-	type Config struct {
-		Sample struct {
-			Username          string \`yaml:"username"\`
-			Password          string \`yaml:"password"\`
-		} \`yaml:"sample"\`
-	}
-
-	func NewConfig(args []string) (*Config, error) {
-		merged, err := mergeYamls(args[1:])
-		if err != nil {
-			return nil, err
-		}
-		b, err := yaml.Marshal(merged)
-		if err != nil {
-			return nil, err
-		}
-		var config Config
-		err = yaml.Unmarshal(b, &config)
-		return &config, err
-	}
-
-	func mergeYamls(args []string) (map[string]interface{}, error) {
-		if len(args) == 0 {
-			return nil, errors.New("=> Specify yaml path")
-		}
-
-		var err error
-		var merged map[string]interface{}
-		for _, arg := range args {
-			data, err := readYaml(arg)
-			if err != nil {
-				return nil, err
-			}
-			if merged == nil {
-				merged = data
-				continue
-			}
-			merged, err = mergeMap(merged, data)
-			if err != nil {
-				return nil, err
-			}
-		}
-		return merged, err
-	}
-
-	func readYaml(path string) (map[string]interface{}, error) {
-		b, err := ioutil.ReadFile(path)
-		if err != nil {
-			return nil, err
-		}
-		var data map[string]interface{}
-		err = yaml.Unmarshal(b, &data)
-		return data, err
-	}
-
 snippet	to_lowerrr
 	strings.ToLower($1)
 snippet	to_upperrr
 	strings.ToUpper($1)
-
-snippet read_csvvv
-	import "encoding/csv"
-	func readTsv(filePath string) error {
-		file, err := os.Open(filePath)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		reader := csv.NewReader(file)
-		reader.Comma = '\t'
-		reader.Comment = '#'
-		for {
-			record, err := reader.Read()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return err
-			}
-			fmt.Println(record)
-		}
-	}
 
 snippet cast_structtt
 	type Common struct {
@@ -837,3 +841,9 @@ snippet defined_typeeee
 # エイリアスに新しいメソッドは定義できない。
 snippet type_aliasss
 	type Name = string
+
+snippet containsss
+	import "golang.org/x/exp/slices"
+	slices.Contains([]string{"a", "b", "c"}, "b")
+
+
