@@ -45,6 +45,9 @@ Host *
   ServerAliveInterval 30
   GSSAPIAuthentication no
   SendEnv LANG LC_*
+  ControlMaster auto
+  ControlPath ~/.ssh/mux-%r@%h:%p
+  ControlPersist 4h
   # ForwardX11 yes
   # ForwardX11Trusted yes
   # disable because tunnel to vag not work
