@@ -1,0 +1,61 @@
+#!/usr/bin/env -S bash -e
+
+current_dir=$(pwd) && readonly current_dir
+
+# find_package_root() {
+#   local project_root
+#   project_root=$(get_git_root)
+#   find "$project_root"/ -type f -name pyproject.toml |
+#     head -1 |
+#     xargs dirname
+# }
+#
+# get_package_path() {
+#   package_root=$(find_package_root)
+#   echo "${dir/$package_root\//}" | sed 's/\//./g'
+# }
+#
+get_class_names() {
+  # ex) class Sample(BaseModel, table=True):  # type: ignore
+  cat <"$f" |
+    grep -E '^class [A-Z][a-zA-Z0-9_]*\(.*\):' |
+    sed -E 's/class ([A-Z][a-zA-Z0-9_]*)\(.*\):.*/\1/g' |
+    tr '\n' ', ' |
+    sed -e 's/,$//'
+}
+
+csv_to_all_classes() {
+  echo "$csv_classes" |
+    sed -e "s, ,,g" -e "s/,/\n/g" |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      echo "$line" |
+        sed -e 's,^,    ",g' -e 's,$,"\,,g'
+    done
+}
+
+main() {
+  local dir csv_classes
+  dir=${1:-$current_dir}
+
+  while read -r f; do
+    [[ -z $f ]] && continue
+    [[ $f =~ ^#.* ]] && continue
+    [[ $f =~ ^__init__.py$ ]] && continue
+    [[ $f =~ ^base_model.py$ ]] && continue
+    clazzes=$(get_class_names)
+    [[ -z $clazzes ]] && continue
+    base_name=$(basename "$f" .py)
+    # from app.model.sample import Sample
+    echo "from .$base_name import $clazzes"
+    csv_classes="$csv_classes$clazzes, "
+  done < <(find "$dir"/ -maxdepth 1 -mindepth 1 -type f -name "*.py")
+  echo
+  cat <<EOF
+__all__ = [
+$(csv_to_all_classes)
+]
+EOF
+}
+main "$@"
