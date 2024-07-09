@@ -105,7 +105,7 @@ let g:ale_sh_shfmt_options = '-i 2 -ci -s' " shfmt see .editorconfig?(not workin
 " Python
 " let g:ale_python_flake8_options = '--ignore=E501,E402,F401,E701' " ignore long-lines, import on top of the file, unused modules and statement with colon
 " let g:ale_python_autopep8_options = '--ignore=E501'              " ignore long-lines for autopep8 fixer
-let g:ale_python_flake8_options = '--max-line-length=120'
+let g:ale_python_flake8_options = '--max-line-length=120 --ignore=E501,F401'
 " let g:ale_python_autopep8_options = ''
 " let g:ale_python_isort_options = ''
 " let g:ale_python_black_options = ''

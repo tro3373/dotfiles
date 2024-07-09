@@ -70,3 +70,12 @@ snippet	while_true_iii
 		counter += 1
 		if counter > 10:
 			break
+
+snippet	ignoreee
+	# flake8: noqa: F401
+
+snippet init_py_auto_import
+	import os
+	__all__ = [
+			f[:-3] for f in os.listdir(os.path.join(os.path.dirname(__file__))) if f.endswith(".py") and (f != "__init__.py" and f != "base_model.py")
+	]
