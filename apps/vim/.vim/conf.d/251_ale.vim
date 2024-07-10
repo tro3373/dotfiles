@@ -100,6 +100,12 @@ let g:ale_go_golangci_lint_package = 1 "When set to `1`, the whole Go package wi
 let g:ale_go_gofmt_options = '-s'
 let g:ale_go_gometalinter_options = '--enable=gosimple --enable=staticcheck'
 " Shell
+" SC1090: Use of uninitialized value. This warning is triggered when a shell script uses a variable that is not set.
+" SC2059: Command not found. This warning is triggered when a shell script uses a command that is not executable.
+" SC2155: Use of uninitialized value. This warning is triggered when a shell script uses a variable that is not declared.
+" SC2164: Command not found in PATH. This warning is triggered when a shell script uses a command that is not found in the system's PATH.
+" SC2086: Syntax error. This warning is triggered when a shell script uses a command with invalid syntax.
+" SC2162: Command not found or not executable. This warning is triggered when a shell script uses a command that is not a valid command or not executable.
 let g:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162' " Ignore shellcheck error
 let g:ale_sh_shfmt_options = '-i 2 -ci -s' " shfmt see .editorconfig?(not working... so specify option)
 " Python
@@ -109,6 +115,16 @@ let g:ale_python_flake8_options = '--max-line-length=120 --ignore=E501,F401'
 " let g:ale_python_autopep8_options = ''
 " let g:ale_python_isort_options = ''
 " let g:ale_python_black_options = ''
+" --ignore-missing-imports: ignore missing imports.
+" --follow-imports=skip: controls how mypy handles imports.
+"   The follow-imports option can take three values: normal, skip, and silent.
+"     normal (default): follow imports and check the imported modules.
+"     skip: skip checking the imported modules. This means that if an imported module has errors, mypy will not report them.
+"     silent: not follow imports at all.
+"             This means that if an imported module has errors,
+"             mypy will not report them,
+"             and the errors will only be reported
+"             when the imported module is actually used.
 let g:ale_python_mypy_options = '--ignore-missing-imports --follow-imports=skip'
 
 
