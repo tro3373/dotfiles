@@ -27,6 +27,7 @@ get_class_names() {
 csv_to_all_classes() {
   echo "$csv_classes" |
     sed -e "s, ,,g" -e "s/,/\n/g" |
+    sort |
     while read -r line; do
       [[ -z $line ]] && continue
       [[ $line =~ ^#.* ]] && continue
@@ -50,7 +51,7 @@ main() {
     # from app.model.sample import Sample
     echo "from .$base_name import $clazzes"
     csv_classes="$csv_classes$clazzes, "
-  done < <(find "$dir"/ -maxdepth 1 -mindepth 1 -type f -name "*.py")
+  done < <(find "$dir"/ -maxdepth 1 -mindepth 1 -type f -name "*.py" | sort)
   echo
   cat <<EOF
 __all__ = [
