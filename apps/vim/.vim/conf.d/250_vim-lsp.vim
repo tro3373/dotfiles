@@ -143,6 +143,7 @@ let g:lsp_settings = {
   \           },
   \           'pylsp_mypy': {
   \             'enabled': v:true,
+  \             'strict': v:true,
   \           }
   \         },
   \       }
