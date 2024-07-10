@@ -119,10 +119,12 @@ let g:ale_python_mypy_options = '--ignore-missing-imports --follow-imports=skip'
 
 " Disable for minified code and enable whitespace trimming
 " Disable md linter because so slow.
+" Disable linter for ui components(shadcn)
 let g:ale_pattern_options = {
 \   '\.min\.js$': {'ale_linters': [], 'ale_fixers': []},
 \   '\.min\.css$': {'ale_linters': [], 'ale_fixers': []},
 \   'md$': {'ale_linters': []},
+\   '.*src/components/ui/.*.tsx$': {'ale_linters': [], 'ale_fixers': []},
 \}
 "\ 'pattern': {'ale_linters': [], 'ale_fixers': []},
 "\ '\.*': {'ale_fixers': ['trim_whitespace', 'remove_trailing_lines']}}
