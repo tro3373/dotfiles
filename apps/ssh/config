@@ -24,22 +24,26 @@ setting_common() {
 
 change_to_right_permission() {
   local ssh_dir=${HOME}/.ssh
-  if [ ! -e "${ssh_dir}" ]; then
+  if [[ ! -e $ssh_dir ]]; then
     # exe mkdir -p ${ssh_dir}
     echo "No .ssh directory exists."
     return 0
   fi
-  if ! stat -c "%a %n" "${ssh_dir}" | grep 755 >/dev/null 2>&1; then
-    exe chmod 755 "${ssh_dir}"
+  if ! stat -c "%a %n" "$ssh_dir" | grep 755 >/dev/null 2>&1; then
+    exe chmod 755 "$ssh_dir"
   fi
 
   local files
-  files=$(find "${ssh_dir}"/ -type f)
-  for file in $files; do
-    if stat -c "%a %n" "${file}" | grep -v 600 >/dev/null 2>&1; then
-      exe chmod 600 "${file}"
+  files=$(find "$ssh_dir"/ -type f)
+  for f in $files; do
+    if stat -c "%a %n" "$f" | grep -v 600 >/dev/null 2>&1; then
+      exe chmod 600 "$f"
     fi
   done
+  local socks_dir=$ssh_dir/socks
+  if [[ ! -e $socks_dir ]]; then
+    mkdir -p "$socks_dir"
+  fi
 }
 
 # link_to_dot() {

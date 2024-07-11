@@ -213,6 +213,7 @@ fi
 
 # http://qiita.com/yuku_t/items/4ffaa516914e7426419a
 function ssh() {
+  [[ ! -e $HOME/.ssh/socks ]] && mkdir -p $HOME/.ssh/socks
   TERM=xterm
   local window_name=$(tmux_ssh_dog -p "$@")
   command ssh "$@"
