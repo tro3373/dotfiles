@@ -141,6 +141,7 @@ let g:ale_pattern_options = {
 \   '\.min\.css$': {'ale_linters': [], 'ale_fixers': []},
 \   'md$': {'ale_linters': []},
 \   '.*src/components/ui/.*.tsx$': {'ale_linters': [], 'ale_fixers': []},
+\   '.*/site-packages/.*.py$': {'ale_linters': [], 'ale_fixers': []},
 \}
 "\ 'pattern': {'ale_linters': [], 'ale_fixers': []},
 "\ '\.*': {'ale_fixers': ['trim_whitespace', 'remove_trailing_lines']}}
