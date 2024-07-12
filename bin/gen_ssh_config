@@ -2,7 +2,7 @@
 
 current_dir=$(pwd)
 # script_dir=$(cd $(dirname $0); pwd)
-command_name=$(basename $0)
+command_name=$(basename "$0") && readonly command_name
 
 usage() {
   cat <<EOF
@@ -46,7 +46,7 @@ Host *
   GSSAPIAuthentication no
   SendEnv LANG LC_*
   ControlMaster auto
-  ControlPath ~/.ssh/socks/mux-%r@%h:%p
+  ControlPath ~/.ssh/socks/mux-%r@%n:%p
   ControlPersist 4h
   # ForwardX11 yes
   # ForwardX11Trusted yes
@@ -121,7 +121,7 @@ gen_config() {
     echo "===> Already exists config file in $target." 1>&2
     return 1
   fi
-  cat_template >$target && chmod $permission $target
+  cat_template >"$target" && chmod $permission "$target"
   echo "===> Config file generated in $target."
   return 0
 }
@@ -129,6 +129,6 @@ gen_config() {
 main() {
   initialize "$@"
   [[ $gen_file -ne 1 ]] && usage && cat_template && advice && exit 0
-  (gen_config ~/.ssh/config || gen_config $current_dir/config) || echo "==> No generate space exists!"
+  (gen_config ~/.ssh/config || gen_config "$current_dir"/config) || echo "==> No generate space exists!"
 }
 main "$@"
