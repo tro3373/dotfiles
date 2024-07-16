@@ -11,6 +11,9 @@ alias	script_dirrr
 	# $(patsubst PATTERN,REPLACEMENT,TEXT)
 	mkfile_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 
+snippet	current_pathhh
+	current_path := $(abspath .)
+
 snippet	go_module_name
 alias	nameeee
 	name := $(shell grep module $(mkfile_dir)/go.mod|head -1|sed -e 's,^.*/,,g')
