@@ -1,0 +1,9 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  # -n: interval sec
+  # -d: highlight differences
+  # -t: no title
+  watch -n 1 -d -t "$@"
+}
+main "$@"
