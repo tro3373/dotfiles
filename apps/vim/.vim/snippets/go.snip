@@ -97,6 +97,9 @@ snippet	errors_newwwf
 alias	new_errorsssf
 	errors.Errorf("Failed to ${1:#do somthing}. %s", slog.String("${2:#key}", "${3:#value}"))
 
+snippet	errors_wrapppf
+	errors.Wrapf(err, "Failed to ${1:#do somthing}. %s", slog.String("${2:#key}", "${3:#value}"))
+
 snippet	errors_samplesss
 	# With Stack
 	errors.New("Error")
@@ -351,7 +354,8 @@ snippet read_csvvv
 	}
 
 ###############################################################################
-
+# Date&Time
+###############################################################################
 
 snippet	time_formattt
 	"20060102_150405"
@@ -367,6 +371,15 @@ alias	time_parseee
 
 snippet	time_unixxx
 	t := time.Unix(${1}, 0)
+
+snippet	first_and_last_day_of_monthhh
+	now := time.Now()
+	currentYear, currentMonth, _ := now.Date()
+	currentLocation := now.Location()
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+###############################################################################
 
 snippet	if_stringer
 	if v, ok := ${1:interface}.(fmt.Stringer); ok {

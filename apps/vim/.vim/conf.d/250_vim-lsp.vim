@@ -10,6 +10,8 @@ function! s:on_lsp_buffer_enabled() abort
   " nmap <buffer> <C-]> <plug>(lsp-definition)
   " nmap <buffer> <C-]> :tab split<cr>:LspDefinition<cr>
   nmap <buffer> <C-]> :tab LspDefinition<cr>
+  nmap <buffer> <C-[> <plug>(lsp-document-diagnostics)
+  nmap <buffer> <C-0> <plug>(lsp-code-action)
   " nmap <buffer> <C-]> :tab LspDefinition<cr>
   " nmap <buffer> <C-]> :leftabove LspDefinition
   " nmap <buffer> <C-]> :rightbelow vertical LspDefinition<cr>
@@ -46,6 +48,7 @@ function! s:on_lsp_buffer_enabled() abort
   " MEMO: Buggy!! LspCodeActionSync source.organizeImports
   " autocmd! BufWritePre *.java call execute(['LspCodeActionSync source.organizeImports', 'LspDocumentFormatSync'])
   " autocmd! BufWritePre *.java call execute('LspDocumentFormatSync')
+  " autocmd! BufEnter * call execute('LspDocumentDiagnostic')
 endfunction
 
 augroup lsp_install

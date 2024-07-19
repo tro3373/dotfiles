@@ -45,7 +45,7 @@ let g:ale_linters['typescriptreact'] = ['eslint']
 let g:ale_linters['shell'] = ['shellcheck']
 let g:ale_linters['java'] = []
 let g:ale_linters['python'] = ['black', 'flake8', 'mypy']
-let g:ale_linters['go'] = ['golangci-lint', 'gobuild']
+let g:ale_linters['go'] = ['golangci-lint', 'gobuild', 'staticcheck']
 let g:ale_linters['vue'] = ['eslint']
 let g:ale_linters['json'] = ['jsonlint']
 let g:ale_linters['terraform'] = ['tflint']
@@ -142,6 +142,7 @@ let g:ale_pattern_options = {
 \   'md$': {'ale_linters': []},
 \   '.*src/components/ui/.*.tsx$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/site-packages/.*.py$': {'ale_linters': [], 'ale_fixers': []},
+\   '.*/go/pkg/mod/.*.go$': {'ale_linters': [], 'ale_fixers': []},
 \}
 "\ 'pattern': {'ale_linters': [], 'ale_fixers': []},
 "\ '\.*': {'ale_fixers': ['trim_whitespace', 'remove_trailing_lines']}}
