@@ -2,26 +2,22 @@
 
 current_dir=$(pwd) && readonly current_dir
 
-# find_package_root() {
-#   local project_root
-#   project_root=$(get_git_root)
-#   find "$project_root"/ -type f -name pyproject.toml |
-#     head -1 |
-#     xargs dirname
-# }
-#
-# get_package_path() {
-#   package_root=$(find_package_root)
-#   echo "${dir/$package_root\//}" | sed 's/\//./g'
-# }
-#
+has() { command -v "${1}" >&/dev/null; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
 get_class_names() {
   # ex) class Sample(BaseModel, table=True):  # type: ignore
   cat <"$f" |
     grep -E '^class [A-Z][a-zA-Z0-9_]*\(.*\):' |
     sed -E 's/class ([A-Z][a-zA-Z0-9_]*)\(.*\):.*/\1/g' |
-    tr '\n' ', ' |
-    sed -e 's/,$//'
+    tr '\n' ',' |
+    sed -e 's/,/, /g' -e 's/, $//'
 }
 
 csv_to_all_classes() {
@@ -36,10 +32,8 @@ csv_to_all_classes() {
     done
 }
 
-main() {
-  local dir csv_classes
-  dir=${1:-$current_dir}
-
+cat_init_py() {
+  local csv_classes
   while read -r f; do
     [[ -z $f ]] && continue
     [[ $f =~ ^#.* ]] && continue
@@ -51,12 +45,27 @@ main() {
     # from app.model.sample import Sample
     echo "from .$base_name import $clazzes"
     csv_classes="$csv_classes$clazzes, "
-  done < <(find "$dir"/ -maxdepth 1 -mindepth 1 -type f -name "*.py" | sort)
+  done < <(find "$src_dir"/ -maxdepth 1 -mindepth 1 -type f -name "*.py" | sort)
   echo
   cat <<EOF
 __all__ = [
 $(csv_to_all_classes)
 ]
 EOF
+}
+
+check() {
+  if [[ -z $src_dir || ! -e $src_dir ]]; then
+    error "==> Specify exist directory"
+  fi
+}
+
+main() {
+  local src_dir dst_file csv_classes
+  src_dir=${1:-$current_dir}
+  dst_file=${2:-"$src_dir"/__init__.py}
+  info "==> Generating $dst_file"
+  cat_init_py >"$dst_file"
+  info "==> Done"
 }
 main "$@"

@@ -1,0 +1,143 @@
+#!/usr/bin/env -S bash -e
+
+has() { command -v "${1}" >&/dev/null; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+fire() {
+  cat <"$src_file" |
+    grep -n -E "^(Table|\})" |
+    grep -A1 Table |
+    sed -e 's,[{}],,g' -e 's,:, ,g'
+}
+
+gen_models() {
+  local s e table_name
+  while read -r _line_no _ _table_name; do
+    [[ -z $_line_no ]] && continue
+    [[ $_line_no =~ ^#.* ]] && continue
+    if [[ -z $_table_name ]]; then
+      # [[ $table_name == sample_talbe ]] && continue
+      e=$_line_no
+      # sed "$s,$e $table_name"
+      dst=$dst_dir/$table_name.py
+      info "==> Generating $dst"
+      sed -n "$s,$e p" "$src_file" |
+        gen_model >"$dst"
+    else
+      s=$_line_no
+      table_name=$_table_name
+    fi
+  done < <(fire)
+}
+
+to_upper_camel() { cat - | sed -r 's/.*/\L\0/g; s/_([a-z0-9])/\U\1/g; s/^(.)/\U\1/g'; }
+
+cat_head() {
+  cat <<EOF
+from sqlmodel import Field
+
+from app.model.entity import Entity
+
+
+class $_class_name(Entity, table=True):  # type: ignore
+    __tablename__ = "$table_name"
+
+EOF
+}
+
+parse_line() {
+  _max_length=$(get_max_length)
+  _type=$(get_type "$_type")
+  _ref=$(get_ref)
+  _def=$(get_default)
+  _nullable=$(get_nullable)
+  _field=$(
+    echo -e "$_nullable $_ref $_max_length $_def" |
+      sed -e 's, \+, ,g' -e 's/, \+$//g' -e 's/,$//g' -e 's,^ ,,g'
+  )
+  echo "    $_name: $_type = Field($_field)"
+}
+
+get_ref() {
+  if ! echo "$_opt" | grep -q "ref:"; then
+    return
+  fi
+  echo "$_opt" | sed -r 's/.*ref: > (.*\.id)\].*/foreign_key="\1",/'
+}
+
+get_default() {
+  if ! echo "$_opt" | grep -q "default:"; then
+    return
+  fi
+  echo "$_opt" |
+    sed -e 's,NULL,None,g' |
+    sed -E 's/.*default: (.*)\].*/default=\1,/'
+}
+
+get_max_length() {
+  if ! echo "$_type" | grep -q "varchar("; then
+    return
+  fi
+  echo "$_type" | sed -E 's/.*varchar\(([0-9]+)\).*/max_length=\1,/'
+
+}
+
+get_nullable() {
+  if ! echo "$_opt" | grep -q "not null"; then
+    echo "nullable=True,"
+    return
+  fi
+  echo "nullable=False,"
+}
+
+get_type() {
+  if [[ $1 =~ varchar ]]; then
+    echo "str"
+  elif [[ $1 =~ int ]]; then
+    echo "int"
+  elif [[ $1 =~ double ]]; then
+    echo "float"
+  elif [[ $1 =~ bigint ]]; then
+    echo "int"
+  else
+    echo "str"
+  fi
+}
+
+gen_model() {
+  local _name _type _notnull _def _ref _class_name
+  _class_name="$(echo "$table_name" | to_upper_camel)Entity"
+  cat_head
+  cat - |
+    grep -v -E '(Table|{|}| id bigint|created_at|updated_at|delete_flg)' |
+    while read -r _name _type _opt; do
+      [[ -z $_name ]] && continue
+      # info "==> $_name" 1>&2
+      parse_line
+    done
+}
+
+check() {
+  if [[ -z $src_file || ! -e $src_file ]]; then
+    error "==> Specify exist dbml file"
+  fi
+  if [[ -z $dst_dir || ! -e $dst_dir ]]; then
+    error "valid dst_dir is required"
+  fi
+}
+
+main() {
+  local src_file dst_dir
+  src_file=$1
+  dst_dir=$2
+  check
+  gen_models
+  info "==> Done"
+}
+main "$@"
