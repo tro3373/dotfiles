@@ -1,0 +1,10 @@
+snippet filtered_files_array
+	File[] filteredFiles =
+					Arrays.stream(files)
+									.filter(f -> !ignoredFiles.contains(f.getName()))
+									.toArray(File[]::new);
+snippet filtered_files_list
+	File[] filteredFiles =
+					Arrays.stream(files)
+									.filter(f -> !ignoredFiles.contains(f.getName()))
+									.collect(Collectors.toList());

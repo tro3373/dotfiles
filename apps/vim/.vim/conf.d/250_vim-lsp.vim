@@ -10,16 +10,17 @@ function! s:on_lsp_buffer_enabled() abort
   " nmap <buffer> <C-]> <plug>(lsp-definition)
   " nmap <buffer> <C-]> :tab split<cr>:LspDefinition<cr>
   nmap <buffer> <C-]> :tab LspDefinition<cr>
-  nmap <buffer> <C-[> <plug>(lsp-document-diagnostics)
-  nmap <buffer> <C-0> <plug>(lsp-code-action)
   " nmap <buffer> <C-]> :tab LspDefinition<cr>
   " nmap <buffer> <C-]> :leftabove LspDefinition
   " nmap <buffer> <C-]> :rightbelow vertical LspDefinition<cr>
   " nmap <buffer> <C-]> :tab LspDefinition
   " nmap <buffer> <C-]> LspDefinition
+  nmap <buffer> <C-[> <plug>(lsp-document-diagnostics)
+  nmap <buffer> <f1> <plug>(lsp-code-action)
   nmap <buffer> <f2> <plug>(lsp-rename)
   nmap <buffer> <C-n> <plug>(lsp-next-error)
   nmap <buffer> <C-p> <plug>(lsp-previouse-error)
+
   " Official settings
   " nmap <buffer> gd <plug>(lsp-definition)
   " nmap <buffer> gr <plug>(lsp-references)
