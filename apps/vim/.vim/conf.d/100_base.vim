@@ -67,7 +67,8 @@ set autoread
 " CursorHold: カーソルが一定時間以上静止した時
 augroup auto-checktime
   autocmd!
-  autocmd WinEnter,FocusGained,BufEnter,CursorHold * checktime
+  " autocmd WinEnter,FocusGained,BufEnter,CursorHold * checktime
+  autocmd WinEnter,FocusGained,BufEnter,CursorHold,CursorHoldI * if !&modified && filereadable(expand('%')) | checktime | endif
 augroup END
 
 
