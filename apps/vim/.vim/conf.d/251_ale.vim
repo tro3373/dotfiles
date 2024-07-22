@@ -142,6 +142,7 @@ let g:ale_pattern_options = {
 \   'md$': {'ale_linters': []},
 \   '.*src/components/ui/.*.tsx$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/site-packages/.*.py$': {'ale_linters': [], 'ale_fixers': []},
+\   '.*/site-packages/.*.pyi$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/go/pkg/mod/.*.go$': {'ale_linters': [], 'ale_fixers': []},
 \}
 "\ 'pattern': {'ale_linters': [], 'ale_fixers': []},

@@ -68,7 +68,8 @@ set autoread
 augroup auto-checktime
   autocmd!
   " autocmd WinEnter,FocusGained,BufEnter,CursorHold * checktime
-  autocmd WinEnter,FocusGained,BufEnter,CursorHold,CursorHoldI * if !&modified && filereadable(expand('%')) | checktime | endif
+  " autocmd WinEnter,FocusGained,BufEnter,CursorHold,CursorHoldI * if !&modified && filereadable(expand('%')) | checktime | endif
+  autocmd WinEnter,FocusGained,BufEnter,CursorHold * if !&modified && filereadable(expand('%')) | checktime | endif
 augroup END
 
 
