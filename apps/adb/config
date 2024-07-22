@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+install_common() {
+  if ! has studio; then
+    add_dependency_args studio
+    return
+  fi
+  log "==> Install from studio > sdk tools > platform tools"
+  log "==> Need to remove .path via rm_cache"
+}
