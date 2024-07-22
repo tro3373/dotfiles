@@ -46,7 +46,7 @@ cat_rules() {
 #SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="d00d", MODE="0600", OWNER="TOBEFILLED"
 ## adb protocol on angler (Nexus 6P)
 #SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee7", MODE="0600", OWNER="paul"
-# adb protocol for Pixel 8pro
+# adb protocol for Pixel 5, 8pro
 SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", ATTR{idProduct}=="4ee7", MODE="0666", GROUP="plugdev"
 EOF
 }
