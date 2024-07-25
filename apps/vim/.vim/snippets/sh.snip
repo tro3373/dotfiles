@@ -180,6 +180,30 @@ snippet	timestamp2date
   local d
   d=echo "$(echo $timestamp |cut -d. -f1 |sed -e 's,\([0-9]\{4\}\)\([0-9]\{2\}\)\([0-9]\{2\}\),\1-\2-\3,g') $(echo $timestamp |cut -d. -f2 |sed -e 's,\([0-9]\{2\}\),\1:,g' -e 's,:$,,g')"
 
+# 1週間後の日付
+snippet next_week
+	date -d "+1 week" +%Y-%m-%d
+
+# 1ヶ月前の日付
+snippet last_month
+	date -d "1 month ago" +%Y-%m-%d
+
+# 30日後の日付と曜日
+snippet after_30days
+	date -d "+30 days" +"%Y-%m-%d (%a)"
+
+# 来年の今日の日付
+snippet next_year_today
+	date -d "next year" +%Y-%m-%d
+
+# 3ヶ月後の月初日
+snippet after_3months_first
+	date -d "+3 months" +%Y-%m-01
+
+# 2週間前の月末日
+snippet last_day_2weeks_ago
+	date -d "2 weeks ago last day of month" +%Y-%m-%d
+
 snippet	readuser
 	read -p  "user: " user
 
