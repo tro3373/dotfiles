@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+install_common() { not_supported; }
+install_arch() {
+  def_install perl-image-exiftool
+}

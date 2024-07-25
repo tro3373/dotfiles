@@ -1,0 +1,35 @@
+#!/usr/bin/env -S bash -e
+
+current_dir=$(pwd) && readonly current_dir
+
+fire() {
+  find "$target_dir"/ -type f -name '*JPG' -o -name '*jpg' -o -name '*JPEG' -o -name '*jpeg' | sort
+  find "$target_dir"/ -type f -name '*MP4' -o -name '*mp4' | sort
+}
+hass() {
+  for arg in "$@"; do
+    has "$arg" && continue
+    echo "No $arg command exist." 1>&2
+    exit 1
+  done
+}
+main() {
+  local target_dir
+  hass exiftool
+  target_dir=${1:-$current_dir}
+  fire |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      # opt=CreateDate
+      # if [[ $line =~ .*JPG$ ]]; then
+      #   opt=DateTimeOriginal
+      # fi
+      # 2016:01:01 21:29:10
+      create_time=$(exiftool -T -CreateDate "$line")
+      echo "==> $line: $create_time"
+      # TODO
+      echo exiftool -alldates="2023-09-16 01:05:28" "$line"
+    done
+}
+main "$@"
