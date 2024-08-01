@@ -4,8 +4,8 @@ dummy="echo"
 error() { echo "$*" 1>&2; }
 has() { command -v "${1}" >&/dev/null; }
 check() {
-  if ! has hub; then
-    error "=> No hub command exist."
+  if ! has gh; then
+    error "=> No gh command exist."
     exit 1
   fi
 }

@@ -1,14 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/env -S bash -e
 
-# set -ex
-
-current_dir=$(pwd)
-script_dir=$(
-  cd "$(dirname $0)"
-  pwd
-)
-command_name=$(basename $0)
-config="$(basename $0).conf"
+script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
+command_name=$(basename "$0") && readonly command_name
+config=".$(basename "$0")"
 args=()
 debug=0
 dummy=
@@ -45,14 +39,15 @@ dlog() {
     echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2
   fi
 }
-has() { command -v ${1} >&/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
 add_args() { args=("${args[@]}" "$@"); }
 gen_conf() {
-  if [[ -e $script_dir/slk.conf ]]; then
+  local dst=$HOME/$config
+  if [[ -e $dst ]]; then
     echo "Already slk.conf exist." 1>&2
     exit 1
   fi
-  cat <<'EOF' >>$script_dir/slk.conf
+  cat <<'EOF' >>"$dst"
 #!/usr/bin/env bash
 
 # shellcheck disable=SC2034
@@ -61,17 +56,18 @@ name=MyBot
 icon=:penguin:
 channel=specify #channel_name, or @user_name
 EOF
-  echo "==> $script_dir/slk.conf generated."
+  echo "==> $dst generated."
 }
 
 load_config() {
-  for d in "$current_dir" "$HOME/bin" "$script_dir"; do
+  for d in "$HOME" "$script_dir"; do
     local _conf="$d/$config"
     if [[ ! -e $_conf ]]; then
       continue
     fi
     # echo "==> Loading from $_conf"
-    source $_conf
+    # shellcheck disable=SC1090
+    source "$_conf"
     return
   done
 }
@@ -135,37 +131,40 @@ initialize() {
 }
 
 is_large_message() {
-  local n=$(echo -e "$message" | wc -l)
-  test $n -gt 10
+  local n
+  n=$(echo -e "$message" | wc -l)
+  test "$n" -gt 10
 }
 
 lchannel() {
+  local _user _channel
   case "${channel}" in
     @*)
-      local _user=$(
+      _user=$(
         curl -k -s -X POST https://slack.com/api/users.list --data-urlencode "token=${token}" 2>&1 |
           jq -r ".members | map(select(.name == \"${channel/@/}\" or .profile.display_name == \"${channel/@/}\")) | .[0].id"
       )
-      local _channel=$(
+      _channel=$(
         curl -k -s -X POST https://slack.com/api/im.list --data-urlencode "token=${token}" 2>&1 |
           jq -r ".ims | map(select(.user == \"${_user}\")) | .[].id"
       )
       if [[ -z $_channel ]]; then
-        echo $_user
+        echo "$_user"
         return
       fi
-      echo ${_channel}
+      echo "${_channel}"
       ;;
-    *) echo ${channel} ;;
+    *) echo "${channel}" ;;
   esac
 }
 
 send() {
+  local _filename
   export http_proxy=
   export https_proxy=
   if [[ -n $upload_file_path ]]; then
     dlog "==> Uploading file from $upload_file_path"
-    local _filename=$(basename $upload_file_path)
+    _filename=$(basename "$upload_file_path")
     # ${filetype:+ --form "filetype=${filetype}"} \
     # ${title:+ --form "title=${title}"} \
     $dummy curl -k -fSsL -X POST https://slack.com/api/files.upload \
