@@ -3,9 +3,10 @@
 current_dir=$(pwd) && readonly current_dir
 command_name=$(basename "$0") && readonly command_name
 
-ext=png
-dst_rootd=$current_dir
-dst_fnm=
+opt_webp=0
+ext=
+dst_root_dir=$current_dir
+dst_fnm_no_ext=
 args=()
 usage() {
   cat <<EOF
@@ -17,77 +18,99 @@ Save clipboard image to file
     Options
       -h|--help : Show this usage
       -d        : Specify output directory(Default is current dir)
-      -f        : Specify output fileName(Default is img.png, If exist img_00n.png)
+      -f        : Specify output fileName(No ext. Default is img, If exist img_00n)
+      -w        : Use webp format instead of png
 
 EOF
 }
 add_args() { args+=("$@"); }
 has() { command -v "${1}" >&/dev/null; }
-check() {
-  if ! has gclip && ! has xclip; then
-    echo "No gclip(or xclip) exists" 1>&2
+hass() {
+  for arg in "$@"; do
+    has "$arg" && continue
+    echo "No $arg command exist." 1>&2
     exit 1
-  fi
+  done
+}
+check() {
+  hass gclip cwebp webp
 }
 initialize() {
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
       -h | --help) usage && exit 0 ;;
-      -d) shift && dst_rootd=$1 ;;
-      -f) shift && dst_fnm=$1 ;;
+      -d) shift && dst_root_dir=$(cd "$1" && pwd) ;;
+      -f) shift && dst_fnm_no_ext=$1 ;;
+      -w) opt_webp=1 ;;
       #-f*|--file*) file=${1#*=} ;;
       *) add_args "$1" ;;
     esac
     shift
   done
   check
+
+  ext=png
+  if [[ $opt_webp -eq 1 ]]; then
+    ext=webp
+  fi
   set -e
 }
-fix_dst_fnm() {
+fix_dst_fnm_no_ext() {
   local fnm n dstf
-  fnm=img.$ext
+  fnm=img
   n=0
   while true; do
-    dstf=$dst_rootd/$fnm
+    dstf=$dst_root_dir/$fnm.$ext
     [[ ! -e $dstf ]] && echo "$fnm" && return
     n=$((n + 1))
-    fnm=img_$(printf "%03d" $n).$ext
+    fnm=img_$(printf "%03d" $n)
   done
 }
-paste_for_mac() {
-  # macos - How to save PNG clipboard contents to file on Mac - Stack Overflow
-  # https://stackoverflow.com/questions/47142470/how-to-save-png-clipboard-contents-to-file-on-mac
-  osascript <<EOF
-set png_data to the clipboard as 束class PNGf損
-set the_file to open for access POSIX path of (POSIX file "$dst") with write permission
-write png_data to the_file
-close access the_file
-EOF
+# paste_for_mac() {
+#   # macos - How to save PNG clipboard contents to file on Mac - Stack Overflow
+#   # https://stackoverflow.com/questions/47142470/how-to-save-png-clipboard-contents-to-file-on-mac
+#   osascript <<EOF
+# set png_data to the clipboard as 束class PNGf損
+# set the_file to open for access POSIX path of (POSIX file "$dst") with write permission
+# write png_data to the_file
+# close access the_file
+# EOF
+# }
+# out_xclip() {
+#   xclip -selection clipboard -t "image/$ext" -o >"$dst"
+# }
+tmp_png_to_dst() {
+  if [[ $opt_webp -ne 1 ]]; then
+    mv "$tmp_png_path" "$dst"
+    return
+  fi
+  webp -o "$dst_root_dir" "$tmp_png_path"
+  sleep 0.1
+  mv "$tmp_webp_path" "$dst"
+  rm "$tmp_png_path"
 }
-out() {
-  if [[ -z $dst_rootd ]]; then
-    dst_rootd=$current_dir
+output() {
+  local tmp_png_path tmp_webp_path dst
+  if [[ -z $dst_root_dir ]]; then
+    dst_root_dir=$current_dir
   fi
-  if [[ -z $dst_fnm ]]; then
-    dst_fnm=$(fix_dst_fnm)
+  if [[ -z $dst_fnm_no_ext ]]; then
+    dst_fnm_no_ext=$(fix_dst_fnm_no_ext)
   fi
-  local dst dstd
-  ext=${dst_fnm##.}
-  dst=$dst_rootd/$dst_fnm
-  dstd=$(dirname "$dst")
-  [[ ! -e $dstd ]] && mkdir -p "$dstd"
-  # if [[ $(uname) == "Darwin" ]]; then
-  #   paste_for_mac
-  if has gclip; then
-    gclip -paste -f "$dst"
-  else
-    xclip -selection clipboard -t "image/$ext" -o >"$dst"
-  fi
+  [[ ! -e $dst_root_dir ]] && mkdir -p "$dst_root_dir"
+
+  tmp_no_ext=$dst_fnm_no_ext.$(date +%Y%m%d.%H%M%S)
+  tmp_png_path=$dst_root_dir/$tmp_no_ext.png
+  tmp_webp_path=$dst_root_dir/$tmp_no_ext.webp
+  dst=$dst_root_dir/$dst_fnm_no_ext.$ext
+
+  gclip -paste -f "$tmp_png_path"
+  tmp_png_to_dst
   echo "$dst"
 }
 main() {
   initialize "$@"
-  out
+  output
 }
 main "$@"
