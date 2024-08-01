@@ -10,7 +10,7 @@ readonly _core_apps=(
 readonly _core_apps_additional=(
   nvim go cargo asdf docker
   sheldon ghq mmv jq yq
-  nvr neofetch fzf htop gh exa bat gclip gomi ctags
+  nvr neofetch fzf htop gh exa bat gclip gomi ctags cwebp
   # apps for shell
   shellcheck shfmt
   # apps for go
