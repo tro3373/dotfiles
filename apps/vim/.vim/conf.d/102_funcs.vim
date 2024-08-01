@@ -733,6 +733,11 @@ function! Open()
   call system('open ' . l:current_file_d)
 endfunction
 command! Open call Open()
+" function! OpenTerm()
+"   let l:current_file_d = expand('%:p:h')
+"   call system('tmux split-window -v cd ' . l:current_file_d)
+" endfunction
+" command! OpenTerm call OpenTerm()
 
 function! OpenChangePath()
   " 現在のファイルパスを取得
