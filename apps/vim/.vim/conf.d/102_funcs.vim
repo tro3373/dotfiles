@@ -266,7 +266,7 @@ function! Hugolize() abort
   \ 'date: '.strnow,
   \ 'lastmod: '.strnow,
   \ 'cover:',
-  \ '    image: img.png',
+  \ '    image: img.webp',
   \ 'title: "'.title.'"',
   \ 'categories:',
   \ '  - tech',
