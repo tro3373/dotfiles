@@ -846,3 +846,30 @@ function! ReplaceMdList2Csv(arr) range
 endfunction
 command! -range ReplaceMdList2Csv <line1>,<line2>call ReplaceMdList2Csv('csv')
 command! -range ReplaceMdList2Array <line1>,<line2>call ReplaceMdList2Csv('array')
+
+function! ReplaceTsvNewlines()
+  "================================ gpt say sample1
+  " " 各行をダブルクォーテーションで囲む
+  " %s/^\v(.+)$/\"\1\"/
+  " " ダブルクォーテーション内の改行をスペースに置換
+  " " \v: very magic: (非常に多くのメタ文字を有効にする)
+  " " \zs: 検索パターンの開始位置を指定
+  " " \ze: 検索パターンの終了位置を指定
+  " %s/\v"\zs\n\ze"/ /g
+  " " 各レコードの終端のダブルクォーテーションをタブに置換
+  " %s/\v"\n"/\t/g
+  " " 末端に余計なタブが残る場合があるので削除
+  " %s/\t$//g
+  "================================ gpt say sample2
+  " :%g/[^"]$/: ファイル内のすべての行に対して正規表現[^"]$を満たす行を検索します。
+  " これは、行末がダブルクォーテーションではない行を選択します。
+  " normal! J : 選択された各行に対して、VimノーマルモードのJコマンドを適用します。
+  " :%g/[^"]$/normal! J
+  "================================
+  " ユーザーから置換文字を入力(def: ' ')
+  let l:replace_char = input('Enter replacement character: ', ' ')
+  " 置換処理、行末がダブルクォーテーションでない行に対して改行を入力した文字に置換
+  " \=l:replace_char: `\=`: 右側の置換部分でevalを行う
+  :%s/\([^"]\)$\n/\=submatch(1)..l:replace_char/g
+endfunction
+command! ReplaceTsvNewlines call ReplaceTsvNewlines()
