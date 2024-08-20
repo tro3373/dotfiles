@@ -866,8 +866,12 @@ function! ReplaceTsvNewlines()
   " normal! J : 選択された各行に対して、VimノーマルモードのJコマンドを適用します。
   " :%g/[^"]$/normal! J
   "================================
-  " ユーザーから置換文字を入力(def: ' ')
-  let l:replace_char = input('Enter replacement character: ', ' ')
+  " ユーザーから置換文字を入力
+  let l:replace_char = input('Enter replacement character: ', '')
+  if l:replace_char == ''
+    " デフォルトは ' '
+    let l:replace_char = ' '
+  endif
   " 置換処理、行末がダブルクォーテーションでない行に対して改行を入力した文字に置換
   " \=l:replace_char: `\=`: 右側の置換部分でevalを行う
   :%s/\([^"]\)$\n/\=submatch(1)..l:replace_char/g
