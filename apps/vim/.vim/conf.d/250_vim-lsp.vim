@@ -135,7 +135,7 @@ let g:lsp_settings = {
   \         'plugins': {
   \           'flake8': {
   \             'enabled': v:true,
-  \             'ignore': ["E501"],
+  \             'ignore': ["E501", "W503"],
   \           },
   \           'jedi_definition': {
   \             'enabled': v:true,
@@ -143,7 +143,7 @@ let g:lsp_settings = {
   \             'follow_builtin_imports': v:true,
   \           },
   \           'pycodestyle': {
-  \             'ignore': ["E501"],
+  \             'ignore': ["E501", "W503"],
   \           },
   \           'pylsp_mypy': {
   \             'enabled': v:true,
