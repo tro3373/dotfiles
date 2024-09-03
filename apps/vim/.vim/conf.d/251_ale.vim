@@ -144,6 +144,7 @@ let g:ale_pattern_options = {
 \   '.*/site-packages/.*.py$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/site-packages/.*.pyi$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/go/pkg/mod/.*.go$': {'ale_linters': [], 'ale_fixers': []},
+\   '.*/usr/lib/go/.*.go$': {'ale_linters': [], 'ale_fixers': []},
 \}
 "\ 'pattern': {'ale_linters': [], 'ale_fixers': []},
 "\ '\.*': {'ale_fixers': ['trim_whitespace', 'remove_trailing_lines']}}

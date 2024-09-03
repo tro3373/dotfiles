@@ -859,4 +859,9 @@ snippet containsss
 	import "golang.org/x/exp/slices"
 	slices.Contains([]string{"a", "b", "c"}, "b")
 
-
+# [...] は Go の配列リテラルの書き方で、配列の要素数を省略すると要素数が自動で決まる固定長配列
+# slices.Contains はスライスのみ対応しているため、配列を渡す場合はスライスに変換する必要がある
+# 固定スライスをスライスに変換する場合は [:] を使う
+snippet change_const_to_slice
+	var values = [...]string{"sample"}
+	slices.Contains(values[:], "sample")
