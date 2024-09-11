@@ -363,6 +363,18 @@ let java_highlight_functions = 1
 " highlight link javaType Type
 " highlight link javaDocTags PreProc
 
+" 特定キーワードのハイライト
+augroup highlight_notes
+  " グループ内の既存の自動コマンドをすべて削除
+  autocmd!
+  " `syn match` コマンドで、`MyNote` という名前の新しい構文ルールを定義
+  " /\v: 正規表現の記法を「very magic」に設定(特殊文字をエスケープしなくてもよい)
+  " <: 単語の境界。これにより、キーワードが単語の先頭にあることを保証
+  autocmd Syntax * syn match MyNote /\v<(NOTE|FIXME|TODO|OPTIMIZE|XXX):/
+  " `MyNote` という構文ルールを、Vimの既存の `Todo` ハイライトグループにリンク
+  autocmd Syntax * hi def link MyNote Todo
+augroup END
+
 if g:is_linux
   set clipboard=unnamedplus
   " vmap <C-c> :w !xsel -ib<CR><CR>
