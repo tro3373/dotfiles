@@ -166,6 +166,8 @@ bind generic 0      +@sh -c "echo %(commit) | tee >(~/.dot/bin/clip >&/dev/null)
 bind refs    0      +@sh -c "echo %(tag)%(branch) | tee >(~/.dot/bin/clip >&/dev/null)"
 # Copy commit title to clipboard:
 bind generic 9      +@sh -c "git show -s --format=%s %(commit) | tee >(~/.dot/bin/clip >&/dev/null)"
+# Copy current lint to clipboard:
+bind generic 8      +@sh -c "echo -n '%(text)' | tee >(~/.dot/bin/clip >&/dev/null)"
 
 # Open the version in vim
 bind diff    O      !bash -c "git show %(commit):%(file) | ~/.dot/bin/tovim >&/dev/null"
