@@ -862,6 +862,7 @@ snippet containsss
 # [...] は Go の配列リテラルの書き方で、配列の要素数を省略すると要素数が自動で決まる固定長配列
 # slices.Contains はスライスのみ対応しているため、配列を渡す場合はスライスに変換する必要がある
 # 固定スライスをスライスに変換する場合は [:] を使う
+# [[golang] Go言語は、map、slice、arrayは定数化出来ない仕様。では代用策は？ #Go - Qiita](https://qiita.com/rikimaru-odd-person/items/4b460e14a6dfc738ca97):w
 snippet change_const_to_slice
 	var values = [...]string{"sample"}
 	slices.Contains(values[:], "sample")
