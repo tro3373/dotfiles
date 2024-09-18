@@ -140,6 +140,8 @@ let g:ale_pattern_options = {
 \   '\.min\.js$': {'ale_linters': [], 'ale_fixers': []},
 \   '\.min\.css$': {'ale_linters': [], 'ale_fixers': []},
 \   'md$': {'ale_linters': []},
+\   '.*/node_modules/.*.ts$': {'ale_linters': [], 'ale_fixers': []},
+\   '.*/node_modules/.*.js$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*src/components/ui/.*.tsx$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/site-packages/.*.py$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/site-packages/.*.pyi$': {'ale_linters': [], 'ale_fixers': []},
