@@ -1,0 +1,11 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  cd ~/.local/share/vim-lsp-settings/servers/pylsp-all/venv/bin
+  if find ./mypy >&/dev/null; then
+    echo "mypy already exists"
+    return
+  fi
+  ./pip install pylsp-mypy
+}
+main "$@"
