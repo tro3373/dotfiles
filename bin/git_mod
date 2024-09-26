@@ -1,7 +1,7 @@
 #!/usr/bin/env -S bash -e
 
 main() {
-  git status -s |
+  git status -s "$@" |
     cut -c4- |
     while read -r line; do
       [[ -z $line ]] && continue

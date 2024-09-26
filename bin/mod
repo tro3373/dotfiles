@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
 main() {
-  git_mod | v "$@"
+  git_mod "$@" | v
 }
 main "$@"
