@@ -99,6 +99,20 @@ let g:ale_fixers['sql']        = [ { buffer -> {'command': 'command -v sql-forma
 let g:ale_go_golangci_lint_package = 1 "When set to `1`, the whole Go package will be checked instead of only the current file.
 let g:ale_go_gofmt_options = '-s'
 let g:ale_go_gometalinter_options = '--enable=gosimple --enable=staticcheck'
+" ST1000: - Incorrect or missing package comment
+" パッケージに対する適切なコメントがない、または不適切なコメントがある場合に警告します。
+" パッケージの目的や機能を簡潔に説明するコメントを期待します。
+" ST1003: - Poorly chosen identifier
+" 不適切な識別子（変数名、関数名、パッケージ名など）を使用している場合に警告します。
+" 主な規則:
+" パッケージ名は小文字のみを使用し、アンダースコアやキャメルケースを避ける
+" 変数名やメソッド名は適切なキャメルケースを使用する
+" 頭字語（例: URL、HTTP）は大文字または小文字で一貫して使用する
+" ST1016: - Use consistent method receiver names
+" 同じ型に対するメソッドレシーバの名前が一貫していない場合に警告します。
+" 例えば、同じ構造体に対して異なるレシーバ名を使用すると警告されます:
+" let g:ale_go_staticcheck_options = '-checks=all,-ST1000,-ST1003,-ST1016'
+let g:ale_go_staticcheck_options = '-checks=all,-ST1000'
 " Shell
 " SC1090: Use of uninitialized value. This warning is triggered when a shell script uses a variable that is not set.
 " SC2059: Command not found. This warning is triggered when a shell script uses a command that is not executable.
@@ -147,6 +161,8 @@ let g:ale_pattern_options = {
 \   '.*/site-packages/.*.pyi$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/go/pkg/mod/.*.go$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/usr/lib/go/.*.go$': {'ale_linters': [], 'ale_fixers': []},
+\   '/var/lib/snapd/snap/go/.*\.go$': {'ale_enabled': 0},
+\   '/usr/local/go/.*\.go$': {'ale_enabled': 0},
 \}
 "\ 'pattern': {'ale_linters': [], 'ale_fixers': []},
 "\ '\.*': {'ale_fixers': ['trim_whitespace', 'remove_trailing_lines']}}
