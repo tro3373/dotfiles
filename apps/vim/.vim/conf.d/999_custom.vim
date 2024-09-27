@@ -5,3 +5,5 @@
 " hi! MatchParen cterm=NONE,bold gui=NONE,bold guibg=#5f9ea0 guifg=NON
 hi! MatchParen cterm=NONE,bold gui=NONE,bold guibg=#6495ed guifg=NONE
 
+" 検索結果上にカーソルがある場合のハイライト
+highlight CurSearch guibg=#6495ed guifg=white
