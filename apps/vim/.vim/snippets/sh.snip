@@ -649,3 +649,7 @@ snippet curl_json_fileee
 snippet def_commanddd
 alias show_native_pathhh
 	command -p -v "${1}" # -p: Perform the command search using a default value for PATH that is guaranteed to find all of the standard utilities.
+
+snippet read_a_b
+	read -r a b <<< $(echo "\$1" | tr ':' ' ')
+

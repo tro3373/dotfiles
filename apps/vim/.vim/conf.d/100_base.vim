@@ -364,6 +364,7 @@ let java_highlight_functions = 1
 " highlight link javaDocTags PreProc
 
 " 特定キーワードのハイライト
+" NOT WORK case exist
 augroup highlight_notes
   " グループ内の既存の自動コマンドをすべて削除
   autocmd!
