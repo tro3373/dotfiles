@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+install_common() { not_supported; }
+install_wsl() { not_supported; }
+install_arch() {
+  install_via_os_default
+}
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
