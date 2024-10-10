@@ -4,11 +4,26 @@ dummy="echo"
 setup_sls=0
 gen_app_cred=0
 
-has() { command -v ${1} >&/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
+
+usage() {
+  cat <<'EOF'
+gcloud auth list # List accounts
+gcloud functions runtimes list # List runtimes
+gcloud config configurations list # List configurations
+gcloud storage ls # List buckets
+
+-h: Show this message
+-e: Execute command
+sls: Setup Serverless Framework
+appcred: Generate application default credentials
+EOF
+}
 
 initialize() {
   for arg in "$@"; do
     case "$arg" in
+      -h) usage ;;
       -e) dummy= ;;
       sls) setup_sls=1 ;;
       appcred) gen_app_cred=1 ;;
@@ -135,7 +150,7 @@ show_services() {
 }
 
 enable_services() {
-  $dummy gcloud services enable $enable_services_list
+  $dummy gcloud services enable "$enable_services_list"
 }
 
 create_service_account() {
@@ -146,7 +161,7 @@ create_service_account() {
   for role in $roles; do
     $dummy gcloud projects add-iam-policy-binding $project \
       --member=serviceAccount:$service_account@$project.iam.gserviceaccount.com \
-      --role=${role}
+      --role="${role}"
   done
 }
 
