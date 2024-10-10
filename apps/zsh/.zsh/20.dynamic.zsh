@@ -123,8 +123,9 @@ _cat_path() {
   add_path /usr/local/sbin
   add_path /usr/local/bin
   add_path /snap/bin
-  add_path /opt/bin              # for docker-machine
-  add_path /usr/local/heroku/bin # for heroku
+  add_path /opt/bin                  # for docker-machine
+  add_path /usr/local/heroku/bin     # for heroku
+  add_path /opt/google-cloud-cli/bin # for gcloud
 
   add_path ${HOME}/.fzf/bin
   add_path ${HOME}/.anyenv/bin
