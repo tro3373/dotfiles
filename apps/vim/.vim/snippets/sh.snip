@@ -451,7 +451,11 @@ snippet	initializzzz
 
 snippet	innnk
 	ink() {
-		if [[ $# -eq 0 ]]; then
+		local stdin=
+		if [[ -p /dev/stdin ]]; then
+			stdin="$(cat <&0)"
+		fi
+		if [[ $# -eq 0 && -z $stdin ]]; then
 			return
 		fi
 
@@ -467,14 +471,14 @@ snippet	innnk
 		export gray="0;37m"
 		export white="$close"
 
-		local text="$*"
+		local text="$stdin$*"
 		local color="$close"
 
-		case $1 in
+		case \$1 in
 			black | red | green | yellow | blue | purple | cyan | gray | white)
-				eval color="\$$1"
+				eval color="\\$\$1"
 				# text="$stdin${*:2}"
-				text=$(echo -e "${*:2}" | sed -e 's,%,%%,g')
+				text=$(echo -e "$stdin${*:2}" | sed -e 's,%,%%,g')
 				;;
 		esac
 
