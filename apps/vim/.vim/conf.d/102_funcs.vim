@@ -293,23 +293,26 @@ function! Chomp(string)
   return trim(a:string)
 endfunction
 
-function! SaveMemoInner(outdir, createDirectory, withHugolize) abort
+function! SaveMemoInner(outdir, defaultTitle, createDirectory, withHugolize) abort
   let dir = a:outdir
   if !isdirectory(expand(dir))
     call mkdir(expand(dir), "p")
   endif
   let now = localtime()
+  let stryyyy = strftime("%Y", now)
   let strnow = strftime("%Y-%m-%d", now)
-  let title = input("FileName: ", "",  "file")
+  let title = input("Title: ", a:defaultTitle,  "file")
   redraw
   if title != ""
     let title = "-" . title
   endif
   let name = strnow . title
   if a:createDirectory == 1
-    let dir = dir . "/" . name
+    let dir = dir . "/" . stryyyy . "/" . name
     call mkdir(expand(dir), "p")
-    let name = "index"
+    if a:withHugolize == 1
+      let name = "index"
+    endif
   endif
   exe ":w " . dir . "/" . name . ".md"
   if a:withHugolize == 1
@@ -319,13 +322,18 @@ function! SaveMemoInner(outdir, createDirectory, withHugolize) abort
   return 0
 endfun
 
-function! SaveMemo() abort
-  call SaveMemoInner("~/.mo", 0, 0)
+function! SaveMemoPrv() abort
+  call SaveMemoInner("~/.mo/prv", "log", 1, 0)
 endfun
-command! SaveMemo call SaveMemo()
+command! SaveMemoPrv call SaveMemoPrv()
+
+function! SaveMemoJob() abort
+  call SaveMemoInner("~/.mo/job", "log", 1, 0)
+endfun
+command! SaveMemoJob call SaveMemoJob()
 
 function! SaveMd() abort
-  call SaveMemoInner("~/.md/content/posts", 1, 1)
+  call SaveMemoInner("~/.md/content/posts", "", 1, 1)
 endfun
 command! SaveMd call SaveMd()
 
