@@ -1,0 +1,18 @@
+#!/usr/bin/env -S bash -e
+
+src_dir="$HOME/.mo"
+
+main() {
+  if [[ $1 == "p" ]]; then
+    src_dir="$src_dir/prv"
+  fi
+  if [[ $1 == "j" ]]; then
+    src_dir="$src_dir/job"
+  fi
+  rg --files "$src_dir/" |
+    sed -e 's,^\(.*/\(job\|prv\)\)/,\1 ,g' |
+    sort -k2 -r |
+    sed -e 's,\(job\|\prv\) ,\1/,g' |
+    v
+}
+main "$@"
