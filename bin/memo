@@ -3,11 +3,9 @@
 src_dir="$HOME/.mo"
 
 main() {
+  src_dir="$src_dir/job"
   if [[ $1 == "p" ]]; then
     src_dir="$src_dir/prv"
-  fi
-  if [[ $1 == "j" ]]; then
-    src_dir="$src_dir/job"
   fi
   rg --files "$src_dir/" |
     sed -e 's,^\(.*/\(job\|prv\)\)/,\1 ,g' |
