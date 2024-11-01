@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+is_installed() { [[ -e node_modules/.bin/biome ]]; }
+install_common() {
+  if [[ ! -e package.json ]]; then
+    exe npm init
+  fi
+  exe npm install --dev @biomejs/biome
+}
+setting_common() {
+  if [[ ! -e package.json ]]; then
+    exe npm init
+  fi
+  if [[ ! -e biome.json ]]; then
+    # shellcheck disable=SC2154
+    exe ln -s "$app_dir"/biome.json .
+  fi
+  log "==> Check the biome configuration"
+  log "npx biome check --verbose"
+}

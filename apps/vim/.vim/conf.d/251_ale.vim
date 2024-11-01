@@ -38,10 +38,10 @@ let g:ale_javascript_prettier_use_local_config = 1
 
 " Linter
 let g:ale_linters = {}
-let g:ale_linters['javascript'] = ['eslint']
-let g:ale_linters['typescript'] = ['eslint']
-let g:ale_linters['javascriptreact'] = ['eslint']
-let g:ale_linters['typescriptreact'] = ['eslint']
+let g:ale_linters['javascript'] = ['eslint', 'biome']
+let g:ale_linters['typescript'] = ['eslint', 'biome']
+let g:ale_linters['javascriptreact'] = ['eslint', 'biome']
+let g:ale_linters['typescriptreact'] = ['eslint', 'biome']
 let g:ale_linters['shell'] = ['shellcheck']
 let g:ale_linters['java'] = []
 let g:ale_linters['python'] = ['black', 'flake8', 'mypy']
@@ -56,8 +56,8 @@ let g:ale_fixers = {}
 " let g:ale_fixers['*']          = ['trim_whitespace', 'remove_trailing_lines']
 let g:ale_fixers['(?!markdown)'] = ['trim_whitespace', 'remove_trailing_lines']
 " let g:ale_fixers['javascript'] = ['prettier-eslint', 'prettier', 'eslint']
-let g:ale_fixers['javascript'] = ['prettier', 'eslint']
-let g:ale_fixers['typescript'] = ['prettier', 'eslint']
+let g:ale_fixers['javascript'] = ['prettier', 'eslint', 'biome']
+let g:ale_fixers['typescript'] = ['prettier', 'eslint', 'biome']
 let g:ale_fixers['javascriptreact'] = ['prettier', 'eslint']
 let g:ale_fixers['typescriptreact'] = ['prettier', 'eslint']
 let g:ale_fixers['vue']        = ['prettier', 'eslint']
