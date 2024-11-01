@@ -100,6 +100,10 @@ alias	new_errorsssf
 snippet	errors_wrapppf
 	errors.Wrapf(err, "Failed to ${1:#do somthing}. %s", slog.String("${2:#key}", "${3:#value}"))
 
+snippet import_errorsss
+	import "github.com/efficientgo/core/errors"
+	fmt.Printf("Error: %+v", err)
+
 snippet	errors_samplesss
 	# With Stack
 	errors.New("Error")
@@ -866,3 +870,41 @@ snippet containsss
 snippet change_const_to_slice
 	var values = [...]string{"sample"}
 	slices.Contains(values[:], "sample")
+
+snippet mainnn
+	package main
+
+	import (
+		"fmt"
+		"log"
+		"log/slog"
+		"os"
+		"regexp"
+
+		"github.com/efficientgo/core/errors"
+	)
+
+	func sub() error {
+		targetDir := "./keep"
+		files, err := os.ReadDir(targetDir)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to readDir. %s", slog.String("dir", targetDir))
+		}
+		r := regexp.MustCompile(\`.*json\`)
+		for _, f := range files {
+			name := f.Name()
+			if !r.MatchString(name) {
+				continue
+			}
+			log.Println("==> ", name, f)
+		}
+		// glob ./keep/*json files
+		return nil
+	}
+
+	func main() {
+		err := sub()
+		if err != nil {
+			fmt.Printf("Error: %+v", err)
+		}
+	}
