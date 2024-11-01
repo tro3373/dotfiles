@@ -27,22 +27,24 @@ let g:quickrun_config = {
 \   "do": {
 \       "exec" : ["make do"],
 \   },
-\   "run": {
-\       "exec" : ["make run"],
+\   "go": {
+\       "exec" : ["go run " . expand('%:p')],
 \   },
-\   "node": {
+\   "javascript": {
 \       "exec" : ["node " . expand('%:p')],
 \   }
 \}
 
 function! QuickRunAuto() abort
   let _ft = &ft
-  if _ft == "go"
-    :QuickRun run
+  let supported_ft = keys(g:quickrun_config)
+  if index(supported_ft, _ft) != -1
+    execute 'QuickRun ' . _ft
   else
     :QuickRun
   endif
 endfunction
 command! QuickRunAuto call QuickRunAuto()
+command! QuickRunDo QuickRun do
 " nmap <Leader>r :QuickRun<CR>
 nmap <Leader>r :QuickRunAuto<CR>
