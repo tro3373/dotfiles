@@ -10,7 +10,9 @@ install_arch() {
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
-install_mac() { not_supported; }
+install_mac() {
+  exe brew install --cask yubico-authenticator
+}
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 setting_common() { no_settings; }
