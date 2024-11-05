@@ -164,10 +164,10 @@ snippet touchhh
 snippet	file_write_jsonnn
 alias		write_file_jsonnn
 	file, _ := json.MarshalIndent(data, "", " ")
-	_ = ioutil.WriteFile("test.json", file, 0664) //#nosec G306
+	_ = os.WriteFile("test.json", file, 0664) //#nosec G306
 snippet	file_read_jsonnn
 alias		read_file_jsonnn
-	raw, err := ioutil.ReadFile(filepath.Clean("test.json"))
+	raw, err := os.ReadFile(filepath.Clean("test.json"))
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exist(1)
@@ -177,7 +177,7 @@ alias		read_file_jsonnn
 snippet	file_writeee
 alias		write_fileee
 	func WriteFile(filePath, data string) error {
-		return ioutil.WriteFile(filePath, []byte(data), 0664) //#nosec G306
+		return os.WriteFile(filePath, []byte(data), 0664) //#nosec G306
 	}
 snippet	file_read_if_existttt
 alias		read_file_if_existtt
@@ -185,7 +185,7 @@ alias		read_file_if_existtt
 		if len(filePath) == 0 || !Exists(filePath) {
 			return "", nil
 		}
-		raw, err := ioutil.ReadFile(filepath.Clean(filePath))
+		raw, err := os.ReadFile(filepath.Clean(filePath))
 		if err != nil {
 			return "", err
 		}
@@ -324,7 +324,7 @@ snippet	read_yamlsss
 	}
 
 	func readYaml(path string) (map[string]interface{}, error) {
-		b, err := ioutil.ReadFile(path)
+		b, err := os.ReadFile(path)
 		if err != nil {
 			return nil, err
 		}
