@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC2034
+current_dir=$(pwd) && readonly current_dir
 command_name=$(basename "$0") && readonly command_name
 script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
 apps_dir=$(cd "$script_dir/../apps" && pwd) && readonly apps_dir
