@@ -11,7 +11,7 @@ install_common() {
 setting_common() {
   if [[ ! -e $current_dir/biome.json ]]; then
     # shellcheck disable=SC2154
-    exe ln -s "$app_dir"/biome.json $current_dir/biome.json
+    exe ln -s "$app_dir"/biome.json "$current_dir"/biome.json
   fi
   log "==> Check the biome configuration"
   log "npx biome check --verbose"

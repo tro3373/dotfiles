@@ -57,6 +57,11 @@ install_mac() {
 
 setting_common() {
   make_link_dot2home
+  # shellcheck disable=SC2154
+  if [[ ! -e $current_dir/.tflint.hcl ]]; then
+    # shellcheck disable=SC2154
+    exe ln -s "$app_dir"/.tflint.hcl "$current_dir"/.tflint.hcl
+  fi
   show_usage
 }
 # setting_wsl() { no_settings; }
