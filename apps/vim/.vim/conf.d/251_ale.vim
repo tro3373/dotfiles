@@ -48,6 +48,7 @@ let g:ale_linters['python'] = ['black', 'flake8', 'mypy']
 let g:ale_linters['go'] = ['golangci-lint', 'gobuild', 'staticcheck']
 let g:ale_linters['vue'] = ['eslint']
 let g:ale_linters['json'] = ['jsonlint']
+" let g:ale_linters['terraform'] = ['tflint', 'tfsec']
 let g:ale_linters['terraform'] = ['tflint']
 let g:ale_linters['lua'] = ['luacheck']
 
@@ -77,6 +78,7 @@ let g:ale_fixers['zsh']        = ['shfmt']
 let g:ale_fixers['sh']         = ['shfmt']
 let g:ale_fixers['go']         = ['goimports', 'gopls', 'gofmt' ]
 " let g:ale_fixers['terraform']  = ['tflint']
+let g:ale_fixers['terraform']  = ['trim_whitespace', 'remove_trailing_lines']
 let g:ale_fixers['yaml']       = ['yamlfmt']
 let g:ale_fixers['lua']        = ['stylua']
 " let g:ale_fixers['markdown']   = ['prettier']
@@ -140,7 +142,8 @@ let g:ale_python_flake8_options = '--max-line-length=120 --ignore=E501,F401'
 "             and the errors will only be reported
 "             when the imported module is actually used.
 let g:ale_python_mypy_options = '--ignore-missing-imports --follow-imports=skip'
-
+" Terraform
+" let g:ale_terraform_tflint_options = '-f json --recursive'
 
 " let g:ale_fix_on_save_ignore = ['sh', 'javascript']
 " let g:ale_fix_on_save_ignore = ['markdown', 'javascript']
