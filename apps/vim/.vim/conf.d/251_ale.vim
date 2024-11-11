@@ -36,6 +36,9 @@ let g:ale_echo_msg_format = '[ALE:%linter%] [%severity%] [%code]: %%s'
 " ローカルの設定ファイルを考慮する
 let g:ale_javascript_prettier_use_local_config = 1
 
+" Disable LSP
+let g:ale_disable_lsp = 0
+
 " Linter
 let g:ale_linters = {}
 let g:ale_linters['javascript'] = ['eslint', 'biome']
