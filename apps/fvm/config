@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+install_common() {
+  exe "curl -fsSL https://fvm.app/install.sh | sudo bash"
+}
