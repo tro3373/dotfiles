@@ -1,35 +1,13 @@
 #!/usr/bin/env bash
 
 install_common() {
-  install_via_os_default
+  # install_via_os_default
+  if ! has asdf; then
+    add_dependency_args asdf
+    return
+  fi
+  if ! asdf plugin-list | grep deno >&/dev/null; then
+    exe asdf plugin-add terraform
+  fi
+  exe asdf install terraform latest
 }
-# install_arch()   { not_supported; }
-install_msys()   { not_supported; }
-install_cygwin() { not_supported; }
-install_mac()    { not_supported; }
-install_ubuntu() { not_supported; }
-install_redhat() { not_supported; }
-setting_common() { no_settings; }
-setting_arch()   { no_settings; }
-setting_msys()   { no_settings; }
-setting_cygwin() { no_settings; }
-setting_mac()    { no_settings; }
-setting_ubuntu() { no_settings; }
-setting_redhat() { no_settings; }
-#is_installed
-#install_via_os_default
-#def_install
-#is_debug
-#is_dry
-#log
-#dlog
-#not_supported
-#make_link_dot2home
-#make_lnk_with_bkup
-#cd_work
-#make_work_if_needed
-#dl
-#dl_unzip
-#dl_untar
-#github
-#github_user_local
