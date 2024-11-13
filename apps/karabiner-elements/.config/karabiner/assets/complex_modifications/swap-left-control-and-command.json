@@ -1,0 +1,60 @@
+{
+  "title": "Swap Left Control Command Settings",
+  "rules": [
+    {
+      "description": "left_control to left_command(without iterm2/Wezterm)",
+      "manipulators": [
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "left_control",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "left_command"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.googlecode\\.iterm2",
+                "^com\\.github\\.wez\\.wezterm"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "basic",
+          "from": {
+            "key_code": "caps_lock",
+            "modifiers": {
+              "optional": [
+                "any"
+              ]
+            }
+          },
+          "to": [
+            {
+              "key_code": "left_command"
+            }
+          ],
+          "conditions": [
+            {
+              "type": "frontmost_application_unless",
+              "bundle_identifiers": [
+                "^com\\.googlecode\\.iterm2",
+                "^com\\.github\\.wez\\.wezterm"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

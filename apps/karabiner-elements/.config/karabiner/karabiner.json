@@ -4,6 +4,45 @@
             "complex_modifications": {
                 "rules": [
                     {
+                        "description": "left_control to left_command(without iterm2/Wezterm)",
+                        "manipulators": [
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.googlecode\\.iterm2",
+                                            "^com\\.github\\.wez\\.wezterm"
+                                        ],
+                                        "type": "frontmost_application_unless"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "left_control",
+                                    "modifiers": { "optional": ["any"] }
+                                },
+                                "to": [{ "key_code": "left_command" }],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "bundle_identifiers": [
+                                            "^com\\.googlecode\\.iterm2",
+                                            "^com\\.github\\.wez\\.wezterm"
+                                        ],
+                                        "type": "frontmost_application_unless"
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "caps_lock",
+                                    "modifiers": { "optional": ["any"] }
+                                },
+                                "to": [{ "key_code": "left_command" }],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
                         "description": "Paste(Shift+Insert)",
                         "manipulators": [
                             {
@@ -161,68 +200,6 @@
                                         "modifiers": ["left_command"]
                                     }
                                 ],
-                                "type": "basic"
-                            }
-                        ]
-                    },
-                    {
-                        "description": "left_control to left_command(without iTerm)",
-                        "manipulators": [
-                            {
-                                "conditions": [
-                                    {
-                                        "bundle_identifiers": [
-                                            "^com\\.googlecode\\.iterm2",
-                                            "^com\\.microsoft\\.Excel",
-                                            "^com\\.microsoft\\.rdc\\.macos",
-                                            "^commentout-org\\.jkiss\\.dbeaver\\.core\\.product"
-                                        ],
-                                        "type": "frontmost_application_unless"
-                                    }
-                                ],
-                                "from": {
-                                    "key_code": "left_control",
-                                    "modifiers": { "optional": ["any"] }
-                                },
-                                "to": [{ "key_code": "left_command" }],
-                                "type": "basic"
-                            },
-                            {
-                                "conditions": [
-                                    {
-                                        "bundle_identifiers": [
-                                            "^com\\.googlecode\\.iterm2",
-                                            "^com\\.microsoft\\.Excel",
-                                            "^com\\.microsoft\\.rdc\\.macos",
-                                            "^commentout-org\\.jkiss\\.dbeaver\\.core\\.product"
-                                        ],
-                                        "type": "frontmost_application_unless"
-                                    }
-                                ],
-                                "from": {
-                                    "key_code": "caps_lock",
-                                    "modifiers": { "optional": ["any"] }
-                                },
-                                "to": [{ "key_code": "left_command" }],
-                                "type": "basic"
-                            },
-                            {
-                                "conditions": [
-                                    {
-                                        "bundle_identifiers": [
-                                            "^com\\.googlecode\\.iterm2",
-                                            "^com\\.microsoft\\.Excel",
-                                            "^com\\.microsoft\\.rdc\\.macos",
-                                            "^commentout-org\\.jkiss\\.dbeaver\\.core\\.product"
-                                        ],
-                                        "type": "frontmost_application_unless"
-                                    }
-                                ],
-                                "from": {
-                                    "key_code": "left_command",
-                                    "modifiers": { "optional": ["any"] }
-                                },
-                                "to": [{ "key_code": "left_control" }],
                                 "type": "basic"
                             }
                         ]
