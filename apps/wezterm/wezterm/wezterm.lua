@@ -20,10 +20,18 @@ end
 -- ここまでは定型文
 -- この先でconfigに各種設定を書いていく
 
+-- Color Scheme
+-- config.color_scheme = 'Batman'
+config.color_scheme = 'Railscasts (base16)'
+-- config.color_scheme = 'Apprentice (base16)'
+-- config.color_scheme = 'Apprentice (Gogh)'
+
+-- フォント
+config.font = wezterm.font('Osaka-Mono', { weight = 'Bold', italic = false })
 -- フォントサイズ
-config.font_size = 13.0
+config.font_size = 19.0
 -- 背景の非透過率（1なら完全に透過させない）
-config.window_background_opacity = 0.80
+config.window_background_opacity = 0.90
 
 -- キーバインド
 config.keys = {
@@ -50,67 +58,66 @@ config.keys = {
         mods = "CMD",
         action = wezterm.action.CloseCurrentPane { confirm = true },
     },
-    -- ⌘ Ctrl ,で下方向にペイン分割
-    {
-    {
-        key = ",",
-        mods = "CMD|CTRL",
-        action = wezterm.action { SplitVertical = { domain = "CurrentPaneDomain" } },
-    },
-    -- ⌘ Ctrl .で右方向にペイン分割
-    {
-        key = ".",
-        mods = "CMD|CTRL",
-        action = wezterm.action { SplitHorizontal = { domain = "CurrentPaneDomain" } },
-    },
-    -- ⌘ Ctrl oでペインの中身を入れ替える
-    {
-        key = "o",
-        mods = "CMD|CTRL",
-        action = wezterm.action.RotatePanes 'Clockwise'
-    },
-    -- ⌘ Ctrl hjklでペインの移動
-    {
-        key = 'h',
-        mods = 'CMD|CTRL',
-        action = wezterm.action.ActivatePaneDirection 'Left',
-    },
-    {
-        key = 'j',
-        mods = 'CMD|CTRL',
-        action = wezterm.action.ActivatePaneDirection 'Down',
-    },
-    {
-        key = 'k',
-        mods = 'CMD|CTRL',
-        action = wezterm.action.ActivatePaneDirection 'Up',
-    },
-    {
-        key = 'l',
-        mods = 'CMD|CTRL',
-        action = wezterm.action.ActivatePaneDirection 'Right',
-    },
-    -- ⌘ Ctrl Shift hjklでペイン境界の調整
-    {
-        key = 'h',
-        mods = 'CMD|CTRL|SHIFT',
-        action = wezterm.action.AdjustPaneSize { 'Left', 2 },
-    },
-    {
-        key = 'j',
-        mods = 'CMD|CTRL|SHIFT',
-        action = wezterm.action.AdjustPaneSize { 'Down', 2 },
-    },
-    {
-        key = 'k',
-        mods = 'CMD|CTRL|SHIFT',
-        action = wezterm.action.AdjustPaneSize { 'Up', 2 },
-    },
-    {
-        key = 'l',
-        mods = 'CMD|CTRL|SHIFT',
-        action = wezterm.action.AdjustPaneSize { 'Right', 2 },
-    },
+    -- -- ⌘ Ctrl ,で下方向にペイン分割
+    -- {
+    --     key = ",",
+    --     mods = "CMD|CTRL",
+    --     action = wezterm.action { SplitVertical = { domain = "CurrentPaneDomain" } },
+    -- },
+    -- -- ⌘ Ctrl .で右方向にペイン分割
+    -- {
+    --     key = ".",
+    --     mods = "CMD|CTRL",
+    --     action = wezterm.action { SplitHorizontal = { domain = "CurrentPaneDomain" } },
+    -- },
+    -- -- ⌘ Ctrl oでペインの中身を入れ替える
+    -- {
+    --     key = "o",
+    --     mods = "CMD|CTRL",
+    --     action = wezterm.action.RotatePanes 'Clockwise'
+    -- },
+    -- -- ⌘ Ctrl hjklでペインの移動
+    -- {
+    --     key = 'h',
+    --     mods = 'CMD|CTRL',
+    --     action = wezterm.action.ActivatePaneDirection 'Left',
+    -- },
+    -- {
+    --     key = 'j',
+    --     mods = 'CMD|CTRL',
+    --     action = wezterm.action.ActivatePaneDirection 'Down',
+    -- },
+    -- {
+    --     key = 'k',
+    --     mods = 'CMD|CTRL',
+    --     action = wezterm.action.ActivatePaneDirection 'Up',
+    -- },
+    -- {
+    --     key = 'l',
+    --     mods = 'CMD|CTRL',
+    --     action = wezterm.action.ActivatePaneDirection 'Right',
+    -- },
+    -- -- ⌘ Ctrl Shift hjklでペイン境界の調整
+    -- {
+    --     key = 'h',
+    --     mods = 'CMD|CTRL|SHIFT',
+    --     action = wezterm.action.AdjustPaneSize { 'Left', 2 },
+    -- },
+    -- {
+    --     key = 'j',
+    --     mods = 'CMD|CTRL|SHIFT',
+    --     action = wezterm.action.AdjustPaneSize { 'Down', 2 },
+    -- },
+    -- {
+    --     key = 'k',
+    --     mods = 'CMD|CTRL|SHIFT',
+    --     action = wezterm.action.AdjustPaneSize { 'Up', 2 },
+    -- },
+    -- {
+    --     key = 'l',
+    --     mods = 'CMD|CTRL|SHIFT',
+    --     action = wezterm.action.AdjustPaneSize { 'Right', 2 },
+    -- },
 
 }
 
@@ -125,6 +132,6 @@ config.mouse_bindings = {
 }
 
 -- タブを下に表示（デフォルトでは上にある）
-config.tab_bar_at_bottom = true
+-- config.tab_bar_at_bottom = true
 
 return config
