@@ -8,6 +8,18 @@ endif
 "=============================================
 " hide/no hide markdown controll word
 let g:vim_markdown_conceal = 1
+" 0 Text is shown normally
+" 1 Each block of concealed text is replaced with one
+"   character.  If the syntax item does not have a custom
+"   replacement character defined (see |:syn-cchar|) the
+"   character defined in 'listchars' is used.
+"   It is highlighted with the "Conceal" highlight group.
+" 2 Concealed text is completely hidden unless it has a
+"   custom replacement character defined (see
+"   |:syn-cchar|).
+" 3 Concealed text is completely hidden.
+" set conceallevel = 2
+" let g:vim_markdown_conceal_code_blocks = 0
 
 " [vim-markdownを入れた時にインサートモードが遅くなったときの回避法 - ごずろぐ](https://gozuk16.hatenablog.com/entry/2017/12/27/232441)
 " 折りたたみ設定

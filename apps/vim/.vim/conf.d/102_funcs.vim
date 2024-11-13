@@ -885,3 +885,52 @@ function! ReplaceTsvNewlines()
   :%s/\([^"]\)$\n/\=submatch(1)..l:replace_char/g
 endfunction
 command! ReplaceTsvNewlines call ReplaceTsvNewlines()
+
+function! ToggleLinting() abort
+  if !exists('g:ale_enabled')
+    return
+  endif
+  if g:ale_enabled
+    ALEDisable
+    LspStopServer
+    let g:ale_enabled = 0
+    let g:lsp_diagnostics_enabled = 0
+    let g:lsp_diagnostics_echo_cursor = 0
+    " let g:lsp_diagnostics_highlights_enabled = 0
+    echo "ALE and LSP disabled."
+  else
+    ALEEnable
+    " LspStartServer => Not Such command Exist
+    let g:ale_enabled = 1
+    let g:lsp_diagnostics_enabled = 1
+    let g:lsp_diagnostics_echo_cursor = 1
+    " let g:lsp_diagnostics_highlights_enabled = 1
+    echo "ALE and LSP enabled."
+  endif
+endfunction
+command! ToggleLinting call ToggleLinting()
+nnoremap <silent> <Space>v :call ToggleLinting()<CR>
+
+" [Markdownでサクッと選択した文字列にリンクを追加する方法](https://zenn.dev/skanehira/articles/2021-11-29-vim-paste-clipboard-link)
+let s:clipboard_register = has('linux') || has('unix') ? '+' : '*'
+function! InsertMarkdownLink() abort
+  " use register `9`
+  let old = getreg('9')
+  let link = trim(getreg(s:clipboard_register))
+  if link !~# '^http.*'
+    normal! gvp
+    return
+  endif
+  " replace `[text](link)` to selected text
+  normal! gv"9y
+  let word = getreg(9)
+  let newtext = printf('[%s](%s)', word, link)
+  call setreg(9, newtext)
+  normal! gv"9p
+  " restore old data
+  call setreg(9, old)
+endfunction
+augroup markdown-insert-link
+  au!
+  au FileType markdown vnoremap <buffer> <silent> p :<C-u>call InsertMarkdownLink()<CR>
+augroup END
