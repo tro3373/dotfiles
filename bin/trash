@@ -27,10 +27,8 @@ _trash() {
 }
 
 main() {
-  if ! has gomi; then
-    _trash "$@"
-    return
-  fi
-  gomi "$@"
+  has gomi && gomi "$@" && return
+  echo "==> Failed to trash via gomi. Use mv instead.." | ink yellow
+  _trash "$@"
 }
 main "$@"
