@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+install_common() { not_supported; }
+install_wsl() { not_supported; }
+install_arch() {
+  if os orb; then
+    not_supported
+    return
+  fi
+  def_install ttf-nerd-fonts-symbols-mono wizterm
+}
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() {
+  exe brew install --cask wezterm
+}
+install_ubuntu() {
+  exe "curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /etc/apt/keyrings/wezterm-fury.gpg"
+  echo 'deb [signed-by=/etc/apt/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' |
+    sudo_tee /etc/apt/sources.list.d/wezterm.list
+}
+install_redhat() { not_supported; }
+setting_common() {
+  if os orb; then
+    not_supported
+    return
+  fi
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/wezterm" "${HOME}/.config/wezterm"
+}
