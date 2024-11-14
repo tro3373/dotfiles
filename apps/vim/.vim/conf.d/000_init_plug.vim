@@ -160,7 +160,9 @@ call plug#begin('$HOME/.vim/plugged')
   " > caw.vim features built-in support for file context through context_filetype.vim.
   " > Just install both plugins and context-aware commenting will work in most files.
   " > The fenced code is detected by predefined regular expressions.
-  Plug 'tyru/caw.vim'                                     " コメントアウトプラグイン <Leader>+c
+  Plug 'nvim-treesitter/nvim-treesitter'                  " Code syntax highlight
+  " Plug 'tyru/caw.vim'                                     " コメントアウトプラグイン <Leader>+c
+  Plug 'tpope/vim-commentary'                             " コメントアウトプラグイン <Leader>+c
   Plug 'Shougo/context_filetype.vim'
   Plug 'tpope/vim-surround'                               " 囲文字入力アシスト
   Plug 'vim-scripts/Align'                                " CSV,TSV整形
