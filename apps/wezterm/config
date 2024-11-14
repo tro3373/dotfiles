@@ -7,7 +7,7 @@ install_arch() {
     not_supported
     return
   fi
-  def_install ttf-nerd-fonts-symbols-mono wizterm
+  def_install ttf-nerd-fonts-symbols-mono wezterm
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
