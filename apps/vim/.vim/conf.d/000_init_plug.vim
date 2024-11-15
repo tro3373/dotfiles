@@ -51,11 +51,15 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'jeetsukumaran/vim-nefertiti'
 
   Plug 'itchyny/lightline.vim'                            " status-line
+  " Plug 'vim-airline/vim-airline-themes'                 " TODO: airline theme. sample: https://github.com/vim-airline/vim-airline/wiki/Screenshots
   Plug 'norcalli/nvim-colorizer.lua'                      " A high-performance color highlighter for Neovim which has no external dependencies!
   Plug 'nathanaelkane/vim-indent-guides'                  " indent guide
+
   Plug 'airblade/vim-gitgutter'                           " Shows a git diff in the gutter!!!!!
   Plug 'tveskag/nvim-blame-line'                          " Show git blame info inline
-  Plug 'tpope/vim-fugitive'                               " Git wrapper so awesome
+  Plug 'tpope/vim-fugitive'                               " TODO: Git wrapper so awesome
+
+  Plug 'junegunn/goyo.vim'                                " TODO: Distraction-free writing in Vim. (Toggle with :Goyo)
 
   " =================================================================
   " Filer
@@ -65,6 +69,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'cocopon/vaffle.vim'                               " SimpleFiler nouse
   " Plug 'scrooloose/nerdtree', {
   "   \ 'on':  ['NERDTreeToggle'] }                         " NERDTree tree view コマンド実行時に読み込む
+  " Plug 'lambdalisue/fern.vim'                             " TODO: fern.vim is a plugin to manage files and directories in Vim
 
   " =================================================================
   " Feature/Funcs Base
@@ -115,6 +120,7 @@ call plug#begin('$HOME/.vim/plugged')
   " Feature/Funcs Operation
   " =================================================================
   Plug 'thinca/vim-quickrun'                              " 現在のファイルを実行して quickfix に表示
+  Plug 'thinca/vim-ambicmd'                               " ユーザ定義コマンドを自動展開
   Plug 'osyo-manga/shabadou.vim'                          " quick-run 用プラグイン
 
   Plug 'kana/vim-submode'                                 " vim-submode(キーマップ plugin)
@@ -156,15 +162,32 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'kana/vim-smartchr'                                " = 等の便利入力
   Plug 'kana/vim-smartinput'                              " () 等の入力補完
   " Plug 'mattn/vim-lexiv'                                " () 等の入力補完
+  " -----------------------------------------------------------------
+  " cohama/lexima.vim
+  " 括弧の自動展開プラグインです。
+  " インサートモードで ( を打つと ) を自動で補完する、といった機能を提供します。
+  " ドットリピートに対応している他、カスタマイズ性が非常に高く、括弧に限らず様々なものを展開できる点も特徴です。
+  "<Space>や<Tab>で即座に展開できるsnippetを好きなように定義できる最強プラグインで、
+  "他のエディタを使うとまず「lexima的なものはないのか」と探して結局再現できないものの筆頭です。
+  " 一見括弧などを自動補完するのように振る舞い、プリセットもほとんどそのような物だが、
+  " lexical imap(らしい)の名の通り、挿入モード（とコマンドラインモード）に文脈を条件とした展開を行うルールを定義できるプラグイン。
+  " 汎用性が高く、条件さえ満たせば何でもできる。それこそスニペットのような物を突っ込んだり、カーソル飛ばしたり（これはおかしいけど）コマンド実行したりできる。
+  " docで強く主張されてるが、ドットリピートを重視しているのでVimmerとしてはありがたい限り。
+  " 括弧やクオーテーションを一発で書き足す事ができるため。
+  " 括弧やクォートなどを保管してくれるので記述効率がよくなる
+  " Plug 'cohama/lexima.vim'                              " TODO: 括弧の自動展開
+  " -----------------------------------------------------------------
+  Plug 'Shougo/context_filetype.vim'
   " [posva/vim-vue: Syntax Highlight for Vue.js components](https://github.com/posva/vim-vue#nerdcommenter)
   " > caw.vim features built-in support for file context through context_filetype.vim.
   " > Just install both plugins and context-aware commenting will work in most files.
   " > The fenced code is detected by predefined regular expressions.
-  Plug 'nvim-treesitter/nvim-treesitter'                  " Code syntax highlight
   " Plug 'tyru/caw.vim'                                     " コメントアウトプラグイン <Leader>+c
+  " Plug 'nvim-treesitter/nvim-treesitter'                  " TODO: Code syntax highlight(tryu/caw.vim lua uncomment errorの解消の為いれたけど、解消せず、そのまま)
+  " Plug 'sheerun/vim-polyglot'                             " TODO: Syntax highlight
   Plug 'tpope/vim-commentary'                             " コメントアウトプラグイン <Leader>+c
-  Plug 'Shougo/context_filetype.vim'
   Plug 'tpope/vim-surround'                               " 囲文字入力アシスト
+  Plug 'tpope/vim-repeat'                                 " .で繰り返し(vim-surround対応)
   Plug 'vim-scripts/Align'                                " CSV,TSV整形
   Plug 'junegunn/vim-easy-align'                          " Align text
 
@@ -223,8 +246,9 @@ call plug#begin('$HOME/.vim/plugged')
     Plug 'akaimo/asyncomplete-around.vim'
     Plug 'prabirshrestha/asyncomplete-file.vim'
 
-    " " TODO
-    " Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
+    " TODO
+    " Plug 'SirVer/ultisnips'                               " TODO: スニペットを拡張し、高速に使えるようにするです。
+    " Plug 'honza/vim-snippets'
     " " This plugin integrates neosnippet.vim in vim-lsp to provide Language Server Protocol snippets.
     " Plug 'thomasfaingnaert/vim-lsp-snippets'
     " Plug 'thomasfaingnaert/vim-lsp-neosnippet'
