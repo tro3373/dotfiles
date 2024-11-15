@@ -16,6 +16,8 @@ if wezterm.config_builder then
 	config = wezterm.config_builder()
 end
 
+local mac = wezterm.target_triple:find("darwin")
+
 -- ここまでは定型文
 -- この先でconfigに各種設定を書いていく
 
@@ -28,7 +30,7 @@ config.color_scheme = "Railscasts (base16)"
 -- フォント
 config.font = wezterm.font("Osaka-Mono", { weight = "Bold", italic = false })
 -- フォントサイズ
-config.font_size = 16.0
+config.font_size = mac and 18.0 or 16.0
 -- 背景の非透過率（1なら完全に透過させない）
 config.window_background_opacity = 0.90
 
