@@ -65,6 +65,13 @@ config.keys = {
     mods = "ALT",
     action = wezterm.action.PasteFrom("Clipboard"),
   },
+  -- Ctrl+Shift n で 全画面トグル
+  {
+    key = 'n',
+    mods = 'SHIFT|CTRL',
+    action = wezterm.action.ToggleFullScreen,
+    -- action = wezterm.window:maximize(),
+  },
   -- -- ⌘ Ctrl ,で下方向にペイン分割
   -- {
   --     key = ",",
