@@ -9,6 +9,10 @@ install_common() {
     exe asdf plugin-add deno
   fi
   exe asdf install deno latest
+  local _ver
+  _ver=$(asdf list deno 2>/dev/null | tail -1 | tr -d " ")
+  # shellcheck disable=SC2016
+  exe "asdf global deno $_ver"
 }
 # install_wsl() { not_supported; }
 # install_arch() {
