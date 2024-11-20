@@ -74,6 +74,10 @@ call plug#begin('$HOME/.vim/plugged')
   " =================================================================
   " Feature/Funcs Base
   " =================================================================
+  if executable('deno')
+    Plug 'vim-denops/denops.vim'                              " Deno plugin for Vim. Enable Js/Ts plugin
+    Plug 'skanehira/denops-translate.vim'                     " newer Translate plugin on Denops
+  endif
   " Unite関連
   function! BuildVimproc(info) abort
     " info is a dictionary with 3 fields

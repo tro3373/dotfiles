@@ -10,3 +10,5 @@ xmap <Leader>c  <Plug>Commentary
 " n: ノーマルモード
 omap <Leader>c  <Plug>Commentary
 nmap <Leader>c  <Plug>CommentaryLine
+
+autocmd FileType markdown setlocal commentstring=>\ %s
