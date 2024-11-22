@@ -201,6 +201,9 @@ call plug#begin('$HOME/.vim/plugged')
   " =================================================================
   if empty($VIM_DISABLE_LINTER) || (!empty($VIM_DISABLE_LINTER) && $VIM_DISABLE_LINTER != 1)
     Plug 'github/copilot.vim'
+    " TODO
+    " Plug 'nvim-lua/plenary.nvim'                              " Dependency for CopilotChat
+    " Plug 'CopilotC-Nvim/CopilotChat.nvim', { 'branch': 'canary' }
 
     Plug 'dense-analysis/ale'                                 " 構文解析(非同期)
     Plug 'maximbaz/lightline-ale'                             " ALE indicator for the lightline vim plugin.
