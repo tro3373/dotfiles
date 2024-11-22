@@ -1,17 +1,47 @@
 #!/usr/bin/env bash
 
 install_common() {
-  exe cd $HOME/bin
+  exe cd "$HOME"/bin
   exe curl -O https://raw.githubusercontent.com/rockymadden/slack-cli/master/src/slack
   exe chmod +x slack
 }
-# install_arch()   { not_supported; }
+install_arch() {
+  # install_removed_menu_slack
+  def_install slack-desktop
+  install_common
+}
+
+# [NOTWORK] archでaltでメニューにカーソルがあたる
+# 入力切替時に2回押さないといけないので、slackのメニューが邪魔
+install_removed_menu_slack() {
+  # Arch LinuxでSlackを使う
+  # https://gist.github.com/proshunsuke/3408f08111e83f969a5f833b28474a4b
+  # https://slack.com/downloads/instructions/linux?ddl=1&build=rpm
+  exe sudo rm -r /etc/cron.daily/slack /usr/bin/slack /usr/share/pixmaps/slack.png /usr/share/lintian/overrides/slack /usr/share/doc/slack-desktop /usr/share/applications/slack.desktop /usr/lib/slack
+  cd_work
+  exe curl -fSsLO https://downloads.slack-edge.com/desktop-releases/linux/x64/4.41.97/slack-desktop-4.41.97-amd64.deb
+  exe ar vx slack-desktop-4.41.97-amd64.deb
+  exe tar Jxfv data.tar.xz
+  exe cd usr/lib/slack/resources/
+  exe asar extract app.asar app
+  # Not work
+  exe sed -i -e 's/setMenu(this.menu)/setMenu(null)/g' app/dist/main.bundle.js
+  # [node.js - Remove menubar from Electron app - Stack Overflow](https://stackoverflow.com/questions/39091964/remove-menubar-from-electron-app)
+  # mainWindow.setMenu(null)
+  exe asar pack app app.asar
+  exe cd ../../../../
+  exe sudo cp -r ./etc/* /etc/
+  exe sudo cp -r ./usr/* /usr/
+}
 # install_msys()   { not_supported; }
 # install_cygwin() { not_supported; }
 # install_mac()    { not_supported; }
 # install_ubuntu() { not_supported; }
 # install_redhat() { not_supported; }
 setting_common() {
+  if grep -q "SLACK_CLI_TOKEN=token" "$HOME"/.works.zsh; then
+    return
+  fi
   exe "echo 'export SLACK_CLI_TOKEN=token' >> $HOME/.works.zsh"
 }
 # setting_arch()   { not_supported; }
