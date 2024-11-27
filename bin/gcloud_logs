@@ -1,0 +1,34 @@
+#!/usr/bin/env -S bash -e
+
+readonly project=${1:-"example-project"}
+readonly q_type="resource.type=api"
+readonly service=${2:-"api.example.com"}
+readonly q_service="resource.labels.service=$service"
+timestamp_s=${3:-"2024-10-01T00:00:00Z"}
+timestamp_e=${4:-"2024-11-01T00:00:00Z"}
+# q_method="resource.labels.method=1.api_example.com.example"
+q_timestamp="timestamp >=\"$timestamp_s\" AND timestamp <=\"$timestamp_e\""
+get() {
+  local dst="logs/log-${timestamp_s}-${timestamp_e}.json"
+  # --freshness=1h AND $q_method --limit=10
+  gcloud logging read \
+    "$q_type AND $q_service AND $q_timestamp" \
+    --order=asc \
+    --format='json' \
+    --project="$project" >"$dst"
+}
+parse() {
+  find ./logs -type f -name "*.json" |
+    while read -r json; do
+      [[ -z $json ]] && continue
+      [[ $json =~ ^#.* ]] && continue
+      cat <"$json" |
+        jq -r '.[] | [.timestamp, .httpRequest.status, .httpRequest.requestMethod, .httpRequest.requestUrl] | @tsv' | tee -a logs/log.tsv
+    done
+}
+main() {
+  mkdir -p logs
+  get
+  parse
+}
+main "$@"
