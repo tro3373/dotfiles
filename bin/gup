@@ -13,7 +13,7 @@ error() {
 
 main() {
   local changes msg="$*"
-  [[ -z $msg ]] && msg='update'
+  [[ -z $msg ]] && msg="update $(date +"%Y-%m-%d %H:%M:%S")"
   changes=$(git status -s | wc -l)
   if [[ $changes -ne 0 ]]; then
     git add -A
