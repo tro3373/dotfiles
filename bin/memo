@@ -7,7 +7,7 @@ main() {
   if [[ $1 == "p" ]]; then
     src_dir="$src_root_dir/prv"
   fi
-  rg --files "$src_dir/" |
+  rg --files --type md "$src_dir/" |
     sed -e 's,^\(.*/\(job\|prv\)\)/,\1 ,g' |
     sort -k2 -r |
     sed -e 's,\(job\|\prv\) ,\1/,g' |
