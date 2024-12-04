@@ -18,8 +18,8 @@ end
 
 local mac = wezterm.target_triple:find("darwin")
 
--- ここまでは定型文
--- この先でconfigに各種設定を書いていく
+-- false: Prevent the configuration error window from being displayed
+config.warn_about_missing_glyphs = false
 
 -- Color Scheme
 -- config.color_scheme = 'Batman'
@@ -33,6 +33,37 @@ config.font = wezterm.font("Osaka-Mono", { weight = "Bold", italic = false })
 config.font_size = mac and 18.0 or 15.0
 -- 背景の非透過率（1なら完全に透過させない）
 config.window_background_opacity = 1 -- 0.90
+
+--------------------------------------------------------------------------------
+-- HyperLink(Open with Click Not work..)
+-- https://example.com
+--------------------------------------------------------------------------------
+-- Use the defaults as a base
+config.hyperlink_rules = wezterm.default_hyperlink_rules()
+-- make task numbers clickable
+-- the first matched regex group is captured in $1.
+table.insert(config.hyperlink_rules, {
+  regex = [[\b[tt](\d+)\b]],
+  format = "https://example.com/tasks/?t=$1",
+})
+-- make username/project paths clickable. this implies paths like the following are for github.
+-- ( "nvim-treesitter/nvim-treesitter" | wbthomason/packer.nvim | wez/wezterm | "wez/wezterm.git" )
+-- as long as a full url hyperlink regex exists above this it should not match a full url to
+-- github or gitlab / bitbucket (i.e. https://gitlab.com/user/project.git is still a whole clickable url)
+table.insert(config.hyperlink_rules, {
+  regex = [[["]?([\w\d]{1}[-\w\d]+)(/){1}([-\w\d\.]+)["]?]],
+  format = "https://www.github.com/$1/$3",
+})
+-- -- If the current mouse cursor position is over a cell that contains a hyperlink,
+-- -- this action causes that link to be opened.
+-- config.mouse_bindings = {
+-- 	-- Ctrl-click will open the link under the mouse cursor
+-- 	{
+-- 		event = { Up = { streak = 1, button = "Left" } },
+-- 		mods = "CTRL",
+-- 		action = wezterm.action.OpenLinkAtMouseCursor,
+-- 	},
+-- }
 
 -- キーバインド
 config.keys = {
