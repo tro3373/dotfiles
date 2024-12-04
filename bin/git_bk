@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-readonly current_dir=$(pwd)
-readonly timestamp=$(date +%Y%m%d%H%M%S)
+current_dir=$(pwd) && readonly current_dir
+timestamp=$(date +%Y%m%d%H%M%S) && readonly timestamp
 dummy="echo"
 restore=0
 archive=0
@@ -20,7 +20,8 @@ check() {
     echo "Invalid args. restore and archive option cannot set both." 1>&2
     exit 1
   fi
-  local result=$(git rev-parse --is-inside-work-tree 2>/dev/null)
+  local result
+  result=$(git rev-parse --is-inside-work-tree 2>/dev/null)
   if [[ $result == true ]]; then
     return
   fi
@@ -38,50 +39,52 @@ find_mod_files() {
 archive_files() {
   local dst=$current_dir/backup_$timestamp.tgz
   find_mod_files |
-    xargs $dummy tar cvfpz $dst >&/dev/null
+    xargs $dummy tar cvfpz "$dst" >&/dev/null
   echo "Done! tgy saved to $dst"
-  [[ -z $dummy ]] && echo $dst | clip
+  [[ -z $dummy ]] && echo "$dst" | clip
 }
 bkup_files() {
-  local hash=$(git rev-parse --short HEAD)
+  local hash
+  hash=$(git rev-parse --short HEAD)
   # local tmpd=$(mktemp -d)
   local tmpd=/tmp/${timestamp}_${prj_name}_${hash}
   local status=$tmpd/status
   local mod_files_d=$tmpd/mod_files
-  $dummy mkdir -p $mod_files_d
-  git status -s 2>&1 | tee $status
+  $dummy mkdir -p "$mod_files_d"
+  git status -s 2>&1 | tee "$status"
   find_mod_files |
     while read -r rel_path; do
       [[ -z $rel_path ]] && continue
       [[ $rel_path =~ ^#.* ]] && continue
-      $dummy cp -r --parents $rel_path $mod_files_d/
+      $dummy cp -r --parents "$rel_path" "$mod_files_d"/
     done
   echo "Done! snapshot saved to $tmpd"
-  [[ -z $dummy ]] && echo $tmpd | clip
+  [[ -z $dummy ]] && echo "$tmpd" | clip
 }
 restore_files() {
-  local srcd=$(find /tmp -maxdepth 1 -mindepth 1 -type d -name "*$prj_name*" |
-    fzf)
+  local srcd
+  srcd=$(find /tmp -maxdepth 1 -mindepth 1 -type d -name "*$prj_name*" | fzf)
   if [[ -z $srcd ]]; then
     echo "specify srcd" 1>&2
     exit 1
   fi
   set -e
-  cd $srcd/mod_files
+  cd "$srcd"/mod_files
   find . -type f |
     while read -r rel_path; do
       [[ -z $rel_path ]] && continue
       [[ $rel_path =~ ^#.* ]] && continue
-      $dummy cp -vf --parents $rel_path $git_root/
+      $dummy cp -vf --parents "$rel_path" "$git_root"/
     done
 }
 main() {
   initialize "$@"
   check
 
-  local git_root=$(get_git_root)
-  cd $git_root
-  local prj_name=$(get_prj_name)
+  local git_root prj_name
+  git_root=$(get_git_root)
+  cd "$git_root"
+  prj_name=$(get_prj_name)
 
   if [[ $restore -eq 1 ]]; then
     restore_files
