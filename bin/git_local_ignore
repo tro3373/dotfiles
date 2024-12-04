@@ -1,0 +1,21 @@
+#!/usr/bin/env -S bash -e
+
+has() { command -v "${1}" >&/dev/null; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$(cat)$*"; }
+info() { _log cyan "$(cat)$*"; }
+warn() { _log yellow "$(cat)$*"; }
+error() { _log red "$(cat)$*" && exit 1; }
+
+main() {
+  local git_root
+  git_root=$(get_git_root)
+  if [[ -z $git_root ]]; then
+    error "Not in git repository"
+  fi
+  mkdir -p "$git_root/.git/info"
+  nvim "$git_root/.git/info/exclude"
+}
+main "$@"

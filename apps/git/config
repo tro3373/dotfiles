@@ -84,6 +84,8 @@ EOF
 }
 
 setting_common() {
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/git" "${HOME}/.config/git"
   make_link_dot2home
   local usrn=0 mail=0 list
   list="$(_current_git_config_list_global)"
