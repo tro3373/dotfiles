@@ -9,3 +9,15 @@ snippet	commandddd
 
 snippet	current_timestamp
 	strftime("%Y%m%d%H%M%S")
+
+snippet	disable_linting
+	" Not working
+	" let $VIM_DISABLE_LINTER=1
+	ALEDisable
+	" Error occur
+	" LspStopServer
+	let g:ale_enabled = 0
+	let g:lsp_diagnostics_enabled = 0
+	let g:lsp_diagnostics_echo_cursor = 0
+	" let g:lsp_diagnostics_highlights_enabled = 0
+	echo "==> ALE and LSP disabled."

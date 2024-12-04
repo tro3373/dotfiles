@@ -165,6 +165,8 @@ if has("autocmd")
   autocmd FileType sh,zsh,bash,vim,html,xhtml,css,scss,javascript,typescript,typescriptreact,yaml,toml,ruby,coffee,sql,vue setlocal ts=2 sts=2 sw=2
   " ファイルの先頭からパースしてハイライトを行う
   autocmd FileType vue syntax sync fromstart
+  " go の場合はタブを空白に変換しない(setlocal: 現在のバッファのみ)
+  autocmd FileType go setlocal noexpandtab
 
   " ファイルを開いた時、読み込んだ時にファイルタイプを設定する
   autocmd BufNewFile,BufRead *.js setlocal ft=javascript
@@ -269,7 +271,7 @@ highlight SpecialKey cterm=NONE ctermfg=cyan guifg=cyan
 " 行番号を表示する
 set number
 " " 相対行番号を表示する
-" set relativenumber
+set relativenumber
 " ルーラを表示
 set ruler
 

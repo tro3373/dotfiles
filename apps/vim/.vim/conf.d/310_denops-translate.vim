@@ -9,6 +9,10 @@ let g:translate_popup_window = 0 " if you want use popup window, set value 1
 let g:translate_winsize = 10 " set buffer window height size if you doesn't use popup window
 let g:translate_ui = ""  "popup / buffer
 
+" カーソル下の単語を翻訳
 nmap <Leader>n :Translate <C-R><C-W><CR>
+" 選択行を翻訳
 vmap <Leader>n :'<,'>Translate<CR>
+" 選択部分を翻訳(Not work)
+" vmap <Leader>n y:Translate <C-r>"
 

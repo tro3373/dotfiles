@@ -103,6 +103,8 @@ let g:ale_fixers['sql']        = [ { buffer -> {'command': 'command -v sql-forma
 " Go
 let g:ale_go_golangci_lint_package = 1 "When set to `1`, the whole Go package will be checked instead of only the current file.
 let g:ale_go_gofmt_options = '-s'
+" " errcheck: check for unchecked errors
+" let g:ale_go_golangci_lint_options = '-D errcheck'
 let g:ale_go_gometalinter_options = '--enable=gosimple --enable=staticcheck'
 " ST1000: - Incorrect or missing package comment
 " パッケージに対する適切なコメントがない、または不適切なコメントがある場合に警告します。

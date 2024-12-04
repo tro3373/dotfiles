@@ -77,13 +77,7 @@ snippet	has
 snippet	hasp
 	hasp() { command -p -v "\${1}" >&/dev/null; }
 snippet	hass
-	hass() {
-		for arg in "\$@"; do
-			has "\$arg" && continue
-			echo "No \$arg command exist." 1>&2
-			exit 1
-		done
-	}
+	hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
 
 snippet	shellcheckignore
 alias	ignore
@@ -218,7 +212,10 @@ snippet	logsettt
 	error() { log "$*" && exit 1; }
 
 snippet	logcolorrr
+	readonly depends=(curl fzf jq)
 	has() { command -v "\${1}" >&/dev/null; }
+	hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+	# hass "${depends[@]}"
 	_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
 	# shellcheck disable=SC2145
 	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "\$1"; }
@@ -333,15 +330,12 @@ alias	ifnotexists_fn
 	}
 
 snippet	check_commandsss
+alias	dependsss
+	readonly depends=(curl fzf jq)
 	has() { command -v "\${1}" >&/dev/null; }
-	check_commands() {
-		for arg in "$@"; do
-			if ! has "$arg"; then
-				echo "No $arg command exist" 1>&2
-				exit 1
-			fi
-		done
-	}
+	hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+	# hass "${depends[@]}"
+
 
 snippet	ifstdin
 	if [[ -p /dev/stdin ]]; then
@@ -625,18 +619,6 @@ snippet find_result_to_array
 		array+=("$REPLY")
 	done < <(find . -name "${input}" -print0)
 
-snippet dependsss
-	readonly depends=()
-	has() { command -v "\${1}" >&/dev/null; }
-	hass() {
-		for arg in "$@"; do
-			has "$arg" && continue
-			echo "No $arg command exist." >&2
-			exit 1
-		done
-	}
-	hass "${depends[@]}"
-
 snippet ifsss
 	IFS='	'
 	IFS=$' \t\n'
@@ -657,3 +639,15 @@ alias show_native_pathhh
 snippet read_a_b
 	read -r a b <<< $(echo "\$1" | tr ':' ' ')
 
+snippet expand_variables
+	hoge="Hello"
+	fuga=hoge
+	echo ${!fuga}  # "Hello" が出力される
+
+snippet func_nameee
+alias current_func_nameee
+	echo "${FUNCNAME[0]}"
+
+snippet to_query_parametersss
+alias query_parametersss
+	jq -r '[to_entries[] | (@uri "\(.key)" + "=" + @uri "\(.value)")] | join("&")'

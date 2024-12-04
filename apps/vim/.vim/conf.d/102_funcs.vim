@@ -315,6 +315,7 @@ function! SaveMemoInner(outdir, defaultTitle, createDirectory, withHugolize) abo
     endif
   endif
   exe ":w " . dir . "/" . name . ".md"
+  exe ":e " . dir . "/" . name . ".md"
   if a:withHugolize == 1
     call Hugolize()
     exe ":w"
@@ -897,7 +898,7 @@ function! ToggleLinting() abort
     let g:lsp_diagnostics_enabled = 0
     let g:lsp_diagnostics_echo_cursor = 0
     " let g:lsp_diagnostics_highlights_enabled = 0
-    echo "ALE and LSP disabled."
+    echo "==> ALE and LSP disabled."
   else
     ALEEnable
     " LspStartServer => Not Such command Exist
@@ -905,7 +906,7 @@ function! ToggleLinting() abort
     let g:lsp_diagnostics_enabled = 1
     let g:lsp_diagnostics_echo_cursor = 1
     " let g:lsp_diagnostics_highlights_enabled = 1
-    echo "ALE and LSP enabled."
+    echo "==> ALE and LSP enabled."
   endif
 endfunction
 command! ToggleLinting call ToggleLinting()
