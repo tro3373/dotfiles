@@ -903,3 +903,44 @@ snippet mainnn
 			fmt.Printf("Error: %+v", err)
 		}
 	}
+
+snippet dump_requesttt
+	func DumpRequest(req *http.Request, prefix string) {
+		if prefix != "" {
+			prefix += " "
+		}
+		_log := func(format string, args ...interface{}) {
+			log.Printf("%s%s\n", prefix, fmt.Sprintf(format, args...))
+		}
+		if req == nil {
+			_log("Request is nil")
+			return
+		}
+		_log("Request")
+		_log("  URL: %s", req.URL)
+		_log("  Method: %s", req.Method)
+		_log("  Body: %s", func() string {
+			if req.Body == nil {
+				return "nil"
+			}
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				return fmt.Sprintf("Failed to read body: %s", err)
+			}
+			// 一度読んだら読めなくなるので、戻す
+			req.Body = io.NopCloser(bytes.NewBuffer(body))
+			return string(body)
+		}())
+	}
+
+snippet dump_responseee
+	func DumpResponse(code int, b []byte, prefix string) {
+		if prefix != "" {
+			prefix += " "
+		}
+		_log := func(format string, args ...interface{}) {
+			log.Printf("%s%s\n", prefix, fmt.Sprintf(format, args...))
+		}
+		_log("Response")
+		_log("  %d: %+v", code, string(b))
+	}

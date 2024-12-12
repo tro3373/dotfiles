@@ -127,7 +127,12 @@ let g:ale_go_staticcheck_options = '-checks=all,-ST1000'
 " SC2164: Command not found in PATH. This warning is triggered when a shell script uses a command that is not found in the system's PATH.
 " SC2086: Syntax error. This warning is triggered when a shell script uses a command with invalid syntax.
 " SC2162: Command not found or not executable. This warning is triggered when a shell script uses a command that is not a valid command or not executable.
+" SC2034: Unused variable. This warning is triggered when a shell script
 let g:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162' " Ignore shellcheck error
+" NOT WORK
+" " .env ファイルに対してのみ SC2034 を無視
+" " b: バッファローカル変数
+" autocmd BufNewFile,BufRead .env let b:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162,SC2034'
 let g:ale_sh_shfmt_options = '-i 2 -ci -s' " shfmt see .editorconfig?(not working... so specify option)
 " Python
 " let g:ale_python_flake8_options = '--ignore=E501,E402,F401,E701' " ignore long-lines, import on top of the file, unused modules and statement with colon

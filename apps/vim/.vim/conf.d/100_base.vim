@@ -235,6 +235,7 @@ autocmd VimEnter,ColorScheme * hi Search ctermfg=238 ctermbg=109 guifg=#646D75 g
 syntax enable
 " default syntax for No syntax
 au BufNewFile,BufRead * if &syntax == '' | set syntax=sh | endif
+au BufNewFile,BufRead * if &syntax == 'conf' | set syntax=sh | endif
 
 
 

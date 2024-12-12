@@ -42,8 +42,14 @@ snippet	checkkk
 	check:
 		@for cmd in ${depends_cmds}; do command -v $$cmd >&/dev/null || (echo "No $$cmd command" && exit 1); done
 
-snippet	shellbinbashhhh
-	SHELL := /bin/bash
+snippet	shebanggg
+alias binnnn
+	SHELL := bash
+	mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+	mkfile_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+	PATH := $(mkfile_dir)/bin:$(PATH)
+	.SHELLFLAGS := -eu -o pipefail -c # -c: Needed in .SHELLFLAGS. Default is -c.
+	.DEFAULT_GOAL := up
 
 snippet	current_goalsss
 	@echo "==> $@ $(STAGE)" && \
@@ -132,3 +138,25 @@ snippet	gen_env_templateee
 		@$(eval target=.env.template)
 		@sed -e '/^#/!s/=.*/=/g' .env >$(target)
 		@echo "==> Generated $(target)"
+
+
+snippet	initializeee
+	SHELL := bash
+	mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+	mkfile_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+	PATH := $(mkfile_dir)/bin:$(PATH)
+	.SHELLFLAGS := -eu -o pipefail -c # -c: Needed in .SHELLFLAGS. Default is -c.
+	.DEFAULT_GOAL := up
+
+	dotenv := $(PWD)/.env
+	-include $(dotenv)
+
+	app := sample
+	stage := dev
+	timestamp := $(shell date '+%Y%m%d.%H%M%S')
+	local_ip := $(shell ipa 2>/dev/null || echo localhost)
+	docker_uid := $(shell id -u)
+	docker_gid := $(shell id -g)
+	docker_user := $(docker_uid):$(docker_gid)
+
+	export
