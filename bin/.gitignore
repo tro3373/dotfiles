@@ -1,1 +1,4 @@
 AXMLPrinter2.jar
+curl_test.env
+lib/curl_test/req/*/*.copy
+lib/curl_test/res
