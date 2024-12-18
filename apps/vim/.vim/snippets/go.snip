@@ -904,13 +904,13 @@ snippet mainnn
 		}
 	}
 
-snippet dump_requesttt
+snippet dump_request_responseee
 	func DumpRequest(req *http.Request, prefix string) {
 		if prefix != "" {
 			prefix += " "
 		}
 		_log := func(format string, args ...interface{}) {
-			log.Printf("%s%s\n", prefix, fmt.Sprintf(format, args...))
+			slog.Info(fmt.Sprintf(prefix+format, args...))
 		}
 		if req == nil {
 			_log("Request is nil")
@@ -933,14 +933,16 @@ snippet dump_requesttt
 		}())
 	}
 
-snippet dump_responseee
 	func DumpResponse(code int, b []byte, prefix string) {
 		if prefix != "" {
 			prefix += " "
 		}
 		_log := func(format string, args ...interface{}) {
-			log.Printf("%s%s\n", prefix, fmt.Sprintf(format, args...))
+			slog.Info(fmt.Sprintf(prefix+format, args...))
 		}
 		_log("Response")
 		_log("  %d: %+v", code, string(b))
 	}
+
+snippet efficientgo_errors
+	"github.com/efficientgo/core/errors"
