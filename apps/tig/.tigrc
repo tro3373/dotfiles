@@ -57,9 +57,10 @@ bind diff    <Esc>. ?sh -c "git diff %(commit)..%(prompt Enter commit ID: ) | ti
 bind refs    <Esc>. ?sh -c "git diff %(branch)..%(prompt Enter branch name: ) | tig"
 
 # C で commit (refs での C は checkout, main での C は cherry-pick だが上書きする)
-bind generic C      !git commit
-bind refs    C      !git commit
-bind main    C      !git commit
+bind generic C      !git c
+bind refs    C      !git c
+bind main    C      !git c
+bind status  C      !git c
 
 
 # S で stash save
