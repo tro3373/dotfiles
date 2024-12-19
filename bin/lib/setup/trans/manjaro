@@ -143,7 +143,8 @@ _setup_custom_shortcut() {
 
   # gsettings_add_custom_keybind 1 "Paste into Terminal" "<Primary><Shift>Insert" "xdotool key --clearmodifiers ctrl+shift+v"
   # gsettings_add_custom_keybind 1 "Paste into Terminal" "<Shift>Insert" "xsel -bo" # Not work
-  gsettings_add_custom_keybind 2 "Open Terminal" "<Primary><Alt>t" "gnome-terminal"
+  # gsettings_add_custom_keybind 2 "Open Terminal" "<Primary><Alt>t" "gnome-terminal"
+  gsettings_add_custom_keybind 2 "Open Terminal" "<Primary><Alt>t" "wezterm"
   gsettings_add_custom_keybind 3 "Open Downloads" "<Super>e" "nautilus Downloads"
   # gsettings_add_custom_keybind 4 "Paste option v" "<Alt>v" "xsel -bo" # Not work?
 
