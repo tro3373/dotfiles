@@ -1,0 +1,10 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  local tmp=/tmp/tmux_buffer
+  tmux capture-pane -S - -p |
+    sed '/^$/d' |
+    fzf --tac -m --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview' >"$tmp"
+  nvim "$tmp"
+}
+main "$@"

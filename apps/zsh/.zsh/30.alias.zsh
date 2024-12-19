@@ -255,6 +255,11 @@ function cd_up() {
 zle -N cd_up              # redist `cd_up` as widget
 bindkey '^f' vi-kill-line # デフォルトのキーバインド(^U)を変更
 bindkey '^u' cd_up
+function tb() {
+  ~/.dot/bin/tmux_buffer
+}
+zle -N tb
+bindkey '^v' tb
 
 function supported() {
   local cmd="$*"
