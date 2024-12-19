@@ -143,6 +143,45 @@ snippet rm_dirrr
 	err := os.Remove(${1})
 snippet rm_dir_alll
 	err := os.RemoveAll(${1})
+snippet move_fileee
+	func MoveFile(src, dst string) error {
+		// 移動先のディレクトリを確認/作成
+		destDir := filepath.Dir(dst)
+		if err := os.MkdirAll(destDir, 0750); err != nil {
+			return errors.Wrapf(err, "failed to create destination directory")
+		}
+
+		// まずRenameを試みる
+		err := os.Rename(src, dst)
+		if err == nil {
+			return nil
+		}
+
+		// Renameが失敗した場合は、コピー＆削除を試みる
+		source, err := os.Open(filepath.Clean(src))
+		if err != nil {
+			return errors.Wrapf(err, "failed to open source file")
+		}
+		defer source.Close()
+
+		destination, err := os.Create(filepath.Clean(dst))
+		if err != nil {
+			return errors.Wrapf(err, "failed to create destination file")
+		}
+		defer destination.Close()
+
+		// コピー
+		if _, err := io.Copy(destination, source); err != nil {
+			return errors.Wrapf(err, "failed to copy file")
+		}
+
+		// 元ファイルを削除
+		if err := os.Remove(src); err != nil {
+			return errors.Wrapf(err, "failed to remove source file")
+		}
+
+		return nil
+	}
 snippet touchhh
 	func touch(path string) error {
 		_, err := os.Stat(path)
