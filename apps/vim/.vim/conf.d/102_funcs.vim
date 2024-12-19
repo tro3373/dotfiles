@@ -771,6 +771,15 @@ call system('code ' . l:path)
 endfunction
 command! -nargs=* Code call Code(<q-args>)
 
+function! Cursor(opts)
+let l:path = expand('%:p')
+  if a:opts =~# 'r'
+    let l:path = GetGitRoot()
+  endif
+call system('cursor ' . l:path)
+endfunction
+command! -nargs=* Cursor call Cursor(<q-args>)
+
 function! ReOpenUtf8()
   exe "e ++enc=utf-8"
 endfunction

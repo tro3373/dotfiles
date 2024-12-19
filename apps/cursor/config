@@ -3,14 +3,17 @@
 _fnm=
 install_common() {
   log "==> Install from https://cursor.sh/"
+  exe open https://cursor.sh/
+  exe read -p "Press Enter after download"
   local _bin
   _bin=$(_find_binary)
   if [[ -z $_bin ]]; then
     log "==> No binary found"
     return
   fi
+  exe chmod +x "$_bin"
   _fnm=$(basename "$_bin")
-  exe mv "$_bin" ~/tools/
+  exe mv -v "$_bin" ~/tools/
   local target=~/bin/cursor
   if [[ -e $target ]]; then
     log "==> $target already exists"
@@ -33,7 +36,12 @@ cat_cursor() {
 main() {
   local cursor_bin
   cursor_bin=$(find ~/tools -name "cursor-*.AppImage" | sort -r | head -1)
-  $cursor_bin >&"$0".log &
+  local args=("$@")
+  if [[ $# -eq 0 ]]; then
+    root_path=$(get_git_root || echo ".")
+    args=("$root_path")
+  fi
+  "$cursor_bin" "${args[@]}" >&"$0".log &
 }
 main "$@"
 EOF
