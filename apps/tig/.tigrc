@@ -60,7 +60,8 @@ bind refs    <Esc>. ?sh -c "git diff %(branch)..%(prompt Enter branch name: ) | 
 bind generic C      !git c
 bind refs    C      !git c
 bind main    C      !git c
-bind status  C      !git c
+bind status  C      !git commit
+bind status  V      !git c
 
 
 # S で stash save
