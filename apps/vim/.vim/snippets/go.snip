@@ -186,7 +186,7 @@ snippet touchhh
 	func touch(path string) error {
 		_, err := os.Stat(path)
 		if os.IsNotExist(err) {
-			file, err := os.Create(path)
+			file, err := os.Create(filepath.Clean(path))
 			if err != nil {
 				return err
 			}
@@ -297,8 +297,8 @@ alias	empty_dirrr
 		return false, nil
 	}
 snippet	existsss
-	func exists(filename string) bool {
-		_, err := os.Stat(filename)
+	func exists(path string) bool {
+		_, err := os.Stat(path)
 		return !os.IsNotExist(err)
 	}
 

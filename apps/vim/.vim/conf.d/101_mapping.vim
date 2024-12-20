@@ -249,8 +249,8 @@ nnoremap sP :<C-u>bp<CR>
 " nnoremap st :<C-u>tabnew %:p<CR>:<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-name=files file_mru file buffer bookmark<CR>
 " タブで Unite 全検索
 " nnoremap st :<C-u>tabnew<CR>:<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-name=files file_mru file buffer bookmark<CR>
-" タブ 新規
-nnoremap st :<C-u>tabnew<CR>
+" " タブ 新規
+" nnoremap st :<C-u>tabnew<CR>
 " タブで複製
 " nnoremap sc :<C-u>tabnew %<CR>
 function! TabNewCurrentWithCursor()
@@ -263,7 +263,7 @@ endfunction
 command! TabNewCurrentWithCursor call TabNewCurrentWithCursor()
 nnoremap sc :TabNewCurrentWithCursor<CR>
 " タブ一覧
-nnoremap sT :<C-u>Unite tab -direction=botright -auto-resize<CR>
+" nnoremap sT :<C-u>Unite tab -direction=botright -auto-resize<CR>
 nnoremap sb :<C-u>Unite buffer_tab -direction=botright -auto-resize -buffer-name=file<CR>
 nnoremap sB :<C-u>Unite buffer -direction=botright -auto-resize -buffer-name=file<CR>
 " ファイル一覧
@@ -279,8 +279,6 @@ nnoremap sa :<C-u>UniteWithBufferDir -direction=botright -auto-resize -buffer-na
 "" ブックマークに追加
 "nnoremap <silent> <Leader>a :<C-u>UniteBookmarkAdd<CR>
 
-" 開いているファイルのディレクトリをエクスプローラで開く
-map <silent> qn :!open %:h>&/dev/null<ENTER>
 
 " diffthis
 nnoremap <Leader>d :diffthis<CR>

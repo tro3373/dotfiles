@@ -300,13 +300,13 @@ function! SaveMemoInner(outdir, defaultTitle, createDirectory, withHugolize) abo
   endif
   let now = localtime()
   let stryyyy = strftime("%Y", now)
-  let strnow = strftime("%Y-%m-%d", now)
+  let strymd = strftime("%Y-%m-%d", now)
   let title = input("Title: ", a:defaultTitle,  "file")
   redraw
   if title != ""
     let title = "-" . title
   endif
-  let name = strnow . title
+  let name = strymd . title
   if a:createDirectory == 1
     let dir = dir . "/" . stryyyy . "/" . name
     call mkdir(expand(dir), "p")
@@ -332,6 +332,26 @@ function! SaveMemoJob() abort
   call SaveMemoInner("~/.mo/job", "log", 1, 0)
 endfun
 command! SaveMemoJob call SaveMemoJob()
+
+function! OpenKnowledge() abort
+  let now = localtime()
+  let stryyyy = strftime("%Y", now)
+  let dir = "~/.mo/knowledge/" .. stryyyy
+  let fname = strftime("%Y-%m-%d", now) . "-" . "knowledge.md"
+  if !isdirectory(expand(dir))
+    call mkdir(expand(dir), "p")
+  endif
+  let dst = dir . "/" . fname
+  if filereadable(expand(dst))
+    exe ":e " . dst
+    return 0
+  endif
+  " new file
+  exe ":e " . dst
+  return 0
+endfun
+command! OpenKnowledge call OpenKnowledge()
+nnoremap sT :<C-u>tabnew<CR>:OpenKnowledge<CR>
 
 function! SaveMd() abort
   call SaveMemoInner("~/.md/content/posts", "", 1, 1)
@@ -736,12 +756,15 @@ function! FindC2A0() abort
 endfun
 command! FindC2A0 call FindC2A0()
 
+" 開いているファイルのディレクトリをエクスプローラで開く
 function! Open()
   let l:current_file_d = expand('%:p:h')
   " execute system('open ' . l:current_file_d)
   call system('open ' . l:current_file_d)
 endfunction
 command! Open call Open()
+map <silent> qn :!open %:h>&/dev/null<ENTER>
+
 " function! OpenTerm()
 "   let l:current_file_d = expand('%:p:h')
 "   call system('tmux split-window -v cd ' . l:current_file_d)
@@ -944,3 +967,16 @@ augroup markdown-insert-link
   au!
   au FileType markdown vnoremap <buffer> <silent> p :<C-u>call InsertMarkdownLink()<CR>
 augroup END
+
+function! SendBufferToCommandAndClose()
+  " 現在のバッファの内容を一時ファイルに保存
+  let tmpfile = tempname()
+  execute 'write! ' . tmpfile
+  " terminal を開いてコマンドを実行し、実行後に閉じる
+  execute 'terminal cat<' . tmpfile . ' | prp && sleep 0.5 && exit'
+  " 一時ファイルを削除
+  call delete(tmpfile)
+  " normal ggVGd
+  " normal "+p
+endfunction
+nnoremap <M-m> :call SendBufferToCommandAndClose()<CR>
