@@ -1,0 +1,16 @@
+#!/usr/bin/env -S bash -e
+
+mo_dir="$HOME/.mo" && readonly mo_dir
+main() {
+  find "$mo_dir"/job/20??/20*log/ -type f -name "20*log.md" |
+    sort |
+    fzf -m \
+      --preview 'echo {}; echo "----------------------------------------"; head -100 {}' \
+      --tac \
+      --select-1 \
+      --exit-0 \
+      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview' |
+    xargs grep '^## 20.*' |
+    nvim -
+}
+main "$@"
