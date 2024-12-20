@@ -262,6 +262,11 @@ function tb() {
 }
 zle -N tb
 bindkey '^v' tb
+function _prp() {
+  ~/.dot/bin/prp
+}
+zle -N _prp
+bindkey '^[m' _prp # Alt-m
 
 function supported() {
   local cmd="$*"

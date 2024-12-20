@@ -1,0 +1,24 @@
+#!/usr/bin/env -S bash -e
+
+fire() {
+  find "$HOME"/.mo/prompt/ -type f -name '*.md'
+}
+
+main() {
+  set -euo pipefail
+  if [[ -p /dev/stdin ]]; then
+    cat <&0 | clip
+  fi
+  CLIPBOARD="$(gclip -paste)" && export CLIPBOARD
+  local f
+  f=$(
+    fire |
+      fzf --preview 'bat --color=always --style=header,grid --line-range :500 {}' \
+        --select-1 --exit-0
+  )
+  [[ -z $f ]] && return 0
+  cat <"$f" |
+    envsubst |
+    tee >(clip)
+}
+main "$@"
