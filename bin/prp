@@ -1,24 +1,58 @@
 #!/usr/bin/env -S bash -e
 
+command_name=$(basename "$0") && readonly command_name
+dst=/tmp/"$command_name".tmp && readonly dst
+edit=0
+
 fire() {
   find "$HOME"/.mo/prompt/ -type f -name '*.md'
 }
 
+usage() {
+  cat <<EOF
+Usage: $command_name [OPTION] [fuzzy query for filter prompts]
+
+Options:
+  -h, --help  Display this help and exit
+  -e          Edit the generated prompt
+
+EOF
+}
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) edit=1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+}
+add_args() { args+=("$@"); }
 main() {
+  initialize "$@"
   set -euo pipefail
   if [[ -p /dev/stdin ]]; then
     cat <&0 | clip
   fi
-  CLIPBOARD="$(gclip -paste)" && export CLIPBOARD
+  content="$(gclip -paste)" && export content
   local f
   f=$(
     fire |
       fzf --preview 'bat --color=always --style=header,grid --line-range :500 {}' \
+        --query "${args[@]}" \
         --select-1 --exit-0
   )
   [[ -z $f ]] && return 0
+  # trap 'rm -f "$dst"' EXIT
   cat <"$f" |
-    envsubst |
-    tee >(clip)
+    envsubst >"$dst"
+  [[ $edit -ne 1 ]] && {
+    cat "$dst"
+    return 0
+  }
+  nvim "$dst"
 }
 main "$@"

@@ -307,8 +307,10 @@ function! SaveMemoInner(outdir, defaultTitle, createDirectory, withHugolize) abo
     let title = "-" . title
   endif
   let name = strymd . title
+  let dir = dir . "/" . stryyyy
+  call mkdir(expand(dir), "p")
   if a:createDirectory == 1
-    let dir = dir . "/" . stryyyy . "/" . name
+    let dir = dir . "/" . name
     call mkdir(expand(dir), "p")
     if a:withHugolize == 1
       let name = "index"
@@ -333,25 +335,18 @@ function! SaveMemoJob() abort
 endfun
 command! SaveMemoJob call SaveMemoJob()
 
-function! OpenKnowledge() abort
-  let now = localtime()
-  let stryyyy = strftime("%Y", now)
-  let dir = "~/.mo/knowledge/" .. stryyyy
-  let fname = strftime("%Y-%m-%d", now) . "-" . "knowledge.md"
-  if !isdirectory(expand(dir))
-    call mkdir(expand(dir), "p")
-  endif
-  let dst = dir . "/" . fname
-  if filereadable(expand(dst))
-    exe ":e " . dst
-    return 0
-  endif
-  " new file
-  exe ":e " . dst
-  return 0
+function! SaveKnowledge() abort
+  let tmpfile = tempname()
+  execute 'write! ' . tmpfile
+  " システムコマンドへ渡す
+  " MEMO: tmp内容が反映されないケースがるので、0.2秒待機
+  let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp gen-content-title.md | llm prompt -'))
+  " 一時ファイルを削除
+  call delete(tmpfile)
+  call SaveMemoInner("~/.mo/knowledge", title, 0, 0)
 endfun
-command! OpenKnowledge call OpenKnowledge()
-nnoremap sT :<C-u>tabnew<CR>:OpenKnowledge<CR>
+command! SaveKnowledge call SaveKnowledge()
+nnoremap sT :<C-u>tabnew<CR>:SaveKnowledge<CR>
 
 function! SaveMd() abort
   call SaveMemoInner("~/.md/content/posts", "", 1, 1)

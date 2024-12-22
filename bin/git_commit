@@ -25,16 +25,8 @@ trap_exit() {
 }
 
 cat_prompt() {
-  cat <<EOF
-Please generate a Git commit message in
-JSON FORMAT based on the following 'git diff' output.
-The JSON should have two keys: 'summary' for the summary,
-and 'details' for the detailed explanation.
-The 'details' value should be formatted with line breaks at appropriate
-positions, aiming for approximately 80 characters per line.
--- Here is the 'git diff' output --
-$(git diff --minimal --cached)
-EOF
+  git diff --minimal --cached |
+    prp gen-git-commit-message.md
 }
 
 genai() {

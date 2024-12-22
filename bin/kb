@@ -1,0 +1,6 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  knowledge | prp "new-blog-post.md"
+}
+main "$@"
