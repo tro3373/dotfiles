@@ -18,7 +18,27 @@ warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
 
 get_dst_path() {
-  echo "$script_dir/lib/$command_name/res/$svc/${timestamp}_${name}.json"
+  local svc_dir
+  svc_dir=$(get_svc_dir res)
+  echo "$svc_dir/${timestamp}_${name}.json"
+}
+get_req_opt_path() {
+  local svc_dir
+  svc_dir=$(get_svc_dir req)
+  echo "$svc_dir/opt"
+  echo "$svc_dir/$name.opt"
+}
+get_req_json_path() {
+  local svc_dir
+  svc_dir=$(get_svc_dir req)
+  echo "$svc_dir/$name.json"
+}
+get_svc_dir() {
+  local req_res=req
+  if [[ $1 == res ]]; then
+    req_res=res
+  fi
+  echo "$script_dir/lib/$command_name/$req_res/$svc"
 }
 
 execute_curl() {
@@ -30,15 +50,11 @@ execute_curl() {
   commands+=(-sSL)
   commands+=(-X "$method")
   commands+=(-H "Content-Type: application/json")
-  local opt_path
-  opt_path=$(get_req_opt_path)
-  if [[ -e $opt_path ]]; then
-    while read -r line; do
-      [[ -z $line ]] && continue
-      [[ $line =~ ^#.* ]] && continue
-      eval "commands+=($line)"
-    done < <(cat <"$opt_path" | envsubst)
-  fi
+  while read -r line; do
+    [[ -z $line ]] && continue
+    [[ $line =~ ^#.* ]] && continue
+    eval "commands+=($line)"
+  done < <(cat_req_opts | envsubst)
   commands+=(-d @-)
   commands+=("$url")
   info "==> Requesting ${commands[*]} .."
@@ -56,6 +72,16 @@ execute_curl() {
       [[ $save_env_val =~ ^#.* ]] && continue
       eval "$save_env_val=$(cat <"$dst" | jq -r "$save_env_val_jq_path")"
       update_dot_env "$save_env_val"
+    done
+}
+
+cat_req_opts() {
+  get_req_opt_path |
+    while read -r _opt_path; do
+      [[ -z $_opt_path ]] && continue
+      [[ $_opt_path =~ ^#.* ]] && continue
+      [[ ! -e $_opt_path ]] && continue
+      cat <"$_opt_path"
     done
 }
 
@@ -78,13 +104,6 @@ cat_req_data() {
     return
   fi
   envsubst <"$_json"
-}
-
-get_req_opt_path() {
-  echo "$script_dir/lib/$command_name/req/$svc/opt"
-}
-get_req_json_path() {
-  echo "$script_dir/lib/$command_name/req/$svc/$name.json"
 }
 
 main() {

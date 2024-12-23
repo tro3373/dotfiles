@@ -87,15 +87,26 @@ find_none_images() {
 clean_system_images() {
   [[ $system_prune -eq 0 ]] && return
   info "=> Cleaning via system prune -a.."
+  $dummy docker volume prune
   $dummy docker system prune -a
+}
+
+recommend() {
+  ! is_dummy && return
+  cat <<'EOF' | _ink yellow
+>> This is dummy mode.
+  -e: Excute aboub command.
+  -s: (warning) Execute also below
+    - docker volume prune
+    - docker system prune -a
+EOF
 }
 
 main() {
   initialize "$@"
   clean_not_active_containers
   clean_none_images
-  if is_dummy; then
-    echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
-  fi
+  clean_system_images
+  recommend
 }
 main "$@"

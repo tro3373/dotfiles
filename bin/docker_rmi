@@ -10,7 +10,7 @@ main() {
       [[ -z $img ]] && continue
       [[ $img =~ ^#.* ]] && continue
       echo "==> Removing $img:$tag ImageId:$hash .." | ink yellow
-      docker rmi "$hash"
+      docker rmi "$hash" "$@"
     done
 }
 main "$@"
