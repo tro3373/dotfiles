@@ -346,7 +346,8 @@ function! SaveKnowledge() abort
   call SaveMemoInner("~/.mo/knowledge", title, 0, 0)
 endfun
 command! SaveKnowledge call SaveKnowledge()
-nnoremap sT :<C-u>tabnew<CR>:SaveKnowledge<CR>
+" nnoremap sT :<C-u>tabnew<CR>:SaveKnowledge<CR>
+nnoremap sT :<C-u>SaveKnowledge<CR>
 
 function! SaveMd() abort
   call SaveMemoInner("~/.md/content/posts", "", 1, 1)
