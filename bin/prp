@@ -42,13 +42,13 @@ main() {
   f=$(
     fire |
       fzf --preview 'bat --color=always --style=header,grid --line-range :500 {}' \
-        --query "${args[@]}" \
+        --query "${args[*]}" \
         --select-1 --exit-0
   )
   [[ -z $f ]] && return 0
   # trap 'rm -f "$dst"' EXIT
   cat <"$f" |
-    envsubst >"$dst"
+    envsubst | tee >(clip) >"$dst"
   [[ $edit -ne 1 ]] && {
     cat "$dst"
     return 0
