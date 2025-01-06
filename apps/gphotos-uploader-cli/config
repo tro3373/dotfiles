@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 
 install_common() {
-  if ! has go; then
-    log "No go exist. install it." 1>&2
-    return
-  fi
-  exe go install github.com/gphotosuploader/gphotos-uploader-cli@latest
+  go_install github.com/gphotosuploader/gphotos-uploader-cli@latest
 }
 
 cat_config() {

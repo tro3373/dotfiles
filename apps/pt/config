@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 
 install_common() {
-  if ! has go; then
-    log "golang not installed."
-    return
-  fi
-  exe go install github.com/monochromegane/the_platinum_searcher/...@latest
+  go_install github.com/monochromegane/the_platinum_searcher/...@latest
 }
 
 setting_common() {

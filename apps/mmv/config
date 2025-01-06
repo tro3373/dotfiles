@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
 install_common() {
-  if ! has go; then
-    log "golang not installed."
-    return
-  fi
-  exe go install github.com/itchyny/mmv/cmd/mmv@latest
+  go_install github.com/itchyny/mmv/cmd/mmv@latest
 }

@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
 install_common() {
-  if ! has go; then
-    log "golang not installed."
-    return
-  fi
-  exe go install github.com/eliben/gemini-cli@latest
+  go_install github.com/eliben/gemini-cli@latest
 }
