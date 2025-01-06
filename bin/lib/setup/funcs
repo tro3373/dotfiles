@@ -469,6 +469,14 @@ dl() {
   fi
 }
 
+go_install() {
+  if ! has go; then
+    log "golang not installed."
+    return
+  fi
+  exe go install "$*"
+}
+
 gsettings_if_needed() {
   local _scheme=$1
   local _path=$2
