@@ -117,10 +117,16 @@ main() {
   [[ -e $list_file ]] || {
     error "==> No list file exist. $list_file"
   }
+  fzf_opt=
+  [[ $# -gt 0 ]] && {
+    # shellcheck disable=SC2089
+    fzf_opt="--query '${*}'"
+  }
+  # shellcheck disable=SC2090,SC2086
   cat <"$list_file" |
     grep -v '^#' |
     envsubst |
-    fzf |
+    fzf $fzf_opt |
     while read -r svc name method url save_env_vals; do
       auth_header=${auth_header/:/: }
       warn "==> svc:$svc"
