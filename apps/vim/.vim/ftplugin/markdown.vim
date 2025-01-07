@@ -11,6 +11,8 @@ function Check()
     s/\[.\]/[x]/
   elseif l:line=~?'\s*-\s*\[x\].*'
     s/\[x\]/[ ]/
+  else
+    s/- /- [ ] /
   endif
   call winrestview(l:curs)
 endfunction

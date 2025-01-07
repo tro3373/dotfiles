@@ -160,3 +160,8 @@ snippet	initializeee
 	docker_user := $(docker_uid):$(docker_gid)
 
 	export
+
+snippet	filterouttt
+	# $@: Target name. ex make a => a
+	# $(MAKECMDGOALS): All Command line arguments. ex make a b c => a b c
+	$(filter-out $@,$(MAKECMDGOALS))
