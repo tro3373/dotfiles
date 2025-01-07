@@ -106,6 +106,7 @@ alias cddot="cd $DOTPATH"
 alias history="history -i"
 alias codeimg="germanium"
 alias germ="germanium"
+alias tb="tmux_buffer"
 if has speedtest; then
   alias st="speedtest"
 fi
