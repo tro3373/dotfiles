@@ -120,13 +120,13 @@ main() {
   fzf_opt=
   [[ $# -gt 0 ]] && {
     # shellcheck disable=SC2089
-    fzf_opt="--query '${*}'"
+    fzf_opt="--query ${*}"
   }
   # shellcheck disable=SC2090,SC2086
   cat <"$list_file" |
     grep -v '^#' |
     envsubst |
-    fzf $fzf_opt |
+    fzf --select-1 --exit-0 $fzf_opt |
     while read -r svc name method url save_env_vals; do
       auth_header=${auth_header/:/: }
       warn "==> svc:$svc"
