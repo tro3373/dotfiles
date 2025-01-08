@@ -135,9 +135,14 @@ let g:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162'
 " autocmd BufNewFile,BufRead .env let b:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162,SC2034'
 let g:ale_sh_shfmt_options = '-i 2 -ci -s' " shfmt see .editorconfig?(not working... so specify option)
 " Python
-" let g:ale_python_flake8_options = '--ignore=E501,E402,F401,E701' " ignore long-lines, import on top of the file, unused modules and statement with colon
 " let g:ale_python_autopep8_options = '--ignore=E501'              " ignore long-lines for autopep8 fixer
-let g:ale_python_flake8_options = '--max-line-length=120 --ignore=E501,F401'
+" W503: line break before binary operator
+" E501: line too long
+" E203: whitespace before ':'
+" F401: module imported but unused
+" E402: module level import not at top of file
+" E701: multiple statements on one line (colon)
+let g:ale_python_flake8_options = '--max-line-length=120 --ignore=W503,E501,E203'
 " let g:ale_python_autopep8_options = ''
 " let g:ale_python_isort_options = ''
 " let g:ale_python_black_options = ''
