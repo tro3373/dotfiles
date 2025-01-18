@@ -1,0 +1,56 @@
+#!/usr/bin/env -S bash -e
+
+readonly depends=(dd fzf)
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+for_mac() {
+  base_dir="$HOME/Downloads"
+  iso=$(
+    find "$base_dir"/ -maxdepth 1 -mindepth 1 -type f -name '*.iso' -o -name '*.dmg' |
+      fzf --prompt 'Select ISO'
+  )
+  if [[ ! -e $iso ]]; then
+    error "==> No iso file exist."
+  fi
+  iso_base_name=$(basename $iso)
+  iso_base_name=${iso_base_name/.iso/}
+  iso_base_name=${iso_base_name/.dmg/}
+  dmg="$base_dir/$iso_base_name.dmg"
+  cmds=()
+  if [[ ! -e $dmg ]]; then
+    cmds+=("hdiutil convert -format UDRW -o $base_dir/$iso_base_name $iso")
+  fi
+  device=$(
+    {
+      diskutil list | grep -E '^/'
+    } | fzf --prompt 'Select Device> ' | awk '{print $1}'
+  )
+  cmds+=("disluitl unmountDisk $device")
+  cmds+=("sudo dd if=$dmb of=$device bs=1m")
+  info "==>"
+  info "==> You need do this."
+  for cmd in "${cmds[@]}"; do
+    echo "$cmd"
+  done
+  info "==>"
+}
+
+not_supported() { error "Not supported."; }
+
+main() {
+  hass "${depends[@]}"
+  if os mac; then
+    for_mac
+    return
+  fi
+  not_supported
+}
+main "$@"
