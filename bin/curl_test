@@ -60,6 +60,7 @@ execute_curl() {
   info "==> Requesting ${commands[*]} .."
   cat_req_data |
     tee >(info "==> Data: $(cat)") |
+    jq -c |
     "${commands[@]}" |
     tee >(jq . >"$dst") |
     jq .
