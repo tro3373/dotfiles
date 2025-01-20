@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 _font=Osaka-Mono.otf
-_dst_system_font_path=/usr/share/fonts/$_font
+_dst_system_font_path=/usr/share/fonts/osaka-mono/$_font
 
 is_installed() {
   if is_mac; then
