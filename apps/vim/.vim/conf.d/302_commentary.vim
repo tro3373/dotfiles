@@ -12,3 +12,4 @@ omap <Leader>c  <Plug>Commentary
 nmap <Leader>c  <Plug>CommentaryLine
 
 autocmd FileType markdown setlocal commentstring=>\ %s
+autocmd FileType sql setlocal commentstring=--\ %s

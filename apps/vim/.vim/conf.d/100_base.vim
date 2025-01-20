@@ -269,6 +269,13 @@ set lcs=tab:\▸\ ,trail:_,extends:\
 set list
 highlight SpecialKey cterm=NONE ctermfg=cyan guifg=cyan
 
+" Makefileを開いている時のみ、タブとスペースの混在をハイライト
+autocmd FileType make call HighlightMixedIndent()
+function! HighlightMixedIndent()
+  " 混在したインデントのパターンをハイライト
+  match Error /^\t* \+\t\+\|\t\+ \+\t*/
+endfunction
+
 " 行番号を表示する
 set number
 " " 相対行番号を表示する
@@ -495,6 +502,7 @@ command! OpenLocalRc call OpenLocalRc()
 augroup sql-auto-uppercase
   autocmd!
   autocmd FileType sql iabbrev <buffer> select SELECT
+  " autocmd FileType sql iabbrev <buffer> <expr> select 'SELECT'
   autocmd FileType sql iabbrev <buffer> update UPDATE
   autocmd FileType sql iabbrev <buffer> delete DELETE
   autocmd FileType sql iabbrev <buffer> from FROM
@@ -505,3 +513,8 @@ augroup sql-auto-uppercase
   autocmd FileType sql iabbrev <buffer> on ON
   autocmd FileType sql iabbrev <buffer> set SET
 augroup END
+" pumvisible() は補完メニューが表示されているかどうかをチェックします。
+" 補完メニューが表示されている場合は <C-y> を実行して選択項目を確定します。
+" 補完メニューが表示されていない場合は <C-]> を実行して略語を展開し、その後 <CR> で改行します12。
+" inoremap <expr> <CR> pumvisible() ? "<C-y>" : "<C-]><CR>"
+

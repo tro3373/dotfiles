@@ -16,6 +16,7 @@ function! s:on_lsp_buffer_enabled() abort
   " nmap <buffer> <C-]> :tab LspDefinition
   " nmap <buffer> <C-]> LspDefinition
   nmap <buffer> <C-[> <plug>(lsp-document-diagnostics)
+  nmap <buffer> <C-j> <plug>(lsp-document-diagnostics)
   nmap <buffer> <f1> <plug>(lsp-code-action)
   nmap <buffer> <f2> <plug>(lsp-rename)
   nmap <buffer> <C-n> <plug>(lsp-next-error)

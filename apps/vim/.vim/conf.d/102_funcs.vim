@@ -142,7 +142,7 @@ command! ClipTime       call ClipTime()
 command! ShowPath       call ShowPath()
 command! CopyDir        call ClipDir()
 command! CopyPath       call ClipPath()
-command! Copy           call ClipFullPath()
+" command! Copy           call ClipFullPath()
 command! CopyFullPath   call ClipFullPath()
 command! CopyFileName   call ClipFileName()
 command! CopyTimestamp  call ClipTimestamp()
@@ -296,6 +296,7 @@ endfunction
 function! SaveMemoInner(outdir, defaultTitle, createDirectory, withHugolize) abort
   let dir = a:outdir
   if !isdirectory(expand(dir))
+    " pオプション: 親ディレクトリが存在しない場合は作成する (parents)
     call mkdir(expand(dir), "p")
   endif
   let now = localtime()
@@ -312,9 +313,11 @@ function! SaveMemoInner(outdir, defaultTitle, createDirectory, withHugolize) abo
   if a:createDirectory == 1
     let dir = dir . "/" . name
     call mkdir(expand(dir), "p")
-    if a:withHugolize == 1
-      let name = "index"
-    endif
+  elseif a:createDirectory == 2
+    call mkdir(expand(dir), "p")
+  endif
+  if a:withHugolize == 1
+    let name = "index"
   endif
   exe ":w " . dir . "/" . name . ".md"
   exe ":e " . dir . "/" . name . ".md"
@@ -326,23 +329,35 @@ function! SaveMemoInner(outdir, defaultTitle, createDirectory, withHugolize) abo
 endfun
 
 function! SaveMemoPrv() abort
-  call SaveMemoInner("~/.mo/prv", "log", 1, 0)
+  call SaveMemoInner("~/.mo/prv", "log", 2, 0)
 endfun
 command! SaveMemoPrv call SaveMemoPrv()
 
 function! SaveMemoJob() abort
-  call SaveMemoInner("~/.mo/job", "log", 1, 0)
+  call SaveMemoInner("~/.mo/job", "log", 2, 0)
 endfun
 command! SaveMemoJob call SaveMemoJob()
 
-function! SaveKnowledge() abort
+function! GetContentTitle(prpfile) abort
   let tmpfile = tempname()
   execute 'write! ' . tmpfile
   " システムコマンドへ渡す
   " MEMO: tmp内容が反映されないケースがるので、0.2秒待機
-  let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp gen-content-title.md | llm prompt -'))
+  let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp '..a:prpfile..' | llm prompt -'))
   " 一時ファイルを削除
   call delete(tmpfile)
+  return title
+endfun
+
+function! SaveKnowledge() abort
+  " let tmpfile = tempname()
+  " execute 'write! ' . tmpfile
+  " " システムコマンドへ渡す
+  " " MEMO: tmp内容が反映されないケースがるので、0.2秒待機
+  " let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp gen-content-title.md | llm prompt -'))
+  " " 一時ファイルを削除
+  " call delete(tmpfile)
+  let title = GetContentTitle("gen-content-title-ja.md")
   call SaveMemoInner("~/.mo/knowledge", title, 0, 0)
 endfun
 command! SaveKnowledge call SaveKnowledge()
@@ -350,7 +365,8 @@ command! SaveKnowledge call SaveKnowledge()
 nnoremap sT :<C-u>SaveKnowledge<CR>
 
 function! SaveMd() abort
-  call SaveMemoInner("~/.md/content/posts", "", 1, 1)
+  let title = GetContentTitle("gen-content-title-en.md")
+  call SaveMemoInner("~/.md/content/posts", title, 1, 1)
 endfun
 command! SaveMd call SaveMd()
 
@@ -437,7 +453,8 @@ command! OneLine call OneLine()
 " 改行付与
 function! OneLineReverse() abort
   let dst = input("Input char to replace LF: ")
-  call SilentFExec(':%s/'.dst.'//g')
+  call SilentFExec(':%s/'.dst.'/
+/g')
 endfun
 command! OneLineReverse call OneLineReverse()
 command! MultiLine call OneLineReverse()
@@ -704,15 +721,34 @@ command! ToCsv call ToCsv()
 
 
 " ファイルコピー作成
-function! Copy() abort
-  let def_fname=expand('%:t') . ".copy"
+function! Buckup() abort
+  " :t はファイル名のみ取得、:r は拡張子を除外
+  let base_name = expand('%:t:r')
+  " .bk1などを除外
+  " substitute
+  "   base_name: 対象文字列
+  "   \.bk\d\+$: .bkに続く1つ以上の数字が末尾にマッチ
+  "   '': 空文字列に置換
+  "   4th arg: フラグ指定なし (g:グローバル置換、i:大文字小文字無視などのフラグを指定しない)
+  let base_name = substitute(base_name, '\.bk\d\+$', '', '')
+  " .bkを除外
+  let base_name = substitute(base_name, '\.bk$', '', '')
+  let ext = expand('%:e')
+  let count = 1
+  let def_fname = base_name . '.bk.' . ext
+  while filereadable(expand("%:p:h") . "/" . def_fname)
+    let count += 1
+    let def_fname = base_name . '.bk' . count . '.' . ext
+  endwhile
   let fname = input("Input FileName: ", def_fname)
   let fpath = expand("%:p:h") . "/" . fname
   redraw
   call SilentFExec(':w '.fpath)
   echo "==> " . fpath . " created."
 endfun
-command! Copy call Copy()
+command! Buckup call Buckup()
+command! Bk call Buckup()
+command! Copy call Buckup()
 
 " yank to remote
 let g:y2r_config = {
