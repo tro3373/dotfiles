@@ -15,8 +15,8 @@ install_cygwin() { not_supported; }
 # install_ubuntu() { not_supported; }
 # install_redhat() { not_supported; }
 setting_common() {
-  _cat_add_settings | cat_you_need_to ~/.works.zsh
-  _cat_add_settings | cat_you_need_to ~/.bashrc
+  _cat_asdf_settings | cat_you_need_to ~/.works.zsh
+  _cat_asdf_settings | cat_you_need_to ~/.bashrc
   # # append completions to fpath
   # fpath=(${ASDF_DIR}/completions $fpath)
   # # initialise completions with ZSH's compinit

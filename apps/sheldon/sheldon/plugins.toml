@@ -32,6 +32,7 @@ github = "romkatv/zsh-defer"
 # # Enhance cd command
 # [plugins.enhancd]
 # github = "b4b4r07/enhancd"
+# github = "babarot/enhancd"
 
 ######################################################
 # Theme
@@ -79,13 +80,14 @@ apply = ["defer"]
 local = "~/.dot/apps/zsh/.zsh/Completion"
 apply = ["fpath"]
 
+# NOT WORK
 [plugins.fzf]
 local = "~/.fzf"
 use = ["shell/key-bindings.zsh", "shell/completion.zsh"]
 apply = ["defer"]
 
 [plugins.asdf-completion]
-remote = "https://raw.githubusercontent.com/asdf-vm/asdf/master/completions/_asdf"
+local = "~/.asdf/completions"
 apply = ["fpath"]
 
 [plugins.zsh-kubectl-completion]
@@ -130,3 +132,4 @@ autoload -Uz compinit
 #zsh-defer compinit -u
 compinit -u
 """
+

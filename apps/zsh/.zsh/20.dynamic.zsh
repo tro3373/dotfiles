@@ -20,6 +20,10 @@ _dynamic() {
 
   # plugins
   if has sheldon; then
+    # TODO sheldon source error exist
+    #autoload -Uz compinit
+    ##zsh-defer compinit -u
+    #compinit -u
     _cache_load sheldon
   fi
 

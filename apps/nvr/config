@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
 install_common() {
-  if ! has pip; then
-    log "pip not installed."
+  # if ! has pip; then
+  #   log "pip not installed."
+  #   return
+  # fi
+  if ! command -v pip | grep -q .asdf; then
+    log "No asdf pip exist"
     return
   fi
   exe pip install neovim-remote

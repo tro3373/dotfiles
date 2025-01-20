@@ -32,7 +32,7 @@ load_update_arg_apps() {
   # XtraFinder
   # shellcheck disable=SC2034
   read -r -a args < <(
-    echo "$(default_apps) wezterm raycast iterm2 vscode scroll-reverser karabiner-elements alt-tab utm orb"
+    echo "$(default_apps) wezterm raycast iterm2 vscode scroll-reverser karabiner-elements alt-tab utm orb wezterm"
   )
 }
 

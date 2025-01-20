@@ -22,7 +22,7 @@ load_update_arg_apps() {
   # cargo order bug?
   # shellcheck disable=SC2034
   read -r -a args < <(
-    echo "$(default_apps) xclip snap fcitx5-mozc hackgen udev-gothic gnome-font-viewer code font"
+    echo "$(default_apps) xclip snap fcitx5-mozc hackgen udev-gothic gnome-font-viewer code font wezterm"
   )
 }
 
@@ -80,18 +80,18 @@ _setup_user_group() {
 
 _setup_cronie() {
   local target=cronie
-  if sudo systamctl status $target | grep Active | grep active >&/dev/null; then
+  if sudo systemctl status $target | grep Active | grep active >&/dev/null; then
     return
   fi
-  exe sudo systamctl enable $target
+  exe sudo systemctl enable $target
 }
 
 _setup_sshd() {
   local target=sshd
-  if sudo systamctl status $target | grep Active | grep active >&/dev/null; then
+  if sudo systemctl status $target | grep Active | grep active >&/dev/null; then
     return
   fi
-  exe sudo systamctl enable $target
+  exe sudo systemctl enable $target
 }
 
 _setup_visudo_editor() {
@@ -226,9 +226,10 @@ EOF
     # Server = http://ftp.tsukuba.wide.ad.jp/Linux/manjaro/stable/$repo/$arch
     # Server = http://ftp.riken.jp/Linux/manjaro/stable/$repo/$arch
   fi
-  #exe sudo pacman -Sy --noconfirm gnupg archlinux-keyring
-  #exe sudo pacman-key --refresh-keys --keyserver keyserver.ubuntu.com
-  exe sudo pacman-key --refresh-keys
+  exe sudo pacman -Sy --noconfirm
+  exe sudo pacman -Sy --noconfirm gnupg archlinux-keyring
+  # exe sudo pacman-key --refresh-keys
+  exe sudo pacman-key --refresh-keys --keyserver keyserver.ubuntu.com
   # Disable for No such app error
   #   exe sudo pacman -Rsu --noconfirm manjaro-gdm-theme firefox-gnome-theme-maia adwaita-maia
   # Fix error
@@ -238,5 +239,4 @@ EOF
 
   # shellcheck disable=SC2154
   exe "$def_install_cmd" "${apps[@]}"
-
 }

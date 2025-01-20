@@ -169,10 +169,10 @@ install_redhat() {
 }
 
 install_arch() {
-  if has vim; then
-    exe sudo pacman -R vim --noconfirm
-  fi
-  def_install gvim vim lua
+  # if has vim; then
+  #   exe sudo pacman -R vim --noconfirm
+  # fi
+  def_install gvim lua
 }
 
 build_arch() {

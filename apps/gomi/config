@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
 install_common() {
-  go_install github.com/b4b4r07/gomi@latest
+  #go_install github.com/b4b4r07/gomi@latest
+  go_install github.com/babarot/gomi@latest
 }

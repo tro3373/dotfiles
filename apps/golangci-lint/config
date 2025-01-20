@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 
 install_common() {
-  local _install_url _latest_tag _cmd
-  _latest_tag=$(github_latest_release_tag golangci/golangci-lint)
-  _install_url="https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh"
-  _cmd="curl -sSfL $_install_url | sh -s -- -b $(go env GOPATH)/bin $_latest_tag"
-  exe "$_cmd"
-  exe golangci-lint --version
-}
-install_mac() {
+  # local _install_url _latest_tag _cmd
+  # _latest_tag=$(github_latest_release_tag golangci/golangci-lint)
+  # _install_url="https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh"
+  # # fix me
+  # _cmd="curl -sSfL $_install_url | sh -s -- -b $(go env GOPATH)/bin $_latest_tag"
+  # exe "$_cmd"
+  # exe golangci-lint --version
   install_via_os_default
 }
 setting_common() { no_settings; }
@@ -19,22 +18,3 @@ setting_cygwin() { no_settings; }
 setting_mac() { no_settings; }
 setting_ubuntu() { no_settings; }
 setting_redhat() { no_settings; }
-#is_installed
-#install_via_os_default
-#def_install
-#is_debug
-#is_dry
-#log
-#dlog
-#not_supported
-#no_settings
-#make_link_dot2home
-#make_lnk_with_bkup
-#cd_work
-#make_work_if_needed
-#dl
-#dl_unzip
-#dl_untar
-#github
-#github_user_local
-#sudo_tee

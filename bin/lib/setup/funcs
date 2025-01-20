@@ -9,16 +9,18 @@ readonly _core_apps=(
 # ag pt anyenv nkf
 readonly _core_apps_additional=(
   nvim go cargo asdf docker
-  sheldon ghq mmv jq yq
-  nvr neofetch fzf htop gh exa bat gclip gomi ctags cwebp
+  sheldon ghq mmv jq yq hugo his
+  neofetch fzf htop gh exa bat gclip gomi ctags cwebp nvr
   # apps for shell
   shellcheck shfmt
   # apps for go
-  goimports gosec golangci-lint staticcheck
+  goimports gosec staticcheck golangci-lint
   # apps for lua
   stylua luarocks luacheck
   # apps for yaml
   yamlfmt
+  # apps for terraform
+  tfsec
 )
 readonly _core_apps_additional_arch=(
   yay
@@ -388,6 +390,7 @@ github_latest_release_tag() {
   local _repo="$1"
   curl -fsSL "https://github.com/$_repo/tags" |
     grep -E "href=\"/$_repo/releases/tag/" |
+    grep /tag/v |
     head -1 |
     sed -e 's,^.*href=,,g' |
     cut -d\" -f2 |

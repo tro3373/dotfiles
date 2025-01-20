@@ -23,7 +23,7 @@ pre_setup() {
 load_update_arg_apps() {
   # shellcheck disable=SC2034
   read -a args < <(
-    echo "$(default_apps) hackgen fcitx5-mozc chrome_rdp"
+    echo "$(default_apps) hackgen fcitx5-mozc chrome_rdp wezterm"
   )
 }
 
