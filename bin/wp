@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+# readonly depends=()
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+# hass "${depends[@]}"
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+wallpapers() {
+  find "$src_dir"/ -maxdepth 1 -mindepth 1 -type f |
+    if [[ -n $next_img_path ]]; then
+      cat - | grep -v "$next_img_path"
+    else
+      cat -
+    fi
+}
+
+next_img() {
+  read -ra images < <(wallpapers | tr '\n' ' ')
+  # warn "${images[@]}"
+  if [[ ${#images[@]} -eq 0 ]]; then
+    return
+  fi
+  max=${#images[@]}
+  r=$RANDOM
+  idx=$((r % max))
+  # warn "$r % $max + 1 = $idx"
+  echo ${images[$idx]}
+}
+
+main() {
+  local src_dir="$HOME/Downloads/_wallpapers"
+  next_img_path=
+  while true; do
+    next_img_path=$(next_img "$next_img_path")
+    if [[ -z $next_img_path ]]; then
+      error "==> No wallpapers exist."
+    fi
+    gsettings set org.gnome.desktop.background picture-uri-dark "$next_img_path"
+    sleep 1m
+  done
+}
+main "$@"
