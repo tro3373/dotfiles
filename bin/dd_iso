@@ -33,14 +33,21 @@ for_mac() {
       diskutil list | grep -E '^/'
     } | fzf --prompt 'Select Device> ' | awk '{print $1}'
   )
-  cmds+=("disluitl unmountDisk $device")
-  cmds+=("sudo dd if=$dmb of=$device bs=1m")
+  if mount | grep -q "$device"; then
+    cmds+=("disluitl unmountDisk $device")
+  fi
+  cmds+=("sudo dd if=$dmg of=$device bs=1M")
   info "==>"
   info "==> You need do this."
+  cat_cmds |
+    tee >(clip)
+  info "==>"
+}
+
+cat_cmds() {
   for cmd in "${cmds[@]}"; do
     echo "$cmd"
   done
-  info "==>"
 }
 
 not_supported() { error "Not supported."; }
