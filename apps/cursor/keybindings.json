@@ -1,0 +1,80 @@
+// 既定値を上書きするには、このファイル内にキー バインドを挿入します
+[
+  {
+    "key": "F3",
+    "when": "inputFocus && vim.mode == 'Normal'",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "# $CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE"
+    }
+  },
+  {
+    "key": "F3",
+    "when": "inputFocus && vim.mode == 'Insert'",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "$CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE"
+    }
+  },
+  {
+    "key": "F4",
+    "when": "inputFocus && vim.mode == 'Normal'",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "- ${CURRENT_YEAR}${CURRENT_MONTH}${CURRENT_DATE}_${CURRENT_HOUR}${CURRENT_MINUTE}${CURRENT_SECOND}"
+    }
+  },
+  {
+    "key": "F4",
+    "when": "inputFocus && vim.mode == 'Insert'",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "${CURRENT_YEAR}${CURRENT_MONTH}${CURRENT_DATE}_${CURRENT_HOUR}${CURRENT_MINUTE}${CURRENT_SECOND}"
+    }
+  },
+  {
+    "key": "F5",
+    "when": "inputFocus && vim.mode == 'Normal'",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "- ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}${CURRENT_TIMEZONE_OFFSET}"
+    }
+  },
+  {
+    "key": "F5",
+    "when": "inputFocus && vim.mode == 'Insert'",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}${CURRENT_TIMEZONE_OFFSET}"
+    }
+  },
+  {
+    "key": "alt+v",
+    "command": "editor.action.clipboardPasteAction"
+  },
+  {
+    "key": "s p",
+    "command": "workbench.action.previousEditor",
+    "when": "editorFocus && vim.mode == 'Normal' && ! renameInputVisible"
+  },
+  {
+    "key": "s n",
+    "command": "workbench.action.nextEditor",
+    "when": "editorFocus && vim.mode == 'Normal' && ! renameInputVisible"
+  },
+  {
+    "key": "s d",
+    "command": "workbench.files.action.focusFilesExplorer",
+    "when": "editorFocus && vim.mode == 'Normal' && ! renameInputVisible"
+  },
+  {
+    "key": "s d",
+    "command": "workbench.action.focusFirstEditorGroup",
+    "when": "explorerViewletFocus"
+  },
+  {
+    "key": "s t",
+    "command": "workbench.action.quickOpen",
+    "when": "editorFocus && vim.mode == 'Normal' && ! renameInputVisible"
+  }
+]
