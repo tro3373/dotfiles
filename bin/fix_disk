@@ -1,0 +1,40 @@
+#!/usr/bin/env -S bash -e
+
+readonly depends=(dd fzf fdisk badblocks e2fsck fsck)
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+main() {
+  hass "${depends[@]}"
+  cmds=()
+  # ディスクの特定:
+  # sudo fdisk -l コマンドを使用して、修復対象のディスクを特定します13。
+  device=$(
+    {
+      sudo fdisk -l | grep -E '^Disk /'
+    } | fzf --prompt 'Select Device> ' | awk '{print $2}' | sed 's/://'
+  )
+  # 不良セクタの検査:
+  # sudo badblocks -v -s /dev/sdX > /tmp/badblocks.txt コマンドを実行します（Xは対象ディスクの文字に置き換えてください）1。
+  cmds+=("sudo badblocks -v -s $device > /tmp/badblocks.txt")
+  # 不良セクタのマーキング:
+  # sudo e2fsck -l /tmp/badblocks.txt /dev/sdX コマンドを使用して、検出された不良セクタをマークします1。
+  cmds+=("sudo e2fsck -l /tmp/badblocks.txt $device")
+  # ファイルシステムの修復:
+  # sudo fsck -t -y -f -c /dev/sdX コマンドを実行して、ファイルシステムの修復と不良セクタのチェックを同時に行います13。
+  cmds+=("sudo fsck -t -y -f -c $device")
+  info "==>"
+  info "==> You need do this."
+  for cmd in "${cmds[@]}"; do
+    echo "$cmd"
+  done
+  info "==>"
+}
+main "$@"
