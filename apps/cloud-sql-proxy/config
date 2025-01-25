@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+_get_latest_tag() {
+  github_latest_release_tag GoogleCloudPlatform/cloud-sql-proxy
+}
+
+_install_common() {
+  local arch=$1
+  local _latest_tag
+  _latest_tag=$(_get_latest_tag)
+  cd_work
+  exe curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${_latest_tag}/cloud-sql-proxy."$arch"
+  exe chmod +x cloud-sql-proxy
+  exe mv cloud-sql-proxy "$HOME"/bin
+}
+
+install_common() {
+  _install_common linux.amd64
+}
+install_mac() {
+  _install_common darwin.arm64
+}
