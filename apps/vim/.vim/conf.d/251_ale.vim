@@ -213,3 +213,20 @@ nmap <silent> <M-j> <Plug>(ale_next_wrap)
 " if dein#tap('lightline.vim')
 "   autocmd MyAutoGroup User ALELint call lightline#update()
 " endif
+
+function! ToggleALE() abort
+  if !exists('g:ale_enabled')
+    return
+  endif
+  if g:ale_enabled
+    ALEDisable
+    let g:ale_enabled = 0
+    echo "==> ALE disabled."
+  else
+    ALEEnable
+    let g:ale_enabled = 1
+    echo "==> ALE enabled."
+  endif
+endfunction
+command! ToggleALE call ToggleALE()
+nnoremap <silent> <Space>b :call ToggleALE()<CR>

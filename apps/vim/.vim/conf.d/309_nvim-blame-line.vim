@@ -2,7 +2,7 @@ if !g:plug.is_installed("nvim-blame-line")
   finish
 endif
 
-nnoremap <silent> <leader>b :ToggleBlameLine<CR>
+" nnoremap <silent> <leader>b :ToggleBlameLine<CR>
 autocmd BufEnter * EnableBlameLine
 
 " " Show blame info below the statusline instead of using virtual text
