@@ -48,29 +48,15 @@
   "vim.leader": "<space>",
   "vim.normalModeKeyBindingsNonRecursive": [
     {
-      "before": [
-        "<C-u>"
-      ],
-      "after": [
-        "H",
-        "z",
-        "z"
-      ]
+      "before": ["<C-u>"],
+      "after": ["H", "z", "z"]
     },
     {
-      "before": [
-        "<C-d>"
-      ],
-      "after": [
-        "L",
-        "z",
-        "z"
-      ]
+      "before": ["<C-d>"],
+      "after": ["L", "z", "z"]
     },
     {
-      "before": [
-        "u"
-      ],
+      "before": ["u"],
       "commands": [
         {
           "command": "undo"
@@ -78,9 +64,7 @@
       ]
     },
     {
-      "before": [
-        "<C-r>"
-      ],
+      "before": ["<C-r>"],
       "commands": [
         {
           "command": "redo"
@@ -88,67 +72,31 @@
       ]
     },
     {
-      "before": [
-        "j"
-      ],
-      "after": [
-        "g",
-        "j"
-      ]
+      "before": ["j"],
+      "after": ["g", "j"]
     },
     {
-      "before": [
-        "k"
-      ],
-      "after": [
-        "g",
-        "k"
-      ]
+      "before": ["k"],
+      "after": ["g", "k"]
     },
     {
-      "before": [
-        "N"
-      ],
-      "after": [
-        "N",
-        "z",
-        "z"
-      ]
+      "before": ["N"],
+      "after": ["N", "z", "z"]
     },
     {
-      "before": [
-        "*"
-      ],
-      "after": [
-        "*",
-        "z",
-        "z"
-      ]
+      "before": ["*"],
+      "after": ["*", "z", "z"]
     },
     {
-      "before": [
-        "\""
-      ],
-      "after": [
-        "*",
-        "z",
-        "z"
-      ]
+      "before": ["\""],
+      "after": ["*", "z", "z"]
     },
     {
-      "before": [
-        "Y"
-      ],
-      "after": [
-        "y",
-        "$"
-      ]
+      "before": ["Y"],
+      "after": ["y", "$"]
     },
     {
-      "before": [
-        "<Leader>",
-        "w"
-      ],
+      "before": ["<Leader>", "w"],
       "after": [],
       "commands": [
         {
@@ -158,10 +106,7 @@
       ]
     },
     {
-      "before": [
-        "<Leader>",
-        "q"
-      ],
+      "before": ["<Leader>", "q"],
       "after": [],
       "commands": [
         {
@@ -171,10 +116,7 @@
       ]
     },
     {
-      "before": [
-        "<Leader>",
-        "x"
-      ],
+      "before": ["<Leader>", "x"],
       "after": [],
       "commands": [
         {
@@ -184,10 +126,7 @@
       ]
     },
     {
-      "before": [
-        "<Leader>",
-        "c"
-      ],
+      "before": ["<Leader>", "c"],
       "after": [],
       "commands": [
         {
@@ -197,50 +136,27 @@
       ]
     },
     {
-      "before": [
-        "<Leader>",
-        "'"
-      ],
-      "after": [
-        "$"
-      ]
+      "before": ["<Leader>", "'"],
+      "after": ["$"]
     },
     {
-      "before": [
-        "<Leader>",
-        "m"
-      ],
-      "after": [
-        "%"
-      ]
+      "before": ["<Leader>", "m"],
+      "after": ["%"]
     }
   ],
   "vim.insertModeKeyBindingsNonRecursive": [
     {
-      "before": [
-        "j",
-        "j"
-      ],
-      "after": [
-        "<Esc>"
-      ]
+      "before": ["j", "j"],
+      "after": ["<Esc>"]
     },
     {
-      "before": [
-        ";",
-        ";"
-      ],
-      "commands": [
-        "editor.action.triggerSuggest"
-      ]
+      "before": [";", ";"],
+      "commands": ["editor.action.triggerSuggest"]
     }
   ],
   "vim.visualModeKeyBindingsNonRecursive": [
     {
-      "before": [
-        "<Leader>",
-        "c"
-      ],
+      "before": ["<Leader>", "c"],
       "after": [],
       "commands": [
         {
@@ -288,10 +204,7 @@
     },
     "ArchLinux (WSL)": {
       "path": "C:\\WINDOWS\\System32\\wsl.exe",
-      "args": [
-        "-d",
-        "ArchLinux"
-      ]
+      "args": ["-d", "ArchLinux"]
     }
   },
   "terminal.integrated.defaultProfile.windows": "ArchLinux (WSL)",
@@ -339,9 +252,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "go.lintTool": "golangci-lint",
-  "go.lintFlags": [
-    "--fast"
-  ],
+  "go.lintFlags": ["--fast"],
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true,
@@ -349,32 +260,20 @@
       "source.organizeImports": "explicit"
     }
   },
-  "isort.args": [
-    "--profile",
-    "black"
-  ],
-  "flake8.args": [
-    "--max-line-length=120",
-    "--ignore=W503,E501,E203"
-  ],
+  "isort.args": ["--profile", "black"],
+  "flake8.args": ["--max-line-length=120", "--ignore=W503,E501,E203"],
   "python.analysis.diagnosticSeverityOverrides": {
     "reportMissingImports": "none"
   },
-  "mypy-type-checker.args": [
-    "--ignore-missing-imports"
-  ],
+  "mypy-type-checker.args": ["--ignore-missing-imports"],
   "hediet.vscode-drawio.theme": "sketch",
   "workbench.startupEditor": "none",
   "github.copilot.editor.enableAutoCompletions": true,
   "remote.downloadExtensionsLocally": true,
   "shellformat.flag": "",
-  "cloudcode.duetAI.project": "fms-dev-425708",
   "workbench.activityBar.orientation": "vertical",
   "makefile.configureOnOpen": false,
-  "cursor.cpp.disabledLanguages": [
-    "plaintext",
-    "scminput"
-  ],
+  "cursor.cpp.disabledLanguages": ["plaintext", "scminput"],
   "terminal.integrated.sendKeybindingsToShell": true,
   "go.toolsManagement.autoUpdate": true,
   "geminicodeassist.inlineSuggestions.enableAuto": true
