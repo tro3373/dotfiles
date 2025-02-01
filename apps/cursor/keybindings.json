@@ -55,26 +55,26 @@
   {
     "key": "s p",
     "command": "workbench.action.previousEditor",
-    "when": "editorFocus && vim.mode == 'Normal' && ! renameInputVisible"
+    "when": "editorFocus && vim.mode == 'Normal' && !renameInputVisible"
   },
   {
     "key": "s n",
     "command": "workbench.action.nextEditor",
-    "when": "editorFocus && vim.mode == 'Normal' && ! renameInputVisible"
+    "when": "editorFocus && vim.mode == 'Normal' && !renameInputVisible"
   },
   {
     "key": "s d",
     "command": "workbench.files.action.focusFilesExplorer",
-    "when": "editorFocus && vim.mode == 'Normal' && ! renameInputVisible"
+    "when": "editorFocus && vim.mode == 'Normal' && !renameInputVisible"
   },
   {
     "key": "s d",
     "command": "workbench.action.focusFirstEditorGroup",
-    "when": "explorerViewletFocus"
+    "when": "explorerViewletFocus && !renameInputVisible && !inputFocus"
   },
   {
     "key": "s t",
     "command": "workbench.action.quickOpen",
-    "when": "editorFocus && vim.mode == 'Normal' && ! renameInputVisible"
+    "when": "editorFocus && vim.mode == 'Normal' && !renameInputVisible"
   }
 ]
