@@ -1,0 +1,15 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  local branch_name=${1:-}
+  if [[ -z $branch_name ]]; then
+    branch_name=$(git_branch)
+  fi
+  read -e -p "Input new branch name: " -i "$branch_name" new_branch_name
+  if [[ -z $new_branch_name ]]; then
+    echo "Branch name is required" >&2
+    exit 1
+  fi
+  git branch -m "$branch_name" "$new_branch_name"
+}
+main "$@"
