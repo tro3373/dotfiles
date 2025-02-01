@@ -5,9 +5,11 @@
 set main-view = id date:local=yes author commit-title:graph=yes,refs=yes
 # set main-view-date-local = true
 # 画面を垂直方向に分割する
-set vertical-split = false
+set vertical-split = yes
 # 水平分割したウィンドウの下画面サイズを % で指定（行数指定も可）
-set split-view-height = 80%
+# set split-view-height = 80%
+# 垂直分割したウィンドウの右画面サイズを % で指定（行数指定も可）
+set split-view-width = 90%
 # 差分の前後の表示行数（diff-context)を指定
 #set diff-context = 6
 
@@ -20,6 +22,14 @@ set diff-options = -m --first-parent
 # インデント、空白のみの変更を無視
 set ignore-space = all
 
+################################################################################
+# `!`: Run the command in the foreground with output shown.
+# `@`: Run the command in the background with no output.
+# `+`: Run the command synchronously, and echo the first line of output to the status bar.
+# `?`: Prompt the user before executing the command.
+# `<`: Exit Tig after executing the command.
+# `>`: Re-open Tig instantly in the last displayed view after executing the command.
+################################################################################
 # ====================================
 # Bind Settings
 # @see https://qiita.com/sfus/items/063797a1dd8fdc7d032f
@@ -40,6 +50,10 @@ bind generic G move-last-line
 # bind refs O ?git checkout %(commit)
 # stash
 # bind stash A ?git stash apply %(stash)
+
+# Ctrl-j,k でファイル間移動
+bind diff <Ctrl-j>  :/^diff
+bind diff <Ctrl-k>  :?^diff
 
 # L で reflog
 bind generic L      !sh -c "git reflog --pretty=raw | tig --pretty=raw"
@@ -79,7 +93,6 @@ bind generic <Esc>c !git commit --allow-empty
 # + で commit --amend
 bind generic +      !git commit --amend --allow-empty
 
-
 ## 以下、Shift付きでブランチ指定、Alt付きでコミットID指定のコマンド
 # = で checkout
 bind main    =      ?git_checkout %(branch) %(remote)
@@ -104,12 +117,13 @@ bind refs    M      ?git merge %(branch)
 bind main    <Esc>m ?git merge %(commit)
 bind diff    <Esc>m ?git merge %(commit)
 
-# R で rebase
-bind main    R      ?git rebase %(branch)
-bind diff    R      ?git rebase %(branch)
-bind refs    R      ?git rebase %(branch)
-bind main    <Esc>r ?git rebase %(commit)
-bind diff    <Esc>r ?git rebase %(commit)
+# ctrl+r で rebase
+bind main    <Ctrl-r> ?git rebase %(branch)
+bind diff    <Ctrl-r> ?git rebase %(branch)
+bind refs    <Ctrl-r> ?git rebase %(branch)
+
+# R で rename
+bind refs    R      !git_rename_branch %(branch)
 
 # I で rebase -i
 bind main    I      ?git rebase -i %(branch)
@@ -133,7 +147,7 @@ bind generic ^      ?git reset --soft HEAD^
 bind status  O      ?git checkout --ours %(file)
 bind status  T      ?git checkout --theirs %(file)
 
-# K で cherry-pick (default: 'C')
+# P で cherry-pick (default: 'C')
 bind main    P      ?git cherry-pick %(commit)
 bind diff    P      ?git cherry-pick %(commit)
 
@@ -163,13 +177,16 @@ bind tree    `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/nu
 bind blob    `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
 bind diff    `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
 
-# Copy commit id
+# Copy
+# MEMO: refs view ではコピー内容が何故かステータスに表示されないので、確認コマンドで表示させる
 bind generic 0      +@sh -c "echo %(commit) | tee >(~/.dot/bin/clip >&/dev/null)"
-bind refs    0      +@sh -c "echo %(tag)%(branch) | tee >(~/.dot/bin/clip >&/dev/null)"
-# Copy commit title to clipboard:
-bind generic 9      +@sh -c "git show -s --format=%s %(commit) | tee >(~/.dot/bin/clip >&/dev/null)"
-# Copy current lint to clipboard:
-bind generic 8      +@sh -c "echo -n '%(text)' | tee >(~/.dot/bin/clip >&/dev/null)"
+bind refs    0      ?sh -c "echo %(commit) | tee >(~/.dot/bin/clip >&/dev/null)"
+bind generic 9      +@sh -c "echo %(tag)%(branch) | tee >(~/.dot/bin/clip >&/dev/null)"
+bind refs    9      ?sh -c "echo %(tag)%(branch) | tee >(~/.dot/bin/clip >&/dev/null)"
+bind generic 8      +@sh -c "git show -s --format=%s %(commit) | tee >(~/.dot/bin/clip >&/dev/null)"
+bind refs    8      ?sh -c "git show -s --format=%s %(commit) | tee >(~/.dot/bin/clip >&/dev/null)"
+bind generic 7      +@sh -c "echo -n '%(text)' | tee >(~/.dot/bin/clip >&/dev/null)"
+bind refs    7      ?sh -c "echo -n '%(text)' | tee >(~/.dot/bin/clip >&/dev/null)"
 
 # Open the version in vim
 bind diff    O      !bash -c "git show %(commit):%(file) | ~/.dot/bin/tovim >&/dev/null"
