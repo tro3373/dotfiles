@@ -7,18 +7,22 @@ settings_d_linux="$HOME/.config/Cursor/User"
 
 _fnm=
 install_common() {
-  log "==> Install from https://cursor.sh/"
-  exe open https://cursor.sh/
-  exe read -p "Press Enter after download"
-  local _bin
-  _bin=$(_find_binary)
-  if [[ -z $_bin ]]; then
-    log "==> No binary found"
-    return
+  if is_mac; then
+    def_install --cask cursor
+  else
+    log "==> Install from https://cursor.sh/"
+    exe open https://cursor.sh/
+    exe read -p "Press Enter after download"
+    local _bin
+    _bin=$(_find_binary)
+    if [[ -z $_bin ]]; then
+      log "==> No binary found"
+      return
+    fi
+    exe chmod +x "$_bin"
+    _fnm=$(basename "$_bin")
+    exe mv -v "$_bin" ~/tools/
   fi
-  exe chmod +x "$_bin"
-  _fnm=$(basename "$_bin")
-  exe mv -v "$_bin" ~/tools/
   local target=~/bin/cursor
   if [[ -e $target ]]; then
     log "==> $target already exists"
@@ -35,12 +39,36 @@ _find_binary() {
 }
 
 cat_cursor() {
+  if is_mac; then
+    cat_cursor_mac
+    return
+  fi
+  cat_cursor_linux
+}
+cat_cursor_linux() {
   cat <<'EOF'
 #!/usr/bin/env -S bash -e
 
 main() {
   local cursor_bin
   cursor_bin=$(find ~/tools -name "cursor-*.AppImage" | sort -r | head -1)
+  local args=("$@")
+  if [[ $# -eq 0 ]]; then
+    root_path=$(get_git_root || echo ".")
+    args=("$root_path")
+  fi
+  "$cursor_bin" "${args[@]}" >&"$0".log &
+}
+main "$@"
+EOF
+}
+cat_cursor_mac() {
+  cat <<'EOF'
+#!/usr/bin/env -S bash -e
+
+main() {
+  local cursor_bin
+  cursor_bin=/Applications/Cursor.app/Contents/MacOS/Cursor
   local args=("$@")
   if [[ $# -eq 0 ]]; then
     root_path=$(get_git_root || echo ".")
