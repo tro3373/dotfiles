@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 
-readonly command_name=$(basename $0)
+command_name=$(basename "$0") && readonly command_name
 readonly url_ras3=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
 readonly url_ras4=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
-readonly script_dir=$(
-  cd "$(dirname ${BASH_SOURCE:-$0})"
-  pwd
-)
+script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
 export PATH=$script_dir/../../../../:$PATH
-source $script_dir/../../../setup/funcs
+source "$script_dir"/../../../setup/funcs
 
 mkfs_ext4=mkfs.ext4
 mkfs_vfat=mkfs.vfat
@@ -37,7 +34,7 @@ check() {
     exit 1
   fi
   check_has fdisk
-  check_has $mkfs_vfat
+  check_has "$mkfs_vfat"
   check_has $mkfs_ext4
   check_has bsdtar
   check_root
@@ -51,15 +48,15 @@ check_target_device_partitions() {
   if is_dry; then
     return
   fi
-  if ! fdisk -l $target_device_id >&/dev/null; then
+  if ! fdisk -l "$target_device_id" >&/dev/null; then
     error "No such device $target_device_id"
     exit 1
   fi
-  if ! fdisk -l $target_device_id | grep "$target_device_id1" >&/dev/null; then
+  if ! fdisk -l "$target_device_id" | grep "$target_device_id1" >&/dev/null; then
     error "No such device $target_device_id1"
     exit 1
   fi
-  if ! fdisk -l $target_device_id | grep "$target_device_id2" >&/dev/null; then
+  if ! fdisk -l "$target_device_id" | grep "$target_device_id2" >&/dev/null; then
     error "No such device $target_device_id2"
     exit 1
   fi
@@ -104,7 +101,7 @@ main() {
 
   if is_mac; then
     diskutil list
-    exe diskutil unMountDisk ${target_device_id}
+    exe diskutil unMountDisk "${target_device_id}"
     # format sd ==> NG
     # local disk_label=RPI
     # MS-DOS: FAT32
@@ -115,7 +112,7 @@ main() {
   else
     # exe fdisk -l
     fdisk_usage | ink yellow
-    exe fdisk ${target_device_id}
+    exe fdisk "${target_device_id}"
   fi
 
   check_target_device_partitions
@@ -123,18 +120,18 @@ main() {
   [[ ! -e tmp ]] && exe mkdir -p tmp
   exe cd tmp
 
-  exe mkfs.vfat $target_device_id1
+  exe mkfs.vfat "$target_device_id1"
   exe mkdir -p boot
-  exe mount $target_device_id1 boot
+  exe mount "$target_device_id1" boot
 
-  exe $mkfs_ext4 $target_device_id2
+  exe $mkfs_ext4 "$target_device_id2"
   exe mkdir -p root
-  exe mount $target_device_id2 root
+  exe mount "$target_device_id2" root
   local fnm=${url##*/}
   if [[ ! -e $fnm ]]; then
     exe curl -fLO $url
   fi
-  exe bsdtar -xpf $fnm -C root
+  exe bsdtar -xpf "$fnm" -C root
   exe sync
 
   exe mv root/boot/* boot
