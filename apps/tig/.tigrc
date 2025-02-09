@@ -170,13 +170,6 @@ bind status  x      ?git clean -d -f
 # x でマージ済みローカルブランチをすべて削除 (master/develop 除く)
 bind refs    x      ?sh -c "git branch --merged | grep -vE '^\\*|master$|develop$' | xargs -I % git branch -d %"
 
-# ` でファイルパスをクリップボードにコピー (Mac用)
-bind stage   `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
-bind status  `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
-bind tree    `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
-bind blob    `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
-bind diff    `      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
-
 # Copy
 # MEMO: refs view ではコピー内容が何故かステータスに表示されないので、確認コマンドで表示させる
 bind generic 0      +@sh -c "echo %(commit) | tee >(~/.dot/bin/clip >&/dev/null)"
@@ -187,6 +180,14 @@ bind generic 8      +@sh -c "git show -s --format=%s %(commit) | tee >(~/.dot/bi
 bind refs    8      ?sh -c "git show -s --format=%s %(commit) | tee >(~/.dot/bin/clip >&/dev/null)"
 bind generic 7      +@sh -c "echo -n '%(text)' | tee >(~/.dot/bin/clip >&/dev/null)"
 bind refs    7      ?sh -c "echo -n '%(text)' | tee >(~/.dot/bin/clip >&/dev/null)"
+
+# 9 でファイルパスをクリップボードにコピー
+bind stage   0      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
+bind status  0      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
+bind tree    0      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
+bind blob    0      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
+bind diff    0      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/null)"
+
 
 # Open the version in vim
 bind diff    O      !bash -c "git show %(commit):%(file) | ~/.dot/bin/tovim >&/dev/null"

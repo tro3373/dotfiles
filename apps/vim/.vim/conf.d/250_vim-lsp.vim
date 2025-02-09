@@ -72,8 +72,9 @@ command! LspDebugAsyncComplete let g:asyncomplete_log_file = expand('$HOME/vim_a
 let g:lsp_diagnostics_enabled = 1           " ファイルの変更に伴いリアルタイムにエラー表示
 let g:lsp_diagnostics_echo_cursor = 1       " enable echo under cursor when in normal mode
 let g:lsp_diagnostics_echo_delay = 500      " diagnostics の表示ディレイ設定
+" g:lsp_diagnostics_float_cursor = 1 カーソルが分析結果バッファに移動するのを防げたので、`1` に変更
 " (WARN) indent-guid and float setting enable will be error!
-let g:lsp_diagnostics_float_cursor = 0      " enable echo floating cursor when in normal mode
+let g:lsp_diagnostics_float_cursor = 1      " enable echo floating cursor when in normal mode
 let g:lsp_diagnostics_float_delay = 500     " diagnostics の表示ディレイ設定
 let g:lsp_diagnostics_highlights_enabled = 1 " エラー表示のハイライトを有効(default:1)
 
@@ -107,6 +108,12 @@ let g:lsp_settings = {
   \  'yaml-language-server': {
   \     'workspace_config': {
   \       'yaml': {
+  \         'schemaStore': {
+  \           'enable': v:true
+  \         },
+  \         'schemas': {
+  \           'https://json.schemastore.org/github-workflow.json': '.github/workflows/*.{yml,yaml}'
+  \         },
   \         'customTags': [
   \           '!fn',
   \           '!And',
