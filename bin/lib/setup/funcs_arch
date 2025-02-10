@@ -179,6 +179,18 @@ setup_pac_key() {
   exe sudo pacman-key --populate $populate_key
 }
 
+setup_raspi_kernel() {
+  # shellcheck disable=SC2154
+  flag="$script_dir"/raspi_kernel_updated
+  if [[ -e $flag ]]; then
+    return
+  fi
+  exe pacman -R --noconfirm linux-aarch64 uboot-raspberrypi
+  exe pacman -Syu --noconfirm --overwrite "'/boot/*'" linux-rpi
+  exe touch "$flag"
+  exe reboot
+}
+
 setup_gnupg_keyserver_settings() {
   local _home_dirs=("${@}")
   for d in "${_home_dirs[@]}"; do
@@ -390,6 +402,72 @@ gen_network_eth0() {
   fi
   backup "$target"
   cat_network_eth0 | cat_tee "$target"
+}
+
+setup_network_wlan() {
+  gen_network_wlan0 "$1" "$2" "$3" "$4" "$5"
+  gen_wpa_supplicant
+  exe systemctl enable systemd-networkd
+  exe systemctl start systemd-networkd
+  exe systemctl enable wpa_supplicant@wlan0
+  exe systemctl start wpa_supplicant@wlan0
+}
+
+cat_network_wlan0() {
+  cat <<EOF
+[Match]
+Name=wlan0
+
+[Network]
+Address=$_ip/$_mask
+Gateway=$_gw
+DNS=$_dnses
+EOF
+}
+
+gen_network_wlan0() {
+  local _ip=$1
+  local _mask=${2:-24}
+  local _if=${3:-wlan0}
+  local _gw=$4
+  local _dnses=$5
+  # local target=/etc/netctl/$_if
+  local target=/etc/systemd/network/$_if.network
+  if [[ -e $target ]] && grep "$_ip" "$target" >&/dev/null; then
+    return
+  fi
+  local ip_prefix=${_ip%\.*}
+  if [[ -z $_gw ]]; then
+    _gw=${ip_prefix}.1
+  fi
+  if [[ -z $_dnses ]]; then
+    _dnses="$_gw"
+  fi
+  backup "$target"
+  cat_network_wlan0 | cat_tee "$target"
+}
+
+cat_wpa_supplicant() {
+  # shellcheck disable=SC2154
+  cat <<EOF
+ctrl_interface=/run/wpa_supplicant
+update_config=1
+
+network={
+    ssid="$wlan_ssid"
+    psk="$wlan_psk"
+}
+EOF
+}
+
+gen_wpa_supplicant() {
+  local target=/etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+  if [[ -e $target ]]; then
+    return
+  fi
+  backup "$target"
+  cat_wpa_supplicant | cat_tee "$target"
+  exe chmod 600 "$target"
 }
 
 [[ $0 != "${BASH_SOURCE[0]}" ]] && return 0

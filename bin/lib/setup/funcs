@@ -80,6 +80,11 @@ is_ubuntu() { [[ $DETECT_OS == "ubuntu" ]]; }
 is_redhat() { [[ $DETECT_OS == "redhat" ]]; }
 is_win() { is_msys || is_cygwin; }
 is_unix() { ! is_win; }
+check_root() {
+  [[ $UID -eq 0 ]] && return
+  elog "Permission denied."
+  exit 1
+}
 ink() {
   local stdin=
   if [[ -p /dev/stdin ]]; then
@@ -630,27 +635,14 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 EOF
 }
 
-clone_dot() {
+setup_dot() {
   local _user=$1
-  local _dstd=$DOT_PATH
-  local _own_dot=1
-  local _setup_args=
-  if [[ -n $_user && -e /home/$_user ]]; then
-    _own_dot=0
-    _dstd=/home/$_user/.dot
-    _setup_args="${*:2}"
-  else
-    _setup_args="${*}"
-  fi
+  local _dstd=/home/$_user/.dot
+  local _setup_args="${*:2}"
   if [[ ! -e $_dstd ]]; then
-    exe git clone https://github.com/tro3373/dotfiles.git "$_dstd"
+    exe sudo -u "$_user" git clone https://github.com/tro3373/dotfiles.git "$_dstd"
   fi
-  [[ -z $_setup_args ]] && return
-  if [[ $_own_dot -eq 1 ]]; then
-    exe "$HOME/.dot/bin/setup" "$_setup_args"
-  else
-    exe sudo -u "$_user" "/home/$_user/.dot/bin/setup" "$_setup_args"
-  fi
+  exe sudo -u "$_user" "/home/$_user/.dot/bin/setup" "$_setup_args"
 }
 
 default_apps() {
@@ -701,17 +693,16 @@ show_dummy_warn_if_needed() {
 
 init_export_path_if_possible() {
   local _script_dir
-  _script_dir=$(
-    cd "$(dirname "${BASH_SOURCE:-$0}")"
-    pwd
-  )
-  local _git_root
-  _git_root=$(cd "$_script_dir" && git rev-parse --show-toplevel)
-  local _com_script_dir=$_git_root/bin
-  if [[ -e $_com_script_dir ]]; then
-    if ! echo ":$PATH:" | grep ":$_com_script_dir:" >&/dev/null; then
-      ilog "=> init_funcs Exporting PATH env the path $_com_script_dir.."
-      export PATH=$_com_script_dir:$PATH
+  _script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
+  if has git && git rev-parse --show-toplevel >&/dev/null; then
+    local _git_root
+    _git_root=$(cd "$_script_dir" && git rev-parse --show-toplevel)
+    local _com_script_dir=$_git_root/bin
+    if [[ -e $_com_script_dir ]]; then
+      if ! echo ":$PATH:" | grep ":$_com_script_dir:" >&/dev/null; then
+        ilog "=> init_funcs Exporting PATH env the path $_com_script_dir.."
+        export PATH=$_com_script_dir:$PATH
+      fi
     fi
   fi
 }

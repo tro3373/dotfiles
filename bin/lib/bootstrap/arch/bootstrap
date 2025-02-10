@@ -1,25 +1,24 @@
 #!/usr/bin/env bash
 
 set -e
-readonly command_name=$(basename $0)
-readonly script_dir=$(
-  cd "$(dirname ${BASH_SOURCE:-$0})"
-  pwd
-)
+command_name=$(basename "$0") && readonly command_name
+script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
 readonly username=archuser
-readonly userpass_path=$script_dir/pass
 readonly userpub_path=$script_dir/pub
+readonly bootstrap_conf=$script_dir/$command_name.conf
+
 # # load funcs
 # source $script_dir/funcs arch $username
 # source $script_dir/funcs_arch
 
 ip=
 host=
+pass=
 
 usage() {
   cat <<EOF
 
-Bootstrap setup for  archlinux system.
+Bootstrap setup for archlinux system.
 
 Usage:
   $command_name [option]
@@ -27,6 +26,7 @@ Options
   -h|--help : Show this usage
   -i|--ip   : specify static ip adress (optional)
   -hst|--host : specify hostname (optional)
+  -p|--pass : specify pass (optional)
 
 EOF
 }
@@ -36,9 +36,9 @@ load_funcs() {
   for d in "${search_dir[@]}"; do
     [[ ! -e $d/funcs ]] && continue
     # shellcheck disable=SC1091
-    source $d/funcs arch $username
+    source "$d"/funcs arch $username
     # shellcheck disable=SC1091
-    source $d/funcs_arch
+    source "$d"/funcs_arch
     break
   done
 }
@@ -49,10 +49,10 @@ check() {
     exit 0
   fi
   check_root
-  # if [[ ! -e $userpass_path ]]; then
-  #   log "=> No $userpass_path (pass file for $username) exist."
-  #   exit 1
-  # fi
+  if [[ ! -e $bootstrap_conf ]]; then
+    log "=> No $bootstrap_conf exist."
+    exit 1
+  fi
   if ! is_wsl && [[ ! -e $userpub_path ]]; then
     log "=> No $userpub_path (pub key for $username) exist."
     exit 1
@@ -61,6 +61,10 @@ check() {
 
 initialize() {
   load_funcs
+  check
+
+  # shellcheck disable=SC1090
+  source "$bootstrap_conf"
   # shellcheck disable=SC2034
   while true; do
     [[ -z $1 ]] && break
@@ -69,14 +73,13 @@ initialize() {
       -e | --exec) dry_run=0 ;;
       -i | --ip) shift && ip=$1 ;;
       -hst | --host) shift && host=$1 ;;
+      -p | --pass) shift && pass=$1 ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
     esac
     shift
   done
-
-  check
 }
 
 finalize() {
@@ -86,39 +89,32 @@ finalize() {
 }
 
 setup_pacman() {
-  improve_pacman_millerlist
+  # Disabled. No need to update pacman.conf
+  # improve_pacman_millerlist
+  setup_raspi_kernel
   improve_pacman_conf
   setup_pac_key
   setup_gnupg
   setup_gnupg_keyserver_settings /root
   improve_pacman_aria2
-  update_and_add_pacman_packages base base-devel git curl sudo vim wget grep sed which unzip gzip openssh zsh
+  update_and_add_pacman_packages base base-devel git curl sudo vim wget grep sed which unzip gzip openssh zsh iw wpa_supplicant
   setup_additional_pacakges
   # ! is_arm && return
   # update_and_add_pacman_packages systemd-timesyncd
 }
 
-cat_userpass() {
-  if [[ ! -e $userpass_path ]]; then
-    return
-  fi
-  cat <$userpass_path | head -1
-}
-
 setup_user() {
-  local _pass=$(cat_userpass)
-  create_user $username "$_pass"
+  create_user $username "$pass"
   setup_gnupg_keyserver_settings /home/$username
   # setup_gnupg norefresh
   setup_sudoers $username
   setup_login_shell $username
-  setup_user_authorized_keys $username $userpub_path
+  setup_user_authorized_keys $username "$userpub_path"
   # shellcheck disable=SC2154
-  clone_dot $username "${args[@]}"
+  setup_dot $username "${args[@]}"
 
-  if [[ -n $_pass ]]; then
-    change_passwd root "$_pass"
-  fi
+  change_passwd root "$pass"
+  # Error if alarm user used
   # if is_arm; then
   #   del_user alarm
   # fi
@@ -137,7 +133,8 @@ EOF
 }
 
 sudo() {
-  local _sudo=$(type -f -p sudo)
+  local _sudo
+  _sudo=$(type -f -p sudo | sed 's,^.* ,,g')
   $_sudo "$@"
 }
 
@@ -146,12 +143,15 @@ main() {
   setup_pacman
   # setup_timezone
   setup_locale
-  setup_user
+  if [[ -n $pass ]]; then
+    setup_user
+  fi
   if [[ -n $host ]]; then
-    setup_hostname $host
+    setup_hostname "$host"
   fi
   if [[ -n $ip ]]; then
-    gen_network_eth0 $ip
+    gen_network_eth0 "$ip"
+    setup_network_wlan "$ip"
   fi
   finalize
   show_dummy_warn_if_needed

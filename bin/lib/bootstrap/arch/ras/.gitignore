@@ -1,2 +1,5 @@
+*.tar.gz
+*.pkg.tar.xz
 pub
 pass
+bootstrap.conf

@@ -1,35 +1,56 @@
 #!/usr/bin/env bash
 
 command_name=$(basename "$0") && readonly command_name
-readonly url_ras3=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-2-latest.tar.gz
-readonly url_ras4=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-4-latest.tar.gz
+readonly url_ras=http://os.archlinuxarm.org/os/ArchLinuxARM-rpi-aarch64-latest.tar.gz
+readonly url_ras_boot=http://nj.us.mirror.archlinuxarm.org/aarch64/core/linux-rpi-6.12.11-3-aarch64.pkg.tar.xz
 script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
 export PATH=$script_dir/../../../../:$PATH
 source "$script_dir"/../../../setup/funcs
 
+readonly send_files=(
+  "$script_dir/../bootstrap"
+  "$script_dir/../../../setup/funcs"
+  "$script_dir/../../../setup/funcs_arch"
+  "$script_dir/pub"
+  "$script_dir/start_bootstrap"
+  "$script_dir/bootstrap.conf"
+)
+
 mkfs_ext4=mkfs.ext4
 mkfs_vfat=mkfs.vfat
 
+target_device_id=
+target_device_id1=
+target_device_id2=
+
 usage() {
   cat <<EOF
-Create archlinux sd image command for raspberry pi 3 or 4.
+Create archlinux sd image command for raspberry pi 5
 
 Usage:
-  $command_name <device_id> [<pi_version>] [option]
+  $command_name <device_id> [option]
 Options
   using funcs initialize_args
     -h|--help : Show this usage
     -d,-e,..
   device_id: ex) /dev/sde or /dev/sdb ...
-  pi_version: specify 3 if you create pi 3. default is pi 4.
 
 EOF
 }
 
-error() { echo "$*" 1>&2; }
+initialize() {
+  set -e
+  initialize_args "$@" -d
+
+  # shellcheck disable=SC2154
+  target_device_id="${args[0]}"
+  target_device_id1=${target_device_id}1
+  target_device_id2=${target_device_id}2
+  check
+}
 
 check() {
-  if ! os ubuntu; then
+  if ! os arch; then
     not_supported
     exit 1
   fi
@@ -39,27 +60,14 @@ check() {
   check_has bsdtar
   check_root
   if [[ -z $target_device_id ]]; then
-    error "Specify target device id."
+    elog "Specify target device id."
     exit 1
   fi
-}
-
-check_target_device_partitions() {
-  if is_dry; then
-    return
-  fi
-  if ! fdisk -l "$target_device_id" >&/dev/null; then
-    error "No such device $target_device_id"
+  for _path in "${send_files[@]}"; do
+    [[ -e $_path ]] && continue
+    elog "=> No $_path exist."
     exit 1
-  fi
-  if ! fdisk -l "$target_device_id" | grep "$target_device_id1" >&/dev/null; then
-    error "No such device $target_device_id1"
-    exit 1
-  fi
-  if ! fdisk -l "$target_device_id" | grep "$target_device_id2" >&/dev/null; then
-    error "No such device $target_device_id2"
-    exit 1
-  fi
+  done
 }
 
 fdisk_usage() {
@@ -78,66 +86,108 @@ fdisk_usage() {
 EOF
 }
 
-main() {
-  set -e
-  if is_mac; then
-    mkfs_ext4=/usr/local/opt/e2fsprogs/sbin/mkfs.ext4
-    mkfs_vfat=$(find /usr/local/Cellar/dosfstools/*/sbin/mkfs.vfat)
-  fi
-  initialize_args "$@" -d
-  # shellcheck disable=SC2154
-  target_device_id="${args[0]}"
-  target_device_id1=${target_device_id}1
-  target_device_id2=${target_device_id}2
-  check
+dl_images() {
+  dl_if_not_exist "$url_ras"
+  dl_if_not_exist "$url_ras_boot"
+}
 
-  local url=$url_ras4
-  # shellcheck disable=SC2154
-  local pi_version=${args[1]}
-  if [[ $pi_version -eq 3 ]]; then
-    echo ">> Target setup pi versoin is $pi_version"
-    url=$url_ras3
+dl_if_not_exist() {
+  local url=$1
+  local fnm=${url##*/}
+  if [[ -e $fnm ]]; then
+    return
   fi
+  exe curl -fLO "$url"
+}
 
-  if is_mac; then
-    diskutil list
-    exe diskutil unMountDisk "${target_device_id}"
-    # format sd ==> NG
-    # local disk_label=RPI
-    # MS-DOS: FAT32
-    # exe diskutil eraseDisk MS-DOS $disk_label ${target_device_id}
-    # https://apple.stackexchange.com/questions/154566/create-a-partition-on-sd-card-for-ext4-filesystem
-    # MacOS cannot see ext partitions...
-    # exe diskutil partitionDisk ${target_device_id} 2 MBRFormat MS-DOS "boot" 200M JournaledHFS+ "root"
-  else
-    # exe fdisk -l
-    fdisk_usage | ink yellow
-    exe fdisk "${target_device_id}"
-  fi
-
+create_sd_partitions() {
+  cat_sfdisk_cmd | cat_do sfdisk -f --quiet --wipe always "$target_device_id"
   check_target_device_partitions
 
-  [[ ! -e tmp ]] && exe mkdir -p tmp
-  exe cd tmp
+  exe mkfs.vfat -F 32 "$target_device_id1"
+  exe mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0 -F "$target_device_id2"
+}
 
-  exe mkfs.vfat "$target_device_id1"
-  exe mkdir -p boot
-  exe mount "$target_device_id1" boot
+cat_sfdisk_cmd() {
+  cat <<'EOF'
+,256M,0c,
+,,,
+EOF
+}
 
-  exe $mkfs_ext4 "$target_device_id2"
-  exe mkdir -p root
-  exe mount "$target_device_id2" root
-  local fnm=${url##*/}
-  if [[ ! -e $fnm ]]; then
-    exe curl -fLO $url
+check_target_device_partitions() {
+  if is_dry; then
+    return
   fi
-  exe bsdtar -xpf "$fnm" -C root
+  if ! fdisk -l "$target_device_id" >&/dev/null; then
+    elog "No such device $target_device_id"
+    exit 1
+  fi
+  if ! fdisk -l "$target_device_id" | grep "$target_device_id1" >&/dev/null; then
+    elog "No such device $target_device_id1"
+    exit 1
+  fi
+  if ! fdisk -l "$target_device_id" | grep "$target_device_id2" >&/dev/null; then
+    elog "No such device $target_device_id2"
+    exit 1
+  fi
+}
+
+mount_sd() {
+  exe mkdir -p /mnt/sd
+  exe mount "$target_device_id2" /mnt/sd
+  exe mkdir -p /mnt/sd/boot
+  exe mount "$target_device_id1" /mnt/sd/boot
+}
+
+umount_sd() {
+  exe umount /mnt/sd/boot
+  exe umount /mnt/sd
+}
+
+write_images() {
+  local fnm_ras=${url_ras##*/}
+  local fnm_ras_boot=${url_ras_boot##*/}
+  exe bsdtar -xpf "$fnm_ras" -C /mnt/sd
+  exe rm -rf /mnt/sd/boot/*
+
+  temp_=$(mktemp -d)
+  exe tar xf "$fnm_ras_boot" -C "$temp_"
+  exe cp -rf "$temp_"/boot/* /mnt/sd/boot/
+}
+
+setup_sd_additional() {
+  setup_sd_ssh
+  setup_sd_bootstrap
+}
+
+setup_sd_ssh() {
+  exe mkdir -p /mnt/sd/home/alarm/.ssh
+  exe cp "$script_dir/pub" /mnt/sd/home/alarm/.ssh/authorized_keys
+  exe chmod 700 /mnt/sd/home/alarm/.ssh
+  exe chmod 600 /mnt/sd/home/alarm/.ssh/authorized_keys
+}
+
+setup_sd_bootstrap() {
+  exe mkdir -p /mnt/sd/root/bin
+  for _path in "${send_files[@]}"; do
+    exe cp "$_path" /mnt/sd/root/bin/
+  done
+}
+
+main() {
+  initialize "$@"
+
+  dl_images
+  create_sd_partitions
+  mount_sd
+  write_images
+
+  setup_sd_additional
+
   exe sync
-
-  exe mv root/boot/* boot
-  exe umount boot root
-
+  umount_sd
   show_dummy_warn_if_needed
-  ink green "Done!"
+  ilog "Done!"
 }
 main "$@"
