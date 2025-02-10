@@ -1,21 +1,50 @@
 #!/usr/bin/env -S bash -e
 
-readonly project=${1:-"example-project"}
-readonly q_type="resource.type=api"
-readonly service=${2:-"api.example.com"}
-readonly q_service="resource.labels.service=$service"
-timestamp_s=${3:-"2024-10-01T00:00:00Z"}
-timestamp_e=${4:-"2024-11-01T00:00:00Z"}
-# q_method="resource.labels.method=1.api_example.com.example"
-q_timestamp="timestamp >=\"$timestamp_s\" AND timestamp <=\"$timestamp_e\""
+command_name=$(basename "$0") && readonly command_name
+script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
+conf_name="${command_name%.*}.conf" && readonly conf_name
+current_dir=$(pwd) && readonly current_dir
+
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+find_config() {
+  for conf in "$current_dir/$conf_name" "$script_dir/$conf_name"; do
+    if [[ ! -e $conf ]]; then
+      continue
+    fi
+    echo "$conf"
+  done
+}
+cat_config_sample() {
+  cat <<'EOF'
+# project_id service_name timestamp_start timestamp_end
+example-project api.example.com 2024-10-01T00:00:00Z 2024-11-01T00:00:00Z
+EOF
+}
 get() {
-  local dst="logs/log-${timestamp_s}-${timestamp_e}.json"
-  # --freshness=1h AND $q_method --limit=10
-  gcloud logging read \
-    "$q_type AND $q_service AND $q_timestamp" \
-    --order=asc \
-    --format='json' \
-    --project="$project" >"$dst"
+  mkdir -p logs
+  while read -r project service timestamp_s timestamp_e; do
+    [[ -z $project ]] && continue
+    [[ $project =~ ^#.* ]] && continue
+    local dst="logs/log-${timestamp_s}-${timestamp_e}.json"
+    [[ -e $dst ]] && continue
+    local q_type="resource.type=api"
+    local q_service="resource.labels.service=$service"
+    local q_timestamp="timestamp >=\"$timestamp_s\" AND timestamp <=\"$timestamp_e\""
+    gcloud logging read \
+      "$q_type AND $q_service AND $q_timestamp" \
+      --order=asc \
+      --format='json' \
+      --project="$project" >"$dst"
+  done < <(cat "$config")
 }
 parse() {
   find ./logs -type f -name "*.json" |
@@ -27,7 +56,12 @@ parse() {
     done
 }
 main() {
-  mkdir -p logs
+  config=$(find_config)
+  if [[ -z $config ]]; then
+    info "==> Please create a config file with the following content:"
+    cat_config_sample
+    error "==> Config file not found: $current_dir/$conf_name or $script_dir/$conf_name"
+  fi
   get
   parse
 }
