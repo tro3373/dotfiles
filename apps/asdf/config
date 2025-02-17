@@ -1,56 +1,9 @@
 #!/usr/bin/env bash
 
-asdf_d=$HOME/.asdf
-is_installed() { test -e "$asdf_d"; }
 install_common() {
-  local _latest_tag
-  _latest_tag=$(github_latest_release_tag asdf-vm/asdf)
-  exe git clone "https://github.com/asdf-vm/asdf.git" "$asdf_d" --branch "$_latest_tag"
+  go_install github.com/asdf-vm/asdf/cmd/asdf@v0.16.2
 }
-# install_wsl() { not_supported; }
-# install_arch() { not_supported; }
-install_msys() { not_supported; }
-install_cygwin() { not_supported; }
-# install_mac() { not_supported; }
-# install_ubuntu() { not_supported; }
-# install_redhat() { not_supported; }
 setting_common() {
-  _cat_asdf_settings | cat_you_need_to ~/.works.zsh
-  _cat_asdf_settings | cat_you_need_to ~/.bashrc
-  # # append completions to fpath
-  # fpath=(${ASDF_DIR}/completions $fpath)
-  # # initialise completions with ZSH's compinit
-  # autoload -Uz compinit && compinit
+  exe mkdir -p "$HOME/.asdf/completions"
+  exe asdf completion zsh | cat_tee "$HOME/.asdf/completions/_asdf"
 }
-
-_cat_asdf_settings() {
-  # shellcheck disable=SC2016
-  echo '. ${HOME}/.asdf/asdf.sh'
-}
-
-# setting_wsl() { no_settings; }
-# setting_arch() { no_settings; }
-setting_msys() { no_settings; }
-setting_cygwin() { no_settings; }
-# setting_mac() { no_settings; }
-# setting_ubuntu() { no_settings; }
-# setting_redhat() { no_settings; }
-#is_installed
-#install_via_os_default
-#def_install
-#is_debug
-#is_dry
-#log
-#dlog
-#not_supported
-#no_settings
-#make_link_dot2home
-#make_lnk_with_bkup
-#cd_work
-#make_work_if_needed
-#dl
-#dl_unzip
-#dl_untar
-#github
-#github_user_local
-#sudo_tee

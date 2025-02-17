@@ -37,10 +37,6 @@ _dynamic() {
   if has anyenv; then
     _cache_load anyenv
   fi
-
-  if [[ -e ${HOME}/.asdf ]]; then
-    . ${HOME}/.asdf/asdf.sh
-  fi
 }
 
 _cache_load() {
@@ -141,6 +137,7 @@ _cat_path() {
   add_path ${HOME}/.ldot/bin
   add_path ${HOME}/bin
   # add_path $BUN_INSTALL/bin # install via asdf
+  add_path "$HOME/.asdf/shims" # for silver searcher ag in msys
 
   # NOTE: Load .works.zsh to execute add_path.
   # 90.additional.zsh load .works.zsh again.
