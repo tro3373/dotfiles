@@ -834,6 +834,7 @@ let l:path = expand('%:p')
 call system('cursor ' . l:path)
 endfunction
 command! -nargs=* Cursor call Cursor(<q-args>)
+command! -nargs=* R call Cursor(<q-args>)
 
 function! ReOpenUtf8()
   exe "e ++enc=utf-8"

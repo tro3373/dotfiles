@@ -123,7 +123,7 @@ bind diff    <Ctrl-r> ?git rebase %(branch)
 bind refs    <Ctrl-r> ?git rebase %(branch)
 
 # R で rename
-bind refs    R      !git_rename_branch %(branch)
+bind refs    R      ?git_rename_branch %(branch)
 
 # I で rebase -i
 bind main    I      ?git rebase -i %(branch)

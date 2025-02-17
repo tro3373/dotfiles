@@ -29,6 +29,7 @@ load_update_arg_apps() {
 post_setup() {
   local show_webp_in_gnome="webp-pixbuf-loader"
   exe yay -S --noconfirm hardinfo google-chrome numix-gtk-theme numix-icon-theme numix-circle-icon-theme-git slack-desktop ristretto $show_webp_in_gnome vlc
+  _setup_wol
   _setup_gnome_extension
   # TODO
   #   - Dark Theme
@@ -52,6 +53,9 @@ post_setup() {
   log "===> Insatall Gnome Shell Extensions"
   log "       Dash to dock        : https://extensions.gnome.org/extension/307/dash-to-dock/"
   log "       Input method Popup  : https://extensions.gnome.org/extension/261/kimpanel/"
+  log "===> Enable wol via root cron"
+  log "       sudo crontab -e"
+  log "           @reboot /usr/bin/ethtool -s enp3s0 wol g"
   log "===> reboot maybe needed."
 }
 
@@ -61,6 +65,11 @@ _setup_gnome_extension() {
   exe pushd ~/gnome-browser-connector
   exe makepkg -si --noconfirm
   exe popd
+}
+
+_setup_wol() {
+  # ethtool: tool for controlling network drivers and hardware
+  exe yay -S --noconfirm ethtool
 }
 
 _setup_user_group() {
