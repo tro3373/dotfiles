@@ -92,6 +92,9 @@ fi
 if has nvim; then
   alias vim="nvim"
 fi
+if has terraform; then
+  alias tf="terraform"
+fi
 # alias v=vim
 alias vi=vim
 alias f="find -name"
