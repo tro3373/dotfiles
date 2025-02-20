@@ -65,7 +65,7 @@ execute_curl() {
     jq .
   [[ -z $save_env_vals || $save_env_vals == _ ]] && return
   echo -e "$save_env_vals" |
-    tr ' ' '\n' |
+    tr ',' '\n' |
     tr ':' ' ' |
     while read -r save_env_val save_env_val_jq_path; do
       [[ -z $save_env_val ]] && continue

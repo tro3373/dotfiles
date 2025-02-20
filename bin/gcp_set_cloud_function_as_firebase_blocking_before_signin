@@ -1,0 +1,27 @@
+#!/usr/bin/env -S bash -e
+
+region=us-central1
+
+main() {
+  project_id=${1}
+  function_name=${2}
+  if [[ -z $project_id || -z $function_name ]]; then
+    echo "Usage: $0 <project_id> <function_name>" >&2
+    exit 1
+  fi
+  function_uri=$(gcloud functions describe "$function_name" --gen2 --region=$region --format="value(serviceConfig.uri)")
+  curl -X PATCH "https://identitytoolkit.googleapis.com/admin/v2/projects/$project_id/config?updateMask=blockingFunctions.triggers" \
+    -H 'Content-Type: application/json' \
+    -H "X-Goog-User-Project: $project_id" \
+    -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+    -d '{
+        "blockingFunctions": {
+          "triggers": {
+            "beforeSignIn":{
+              "functionUri":"'"$function_uri"'"
+            }
+          }
+        }
+      }'
+}
+main "$@"
