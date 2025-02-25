@@ -165,6 +165,12 @@ _init() {
   export ZSH_AUTOSUGGEST_USE_ASYNC=1
   # bindkey '^ ' autosuggest-accept # ctrl + space
 
+  # Completion for make
+  # GNU Make target completion with Zsh with Included make files - Unix & Linux Stack Exchange
+  # https://unix.stackexchange.com/questions/716376/gnu-make-target-completion-with-zsh-with-included-make-files
+  zstyle ':completion:*:make:*:targets' call-command true
+  zstyle ':completion:*:*:make:*' tag-order 'targets'
+
   export GOPATH=$HOME/go
   export CARGO_HOME=$HOME/.cargo
   # For bat command
