@@ -1013,3 +1013,11 @@ function! SendBufferToCommandAndClose()
   " normal "+p
 endfunction
 nnoremap <M-m> :call SendBufferToCommandAndClose()<CR>
+
+function! ConvertMdNumberToOne()
+  " 行頭の数字を1に変換
+  %s/^\d\. /1. /g
+  " 行頭以外の数字を1に変換
+  %s/  \d\. /  1. /g
+endfunction
+command! ConvertMdNumberToOne call ConvertMdNumberToOne()
