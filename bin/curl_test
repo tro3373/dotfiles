@@ -93,8 +93,11 @@ update_dot_env() {
   if [[ $v == null ]]; then
     return
   fi
-  sed -i "/$k=/d" "$env_file"
-  echo "$k=$v" >>"$env_file"
+  {
+    cat <"$env_file" | grep -v "^$k="
+    echo "$k=$v"
+  } >"$env_file.tmp"
+  mv "$env_file.tmp" "$env_file"
   info "==> Env updated: $k=$v"
 }
 
@@ -128,7 +131,7 @@ main() {
   cat <"$list_file" |
     grep -v '^#' |
     envsubst |
-    fzf --select-1 --exit-0 $fzf_opt |
+    fzf --tac --select-1 --exit-0 $fzf_opt |
     while read -r svc name method url save_env_vals; do
       auth_header=${auth_header/:/: }
       warn "==> svc:$svc"
