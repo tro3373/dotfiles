@@ -1,3 +1,13 @@
+alias_with_compdef() {
+  local cmd=$1
+  if ! has $cmd; then
+    return
+  fi
+  local alias=$2
+  local defname="${3:-_files}"
+  alias $alias=$cmd
+  compdef $defname $alias=$cmd
+}
 ##############################################
 # Alias
 ##############################################
@@ -92,27 +102,25 @@ fi
 if has nvim; then
   alias vim="nvim"
 fi
-if has terraform; then
-  alias tf="terraform"
-fi
+alias_with_compdef terraform tf
 # alias v=vim
 alias vi=vim
 alias f="find -name"
 alias j="jobs -l"
-alias g="git"
-alias d="docker"
-alias s="systemctl"
-alias m="make"
-alias c="code"
-alias r="cursor"
 alias cddot="cd $DOTPATH"
 alias history="history -i"
+alias_with_compdef git g _git
+alias_with_compdef docker d
+alias_with_compdef systemctl s _systemctl
+alias_with_compdef make m _make
+alias_with_compdef code c
+alias_with_compdef cursor r
+alias_with_compdef trash t
+alias_with_compdef flutter fl
+alias_with_compdef speedtest st
 alias codeimg="germanium"
 alias germ="germanium"
 alias tb="tmux_buffer"
-if has speedtest; then
-  alias st="speedtest"
-fi
 if has mmv; then
   mmv() {
     if [[ $# -ne 0 ]]; then
@@ -121,10 +129,6 @@ if has mmv; then
     fi
     command mmv ./*
   }
-fi
-
-if has flutter; then
-  alias fl="flutter"
 fi
 
 gm() {

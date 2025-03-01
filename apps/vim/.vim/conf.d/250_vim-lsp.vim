@@ -74,7 +74,7 @@ let g:lsp_diagnostics_echo_cursor = 1       " enable echo under cursor when in n
 let g:lsp_diagnostics_echo_delay = 500      " diagnostics の表示ディレイ設定
 " g:lsp_diagnostics_float_cursor = 1 カーソルが分析結果バッファに移動するのを防げたので、`1` に変更
 " (WARN) indent-guid and float setting enable will be error!
-let g:lsp_diagnostics_float_cursor = 1      " enable echo floating cursor when in normal mode
+let g:lsp_diagnostics_float_cursor = 0      " enable echo floating cursor when in normal mode
 let g:lsp_diagnostics_float_delay = 500     " diagnostics の表示ディレイ設定
 let g:lsp_diagnostics_highlights_enabled = 1 " エラー表示のハイライトを有効(default:1)
 

@@ -1,0 +1,7 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  unzip "$1"
+  trash "$1"
+}
+main "$@"

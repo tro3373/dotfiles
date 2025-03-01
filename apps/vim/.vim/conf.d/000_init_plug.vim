@@ -66,7 +66,7 @@ call plug#begin('$HOME/.vim/plugged')
   " =================================================================
   " Plug 'mattn/ctrlp-filer'                                " Plugins for ctrlp.vim Filer (After start, Ctrl+D will not work bug occure.)
   " Plug 'Shougo/vimfiler'                                  " :VimFiler
-  Plug 'cocopon/vaffle.vim'                               " SimpleFiler nouse
+  Plug 'tro3373/vaffle.vim'                               " SimpleFiler nouse
   " Plug 'scrooloose/nerdtree', {
   "   \ 'on':  ['NERDTreeToggle'] }                         " NERDTree tree view コマンド実行時に読み込む
   " Plug 'lambdalisue/fern.vim'                             " TODO: fern.vim is a plugin to manage files and directories in Vim
