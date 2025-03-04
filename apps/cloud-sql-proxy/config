@@ -9,7 +9,7 @@ _install_common() {
   local _latest_tag
   _latest_tag=$(_get_latest_tag)
   cd_work
-  exe curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${_latest_tag}/cloud-sql-proxy."$arch"
+  exe curl -o cloud-sql-proxy "https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/${_latest_tag}/cloud-sql-proxy.$arch"
   exe chmod +x cloud-sql-proxy
   exe mv cloud-sql-proxy "$HOME"/bin
 }
