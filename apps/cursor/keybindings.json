@@ -76,5 +76,13 @@
     "key": "s t",
     "command": "workbench.action.quickOpen",
     "when": "editorFocus && vim.mode == 'Normal' && !renameInputVisible"
+  },
+  {
+    "key": "Ctrl+n",
+    "command": "explorer.newFile" // ファイルツリーで新規ファイル作成
+  },
+  {
+    "key": "Ctrl+Alt+N",
+    "command": "explorer.newFolder" // ファイルツリーで新規ディレクトリ作成
   }
 ]

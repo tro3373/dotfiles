@@ -3,6 +3,7 @@
   "window.restoreWindows": "all",
   "window.openFoldersInNewWindow": "on",
   "workbench.colorTheme": "Apprentice",
+  // "workbench.colorTheme": "GitHub Dark",
   "workbench.iconTheme": "vscode-icons",
   "editor.mouseWheelZoom": true,
   "editor.fontFamily": "Osaka-Mono, 'UDEV Gothic JPDOC', 'HackGen Console', Cica-Regular, 'Ricty Diminished Discord', 'Ricty Diminished', 'Myrica M', Consolas, 'Courier New', monospace",
@@ -13,8 +14,8 @@
   "editor.fontLigatures": false,
   "editor.insertSpaces": true,
   "editor.wordSeparators": "`~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?、。　",
-  "editor.formatOnType": true,
-  "editor.formatOnSave": true,
+  "editor.formatOnType": true, // 入力後の自動フォーマットは無効
+  "editor.formatOnSave": true, // Prettier を実行
   "editor.formatOnSaveMode": "file",
   "editor.formatOnPaste": false,
   "editor.codeActionsOnSave": {
@@ -22,11 +23,20 @@
     "source.fixAll": "explicit",
     "source.fixAll.eslint": "explicit"
   },
-  "eslint.workingDirectories": [
-    {
-      "mode": "auto"
-    }
-  ],
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  // "eslint.autoFixOnSave": true,
+  // "tslint.autoFixOnSave": true,
+  // "prettier.eslintIntegration": true,
+  // "prettier.tslintIntegration": true,
+  // "prettier.singleQuote": true,
+  // "editor.defaultFormatter": "esbenp.prettier-vscode",
+  // "[javascript]": {
+  //   "editor.defaultFormatter": "esbenp.prettier-vscode"
+  // }
+  // ===================================
+  // "eslint.validate": ["javascript", "javascriptreact"],
+  // "eslint.autoFixOnSave": true,
+  // ===================================
   "editor.renderWhitespace": "boundary",
   "editor.inlineSuggest.enabled": true,
   "editor.stickyScroll.enabled": true,
@@ -42,11 +52,15 @@
   "vim.useCtrlKeys": true,
   "vim.handleKeys": {
     "<C-d>": true,
+    // "<C-u>": true,
     "<C-j>": false,
     "<C-p>": false
   },
+  // "vim.foldFix": true,
   "vim.leader": "<space>",
   "vim.normalModeKeyBindingsNonRecursive": [
+    // VSCodeでVim拡張使っているとコードが勝手に領域展開しちゃう問題に対処する
+    // https://zenn.dev/kenfdev/articles/3637e70b450d56
     {
       "before": ["<C-u>"],
       "after": ["H", "z", "z"]
@@ -55,6 +69,7 @@
       "before": ["<C-d>"],
       "after": ["L", "z", "z"]
     },
+    // https://fe-notes.work/posts/20200708_vsvim01/
     {
       "before": ["u"],
       "commands": [
@@ -143,6 +158,42 @@
       "before": ["<Leader>", "m"],
       "after": ["%"]
     }
+    // {
+    //   "before": ["s", "p"],
+    //   "after": [],
+    //   "commands": [
+    //     {
+    //       "command": "workbench.action.previousEditor",
+    //       "args": []
+    //     }
+    //   ]
+    // },
+    // {
+    //   "before": ["s", "n"],
+    //   "after": [],
+    //   "commands": [
+    //     {
+    //       "command": "workbench.action.nextEditor",
+    //       "args": []
+    //     }
+    //   ]
+    // },
+    // {
+    //   "before": ["s", "t"],
+    //   "after": [],
+    //   "commands": [
+    //     {
+    //       // "command": "explorer.newFile",
+    //       // "command": "workbench.action.files.newUntitledFile",
+    //       "command": "workbench.action.quickOpen",
+    //       "args": []
+    //     }
+    //   ]
+    // },
+    // {
+    //   "before": ["s", "d"],
+    //   "commands": ["workbench.view.explorer", "revealInExplorer"]
+    // }
   ],
   "vim.insertModeKeyBindingsNonRecursive": [
     {
@@ -215,6 +266,7 @@
     "scminput": false
   },
   "hediet.vscode-drawio.resizeImages": null,
+  // Markdown
   "[markdown]": {
     "editor.formatOnSave": false,
     "editor.tabSize": 4,
@@ -222,17 +274,18 @@
   },
   "markdownlint.config": {
     "default": true,
-    "MD007": {
-      "indent": 4
-    }
+    "MD007": { "indent": 4 }
   },
-  "java.format.settings.google.extra": "--aosp",
+  // "java.format.settings.profile": "GoogleStyle",
+  // "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+  "java.format.settings.google.extra": "--aosp", // For 4 instead of 2 spaces!
   "[java]": {
     "editor.formatOnPaste": true,
     "editor.formatOnSave": true,
     "editor.formatOnType": true,
     "editor.defaultFormatter": "josevseb.google-java-format-for-vs-code"
   },
+  // Javascript
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -251,8 +304,10 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  // Go
   "go.lintTool": "golangci-lint",
   "go.lintFlags": ["--fast"],
+  // Python
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true,
@@ -276,5 +331,7 @@
   "cursor.cpp.disabledLanguages": ["plaintext", "scminput"],
   "terminal.integrated.sendKeybindingsToShell": true,
   "go.toolsManagement.autoUpdate": true,
-  "geminicodeassist.inlineSuggestions.enableAuto": true
+  "vsicons.dontShowNewVersionMessage": true,
+  "geminicodeassist.inlineSuggestions.enableAuto": true,
+  "geminicodeassist.project": ""
 }
