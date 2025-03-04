@@ -986,3 +986,21 @@ snippet dump_request_responseee
 snippet efficientgo_errors
 alias errors_import_efficientgo
 	"github.com/efficientgo/core/errors"
+
+snippet gen_passworddd
+	func GeneratePassword() string {
+		length := 12
+		chars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+"
+		result := make([]byte, length)
+
+		for i := range result {
+			// crypto/randとmath/bigを使用して均一な分布のランダムインデックスを生成
+			n, err := rand.Int(rand.Reader, big.NewInt(int64(len(chars))))
+			if err != nil {
+				slog.Error("Failed to generate crypto random", "error", err)
+				continue
+			}
+			result[i] = chars[n.Int64()]
+		}
+		return string(result)
+	}
