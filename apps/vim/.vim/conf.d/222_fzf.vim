@@ -24,7 +24,7 @@ function! s:find_rip_grep(q, d) abort
     let l:target_dir = GetGitRoot()
   endif
   call fzf#vim#grep(
-      \   'rg --ignore-file ~/.ignore --column --line-number --no-heading --hidden --smart-case "'.a:q.'" '.l:target_dir,
+      \   'rg --ignore-file ~/.ignore --glob "!.git/" --column --line-number --no-heading --hidden --smart-case "'.a:q.'" '.l:target_dir,
       \   1,
       \   fzf#vim#with_preview({'options': '--query="' . a:q . '" --delimiter : --nth 4..'}, 'right:50%', '?'),
       \   0,
@@ -43,7 +43,7 @@ function! s:find_rip_grep_fuzzy(q, d) abort
     let l:target_dir = GetGitRoot()
   endif
   call fzf#vim#grep(
-      \   'rg --ignore-file ~/.ignore --column --line-number --no-heading --hidden --smart-case .+ ' . l:target_dir,
+      \   'rg --ignore-file ~/.ignore --glob "!.git/" --column --line-number --no-heading --hidden --smart-case .+ ' . l:target_dir,
       \   1,
       \   fzf#vim#with_preview({'options': '--query="' . a:q . '" --delimiter : --nth 4..'}, 'right:50%', '?'),
       \   0,
