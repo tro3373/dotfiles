@@ -343,7 +343,7 @@ function! GetContentTitle(prpfile) abort
   execute 'write! ' . tmpfile
   " システムコマンドへ渡す
   " MEMO: tmp内容が反映されないケースがるので、0.2秒待機
-  let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp '..a:prpfile..' | llm prompt -'))
+  let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp -ne '..a:prpfile..' | llm prompt -'))
   " 一時ファイルを削除
   call delete(tmpfile)
   return title
@@ -354,7 +354,7 @@ function! SaveKnowledge() abort
   " execute 'write! ' . tmpfile
   " " システムコマンドへ渡す
   " " MEMO: tmp内容が反映されないケースがるので、0.2秒待機
-  " let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp gen-content-title.md | llm prompt -'))
+  " let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp -ne gen-content-title.md | llm prompt -'))
   " " 一時ファイルを削除
   " call delete(tmpfile)
   let title = GetContentTitle("gen-content-title-ja.md")
@@ -1001,17 +1001,52 @@ augroup markdown-insert-link
   au FileType markdown vnoremap <buffer> <silent> p :<C-u>call InsertMarkdownLink()<CR>
 augroup END
 
+" function! SendBufferToCommandAndClose()
+"   " 現在のバッファの内容を一時ファイルに保存
+"   execute 'write! /tmp/buff_prp.tmp'
+"   " terminal を開いてコマンドを実行し、実行後に閉じる
+"   " execute 'terminal cat<'..tmpfile..' | prp -ne>'..tmpfile2..' && sleep 0.5 && exit'
+"   " execute 'terminal cat< /tmp/buff_prp.tmp | prp -ne >/tmp/buff_prp.md && nvim /tmp/buff_prp.md'
+"   " system('cat< /tmp/buff_prp.tmp | prp -ne >/tmp/buff_prp.md')
+"   "
+"   "
+"   "  " prpコマンドを実行して結果を一時ファイルに保存
+"   call system('cat /tmp/buff_prp.tmp | prp -ne > /tmp/buff_prp.md')
+"   " 現在のバッファで一時ファイルを開く
+"   execute 'edit /tmp/buff_prp.md'
+"   "
+"   " 一時ファイルを削除
+"   " call delete(tmpfile)
+"   " exe "e /tmp/buff_prp.md"
+"   " normal ggVGd
+"   " normal "+p
+" endfunction
+
 function! SendBufferToCommandAndClose()
   " 現在のバッファの内容を一時ファイルに保存
-  let tmpfile = tempname()
-  execute 'write! ' . tmpfile
-  " terminal を開いてコマンドを実行し、実行後に閉じる
-  execute 'terminal cat<' . tmpfile . ' | prp && sleep 0.5 && exit'
-  " 一時ファイルを削除
-  call delete(tmpfile)
-  " normal ggVGd
-  " normal "+p
+  execute 'write! /tmp/buff_prp.tmp'
+  " 先に開いておく
+  " system('touch /tmp/buff_prp.md')
+  execute 'edit /tmp/buff_prp.md'
+
+  " 新しいタブでターミナルを開き、prpコマンドを実行
+  execute 'tabnew | terminal cat /tmp/buff_prp.tmp | prp -ne >/tmp/buff_prp.md'
+  " ターミナルバッファが閉じられたときに実行されるオートコマンドを設定
+  augroup prp_terminal
+    autocmd!
+    autocmd TermClose <buffer> call PostPrpProcess()
+  augroup END
+  " 結果を処理する関数
+  function! PostPrpProcess()
+    " 再描画の為に実施
+    execute 'edit /tmp/buff_prp.md'
+    " 一時的なオートコマンドグループを削除
+    augroup prp_terminal
+      autocmd!
+    augroup END
+  endfunction
 endfunction
+
 nnoremap <M-m> :call SendBufferToCommandAndClose()<CR>
 
 function! ConvertMdNumberToOne()

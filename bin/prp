@@ -1,8 +1,8 @@
 #!/usr/bin/env -S bash -e
 
 command_name=$(basename "$0") && readonly command_name
-dst=/tmp/"$command_name".tmp && readonly dst
-edit=0
+dst=/tmp/"$command_name".tmp.md && readonly dst
+edit=1
 
 fire() {
   find "$HOME"/.mo/prompt/ -type f -name '*.md'
@@ -14,7 +14,7 @@ Usage: $command_name [OPTION] [fuzzy query for filter prompts]
 
 Options:
   -h, --help  Display this help and exit
-  -e          Edit the generated prompt
+  -ne         No Edit. Cat only
 
 EOF
 }
@@ -24,20 +24,24 @@ initialize() {
     [[ -z $1 ]] && break
     case "$1" in
       -h | --help) usage && exit 0 ;;
-      -e) edit=1 ;;
+      -ne) edit=0 ;;
       *) add_args "$1" ;;
     esac
     shift
   done
 }
 add_args() { args+=("$@"); }
+get_content() {
+  if [[ -p /dev/stdin ]]; then
+    cat <&0
+    return
+  fi
+  xsel -bo
+}
 main() {
   initialize "$@"
   set -euo pipefail
-  if [[ -p /dev/stdin ]]; then
-    cat <&0 | clip
-  fi
-  content="$(gclip -paste)" && export content
+  content="$(get_content)" && export content
   local f
   f=$(
     fire |
