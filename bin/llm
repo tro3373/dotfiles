@@ -1,6 +1,29 @@
 #!/usr/bin/env -S bash -e
 
+readonly depends=(gemini-cli)
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+fire() {
+  if [[ -p /dev/stdin ]]; then
+    cat -
+  fi
+  if [[ $# -ne 0 ]]; then
+    echo "$@"
+  fi
+}
+
 main() {
-  command gemini-cli "$@"
+  hass "${depends[@]}"
+  if [[ $# -eq 0 && ! -p /dev/stdin ]]; then
+    error "==> No input data."
+  fi
+  fire "$@" | command gemini-cli prompt -
 }
 main "$@"

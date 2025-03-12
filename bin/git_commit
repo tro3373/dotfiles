@@ -32,7 +32,7 @@ cat_prompt() {
 genai() {
   cat_prompt |
     tee >(cat >"$tmp_msg") |
-    llm prompt - |
+    llm |
     tr -d '\n' |
     grep -m 1 -Eo '\{\s*"(summary|details)".+}' |
     jq >"$tmp_msg_json"

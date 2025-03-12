@@ -343,7 +343,7 @@ function! GetContentTitle(prpfile) abort
   execute 'write! ' . tmpfile
   " システムコマンドへ渡す
   " MEMO: tmp内容が反映されないケースがるので、0.2秒待機
-  let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp -ne '..a:prpfile..' | llm prompt -'))
+  let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp -ne '..a:prpfile..' | llm'))
   " 一時ファイルを削除
   call delete(tmpfile)
   return title
@@ -354,7 +354,7 @@ function! SaveKnowledge() abort
   " execute 'write! ' . tmpfile
   " " システムコマンドへ渡す
   " " MEMO: tmp内容が反映されないケースがるので、0.2秒待機
-  " let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp -ne gen-content-title.md | llm prompt -'))
+  " let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp -ne gen-content-title.md | llm'))
   " " 一時ファイルを削除
   " call delete(tmpfile)
   let title = GetContentTitle("gen-content-title-ja.md")
