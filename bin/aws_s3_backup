@@ -1,31 +1,135 @@
-#!/usr/bin/env bash
+#!/usr/bin/env -S bash -e
 
-readonly dstd=backup_$(date +%Y%m%d_%H%M%S)
-profile=default
+command_name=$(basename "$0") && readonly command_name
+current_dir=$(pwd) && readonly current_dir
+timestamp=$(date +%Y%m%d_%H%M%S) && readonly timestamp
+
+purge=0
 bucket=
-dummy="echo"
+dst_tmp_sync_dir=
+dst_root_dir=
+log_file=
 
-initialize() {
-  for arg in "$@"; do
-    case "$arg" in
-      -e) dummy= ;;
-      -b) bucket="$arg" ;;
-      *) profile="$arg" ;;
-    esac
-  done
-  [[ -z $bucket ]] && echo "Specify bucket -b option." 1>&2 && exit 1
+has() { command -v "${1}" >&/dev/null; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+notice() {
+  if has slk; then
+    cat - | slk 2>/dev/null || :
+  else
+    cat -
+  fi
 }
 
-backup_s3() {
-  echo "=> Backuping syncing $bucket $dstd.." 1>&2
-  [[ ! -e $dstd ]] && mkdir -p $dstd
-  $dummy aws --profile $profile \
-    s3 sync s3://$bucket $dstd
+usage() {
+  cat <<EOF
+
+Backup s3 bucket to local directory
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help  : Show this usage
+      -p|--purge : Delete object that backupped from s3
+      -d|--dst   : Specify export directory
+
+EOF
+}
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -p | --purge) purge=1 ;;
+      -d | --dst) shift && dst_root_dir="$1" ;;
+      *) bucket="$1" ;;
+    esac
+    shift
+  done
+  if [[ -z $dst_root_dir ]]; then
+    dst_root_dir="$current_dir/$command_name"
+  fi
+  check
+
+  log_dir="$dst_root_dir/log"
+  log_file="$log_dir/$timestamp.log"
+  mkdir -p "$log_dir"
+  set -eu
+}
+
+check() {
+  if [[ -z $bucket ]]; then
+    error "==> Specify bucket name"
+  fi
+}
+
+end() {
+  if [[ $? -ne 0 ]]; then
+    error "==> Failed"
+  fi
+  info "==> Removing $dst_tmp_sync_dir.."
+  rm -rf "$dst_tmp_sync_dir"
+  log "==> Done"
+  echo "==> End $command_name $timestamp" | notice
+}
+
+download_bucket() {
+  info "==> Downloading from s3://$bucket to $dst_tmp_sync_dir.."
+  # aws s3 sync "s3://$bucket" "$dst_tmp_sync_dir" || info "==> Failed to aws s3 sync.."
+  aws s3 cp --recursive "s3://$bucket" "$dst_tmp_sync_dir" || info "==> Failed to aws s3 sync.."
+  info "==> Downloaded  from s3://$bucket to $dst_tmp_sync_dir."
+}
+
+copy_to_persistence() {
+  local dst_dir="$dst_bucket_dir/persistence"
+  [[ ! -e $dst_dir ]] && mkdir -p "$dst_dir"
+  info "==> Copying from $dst_tmp_sync_dir to $dst_dir.."
+  (
+    cd "$dst_tmp_sync_dir/" && find ./ -type f -print0 |
+      xargs -0 cp --parents -vft "$dst_dir"
+  )
+  info "==>  Copied from $dst_tmp_sync_dir to $dst_dir."
+}
+
+purge_synced_files_from_s3() {
+  local today
+  today=$(date +%Y/%m/%d)
+  info "==> Purging $bucket exclude $today.."
+  find "$dst_tmp_sync_dir"/ -type f |
+    # Change file path to s3 key
+    sed -e "s,$dst_tmp_sync_dir/,,g" |
+    # Exclude today's files
+    grep -v "$today" |
+    # Remove all at once by year/month/day
+    sed -e 's,\(^.*/2[0-9]\{3\}/[0-9]\{2\}/[0-9]\{2\}/\).*,\1,g' |
+    sort -u |
+    xargs -I {} sh -c "echo \"==> Removing {}\" && aws s3 rm --recursive \"s3://$bucket/{}\""
+  info "==> Purged $bucket exclude $today."
+}
+
+internal() {
+  echo "==> Start $command_name $timestamp" | notice
+  local dst_bucket_dir="$dst_root_dir/$bucket"
+  dst_tmp_sync_dir="$dst_bucket_dir/tmp_$timestamp"
+
+  download_bucket
+  copy_to_persistence
+
+  trap end 0 1 2 3 15
+
+  [[ $purge -ne 1 ]] && return
+  purge_synced_files_from_s3
 }
 
 main() {
   initialize "$@"
-  backup_s3
-  echo "Done"
+  internal "$@" |& tee "$log_file"
 }
 main "$@"
