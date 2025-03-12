@@ -1,0 +1,10 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  tmux list-sessions -F "#{session_name}" |
+    fzf-tmux -p --reverse \
+      --preview 'tmux list-windows -t {} | sed "s/^/  /"' \
+      --preview-window right:50% \
+      --bind 'enter:execute(tmux kill-session -t {})+abort'
+}
+main "$@"

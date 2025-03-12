@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 main() {
-  set -x
-  [[ -z $TMUX ]] && return
-  local selected="$(tmux ls | fzf-tmux | cut -d : -f 1)"
-  [[ -z $selected ]] && return
-  tmux switch -t $selected
+  tmux list-sessions |
+    fzf-tmux -p --reverse \
+      --preview 'tmux list-windows -t {1} | sed "s/^/  /"' \
+      --preview-window right:50% \
+      --bind 'enter:execute(tmux switch-client -t {1})+accept'
 }
 main "$@"
