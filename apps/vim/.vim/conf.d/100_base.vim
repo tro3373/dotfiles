@@ -278,8 +278,8 @@ endfunction
 
 " 行番号を表示する
 set number
-" " 相対行番号を表示する
-set relativenumber
+" " " 相対行番号を表示する
+" set relativenumber
 " ルーラを表示
 set ruler
 
