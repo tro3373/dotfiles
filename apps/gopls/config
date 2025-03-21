@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+install_common() {
+  # shellcheck disable=SC2154
+  exe cd "$current_dir"
+  exe go version
+  go_install golang.org/x/tools/gopls@latest
+  exe cd -
+}
