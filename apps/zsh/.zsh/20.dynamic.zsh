@@ -26,6 +26,9 @@ _dynamic() {
     #compinit -u
     _cache_load sheldon
   fi
+  if has uv; then
+    _cache_load uv
+  fi
 
   # dircolors 設定
   _cache_load lscolors
@@ -198,6 +201,10 @@ _cat_direnv() {
 
 _cat_anyenv() {
   anyenv init -
+}
+
+_cat_uv() {
+  uv generate-shell-completion zsh
 }
 
 _dynamic

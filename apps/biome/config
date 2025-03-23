@@ -9,9 +9,10 @@ install_common() {
   exe "(cd $current_dir && npm install --dev @biomejs/biome)"
 }
 setting_common() {
-  if [[ ! -e $current_dir/biome.json ]]; then
+  config_json_name="biome.json"
+  if [[ ! -e $current_dir/$config_json_name ]]; then
     # shellcheck disable=SC2154
-    exe cp "$app_dir"/biome.json "$current_dir"/biome.json
+    exe cp "$app_dir"/$config_json_name "$current_dir"/$config_json_name
   fi
   log "==> Check the biome configuration"
   log "npx biome check --verbose"

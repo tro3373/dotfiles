@@ -33,7 +33,7 @@ install_common() {
 }
 
 _find_binary() {
-  find ~/Downloads/ -maxdepth 1 -mindepth 1 -name 'cursor-*.AppImage' -type f |
+  find ~/Downloads/ -maxdepth 1 -mindepth 1 -name '?ursor-*.AppImage' -type f |
     fzf -1 -0 || :
 }
 

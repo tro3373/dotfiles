@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+install_common() {
+  install_via_os_default
+}
+setting_common() {
+  config_name="pyproject.toml"
+  # shellcheck disable=SC2154
+  if [[ -e $current_dir/$config_name ]]; then
+    log "==> $config_name already exists"
+    return
+  fi
+  # shellcheck disable=SC2154
+  exe cp "$app_dir"/$config_name "$current_dir"/$config_name
+}
