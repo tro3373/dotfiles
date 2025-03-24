@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 main() {
-  local pos=$(mintty -R o -e "Move Resize Window and Exit" aaa 2>/dev/null)
-  echo $pos | sed -e "s/mintty -o //g" | sed -e "s/-o//g" | sed -e "s/ \+/\n/g"
+  pos=$(mintty -R o -e "Move Resize Window and Exit" aaa 2>/dev/null)
+  echo "$pos" | sed -e "s/mintty -o //g" | sed -e "s/-o//g" | sed -e "s/ \+/\n/g"
 }
 main "$@"
