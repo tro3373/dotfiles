@@ -138,6 +138,9 @@ let g:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162'
 " " .env ファイルに対してのみ SC2034 を無視
 " " b: バッファローカル変数
 " autocmd BufNewFile,BufRead .env let b:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162,SC2034'
+"  -i,  --indent uint       0 for tabs (default), >0 for number of spaces
+" -ci, --case-indent       switch cases will be indented
+"  -s,  --simplify  simplify the code
 let g:ale_sh_shfmt_options = '-i 2 -ci -s' " shfmt see .editorconfig?(not working... so specify option)
 " Python
 " let g:ale_python_autopep8_options = '--ignore=E501'              " ignore long-lines for autopep8 fixer
