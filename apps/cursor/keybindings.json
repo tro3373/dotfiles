@@ -50,7 +50,8 @@
   },
   {
     "key": "alt+v",
-    "command": "editor.action.clipboardPasteAction"
+    "command": "editor.action.clipboardPasteAction",
+    "when": "editorFocus && vim.mode != 'CommandLine' && !renameInputVisible"
   },
   {
     "key": "s p",

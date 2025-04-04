@@ -195,6 +195,12 @@
     //   "commands": ["workbench.view.explorer", "revealInExplorer"]
     // }
   ],
+  "vim.commandLineModeKeyBindingsNonRecursive": [
+    {
+      "before": ["s", "<Leader>"],
+      "after": ["s", "/", "/", "/", "g", "<Left>", "<Left>"]
+    }
+  ],
   "vim.insertModeKeyBindingsNonRecursive": [
     {
       "before": ["j", "j"],
@@ -215,6 +221,12 @@
           "args": []
         }
       ]
+    },
+    {
+      // 選択範囲をコピーして検索モードに入る
+      "before": ["\""],
+      "after": ["y", "/", "<C-r>", "\"", "<CR>"],
+      "commands": []
     }
   ],
   "files.watcherExclude": {
@@ -346,5 +358,14 @@
   ],
   "print.folder.maxLines": 1200,
   "print.folder.maxFiles": 30,
-  "print.folder.includeFileList": false
+  "print.folder.includeFileList": false,
+  "roo-cline.allowedCommands": [
+    "npm test",
+    "npm install",
+    "tsc",
+    "git log",
+    "git diff",
+    "git show",
+    "go test"
+  ]
 }
