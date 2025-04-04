@@ -101,8 +101,18 @@ function! ClipDir()
   call ClipComm()
 endfunction
 function! ClipPath()
-  let @*=expand('%:P')
+  let @*=GetGitRelativePath()
   call ClipComm()
+endfunction
+function! GetGitRelativePath()
+  let l:gitroot = GetGitRoot()
+  if l:gitroot == "."
+    return expand('%:p')
+  else
+  endif
+  let l:fullpath = expand('%:p')
+  let l:gitroot_with_slash = l:gitroot . '/'
+  return substitute(l:fullpath, escape(l:gitroot_with_slash, '/\'), '', '')
 endfunction
 function! ClipFullPath()
   let @*=expand('%:p')
@@ -485,6 +495,19 @@ function! ToTab(...) abort
   call SetTabs(recoveryNum)
 endfun
 command! -nargs=? ToTab call ToTab(<f-args>)
+
+function! ToSpace2() abort
+  " Not work
+  " %s/^\( \{4}\)\+/\=repeat('  ', len(submatch(0)) / 4)/
+  call ToTab(4)
+  call ToSpace(2)
+endfun
+command! ToSpace2 call ToSpace2()
+function! ToSpace4() abort
+  call ToTab(2)
+  call ToSpace(4)
+endfun
+command! ToSpace4 call ToSpace4()
 
 " 選択削除
 function! DeleteSelected() abort
