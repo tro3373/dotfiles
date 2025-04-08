@@ -96,7 +96,7 @@ recommend() {
   cat <<'EOF' | _ink yellow
 >> This is dummy mode.
   -e: Excute aboub command.
-  -s: (warning) Execute also below
+  -s: (!!!!WARNING!!!!) Execute also below. All images and containers will be removed.
     - docker volume prune
     - docker system prune -a
 EOF
