@@ -85,5 +85,9 @@
   {
     "key": "Ctrl+Alt+N",
     "command": "explorer.newFolder" // ファイルツリーで新規ディレクトリ作成
+  },
+  {
+    "key": "ctrl+i",
+    "command": "composerMode.agent"
   }
 ]

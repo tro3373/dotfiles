@@ -5,6 +5,12 @@
 settings_d_mac="${HOME}/Library/Application Support/Cursor/User"
 settings_d_linux="$HOME/.config/Cursor/User"
 
+install_arch() {
+  def_install cursor-extracted
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/cursor" "$target"
+}
+
 _fnm=
 install_common() {
   if is_mac; then

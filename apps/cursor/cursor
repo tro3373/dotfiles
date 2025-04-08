@@ -1,6 +1,11 @@
 #!/usr/bin/env -S bash -e
 
 find_cursor_bin() {
+  local cursor_bin=/opt/cursor/usr/share/cursor/cursor
+  if [[ -x $cursor_bin ]]; then
+    echo "$cursor_bin"
+    return
+  fi
   if os mac; then
     echo "/Applications/Cursor.app/Contents/MacOS/Cursor"
     return
