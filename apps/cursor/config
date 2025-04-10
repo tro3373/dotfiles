@@ -7,8 +7,7 @@ settings_d_linux="$HOME/.config/Cursor/User"
 
 install_arch() {
   def_install cursor-extracted
-  # shellcheck disable=SC2154
-  make_lnk_with_bkup "$app_dir/cursor" "$target"
+  _link_bin_cursor_if_needed
 }
 
 _fnm=
@@ -29,6 +28,10 @@ install_common() {
     _fnm=$(basename "$_bin")
     exe mv -v "$_bin" ~/tools/
   fi
+  _link_bin_cursor_if_needed
+}
+
+_link_bin_cursor_if_needed() {
   local target=~/bin/cursor
   if [[ -e $target ]]; then
     log "==> $target already exists"
