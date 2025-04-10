@@ -35,11 +35,36 @@ config.font_size = mac and 18.0 or 15.0
 config.window_background_opacity = 1 -- 0.90
 
 --------------------------------------------------------------------------------
--- HyperLink(Open with Click Not work..)
+-- HyperLink
 -- https://example.com
 --------------------------------------------------------------------------------
--- Use the defaults as a base
-config.hyperlink_rules = wezterm.default_hyperlink_rules()
+--------------------------------------------------------------------------------
+-- Case: Custom Rules as a base(For support markdown link)
+-- [markdown](https://example.com)
+--------------------------------------------------------------------------------
+config.hyperlink_rules = {
+  -- Markdown link: [text](URL) を優先的に検出
+  -- URL部分 ($2) だけを抽出する
+  {
+    -- regex = "%[(.-)%]%(([%w]+://[^%s%)]+)%)",
+    -- regex = "%[(.-)%]%(([^%s%)]+)%)",
+    -- MEMO: Luaの文字列定義方法
+    --  - 'パターン'
+    --  - "パターン"
+    --  - [[パターン]]
+    --  - [=[パターン]=]、または `=` の数を変更して指定できる
+    regex = [=[\[([^\]]+)\]\((https?://[^\s\)]+)\)]=],
+    format = "$2",
+  },
+}
+local default_rules = wezterm.default_hyperlink_rules()
+for _, rule in ipairs(default_rules) do
+  table.insert(config.hyperlink_rules, rule)
+end
+
+--------------------------------------------------------------------------------
+-- Additional Rules
+--------------------------------------------------------------------------------
 -- make task numbers clickable
 -- the first matched regex group is captured in $1.
 table.insert(config.hyperlink_rules, {
@@ -54,6 +79,7 @@ table.insert(config.hyperlink_rules, {
   regex = [[["]?([\w\d]{1}[-\w\d]+)(/){1}([-\w\d\.]+)["]?]],
   format = "https://www.github.com/$1/$3",
 })
+
 -- -- If the current mouse cursor position is over a cell that contains a hyperlink,
 -- -- this action causes that link to be opened.
 -- config.mouse_bindings = {
