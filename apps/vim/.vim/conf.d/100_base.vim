@@ -159,10 +159,11 @@ set formatoptions=jcroql
 " tw  = textwidth
 " ft  = filetype
 " expandtab         <TAB>を空白スペース文字に置き換える
-set ts=4 sts=4 sw=4 expandtab
+set ts=2 sts=2 sw=2 expandtab
 if has("autocmd")
   " ファイル種別による個別設定
-  autocmd FileType sh,zsh,bash,vim,html,xhtml,css,scss,javascript,typescript,typescriptreact,yaml,toml,ruby,coffee,sql,vue,markdown setlocal ts=2 sts=2 sw=2
+  " MEMO: .editorconfig を使用している場合は無視される
+  autocmd FileType python,java,go,make,Dockerfile,lua setlocal ts=4 sts=4 sw=4
   " ファイルの先頭からパースしてハイライトを行う
   autocmd FileType vue syntax sync fromstart
   " go の場合はタブを空白に変換しない(setlocal: 現在のバッファのみ)

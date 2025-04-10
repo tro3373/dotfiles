@@ -165,3 +165,9 @@ snippet	filterouttt
 	# $@: Target name. ex make a => a
 	# $(MAKECMDGOALS): All Command line arguments. ex make a b c => a b c
 	$(filter-out $@,$(MAKECMDGOALS))
+snippet	unameeee
+alias	archhhh
+	arch ?= amd
+	ifeq ($(shell uname -m),arm64)
+		arch ?= arm
+	endif
