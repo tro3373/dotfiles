@@ -1,35 +1,88 @@
+// 既定値を上書きするには、このファイル内にキー バインドを挿入します
 [
   {
-    "key": "s p",
+    "key": "F3",
     "when": "inputFocus && vim.mode == 'Normal'",
-    "command": "workbench.action.previousEditor"
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "# $CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE"
+    }
   },
   {
-    "key": "ctrl+pageup",
-    "command": "-workbench.action.previousEditor"
+    "key": "F3",
+    "when": "inputFocus && vim.mode == 'Insert'",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "$CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE"
+    }
+  },
+  {
+    "key": "F4",
+    "when": "inputFocus && vim.mode == 'Normal'",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "- ${CURRENT_YEAR}${CURRENT_MONTH}${CURRENT_DATE}_${CURRENT_HOUR}${CURRENT_MINUTE}${CURRENT_SECOND}"
+    }
+  },
+  {
+    "key": "F4",
+    "when": "inputFocus && vim.mode == 'Insert'",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "${CURRENT_YEAR}${CURRENT_MONTH}${CURRENT_DATE}_${CURRENT_HOUR}${CURRENT_MINUTE}${CURRENT_SECOND}"
+    }
+  },
+  {
+    "key": "F5",
+    "when": "inputFocus && vim.mode == 'Normal'",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "- ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}${CURRENT_TIMEZONE_OFFSET}"
+    }
+  },
+  {
+    "key": "F5",
+    "when": "inputFocus && vim.mode == 'Insert'",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "snippet": "${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}${CURRENT_TIMEZONE_OFFSET}"
+    }
+  },
+  {
+    "key": "alt+v",
+    "command": "editor.action.clipboardPasteAction"
+  },
+  {
+    "key": "s p",
+    "command": "workbench.action.previousEditor",
+    "when": "editorFocus && vim.mode == 'Normal' && !renameInputVisible"
   },
   {
     "key": "s n",
-    "when": "inputFocus && vim.mode == 'Normal'",
-    "command": "workbench.action.nextEditor"
+    "command": "workbench.action.nextEditor",
+    "when": "editorFocus && vim.mode == 'Normal' && !renameInputVisible"
   },
   {
-    "key": "ctrl+pagedown",
-    "command": "-workbench.action.nextEditor"
+    "key": "s d",
+    "command": "workbench.files.action.focusFilesExplorer",
+    "when": "editorFocus && vim.mode == 'Normal' && !renameInputVisible"
+  },
+  {
+    "key": "s d",
+    "command": "workbench.action.focusFirstEditorGroup",
+    "when": "explorerViewletFocus && !renameInputVisible && !inputFocus"
   },
   {
     "key": "s t",
-    "when": "inputFocus && vim.mode == 'Normal'",
-    "command": "workbench.action.files.newUntitledFile"
+    "command": "workbench.action.quickOpen",
+    "when": "editorFocus && vim.mode == 'Normal' && !renameInputVisible"
   },
   {
-    "key": "space q",
-    "when": "inputFocus && vim.mode == 'Normal'",
-    "command": "workbench.action.closeActiveEditor"
+    "key": "Ctrl+n",
+    "command": "explorer.newFile" // ファイルツリーで新規ファイル作成
   },
   {
-    "key": "space w",
-    "when": "inputFocus && vim.mode == 'Normal'",
-    "command": "workbench.action.files.save"
+    "key": "Ctrl+Alt+N",
+    "command": "explorer.newFolder" // ファイルツリーで新規ディレクトリ作成
   }
 ]
