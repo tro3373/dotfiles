@@ -1,0 +1,11 @@
+#!/usr/bin/env -S bash -e
+
+timestamp=$(date +%Y-%m-%d_%H-%M-%S) && readonly timestamp
+main() {
+  if [[ $# -eq 0 ]]; then
+    echo "Usage: $0 <todo message here>"
+    return 1
+  fi
+  ln -s /warning-"$timestamp" "$*"
+}
+main "$@"
