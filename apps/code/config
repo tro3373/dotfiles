@@ -1,23 +1,5 @@
 #!/usr/bin/env bash
 
-# settings_d_msys="${WINHOME}/AppData/Roaming/Code/User"
-# settings_d_msys="${WINHOME}/scoop/persist/vscode/data/user-data/User"
-# settings_d_mac="${HOME}/Library/Application Support/Code/User"
-# settings_d_ubuntu="$HOME/.config/Code/User"
-
-# is_installed() {
-#   if is_msys; then
-#     # test -e "$settings_d_msys"
-#     has_scoop vscode
-#   elif is_mac; then
-#     test -e "$settings_d_mac"
-#   elif is_ubuntu; then
-#     test -e "$settings_d_ubuntu"
-#   else
-#     # shellcheck disable=SC2154
-#     has "$app"
-#   fi
-# }
 install_common() { not_supported; }
 install_arch() {
   def_install visual-studio-code-bin
@@ -31,41 +13,54 @@ install_mac() {
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
-setting_common() { no_settings; }
-setting_arch() { no_settings; }
+
+_link_bin_code_if_needed() {
+  local target=~/bin/code
+  if [[ -e $target ]]; then
+    log "==> $target already exists"
+    return
+  fi
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/code" "$target"
+}
+
+setting_common() {
+  _link_bin_code_if_needed
+}
+# setting_arch() { no_settings; }
 setting_msys() {
   # _ln_jsons "$settings_d_msys"
   # _add_packages
   exe winln -q "$WINHOME/scoop/apps/vscode/current/Code.exe"
 }
-setting_cygwin() { no_settings; }
-setting_mac() {
-  # _ln_jsons "$settings_d_mac"
-  # _add_code_path "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-  :
-}
-setting_ubuntu() {
-  # _ln_jsons "$settings_d_ubuntu"
-  :
-}
-setting_redhat() { no_settings; }
-_add_code_path() {
-  local _code_bin="$*"
-  local _target=$HOME/.works.zsh
-  if grep "$_code_bin" "$_target" >&/dev/null; then
-    return
-  fi
-  log "==> Adding to $_target.."
-  echo "add_path '$_code_bin'" |
-    if is_dry; then
-      cat -
-    else
-      cat - | tee -a "$_target"
-    fi
-  del_if_exist "$HOME/.path"
-  # Use setting sync
-  # _add_packages
-}
+# setting_cygwin() { no_settings; }
+# setting_mac() {
+#   # _ln_jsons "$settings_d_mac"
+#   # _add_code_path "/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+#   :
+# }
+# setting_ubuntu() {
+#   # _ln_jsons "$settings_d_ubuntu"
+#   :
+# }
+# setting_redhat() { no_settings; }
+# _add_code_path() {
+#   local _code_bin="$*"
+#   local _target=$HOME/.works.zsh
+#   if grep "$_code_bin" "$_target" >&/dev/null; then
+#     return
+#   fi
+#   log "==> Adding to $_target.."
+#   echo "add_path '$_code_bin'" |
+#     if is_dry; then
+#       cat -
+#     else
+#       cat - | tee -a "$_target"
+#     fi
+#   del_if_exist "$HOME/.path"
+#   # Use setting sync
+#   # _add_packages
+# }
 # _add_packages() {
 #   if is_dry; then
 #     log "==> vscode packages is.."
@@ -80,24 +75,8 @@ _add_code_path() {
 #   export PATH="$_code_bin:$PATH"
 #   exe "$app_dir/gen_extensions" 1
 # }
-_ln_jsons() {
-  # shellcheck disable=SC2154
-  make_lnk_with_bkup "$app_dir/settings.json" "$1/settings.json"
-  make_lnk_with_bkup "$app_dir/keybindings.json" "$1/keybindings.json"
-}
-#install_via_os_default
-#def_install
-#is_debug
-#is_dry
-#log
-#dlog
-#not_supported
-#make_link_dot2home
-#make_lnk_with_bkup
-#cd_work
-#make_work_if_needed
-#dl
-#dl_unzip
-#dl_untar
-#github
-#github_user_local
+# _ln_jsons() {
+#   # shellcheck disable=SC2154
+#   make_lnk_with_bkup "$app_dir/settings.json" "$1/settings.json"
+#   make_lnk_with_bkup "$app_dir/keybindings.json" "$1/keybindings.json"
+# }

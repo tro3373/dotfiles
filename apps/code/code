@@ -1,0 +1,53 @@
+#!/usr/bin/env -S bash -e
+
+find_code_bin() {
+  local code_bin=/opt/visual-studio-code/code
+  if [[ -x $code_bin ]]; then
+    echo "$code_bin"
+    return
+  fi
+  # TODO for mac
+  # if os mac; then
+  #   echo "/Applications/code.app/Contents/MacOS/code"
+  #   return
+  # fi
+  # find "$HOME"/tools/ -name "code-*.AppImage" | sort -r | head -1
+}
+
+is_process_already_exists() {
+  pgrep -f "$*" >/dev/null
+}
+
+start_code() {
+  "$code_bin" "$@" >>/tmp/code.log 2>&1 &
+}
+
+closest_dirname() {
+  if [[ -d $1 ]]; then
+    echo "$1"
+    return
+  fi
+  dirname "$1"
+}
+
+get_git_root_or_current_dir() {
+  if [[ $# -ne 0 ]]; then
+    cd "$(closest_dirname "$1")"
+  fi
+  git rev-parse --show-toplevel 2>/dev/null || pwd
+}
+
+main() {
+  code_bin=$(find_code_bin)
+  if [[ $# -eq 0 ]]; then
+    start_code "$(get_git_root_or_current_dir)"
+    return
+  fi
+
+  if ! is_process_already_exists "$code_bin"; then
+    start_code "$(get_git_root_or_current_dir "$1")"
+    sleep 0.5
+  fi
+  start_code "$@"
+}
+main "$@"

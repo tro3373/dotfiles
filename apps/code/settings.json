@@ -2,7 +2,11 @@
   "files.hotExit": "onExit",
   "window.restoreWindows": "all",
   "window.openFoldersInNewWindow": "on",
-  "workbench.colorTheme": "Apprentice",
+  // "workbench.colorTheme": "Apprentice",
+  "workbench.colorTheme": "One Dark Pro Darker",
+  // "workbench.colorTheme": "One Dark Pro Darker",
+  // "workbench.colorTheme": "Atom One Dark",
+  // "workbench.colorTheme": "Apprentice",
   // "workbench.colorTheme": "GitHub Dark",
   "workbench.iconTheme": "vscode-icons",
   "editor.mouseWheelZoom": true,
@@ -195,6 +199,12 @@
     //   "commands": ["workbench.view.explorer", "revealInExplorer"]
     // }
   ],
+  "vim.commandLineModeKeyBindingsNonRecursive": [
+    {
+      "before": ["s", "<Leader>"],
+      "after": ["s", "/", "/", "/", "g", "<Left>", "<Left>"]
+    }
+  ],
   "vim.insertModeKeyBindingsNonRecursive": [
     {
       "before": ["j", "j"],
@@ -215,6 +225,12 @@
           "args": []
         }
       ]
+    },
+    {
+      // 選択範囲をコピーして検索モードに入る
+      "before": ["\""],
+      "after": ["y", "/", "<C-r>", "\"", "<CR>"],
+      "commands": []
     }
   ],
   "files.watcherExclude": {
@@ -331,8 +347,30 @@
   "cursor.cpp.disabledLanguages": ["plaintext", "scminput"],
   "terminal.integrated.sendKeybindingsToShell": true,
   "go.toolsManagement.autoUpdate": true,
-  "geminicodeassist.inlineSuggestions.enableAuto": true,
   "vsicons.dontShowNewVersionMessage": true,
+  "geminicodeassist.inlineSuggestions.enableAuto": true,
   "geminicodeassist.project": "",
-  "gitlens.telemetry.enabled": false
+  "geminicodeassist.enableTelemetry": false,
+  "gitlens.telemetry.enabled": false,
+  "print.folder.fileNames": true,
+  "print.folder.include": [],
+  "print.folder.exclude": [
+    "{bin,obj,out}",
+    "node_modules",
+    "data",
+    "**/*.{bin,exe,dll,hex,pdb,pdf,pfx,png,jpg,gif,bmp,suo,design}"
+  ],
+  "print.folder.maxLines": 1200,
+  "print.folder.maxFiles": 30,
+  "print.folder.includeFileList": false,
+  "roo-cline.allowedCommands": [
+    "npm test",
+    "npm install",
+    "tsc",
+    "git log",
+    "git diff",
+    "git show",
+    "go test"
+  ],
+  "git.openRepositoryInParentFolders": "always"
 }
