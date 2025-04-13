@@ -1,5 +1,6 @@
 _dynamic() {
   [[ ! -e $CACHE_D ]] && mkdir -p $CACHE_D
+
   _cache_load whoami
   if is_msys; then
     export WINHOME=/c/Users/$WHOAMI
@@ -12,34 +13,20 @@ _dynamic() {
   fi
 
   _dynamic_exports
-
   export GEN_PATH_F=$CACHE_D/path
   _cache_load path
   export GEN_MANPATH_F=$CACHE_D/manpath
   _cache_load manpath
-
-  # plugins
-  if has sheldon; then
-    # TODO sheldon source error exist
-    #autoload -Uz compinit
-    ##zsh-defer compinit -u
-    #compinit -u
-    _cache_load sheldon
-  fi
-  if has uv; then
-    _cache_load uv
-  fi
-
-  # dircolors 設定
   _cache_load lscolors
 
-  if has direnv; then
-    _cache_load direnv
-  fi
+  _cache_loads sheldon uv direnv gh
+}
 
-  if has anyenv; then
-    _cache_load anyenv
-  fi
+_cache_loads() {
+  for src in "$@"; do
+    has $src || continue
+    _cache_load $src
+  done
 }
 
 _cache_load() {
@@ -131,7 +118,7 @@ _cat_path() {
   add_path /opt/google-cloud-cli/bin # for gcloud
 
   add_path ${HOME}/.fzf/bin
-  add_path ${HOME}/.anyenv/bin
+  # add_path ${HOME}/.anyenv/bin
   add_path $GOPATH/bin
   add_path $CARGO_HOME/bin
   add_path ${HOME}/.cargo/bin
@@ -199,12 +186,16 @@ _cat_direnv() {
   direnv hook zsh
 }
 
-_cat_anyenv() {
-  anyenv init -
-}
+# _cat_anyenv() {
+#   anyenv init -
+# }
 
 _cat_uv() {
   uv generate-shell-completion zsh
+}
+
+_cat_gh() {
+  gh completion -s zsh
 }
 
 _dynamic
