@@ -26,12 +26,12 @@ install_mac() {
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
-setting_common() {
-  if grep 'gh completion -s zsh' ~/.works.zsh >&/dev/null; then
-    return
-  fi
-  exe "echo 'eval \"\$(gh completion -s zsh)\"' >> ~/.works.zsh"
-}
+# setting_common() {
+#   if grep 'gh completion -s zsh' ~/.works.zsh >&/dev/null; then
+#     return
+#   fi
+#   exe "echo 'eval \"\$(gh completion -s zsh)\"' >> ~/.works.zsh"
+# }
 # setting_arch() { not_supported; }
 # setting_msys() { not_supported; }
 # setting_cygwin() { not_supported; }

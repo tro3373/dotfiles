@@ -9,20 +9,20 @@ install_cygwin() { not_supported; }
 install_mac() { not_supported; }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
-setting_common() {
-  local _workzsh=$HOME/.works.zsh
-  if grep direnv $_workzsh >&/dev/null; then
-    return
-  fi
-  log "adding to $_workzsh.."
-  # shellcheck disable=SC2016
-  echo 'eval "$(direnv hook zsh)"' |
-    if is_dry; then
-      cat -
-    else
-      cat - | tee -a $_workzsh
-    fi
-}
+# setting_common() {
+#   local _workzsh=$HOME/.works.zsh
+#   if grep direnv $_workzsh >&/dev/null; then
+#     return
+#   fi
+#   log "adding to $_workzsh.."
+#   # shellcheck disable=SC2016
+#   echo 'eval "$(direnv hook zsh)"' |
+#     if is_dry; then
+#       cat -
+#     else
+#       cat - | tee -a $_workzsh
+#     fi
+# }
 # setting_arch() { no_settings; }
 setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
