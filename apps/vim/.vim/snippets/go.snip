@@ -565,6 +565,12 @@ snippet	strconv_itoaaa
 alias	itoaaa
 	strconv.Itoa(${1})
 
+snippet	strconv_atoiii
+alias	atoiii
+	// 10: 10進数
+	// 64: 64bit整数
+	timeout, err := strconv.ParseInt(${1}, 10, 64)
+
 snippet	exec_run
 	err := exec.Command("ls", "-la").Run()
 
