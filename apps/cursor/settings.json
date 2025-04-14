@@ -2,6 +2,7 @@
   "files.hotExit": "onExit",
   "window.restoreWindows": "all",
   "window.openFoldersInNewWindow": "on",
+  "window.customMenuBarAltFocus": false,
   "workbench.colorTheme": "Apprentice",
   // "workbench.colorTheme": "GitHub Dark",
   "workbench.iconTheme": "vscode-icons",
