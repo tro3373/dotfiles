@@ -1079,3 +1079,30 @@ function! ConvertMdNumberToOne()
   %s/  \d\. /  1. /g
 endfunction
 command! ConvertMdNumberToOne call ConvertMdNumberToOne()
+
+
+" 半角全角変換
+function! ZenkakuHankakuRange(mode, ...)
+  let z = '０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ'
+  let h = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+  let s = a:mode ==# 'zen' ? h : z
+  let d = a:mode ==# 'zen' ? z : h
+  let s_list = split(s, '\zs')
+  let d_list = split(d, '\zs')
+
+  " ビジュアルモードで選択されている場合はその範囲を使用
+  let range = visualmode() != '' ? "'<,'>" : '%'
+
+  for i in range(len(s_list))
+    try
+      let cmd = range . 's/' . escape(s_list[i], '/\') . '/' . escape(d_list[i], '/\') . '/g'
+      silent execute cmd
+    catch /^Vim\%((\a\+)\)\=:E486/
+      " パターンが見つからない場合は無視
+    endtry
+  endfor
+endfunction
+command! -range Zen call ZenkakuHankakuRange('zen')
+command! -range Han call ZenkakuHankakuRange('han')
+command! -range ToZen call ZenkakuHankakuRange('zen')
+command! -range ToHan call ZenkakuHankakuRange('han')
