@@ -242,10 +242,11 @@ noremap <F4> <ESC>:call append(line(".")-1, "## ".strftime("%Y%m%d_%H%M%S"))<CR>
 noremap <F5> <ESC>:call append(line(".")-1, "### ".strftime("%Y%m%d_%H%M%S"))<CR>
 noremap <F6> <ESC>:call append(line(".")-1, "### ".strftime("%Y-%m-%dT%H:%M:%S%z"))<CR>
 
-" 画面分割(縦分割)
-nnoremap ss :<C-u>sp<CR>
 " 画面分割(横分割)
-nnoremap sv :<C-u>vs<CR>
+nnoremap ss :<C-u>sp<CR><C-w>j
+" 画面分割(縦分割)
+nnoremap sv :<C-u>vnew<CR>
+nnoremap sV :<C-u>vs<CR>
 nnoremap sN :<C-u>bn<CR>
 nnoremap sP :<C-u>bp<CR>
 " タブで現在のファイルを開いて Unite 全部検索
