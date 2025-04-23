@@ -47,6 +47,7 @@ execute_curl() {
   local commands=()
   commands+=(curl)
   commands+=(-sSL)
+  commands+=("$url")
   commands+=(-X "$method")
   commands+=(-H "Content-Type: application/json")
   while read -r line; do
@@ -55,8 +56,7 @@ execute_curl() {
     eval "commands+=($line)"
   done < <(cat_req_opts | envsubst)
   commands+=(-d @-)
-  commands+=("$url")
-  info "==> Requesting ${commands[*]} .."
+  dump_request
   cat_req_data |
     tee >(info "==> Data: $(cat)") |
     jq -c |
@@ -85,6 +85,16 @@ cat_req_opts() {
     done |
     head -1 |
     xargs cat
+}
+
+dump_request() {
+  info "==> Requesting..${commands[*]}"
+  for arg in "${commands[@]}"; do
+    [[ $arg =~ ^curl ]] && printf "%s" "$arg" && continue
+    [[ $arg =~ ^(-d|@) ]] && echo "" && break # last arg
+    [[ $arg =~ ^- ]] && printf ' \\ \n  %s ' "$arg" && continue
+    printf '"%s"' "$arg"
+  done
 }
 
 update_dot_env() {
