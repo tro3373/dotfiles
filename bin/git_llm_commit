@@ -26,7 +26,7 @@ trap_exit() {
 
 cat_prompt() {
   git diff --minimal --cached |
-    prp gen-git-commit-message.md
+    prp -ne gen-git-commit-message.md
 }
 
 genai() {
@@ -34,7 +34,7 @@ genai() {
     tee >(cat >"$tmp_msg") |
     llm |
     tr -d '\n' |
-    grep -m 1 -Eo '\{\s*"(summary|details)".+}' |
+    grep -m 1 -Eo '\{\s*"(subject|body)".+}' |
     jq >"$tmp_msg_json"
 }
 
@@ -48,10 +48,10 @@ main() {
 
   genai
 
-  local summary details
-  summary=$(jq -r '.summary' "$tmp_msg_json")
-  details=$(jq -r '.details' "$tmp_msg_json")
+  local subject body
+  subject=$(jq -r '.subject' "$tmp_msg_json")
+  body=$(jq -r '.body' "$tmp_msg_json")
   # コミットメッセージを設定しつつエディタで開く
-  git commit --edit -m "feat: $summary" -m "$details"
+  git commit --edit -m "feat: $subject" -m "$body"
 }
 main "$@"
