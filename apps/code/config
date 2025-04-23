@@ -24,7 +24,26 @@ _link_bin_code_if_needed() {
   make_lnk_with_bkup "$app_dir/code" "$target"
 }
 
+_add_term_config() {
+  local target="$HOME/.works.zsh"
+  if grep -q 'TERM_PROGRAM == "vscode"' "$target"; then
+    log "==> $target already setupped"
+    return
+  fi
+  is_dry && return
+  local code_path=/bin/code
+  command -p -v code &>/dev/null && code_path=$(command -p -v code)
+  _cat_term_config >>"$target"
+}
+
+_cat_term_config() {
+  cat <<EOF
+[[ \$TERM_PROGRAM == "vscode" ]] && . "\$($code_path --locate-shell-integration-path zsh)"
+EOF
+}
+
 setting_common() {
+  _add_term_config
   _link_bin_code_if_needed
 }
 # setting_arch() { no_settings; }

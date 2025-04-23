@@ -367,6 +367,10 @@
     "git log",
     "git diff",
     "git show",
-    "go test"
+    "go test",
+    "git status",
+    "mkdir",
+    "git --no-pager diff --cached",
+    "git --no-pager status"
   ]
 }
