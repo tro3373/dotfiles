@@ -30,7 +30,25 @@
       "all": true,
       "suspicious": {
         "noConsole": "off",
-        "noConsoleLog": "off"
+        "noConsoleLog": "off",
+        "noReactSpecificProps": {
+          "level": "off",
+          "options": {
+            "allowedProps": [
+              "className"
+            ]
+          }
+        }
+      },
+      "correctness": {
+        "noUndeclaredVariables": {
+          "level": "error",
+          "options": {
+            "globals": [
+              "React"
+            ]
+          }
+        }
       },
       "nursery": {
         "useSortedClasses": "warn"
