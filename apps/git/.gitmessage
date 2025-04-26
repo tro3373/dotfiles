@@ -10,6 +10,8 @@
 #- chore (updating grunt tasks etc; no production code change)
 
 ## Example <scope> values:
+#- api
+#- frontend
 #- init
 #- runner
 #- watcher
@@ -26,7 +28,7 @@
 #<footer>
 #
 ## description
-#fix(middleware): ensure Range headers adhere more closely to RFC 2616
+#fix(middleware): Ensure range headers adhere more closely to RFC 2616
 #
 #Add one new dependency, use `range-parser` (Express dependency) to compute
 #range. It is more well-tested in the wild.
@@ -34,9 +36,9 @@
 #Fixes #2310
 #                         scope        commit title
 #
-#        commit type       /                /      
+#        commit type       /                /
 #                \        |                |
-#                 feat(ngInclude): add template url parameter to events
+#                 feat(ngInclude): Add template url parameter to events
 #
 #        body ->  The 'src` (i.e. the url of the template to load) is now provided to the
 #                 `$includeContentRequested`, `$includeContentLoaded` and `$includeContentError`
