@@ -10,7 +10,7 @@ find_cursor_bin() {
     find "$HOME"/tools/ -name "cursor-*.AppImage" | sort -r | head -1
     return
   fi
-  cursor_bin=/Applications/Cursor.app/Contents/Resources/app/bin
+  cursor_bin=/Applications/Cursor.app/Contents/Resources/app/bin/cursor
   if [[ -x $cursor_bin ]]; then
     echo "$cursor_bin"
     return
@@ -46,6 +46,11 @@ main() {
   cursor_bin=$(find_cursor_bin)
   if [[ $# -eq 0 ]]; then
     start_cursor "$(get_git_root_or_current_dir)"
+    return
+  fi
+
+  if [[ $1 =~ ^-.*$ ]]; then
+    "$cursor_bin" "$@"
     return
   fi
 
