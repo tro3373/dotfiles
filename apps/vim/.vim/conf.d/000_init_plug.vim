@@ -286,7 +286,7 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'udalov/kotlin-vim'                                  " kotlin
 
   Plug 'tyru/open-browser.vim'                              " Open browser
-  Plug 'rcmdnk/vim-markdown'                                " Markdown syntax
+  Plug 'preservim/vim-markdown'                             " Markdown syntax
   Plug 'mattn/vim-sqlfmt'                                   " SQL
 
   " Markdown Preview 関連

@@ -4,7 +4,7 @@ endif
 
 "=============================================
 " Markdown Syntax etc
-" 'plasticboy/vim-markdown'
+" 'preservim/vim-markdown'
 "=============================================
 " hide/no hide markdown controll word
 let g:vim_markdown_conceal = 1
