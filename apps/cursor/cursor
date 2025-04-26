@@ -6,11 +6,17 @@ find_cursor_bin() {
     echo "$cursor_bin"
     return
   fi
-  if os mac; then
-    echo "/Applications/Cursor.app/Contents/MacOS/Cursor"
+  if ! os mac; then
+    find "$HOME"/tools/ -name "cursor-*.AppImage" | sort -r | head -1
     return
   fi
-  find "$HOME"/tools/ -name "cursor-*.AppImage" | sort -r | head -1
+  cursor_bin=/Applications/Cursor.app/Contents/Resources/app/bin
+  if [[ -x $cursor_bin ]]; then
+    echo "$cursor_bin"
+    return
+  fi
+  echo "==> warn: $cursor_bin is not installed. Install from Cursor gui" 1>&2
+  echo "/Applications/Cursor.app/Contents/MacOS/Cursor"
 }
 
 is_process_already_exists() {
