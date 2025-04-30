@@ -348,37 +348,72 @@ function! SaveMemoJob() abort
 endfun
 command! SaveMemoJob call SaveMemoJob()
 
-function! GetContentTitle(prpfile) abort
+function! WriteToTemp() abort
   let tmpfile = tempname()
   execute 'write! ' . tmpfile
+  return tmpfile
+endfunction
+
+function! WriteSelectionToTemp() abort
+  let tmpfile = tempname()
+
+  " 選択範囲の取得
+  " 1. 現在の無名レジスタの内容を保存
+  let save_reg = @"
+  " 2. 選択範囲をヤンク
+  normal! gvy
+  " 3. ヤンクした内容を変数に格納
+  let selected_text = @"
+  " 4. 無名レジスタの内容を元に戻す
+  let @" = save_reg
+
+  " 一時ファイルへの書き込み
+  call writefile(split(selected_text, '\n'), tmpfile)
+
+  return tmpfile
+endfunction
+
+" MEMO: prpName は一意に決まること
+function! GenerateViaLLM(prpName, tmpfile) abort
   " システムコマンドへ渡す
   " MEMO: tmp内容が反映されないケースがるので、0.2秒待機
-  let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp -ne '..a:prpfile..' | llm'))
+  let title = Chomp(system('sleep 0.2 && cat '..a:tmpfile..' | prp -ne '..a:prpName..' | llm'))
   " 一時ファイルを削除
-  call delete(tmpfile)
+  call delete(a:tmpfile)
   return title
 endfun
 
 function! SaveKnowledge() abort
-  " let tmpfile = tempname()
-  " execute 'write! ' . tmpfile
-  " " システムコマンドへ渡す
-  " " MEMO: tmp内容が反映されないケースがるので、0.2秒待機
-  " let title = Chomp(system('sleep 0.2 && cat '..tmpfile..' | prp -ne gen-content-title.md | llm'))
-  " " 一時ファイルを削除
-  " call delete(tmpfile)
-  let title = GetContentTitle("gen-content-title-ja.md")
+  let tmpfile = WriteToTemp()
+  let title = GenerateViaLLM("gen-knowledge-filename-ja.md", tmpfile)
   call SaveMemoInner("~/.mo/knowledge", title, 0, 0)
 endfun
 command! SaveKnowledge call SaveKnowledge()
-" nnoremap sT :<C-u>tabnew<CR>:SaveKnowledge<CR>
 nnoremap sT :<C-u>SaveKnowledge<CR>
 
 function! SaveMd() abort
-  let title = GetContentTitle("gen-content-title-en.md")
+  let tmpfile = WriteToTemp()
+  let title = GenerateViaLLM("gen-content-title-en.md", tmpfile)
   call SaveMemoInner("~/.md/content/posts", title, 1, 1)
 endfun
 command! SaveMd call SaveMd()
+
+function! CorrectEnglish() abort
+  " 選択範囲を一時ファイルに保存
+  let tmpfile = WriteSelectionToTemp()
+  " LLMで修正
+  let content = GenerateViaLLM("correct-english.md", tmpfile)
+
+  " 選択範囲を修正された内容で置き換え
+  let save_reg = @"
+  let @" = content
+  normal! gvp
+  let @" = save_reg
+endfun
+" コマンドとして登録（範囲指定可能）
+command! -range CorrectEnglish call CorrectEnglish()
+" キーマッピング
+vnoremap <Leader>m :<C-u>call CorrectEnglish()<CR>
 
 " 全選択コピー
 function! CopyAll() abort
@@ -909,7 +944,7 @@ function! ToMdTable() range
 endfunction
 " https://www.xmisao.com/2014/03/19/how-to-define-range-specific-command-in-vim.html
 command! -range ToMdTable <line1>,<line2>call ToMdTable()
-vnoremap <silent> <leader>m :ToMdTable<cr>
+vnoremap <silent> <leader>md :ToMdTable<cr>
 
 " ALT+P で paste_img 外部コマンドを実行
 function! PasteImage() abort
@@ -1106,3 +1141,11 @@ command! -range Zen call ZenkakuHankakuRange('zen')
 command! -range Han call ZenkakuHankakuRange('han')
 command! -range ToZen call ZenkakuHankakuRange('zen')
 command! -range ToHan call ZenkakuHankakuRange('han')
+
+function! ShowTabs() abort
+  :set shiftwidth?
+  :set tabstop?
+  :set softtabstop?
+  :set expandtab?
+endfun
+command! ShowTabs call ShowTabs()
