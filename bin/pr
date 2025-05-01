@@ -13,10 +13,16 @@ warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
 
 end() {
-  rm -rf /tmp/pr
+  # rm -rf /tmp/pr
+  info "==> Done!"
 }
 
-find_target_branch() {
+find_target_branch_with_fetch() {
+  # Fetch the latest changes from the remote repository
+  info "==> Git fetching.."
+  git fetch origin
+
+  info "==> Finding target branch.."
   remote_branches=$(git ls-remote --heads origin)
   branches=(develop main master)
   for b in "${branches[@]}"; do
@@ -47,23 +53,16 @@ $(sed -e 's/^/- /' /tmp/pr/commit_list)
 EOF
 }
 
-main() {
-  local issue=$1
+check() {
   hass "${depends[@]}"
 
   if git branch --show-current | grep -q 'develop'; then
     error "==> You are on develop branch."
   fi
+}
 
-  # Fetch the latest changes from the remote repository
-  info "==> Git fetching.."
-  git fetch origin
-  info "==> Finding target branch.."
-  target_branch=$(find_target_branch)
-
+create_pr_parts() {
   mkdir -p /tmp/pr
-  # trap end 0 1 2 3 15
-
   info "==> Creating diff.."
   git diff "$target_branch"...HEAD >/tmp/pr/diff
   info "==> Creating commit_list.."
@@ -71,7 +70,7 @@ main() {
 
   if [[ ! -s /tmp/pr/diff ]]; then
     warn "No changes"
-    return
+    exit 0
   fi
 
   info "==> Creating messages.json.."
@@ -90,11 +89,30 @@ main() {
     cat_issue >>/tmp/pr/body
   fi
   cat_commit_list >>/tmp/pr/body
+}
 
+create_pr_with_push() {
   info "==> Pushing commits.."
   git push -u origin HEAD
   info "==> Creating PR!.."
   cat </tmp/pr/body | gh pr create --web --title "$(cat </tmp/pr/title)" --body-file -
-  info "==> Done!"
+}
+
+main() {
+  local issue=$1
+  check
+
+  trap end 0 1 2 3 15
+  target_branch=$(find_target_branch_with_fetch)
+
+  create_parts=1
+  if [[ $issue == "/tmp" ]]; then
+    create_parts=0
+  fi
+
+  if [[ $create_parts -eq 1 ]]; then
+    create_pr_parts
+  fi
+  create_pr_with_push
 }
 main "$@"
