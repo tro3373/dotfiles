@@ -23,14 +23,16 @@ is_inside_repo() {
 main() {
   ! is_inside_repo && echo "Not in repository." 1>&2 && exit 1
   if [[ -n $target ]]; then
-    cd $target
+    cd "$target" || exit
   fi
-  local modified=$(git status -s)
+  local modified
+  modified=$(git status -s)
   local stash=0
   # local stash_msg=""
   if [[ $modified != "" ]]; then
     # local shuld_stash=$(echo "$modified" | grep -v '??' | wc -l)
-    local shuld_stash=$(echo "$modified" | grep -c -v '??')
+    local shuld_stash
+    shuld_stash=$(echo "$modified" | grep -c -v '??')
     if [[ $shuld_stash -gt 0 ]]; then
       stash=1
       # stash_msg="(with_stash)"
@@ -55,7 +57,7 @@ main() {
     echo "$modified"
   fi
   if [[ -n $target ]]; then
-    cd - >/dev/null 2>&1
+    cd - >/dev/null 2>&1 || exit
   fi
 }
 main "$@"

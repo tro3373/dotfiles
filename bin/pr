@@ -1,0 +1,118 @@
+#!/usr/bin/env -S bash -e
+
+readonly depends=(gh curl fzf jq llm)
+
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+end() {
+  # rm -rf /tmp/pr
+  info "==> Done!"
+}
+
+find_target_branch_with_fetch() {
+  # Fetch the latest changes from the remote repository
+  info "==> Git fetching.."
+  git fetch origin
+
+  info "==> Finding target branch.."
+  remote_branches=$(git ls-remote --heads origin)
+  branches=(develop main master)
+  for b in "${branches[@]}"; do
+    if echo -e "$remote_branches" | grep -q "refs/heads/$b"; then
+      echo "origin/$b"
+      return
+    fi
+  done
+}
+
+cat_issue() {
+  cat <<EOF
+
+## 関連Issue
+
+- 関連Issue: $issue
+
+EOF
+}
+
+cat_commit_list() {
+  cat <<EOF
+
+## コミット一覧
+
+$(sed -e 's/^/- /' /tmp/pr/commit_list)
+
+EOF
+}
+
+check() {
+  hass "${depends[@]}"
+
+  if git branch --show-current | grep -q 'develop'; then
+    error "==> You are on develop branch."
+  fi
+}
+
+create_pr_parts() {
+  mkdir -p /tmp/pr
+  info "==> Creating diff.."
+  git diff "$target_branch"...HEAD -- ':!*/package-lock.json' >/tmp/pr/diff
+  info "==> Creating commit_list.."
+  git log --oneline "$target_branch"...HEAD >/tmp/pr/commit_list
+
+  if [[ ! -s /tmp/pr/diff ]]; then
+    warn "No changes"
+    exit 0
+  fi
+
+  info "==> Creating messages.json.."
+  cat </tmp/pr/diff | prp -ne gen-git-pr-message.md | llm >/tmp/pr/messages.json
+
+  info "==> Creating title/body.."
+  jq -r '.title' /tmp/pr/messages.json >/dev/null 2>&1 || {
+    # ```から始まる行を削除
+    sed -i '/^```/d' /tmp/pr/messages.json
+    # 空行を削除
+    sed -i '/^$/d' /tmp/pr/messages.json
+  }
+  jq -r '.title' /tmp/pr/messages.json >/tmp/pr/title
+  jq -r '.body' /tmp/pr/messages.json >/tmp/pr/body
+  if [[ -n $issue ]]; then
+    cat_issue >>/tmp/pr/body
+  fi
+  cat_commit_list >>/tmp/pr/body
+}
+
+create_pr_with_push() {
+  info "==> Pushing commits.."
+  git push -u origin HEAD
+  info "==> Creating PR!.."
+  cat </tmp/pr/body | gh pr create --web --title "$(cat </tmp/pr/title)" --body-file -
+}
+
+main() {
+  local issue=$1
+  check
+
+  trap end 0 1 2 3 15
+  target_branch=$(find_target_branch_with_fetch)
+
+  create_parts=1
+  if [[ $issue == "/tmp" ]]; then
+    create_parts=0
+  fi
+
+  if [[ $create_parts -eq 1 ]]; then
+    create_pr_parts
+  fi
+  create_pr_with_push
+}
+main "$@"

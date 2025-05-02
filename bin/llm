@@ -1,5 +1,6 @@
 #!/usr/bin/env -S bash -e
 
+readonly model=gemini-2.5-flash-preview-04-17
 readonly depends=(gemini-cli)
 has() { command -v "${1}" >&/dev/null; }
 hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
@@ -24,6 +25,6 @@ main() {
   if [[ $# -eq 0 && ! -p /dev/stdin ]]; then
     error "==> No input data."
   fi
-  fire "$@" | command gemini-cli prompt -
+  fire "$@" | command gemini-cli prompt --model $model -
 }
 main "$@"
