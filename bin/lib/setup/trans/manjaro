@@ -22,7 +22,7 @@ load_update_arg_apps() {
   # cargo order bug?
   # shellcheck disable=SC2034
   read -r -a args < <(
-    echo "$(default_apps) xclip snap fcitx5-mozc hackgen udev-gothic gnome-font-viewer code font wezterm"
+    echo "$(default_apps) xclip snap fcitx5-mozc hackgen udev-gothic gnome-font-viewer code font wezterm kdeconnect"
   )
 }
 
