@@ -41,7 +41,6 @@ get_content() {
 main() {
   initialize "$@"
   set -euo pipefail
-  content="$(get_content)" && export content
   local f
   f=$(
     fire |
@@ -50,6 +49,7 @@ main() {
         --select-1 --exit-0
   )
   [[ -z $f ]] && return 0
+  content="$(get_content)" && export content
   # trap 'rm -f "$dst"' EXIT
   cat <"$f" |
     envsubst | tee >(clip) >"$dst"

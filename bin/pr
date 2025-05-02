@@ -64,7 +64,7 @@ check() {
 create_pr_parts() {
   mkdir -p /tmp/pr
   info "==> Creating diff.."
-  git diff "$target_branch"...HEAD >/tmp/pr/diff
+  git diff "$target_branch"...HEAD -- ':!*/package-lock.json' >/tmp/pr/diff
   info "==> Creating commit_list.."
   git log --oneline "$target_branch"...HEAD >/tmp/pr/commit_list
 
