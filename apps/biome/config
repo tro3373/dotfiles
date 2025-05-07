@@ -6,7 +6,7 @@ install_common() {
   if [[ ! -e $current_dir/package.json ]]; then
     exe "(cd $current_dir && npm init)"
   fi
-  exe "(cd $current_dir && npm install --dev @biomejs/biome)"
+  exe "(cd $current_dir && npm install -D @biomejs/biome)"
 }
 setting_common() {
   config_json_name="biome.json"

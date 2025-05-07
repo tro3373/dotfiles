@@ -300,7 +300,21 @@
   },
   // Javascript
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    // "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascriptreact]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "[jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -309,12 +323,6 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[vue]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   // Go
@@ -360,6 +368,16 @@
   "print.folder.maxLines": 1200,
   "print.folder.maxFiles": 30,
   "print.folder.includeFileList": false,
+  "indentRainbow.indicatorStyle": "light", // ライン表示
+  "indentRainbow.lightIndicatorStyleLineWidth": 1.5, // ラインの太さ
+  "indentRainbow.colors": [
+    "rgba(128, 64, 64, 1)",
+    "rgba(128, 96, 32, 1)",
+    "rgba(128, 128, 32, 1)",
+    "rgba(32, 128, 32, 1)",
+    "rgba(32, 64, 128, 1)",
+    "rgba(128, 64, 128, 1)"
+  ],
   "roo-cline.allowedCommands": [
     "npm test",
     "npm install",

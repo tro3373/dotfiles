@@ -35,16 +35,19 @@ let g:ale_echo_msg_warning_str = 'W'
 let g:ale_echo_msg_format = '[ALE:%linter%] [%severity%] [%code]: %%s'
 " ローカルの設定ファイルを考慮する
 let g:ale_javascript_prettier_use_local_config = 1
+" let g:ale_javascript_biome_executable = 'npx biome'
+" let g:ale_typescript_biome_executable = './node_modules/.bin/biome'
+" let g:ale_javascript_biome_options = 'format --write'
 
 " Disable LSP
 let g:ale_disable_lsp = 0
 
 " Linter
 let g:ale_linters = {}
-let g:ale_linters['javascript'] = ['eslint', 'biome']
-let g:ale_linters['typescript'] = ['eslint', 'biome']
-let g:ale_linters['javascriptreact'] = ['eslint', 'biome']
-let g:ale_linters['typescriptreact'] = ['eslint', 'biome']
+let g:ale_linters['javascript'] = ['biome', 'eslint']
+let g:ale_linters['typescript'] = ['biome', 'eslint']
+let g:ale_linters['javascriptreact'] = ['biome', 'eslint']
+let g:ale_linters['typescriptreact'] = ['biome', 'eslint']
 let g:ale_linters['shell'] = ['shellcheck']
 let g:ale_linters['java'] = []
 " let g:ale_linters['python'] = ['black', 'flake8', 'mypy']
@@ -62,8 +65,8 @@ let g:ale_fixers = {}
 " let g:ale_fixers['*']          = ['trim_whitespace', 'remove_trailing_lines']
 let g:ale_fixers['(?!markdown)'] = ['trim_whitespace', 'remove_trailing_lines']
 " let g:ale_fixers['javascript'] = ['prettier-eslint', 'prettier', 'eslint']
-let g:ale_fixers['javascript'] = ['prettier', 'eslint', 'biome']
-let g:ale_fixers['typescript'] = ['prettier', 'eslint', 'biome']
+let g:ale_fixers['javascript'] = ['biome', 'prettier', 'eslint']
+let g:ale_fixers['typescript'] = ['biome', 'prettier', 'eslint']
 let g:ale_fixers['javascriptreact'] = ['prettier', 'eslint']
 let g:ale_fixers['typescriptreact'] = ['prettier', 'eslint']
 let g:ale_fixers['vue']        = ['prettier', 'eslint']

@@ -31,24 +31,11 @@
       "suspicious": {
         "noConsole": "off",
         "noConsoleLog": "off",
-        "noReactSpecificProps": {
-          "level": "off",
-          "options": {
-            "allowedProps": [
-              "className"
-            ]
-          }
-        }
+        "noReactSpecificProps": "off"
       },
       "correctness": {
-        "noUndeclaredVariables": {
-          "level": "error",
-          "options": {
-            "globals": [
-              "React"
-            ]
-          }
-        }
+        "noUndeclaredVariables": "error",
+        "noUnusedVariables": "off"
       },
       "nursery": {
         "useSortedClasses": "warn"
@@ -59,7 +46,17 @@
     "formatter": {
       "quoteStyle": "single",
       "semicolons": "always"
-    }
+    },
+    "globals": [
+      "React",
+      "GmailApp",
+      "SpreadsheetApp",
+      "PropertiesService",
+      "Session",
+      "Utilities",
+      "Logger",
+      "UrlFetchApp"
+    ]
   },
   "overrides": [
     {
