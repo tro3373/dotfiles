@@ -31,13 +31,6 @@ initialize() {
   done
 }
 add_args() { args+=("$@"); }
-get_content() {
-  if [[ -p /dev/stdin ]]; then
-    cat <&0
-    return
-  fi
-  xsel -bo
-}
 main() {
   initialize "$@"
   set -euo pipefail
@@ -49,10 +42,12 @@ main() {
         --select-1 --exit-0
   )
   [[ -z $f ]] && return 0
-  content="$(get_content)" && export content
-  # trap 'rm -f "$dst"' EXIT
-  cat <"$f" |
-    envsubst | tee >(clip) >"$dst"
+
+  cat <"$f" >"$dst"
+  if [[ -p /dev/stdin ]]; then
+    cat <&0 >>"$dst"
+  fi
+
   [[ $edit -ne 1 ]] && {
     cat "$dst"
     return 0

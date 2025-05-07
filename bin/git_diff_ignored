@@ -1,0 +1,6 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  git diff "$@" -- ":!*/package-lock.json" ":!*/.terraform.lock.hcl"
+}
+main "$@"

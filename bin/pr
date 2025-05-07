@@ -64,7 +64,7 @@ check() {
 create_pr_parts() {
   mkdir -p /tmp/pr
   info "==> Creating diff.."
-  git diff "$target_branch"...HEAD -- ':!*/package-lock.json' >/tmp/pr/diff
+  git_diff_ignored "$target_branch"...HEAD >/tmp/pr/diff
   info "==> Creating commit_list.."
   git log --oneline "$target_branch"...HEAD >/tmp/pr/commit_list
 
@@ -74,7 +74,10 @@ create_pr_parts() {
   fi
 
   info "==> Creating messages.json.."
-  cat </tmp/pr/diff | prp -ne gen-git-pr-message.md | llm >/tmp/pr/messages.json
+  cat </tmp/pr/diff |
+    # head -200 |
+    prp -ne gen-git-pr-message.md |
+    llm >/tmp/pr/messages.json
 
   info "==> Creating title/body.."
   jq -r '.title' /tmp/pr/messages.json >/dev/null 2>&1 || {

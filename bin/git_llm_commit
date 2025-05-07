@@ -25,7 +25,7 @@ trap_exit() {
 }
 
 cat_prompt() {
-  git diff --minimal --cached -- ':!*/package-lock.json' |
+  git_diff_ignored --minimal --cached |
     prp -ne gen-git-commit-message.md
 }
 
