@@ -10,7 +10,7 @@ install_common() {
 }
 setting_common() {
   config_json_name="biome.json"
-  if [[ ! -e $current_dir/$config_json_name ]]; then
+  if is_force || ! test -e "$current_dir"/$config_json_name; then
     # shellcheck disable=SC2154
     exe cp "$app_dir"/$config_json_name "$current_dir"/$config_json_name
   fi
