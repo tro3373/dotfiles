@@ -18,13 +18,21 @@ end() {
 }
 
 find_target_branch_with_fetch() {
+  branches=(develop)
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+  if [[ $current_branch =~ ^(main|master)$ ]]; then
+    error "==> Current branch is $current_branch. Please checkout to other branch."
+  fi
+  if [[ $current_branch == "develop" ]]; then
+    branches=(main master)
+  fi
+
   # Fetch the latest changes from the remote repository
   info "==> Git fetching.."
   git fetch origin
 
   info "==> Finding target branch.."
   remote_branches=$(git ls-remote --heads origin)
-  branches=(develop main master)
   for b in "${branches[@]}"; do
     if echo -e "$remote_branches" | grep -q "refs/heads/$b"; then
       echo "origin/$b"
@@ -55,10 +63,6 @@ EOF
 
 check() {
   hass "${depends[@]}"
-
-  if git branch --show-current | grep -q 'develop'; then
-    error "==> You are on develop branch."
-  fi
 }
 
 create_pr_parts() {
@@ -107,6 +111,10 @@ main() {
 
   trap end 0 1 2 3 15
   target_branch=$(find_target_branch_with_fetch)
+  if [[ -z $target_branch ]]; then
+    error "==> No target branch found."
+  fi
+  info "==> Target branch: $target_branch"
 
   create_parts=1
   if [[ $issue == "/tmp" ]]; then
