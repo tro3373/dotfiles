@@ -1,5 +1,7 @@
 {
   "files.hotExit": "onExit",
+  // "files.autoSave": "afterDelay",
+  // "files.autoSaveDelay": 1000,
   "window.restoreWindows": "all",
   "window.openFoldersInNewWindow": "on",
   "window.customMenuBarAltFocus": false,
@@ -22,7 +24,9 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit",
     "source.fixAll": "explicit",
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": "explicit",
+    "quickfix.biome": "always",
+    "source.organizeImports.biome": "always"
   },
   "eslint.workingDirectories": [{ "mode": "auto" }],
   // "eslint.autoFixOnSave": true,
@@ -298,6 +302,7 @@
     "editor.formatOnType": true,
     "editor.defaultFormatter": "josevseb.google-java-format-for-vs-code"
   },
+  "biome.lspBin": "node_modules/.bin/biome",
   // Javascript
   "[javascript]": {
     // "editor.defaultFormatter": "esbenp.prettier-vscode"
