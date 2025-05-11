@@ -35,7 +35,8 @@
       },
       "correctness": {
         "noUndeclaredVariables": "error",
-        "noUnusedVariables": "off"
+        "noUnusedVariables": "off",
+        "useImportExtensions": "off"
       },
       "nursery": {
         "useSortedClasses": "warn"
@@ -49,6 +50,7 @@
     },
     "globals": [
       "React",
+      "JSX",
       "GmailApp",
       "SpreadsheetApp",
       "PropertiesService",
