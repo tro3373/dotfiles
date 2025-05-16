@@ -16,6 +16,13 @@ let g:ale_lint_on_enter = 1
 let g:ale_fix_on_save = 1
 " 画面表示領域を常に表示
 let g:ale_sign_column_always = 1
+" " エラーリストウィンドウのサイズ
+" let g:ale_list_window_size = 20
+" ALEInfo ウィンドウのサイズ
+augroup ALEInfoResize
+  autocmd!
+  autocmd FileType ale-info resize 30
+augroup END
 " エラーリストを常に表示
 let g:ale_open_list = 1
 " エラーと警告がなくなっても開いたままにするか
@@ -33,11 +40,6 @@ let g:ale_echo_msg_error_str = 'E'
 let g:ale_echo_msg_warning_str = 'W'
 " let g:ale_echo_msg_format = '[%linter%] [%severity%] %code: %%s'
 let g:ale_echo_msg_format = '[ALE:%linter%] [%severity%] [%code]: %%s'
-" ローカルの設定ファイルを考慮する
-let g:ale_javascript_prettier_use_local_config = 1
-" let g:ale_javascript_biome_executable = 'npx biome'
-" let g:ale_typescript_biome_executable = './node_modules/.bin/biome'
-" let g:ale_javascript_biome_options = 'format --write'
 
 " Disable LSP
 let g:ale_disable_lsp = 0
@@ -106,6 +108,14 @@ let g:ale_fixers['sql']        = [ { buffer -> {'command': 'command -v sql-forma
 
 
 " 各言語毎のオプション設定
+" JavaScript/TypeScript
+" let g:ale_javascript_prettier_use_local_config = 1 " ローカルの設定ファイルを考慮する
+let g:ale_biome_fixer_apply_unsafe = 1 " --unsafe オプションを有効にする
+" let g:ale_biome_executable = 'npx biome'
+" let g:ale_biome_executable = './node_modules/.bin/biome'
+" let g:ale_biome_options = '--write --unsafe'
+
+
 " Go
 let g:ale_go_golangci_lint_package = 1 "When set to `1`, the whole Go package will be checked instead of only the current file.
 let g:ale_go_gofmt_options = '-s'
@@ -128,6 +138,7 @@ let g:ale_go_gometalinter_options = '--enable=gosimple --enable=staticcheck'
 " ST1020: - The documentation of an exported function should start with the function's name
 " エクスポートされた関数のドキュメンテーションコメントは、その関数の名前で始まるべき
 let g:ale_go_staticcheck_options = '-checks=all,-ST1000'
+
 " Shell
 " SC1090: Use of uninitialized value. This warning is triggered when a shell script uses a variable that is not set.
 " SC2059: Command not found. This warning is triggered when a shell script uses a command that is not executable.
@@ -145,6 +156,7 @@ let g:ale_sh_shellcheck_options = '-e SC1090,SC2059,SC2155,SC2164,SC2086,SC2162'
 " -ci, --case-indent       switch cases will be indented
 "  -s,  --simplify  simplify the code
 let g:ale_sh_shfmt_options = '-i 2 -ci -s' " shfmt see .editorconfig?(not working... so specify option)
+
 " Python
 " let g:ale_python_autopep8_options = '--ignore=E501'              " ignore long-lines for autopep8 fixer
 " W503: line break before binary operator
@@ -185,7 +197,7 @@ let g:ale_pattern_options = {
 \   'md$': {'ale_linters': []},
 \   '.*/node_modules/.*.ts$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/node_modules/.*.js$': {'ale_linters': [], 'ale_fixers': []},
-\   '.*src/components/ui/.*.tsx$': {'ale_linters': [], 'ale_fixers': []},
+\   '.*/components/ui/.*.tsx$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/site-packages/.*.py$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/site-packages/.*.pyi$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/go/pkg/mod/.*.go$': {'ale_linters': [], 'ale_fixers': []},

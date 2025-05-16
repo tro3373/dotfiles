@@ -24,7 +24,7 @@ let g:lightline = {
 \       ['lineinfo', 'syntastic'],
 \       ['percent'],
 \       ['filetype', 'fileencoding', 'fileformat'],
-\       ['lsp_errors', 'lsp_warnings', 'lsp_ok', 'linter_checking', 'linter_errors', 'linter_warnings', 'linter_infos', 'linter_ok'],
+\       ['lsp_errors', 'lsp_warnings', 'lsp_ok', 'linter_checking', 'linter_errors', 'linter_warnings', 'linter_infos', 'linter_ok', 'lsp_running'],
 \     ]
 \   },
 \   'component': {
@@ -43,6 +43,7 @@ let g:lightline = {
 \     'syntastic':    'SyntasticStatuslineFlag',
 \     'charcode':     'MyCharCode',
 \     'gitgutter':    'MyGitGutter',
+\     'lsp_running':  'MyLspRunning',
 \   },
 \   'component_expand': {
 \     'lsp_warnings':     'lightline_lsp#warnings',
@@ -161,6 +162,14 @@ function! MyGitGutter()
     endif
   endfor
   return join(ret, ' ')
+endfunction
+
+function! MyLspRunning()
+  if !exists(":LspSettingsStatus")
+    return ''
+  endif
+  let l:status = execute('LspSettingsStatus')
+  return (l:status =~# 'running') ? 'LSP:RUN' : 'LSP:OFF'
 endfunction
 
 " https://github.com/Lokaltog/vim-powerline/blob/develop/autoload/Powerline/Functions.vim

@@ -287,6 +287,7 @@ call plug#begin('$HOME/.vim/plugged')
 
   Plug 'tyru/open-browser.vim'                              " Open browser
   Plug 'preservim/vim-markdown'                             " Markdown syntax
+  Plug 'sqls-server/sqls.vim'                               " Plugin for sqls
   Plug 'mattn/vim-sqlfmt'                                   " SQL
 
   " Markdown Preview 関連
