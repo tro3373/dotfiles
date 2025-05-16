@@ -52,6 +52,6 @@ main() {
   subject=$(jq -r '.subject' "$tmp_msg_json")
   body=$(jq -r '.body' "$tmp_msg_json")
   # コミットメッセージを設定しつつエディタで開く
-  git commit --edit -m "feat: $subject" -m "$body"
+  git commit --edit -m "$subject" -m "$body"
 }
 main "$@"
