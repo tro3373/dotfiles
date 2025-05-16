@@ -35,27 +35,46 @@ closest_dirname() {
   dirname "$1"
 }
 
-get_git_root_or_current_dir() {
-  if [[ $# -ne 0 ]]; then
-    cd "$(closest_dirname "$1")"
+closest_root_dirname() {
+  # search_names=("package.json" "go.mod" ".git" ".hg" ".svn")
+  search_names=(".git")
+  start_dir=$(closest_dirname "$1")
+  dir="$start_dir"
+  for name in "${search_names[@]}"; do
+    if [[ -e "$dir/$name" ]]; then
+      echo "$dir"
+      return
+    fi
+    dir=$(dirname "$dir")
+  done
+}
+
+get_root_dir() {
+  if [[ $# -eq 0 ]]; then
+    git rev-parse --show-toplevel 2>/dev/null || pwd
+    return
   fi
-  git rev-parse --show-toplevel 2>/dev/null || pwd
+  cd "$(closest_root_dirname "$1")"
+  pwd
 }
 
 main() {
   cursor_bin=$(find_cursor_bin)
   if [[ $# -eq 0 ]]; then
-    start_cursor "$(get_git_root_or_current_dir)"
+    # if no arguments are passed, start cursor in the current directory or the git root
+    start_cursor "$(get_root_dir)"
     return
   fi
 
   if [[ $1 =~ ^-.*$ ]]; then
+    # if the first argument is an option, then call the cursor binary as is
     "$cursor_bin" "$@"
     return
   fi
 
   if ! is_process_already_exists "$cursor_bin"; then
-    start_cursor "$(get_git_root_or_current_dir "$1")"
+    # if cursor is not running, start it with the first argument
+    start_cursor "$(get_root_dir "$1")"
     sleep 0.5
   fi
   start_cursor "$@"

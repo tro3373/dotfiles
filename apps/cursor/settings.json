@@ -27,19 +27,24 @@
   "editor.fontLigatures": false,
   "editor.insertSpaces": true,
   "editor.wordSeparators": "`~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?、。　",
-  "editor.formatOnType": true, // 入力後の自動フォーマットは無効
-  "editor.formatOnSave": true, // Prettier を実行
-  "editor.formatOnSaveMode": "file",
+  "editor.formatOnType": false, // 入力後の自動フォーマットは無効
   "editor.formatOnPaste": false,
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
   "editor.renderWhitespace": "boundary",
   "editor.inlineSuggest.enabled": true,
   "editor.stickyScroll.enabled": true,
   "editor.codeActionsOnSave": {
+    // "explicit"	手動で保存したときだけアクションを実行（以前の true と同じ）
+    // "always"	手動・自動保存、ウィンドウやフォーカスの変更時にもアクションを実行
+    // "never"	保存時にアクションを実行しない（以前の false と同じ）
     "source.organizeImports": "explicit",
     "source.fixAll": "explicit",
-    "source.fixAll.eslint": "explicit",
+    // "source.fixAll.eslint": "explicit",
+    "source.fixAll.biome": "explicit",
     "quickfix.biome": "always",
     "source.organizeImports.biome": "always"
+    // "source.organizeImports.biome": "explicit"
   },
   "eslint.workingDirectories": [{ "mode": "auto" }],
   // "eslint.autoFixOnSave": true,
@@ -131,13 +136,13 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "[vue]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "[go]": {
     "go.lintTool": "golangci-lint",
