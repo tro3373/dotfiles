@@ -80,15 +80,15 @@ create_pr_parts() {
   info "==> Creating messages.json.."
   cat </tmp/pr/diff |
     # head -200 |
-    prp -ne gen-git-pr-message.md |
+    prp -ne gen-git-pr-message.md >/tmp/pr/prompt.md
+  cat </tmp/pr/prompt.md |
     llm >/tmp/pr/messages.json
 
   info "==> Creating title/body.."
   jq -r '.title' /tmp/pr/messages.json >/dev/null 2>&1 || {
-    # ```から始まる行を削除
-    sed -i '/^```/d' /tmp/pr/messages.json
-    # 空行を削除
-    sed -i '/^$/d' /tmp/pr/messages.json
+    cat </tmp/pr/messages.json |
+      sed -e '/^```/d' -e '/^$/d' >/tmp/pr/messages.json.bk
+    mv /tmp/pr/messages.json.bk /tmp/pr/messages.json
   }
   jq -r '.title' /tmp/pr/messages.json >/tmp/pr/title
   jq -r '.body' /tmp/pr/messages.json >/tmp/pr/body
