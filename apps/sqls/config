@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+install_common() {
+  go_install github.com/sqls-server/sqls@latest
+}
+
+setting_common() {
+  dst=${XDG_CONFIG_HOME:-~/.config}/sqls/config.yml
+  if [[ -e $dst ]]; then
+    log "==> Already sqls config file exists: $dst"
+    return
+  fi
+  dstd=$(dirname "$dst")
+  exe mkdir -p "$dstd"
+  # shellcheck disable=SC2154
+  exe cp "$app_dir/config.example.yaml" "$dst"
+  log "==> sqls config file exist in $dst!"
+}
