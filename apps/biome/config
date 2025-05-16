@@ -7,6 +7,7 @@ install_common() {
     exe "(cd $current_dir && npm init)"
   fi
   exe "(cd $current_dir && npm install -D @biomejs/biome)"
+  exe "(cd $current_dir && npx json -I -f package.json -e 'this.scripts[\"checkfix\"]=\"npx biome check --write --unsafe\"')"
 }
 setting_common() {
   config_json_name="biome.jsonc"

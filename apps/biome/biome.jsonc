@@ -8,12 +8,24 @@
   "files": {
     "ignoreUnknown": false,
     "ignore": [
-      "public"
+      "public",
+      "**/node_modules/**",
+      "**/.next/**",
+      "**/dist/**",
+      "**/out/**",
+      "**/build/**",
+      "**/coverage/**",
+      "**/package-lock.json",
+      "**/yarn.lock",
+      "**/pnpm-lock.yaml",
+      "**/obj/**",
+      "**/components/ui/**" // Ignore shadcn/ui components
+      // "**/lib/**"
     ]
   },
   "formatter": {
     "enabled": true,
-    "formatWithErrors": false,
+    "formatWithErrors": false, // エラー時にもフォーマットを実行するか
     "ignore": [],
     "attributePosition": "auto",
     "indentStyle": "space",
@@ -35,8 +47,12 @@
       },
       "correctness": {
         "noUndeclaredVariables": "error",
-        "noUnusedVariables": "off",
-        "useImportExtensions": "off"
+        "noUnusedVariables": "warn", // 未使用の変数を警告 => WARN
+        "noConstantCondition": "off", // 常に真偽値を返す条件式を警告 => OFF
+        "useImportExtensions": "off" // tsxモジュールインポート時に拡張子を強制 => OFF
+      },
+      "style": {
+        "noDefaultExport": "off" // デフォルトエクスポート禁止 => OFF
       },
       "nursery": {
         "useSortedClasses": "warn"
@@ -59,24 +75,5 @@
       "Logger",
       "UrlFetchApp"
     ]
-  },
-  "overrides": [
-    {
-      "include": [
-        "next.config.js",
-        "layout.tsx",
-        "page.tsx",
-        "loading.tsx",
-        "error.tsx",
-        "not-found.tsx"
-      ],
-      "linter": {
-        "rules": {
-          "style": {
-            "noDefaultExport": "off"
-          }
-        }
-      }
-    }
-  ]
+  }
 }
