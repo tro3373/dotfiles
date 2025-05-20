@@ -24,6 +24,9 @@ find_target_branch_with_fetch() {
     error "==> Current branch is $current_branch. Please checkout to other branch."
   fi
   if [[ $current_branch == "develop" ]]; then
+    warn "==> Current branch is $current_branch. Local changes will be pushed to $current_branch."
+    warn "==> Press Enter to continue..(Cancel: Ctrl+C)"
+    read -r _
     branches=(main master)
   fi
 
