@@ -16,3 +16,7 @@ vmap <Leader>n :'<,'>Translate<CR>
 " 選択部分を翻訳(Not work)
 " vmap <Leader>n y:Translate <C-r>"
 
+" カーソル下の単語を逆翻訳
+nmap <Leader>N :Translate! <C-R><C-W><CR>
+" 選択行を逆翻訳
+vmap <Leader>N :'<,'>Translate!<CR>
