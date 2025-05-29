@@ -24,6 +24,11 @@ is_process_already_exists() {
 }
 
 start_cursor() {
+  if [[ -e "$1/.git" ]]; then
+    local collect_knowledges="$HOME"/.collect_knowledges
+    test -e "$collect_knowledges" || touch "$collect_knowledges"
+    grep -q "$1" "$collect_knowledges" || echo "$1" >>"$collect_knowledges"
+  fi
   "$cursor_bin" "$@" >>/tmp/cursor.log 2>&1 &
 }
 
