@@ -174,3 +174,8 @@ alias	archhhh
 	ifeq ($(shell uname -m),arm64)
 		arch ?= arm
 	endif
+
+snippet	confirmmm
+alias	readdddd
+	echo "==> ${1} Press Enter to continue..(Cancel: Ctrl+C)"
+	read -r _
