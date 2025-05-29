@@ -73,7 +73,8 @@
       "Session",
       "Utilities",
       "Logger",
-      "UrlFetchApp"
+      "UrlFetchApp",
+      "chrome"
     ]
   }
 }
