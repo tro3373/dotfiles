@@ -117,7 +117,7 @@
     // "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
     "java.format.settings.google.extra": "--aosp" // For 4 instead of 2 spaces!
   },
-  "biome.lspBin": "node_modules/.bin/biome",
+  // "biome.lspBin": "node_modules/.bin/biome",
   "[javascript]": {
     // "editor.defaultFormatter": "esbenp.prettier-vscode"
     "editor.formatOnSave": true,
@@ -178,7 +178,7 @@
   "remote.downloadExtensionsLocally": true,
   "shellformat.flag": "",
   "hediet.vscode-drawio.resizeImages": null,
-  "hediet.vscode-drawio.theme": "sketch",
+  "hediet.vscode-drawio.theme": "kennedy",
   "indentRainbow.indicatorStyle": "light", // ライン表示
   "indentRainbow.lightIndicatorStyleLineWidth": 1.5, // ラインの太さ
   "indentRainbow.colors": [
@@ -400,5 +400,8 @@
       "after": ["y", "/", "<C-r>", "\"", "<CR>"],
       "commands": []
     }
-  ]
+  ],
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+  }
 }
