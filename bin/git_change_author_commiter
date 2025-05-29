@@ -2,7 +2,7 @@
 
 name="$1"
 mail="$2"
-has() { command -v ${1} >&/dev/null; }
+has() { command -v "${1}" >&/dev/null; }
 show_commit_graph() {
   local nopager=
   local opt=
@@ -21,8 +21,8 @@ get_commit_id() {
     else
       show_commit_graph 1 >&2
       echo >&2
-      echo $msg >&2
-      read ret
+      echo "$msg" >&2
+      read -r ret
     fi
     [[ -n $ret ]] && echo "$ret" && break
   done
@@ -30,12 +30,12 @@ get_commit_id() {
 inisialize() {
   while [[ $name == "" ]]; do
     printf "==> Input name to convert: "
-    read -e -i "$(git config user.name)" name
+    read -r -e -i "$(git config user.name)" name
     echo
   done
   while [[ $mail == "" ]]; do
     printf "==> Input mail to convert: "
-    read -e -i "$(git config user.email)" mail
+    read -r -e -i "$(git config user.email)" mail
     echo
   done
   opt=
@@ -45,7 +45,7 @@ inisialize() {
     echo "       all|a: change all auther commiter"
     echo "   specify|s: change auther commiter specify commit"
     echo
-    read batch_type
+    read -r batch_type
     case "$batch_type" in
       all | a) opt=HEAD && return ;;
       specify | s) break ;;
@@ -64,10 +64,10 @@ main() {
   echo "   opt: $opt"
   echo "==> Are you ready? type any key..."
   echo
-  read
+  read -r _
   git filter-branch -f --env-filter \
     "GIT_AUTHOR_NAME='$name'; GIT_AUTHOR_EMAIL='$mail'; GIT_COMMITTER_NAME='$name'; GIT_COMMITTER_EMAIL='$mail';" \
-    $opt
+    "$opt"
   # git commit --amend --author="$name <$mail>"
 }
 main
