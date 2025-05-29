@@ -1,0 +1,76 @@
+#!/usr/bin/env -S bash -e
+
+readonly depends=(git)
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+ln_if_not_exists() {
+  local src="$1"
+  local dst="$2"
+  if [[ -e $dst ]]; then
+    warn "==> $dst already exists, skipping."
+    return
+  fi
+  ln -s "$src" "$dst"
+  info "==> Created symlink: $src -> $dst"
+}
+
+fire_targets() {
+  cat <<'EOF'
+.cursorignore
+.cursorindexingignore
+.roo
+.rooignore
+EOF
+}
+
+fire_ignore_targets() {
+  cat <<'EOF'
+.cursor
+.clineignore
+.clinerules
+.specstory
+EOF
+}
+
+setup_ignore() {
+  local target=.git/info/exclude
+  {
+    fire_targets
+    fire_ignore_targets
+  } |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      [[ -e $target ]] && grep -q -E "^$line$" "$target" && continue
+      echo "$line" >>"$target"
+    done
+}
+
+main() {
+  hass "${depends[@]}"
+  test -e .git || {
+    error "==> This script must be run in a git repository."
+  }
+  mkdir -p .cursor
+  ln -s ~/.mo/.cursor/rules .cursor/rules || {
+    error "==> Failed to create symlink for .cursor/rules."
+  }
+  fire_targets |
+    while read -r line; do
+      [[ -z $line ]] && continue
+      [[ $line =~ ^#.* ]] && continue
+      ln_if_not_exists ~/.mo/"$line" "$line"
+    done
+  mkdir -p .git/info
+  setup_ignore
+  info "==> Symlinks created in $(pwd), And .git/info/exclude updated."
+}
+main "$@"
