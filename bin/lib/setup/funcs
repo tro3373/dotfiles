@@ -22,7 +22,7 @@ readonly _core_apps_additional=(
   # apps for yaml
   yamlfmt
   # apps for terraform
-  tfsec
+  tfsec tflint
   # apps for docker
   hadolint dockerfmt
 )

@@ -2,6 +2,8 @@
 
 show_usage() {
   cat <<'EOF'
+# Install plugin
+tflint --init
 # Execute lint
 tflint
 # Enable lint target for 'modules' directory
@@ -62,6 +64,7 @@ setting_common() {
     # shellcheck disable=SC2154
     exe ln -s "$app_dir"/.tflint.hcl "$current_dir"/.tflint.hcl
   fi
+  exe tflint --init
   show_usage
 }
 # setting_wsl() { no_settings; }
