@@ -1,0 +1,28 @@
+#!/usr/bin/env -S bash -e
+
+command_name=$(basename "$0") && readonly command_name
+conf="$HOME/.$command_name"
+
+readonly depends=(make node)
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+main() {
+  hass "${depends[@]}"
+  [[ ! -e $conf ]] && {
+    error "==> No configuration file found at $conf. Please create it with the necessary settings."
+  }
+  # shellcheck disable=SC1090
+  . "$conf"
+  # shellcheck disable=SC2154
+  cd "$target_dir" || error "==> Cannot change to target directory $target_dir."
+  make
+}
+main "$@"
