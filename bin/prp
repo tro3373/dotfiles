@@ -2,6 +2,7 @@
 
 command_name=$(basename "$0") && readonly command_name
 dst=/tmp/"$command_name".tmp.md && readonly dst
+pre_message=
 edit=1
 
 fire() {
@@ -15,6 +16,7 @@ Usage: $command_name [OPTION] [fuzzy query for filter prompts]
 Options:
   -h, --help  Display this help and exit
   -ne         No Edit. Cat only
+  -pm         Set pre-message for the prompt
 
 EOF
 }
@@ -25,6 +27,7 @@ initialize() {
     case "$1" in
       -h | --help) usage && exit 0 ;;
       -ne) edit=0 ;;
+      -pm) shift && pre_message="$1" ;;
       *) add_args "$1" ;;
     esac
     shift
@@ -43,7 +46,10 @@ main() {
   )
   [[ -z $f ]] && return 0
 
-  cat <"$f" >"$dst"
+  {
+    [[ -n $pre_message ]] && echo "$pre_message"
+    cat <"$f"
+  } >"$dst"
   if [[ -p /dev/stdin ]]; then
     cat <&0 >>"$dst"
   fi

@@ -76,6 +76,7 @@ bind refs    C      !git commit
 bind main    C      !git commit
 bind status  C      !git commit
 bind status  V      !git llmcm
+bind status  <Esc>V !git llmcmjp
 
 
 # S で stash save

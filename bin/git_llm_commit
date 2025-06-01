@@ -25,8 +25,11 @@ trap_exit() {
 }
 
 cat_prompt() {
+  llm_lang=英語
+  [[ $mode == ja ]] && llm_lang=日本語
+  export llm_lang
   git_diff_ignored --minimal --cached |
-    prp -ne gen-git-commit-message.md
+    prp -ne -pm "以下内容に従って、$llm_langで" gen-git-commit-message.md
 }
 
 genai() {
@@ -39,6 +42,9 @@ genai() {
 }
 
 main() {
+  mode=en
+  [[ $1 == --ja ]] && mode=ja
+  [[ $1 == --help ]] && echo "Usage: $command_name [--ja]" && exit 0
   hass "${depends[@]}"
   set -eu
   trap trap_error ERR
