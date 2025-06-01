@@ -8,3 +8,8 @@ install_common() {
 install_mac() {
   exe brew install --cask claude
 }
+
+setting_common() {
+  log "==> claude"
+  log "===> /init"
+}
