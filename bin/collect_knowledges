@@ -10,17 +10,16 @@ hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; d
 # hass "${depends[@]}"
 _ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
 # shellcheck disable=SC2145
-_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S"): $command_name: ${@:2}" | _ink "$1"; }
 log() { _log white "$*"; }
 info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
 
-# TODO Roo
-# find "$HOME"/.config/Cursor/User/globalStorage/rooveterinaryinc.roo-cline/tasks/*/api_conversation_history.json |
-#   xargs cp -t "$dst_dir" 2>/dev/null || :
 main() {
   [[ ! -e $conf_path ]] && error "==> No config file found at $conf_path."
+
+  # Cursor history to Markdown
   cat <"$conf_path" |
     while read -r src_dir; do
       [[ -z $src_dir ]] && continue
@@ -28,11 +27,16 @@ main() {
       [[ $src_dir =~ ^#.* ]] && continue
       find "$src_dir/" -maxdepth 1 -mindepth 1 -type f -name '2*.md' |
         while read -r src_file; do
-          yyyy=$(basename "$src_file" | cut -c 1-4)
+          name=$(basename "$src_file")
+          yyyy=$(echo "$name" | cut -c 1-4)
           [[ -z $yyyy ]] && continue
           [[ ! -d "$dst_dir/$yyyy" ]] && mkdir -p "$dst_dir/$yyyy"
+          info "===> Deploying $dst_dir/$yyyy/$name.."
           cp "$src_file" "$dst_dir/$yyyy"
         done
     done
+
+  # Roo code history to Markdown
+  roohis2md
 }
 main "$@"
