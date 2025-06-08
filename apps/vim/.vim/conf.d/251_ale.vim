@@ -190,8 +190,8 @@ let g:ale_python_mypy_options = '--ignore-missing-imports --follow-imports=skip'
 " let g:ale_fix_on_save_ignore = ['vue']
 "
 " Dockerfile
-" DL3018: Pin versions in apt-get install.
-let g:ale_dockerfile_hadolint_options = '--ignore DL3018'
+" DL3008: Pin versions in apt-get install.
+let g:ale_dockerfile_hadolint_options = '--ignore DL3008'
 
 
 " Disable for minified code and enable whitespace trimming

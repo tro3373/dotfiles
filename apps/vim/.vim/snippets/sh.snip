@@ -218,7 +218,7 @@ snippet	logcolorrr
 	# hass "${depends[@]}"
 	_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
 	# shellcheck disable=SC2145
-	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "\$1"; }
+	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink "$1"; }
 	log() { _log white "$*"; }
 	info() { _log cyan "$*"; }
 	warn() { _log yellow "$*"; }
@@ -433,7 +433,7 @@ snippet	initializzzz
 	hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
 	_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
 	# shellcheck disable=SC2145
-	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "\$1"; }
+	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink "$1"; }
 	log() { _log white "$*"; }
 	info() { _log cyan "$*"; }
 	warn() { _log yellow "$*"; }
@@ -616,12 +616,23 @@ snippet to_jsttt
 		TZ=JST date -d "$* GMT" "+%Y/%m/%d %H:%M"
 	}
 
-snippet fzff
-	fzf -m -q "$query" \
-	--preview 'head -100 {}' \
-	--select-1 \
-	--exit-0 \
-	--bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
+snippet fzfff
+	# fzf:
+	# --exit-0: exit with status 0 if no match found
+	# --select-1: select the first match if only one match found
+	# --multi: allow multiple selections
+	# --bind: bind keys to actions
+	# --preview: show a preview of the selected file
+	# query_opt=
+	# [[ $# -gt 0 ]] && {
+	# 	query_opt="--query ${*}"
+	# }
+	fzf $query_opt \
+		--exit-0 \
+		--select-1 \
+		--multi \
+		--bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' \
+		--preview 'head -100 {} && bat --color=always --style=header,grid --line-range :500 {}'
 
 snippet find_result_to_array
 	array=()

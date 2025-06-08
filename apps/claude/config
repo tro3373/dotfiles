@@ -12,4 +12,8 @@ install_mac() {
 setting_common() {
   log "==> claude"
   log "===> /init"
+  local src_settings="$HOME/.mo/.claude/settings.json"
+  if [[ -e $src_settings ]]; then
+    exe ln -s "$src_settings" "$HOME/.claude/settings.json"
+  fi
 }

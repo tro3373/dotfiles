@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+install_common() {
+  go_install golang.org/x/vuln/cmd/govulncheck@latest
+}

@@ -216,7 +216,12 @@
     "git --no-pager status",
     "cd",
     "shellcheck",
-    "shfmt"
+    "shfmt",
+    "notify",
+    "find",
+    "go build",
+    "go mod tidy",
+    "find docs/tasks/ -maxdepth 1 -mindepth 1 -type f -name '*.md' | fzf --select-1 --exit-0"
   ],
   "vim.useSystemClipboard": true,
   "vim.cmdLineInitialColon": true,
@@ -405,5 +410,6 @@
   ],
   "[dockerfile]": {
     "editor.defaultFormatter": "ms-azuretools.vscode-docker"
-  }
+  },
+  "cursor.composer.shouldChimeAfterChatFinishes": true
 }

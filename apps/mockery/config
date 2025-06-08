@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+install_common() {
+  tag=$(gh release view --repo vektra/mockery --json tagName -q .tagName)
+  go_install github.com/vektra/mockery/v3@"$tag"
+}

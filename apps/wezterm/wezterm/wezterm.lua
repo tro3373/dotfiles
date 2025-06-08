@@ -29,6 +29,7 @@ config.color_scheme = "Railscasts (base16)"
 
 -- フォント
 config.font = wezterm.font("Osaka-Mono", { weight = "Bold", italic = false })
+-- config.font = wezterm.font("Osaka-Mono", { weight = "Regular", italic = false })
 -- フォントサイズ
 config.font_size = mac and 18.0 or 15.0
 -- 背景の非透過率（1なら完全に透過させない）
