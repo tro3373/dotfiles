@@ -1,9 +1,30 @@
 #!/bin/bash
 
-summary=${1:-"Notify"}
-body=${2:-"done."}
+notify_mac() {
+  # Notify system
+  osascript -e "display notification '$body' with title '$title'"
+  # Sound
+  afplay /System/Library/Sounds/Funk.aiff
+}
+notify_linux() {
+  # Notify system
+  notify-send -u normal -i /usr/share/icons/application-default-icon.png "$title" "$body"
+  # Sound
+  sound=complete.oga # message-new-instant.oga dialog-warning.oga dialog-information.oga
+  paplay /usr/share/sounds/freedesktop/stereo/$sound
+}
+notify_win() {
+  powershell.exe -ExecutionPolicy RemoteSigned -Command "New-BurntToastNotification -Text '$title', '$body'"
+}
 
 main() {
-  notify-send -i /usr/share/icons/application-default-icon.png "$summary" "$body"
+  title=$1
+  # shellcheck disable=SC2124
+  body="${@:2}"
+  [[ -z $title ]] && title="Notify"
+  [[ -z $body ]] && body="No message provided"
+  os mac && notify_mac && return
+  os win && notify_win && return
+  notify_linux
 }
-main
+main "$@"

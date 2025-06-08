@@ -54,6 +54,19 @@ setup_ignore() {
     done
 }
 
+setup_claude() {
+  if [[ ! -e ~/.claude/settings.json ]]; then
+    ln -s ~/.mo/.claude/settings.json ~/.claude/settings.json || {
+      error "==> Failed to create symlink for ~/.claude/settings.json."
+    }
+  fi
+  if [[ ! -e ~/.claude/CLAUDE.md ]]; then
+    ln -s ~/.mo/.claude/CLAUDE.md ~/.claude/CLAUDE.md || {
+      error "==> Failed to create symlink for ~/.claude/CLAUDE.md."
+    }
+  fi
+}
+
 main() {
   hass "${depends[@]}"
   test -e .git || {
@@ -71,6 +84,7 @@ main() {
     done
   mkdir -p .git/info
   setup_ignore
+  setup_claude
   info "==> Symlinks created in $(pwd), And .git/info/exclude updated."
 }
 main "$@"

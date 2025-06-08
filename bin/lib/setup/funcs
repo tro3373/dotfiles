@@ -14,7 +14,7 @@ readonly _core_apps_additional=(
   # apps for shell
   shellcheck shfmt
   # apps for go
-  goimports gosec staticcheck golangci-lint
+  gup goimports gosec staticcheck golangci-lint govulncheck
   # apps for py
   ruff uv
   # apps for lua
@@ -406,6 +406,7 @@ github_latest_release_tag() {
     sed -e "s,/$_repo/releases/tag/,,g"
 }
 
+# TODO: gh release download -R suzuki-shunsuke/tfcmt v4.14.4 -p tfcmt_linux_amd64.tar.gz
 _github() {
   local dst="$1"
   local url="$2"

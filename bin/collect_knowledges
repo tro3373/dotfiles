@@ -19,6 +19,12 @@ error() { _log red "$*" && exit 1; }
 main() {
   [[ ! -e $conf_path ]] && error "==> No config file found at $conf_path."
 
+  # Perplexity history to Markdown
+  pup
+
+  # Roo code history to Markdown
+  roohis2md
+
   # Cursor history to Markdown
   cat <"$conf_path" |
     while read -r src_dir; do
@@ -31,12 +37,11 @@ main() {
           yyyy=$(echo "$name" | cut -c 1-4)
           [[ -z $yyyy ]] && continue
           [[ ! -d "$dst_dir/$yyyy" ]] && mkdir -p "$dst_dir/$yyyy"
-          info "===> Deploying $dst_dir/$yyyy/$name.."
+          dst="$dst_dir/$yyyy/$name"
+          [[ -e $dst ]] && continue
+          info "===> Deploying $dst.."
           cp "$src_file" "$dst_dir/$yyyy"
         done
     done
-
-  # Roo code history to Markdown
-  roohis2md
 }
 main "$@"

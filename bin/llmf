@@ -1,0 +1,20 @@
+#!/usr/bin/env -S bash -e
+
+filter() {
+  query_opt=
+  [[ $# -gt 0 ]] && {
+    query_opt="--query ${*}"
+  }
+  # shellcheck disable=SC2086
+  cat - |
+    fzf $query_opt \
+      --exit-0 \
+      --select-1 \
+      --multi \
+      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' \
+      --preview 'head -100 {} && bat --color=always --style=header,grid --line-range :500 {}'
+}
+main() {
+  ff | filter "$@" | sed -e 's,^,@,g' | tee >(clip)
+}
+main "$@"

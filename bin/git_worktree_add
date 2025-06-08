@@ -1,0 +1,104 @@
+#!/usr/bin/env -S bash -e
+
+command_name=$(basename "$0") && readonly command_name
+current_dir=$(pwd) && readonly current_dir
+readonly depends=(git fzf)
+mode=add
+branch=
+args=()
+usage() {
+  cat <<EOF
+
+Add a new git worktree for the specified branch(or Remove it).
+
+  Usage:
+      $command_name [option] <branch_name>
+    Options
+      -h|--help : Show this usage
+      -r        : Remove the worktree instead of adding it
+
+EOF
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -r) mode=remove ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+}
+check() {
+  hass "${depends[@]}"
+
+  if [[ ! -d .git ]]; then
+    error "==> Not a git repository or main git repository. Please run this command in a git repository."
+  fi
+
+  branch="${args[*]}"
+  if [[ $mode == "add" && -z $branch ]]; then
+    cat <<EOF | error
+==> Specify a branch name to add a worktree for.
+==> Exiting branch is..
+
+$(git branch -vv)
+
+EOF
+  fi
+}
+add_args() { args+=("$@"); }
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+add_worktree() {
+  # dirname + brach name(replace slash to hiphen)
+  dst_dir="$(basename "$(pwd)")-${branch//\//-}"
+  info "==> Adding worktree for branch '$branch' at '../$dst_dir'."
+  git worktree add -b "$branch" "../$dst_dir" || {
+    error "Failed to add worktree for branch '$branch'."
+  }
+  info "==> Added worktree for branch '$branch' at '../$dst_dir'."
+}
+
+remove_worktree() {
+  if [[ -z $branch ]]; then
+    removal_list=$(git worktree list | grep -v "^$current_dir " || :)
+    if [[ -z $removal_list ]]; then
+      error "No worktrees exist to remove."
+    fi
+    warn "==> Select a branch to remove worktree for."
+    branch=$(
+      echo -e "$removal_list" |
+        fzf --height=20% --reverse --no-multi --no-color --prompt="Select branch to remove worktree for: " |
+        awk '{print $1}'
+    )
+    if [[ -z $branch ]]; then
+      error "No branch selected. Exiting."
+    fi
+  fi
+  info "==> Removing worktree for branch '$branch'."
+  git worktree remove "$branch"
+  info "==> Worktree for branch '$branch' removed. Current worktrees:"
+  git worktree list
+}
+
+main() {
+  initialize "$@"
+
+  if [[ $mode == "remove" ]]; then
+    remove_worktree
+    return
+  fi
+  add_worktree
+}
+main "$@"
