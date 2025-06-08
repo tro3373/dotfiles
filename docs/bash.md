@@ -1,6 +1,6 @@
 # Sample .bashrc color PS1
 
-```
+```bash
 col() {
   red="1;31m"
   blue="1;34m"
@@ -22,13 +22,13 @@ PS1="[\t \u@${open}$(col)\h${close}@AWS \W]\$ "
 
 # Parameter Expansion
 
-```
+```bash
 var=HeyThere
 echo ${var,,}
 heythere
 ```
 
-```
+```bash
 ${var^}     #Heythere
 ${var^^}    #HEYTHERE
 ${var,}     #heyThere
@@ -40,7 +40,7 @@ ${var,,}    #heythere
 
 ## Priority of process
 
-```
+```bash
 # プロセス優先度最低、ディスクI/O優先度最低
 ionice -c 2 -n 7 nice -n 19 <command>
 ```
@@ -57,7 +57,7 @@ ionice -c 2 -n 7 nice -n 19 <command>
 
 ## pipe vim
 
-```
+```bash
 # vimで編集後、 stty sane しないと表示が崩れる
 find . -name '*.java' -type f |xargs vim
 
@@ -75,7 +75,7 @@ vim $@ </dev/tty
 
 ## test コマンド
 
-```
+```bash
 test コマンドのオプションの意味
 -p	名前付きパイプであれば真
 -t	端末にてオープンされていれば真
@@ -83,7 +83,7 @@ test コマンドのオプションの意味
 
 ## プロセス置換
 
-```
+```bash
 # 実行結果をdiffする
 diff <(cat file1) <(cat file1 |grep hogehoge)
 # command1の結果をcommand2とcommand3に渡す
@@ -98,7 +98,7 @@ command 2> >(awk '{print "[ERROR]", $0}')
 
 ## 標準入力
 
-```
+```bash
 diff <(cat file1) <(cat file1 |grep hogehoge)
 
 # ファイルの内容を変数へ格納する
@@ -132,7 +132,7 @@ $* ==> 引数変数$1、$2、$3...をスペースで区切ってすべて表示(
 $@ ==> IFSに影響しない$*
 ${#args[@]} ==> 配列の数
 
-```sh
+```bash
 ## "@", "*" 違いサンプル
 asterisk() { for i in "$*"; do echo $i done }
 asterisk 123 abc
@@ -206,7 +206,7 @@ command1 || command2 ==> コマンド１が正常終了でなければコマン�
 command1 |& command2 ==> コマンド１の標準出力と標準エラー出力の両方をコマンド２へパイプ
     - [bash - How can I pipe stderr, and not stdout? - Stack Overflow](https://stackoverflow.com/questions/2342826/how-can-i-pipe-stderr-and-not-stdout)
 
-```sh
+```bash
 # ファイル名を取得
 basename '/a/b/c.d.e'
 # c.d.e
@@ -220,6 +220,7 @@ dirname '/a/b/c.d.e'
 # スクリプトファイルのディレクトリを取得
 BASEDIR=$(cd $(/usr/bin/dirname $0); pwd)
 ```
+
 # source されるスクリプトを考慮した ファイルの存在するディレクトリ
 app_dir="$(cd -- "$(dirname -- "${BASH_SOURCE}}")"; pwd)"
 
@@ -237,7 +238,8 @@ ${変数名%パターン} → 後方一致でのマッチ部分削除(最短マ�
 ${変数名%%パターン} → 後方一致でのマッチ部分削除(最長マッチ)
 ${変数名/置換前文字列/置換後文字列} → 文字列置換(最初にマッチしたもののみ)
 ${変数名//置換前文字列/置換後文字列} → 文字列置換(マッチしたものすべて)
-```
+
+```bash
 var="/my/path/dir/test.dat"
 echo ${var#*/}
 ==> my/path/dir/test.dat
@@ -251,8 +253,10 @@ echo ${var%%.*}
 ==> /my/path/dir/test
 
 var="abcdef abcdef xyz"
+# Replace First Only
 echo ${var/abc/XXX}
 ==> XXXdef abcdef xyz
+# Replace ALL
 echo ${var//abc/XXX}
 ==> XXXdef XXXdef xyz
 
@@ -267,7 +271,8 @@ echo ${STRING/%?/}
 ```
 
 ## ブレース展開
-```
+
+```bash
 # backup 作成
 cp /path/to/target/file/hogehoge{,.bk}
 # 展開処理
@@ -284,7 +289,7 @@ exec &>fileとすると以降のコマンド実行結果は全てfileに書か�
 
 ### 任意のファイルディスクリプタを開く。(出力)
 
-```sh
+```bash
 exec 3>file         # 3というfileへの出力用のディスクリプタ(3以外でもよい)を開く
 echo "hoge" >&3
 exec 3>&-           # ファイルディスクリプタを閉じる
@@ -292,7 +297,7 @@ exec 3>&-           # ファイルディスクリプタを閉じる
 
 ### 任意のファイルディスクリプタを開く。(入出力)
 
-```sh
+```bash
 echo "hoge" > file
 echo "fuga" >> file
 echo "piyo" >> file
@@ -307,7 +312,7 @@ cat file
 # puyo
 # piyo
 ```
-```sh
+```bash
 # 同義
 echo 'hoge' >hoge.txt
 >hoge.txt echo 'hoge'
@@ -331,7 +336,7 @@ HISTFILESIZE=0 && exit
 
 
 ## EXITをフックする
-```sh
+```bash
 #!/bin/bash
 
 # 一時ファイルを格納するディレクトリを作成
@@ -347,10 +352,11 @@ trap finally EXIT
 echo 'start' > $tmpfile/file1
 cat $tmpfile/file1
 ```
+
 $$
 
 ## test -n
-```
+```bash
 var=
 test -n $var && echo ng
 ng      <<<<<<<<<<<<<<<< ATTENTION!!
@@ -372,5 +378,4 @@ test -z $var || echo ok
 ok
 test -z "$var" || echo ok
 ok
-
 ```
