@@ -10,11 +10,11 @@ endif
 "       \ 'svn': 0,
 "       \ 'cvs': 0,
 "       \ '.': 0}
-let g:copilot_filetypes = {
-  \ 'markdown': 0,
-  \ 'gitcommit': 0,
-  \ 'gitrebase': 0,
-  \ 'hgcommit': 0,
-  \ 'svn': 0,
-  \ 'cvs': 0,
-  \ '.': 0}
+" let g:copilot_filetypes = {
+"   \ 'markdown': 0,
+"   \ 'gitcommit': 0,
+"   \ 'gitrebase': 0,
+"   \ 'hgcommit': 0,
+"   \ 'svn': 0,
+"   \ 'cvs': 0,
+"   \ '.': 0}
