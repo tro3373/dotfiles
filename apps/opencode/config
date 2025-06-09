@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+install_common() {
+  go_install github.com/opencode-ai/opencode@latest
+}
+
+setting_common() {
+  make_link_dot2home
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir"/opencode ~/.config/opencode
+}
