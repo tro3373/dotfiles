@@ -488,6 +488,7 @@ go_install() {
     return
   fi
   exe go install "$*"
+  exe asdf reshim go
 }
 
 gsettings_if_needed() {
