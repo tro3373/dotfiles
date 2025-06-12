@@ -20,21 +20,25 @@ fire() {
 }
 
 _llm() {
-  # mode=gemini-cli
+  mode=gemini-cli
   mode=tgpt
   # mode=claude
   cat - |
     if [[ $mode == "tgpt" ]]; then
-      # [aandrew-me/tgpt: AI Chatbots in terminal without needing API keys](https://github.com/aandrew-me/tgpt?tab=readme-ov-file)
-      # Available providers to use: deepseek, gemini, groq, isou, koboldai, ollama, openai, pollinations and phind(default)
-      provider=groq
-      # [Supported Models - GroqDocs](https://console.groq.com/docs/models)
-      model=gemma2-9b-it
-      command tgpt --provider $provider --model $model --key "$GROQ_API_KEY" "$(cat -)"
+      # ## aandrew-me/tgpt: AI Chatbots in terminal without needing API keys
+      # - https://github.com/aandrew-me/tgpt?tab=readme-ov-file
+      # ### Provider
+      # - deepseek, gemini, groq, isou, koboldai, ollama, openai, pollinations and phind(default)
+      # ### Provider Groq
+      # - Supported Models - GroqDocs
+      #   - https://console.groq.com/docs/models
+      # provider=groq model=gemma2-9b-it API_KEY=$GROQ_API_KEY
+      provider=gemini model=gemini-2.5-flash-preview-05-20 API_KEY=$GEMINI_API_KEY
+      command tgpt --quiet --provider $provider --model $model --key "$API_KEY"
     # elif [[ $mode == "claude" ]]; then
     #   command claude -p
     else
-      model=gemini-2.5-flash-preview-04-17
+      model=gemini-2.5-flash-preview-05-20
       # model=gemini-2.5-pro-preview-05-06
       command gemini-cli prompt --model $model -
     fi

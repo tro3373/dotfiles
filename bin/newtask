@@ -1,0 +1,32 @@
+#!/usr/bin/env -S bash -e
+
+command_name=$(basename "$0") && readonly command_name
+tmp_root_dir=/tmp/"$command_name" && readonly tmp_root_dir
+readonly depends=(llm)
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink ""; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+main() {
+  hass "${depends[@]}"
+  if [[ ! -p /dev/stdin ]]; then
+    error "==> Specify Prompt"
+  fi
+  mkdir -p "$tmp_root_dir" || error "==> Failed to create tmp dir: $tmp_root_dir"
+  cat - >"$tmp_root_dir/prompt.md" || error "==> Failed to write prompt to file"
+  branch_name=$(cat <"$tmp_root_dir/prompt.md" | prp -ne gen-git-branch-name.md | llm | grep 'feature/')
+  working_dir=$(git_worktree_add "$branch_name")
+  git_root_dir=$(get_git_root)
+  opencode_md="$git_root_dir/OpenCode.md"
+  if [[ -e $opencode_md ]]; then
+    cp "$opencode_md" "$working_dir/OpenCode.md" || warn "==> Failed to copy OpenCode.md to $working_dir"
+  fi
+  opencode -c "$working_dir" "$(cat <"$tmp_root_dir/prompt.md")"
+}
+main "$@"

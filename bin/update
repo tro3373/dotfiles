@@ -102,6 +102,12 @@ update_mac() {
   log "=> Checking.."
   $dummy brew doctor
 }
+
+update_go() {
+  log "=> Updating Go.."
+  update_go_bins
+}
+
 main() {
   initialize "$@"
   set -e
@@ -117,6 +123,7 @@ main() {
   if os wsl; then
     update_scoop
   fi
+  update_go
   log "Done!"
 }
 main "$@"

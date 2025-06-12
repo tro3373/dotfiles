@@ -50,6 +50,7 @@ execute_curl() {
   commands+=("$url")
   commands+=(-X "$method")
   commands+=(-H "Content-Type: application/json")
+  commands+=(-H "Origin: localhost:8080")
   while read -r line; do
     [[ -z $line ]] && continue
     [[ $line =~ ^#.* ]] && continue

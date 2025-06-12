@@ -68,6 +68,7 @@ add_worktree() {
     error "Failed to add worktree for branch '$branch'."
   }
   info "==> Added worktree for branch '$branch' at '../$dst_dir'."
+  (cd "../$dst_dir" && pwd)
 }
 
 remove_worktree() {
