@@ -99,7 +99,7 @@ let g:ale_fixers['lua']        = ['stylua']
 let g:ale_fixers['java']       = [ { buffer -> {'command': 'command -v google-java-format>&/dev/null && google-java-format -a %s'} } ]
 " let g:ale_fixers['dart']       = ['dart']
 let g:ale_fixers['sql']        = [ { buffer -> {'command': 'command -v sql-formatter >&/dev/null && sql-formatter --config ~/.dot/apps/sql-formatter/config.json'} } ]
-let g:ale_fixers['Dockerfile'] = [ { buffer -> {'command': 'command -v dockerfmt >&/dev/null && dockerfmt version >&/dev/null && dockerfmt -w %s', 'read_buffer': 1} } ]
+" let g:ale_fixers['Dockerfile'] = [ { buffer -> {'command': 'command -v dockerfmt >&/dev/null && dockerfmt version >&/dev/null && dockerfmt -w %s', 'read_buffer': 1} } ]
 " function! MyShellCheckFixer(buffer) abort
 "   " 'command': 'shellcheck -f diff %s |patch -p1'
 "   return {
@@ -191,7 +191,8 @@ let g:ale_python_mypy_options = '--ignore-missing-imports --follow-imports=skip'
 "
 " Dockerfile
 " DL3008: Pin versions in apt-get install.
-let g:ale_dockerfile_hadolint_options = '--ignore DL3008'
+" DL3018: Pin versions in apk add
+let g:ale_dockerfile_hadolint_options = '--ignore DL3008 --ignore DL3018'
 
 
 " Disable for minified code and enable whitespace trimming
