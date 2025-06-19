@@ -25,11 +25,11 @@ trap_exit() {
 }
 
 cat_prompt() {
-  llm_lang=英語
-  [[ $mode == ja ]] && llm_lang=日本語
+  llm_lang=English
+  [[ $mode == ja ]] && llm_lang=Japanese
   export llm_lang
   git_diff_ignored --minimal --cached |
-    prp -ne -pm "以下内容に従って、$llm_langで" gen-git-commit-message.md
+    prp -ne -pm "Follow the instructions below in $llm_lang" gen-git-commit-message.md$
 }
 
 genai() {

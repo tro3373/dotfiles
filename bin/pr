@@ -83,14 +83,14 @@ create_pr_parts() {
   info "==> Creating messages.json.."
   cat </tmp/pr/diff |
     # head -200 |
-    prp -ne gen-git-pr-message.md >/tmp/pr/prompt.md
+    prp -ne gen-git-pr-message.md$ >/tmp/pr/prompt.md
   cat </tmp/pr/prompt.md |
     llm >/tmp/pr/messages.json
 
   info "==> Creating title/body.."
   jq -r '.title' /tmp/pr/messages.json >/dev/null 2>&1 || {
     cat </tmp/pr/messages.json |
-      sed -e '/^```/d' -e '/^$/d' >/tmp/pr/messages.json.bk
+      sed -e '/^```/d' -e '/```json/d' -e '/^$/d' >/tmp/pr/messages.json.bk
     mv /tmp/pr/messages.json.bk /tmp/pr/messages.json
   }
   jq -r '.title' /tmp/pr/messages.json >/tmp/pr/title

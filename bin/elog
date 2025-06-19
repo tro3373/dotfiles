@@ -1,0 +1,11 @@
+#!/usr/bin/env -S bash -e
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd) && readonly script_dir
+
+main() {
+  # shellcheck disable=SC1091
+  source "${script_dir}/lib/func_log"
+  com_log red "$@"
+  exit 1
+}
+main "$@"

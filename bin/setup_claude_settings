@@ -1,0 +1,27 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  git_root=$(get_git_root)
+  dst="$git_root/.claude/settings.local.json"
+  if [[ -e $dst ]]; then
+    wlog "Claude settings already exist at $dst"
+    echo "==> Removing exist settings! Press Enter to continue..(Cancel: Ctrl+C)"
+    read -r _
+    rm -f "$dst" || {
+      elog "==> Failed to remove existing Claude settings at $dst"
+    }
+  fi
+  mkdir -p "$git_root/.claude" || {
+    elog "==> Failed to create directory $git_root/.claude"
+  }
+  # cp -v ~/.claude/settings.json "$dst" || {
+  #   elog "==> Failed to copy Claude settings to $dst"
+  # }
+  # permissionsのみを抽出して{.permissions: {...}} で表示
+  cat <~/.claude/settings.json |
+    jq 'select(.permissions) | {permissions: .permissions}' >"$dst" || {
+    elog "==> Failed to extract Claude permissions to $dst"
+  }
+  ilog "==> Claude settings copied to $dst"
+}
+main "$@"

@@ -1,0 +1,28 @@
+#!/usr/bin/env -S bash -e
+
+readonly depends=(readability)
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink ""; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+to_md() {
+  readability --format markdown "$@"
+}
+
+main() {
+  hass "${depends[@]}"
+  [[ $# -eq 0 ]] && error "==> No URL provided."
+  local stdin
+  if [[ -p /dev/stdin ]]; then
+    cat - to_md
+  else
+    to_md "$@"
+  fi
+}
+main "$@"

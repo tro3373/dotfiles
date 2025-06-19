@@ -52,7 +52,9 @@ is_debug() { [[ $debug -eq 1 ]]; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
 is_additional() { [[ $additional -eq 1 ]]; }
 is_force() { [[ $force -eq 1 ]]; }
-_log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") ${*:2}" | ink "$1" 1>&2; }
+# _log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") ${*:2}" | ink "$1" 1>&2; }
+# shellcheck disable=SC2145
+_log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | ink "$1" 1>&2; }
 log() { _log cyan "$*"; }
 ilog() { _log green "$*"; }
 elog() { _log red "$*"; }
