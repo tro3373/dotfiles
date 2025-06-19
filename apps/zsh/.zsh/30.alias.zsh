@@ -93,6 +93,7 @@ alias gt="git tag"
 alias gc="git commit"
 alias gr="git remote -v"
 alias gs="git status"
+alias gw="git_worktree"
 if has git-sim; then
   alias gsm="git-sim"
 fi
