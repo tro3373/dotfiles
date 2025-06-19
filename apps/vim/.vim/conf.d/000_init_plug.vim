@@ -201,6 +201,11 @@ call plug#begin('$HOME/.vim/plugged')
   " =================================================================
   if empty($VIM_DISABLE_LINTER) || (!empty($VIM_DISABLE_LINTER) && $VIM_DISABLE_LINTER != 1)
     Plug 'github/copilot.vim'
+
+    " For greggh/claude-code
+    Plug 'nvim-lua/plenary.nvim'
+    Plug 'greggh/claude-code.nvim'
+
     " TODO
     " Plug 'nvim-lua/plenary.nvim'                              " Dependency for CopilotChat
     " Plug 'CopilotC-Nvim/CopilotChat.nvim', { 'branch': 'canary' }

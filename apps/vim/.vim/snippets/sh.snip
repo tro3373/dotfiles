@@ -218,7 +218,7 @@ snippet	logcolorrr
 	# hass "${depends[@]}"
 	_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
 	# shellcheck disable=SC2145
-	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink "$1"; }
+	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink "\$1"; }
 	log() { _log white "$*"; }
 	info() { _log cyan "$*"; }
 	warn() { _log yellow "$*"; }

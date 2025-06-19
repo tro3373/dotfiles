@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
 install_common() {
-  go_install github.com/swaggo/swag/cmd/swag@latest
+  go_install github.com/swaggo/swag/v2/cmd/swag@latest
 }

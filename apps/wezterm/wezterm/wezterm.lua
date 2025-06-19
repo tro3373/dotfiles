@@ -21,19 +21,48 @@ local mac = wezterm.target_triple:find("darwin")
 -- false: Prevent the configuration error window from being displayed
 config.warn_about_missing_glyphs = false
 
+-------------------------------------------------------------------------------
 -- Color Scheme
+-------------------------------------------------------------------------------
 -- config.color_scheme = 'Batman'
 config.color_scheme = "Railscasts (base16)"
 -- config.color_scheme = 'Apprentice (base16)'
 -- config.color_scheme = 'Apprentice (Gogh)'
 
+-------------------------------------------------------------------------------
 -- フォント
+-------------------------------------------------------------------------------
 config.font = wezterm.font("Osaka-Mono", { weight = "Bold", italic = false })
 -- config.font = wezterm.font("Osaka-Mono", { weight = "Regular", italic = false })
 -- フォントサイズ
 config.font_size = mac and 18.0 or 15.0
+
+-------------------------------------------------------------------------------
+-- その他設定
+-------------------------------------------------------------------------------
+-- -- システムのビープ音を鳴らす（デフォルト）
+-- config.audible_bell = "SystemBeep"
 -- 背景の非透過率（1なら完全に透過させない）
 config.window_background_opacity = 1 -- 0.90
+-- タブを下に表示（デフォルトでは上にある）
+config.tab_bar_at_bottom = true
+-- タブが1つだけの場合は非表示
+config.hide_tab_bar_if_only_one_tab = true
+-- Explicitly set the name of the IME server to which wezterm will connect via the XIM protocol
+-- config.use_ime = true
+-- config.xim_im_name = "fcitx"
+
+-------------------------------------------------------------------------------
+-- マウス操作の挙動設定
+-------------------------------------------------------------------------------
+config.mouse_bindings = {
+  -- 右クリックでクリップボードから貼り付け
+  {
+    event = { Down = { streak = 1, button = "Right" } },
+    mods = "NONE",
+    action = wezterm.action.PasteFrom("Clipboard"),
+  },
+}
 
 --------------------------------------------------------------------------------
 -- HyperLink
@@ -62,7 +91,6 @@ local default_rules = wezterm.default_hyperlink_rules()
 for _, rule in ipairs(default_rules) do
   table.insert(config.hyperlink_rules, rule)
 end
-
 --------------------------------------------------------------------------------
 -- Additional Rules
 --------------------------------------------------------------------------------
@@ -92,7 +120,9 @@ table.insert(config.hyperlink_rules, {
 -- 	},
 -- }
 
+-------------------------------------------------------------------------------
 -- キーバインド
+-------------------------------------------------------------------------------
 config.keys = {
   -- ¥ではなく、バックスラッシュを入力する。おそらくMac固有
   {
@@ -191,23 +221,5 @@ config.keys = {
   --     action = wezterm.action.AdjustPaneSize { 'Right', 2 },
   -- },
 }
-
--- マウス操作の挙動設定
-config.mouse_bindings = {
-  -- 右クリックでクリップボードから貼り付け
-  {
-    event = { Down = { streak = 1, button = "Right" } },
-    mods = "NONE",
-    action = wezterm.action.PasteFrom("Clipboard"),
-  },
-}
-
--- タブを下に表示（デフォルトでは上にある）
-config.tab_bar_at_bottom = true
--- タブが1つだけの場合は非表示
-config.hide_tab_bar_if_only_one_tab = true
--- Explicitly set the name of the IME server to which wezterm will connect via the XIM protocol
--- config.use_ime = true
--- config.xim_im_name = "fcitx"
 
 return config

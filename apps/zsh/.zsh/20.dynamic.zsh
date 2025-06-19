@@ -124,7 +124,8 @@ _cat_path() {
   add_path ${HOME}/.cargo/bin
   add_path ${HOME}/.local/bin
   # add_path $BUN_INSTALL/bin # install via asdf
-  add_path "$HOME/.asdf/shims" # for silver searcher ag in msys
+  add_path "$HOME/.asdf/shims"
+  add_path "$HOME/.npm-global/bin"
 
   add_path ${DOTPATH}/bin
   add_path ${HOME}/.ldot/bin

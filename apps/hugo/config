@@ -1,25 +1,26 @@
 #!/bin/bash
 
 install_common() {
-  if ! has go; then
-    log "No golang installed"
-    exit 2
-  fi
-  # ソースコード取得
-  cd_work
-  if [[ -e hugo ]]; then
-    exe cd hugo
-    exe git fetch
-  else
-    exe git clone https://github.com/spf13/hugo
-    exe cd hugo
-  fi
-  local current_branch latest_tag
-  current_branch=$(exes git branch --show-current)
-  latest_tag=$(exes git tag --list | sort -V | tail -1)
-  if [[ $current_branch != "$latest_tag" ]]; then
-    exe git switch -c "$latest_tag" "$latest_tag"
-  fi
-  log "==> Installing via go install --tags extended.."
-  exe go install --tags extended
+  # if ! has go; then
+  #   log "No golang installed"
+  #   exit 2
+  # fi
+  # # ソースコード取得
+  # cd_work
+  # if [[ -e hugo ]]; then
+  #   exe cd hugo
+  #   exe git fetch
+  # else
+  #   exe git clone https://github.com/spf13/hugo
+  #   exe cd hugo
+  # fi
+  # local current_branch latest_tag
+  # current_branch=$(exes git branch --show-current)
+  # latest_tag=$(exes git tag --list | sort -V | tail -1)
+  # if [[ $current_branch != "$latest_tag" ]]; then
+  #   exe git switch -c "$latest_tag" "$latest_tag"
+  # fi
+  # log "==> Installing via go install --tags extended.."
+  # exe go install --tags extended
+  CGO_ENABLED=1 go_install -tags extended github.com/gohugoio/hugo@latest
 }
