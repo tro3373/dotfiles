@@ -114,7 +114,8 @@ alias_with_compdef git g _git
 alias_with_compdef docker d
 alias_with_compdef systemctl s _systemctl
 alias_with_compdef make m _make
-alias_with_compdef code c
+# alias_with_compdef code c
+alias_with_compdef claude c
 alias_with_compdef cursor r
 alias_with_compdef trash t
 alias_with_compdef flutter fl

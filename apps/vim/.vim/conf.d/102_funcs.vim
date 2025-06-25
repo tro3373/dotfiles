@@ -551,7 +551,19 @@ function! DeleteSelected() abort
   call SilentFExec(':%s///g')
 endfun
 command! DeleteSelected call DeleteSelected()
-
+" 選択部分以外を削除
+function! DeleteUnSelected() abort
+  if empty(@/)
+    echo "検索パターンが空"
+    return
+  endif
+  " :%v/pattern/d で検索パターンにマッチしない行を削除
+  " \V: very nomagic モード（特殊文字をエスケープ不要）
+  " escape(): 検索パターン内のバックスラッシュをエスケープ
+  execute ':%v/\V' . escape(@/, '\') . '/d'
+endfun
+command! DeleteUnSelected call DeleteUnSelected()
+command! DeleteSelectedLineInvert call DeleteSelectedLineInvert()
 " 検索結果の存在する行を削除
 function! DeleteSelectedLine() abort
   " call SilentFExec(':%g//d')
