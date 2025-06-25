@@ -1,5 +1,17 @@
 #!/usr/bin/env -S bash -e
 
+# MEMO: ilog/elog/wlog
+# - Loop process Notwork if If stdin exist:
+#   - ex)
+#     ls -la |
+#       while read -r line; do
+#         [[ -z $line ]] && continue
+#         [[ $line =~ ^#.* ]] && continue
+#         # WARN: this ilog stdin Vacuum ls outputs.
+#         ilog "hogehoge"
+#         # This work
+#         echo "hogehoge" | ilog
+#       done
 com_log() {
   local stdin
   stdin=

@@ -2,15 +2,6 @@
 
 command_name=$(basename "$0") && readonly command_name
 readonly depends=(claude tgpt gemini-cli)
-has() { command -v "${1}" >&/dev/null; }
-hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
-_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
-# shellcheck disable=SC2145
-_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink ""; }
-log() { _log white "$*"; }
-info() { _log cyan "$*"; }
-warn() { _log yellow "$*"; }
-error() { _log red "$*" && exit 1; }
 add_args() { args+=("$@"); }
 args=()
 mode=tgpt
@@ -91,7 +82,7 @@ _llm() {
 main() {
   initialize "$@"
   if [[ $# -eq 0 && ! -p /dev/stdin ]]; then
-    error "==> No input data."
+    elog "==> No input data."
   fi
   fire "$@" | _llm
 }

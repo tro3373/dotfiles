@@ -1,0 +1,8 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  for arg in "$@"; do
+    has "$arg" || elog "==> No $arg command exist."
+  done
+}
+main "$@"

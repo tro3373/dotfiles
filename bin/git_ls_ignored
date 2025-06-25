@@ -1,0 +1,6 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  git ls-files --others --ignored --exclude-standard
+}
+main "$@"

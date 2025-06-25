@@ -1,10 +1,10 @@
 #!/usr/bin/env -S bash -e
 
 command_name=$(basename "$0") && readonly command_name
-current_dir=$(pwd) && readonly current_dir
 readonly depends=(git fzf)
 mode=list
 branch=
+switch=0
 args=()
 usage() {
   cat <<EOF
@@ -18,6 +18,9 @@ Add a new git worktree for the specified branch(or Remove it).
       -l        : List all worktrees (default)
       -a        : Add a worktree for the specified branch
       -r        : Remove the worktree instead of adding it
+      -sw       : Change directory
+                    -a -sw: Switch to the newly added worktree directory
+                    -l -sw: Switch to the selected worktree directory
 
 EOF
 }
@@ -29,6 +32,7 @@ initialize() {
       -l) mode=list ;;
       -r) mode=remove ;;
       -a) mode=add ;;
+      -sw) switch=1 ;;
       *) add_args "$1" ;;
     esac
     shift
@@ -37,10 +41,6 @@ initialize() {
 }
 check() {
   hass "${depends[@]}"
-
-  if [[ ! -d .git ]]; then
-    elog "==> Not a git repository or main git repository. Please run this command in a git repository."
-  fi
 
   branch="${args[*]}"
   if [[ $mode == "add" && -z $branch ]]; then
@@ -68,7 +68,22 @@ list_worktrees() {
     elog "Failed to change directory to git root: $git_root_dir"
   }
   ilog "==> Listing all worktrees in the repository:"
-  git worktree list
+  if [[ $switch -ne 1 ]]; then
+    _list_worktrees
+    return
+  fi
+  while read -r brach_path _ branch_name; do
+    [[ -z $brach_path ]] && continue
+    [[ $brach_path =~ ^#.* ]] && continue
+    echo "cd $brach_path" |
+      tee > >(clip) |
+      {
+        cat -
+        echo "==> cd command clipped!"
+      } | ilog
+  done < <(
+    _select_worktrees "Select branch to move : " --no-multi
+  )
 }
 
 add_worktree() {
@@ -76,47 +91,82 @@ add_worktree() {
   cd "$git_root_dir" || {
     elog "Failed to change directory to git root: $git_root_dir"
   }
-  dst_dir="$git_root_dir/.git/$command_name/$(get_worktree_branch_name)"
+  dst_dir="$git_root_dir/.git/___$command_name/$(get_worktree_branch_name)"
   ilog "==> Adding worktree to $dst_dir for $branch branch.."
   git worktree add -b "$branch" "$dst_dir" || {
     elog "Failed to add worktree to $dst_dir for branch '$branch'."
   }
-  ln_envs_zip_entry_if_needed
+  ln_ignored_if_needed
   ilog "==> Added worktree for branch '$branch' at '$dst_dir'."
+  if [[ $switch -eq 1 ]]; then
+    cd "$dst_dir" || {
+      elog "Failed to change directory to worktree: $dst_dir"
+    }
+    ilog "==> Switched to worktree at '$dst_dir'."
+  fi
   echo "$dst_dir"
 }
 
-ln_envs_zip_entry_if_needed() {
-  local envs_zip_file="$git_root_dir/envs.zip"
-  [[ ! -e $envs_zip_file ]] && return
-  zipinfo -1 "$envs_zip_file" |
+ln_ignored_if_needed() {
+  git ls-files --others --ignored --exclude-standard |
     while read -r line; do
       [[ -z $line ]] && continue
       [[ $line =~ ^#.* ]] && continue
-      ilog "==> Linking $line from envs.zip to $dst_dir"
-      ln -s "$line" "$dst_dir/$line"
+      [[ $line =~ /$ ]] && line="${line%/}"
+      # src="$git_root_dir/$line"
+      src="../../../$line"
+      dst="$dst_dir/$line"
+      dst_ln_dir="$(dirname "$dst")"
+      [[ ! -e $dst_ln_dir ]] && mkdir -p "$dst_ln_dir"
+      echo "==> Linking $line" | ilog
+      ln -s "$src" "$dst"
     done
 }
 
-remove_worktree() {
-  if [[ -z $branch ]]; then
-    removal_list=$(git worktree list | grep -v "^$current_dir " || :)
-    if [[ -z $removal_list ]]; then
-      elog "No worktrees exist to remove."
-    fi
-    branch=$(
-      echo -e "$removal_list" |
-        fzf --height=20% --reverse --no-multi --no-color --prompt="Select branch to remove worktree for: " |
-        awk '{print $1}'
-    )
-    if [[ -z $branch ]]; then
-      elog "No branch selected. Exiting."
-    fi
-  fi
-  ilog "==> Removing worktree for branch '$branch'."
-  git worktree remove "$branch"
-  ilog "==> Worktree for branch '$branch' removed. Current worktrees:"
+# /path/to/worktree xxxxhashxx [feature/xxxx]
+_list_worktrees() {
   git worktree list
+}
+
+_select_worktrees() {
+  msg="$1"
+  # shellcheck disable=SC2124
+  query_opt="${@:2}"
+  [[ -n $branch ]] && {
+    query_opt="--query $branch $query_opt"
+  }
+  # shellcheck disable=SC2086
+  _list_worktrees |
+    fzf $query_opt \
+      --exit-0 \
+      --select-1 \
+      --reverse \
+      --no-color \
+      --height=20% \
+      --bind 'ctrl-l:toggle-all' \
+      --prompt="$msg"
+}
+
+remove_worktree() {
+  removal_list=$(_list_worktrees)
+  if [[ -z $removal_list ]]; then
+    elog "No worktrees exist to remove."
+  fi
+  if [[ ! $removal_list =~ ^.*___.* ]]; then
+    elog "No worktrees exist to remove. (Only worktrees created by this script can be removed.)"
+  fi
+
+  _select_worktrees "Select branch to remove worktree for: " --multi |
+    while read -r brach_path _ branch_name; do
+      [[ -z $brach_path ]] && continue
+      [[ $brach_path =~ ^#.* ]] && continue
+      # Remove []: ex [feature/xxxx] => feature/xxxx
+      branch_name=${branch_name//[\[\]]/}
+      ilog "==> Removing worktree path: '$brach_path'.."
+      git worktree remove "$brach_path"
+      ilog "==> Removing branch '$branch_name'.."
+      git branch -d "$branch_name"
+    done
 }
 
 main() {

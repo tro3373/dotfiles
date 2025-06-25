@@ -1,0 +1,6 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  npx ccusage@latest "$@"
+}
+main "$@"
