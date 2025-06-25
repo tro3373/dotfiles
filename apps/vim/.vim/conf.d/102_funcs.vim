@@ -557,12 +557,39 @@ function! DeleteUnSelected() abort
     echo "検索パターンが空"
     return
   endif
-  " :%v/pattern/d で検索パターンにマッチしない行を削除
-  " \V: very nomagic モード（特殊文字をエスケープ不要）
-  " escape(): 検索パターン内のバックスラッシュをエスケープ
-  execute ':%v/\V' . escape(@/, '\') . '/d'
+
+  " 現在のバッファ内容を保存
+  let l:lines = getline(1, '$')
+  let l:all_content = join(l:lines, "\n")
+
+  " マッチする部分を収集
+  let l:matches = []
+  let l:pattern = @/
+
+  " すべてのマッチを検索
+  let l:start = 0
+  while 1
+    let l:match_start = match(l:all_content, l:pattern, l:start)
+    if l:match_start == -1
+      break
+    endif
+    let l:match_end = matchend(l:all_content, l:pattern, l:start)
+    let l:match_text = strpart(l:all_content, l:match_start, l:match_end - l:match_start)
+    call add(l:matches, l:match_text)
+    let l:start = l:match_end
+  endwhile
+
+  if len(l:matches) > 0
+    " バッファをクリアして、マッチした部分のみを挿入
+    normal! ggdG
+    call setline(1, l:matches)
+    echo "Extracted " . len(l:matches) . " matches"
+  else
+    echo "No matches found"
+  endif
 endfun
 command! DeleteUnSelected call DeleteUnSelected()
+
 command! DeleteSelectedLineInvert call DeleteSelectedLineInvert()
 " 検索結果の存在する行を削除
 function! DeleteSelectedLine() abort
