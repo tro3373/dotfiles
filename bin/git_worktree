@@ -15,12 +15,11 @@ Add a new git worktree for the specified branch(or Remove it).
       $command_name [option] <branch_name>
     Options
       -h|--help : Show this usage
-      -l        : List all worktrees (default)
+      -l        : List all worktrees with switch (default)
       -a        : Add a worktree for the specified branch
       -r        : Remove the worktree instead of adding it
       -sw       : Change directory
                     -a -sw: Switch to the newly added worktree directory
-                    -l -sw: Switch to the selected worktree directory
 
 EOF
 }
@@ -67,22 +66,19 @@ list_worktrees() {
   cd "$git_root_dir" || {
     elog "Failed to change directory to git root: $git_root_dir"
   }
-  ilog "==> Listing all worktrees in the repository:"
-  if [[ $switch -ne 1 ]]; then
-    _list_worktrees
-    return
-  fi
+  # ilog "==> Listing all worktrees in the repository:"
   while read -r brach_path _ branch_name; do
     [[ -z $brach_path ]] && continue
     [[ $brach_path =~ ^#.* ]] && continue
-    echo "cd $brach_path" |
-      tee > >(clip) |
-      {
-        cat -
-        echo "==> cd command clipped!"
-      } | ilog
+    echo cd "$brach_path"
+    # echo "cd $brach_path" |
+    #   tee > >(clip) |
+    #   {
+    #     cat -
+    #     echo "==> cd command clipped!"
+    #   } | ilog
   done < <(
-    _select_worktrees "Select branch to move : " --no-multi
+    _select_worktrees "Switching directory.. Select worktree branches: " --no-multi
   )
 }
 
@@ -113,8 +109,8 @@ ln_ignored_if_needed() {
       [[ -z $line ]] && continue
       [[ $line =~ ^#.* ]] && continue
       [[ $line =~ /$ ]] && line="${line%/}"
-      # src="$git_root_dir/$line"
-      src="../../../$line"
+      src="$git_root_dir/$line"
+      # src="../../../${line/.*\//../}" # TODO Test
       dst="$dst_dir/$line"
       dst_ln_dir="$(dirname "$dst")"
       [[ ! -e $dst_ln_dir ]] && mkdir -p "$dst_ln_dir"
@@ -135,13 +131,12 @@ _select_worktrees() {
   [[ -n $branch ]] && {
     query_opt="--query $branch $query_opt"
   }
+  # --no-color
   # shellcheck disable=SC2086
   _list_worktrees |
     fzf $query_opt \
       --exit-0 \
-      --select-1 \
       --reverse \
-      --no-color \
       --height=20% \
       --bind 'ctrl-l:toggle-all' \
       --prompt="$msg"

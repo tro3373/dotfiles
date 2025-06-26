@@ -89,11 +89,19 @@ alias diff="diff -Nru"
 alias diffs="diff -Nru --strip-trailing-cr"
 alias gp="git pull --rebase"
 alias gb="git branch -vv"
-alias gt="git tag"
 alias gc="git commit"
 alias gr="git remote -v"
 alias gs="git status"
-alias gw="git_worktree"
+# alias gt="git tag"
+# alias gt="git_worktree"
+gt() {
+  result=$(git_worktree "$@")
+  if [[ ! $result =~ ^cd.*$ ]]; then
+    return
+  fi
+  echo "==> Executing: $result" | wlog
+  eval "$result"
+}
 if has git-sim; then
   alias gsm="git-sim"
 fi
