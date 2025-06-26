@@ -200,11 +200,39 @@ call plug#begin('$HOME/.vim/plugged')
   " Code Edit
   " =================================================================
   if empty($VIM_DISABLE_LINTER) || (!empty($VIM_DISABLE_LINTER) && $VIM_DISABLE_LINTER != 1)
+    " =================================================================
+    " AI Assist
+    " =================================================================
     Plug 'github/copilot.vim'
-
-    " For greggh/claude-code
+    " ================================================================
+    " TODO: yetone/avante.nvim
+    " " Deps
+    " Plug 'nvim-lua/plenary.nvim'
+    " Plug 'MunifTanjim/nui.nvim'
+    " Plug 'MeanderingProgrammer/render-markdown.nvim'
+    " " Optional deps
+    " Plug 'hrsh7th/nvim-cmp'
+    " Plug 'nvim-tree/nvim-web-devicons' "or Plug 'echasnovski/mini.icons'
+    " Plug 'HakonHarnes/img-clip.nvim'
+    " Plug 'zbirenbaum/copilot.lua'
+    " Plug 'stevearc/dressing.nvim' " for enhanced input UI
+    " Plug 'folke/snacks.nvim' " for modern input UI
+    " " Yay, pass source=true if you want to build from source
+    " Plug 'yetone/avante.nvim', { 'branch': 'main', 'do': 'make' }
+    " autocmd! User avante.nvim lua << EOF
+    " require('avante').setup()
+    " EOF
+    " ================================================================
+    " TODO nekowasabi/claudecode.vim
+    " Plug 'vim-denops/denops.vim'
+    " Plug 'nekowasabi/claudecode.vim'
+    " ================================================================
+    " TODO greggh/claude-code
     Plug 'nvim-lua/plenary.nvim'
     Plug 'greggh/claude-code.nvim'
+    " ================================================================
+    " TODO: https://github.com/ravitemer/mcphub.nvim?tab=readme-ov-file
+
 
     " TODO
     " Plug 'nvim-lua/plenary.nvim'                              " Dependency for CopilotChat
