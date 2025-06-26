@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# _get_latest_tag() {
+#   github_latest_release_tag GoogleCloudPlatform/alloydb-auth-proxy
+# }
+
+# _install_common() {
+#   local arch=$1
+#   local _latest_tag
+#   _latest_tag=$(_get_latest_tag)
+#   cd_work
+#   exe curl -o alloydb-auth-proxy "https://storage.googleapis.com/alloydb-auth-proxy/${_latest_tag}/alloydb-auth-proxy.$arch"
+#   exe chmod +x alloydb-auth-proxy
+#   exe mv alloydb-auth-proxy "$HOME"/bin
+# }
+
+# install_common() {
+#   _install_common linux.amd64
+# }
+# install_mac() {
+#   _install_common darwin.arm64
+# }
+
+install_common() {
+  go_install github.com/GoogleCloudPlatform/alloydb-auth-proxy@latest
+}
