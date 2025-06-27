@@ -15,6 +15,8 @@ readonly _core_apps_additional=(
   shellcheck shfmt
   # apps for go
   gup goimports gosec staticcheck golangci-lint govulncheck
+  # apps for node
+  ncu claude gemini
   # apps for py
   ruff uv
   # apps for lua
