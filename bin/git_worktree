@@ -4,6 +4,7 @@ command_name=$(basename "$0") && readonly command_name
 readonly depends=(git fzf)
 mode=list
 branch=
+commit_hash=
 switch=0
 args=()
 usage() {
@@ -12,7 +13,7 @@ usage() {
 Add a new git worktree for the specified branch(or Remove it).
 
   Usage:
-      $command_name [option] <branch_name>
+      $command_name [option] <branch_name> <commit_hash>
     Options
       -h|--help : Show this usage
       -l        : List all worktrees with switch (default)
@@ -41,7 +42,8 @@ initialize() {
 check() {
   hass "${depends[@]}"
 
-  branch="${args[*]}"
+  branch="${args[1]}"
+  commit_hash="${args[2]}"
   if [[ $mode == "add" && -z $branch ]]; then
     cat <<EOF | elog
 ==> Specify a branch name to add a worktree for.
@@ -88,19 +90,20 @@ add_worktree() {
     elog "Failed to change directory to git root: $git_root_dir"
   }
   dst_dir="$git_root_dir/.git/___$command_name/$(get_worktree_branch_name)"
-  ilog "==> Adding worktree to $dst_dir for $branch branch.."
-  git worktree add -b "$branch" "$dst_dir" || {
+  ilog "==> Adding worktree to $dst_dir for $branch branch hash:$commit_hash.."
+  git worktree add -b "$branch" "$dst_dir" "$commit_hash" || {
     elog "Failed to add worktree to $dst_dir for branch '$branch'."
   }
   ln_ignored_if_needed
   ilog "==> Added worktree for branch '$branch' at '$dst_dir'."
-  if [[ $switch -eq 1 ]]; then
-    cd "$dst_dir" || {
-      elog "Failed to change directory to worktree: $dst_dir"
-    }
-    ilog "==> Switched to worktree at '$dst_dir'."
+
+  if [[ $switch -ne 1 ]]; then
+    # Log the directory and exit
+    echo "$dst_dir"
+    return
   fi
-  echo "$dst_dir"
+  # Change to the new worktree directory via cd command(handled by zsh)
+  echo cd "$dst_dir"
 }
 
 ln_ignored_if_needed() {
@@ -160,8 +163,8 @@ remove_worktree() {
       branch_name=${branch_name//[\[\]]/}
       ilog "==> Removing worktree path: '$brach_path'.."
       git worktree remove "$brach_path"
-      ilog "==> Removing branch '$branch_name'.."
-      git branch -d "$branch_name"
+      # ilog "==> Removing branch '$branch_name'.."
+      # git branch -d "$branch_name"
     done
 }
 
