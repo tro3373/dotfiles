@@ -66,6 +66,9 @@ _llm() {
       # provider=gemini API_KEY=$GEMINI_API_KEY model=gemini-2.5-flash-preview-05-20
       # provider=gemini API_KEY=$GEMINI_API_KEY model=gemini-2.5-flash-lite-preview-06-17
       provider=gemini API_KEY=$GEMINI_API_KEY model=$GEMINI_MODEL
+      if [[ -z $model ]]; then
+        model=gemini-2.5-flash-lite-preview-06-17
+      fi
       command tgpt --quiet --provider $provider --model "$model" --key "$API_KEY"
     elif [[ $mode == "claude" ]]; then
       # tmp_org=/tmp/llm-claude-prompt-org.md
@@ -77,6 +80,7 @@ _llm() {
       command gemini -p "Execute the instructions from standard input."
     else
       # model=gemini-2.5-flash-preview-05-20
+      #
       # model=gemini-2.5-pro-preview-05-06
       model=$GEMINI_MODEL
       command gemini-cli prompt --model "$model" -
