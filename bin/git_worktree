@@ -104,7 +104,8 @@ add_worktree() {
 }
 
 ln_ignored_if_needed() {
-  git ls-files --others --ignored --exclude-standard |
+  # Get ignored files/directories (directories shown with trailing /)
+  git status --ignored --porcelain | grep '^!!' | cut -c4- |
     while read -r line; do
       [[ -z $line ]] && continue
       [[ $line =~ ^#.* ]] && continue
