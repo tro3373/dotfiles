@@ -300,6 +300,10 @@ snippet	trappp
 	#15 プロセスを終了させるための終了シグナル。kill コマンドはデフォルトでこのシグナルを使用する (つまり kill PID は kill -15 PID と同じ結果になる)。
 	trap ${1:end} 0 1 2 3 15
 
+snippet	trap_returnnn
+	tmp_dir=$(mktemp -d)
+	trap 'rm -rf "$tmp_dir"' RETURN
+
 snippet	checkroot
 	check_root () {
 		[[ $UID -eq 0 ]] && return
@@ -672,3 +676,10 @@ alias current_func_nameee
 snippet to_query_parametersss
 alias query_parametersss
 	jq -r '[to_entries[] | (@uri "\(.key)" + "=" + @uri "\(.value)")] | join("&")'
+
+snippet commmmm
+	# comm: commコマンドは、2つのソートされたファイルを比較し、共通部分や差分を表示します。
+	#   -1: 1番目のファイルにのみ存在する行を表示しない
+	#   -2: 2番目のファイルにのみ存在する行を表示しない
+	#  -12: 両方のファイルに存在する行を表示
+	comm -12 "$\1" "$\2"
