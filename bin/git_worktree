@@ -42,8 +42,9 @@ initialize() {
 check() {
   hass "${depends[@]}"
 
-  branch="${args[1]}"
-  commit_hash="${args[2]}"
+  branch="${args[0]}"
+  commit_hash="${args[1]}"
+
   if [[ $mode == "add" && -z $branch ]]; then
     cat <<EOF | elog
 ==> Specify a branch name to add a worktree for.
@@ -91,10 +92,11 @@ add_worktree() {
   }
   dst_dir="$git_root_dir/.git/___$command_name/$(get_worktree_branch_name)"
   ilog "==> Adding worktree to $dst_dir for $branch branch hash:$commit_hash.."
-  git worktree add -b "$branch" "$dst_dir" "$commit_hash" || {
+  # shellcheck disable=SC2086
+  git worktree add -b "$branch" "$dst_dir" $commit_hash || {
     elog "Failed to add worktree to $dst_dir for branch '$branch'."
   }
-  ln_ignored_if_needed
+  : ln_ignored_if_needed
   ilog "==> Added worktree for branch '$branch' at '$dst_dir'."
 
   if [[ $switch -ne 1 ]]; then
