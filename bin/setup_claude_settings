@@ -17,10 +17,10 @@ main() {
   # cp -v ~/.claude/settings.json "$dst" || {
   #   elog "==> Failed to copy Claude settings to $dst"
   # }
-  # permissionsのみを抽出して{.permissions: {...}} で表示
+  # permissionsとhooksのみを抽出して{.permissions: {...}, .hooks: {...}} で表示
   cat <~/.claude/settings.json |
-    jq 'select(.permissions) | {permissions: .permissions}' >"$dst" || {
-    elog "==> Failed to extract Claude permissions to $dst"
+    jq 'select(.permissions or .hooks) | {permissions: .permissions, hooks: .hooks} | with_entries(select(.value != null))' >"$dst" || {
+    elog "==> Failed to extract Claude permissions and hooks to $dst"
   }
   ilog "==> Claude settings copied to $dst"
 }
