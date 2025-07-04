@@ -150,6 +150,7 @@ main() {
     update_scoop
   fi
   update_go
+  update_node
   ilog "Done!"
 }
 main "$@"
