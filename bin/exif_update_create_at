@@ -29,7 +29,8 @@ main() {
       create_time=$(exiftool -T -CreateDate "$line")
       echo "==> $line: $create_time"
       # TODO
-      echo exiftool -alldates="2023-09-16 01:05:28" "$line"
+      # echo "exiftool -alldates='2023-09-16 01:05:28' \"$line\""
+      echo "exiftool -alldates='$create_time' \"$line\""
     done
 }
 main "$@"
