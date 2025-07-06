@@ -19,9 +19,14 @@ main() {
   # }
   # permissionsとhooksのみを抽出して{.permissions: {...}, .hooks: {...}} で表示
   cat <~/.claude/settings.json |
-    jq 'select(.permissions or .hooks) | {permissions: .permissions, hooks: .hooks} | with_entries(select(.value != null))' >"$dst" || {
+    jq 'select(.permissions or .hooks or .enabledMcpjsonServers) | {permissions: .permissions, hooks: .hooks, enabledMcpjsonServers: .enabledMcpjsonServers} | with_entries(select(.value != null))' >"$dst" || {
     elog "==> Failed to extract Claude permissions and hooks to $dst"
   }
+  if [[ ! -e $git_root/.mcp.json ]]; then
+    ln -s ~/.mo/.claude/.mcp.json "$git_root/.mcp.json" || {
+      elog "==> Failed to create symlink for .mcp.json"
+    }
+  fi
   ilog "==> Claude settings copied to $dst"
 }
 main "$@"
