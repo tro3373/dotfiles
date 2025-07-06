@@ -1,0 +1,35 @@
+#!/usr/bin/env -S bash -e
+
+global_npm_dir=$HOME/.npm-global && readonly global_npm_dir
+package_list_file="/tmp/npm-glocal-packages.txt" && readonly package_list_file
+
+suggest_setup_path() {
+  cat <<'EOF' | ilog
+==> Execute below if needed.
+    echo 'export PATH=$HOME/.npm-global/bin:$PATH' >>~/.bashrc
+EOF
+}
+
+main() {
+  if [[ -e $global_npm_dir ]]; then
+    wlog "==> $global_npm_dir already exists."
+    return
+  fi
+  mkdir -p "$global_npm_dir"
+
+  ilog "==> Saving existing global npm packages to $package_list_file.."
+  npm ls -g --depth=0 --json |
+    jq -r '.dependencies | keys | .[]' >$package_list_file
+
+  wlog "==> Below package will be installed to $global_npm_dir.."
+  cat <$package_list_file | sed 's/^/  /'
+
+  # 新しいディレクトリパスを使用するようにnpmを設定
+  npm config set prefix "$global_npm_dir" # ~/.npmrc に設定が追加される
+
+  ilog "==> Installing global npm packages to $global_npm_dir.."
+  xargs npm install -g <$package_list_file
+
+  suggest_setup_path
+}
+main "$@"
