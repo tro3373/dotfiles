@@ -1,0 +1,85 @@
+#!/usr/bin/env -S bash -euo pipefail
+
+# gh_pr_review_tasks - GitHub PR のレビューコメントからタスクを表示
+command_name=$(basename "$0") && readonly command_name
+
+usage() {
+  cat <<EOF
+Usage: $command_name <pr_number> [--all]
+  Extract and display task files referenced in PR review comments
+
+  Examples:
+    $command_name 145
+EOF
+}
+
+fire_comments() {
+  # ファイルへのレビューコメント
+  # gh api "repos/${repo}/pulls/${pr_number}/comments" --jq '.[] | {user: .user.login, body: .body}' 2>/dev/null || true
+  # コードに対するレビューコメントのみ取得（pathフィールドが存在するもの）
+  gh api "repos/${repo}/pulls/${pr_number}/comments" --jq '.[] | select(.path != null) | {user: .user.login, body: .body, path: .path, line: .line, side: .side, diff_hunk: .diff_hunk}' 2>/dev/null || true
+  # PRレビューのコメント
+  gh api "repos/${repo}/pulls/${pr_number}/reviews" --jq '.[] | select(.body != null and .body != "") | {user: .user.login, body: .body}' 2>/dev/null || true
+  # イシューコメント（PR全体へのコメント）
+  gh api "repos/${repo}/issues/${pr_number}/comments" --jq '.[] | {user: .user.login, body: .body}' 2>/dev/null || true
+}
+
+main() {
+  # 引数チェック
+  if [[ $# -lt 1 ]]; then
+    usage
+    elog "==> Error: PR number is required."
+  fi
+
+  pr_number="$1"
+
+  # 無視するパターンの配列
+  ignore_patterns=(
+    '^## Pull Request Overview.*$'
+    '^## Code Review.*$'
+    '^## Summary of Changes.*$'
+  )
+
+  repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+
+  ilog "==> 📋 Fetching PR #${pr_number} code review comments..."
+  # コードレビューコメントのみ取得
+  fire_comments |
+    jq -s '.' |
+    jq -r '.[] | @json' |
+    while IFS= read -r json_line; do
+      body=$(echo "$json_line" | jq -r '.body')
+      # 無視パターンのチェック
+      skip=false
+      for pattern in "${ignore_patterns[@]}"; do
+        if [[ $body =~ $pattern ]]; then
+          skip=true
+          break
+        fi
+      done
+      [[ $skip == true ]] && continue
+      [[ -z $body ]] && continue
+      ## Summary of Changes
+      user=$(echo "$json_line" | jq -r '.user')
+      path=$(echo "$json_line" | jq -r '.path // ""')
+      line=$(echo "$json_line" | jq -r '.line // ""')
+      side=$(echo "$json_line" | jq -r '.side // ""')
+      ref=
+      [[ -n $path ]] && ref="${path}"
+      [[ -n $line ]] && ref="${ref}#L${line}"
+      [[ -n $side ]] && ref="${ref} (${side})"
+      [[ -n $ref ]] && ref="\`${ref}\`"
+
+      # Markdown形式でタスクリストを出力（ファイルパスと行番号付き）
+      echo "- [ ] 📝 ${ref} by 👤 ${user}"
+
+      # bodyの各行に2スペースのインデントを追加
+      while IFS= read -r line; do
+        [[ -z $line ]] && continue
+        echo "  ${line}"
+      done <<<"$body"
+      echo ""
+    done
+  ilog "✅ Task extraction complete!"
+}
+main "$@"
