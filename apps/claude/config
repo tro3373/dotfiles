@@ -3,7 +3,7 @@
 install_common() {
   exe cd "$HOME"
   normal_install
-  suggested_install
+  suggest
 }
 
 normal_install() {
@@ -11,34 +11,16 @@ normal_install() {
   exe asdf reshim
 }
 
-suggested_install() {
+suggest() {
   if [[ -e ~/.npm-global ]]; then
     return
   fi
-
-  local package_list_file="$HOME/npm-glocal-packages.txt"
-  # まず、既存のグローバルパッケージのリストを後で移行するために保存
-  exe "npm list -g --depth=0 >$package_list_file"
-  # グローバルパッケージ用のディレクトリを作成
-  exe mkdir -p ~/.npm-global
-  # 新しいディレクトリパスを使用するようにnpmを設定
-  exe npm config set prefix ~/.npm-global
-  # # 注意：~/.bashrcを、お使いのシェルに適した~/.zshrc、~/.profile、または他の適切なファイルに置き換え
-  # echo 'export PATH=~/.npm-global/bin:$PATH' >>~/.bashrc
-  # # 新しいPATH設定を適用
-  # source ~/.bashrc
-  # 新しい場所にClaude Codeを再インストール
-  exe npm install -g @anthropic-ai/claude-code
-  exe asdf reshim
-  # オプション：以前のグローバルパッケージを新しい場所に再インストール
-  # ~/npm-global-packages.txtを見て、保持したいパッケージをインストール
-  # npm install -g package1 package2 package3...
-  log "==> Re install packages. OLD packages => $package_list_file"
+  log "==> Execute 'setup_npm_global' first and Re-Install."
 }
 
-install_mac() {
-  exe brew install --cask claude
-}
+# install_mac() {
+#   exe brew install --cask claude
+# }
 
 setting_common() {
   log "==> claude"
