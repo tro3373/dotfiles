@@ -8,7 +8,8 @@ install_common() {
   # _cmd="curl -sSfL $_install_url | sh -s -- -b $(go env GOPATH)/bin $_latest_tag"
   # exe "$_cmd"
   # exe golangci-lint --version
-  install_via_os_default
+  # install_via_os_default
+  go_install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 }
 setting_common() { no_settings; }
 setting_wsl() { no_settings; }
