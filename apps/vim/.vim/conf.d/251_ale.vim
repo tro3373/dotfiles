@@ -139,7 +139,9 @@ let g:ale_go_gometalinter_options = '--enable=gosimple --enable=staticcheck'
 " let g:ale_go_staticcheck_options = '-checks=all,-ST1000,-ST1003,-ST1016'
 " ST1020: - The documentation of an exported function should start with the function's name
 " エクスポートされた関数のドキュメンテーションコメントは、その関数の名前で始まるべき
-let g:ale_go_staticcheck_options = '-checks=all,-ST1000'
+" QF1008: - Omit embedded fields from selector expression
+" 埋め込みフィールドをセレクター式から省略する
+let g:ale_go_staticcheck_options = '-checks=all,-ST1000,-QF1008'
 
 " Shell
 " SC1090: Use of uninitialized value. This warning is triggered when a shell script uses a variable that is not set.

@@ -683,3 +683,6 @@ snippet commmmm
 	#   -2: 2番目のファイルにのみ存在する行を表示しない
 	#  -12: 両方のファイルに存在する行を表示
 	comm -12 "$\1" "$\2"
+
+snippet empty_dirrr
+	find ./path/to/ -type f -print -quit | grep -q . || return

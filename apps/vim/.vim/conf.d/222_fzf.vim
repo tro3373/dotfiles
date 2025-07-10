@@ -18,7 +18,7 @@ endif
 let $FZF_DEFAULT_OPTS="--ansi --preview-window 'right:50%' --layout reverse --preview 'bat --color=always --style=header,grid --line-range :500 {}'"
 
 " ウィンドウサイズ変更したい場合
-" let g:fzf_layout = { 'window': { 'width': 1.0, 'height': 1.0, 'yoffset': 0.5, 'xoffset': 0.5, 'border': 'sharp' } }
+let g:fzf_layout = { 'window': { 'width': 1.0, 'height': 1.0, 'yoffset': 0.5, 'xoffset': 0.5, 'border': 'sharp' } }
 
 " 【解説】開発ライブ実況 #1 (Vim / Go) 編 by メルペイ Architect チーム Backend エンジニア #mercari_codecast | メルカリエンジニアリング
 " https://engineering.mercari.com/blog/entry/mercari_codecast_1/
@@ -27,6 +27,7 @@ function! s:find_rip_grep(q, d) abort
   if a:d == ''
     let l:target_dir = GetGitRoot()
   endif
+  " fzf#vim#with_preview で ctrl+h/l で左右するようにできないか？
   call fzf#vim#grep(
       \   'rg --ignore-file ~/.ignore --glob "!.git/" --column --line-number --no-heading --hidden --smart-case "'.a:q.'" '.l:target_dir,
       \   1,
