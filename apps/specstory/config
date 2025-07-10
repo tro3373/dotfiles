@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+install_common() {
+  # exe "curl -fSsL https://raw.githubusercontent.com/specstoryai/getspecstory/refs/heads/main/install.sh | bash"
+  _repo=specstoryai/getspecstory
+  _tag=$(github_latest_release_tag $_repo)
+  _name="SpecStoryCLI_$(uname -s)_$(uname -m).tar.gz"
+  _url="https://github.com/$_repo/releases/download/$_tag/$_name"
+  _tmp_dir=$(mktemp -d)
+  exe "curl -fSsL \"$_url\" | tar -xzf - -C \"$_tmp_dir\""
+  exe "sudo mv \"$_tmp_dir/specstory\" /usr/local/bin/"
+}
+install_mac() {
+  exe brew tap specstoryai/tap
+  exe brew update
+  exe brew install specstory
+  exe specstory --version
+}
