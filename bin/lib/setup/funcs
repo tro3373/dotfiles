@@ -401,13 +401,14 @@ cd_work() {
 
 github_latest_release_tag() {
   local _repo="$1"
-  curl -fsSL "https://github.com/$_repo/tags" |
-    grep -E "href=\"/$_repo/releases/tag/" |
-    grep /tag/v |
-    head -1 |
-    sed -e 's,^.*href=,,g' |
-    cut -d\" -f2 |
-    sed -e "s,/$_repo/releases/tag/,,g"
+  # curl -fsSL "https://github.com/$_repo/tags" |
+  #   grep -E "href=\"/$_repo/releases/tag/" |
+  #   grep /tag/v |
+  #   head -1 |
+  #   sed -e 's,^.*href=,,g' |
+  #   cut -d\" -f2 |
+  #   sed -e "s,/$_repo/releases/tag/,,g"
+  gh release view --repo "$_repo" --json tagName -q .tagName
 }
 
 # TODO: gh release download -R suzuki-shunsuke/tfcmt v4.14.4 -p tfcmt_linux_amd64.tar.gz
