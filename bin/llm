@@ -1,10 +1,13 @@
 #!/usr/bin/env -S bash -e
 
 command_name=$(basename "$0") && readonly command_name
-readonly depends=(claude tgpt gemini-cli gemini)
+readonly depends=(gemini-cli tgpt claude gemini)
 add_args() { args+=("$@"); }
 args=()
-mode=tgpt
+cmd=
+provider=
+model=
+key=
 
 usage() {
   cat <<EOF
@@ -15,9 +18,12 @@ $command_name - LLM command line interface.
   Usage:
       $command_name [option]
     Options
-      -h|--help : Show this usage
-      --mode    : Specify the LLM mode (default: tgpt)
-                  Available modes: gemini-cli, tgpt, claude
+      -h|--help     : Show this usage
+      -c|--cmd      : Specify the LLM cmd (default: tgpt)
+                      Available modes: gemini-cli, tgpt, claude, gemini
+      -p|--provider : Specify the provider for tgpt (default: gemini)
+      -m|--model    : Specify the model to use
+      -k|--key      : Specify the API key for the provider
 
 EOF
 }
@@ -28,7 +34,10 @@ initialize() {
       -h | --help) usage && exit 0 ;;
       # -e) dummy= ;;
       # -f*|--file*) file=${1#*=} ;;
-      --mode) shift && mode="$1" ;;
+      --cmd | -c) shift && cmd="$1" ;;
+      --provider | -p) shift && provider="$1" ;;
+      --model | -m) shift && model="$1" ;;
+      --key | -k) shift && key="$1" ;;
       *) add_args "$1" ;;
     esac
     shift
@@ -49,41 +58,59 @@ fire() {
   fi
 }
 
+_tgpt() {
+  # ## aandrew-me/tgpt: AI Chatbots in terminal without needing API keys
+  # - https://github.com/aandrew-me/tgpt?tab=readme-ov-file
+  # ### Provider
+  # - deepseek, gemini, groq, isou, koboldai, ollama, openai, pollinations and phind(default)
+  # ### Provider Groq
+  # - Supported Models - GroqDocs
+  #   - https://console.groq.com/docs/models
+  # provider=groq model=gemma2-9b-it API_KEY=$GROQ_API_KEY
+  # provider=gemini API_KEY=$GEMINI_API_KEY model=gemini-2.5-flash-preview-05-20
+  # provider=gemini API_KEY=$GEMINI_API_KEY model=gemini-2.5-flash-lite-preview-06-17
+  if [[ -z $provider ]]; then
+    provider=gemini
+  fi
+  if [[ $provider == "gemini" ]]; then
+    [[ -z $model ]] && model=$GEMINI_MODEL
+    [[ -z $key ]] && key=$GEMINI_API_KEY
+  fi
+  if [[ $provider == "groq" ]]; then
+    [[ -z $model ]] && model=gemma2-9b-it
+    [[ -z $key ]] && key=$GROQ_API_KEY
+  fi
+  command tgpt --quiet --provider "$provider" --model "$model" --key "$key"
+}
+
+_claude() {
+  # tmp_org=/tmp/llm-claude-prompt-org.md
+  # cat - >$tmp_org
+  # command claude -p "$tmp_org の指示を実行して"
+  # command claude -p "標準入力からの指示を実行して."
+  command claude -p "Execute the instructions from standard input."
+}
+
+_gemini() {
+  command gemini -y -p ""
+}
+
+_eliben_gemini_cli() {
+  [[ -z $model ]] && model=$GEMINI_MODEL
+  [[ -z $key ]] && key=$GEMINI_API_KEY
+  command gemini-cli --model "$model" --key "$key" prompt -
+}
+
 _llm() {
-  # mode=gemini-cli
-  # mode=tgpt
-  # mode=claude
   cat - |
-    if [[ $mode == "tgpt" ]]; then
-      # ## aandrew-me/tgpt: AI Chatbots in terminal without needing API keys
-      # - https://github.com/aandrew-me/tgpt?tab=readme-ov-file
-      # ### Provider
-      # - deepseek, gemini, groq, isou, koboldai, ollama, openai, pollinations and phind(default)
-      # ### Provider Groq
-      # - Supported Models - GroqDocs
-      #   - https://console.groq.com/docs/models
-      # provider=groq model=gemma2-9b-it API_KEY=$GROQ_API_KEY
-      # provider=gemini API_KEY=$GEMINI_API_KEY model=gemini-2.5-flash-preview-05-20
-      # provider=gemini API_KEY=$GEMINI_API_KEY model=gemini-2.5-flash-lite-preview-06-17
-      provider=gemini API_KEY=$GEMINI_API_KEY model=$GEMINI_MODEL
-      if [[ -z $model ]]; then
-        model=gemini-2.5-flash-lite-preview-06-17
-      fi
-      command tgpt --quiet --provider $provider --model "$model" --key "$API_KEY"
-    elif [[ $mode == "claude" ]]; then
-      # tmp_org=/tmp/llm-claude-prompt-org.md
-      # cat - >$tmp_org
-      # command claude -p "$tmp_org の指示を実行して"
-      # command claude -p "標準入力からの指示を実行して."
-      command claude -p "Execute the instructions from standard input."
-    elif [[ $mode == "gemini" ]]; then
-      command gemini -p "Execute the instructions from standard input."
+    if [[ $cmd == "claude" ]]; then
+      _claude
+    elif [[ $cmd == "gemini" ]]; then
+      _gemini
+    elif [[ $cmd == "gemini-cli" ]]; then
+      _eliben_gemini_cli
     else
-      # model=gemini-2.5-flash-preview-05-20
-      #
-      # model=gemini-2.5-pro-preview-05-06
-      model=$GEMINI_MODEL
-      command gemini-cli prompt --model "$model" -
+      _tgpt
     fi
 }
 

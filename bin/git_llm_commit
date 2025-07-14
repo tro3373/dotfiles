@@ -1,27 +1,18 @@
 #!/usr/bin/env bash
 
 command_name=$(basename "$0") && readonly command_name
-tmp_msg=/tmp/"$command_name.txt" && readonly tmp_msg
-tmp_msg_json=/tmp/"$command_name.json" && readonly tmp_msg_json
 readonly depends=(jq llm)
 
-has() { command -v "${1}" >&/dev/null; }
-hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
-# hass "${depends[@]}"
-_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
-# shellcheck disable=SC2145
-_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
-log() { _log white "$*"; }
-info() { _log cyan "$*"; }
-warn() { _log yellow "$*"; }
-error() { _log red "$*" && exit 1; }
-
 trap_error() {
-  warn "[Error]: $(cat <"$tmp_msg")"
+  cat <<EOF | wlog
+[Error]: See below..
+- $tmp_prp
+- $tmp_commit_msg
+EOF
 }
 
 trap_exit() {
-  rm -f "$tmp_msg" "$tmp_msg_json"
+  rm -f "$tmp_prp" "$tmp_commit_msg"
 }
 
 cat_prompt() {
@@ -32,32 +23,34 @@ cat_prompt() {
     prp -ne -pm "Follow the instructions below in $llm_lang" gen-git-commit-message.md$
 }
 
-genai() {
-  cat_prompt |
-    tee >(cat >"$tmp_msg") |
-    llm |
-    tr -d '\n' |
-    grep -m 1 -Eo '\{\s*"(subject|body)".+}' |
-    jq >"$tmp_msg_json"
-}
+# genai() {
+#   cat_prompt |
+#     tee >(cat >"$tmp_msg") |
+#     # llm |
+#     llm --mode gemini |
+#     tr -d '\n' |
+#     grep -m 1 -Eo '\{\s*"(subject|body)".+}' |
+#     jq >"$tmp_msg_json"
+# }
 
 main() {
   mode=en
   [[ $1 == --ja ]] && mode=ja
   [[ $1 == --help ]] && echo "Usage: $command_name [--ja]" && exit 0
   hass "${depends[@]}"
+
+  # もしコミットする変更がなければエラーを出力して終了
+  git diff --cached --quiet && elog "==> No changes to commit"
   set -eu
+
+  tmp_prp=$(mktemp)
+  tmp_commit_msg="$tmp_prp.commit_msg"
   trap trap_error ERR
   trap trap_exit EXIT
-  # もしコミットする変更がなければエラーを出力して終了
-  git diff --cached --quiet && error "==> No changes to commit"
-
-  genai
-
-  local subject body
-  subject=$(jq -r '.subject' "$tmp_msg_json")
-  body=$(jq -r '.body' "$tmp_msg_json")
-  # コミットメッセージを設定しつつエディタで開く
-  git commit --edit -m "$subject" -m "$body"
+  cat_prompt >"$tmp_prp"
+  cat <"$tmp_prp" |
+    llm |
+    sed -e 's/\r//g' -e 's/^M//g' -e 's/^```//' -e 's/```$//' >"$tmp_commit_msg"
+  git commit -e -F "$tmp_commit_msg"
 }
 main "$@"
