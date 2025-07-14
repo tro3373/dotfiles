@@ -130,8 +130,10 @@ update_node() {
     return
   fi
 
-  ilog "=> Installing updated packages: $packages"
-  $dummy npm -g install "$packages"
+  for pkg in $packages; do
+    ilog "=> Installing updated packages: $pkg"
+    $dummy npm -g install "$pkg"
+  done
 }
 
 main() {
