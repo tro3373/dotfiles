@@ -61,7 +61,7 @@ execute_curl() {
   if [[ ! ${commands[*]} =~ -H[[:space:]]*Origin: ]]; then
     commands+=(-H "Origin: localhost:8080")
   fi
-  if [[ $method == POST ]]; then
+  if [[ $method == POST || $method == PUT || $method == PATCH ]]; then
     commands+=(-d @-)
   fi
   dump_request
