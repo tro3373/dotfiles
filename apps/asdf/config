@@ -1,9 +1,23 @@
 #!/usr/bin/env bash
 
 install_common() {
-  go_install github.com/asdf-vm/asdf/cmd/asdf@v0.16.2
+  # go_install github.com/asdf-vm/asdf/cmd/asdf@v0.16.2
+  platform=$(get_platform)
+  arch=$(get_arch)
+  dl_gh_release asdf-vm/asdf latest "*${platform}-${arch}.tar.gz"
+  exe 'tar -xzf asdf-*.tar.gz'
+  exe 'sudo cp asdf /usr/local/bin/'
 }
-setting_common() {
-  exe mkdir -p "$HOME/.asdf/completions"
-  exe asdf completion zsh | cat_tee "$HOME/.asdf/completions/_asdf"
-}
+# install_arch() {
+#   cd_work
+#   github https://aur.archlinux.org/asdf-vm.git
+#   exe makepkg -sf
+#   exe "sudo pacman -U --noconfirm asdf-vm-*.pkg.tar.zst"
+# }
+# install_mac() {
+#   def_install coreutils git bash
+# }
+# setting_common() {
+#   exe mkdir -p "$HOME/.asdf/completions"
+#   exe asdf completion zsh | cat_tee "$HOME/.asdf/completions/_asdf"
+# }

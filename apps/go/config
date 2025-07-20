@@ -38,6 +38,8 @@ install_arch() {
   else
     install_via_os_default
   fi
+  exe export GOPATH="$HOME"/go
+  exe export PATH="$GOPATH/bin:$PATH"/go
 }
 
 install_mac() {

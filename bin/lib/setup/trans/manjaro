@@ -21,7 +21,7 @@ pre_setup() {
 
 _setup_inode_max() {
   echo 'fs.inotify.max_user_watches=1048576' | sudo_tee /etc/sysctl.d/40-max-user-watches.conf
-  echo cat /proc/sys/fs/inotify/max_user_watches
+  exe cat /proc/sys/fs/inotify/max_user_watches
 }
 
 load_update_arg_apps() {

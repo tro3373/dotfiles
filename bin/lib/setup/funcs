@@ -8,9 +8,9 @@ readonly _core_apps=(
 )
 # ag pt anyenv nkf
 readonly _core_apps_additional=(
-  nvim go cargo asdf docker
+  nvim fzf gh asdf go cargo docker
   sheldon ghq mmv jq yq hugo his
-  neofetch fzf htop gh exa bat gclip gomi ctags cwebp nvr
+  neofetch htop exa bat gclip gomi ctags cwebp nvr
   # apps for shell
   shellcheck shfmt
   # apps for go
@@ -77,6 +77,20 @@ has_npm() {
 # TODO change func name
 isexist() { find "$*" >&/dev/null; }
 
+get_platform() {
+  local p
+  p="$(uname -s)"
+  echo "${p,,}"
+}
+get_arch() {
+  local a
+  a="$(uname -m)"
+  case "$a" in
+    x86_64) a="amd64" ;;
+    aarch64 | arm64) a="arm64" ;;
+  esac
+  echo "$a"
+}
 is_arch() { [[ $DETECT_OS == "arch" ]]; }
 is_arm() { uname -m | grep -E "(arm|aarch64)" >&/dev/null; }
 is_x86_64() { uname -m | grep x86_64 >&/dev/null; }
@@ -409,6 +423,18 @@ github_latest_release_tag() {
   #   cut -d\" -f2 |
   #   sed -e "s,/$_repo/releases/tag/,,g"
   gh release view --repo "$_repo" --json tagName -q .tagName
+}
+
+dl_gh_release() {
+  local _repo="$1"
+  local _ver="$2"
+  local _filter="${3:-*.tar.gz}"
+  if [[ $_ver == latest ]]; then
+    _ver=$(github_latest_release_tag "$_repo")
+  fi
+  cd_work
+  # 最新リリースのアーカイブ（例: asdf.tar.gz）をダウンロード
+  exe gh release download --clobber "$_ver" --repo "$_repo" --pattern "$_filter"
 }
 
 # TODO: gh release download -R suzuki-shunsuke/tfcmt v4.14.4 -p tfcmt_linux_amd64.tar.gz
