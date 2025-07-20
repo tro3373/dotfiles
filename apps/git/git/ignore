@@ -1,4 +1,6 @@
 .trash
+.tasks.md
+.done.md
 
-**/docs/Tasks.md
 **/.claude/settings.local.json
+**/CLAUDE.local.md
