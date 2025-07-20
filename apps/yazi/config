@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+install_common() { not_supported; }
+install_arch() {
+  def_install yazi ffmpeg 7zip jq poppler fd ripgrep fzf zoxide imagemagick resvg
+}
+install_mac() {
+  def_install yazi ffmpeg sevenzip jq poppler fd ripgrep fzf zoxide resvg imagemagick font-symbols-only-nerd-font
+}
