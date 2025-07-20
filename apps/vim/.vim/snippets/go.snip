@@ -771,8 +771,12 @@ snippet	containsss_manual
 # G301: Poor file permissions used when creating a directory
 # G302: Poor file permissions used with chmod
 # G306: Poor file permissions used when writing to a new file
-snippet	ignoreee
+snippet	ignore_goseccc
 	//#nosec G301 G302 G306
+snippet	ignore_golangcilinttt
+	//nolint:gosec,errcheck,revive,stylecheck,staticcheck,unused,gosimple,misspell,prealloc,scopelint,unconvert
+snippet	ignore_staticcheckkk
+	//lint:ignore <チェックID> <理由（必須）>
 
 snippet	deep_copyyy
 	func DeepCopy(src interface{}, dst interface{}) (err error) {

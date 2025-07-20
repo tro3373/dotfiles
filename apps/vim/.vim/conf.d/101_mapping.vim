@@ -21,6 +21,9 @@ inoremap <silent> jk <ESC>
 " inoremap <C-h> <Left>
 " inoremap <C-l> <Right>
 
+" 現在のファイルのフルパスを挿入
+inoremap <C-f> <C-r>=expand('%:p')<CR>
+
 nnoremap <C-u> 10k
 nnoremap <C-d> 10j
 nnoremap <C-b> 20k

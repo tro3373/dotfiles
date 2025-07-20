@@ -67,6 +67,7 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'mattn/ctrlp-filer'                                " Plugins for ctrlp.vim Filer (After start, Ctrl+D will not work bug occure.)
   " Plug 'Shougo/vimfiler'                                  " :VimFiler
   Plug 'tro3373/vaffle.vim'                               " SimpleFiler nouse
+  " Plug 'yukimura1227/vim-yazi'
   " Plug 'scrooloose/nerdtree', {
   "   \ 'on':  ['NERDTreeToggle'] }                         " NERDTree tree view コマンド実行時に読み込む
   " Plug 'lambdalisue/fern.vim'                             " TODO: fern.vim is a plugin to manage files and directories in Vim
@@ -227,9 +228,9 @@ call plug#begin('$HOME/.vim/plugged')
     " Plug 'vim-denops/denops.vim'
     " Plug 'nekowasabi/claudecode.vim'
     " ================================================================
-    " TODO greggh/claude-code
-    Plug 'nvim-lua/plenary.nvim'
-    Plug 'greggh/claude-code.nvim'
+    " MEMO: NoNeedded
+    " Plug 'nvim-lua/plenary.nvim'
+    " Plug 'greggh/claude-code.nvim'
     " ================================================================
     " TODO: https://github.com/ravitemer/mcphub.nvim?tab=readme-ov-file
 

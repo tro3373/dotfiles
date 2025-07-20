@@ -83,6 +83,8 @@ snippet	ifeqqqq
 	else
 		VAULT := $(VAULT_PRD)
 	endif
+snippet iffilterrr
+	@$(eval stage := $(if $(filter local,$(stage)),dev,$(stage)))
 
 snippet	variable_argssss
 	_subcommand-%:
