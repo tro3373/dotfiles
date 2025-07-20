@@ -38,7 +38,9 @@ call plug#begin('$HOME/.vim/plugged')
   " View
   " =================================================================
   " color-scheme
-  Plug 'romainl/Apprentice'
+  Plug 'romainl/Apprentice', { 'commit': 'cb051ec' }  " vim version (before ctermul support)
+  " Plug 'rktjmp/lush.nvim'
+  " Plug 'adisen99/apprentice.nvim' " nvim version
   " Plug 'morhetz/gruvbox'
   " Plug 'w0ng/vim-hybrid'
   " Plug 'chriskempson/vim-tomorrow-theme'
