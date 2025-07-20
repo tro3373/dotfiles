@@ -139,7 +139,7 @@ generate_for_dir() {
     rel_src_f_for_log=${src_f/$lib_dir\//}
     log "==> Generating template from $rel_src_f_for_log.."
     $dummy cp -p "$src_f" "$dst_f"
-  done < <(find "$src_dir/" -type f)
+  done < <(find "$src_dir/" -type f ! -name '*.bk*')
 }
 
 generate_additional_for_go() {
