@@ -1,13 +1,3 @@
-alias_with_compdef() {
-  local cmd=$1
-  if ! has $cmd; then
-    return
-  fi
-  local alias=$2
-  local defname="${3:-_files}"
-  alias $alias=$cmd
-  compdef $defname $alias=$cmd
-}
 ##############################################
 # Alias
 ##############################################
@@ -111,6 +101,16 @@ fi
 if has nvim; then
   alias vim="nvim"
 fi
+alias_with_compdef() {
+  local cmd=$1
+  if ! has $cmd; then
+    return
+  fi
+  local alias=$2
+  local defname="${3:-_files}"
+  alias $alias=$cmd
+  compdef $defname $alias=$cmd
+}
 alias_with_compdef terraform tf
 # alias v=vim
 alias vi=vim
@@ -123,9 +123,12 @@ alias_with_compdef docker d
 alias_with_compdef systemctl s _systemctl
 alias_with_compdef make m _make
 # alias_with_compdef code c
+# if has claude && has specstory; then
+#   alias claude="specstory claude"
+# fi
 alias_with_compdef claude c
 alias_with_compdef cursor r
-alias_with_compdef trash t
+alias_with_compdef tasks t
 alias_with_compdef flutter fl
 alias_with_compdef speedtest st
 alias codeimg="germanium"
