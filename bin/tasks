@@ -1,0 +1,9 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  git_root=$(git rev-parse --show-toplevel)
+  target_file="$git_root/.tasks.md"
+  [[ ! -e $target_file ]] && touch "$target_file"
+  echo "$target_file" | v
+}
+main "$@"
