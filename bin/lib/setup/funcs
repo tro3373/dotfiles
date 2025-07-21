@@ -618,11 +618,12 @@ cat_do() {
     cat -
     log "------------------------------------"
   else
-    log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    printf "> Executing: %s\n" "$*"
-    log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    # MEMO: This debug log not work
+    # log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    # printf "> Executing: %s\n" "$*"
+    # log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     # shellcheck disable=SC2294
-    cat - | eval "$@" >/dev/null
+    cat - | "$@" >/dev/null
   fi
 }
 

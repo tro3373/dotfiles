@@ -17,7 +17,15 @@ install_common() {
 # install_mac() {
 #   def_install coreutils git bash
 # }
-# setting_common() {
-#   exe mkdir -p "$HOME/.asdf/completions"
-#   exe asdf completion zsh | cat_tee "$HOME/.asdf/completions/_asdf"
-# }
+setting_common() {
+  exe mkdir -p "$HOME/.asdf/completions"
+  _cat_asdf_completions | cat_tee "$HOME/.asdf/completions/_asdf"
+}
+
+_cat_asdf_completions() {
+  if has asdf; then
+    asdf completion zsh
+    return
+  fi
+  echo "Execute result: asdf completion zsh"
+}
