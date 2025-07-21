@@ -19,13 +19,26 @@ install_common() {
 # }
 setting_common() {
   exe mkdir -p "$HOME/.asdf/completions"
-  _cat_asdf_completions | cat_tee "$HOME/.asdf/completions/_asdf"
+  exe asdf completion zsh | cat_tee "$HOME/.asdf/completions/_asdf"
+
+  setup_asdf_lang golang
+  setup_asdf_lang nodejs
+  setup_asdf_lang python
+  setup_asdf_lang terraform
 }
 
-_cat_asdf_completions() {
-  if has asdf; then
-    asdf completion zsh
-    return
+setup_asdf_lang() {
+  has asdf || return
+  p="$1"
+  v="$2"
+  grep -q "$p" "$HOME/.tool-versions" || return
+  if ! asdf plugin list | grep -q "$p"; then
+    exe asdf plugin add "$p"
   fi
-  echo "Execute result: asdf completion zsh"
+  if [[ -z $v ]]; then
+    v=$(asdf latest "$p")
+  fi
+  exe asdf list "$p" "$v" >&/dev/null && return
+  exe asdf install "$p" "$v"
+  exe "cd $HOME && asdf set $p $v"
 }
