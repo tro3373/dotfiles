@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 _font=Osaka-Mono.otf
-_dst_system_font_path=/usr/share/fonts/osaka-mono/$_font
+_dst_system_font_dir_path=/usr/share/fonts/osaka-mono
+_dst_system_font_path=$_dst_system_font_dir_path/$_font
 
 is_installed() {
   if is_mac; then
@@ -13,6 +14,7 @@ is_installed() {
   test -e "$_dst_system_font_path"
 }
 install_common() {
+  [[ ! -e $_dst_system_font_dir_path ]] && exe sudo mkdir -p "$_dst_system_font_dir_path"
   # shellcheck disable=SC2154
   exe sudo cp -v "$app_dir/$_font" "$_dst_system_font_path"
 }
