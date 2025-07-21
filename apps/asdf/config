@@ -18,13 +18,17 @@ install_common() {
 #   def_install coreutils git bash
 # }
 setting_common() {
-  exe mkdir -p "$HOME/.asdf/completions"
-  exe asdf completion zsh | cat_tee "$HOME/.asdf/completions/_asdf"
-
   setup_asdf_lang golang
   setup_asdf_lang nodejs
   setup_asdf_lang python
   setup_asdf_lang terraform
+
+  setup_completion
+}
+
+setup_completion() {
+  exe mkdir -p "$HOME/.asdf/completions"
+  exe asdf completion zsh | cat_tee "$HOME/.asdf/completions/_asdf"
 }
 
 setup_asdf_lang() {
