@@ -96,7 +96,7 @@ add_worktree() {
   git worktree add -b "$branch" "$dst_dir" $commit_hash || {
     elog "Failed to add worktree to $dst_dir for branch '$branch'."
   }
-  : ln_ignored_if_needed
+  ln_ignored_if_needed
   ilog "==> Added worktree for branch '$branch' at '$dst_dir'."
 
   if [[ $switch -ne 1 ]]; then
