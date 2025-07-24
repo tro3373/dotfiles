@@ -101,6 +101,9 @@ fi
 if has nvim; then
   alias vim="nvim"
 fi
+if has aws; then
+  alias awsl='aws --endpoint-url=http://localhost:4566'
+fi
 alias_with_compdef() {
   local cmd=$1
   if ! has $cmd; then
