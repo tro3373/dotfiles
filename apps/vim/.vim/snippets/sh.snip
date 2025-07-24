@@ -437,8 +437,9 @@ snippet	initializzzz
 	has() { command -v "\${1}" >&/dev/null; }
 	hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
 	_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+	#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink "\$1"; }
 	# shellcheck disable=SC2145
-	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink "$1"; }
+	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
 	log() { _log white "$*"; }
 	info() { _log cyan "$*"; }
 	warn() { _log yellow "$*"; }
@@ -687,3 +688,6 @@ snippet commmmm
 
 snippet empty_dirrr
 	find ./path/to/ -type f -print -quit | grep -q . || return
+
+snippet indiret_variablesss
+	indirect_val () { echo "${!1}"; }
