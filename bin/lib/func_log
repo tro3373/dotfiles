@@ -1,23 +1,9 @@
 #!/usr/bin/env -S bash -e
 
 # MEMO: ilog/elog/wlog
-# - Loop process Notwork if If stdin exist:
-#   - ex)
-#     ls -la |
-#       while read -r line; do
-#         [[ -z $line ]] && continue
-#         [[ $line =~ ^#.* ]] && continue
-#         # WARN: this ilog stdin Vacuum ls outputs.
-#         ilog "hogehoge"
-#         # This work
-#         echo "hogehoge" | ilog
-#       done
 com_log() {
   local stdin
   stdin=
-  if [[ -p /dev/stdin ]]; then
-    stdin="$(cat <&0)"
-  fi
   # shellcheck disable=SC2145
   echo -n "$(date +"%Y-%m-%d %H:%M:%S") $stdin${@:2}" | ink "$1"
   # printf "%s %s%s\n" "$(date +"%Y-%m-%d %H:%M:%S")" "$stdin" "${@:2}" | ink "$1"

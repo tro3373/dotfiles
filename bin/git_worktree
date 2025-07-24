@@ -46,13 +46,14 @@ check() {
   commit_hash="${args[1]}"
 
   if [[ $mode == "add" && -z $branch ]]; then
-    cat <<EOF | elog
+    cat <<EOF | ink red
 ==> Specify a branch name to add a worktree for.
 ==> Exiting branch is..
 
 $(git branch -vv)
 
 EOF
+    exit 1
   fi
 }
 add_args() { args+=("$@"); }
@@ -74,12 +75,6 @@ list_worktrees() {
     [[ -z $brach_path ]] && continue
     [[ $brach_path =~ ^#.* ]] && continue
     echo cd "$brach_path"
-    # echo "cd $brach_path" |
-    #   tee > >(clip) |
-    #   {
-    #     cat -
-    #     echo "==> cd command clipped!"
-    #   } | ilog
   done < <(
     _select_worktrees "Switching directory.. Select worktree branches: " --no-multi
   )
@@ -120,7 +115,7 @@ ln_ignored_if_needed() {
       dst="$dst_dir/$line"
       dst_ln_dir="$(dirname "$dst")"
       [[ ! -e $dst_ln_dir ]] && mkdir -p "$dst_ln_dir"
-      echo "==> Linking $line" | ilog
+      ilog "==> Linking $line"
       ln -s "$src" "$dst"
     done
 }

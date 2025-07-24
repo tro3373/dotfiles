@@ -4,7 +4,7 @@ command_name=$(basename "$0") && readonly command_name
 readonly depends=(jq llm)
 
 trap_error() {
-  cat <<EOF | wlog
+  cat <<EOF | ink red
 [Error]: See below..
 - $tmp_prp
 - $tmp_commit_msg
@@ -24,9 +24,11 @@ cat_prompt() {
 }
 
 cat_commit_msg() {
+  # _model=gemini-2.5-flash-lite-preview-06-17
+  _model=gemini-2.5-flash-lite
   cat <"$tmp_prp" |
     # llm -c gemini |
-    llm -c gemini -m gemini-2.5-flash-lite-preview-06-17 |
+    llm -c gemini -m $_model |
     sed -e 's/\r//g' -e 's/^M//g' -e 's/^```//' -e 's/```$//' -e '/^Loaded cached credentials/d'
 }
 

@@ -4,7 +4,7 @@ global_npm_dir=$HOME/.npm-global && readonly global_npm_dir
 package_list_file="/tmp/npm-glocal-packages.txt" && readonly package_list_file
 
 suggest_setup_path() {
-  cat <<'EOF' | ilog
+  cat <<'EOF' | ink yellow
 ==> Execute below if needed.
     echo 'export PATH=$HOME/.npm-global/bin:$PATH' >>~/.bashrc
 EOF
