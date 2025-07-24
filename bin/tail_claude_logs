@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+main() {
+  set -eo pipefail
+  ymd=$(date +%Y%m%d)
+  find "$HOME"/.mo/.claude/logs -type f -name "*$ymd*" -print0 |
+    xargs -0 tail -F
+}
+main "$@"

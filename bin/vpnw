@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+command_name=$(basename "$0") && readonly command_name
+
+has() { command -v "${1}" >&/dev/null; }
+
+# args=()
+usage() {
+  cat <<EOF
+
+Run vpn connection via wireguard.
+
+  Usage:
+    $command_name [option]
+  Options
+    -h|--help   : Show this usage
+
+EOF
+}
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+    esac
+    shift
+  done
+}
+
+update_resolvconf() {
+  sudo resolvconf -u
+}
+
+restore_resolvconf() {
+  local target="/etc/resolv.conf"
+  local target_bk="/etc/resolv.conf.bk"
+  if [[ ! -e $target_bk ]]; then
+    elog "==> No backup for $target found."
+    return
+  fi
+  sudo cp -fv "$target_bk" "$target"
+}
+
+main() {
+  initialize "$@"
+  [[ $1 == "up" ]] && {
+    # restore_resolvconf
+    sudo wg-quick up wg0
+    update_resolvconf
+    sleep 1
+    restore_resolvconf
+    sudo wg-quick up wg0
+    return
+  }
+  [[ $1 == "down" ]] && {
+    sudo wg-quick down wg0
+    restore_resolvconf
+    return
+  }
+  sudo wg show
+}
+main "$@"
