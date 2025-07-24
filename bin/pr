@@ -1,40 +1,64 @@
-#!/usr/bin/env -S bash -e
+#!/usr/bin/env bash
 
+command_name=$(basename "$0") && readonly command_name
 readonly depends=(gh curl fzf jq llm)
+issue=
+target_tmp_dir=
+target_branch=
 
-has() { command -v "${1}" >&/dev/null; }
-hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
-_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
-# shellcheck disable=SC2145
-_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
-log() { _log white "$*"; }
-info() { _log cyan "$*"; }
-warn() { _log yellow "$*"; }
-error() { _log red "$*" && exit 1; }
+usage() {
+  cat <<EOF
 
-end() {
-  # rm -rf /tmp/pr
-  info "==> Done!"
+Make a pull request via llm from git diff and commit list.
+
+  Usage:
+      $command_name [option] [base_branch]
+    Options
+      -h|--help  : Show this usage
+      -i|--issue : Issue number to link with the PR
+      -d|--dir   : Specify target_tmp_dir
+
+EOF
+}
+
+check() { hass "${depends[@]}"; }
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      # -e) dummy= ;;
+      # -f*|--file*) file=${1#*=} ;;
+      # -f|--file) shift && file=$1 ;;
+      -i | --issue) shift && issue=$1 ;;
+      -d | --dir) shift && target_tmp_dir=$1 ;;
+      *) target_branch=$1 ;;
+    esac
+    shift
+  done
+  check
+  trap end 0 1 2 3 15
+  set -eo pipefail
 }
 
 find_target_branch_with_fetch() {
   branches=(develop main)
   current_branch=$(git rev-parse --abbrev-ref HEAD)
   if [[ $current_branch =~ ^(main|master)$ ]]; then
-    error "==> Current branch is $current_branch. Please checkout to other branch."
+    elog "==> Current branch is $current_branch. Please checkout to other branch."
   fi
   if [[ $current_branch == "develop" ]]; then
-    warn "==> Current branch is $current_branch. Local changes will be pushed to $current_branch."
-    warn "==> Press Enter to continue..(Cancel: Ctrl+C)"
+    wlog "==> Current branch is $current_branch. Local changes will be pushed to $current_branch."
+    wlog "==> Press Enter to continue..(Cancel: Ctrl+C)"
     read -r _
     branches=(main master)
   fi
 
   # Fetch the latest changes from the remote repository
-  info "==> Git fetching.."
+  ilog "==> Git fetching.."
   git fetch origin
 
-  info "==> Finding target branch.."
+  ilog "==> Finding target branch.."
   remote_branches=$(git ls-remote --heads origin)
   for b in "${branches[@]}"; do
     if echo -e "$remote_branches" | grep -q "refs/heads/$b"; then
@@ -49,7 +73,7 @@ cat_issue() {
 
 ## 関連Issue
 
-- 関連Issue: $issue
+- 関連Issue: #$issue
 
 EOF
 }
@@ -59,72 +83,76 @@ cat_commit_list() {
 
 ## コミット一覧
 
-$(sed -e 's/^/- /' /tmp/pr/commit_list)
+$(sed -e 's/^/- /' "$target_tmp_dir"/commit_list)
 
 EOF
 }
 
-check() {
-  hass "${depends[@]}"
-}
-
 create_pr_parts() {
-  mkdir -p /tmp/pr
-  info "==> Creating diff.."
-  git_diff_ignored "$target_branch"...HEAD >/tmp/pr/diff
-  info "==> Creating commit_list.."
-  git log --oneline "$target_branch"...HEAD >/tmp/pr/commit_list
+  mkdir -p "$target_tmp_dir"
+  ilog "==> Creating diff.."
+  git_diff_ignored "$target_branch"...HEAD >"$target_tmp_dir"/diff
+  ilog "==> Creating commit_list.."
+  git log --oneline "$target_branch"...HEAD >"$target_tmp_dir"/commit_list
 
-  if [[ ! -s /tmp/pr/diff ]]; then
-    warn "No changes"
+  if [[ ! -s $target_tmp_dir/diff ]]; then
+    wlog "No changes"
     exit 0
   fi
 
-  info "==> Creating messages.json.."
-  cat </tmp/pr/diff |
+  ilog "==> Creating messages.json.."
+  cat <"$target_tmp_dir"/diff |
     # head -200 |
-    prp -ne gen-git-pr-message.md$ >/tmp/pr/prompt.md
-  cat </tmp/pr/prompt.md |
-    llm >/tmp/pr/messages.json
+    prp -ne gen-git-pr-message.md$ >"$target_tmp_dir"/prompt.md
+  cat <"$target_tmp_dir"/prompt.md |
+    llm >"$target_tmp_dir"/messages.json
 
-  info "==> Creating title/body.."
-  jq -r '.title' /tmp/pr/messages.json >/dev/null 2>&1 || {
-    cat </tmp/pr/messages.json |
-      sed -e '/^```/d' -e '/```json/d' -e '/^$/d' >/tmp/pr/messages.json.bk
-    mv /tmp/pr/messages.json.bk /tmp/pr/messages.json
+  ilog "==> Creating title/body.."
+  jq -r '.title' "$target_tmp_dir"/messages.json >/dev/null 2>&1 || {
+    cat <"$target_tmp_dir"/messages.json |
+      sed -e '/^```/d' -e '/```json/d' -e '/^$/d' >"$target_tmp_dir"/messages.json.bk
+    mv "$target_tmp_dir"/messages.json.bk "$target_tmp_dir"/messages.json
   }
-  jq -r '.title' /tmp/pr/messages.json >/tmp/pr/title
-  jq -r '.body' /tmp/pr/messages.json >/tmp/pr/body
+  jq -r '.title' "$target_tmp_dir"/messages.json >"$target_tmp_dir"/title
+  jq -r '.body' "$target_tmp_dir"/messages.json >"$target_tmp_dir"/body
   if [[ -n $issue ]]; then
-    cat_issue >>/tmp/pr/body
+    cat_issue >>"$target_tmp_dir"/body
   fi
-  cat_commit_list >>/tmp/pr/body
+  cat_commit_list >>"$target_tmp_dir"/body
 }
 
 create_pr_with_push() {
-  info "==> Pushing commits.."
+  ilog "==> Pushing commits.."
   git push -u origin HEAD
-  info "==> Creating PR!.."
-  cat </tmp/pr/body | gh pr create --web --title "$(cat </tmp/pr/title)" --body-file -
+  _target_branch=${target_branch#origin/}
+  ilog "==> Creating PR!.."
+  echo -e "cat <$target_tmp_dir/body | gh pr create --base \"$_target_branch\" --web --title \"$(cat <"$target_tmp_dir"/title)\" --body-file -"
+  cat <"$target_tmp_dir"/body |
+    gh pr create \
+      --base "$_target_branch" \
+      --web \
+      --title "$(cat <"$target_tmp_dir"/title)" \
+      --body-file -
+}
+
+end() {
+  # rm -rf $target_tmp_dir
+  ilog "==> Done!"
 }
 
 main() {
-  local issue=$1
-  check
+  initialize "$@"
 
-  trap end 0 1 2 3 15
-  target_branch=$(find_target_branch_with_fetch)
   if [[ -z $target_branch ]]; then
-    error "==> No target branch found."
+    target_branch=$(find_target_branch_with_fetch)
+    if [[ -z $target_branch ]]; then
+      elog "==> No target branch found."
+    fi
   fi
-  info "==> Target branch: $target_branch"
+  ilog "==> Target branch: $target_branch"
 
-  create_parts=1
-  if [[ $issue == "/tmp" ]]; then
-    create_parts=0
-  fi
-
-  if [[ $create_parts -eq 1 ]]; then
+  if [[ -z $target_tmp_dir ]]; then
+    target_tmp_dir=/tmp/pr
     create_pr_parts
   fi
   create_pr_with_push
