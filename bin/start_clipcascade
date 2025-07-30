@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+port=65535
+_list() {
+  ilog "==> Listing running docker containers..."
+  docker ps
+}
+_start() {
+  ilog "==> Starting ClipCascade..."
+  wlog "====> Using port $port....."
+  docker run --rm -d \
+    --name clipcascade \
+    -p "$port:8080" \
+    -e CC_MAX_MESSAGE_SIZE_IN_MiB=1 \
+    -v "$HOME"/.data/clipcascade:/database \
+    sathvikrao/clipcascade
+}
+_stop() {
+  ilog "==> Stopping ClipCascade..."
+  docker stop clipcascade
+}
+main() {
+  set -eo pipefail
+  if [[ $1 == "stop" || $1 == "down" ]]; then
+    _stop
+    _list
+    return
+  fi
+  _start
+  _list
+}
+main "$@"
