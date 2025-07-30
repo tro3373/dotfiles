@@ -196,6 +196,9 @@ let g:ale_python_mypy_options = '--ignore-missing-imports --follow-imports=skip'
 " DL3018: Pin versions in apk add
 let g:ale_dockerfile_hadolint_options = '--ignore DL3008 --ignore DL3018'
 
+" Lua
+" 631: Line is to long (over 120 characters)
+let g:ale_lua_luacheck_options = '--ignore 631'
 
 " Disable for minified code and enable whitespace trimming
 " Disable md linter because so slow.

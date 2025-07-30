@@ -206,7 +206,9 @@ call plug#begin('$HOME/.vim/plugged')
     " =================================================================
     " AI Assist
     " =================================================================
-    Plug 'github/copilot.vim'
+    Plug 'github/copilot.vim'                                     " GitHub Copilot for Vim
+    Plug 'nvim-lua/plenary.nvim'                                  " Dependency for CopilotChat
+    Plug 'CopilotC-Nvim/CopilotChat.nvim'                         " Copilot Chat for Neovim
     " ================================================================
     " TODO: yetone/avante.nvim
     " " Deps
@@ -236,10 +238,6 @@ call plug#begin('$HOME/.vim/plugged')
     " ================================================================
     " TODO: https://github.com/ravitemer/mcphub.nvim?tab=readme-ov-file
 
-
-    " TODO
-    " Plug 'nvim-lua/plenary.nvim'                              " Dependency for CopilotChat
-    " Plug 'CopilotC-Nvim/CopilotChat.nvim', { 'branch': 'canary' }
 
     Plug 'dense-analysis/ale'                                 " 構文解析(非同期)
     Plug 'maximbaz/lightline-ale'                             " ALE indicator for the lightline vim plugin.

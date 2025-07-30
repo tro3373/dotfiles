@@ -212,14 +212,12 @@ snippet	logsettt
 	error() { log "$*" && exit 1; }
 
 snippet	logcolorrr
-	readonly depends=(curl fzf jq)
 	has() { command -v "\${1}" >&/dev/null; }
 	hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
-	# hass "${depends[@]}"
 	_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
 	#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink "\$1"; }
 	# shellcheck disable=SC2145
-	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "\$1"; }
 	log() { _log white "$*"; }
 	info() { _log cyan "$*"; }
 	warn() { _log yellow "$*"; }
@@ -382,22 +380,6 @@ snippet	dummyset
 	initialize "$@"
 	is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
 
-snippet	initialize
-	initialize() {
-		while true; do
-			[[ -z \$1 ]] && break
-			case "\$1" in
-				-h|--help) usage && exit 0	;;
-				#-f*|--file*) file=${1#*=} ;;
-				#-f|--file) shift && file=\$1 ;;
-				*) add_args "\$1"						 ;;
-			esac
-			shift
-		done
-		check
-		# all_args="${args[*]}"
-	}
-
 snippet	reado
 alias	redo
 alias	red
@@ -433,31 +415,29 @@ snippet	initializzzz
 			shift
 		done
 		check
+		set -euo pipefail
 	}
+	check() { hass "${depends[@]}"; }
+	add_args() { args+=("$@"); }
+	# is_dummy() { [[ -n "$dummy" ]]; }
 	has() { command -v "\${1}" >&/dev/null; }
 	hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
 	_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
-	#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink "\$1"; }
 	# shellcheck disable=SC2145
-	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "\$1"; }
 	log() { _log white "$*"; }
 	info() { _log cyan "$*"; }
 	warn() { _log yellow "$*"; }
 	error() { _log red "$*" && exit 1; }
-	# is_dummy() { [[ -n "$dummy" ]]; }
-	add_args() { args+=("$@"); }
-	check() {
-		hass "${depends[@]}"
-	}
-	main() {
-		initialize "$@"
-		for arg in "${args[@]}"; do
-			echo "Arguments: $arg"
-		done
-		# echo $file
-		# is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
-	}
-	main "$@"
+	# main() {
+	# 	initialize "$@"
+	# 	for arg in "${args[@]}"; do
+	# 		echo "Arguments: $arg"
+	# 	done
+	# 	# echo $file
+	# 	# is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+	# }
+	# main "$@"
 
 snippet	innnk
 	ink() {
