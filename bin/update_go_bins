@@ -4,7 +4,7 @@ has() { command -v "${1}" >&/dev/null; }
 hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
 
 find_gup() {
-  local src_paths=("/home/archuser/.asdf/shims/gup" "/home/archuser/go/bin/gup")
+  local src_paths=("/home/archuser/go/bin/gup" "/home/archuser/.asdf/shims/gup")
   for src_path in "${src_paths[@]}"; do
     if [[ -x $src_path ]]; then
       echo "$src_path"
