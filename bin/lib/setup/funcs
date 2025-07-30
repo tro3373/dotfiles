@@ -9,8 +9,9 @@ readonly _core_apps=(
 # ag pt anyenv nkf
 readonly _core_apps_additional=(
   nvim fzf gh asdf go cargo docker
-  sheldon ghq mmv jq yq hugo his
-  neofetch htop exa bat gclip gomi ctags cwebp nvr
+  sheldon ghq mmv jq yq
+  bat exa clipper
+  hugo neofetch htop gclip gomi ctags cwebp nvr his
   # apps for shell
   shellcheck shfmt
   # apps for go
@@ -519,7 +520,7 @@ go_install() {
     return
   fi
   exe go install "$*"
-  exe asdf reshim go
+  exe asdf reshim golang
 }
 
 gsettings_if_needed() {
