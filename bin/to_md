@@ -1,0 +1,37 @@
+#!/usr/bin/env -S bash -e
+
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+fire() {
+  if [[ -p /dev/stdin ]]; then
+    cat - _to_md
+  fi
+  if [[ $# -ne 0 ]]; then
+    echo "$@" |
+      tr " " "\n"
+  fi
+}
+
+main() {
+  [[ ! -p /dev/stdin && $# -eq 0 ]] && error "==> No URL provided."
+  fire "$@" |
+    while read -r url; do
+      [[ -z $url ]] && continue
+      [[ $url =~ ^#.* ]] && continue
+      cmd="readability --format markdown \"$url\""
+      if ! has readability; then
+        cmd="npx -y $cmd"
+      fi
+      info "==> Executing: $cmd.."
+      "$cmd"
+    done
+}
+main "$@"
