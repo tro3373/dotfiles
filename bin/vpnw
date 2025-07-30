@@ -45,19 +45,25 @@ restore_resolvconf() {
 main() {
   initialize "$@"
   [[ $1 == "up" ]] && {
-    # restore_resolvconf
+    sudo tailscale down
     sudo wg-quick up wg0
     update_resolvconf
     sleep 1
     restore_resolvconf
     sudo wg-quick up wg0
-    return
+    sleep 1
+    restore_resolvconf
+    # return
   }
   [[ $1 == "down" ]] && {
     sudo wg-quick down wg0
     restore_resolvconf
-    return
+    # return
+    sudo tailscale up
   }
+  ilog "==> Showing wireguard status"
   sudo wg show
+  ilog "==> Showing my public IP"
+  curl ifconfig.io
 }
 main "$@"
