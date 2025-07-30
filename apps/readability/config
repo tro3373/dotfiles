@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# is_installed() {
+#   npm ls -g @mizchi/readability >/dev/null 2>&1
+# }
 install_common() {
-  go_install github.com/mackee/go-readability/cmd/readability@latest
+  # go_install github.com/mackee/go-readability/cmd/readability@latest
+  exe cd "$HOME"
+  exe npm install -g @mizchi/readability
+  exe asdf reshim
 }
