@@ -29,6 +29,7 @@ cat_commit_msg() {
   cat <"$tmp_prp" |
     # llm -c gemini |
     llm -c gemini -m $_model |
+    # llm -c tgpt -p groq |
     sed -e 's/\r//g' -e 's/^M//g' -e 's/^```//' -e 's/```$//' -e '/^Loaded cached credentials/d'
 }
 
