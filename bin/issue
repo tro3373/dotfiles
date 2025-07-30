@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+readonly depends=(fzf)
+command_name=$(basename "$0") && readonly command_name
+file=
+title=
+args=()
+usage() {
+  cat <<EOF
+
+Create new GitHub Issue. start editor to write issue body.
+
+  Usage:
+      $command_name [option] [-f file] [-t title]
+    Options
+      -h|--help : Show this usage
+
+EOF
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      # -e) dummy= ;;
+      # -f*|--file*) file=${1#*=} ;;
+      -f | --file) shift && file=$1 ;;
+      -t | --title) shift && title=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+  set -euo pipefail
+}
+check() { hass "${depends[@]}"; }
+add_args() { args+=("$@"); }
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+main() {
+  initialize "$@"
+  git_root=$(git rev-parse --show-toplevel 2>/dev/null || :)
+  if [[ -z $git_root ]]; then
+    error "==> Not inside git repository"
+  fi
+  # file="${args[*]}"
+  if [[ -z $file ]]; then
+    prj=$(basename "$git_root")
+    timestamp=$(date +%Y-%m-%d_%H-%M-%S)
+    file="/tmp/$timestamp.$prj.new-issue.md"
+    # touch "$file"
+    # trap 'rm -f "$file"' EXIT
+    nvim -p "$file"
+  fi
+  if [[ ! -s $file ]]; then
+    # rm -v "$file"
+    error "==> File is empty: $file"
+  fi
+  info "==> Creating issue from $file.."
+  if [[ -z $title ]]; then
+    title=$(cat <"$file" | prp -ne gen-pr-title-from-file-ja.md$ | llm)
+  fi
+  gh issue create --web --title "$title" -F "$file"
+}
+main "$@"
