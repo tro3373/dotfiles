@@ -1,9 +1,42 @@
 #!/usr/bin/env bash
 
 install_common() {
+  # Use socat to forward the port
+  def_install socat
   go_install github.com/wincent/clipper@latest
 }
 
 setting_common() {
+  if is_mac; then
+    _setup_for_mac
+    return
+  fi
+  _setup_for_linux
+}
+
+_deploy_user_local_bin() {
+  exe sudo cp -fv "$(which clipper)" /usr/local/bin/clipper
+}
+
+_setup_for_mac() {
   make_link_dot2home
+  _deploy_user_local_bin
+  # shellcheck disable=SC2154
+  exe cp "$app_dir"/com.wincent.clipper.plist ~/Library/LaunchAgents/
+  exe launchctl load -w -S Aqua ~/Library/LaunchAgents/com.wincent.clipper.plist
+}
+
+_setup_for_linux() {
+  local conf_clipper_dir="${HOME}/.config/clipper"
+  exe mkdir -p "$conf_clipper_dir"
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/.clipper.json" "$conf_clipper_dir/clipper.json"
+  _deploy_user_local_bin
+  local conf_systemd_user_dir="${HOME}/.config/systemd/user"
+  exe mkdir -p "$conf_systemd_user_dir"
+  # shellcheck disable=SC2154
+  exe cp "$app_dir"/clipper.service "$conf_systemd_user_dir/"
+  exe systemctl --user daemon-reload
+  exe systemctl --user enable clipper.service
+  exe systemctl --user start clipper.service
 }
