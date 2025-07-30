@@ -29,10 +29,10 @@ _start_process() {
     return
   fi
 
-  if ! test -e /tmp/clipd.pid; then
-    # nohup ${DOTPATH}/bin/clip -d >&/dev/null &
-    ${DOTPATH}/bin/clip -d >&/dev/null &
-  fi
+  # if ! test -e /tmp/clipd.pid; then
+  #   # nohup ${DOTPATH}/bin/clip -d >&/dev/null &
+  #   ${DOTPATH}/bin/clip -d >&/dev/null &
+  # fi
   # ${DOTPATH}/bin/tmux_dog
 }
 _start_process

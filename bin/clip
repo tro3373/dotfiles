@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+command_name=$(basename "$0") && readonly command_name
+readonly depends=(clipper socat)
+readonly sock="$HOME"/.clipper.sock
+
+usage() {
+  cat <<EOF
+
+Copy to os clipboard for wrap different distribution.
+Arguments and Normal input will be clipped.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+      -d        : start daemon
+      -k        : kill daemon
+
+EOF
+}
+
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+    esac
+    shift
+  done
+  check
+  set -eo pipefail
+}
+
+check() {
+  hass "${depends[@]}"
+  if [[ ! -S $sock ]]; then
+    error "==> Socket file $sock not exist. No clipper daemon running?"
+  fi
+}
+
+main() {
+  initialize "$@"
+  cat - |
+    socat - UNIX-CONNECT:"$sock"
+}
+main "$@"
