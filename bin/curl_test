@@ -22,12 +22,6 @@ get_dst_path() {
   svc_dir=$(get_svc_dir res)
   echo "$svc_dir/${timestamp}_${name}.json"
 }
-get_req_opt_path() {
-  local svc_dir
-  svc_dir=$(get_svc_dir req)
-  echo "$svc_dir/$name.opt"
-  echo "$svc_dir/opt"
-}
 get_req_json_path() {
   local svc_dir
   svc_dir=$(get_svc_dir req)
@@ -35,15 +29,14 @@ get_req_json_path() {
 }
 get_svc_dir() {
   local req_res=req
-  if [[ $1 == res ]]; then
-    req_res=res
-  fi
+  [[ $1 == res ]] && req_res=res
   echo "$script_dir/lib/$command_name/$req_res/$svc"
 }
 
 execute_curl() {
   dst=$(get_dst_path)
   mkdir -p "$(dirname "$dst")"
+
   local commands=()
   commands+=(curl)
   # commands+=(-L)
@@ -61,16 +54,21 @@ execute_curl() {
   if [[ ! ${commands[*]} =~ -H[[:space:]]*Origin: ]]; then
     commands+=(-H "Origin: localhost:8080")
   fi
-  if [[ $method == POST || $method == PUT || $method == PATCH ]]; then
-    commands+=(-d @-)
+
+  req_json="$(get_req_json_path)"
+  if [[ -e $req_json ]]; then
+    info "==> Requesting Data: $(cat <"$req_json")"
+    if [[ $method == POST || $method == PUT || $method == PATCH ]]; then
+      commands+=(-d @-)
+    fi
   fi
+
   dump_request
-  cat_req_data |
-    tee >(info "==> Data: $(cat)") |
-    jq -c |
-    "${commands[@]}" |
-    tee >(jq . >"$dst") |
-    jq .
+  cat_req_data | jq -c | "${commands[@]}" | jq . >"$dst"
+  info "==> Response Saved to: $dst"
+  info "==> Response:"
+  cat <"$dst" | jq .
+
   [[ -z $save_env_vals || $save_env_vals == _ ]] && return
   echo -e "$save_env_vals" |
     tr ',' '\n' |
@@ -84,25 +82,22 @@ execute_curl() {
 }
 
 cat_req_opts() {
-  get_req_opt_path |
-    while read -r _opt_path; do
-      [[ -z $_opt_path ]] && continue
-      [[ $_opt_path =~ ^#.* ]] && continue
-      [[ ! -e $_opt_path ]] && continue
-      echo "$_opt_path"
-    done |
-    head -1 |
-    xargs cat
+  local svc_dir
+  svc_dir=$(get_svc_dir req)
+  for f in "$svc_dir/$name.opt" "$svc_dir/opt"; do
+    [[ -e $f ]] && cat "$f" && return
+  done
 }
 
 dump_request() {
-  info "==> Requesting..${commands[*]}"
+  info "==> Requesting.."
   for arg in "${commands[@]}"; do
     [[ $arg =~ ^curl ]] && printf "%s" "$arg" && continue
     [[ $arg =~ ^(-d|@) ]] && echo "" && break # last arg
     [[ $arg =~ ^- ]] && printf ' \\ \n  %s ' "$arg" && continue
     printf '"%s"' "$arg"
   done
+  echo
 }
 
 update_dot_env() {
@@ -120,13 +115,11 @@ update_dot_env() {
 }
 
 cat_req_data() {
-  local _json
-  _json="$(get_req_json_path)"
-  if [[ ! -e $_json ]]; then
-    echo ""
+  if [[ -e $req_json ]]; then
+    envsubst <"$req_json"
     return
   fi
-  envsubst <"$_json"
+  echo ""
 }
 
 main() {
@@ -152,11 +145,11 @@ main() {
     fzf --tac --select-1 --exit-0 $fzf_opt |
     while read -r svc name method url save_env_vals; do
       auth_header=${auth_header/:/: }
-      warn "==> svc:$svc"
-      warn "==> name:$name"
-      warn "==> method:$method"
-      warn "==> url:$url"
-      warn "==> save_env_vals:$save_env_vals"
+      warn "==> svc: $svc"
+      warn "==> name: $name"
+      warn "==> method: $method"
+      warn "==> url: $url"
+      warn "==> save_env_vals: $save_env_vals"
       [[ -z $name ]] && continue
       [[ $name =~ ^#.* ]] && continue
       execute_curl

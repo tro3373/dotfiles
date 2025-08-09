@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+main() {
+  set -eo pipefail
+  systemctl --user restart clipper.service
+}
+main "$@"

@@ -20,7 +20,7 @@ cat_prompt() {
   [[ $mode == ja ]] && llm_lang=日本語
   export llm_lang
   git_diff_ignored --minimal --cached |
-    prp -ne -pm "Follow the instructions below in $llm_lang" gen-git-commit-message.md$
+    prp -ne -pm "Follow the instructions below. You **Must Use $llm_lang!**" gen-git-commit-message.md$
 }
 
 cat_commit_msg() {
@@ -28,8 +28,8 @@ cat_commit_msg() {
   _model=gemini-2.5-flash-lite
   cat <"$tmp_prp" |
     # llm -c gemini |
-    llm -c gemini -m $_model |
-    # llm -c tgpt -p groq |
+    # llm -c gemini -m $_model |
+    llm -c tgpt -p groq |
     sed -e 's/\r//g' -e 's/^M//g' -e 's/^```//' -e 's/```$//' -e '/^Loaded cached credentials/d'
 }
 

@@ -105,11 +105,14 @@ add_worktree() {
 
 ln_ignored_if_needed() {
   # Get ignored files/directories (directories shown with trailing /)
-  git status --ignored --porcelain | grep '^!!' | cut -c4- |
+  git status --ignored --porcelain 2>/dev/null |
+    grep '^!!' |
+    grep -v '.tasks.md' |
+    cut -c4- |
+    sed -e 's,/$,,g' |
     while read -r line; do
       [[ -z $line ]] && continue
       [[ $line =~ ^#.* ]] && continue
-      [[ $line =~ /$ ]] && line="${line%/}"
       src="$git_root_dir/$line"
       # src="../../../${line/.*\//../}" # TODO Test
       dst="$dst_dir/$line"

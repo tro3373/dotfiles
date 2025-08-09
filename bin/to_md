@@ -31,7 +31,7 @@ main() {
         cmd="npx -y $cmd"
       fi
       info "==> Executing: $cmd.."
-      "$cmd"
+      eval "$cmd"
     done
 }
 main "$@"

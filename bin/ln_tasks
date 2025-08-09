@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+mv_and_ln_if_not_exists() {
+  dstd="$HOME/.mo/tasks/$repo_name"
+  [[ ! -e $dstd ]] && mkdir -p "$dstd"
+
+  for target in "$@"; do
+    dst="$dstd/$target"
+    if [[ -e $dst ]]; then
+      warn "==> $dst already exists, skipping link"
+      continue
+    fi
+    src="$repo_path/$target"
+    mv -fv "$src" "$dst"
+    ln -sv "$dst" "$src"
+  done
+}
+
+main() {
+  set -eo pipefail
+  repo_path=$(git rev-parse --show-toplevel)
+  if [[ -L $repo_path/.tasks.md ]]; then
+    wlog "==> Tasks file already linked"
+    return
+  fi
+  repo_name=$(basename "$repo_path")
+  touch "$repo_path"/{.tasks.md,.done.md}
+  mv_and_ln_if_not_exists .tasks.md .done.md
+}
+main "$@"

@@ -5,6 +5,7 @@ readonly depends=(gh curl fzf jq llm)
 issue=
 target_tmp_dir=
 target_branch=
+current_branch=
 
 usage() {
   cat <<EOF
@@ -39,11 +40,11 @@ initialize() {
   check
   trap end 0 1 2 3 15
   set -eo pipefail
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
 }
 
 find_target_branch_with_fetch() {
   branches=(develop main)
-  current_branch=$(git rev-parse --abbrev-ref HEAD)
   if [[ $current_branch =~ ^(main|master)$ ]]; then
     elog "==> Current branch is $current_branch. Please checkout to other branch."
   fi
@@ -123,13 +124,14 @@ create_pr_parts() {
 
 create_pr_with_push() {
   ilog "==> Pushing commits.."
-  git push -u origin HEAD
+  git push -u origin "$current_branch"
   _target_branch=${target_branch#origin/}
   ilog "==> Creating PR!.."
   echo -e "cat <$target_tmp_dir/body | gh pr create --base \"$_target_branch\" --web --title \"$(cat <"$target_tmp_dir"/title)\" --body-file -"
   cat <"$target_tmp_dir"/body |
     gh pr create \
       --base "$_target_branch" \
+      --head "$current_branch" \
       --web \
       --title "$(cat <"$target_tmp_dir"/title)" \
       --body-file -

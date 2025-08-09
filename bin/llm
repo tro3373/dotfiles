@@ -77,7 +77,8 @@ _tgpt() {
     [[ -z $key ]] && key=$GEMINI_API_KEY
   fi
   if [[ $provider == "groq" ]]; then
-    [[ -z $model ]] && model=gemma2-9b-it
+    # [[ -z $model ]] && model=gemma2-9b-it
+    [[ -z $model ]] && model=openai/gpt-oss-120b
     [[ -z $key ]] && key=$GROQ_API_KEY
   fi
   command tgpt --quiet --provider "$provider" --model "$model" --key "$key"
