@@ -172,6 +172,7 @@ _init() {
   zstyle ':completion:*:*:make:*' tag-order 'targets'
 
   export GOPATH=$HOME/go
+  export GOBIN=$GOPATH/bin
   export CARGO_HOME=$HOME/.cargo
   # For bat command
   export BAT_THEME="Visual Studio Dark+"

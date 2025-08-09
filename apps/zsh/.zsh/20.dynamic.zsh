@@ -119,7 +119,7 @@ _cat_path() {
 
   add_path ${HOME}/.fzf/bin
   # add_path ${HOME}/.anyenv/bin
-  add_path $GOPATH/bin
+  add_path $GOBIN
   add_path $CARGO_HOME/bin
   add_path ${HOME}/.cargo/bin
   add_path ${HOME}/.local/bin
