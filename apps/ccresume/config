@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+install_common() {
+  exe cd "$HOME"
+  exe npm install -g @sasazame/ccresume
+  exe asdf reshim
+}
