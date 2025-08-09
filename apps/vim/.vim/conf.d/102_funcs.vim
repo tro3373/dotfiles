@@ -1191,13 +1191,19 @@ function! ShowTabs() abort
 endfun
 command! ShowTabs call ShowTabs()
 
-function! Issue() abort
+function! Issue(args) abort
   let tmpfile = WriteToTemp()
   if !exists('*jobstart')
     echo "jobstart not found. Please update Neovim to use this command."
     return
   endif
-  " Neovim
-  call jobstart(['issue', '-f', tmpfile])
+  let cmd = ['issue']
+  call add(cmd, '-f')
+  call add(cmd, tmpfile)
+  if !empty(a:args)
+    call add(cmd, '-t')
+    call add(cmd, a:args)
+  endif
+  call jobstart(cmd)
 endfunction
-command! Issue call Issue()
+command! -nargs=* Issue call Issue(expand('<args>'))

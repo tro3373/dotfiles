@@ -500,6 +500,18 @@ function! OpenLocalRc()
   exe "tabe" l:rc
 endfunction
 command! OpenLocalRc call OpenLocalRc()
+function! DisableLintInThisRepository()
+  let l:rc = s:get_local_rc_path()
+  call system('mkdir -p "' .. fnamemodify(l:rc, ':h') .. '"')
+  let lines = []
+  call add(lines, 'let g:ale_enabled = 0')
+  call add(lines, 'let g:lsp_diagnostics_enabled = 0')
+  call add(lines, 'let g:lsp_diagnostics_echo_cursor = 0')
+  call writefile(lines, l:rc, 'a')
+  echo '==> Added ignore lint settings!! ' .. l:rc
+  exe "tabe" l:rc
+endfunction
+command! DisableLintInThisRepository call DisableLintInThisRepository()
 
 "==============================================================================
 " SQL auto uppercase
