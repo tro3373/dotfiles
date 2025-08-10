@@ -534,3 +534,27 @@ augroup END
 " 補完メニューが表示されていない場合は <C-]> を実行して略語を展開し、その後 <CR> で改行します12。
 " inoremap <expr> <CR> pumvisible() ? "<C-y>" : "<C-]><CR>"
 
+"==============================================================================
+" URL行での自動コメント挿入を無効化
+" https:// や http:// を含む行では改行時に // が自動挿入されないようにする
+augroup url_no_auto_comment
+  autocmd!
+  " TextChangedIで、URL行の後の自動挿入された//を削除
+  autocmd TextChangedI * call s:RemoveAutoCommentAfterURL()
+augroup END
+
+function! s:RemoveAutoCommentAfterURL()
+  " 前の行にURLパターンがあり、現在行が // だけの場合
+  let prev_line_num = line('.') - 1
+  if prev_line_num > 0
+    let prev_line = getline(prev_line_num)
+    let curr_line = getline('.')
+    " 前の行にURLがあり、現在行が空白と//だけの場合
+    if prev_line =~# '\v(https?|ftp|ssh|wss?|file)://' && curr_line =~# '^\s*\/\/\s*$'
+      " インデントを保持して//だけ削除
+      let indent = matchstr(curr_line, '^\s*')
+      call setline('.', indent)
+    endif
+  endif
+endfunction
+
