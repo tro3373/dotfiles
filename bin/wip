@@ -10,6 +10,7 @@ info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
 
+has_staged_changes() { git diff --cached --name-only | grep -q .; }
 main() {
   local changes
   changes=$(git status -s | wc -l)
@@ -19,7 +20,9 @@ main() {
   fi
   local msg="$*"
   [[ -z $msg ]] && msg=wip
-  git add -A
+  if ! has_staged_changes; then
+    git add -A
+  fi
   git commit -m "$msg"
 }
 main "$@"
