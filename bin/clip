@@ -2,7 +2,8 @@
 
 command_name=$(basename "$0") && readonly command_name
 readonly depends=(clipper socat)
-readonly sock="$HOME"/.clipper.sock
+readonly local_sock="$HOME"/.clipper.sock
+readonly remote_sock="$HOME"/.clipper.r.sock
 
 usage() {
   cat <<EOF
@@ -29,6 +30,7 @@ log() { _log white "$*"; }
 info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
+is_remote() { test -n "$SSH_CONNECTION"; }
 
 initialize() {
   while true; do
@@ -38,6 +40,8 @@ initialize() {
     esac
     shift
   done
+  sock="$local_sock"
+  is_remote && sock="$remote_sock"
   check
   set -eo pipefail
 }
