@@ -539,8 +539,8 @@ augroup END
 " https:// や http:// を含む行では改行時に // が自動挿入されないようにする
 augroup url_no_auto_comment
   autocmd!
-  " TextChangedIで、URL行の後の自動挿入された//を削除
-  autocmd TextChangedI * call s:RemoveAutoCommentAfterURL()
+  " filetypeが設定されていない時のみ、URL行の後の自動挿入された//を削除
+  autocmd TextChangedI * if &filetype == '' | call s:RemoveAutoCommentAfterURL() | endif
 augroup END
 
 function! s:RemoveAutoCommentAfterURL()
@@ -552,8 +552,10 @@ function! s:RemoveAutoCommentAfterURL()
     " 前の行にURLがあり、現在行が空白と//だけの場合
     if prev_line =~# '\v(https?|ftp|ssh|wss?|file)://' && curr_line =~# '^\s*\/\/\s*$'
       " インデントを保持して//だけ削除
-      let indent = matchstr(curr_line, '^\s*')
+      let indent = matchstr(prev_line, '^\s*')
       call setline('.', indent)
+      " " 現在行を空にする
+      " call setline('.', '')
     endif
   endif
 endfunction
