@@ -1,0 +1,290 @@
+#!/usr/bin/env bash
+
+command_name=$(basename "$0") && readonly command_name
+conf_file=$HOME/.$command_name && readonly conf_file
+cache_token=$HOME/.$command_name.token && readonly cache_token
+tasks_api_endpoint="https://tasks.googleapis.com" && readonly tasks_api_endpoint
+
+readonly depends=(curl)
+args=()
+usage() {
+  cat <<EOF
+
+Google Tasks CLI
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+
+EOF
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      # -e) dummy= ;;
+      # -f*|--file*) file=${1#*=} ;;
+      # -f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+  set -euo pipefail
+}
+check() { hass "${depends[@]}"; }
+add_args() { args+=("$@"); }
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+load_config() {
+  if [[ ! -e $conf_file ]]; then
+    info "===> Creating configuration file $conf_file.."
+    touch "$conf_file"
+    chmod 600 "$conf_file"
+  fi
+  # shellcheck disable=SC1090
+  source "$conf_file"
+
+  if [[ -z $CLIENT_ID ]]; then
+    error "===> Please set CLIENT_ID in $conf_file"
+  fi
+  if [[ -z $CLIENT_SECRET ]]; then
+    error "===> Please set CLIENT_SECRET in $conf_file"
+  fi
+}
+
+get_auth_code() {
+  info "===> Getting authorization code.."
+  open "https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&scope=https://www.googleapis.com/auth/tasks"
+  info "===> Please enter the authorization code:"
+  read -r auth_code
+  echo "$auth_code"
+}
+
+get_access_token() {
+  info "==> Getting access token.."
+  if [[ -e $cache_token ]]; then
+    read -r access_expired refresh_expired < <(check_expired_token)
+    if [[ $access_expired == 0 ]]; then
+      info "===> Using cached token.."
+      cat_access_token_from_cache_token_file
+      return
+    fi
+    if [[ $refresh_expired == 0 ]]; then
+      info "===> Refreshing access token.."
+      generate_access_token refresh
+      cat_access_token_from_cache_token_file
+      return
+    fi
+
+    info "===> Removing expired cache token.."
+    rm -v "$cache_token" 1>&2
+  fi
+
+  info "===> Authorizing to get access token.."
+  generate_access_token auth
+  cat_access_token_from_cache_token_file
+}
+
+generate_access_token() {
+  local grant_type="$1"
+  local code_or_token
+  local new_token="$cache_token.new"
+  local merge=0
+  load_config
+  if [[ $grant_type == "auth" ]]; then
+    code_or_token=$(get_auth_code)
+  else
+    merge=1
+    code_or_token=$(jq -r '.refresh_token // empty' <"$cache_token")
+  fi
+  request_access_token >"$new_token"
+  if [[ $merge -eq 1 ]]; then
+    local merged_token="$cache_token.merged"
+    jq -s '.[0] * .[1]' "$cache_token" "$new_token" >"$merged_token"
+    mv -fv "$merged_token" "$new_token" 1>&2
+  fi
+
+  mv -fv "$new_token" "$cache_token" 1>&2
+  warn "===> Access token generated. $(cat <"$cache_token")"
+  chmod 600 "$cache_token"
+}
+
+request_access_token() {
+  info "===> Getting access token by grant_type:$grant_type.."
+  local commands=()
+  commands+=(curl)
+  commands+=(-fsSL)
+  # commands+=(-Lv)
+  commands+=("https://oauth2.googleapis.com/token")
+  commands+=(-d "client_id=${CLIENT_ID}")
+  commands+=(-d "client_secret=${CLIENT_SECRET}")
+  if [[ $grant_type == "auth" ]]; then
+    commands+=(-d "code=$code_or_token")
+    commands+=(-d "grant_type=authorization_code")
+    commands+=(-d "redirect_uri=urn:ietf:wg:oauth:2.0:oob")
+  else
+    commands+=(-d "refresh_token=$code_or_token")
+    commands+=(-d "grant_type=refresh_token")
+  fi
+  warn "===> Executing: ${commands[*]}"
+  # set -x
+  "${commands[@]}"
+}
+
+cat_access_token_from_cache_token_file() {
+  cat <"$cache_token" | jq -r '.access_token'
+}
+
+check_expired_token() {
+  # Get file modification time (epoch seconds)
+  mod_time=$(stat -c %Y "$cache_token")
+  expires_in=$(jq -r '.expires_in' <"$cache_token")
+  refresh_token_expires_in=$(jq -r '.refresh_token_expires_in' <"$cache_token")
+  access_expiry=$((mod_time + expires_in))
+  refresh_token_expiry=$((mod_time + refresh_token_expires_in))
+  now=$(date +%s)
+  access_expired=$((now > access_expiry))
+  refresh_expired=$((now > refresh_token_expiry))
+  echo $access_expired $refresh_expired
+}
+
+request_tasks_api() {
+  local commands=()
+  commands+=(curl)
+  commands+=(-fsSL)
+  commands+=(--header "Authorization: Bearer $access_token")
+  commands+=(--header 'Accept: application/json')
+  commands+=("$@")
+  warn "===> Executing: ${commands[*]}"
+  # set -x
+  "${commands[@]}"
+}
+
+get_lists() {
+  request_tasks_api "$tasks_api_endpoint/tasks/v1/users/@me/lists"
+}
+
+get_list_tasks() {
+  info "===> Getting tasks for list $list_id"
+  pager=
+  if [[ -n $next_page_token ]]; then
+    pager="&pageToken=$next_page_token"
+  fi
+  request_tasks_api "$tasks_api_endpoint/tasks/v1/lists/$list_id/tasks?showCompleted=false$pager"
+}
+
+move_task() {
+  info "===> Moving task...list_id=$list_id task_id=$task_id move_to_list_id=$move_to_list_id"
+  request_tasks_api -X POST "https://tasks.googleapis.com/tasks/v1/lists/$list_id/tasks/$task_id/move?destinationTasklist=$move_to_list_id"
+}
+
+move_tasks() {
+  local -a list_names=("$@")
+  local list_count=${#list_names[@]}
+
+  # 最低2つのリスト名が必要（移動元と移動先）
+  if [[ $list_count -lt 2 ]]; then
+    error "===> Usage: move_tasks <source_list_1> [source_list_2 ...] <destination_list>"
+  fi
+
+  # 最後の引数が移動先リスト
+  local dest_list_name="${list_names[-1]}"
+  local -a source_list_names=("${list_names[@]:0:$((list_count - 1))}")
+
+  info "===> Moving tasks from [${source_list_names[*]}] to [$dest_list_name]"
+
+  # リスト名からリストIDを取得
+  local lists_json
+  lists_json=$(get_lists)
+
+  # 移動先リストIDを取得
+  local dest_list_id
+  dest_list_id=$(echo "$lists_json" | jq -r --arg name "$dest_list_name" '.items[] | select(.title == $name) | .id')
+
+  if [[ -z $dest_list_id ]]; then
+    error "===> Destination list not found: $dest_list_name"
+  fi
+
+  info "===> Destination list ID: $dest_list_id"
+
+  # タスクを格納する一時ファイル
+  timestamp=$(date +%Y-%m-%d.%H%M%S)
+  local target_tsv_file="$HOME/.gtasks.$timestamp.tsv"
+  : >"$target_tsv_file" # ファイルを初期化
+
+  # 各移動元リストからタスクを取得
+  for source_list_name in "${source_list_names[@]}"; do
+    local source_list_id
+    source_list_id=$(echo "$lists_json" | jq -r --arg name "$source_list_name" '.items[] | select(.title == $name) | .id')
+
+    if [[ -z $source_list_id ]]; then
+      warn "===> Source list not found, skipping: $source_list_name"
+      continue
+    fi
+
+    info "===> Fetching tasks from $source_list_name (ID: $source_list_id)"
+
+    # ページネーションでタスクを全て取得
+    local next_page_token=""
+    local page_count=0
+
+    while true; do
+      page_count=$((page_count + 1))
+      info "===> Fetching page $page_count for $source_list_name"
+
+      local pager=""
+      if [[ -n $next_page_token ]]; then
+        pager="&pageToken=$next_page_token"
+      fi
+
+      local tasks_json
+      tasks_json=$(request_tasks_api "$tasks_api_endpoint/tasks/v1/lists/$source_list_id/tasks?showCompleted=false$pager")
+
+      # タスクをTSV形式で保存（parent を持たないタスクのみ）
+      echo "$tasks_json" | jq -r --arg list_name "$source_list_name" --arg list_id "$source_list_id" \
+        '.items[] | select(.parent == null) | "\(.updated)\t\($list_name)\t\($list_id)\t\(.id)\t\(.title)"' >>"$target_tsv_file"
+
+      # 次のページトークンを取得
+      next_page_token=$(echo "$tasks_json" | jq -r '.nextPageToken // empty')
+
+      if [[ -z $next_page_token ]]; then
+        break
+      fi
+    done
+  done
+
+  # TSVファイルをソート（updatedカラムで古い順）
+  local sorted_file="${target_tsv_file}.sorted"
+  sort "$target_tsv_file" >"$sorted_file"
+  mv -f "$sorted_file" "$target_tsv_file"
+
+  info "===> Found $(wc -l <"$target_tsv_file") tasks to move"
+
+  # タスクを移動
+  while IFS=$'\t' read -r updated source_list_name list_id task_id task_title; do
+    info "===> Moving task: $task_title (from $source_list_name, updated: $updated)"
+    move_to_list_id=$dest_list_id
+    move_task
+  done <"$target_tsv_file"
+
+  info "===> Task move completed. Target List: $target_tsv_file"
+}
+
+main() {
+  set -eo pipefail
+  access_token=$(get_access_token)
+
+  move_tasks "$@"
+}
+main "$@"
