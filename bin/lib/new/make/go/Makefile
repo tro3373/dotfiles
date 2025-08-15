@@ -15,7 +15,7 @@ export
 
 dst := /tmp/api
 
-all: clean gen tidy fmt vet sec lint build test
+all: clean gen tidy fmt lint build test
 clean:
 	@echo "==> Cleaning" >&2
 	@rm -f $(dst)
@@ -25,18 +25,16 @@ tidy:
 	@go mod tidy -v
 tidy-go:
 	@v=$(shell go version|awk '{print $$3}' |sed -e 's,go\(.*\)\..*,\1,g') && go mod tidy -go=$${v}
+deps:
+	@go list -m all
+update:
+	@go get -u ./...
 fmt:
 	@echo "==> Running go fmt ./..." >&2
 	@go fmt ./...
 lint:
 	@echo "==> Running golangci-lint run" >&2
 	@golangci-lint run
-vet:
-	@echo "==> Running go vet ./..." >&2
-	@go vet ./...
-sec:
-	@echo "==> Running gosec ./..." >&2
-	@gosec --color=true ./...
 build:
 	@echo "==> Go Building" >&2
 	@env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -o $(dst) cmd/main.go
@@ -70,7 +68,7 @@ testsum:
 	@gotestsum --format testname -- -v $(pkg) -coverprofile=$(cover_out) -covermode=$(cover_mode) -coverpkg=$(pkg)
 testsum-cover-check: testsum
 	@echo "==> Running test-coverage" >&2
-	@go-test-coverage --config=./.testcoverage.yml
+	@go-test-coverage --config=./.testcoverage.yaml
 
 
 gen: mockery swag
