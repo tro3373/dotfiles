@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+install_common() {
+  install_via_os_default
+}
