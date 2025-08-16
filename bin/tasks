@@ -1,9 +1,82 @@
-#!/usr/bin/env -S bash -e
+#!/usr/bin/env bash
+
+readonly depends=(curl fzf jq)
+command_name=$(basename "$0") && readonly command_name
+args=()
+mode=list
+
+usage() {
+  cat <<EOF
+
+Manage repository tasks.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help  : Show this usage
+      -s|--split : Split tasks into multiple files
+
+EOF
+}
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -s | --split) mode="split" ;;
+      # -f*|--file*) file=${1#*=} ;;
+      # -f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+  set -euo pipefail
+}
+check() { hass "${depends[@]}"; }
+add_args() { args+=("$@"); }
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+init_link_tasks() {
+  repo_name=$(basename "$git_root")
+  srcd="$HOME/.mo/tasks/$repo_name"
+  mkdir -p "$srcd/.tasks/done"
+  touch "$srcd"/.tasks.md
+  ln -s "$srcd/.tasks" "$git_root/.tasks"
+  ln -s "$srcd/.tasks.md" "$git_root/.tasks.md"
+}
+
+find_tasks() {
+  echo .tasks.md
+  find .tasks/ -maxdepth 1 -mindepth 1 -type f -name '*.md' |
+    sort
+}
+
+split_tasks() {
+  if [[ ! -s $target_file ]] || ! grep -qE '^- \[ \]' "$target_file"; then
+    error "==> Empty tasks. $target_file"
+  fi
+}
 
 main() {
+  initialize "$@"
   git_root=$(git rev-parse --show-toplevel)
+  cd "$git_root" || exit 1
   target_file="$git_root/.tasks.md"
-  [[ ! -e $target_file ]] && touch "$target_file"
-  echo "$target_file" | v
+  [[ ! -e $target_file ]] && init_link_tasks
+  if [[ $mode == "split" ]]; then
+    split_tasks
+    return
+  fi
+  find_tasks | v
 }
 main "$@"
