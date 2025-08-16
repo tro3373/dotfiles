@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+timestamp=$(date +%Y%m%d.%H%M%S) && readonly timestamp
+main() {
+  set -eo pipefail
+  name="tbg-${timestamp}"
+  tmux new -d -s "$name" -- "$@"
+}
+main "$@"
