@@ -520,7 +520,7 @@ go_install() {
     return
   fi
   exe go install "$*"
-  exe asdf reshim golang
+  # exe asdf reshim golang
 }
 
 gsettings_if_needed() {
