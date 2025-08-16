@@ -89,7 +89,7 @@ _claude() {
   # cat - >$tmp_org
   # command claude -p "$tmp_org の指示を実行して"
   # command claude -p "標準入力からの指示を実行して."
-  command claude -p "Execute the instructions from standard input."
+  command claude --dangerously-skip-permissions -p "Execute the instructions from standard input."
 }
 
 _gemini() {
