@@ -1,0 +1,261 @@
+#!/usr/bin/env bash
+
+# Discord投稿スクリプト
+#
+# 設定方法:
+#   1. ~/.dis ファイルに環境変数を設定（自動読み込み）
+#      export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN"
+#      export DISCORD_BOT_TOKEN="YOUR_BOT_TOKEN"  # Bot使用時
+#      export DISCORD_CHANNEL_ID="YOUR_CHANNEL_ID"  # Bot使用時
+#
+#   2. または環境変数を直接設定
+#
+# 使用方法:
+#   echo "メッセージ" | dis                   # 標準入力から
+#   dis "メッセージ"                          # 引数から
+#   echo "前半" | dis "後半"                  # 両方使用（マージ）
+#   dis --embed --title "タイトル" --description "説明"
+
+command_name=$(basename "$0") && readonly command_name
+config_file="$HOME/.dis" && readonly config_file
+
+# グローバル変数
+message=""
+stdin_message=""
+mode="webhook" # webhook or bot or embed
+title=""
+description=""
+
+# ヘルパー関数
+has() { command -v "${1}" >&/dev/null; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+# jqを使用した安全なJSON生成
+create_simple_json() {
+  local content="$1"
+  jq -n --arg content "$content" '{content: $content}'
+}
+
+# Embed JSONを安全に生成
+create_embed_json() {
+  local title="$1"
+  local description="$2"
+  local timestamp
+  timestamp=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+  
+  jq -n \
+    --arg title "$title" \
+    --arg description "$description" \
+    --arg timestamp "$timestamp" \
+    '{
+      embeds: [{
+        title: $title,
+        description: $description,
+        color: 5814783,
+        timestamp: $timestamp
+      }]
+    }'
+}
+
+# 使用方法表示
+usage() {
+  cat <<EOF
+Discord投稿サンプルスクリプト
+
+Usage:
+  $command_name [options] [message]
+  echo "message" | $command_name [options] [additional_message]
+
+Options:
+  -h|--help       : このヘルプを表示
+  -w|--webhook    : Webhookで投稿（デフォルト）
+  -b|--bot        : Bot APIで投稿
+  -e|--embed      : Embedメッセージとして投稿
+  -t|--title      : Embedのタイトル（--embedと併用）
+  -d|--description: Embedの説明（--embedと併用）
+  --dry-run       : 実行せずにコマンドを表示
+
+Examples:
+  # シンプルなメッセージ投稿
+  $command_name "Hello Discord!"
+  echo "Hello" | $command_name "Discord!"
+
+  # パイプラインでの使用
+  cat log.txt | $command_name "エラーログ:"
+
+  # Embedメッセージ投稿
+  $command_name --embed --title "お知らせ" --description "重要"
+
+設定ファイル:
+  ~/.dis : 環境変数の設定ファイル（自動読み込み）
+
+環境変数:
+  DISCORD_WEBHOOK_URL : Discord Webhook URL
+  DISCORD_BOT_TOKEN   : Discord Bot Token（Bot APIを使う場合）
+  DISCORD_CHANNEL_ID  : 投稿先チャンネルID（Bot APIを使う場合）
+EOF
+}
+
+# Discord Webhookで投稿
+post_via_webhook() {
+  local webhook_url="${DISCORD_WEBHOOK_URL}"
+  [[ -z $webhook_url ]] && error "DISCORD_WEBHOOK_URLが設定されていません"
+
+  local json_data
+  if [[ $mode == "embed" ]]; then
+    # Embedメッセージの場合
+    json_data=$(create_embed_json "${title:-お知らせ}" "${description:-$message}")
+  else
+    # 通常メッセージの場合
+    json_data=$(create_simple_json "$message")
+  fi
+
+  info "Discordに投稿中..."
+
+  local response
+  response=$(curl -s -X POST "$webhook_url" \
+    -H "Content-Type: application/json" \
+    -d "$json_data")
+
+  if [[ -z $response ]]; then
+    info "✅ 投稿成功！"
+  else
+    error "❌ 投稿失敗: $response"
+  fi
+}
+
+# Discord Bot APIで投稿
+post_via_bot() {
+  local bot_token="${DISCORD_BOT_TOKEN}"
+  local channel_id="${DISCORD_CHANNEL_ID}"
+
+  [[ -z $bot_token ]] && error "DISCORD_BOT_TOKENが設定されていません"
+  [[ -z $channel_id ]] && error "DISCORD_CHANNEL_IDが設定されていません"
+
+  local json_data
+  if [[ $mode == "embed" ]]; then
+    json_data=$(create_embed_json "${title:-お知らせ}" "${description:-$message}")
+  else
+    json_data=$(create_simple_json "$message")
+  fi
+
+  info "Bot経由でDiscordに投稿中..."
+
+  local response
+  response=$(curl -s -X POST "https://discord.com/api/v10/channels/$channel_id/messages" \
+    -H "Authorization: Bot $bot_token" \
+    -H "Content-Type: application/json" \
+    -d "$json_data")
+
+  if echo "$response" | grep -q '"id"'; then
+    info "✅ 投稿成功！"
+  else
+    error "❌ 投稿失敗: $response"
+  fi
+}
+
+# 標準入力からメッセージを読み込み
+read_stdin() {
+  if [[ ! -t 0 ]]; then
+    # 標準入力が利用可能な場合
+    stdin_message=$(cat)
+  fi
+}
+
+# 初期化処理
+initialize() {
+  set -eo pipefail
+
+  local use_bot=0
+  local use_embed=0
+
+  # ~/.dis設定ファイルを読み込み
+  if [[ -f $config_file ]]; then
+    # shellcheck disable=SC1090
+    source "$config_file"
+  fi
+
+  # 標準入力を読む
+  read_stdin
+
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -w | --webhook) mode="webhook" ;;
+      -b | --bot) mode="bot" && use_bot=1 ;;
+      -e | --embed) mode="embed" && use_embed=1 ;;
+      -t | --title) shift && title="$1" ;;
+      -d | --description) shift && description="$1" ;;
+      -*) error "不明なオプション: $1" ;;
+      *) message="$message $1" ;;
+    esac
+    shift
+  done
+
+  # 標準入力と引数のメッセージをマージ
+  if [[ -n $stdin_message && -n $message ]]; then
+    # 両方ある場合は結合（標準入力 + 改行 + 引数）
+    message="${stdin_message}\n${message}"
+  elif [[ -n $stdin_message ]]; then
+    # 標準入力のみ
+    message="$stdin_message"
+  fi
+
+  # メッセージのトリミング（先頭・末尾の空白のみ削除）
+  message=$(echo "$message" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
+  # 必須チェック
+  if [[ -z $message && -z $description ]]; then
+    error "メッセージまたは説明文を指定してください"
+  fi
+
+  # Bot modeの設定
+  [[ $use_bot -eq 1 ]] && mode="bot"
+
+  # Embedの場合、modeを維持
+  if [[ $use_embed -eq 1 ]]; then
+    if [[ $use_bot -eq 1 ]]; then
+      # Bot経由のEmbed
+      mode="bot"
+    else
+      # Webhook経由のEmbed（デフォルト）
+      mode="embed"
+    fi
+  fi
+}
+
+# メイン処理
+main() {
+  initialize "$@"
+
+  # デモメッセージ
+  if [[ -z $DISCORD_WEBHOOK_URL && -z $DISCORD_BOT_TOKEN ]]; then
+    warn "環境変数が設定されていません。デモモードで実行します。"
+    info "送信予定のメッセージ: $message"
+    [[ -n $title ]] && info "タイトル: $title"
+    [[ -n $description ]] && info "説明: $description"
+    exit 0
+  fi
+
+  # 投稿実行
+  case "$mode" in
+    webhook | embed)
+      post_via_webhook
+      ;;
+    bot)
+      post_via_bot
+      ;;
+    *)
+      error "不明なモード: $mode"
+      ;;
+  esac
+}
+
+main "$@"
