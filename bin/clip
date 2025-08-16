@@ -40,6 +40,7 @@ initialize() {
     esac
     shift
   done
+  # TODO Get IP from SSH_CONNECTION and use it
   sock="$local_sock"
   is_remote && sock="$remote_sock"
   check
