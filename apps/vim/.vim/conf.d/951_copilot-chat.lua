@@ -1,3 +1,4 @@
+-- luacheck: globals vim
 -- グローバル変数として公開(Vimスクリプトから呼び出す)
 -- CopilotC-Nvim/CopilotChat.nvim
 _G.copilot_chat_setup = function()
@@ -124,58 +125,68 @@ _G.copilot_chat_setup = function()
 
     -- -- default mappings
     -- -- see config/mappings.lua for implementation
-    -- mappings = {
-    --   complete = {
-    --     insert = "<Tab>",
-    --   },
-    --   close = {
-    --     normal = "q",
-    --     insert = "<C-c>",
-    --   },
-    --   reset = {
-    --     normal = "<C-l>",
-    --     insert = "<C-l>",
-    --   },
-    --   submit_prompt = {
-    --     normal = "<CR>",
-    --     insert = "<C-s>",
-    --   },
-    --   toggle_sticky = {
-    --     normal = "grr",
-    --   },
-    --   clear_stickies = {
-    --     normal = "grx",
-    --   },
-    --   accept_diff = {
-    --     normal = "<C-y>",
-    --     insert = "<C-y>",
-    --   },
-    --   jump_to_diff = {
-    --     normal = "gj",
-    --   },
-    --   quickfix_answers = {
-    --     normal = "gqa",
-    --   },
-    --   quickfix_diffs = {
-    --     normal = "gqd",
-    --   },
-    --   yank_diff = {
-    --     normal = "gy",
-    --     register = '"', -- Default register to use for yanking
-    --   },
-    --   show_diff = {
-    --     normal = "gd",
-    --     full_diff = false, -- Show full diff instead of unified diff when showing diff window
-    --   },
-    --   show_info = {
-    --     normal = "gi",
-    --   },
-    --   show_context = {
-    --     normal = "gc",
-    --   },
-    --   show_help = {
-    --     normal = "gh",
-    --   },
-    -- },
+    mappings = {
+      --   complete = {
+      --     insert = "<Tab>",
+      --   },
+      --   close = {
+      --     normal = "q",
+      --     insert = "<C-c>",
+      --   },
+      --   reset = {
+      --     normal = "<C-l>",
+      --     insert = "<C-l>",
+      --   },
+      submit_prompt = {
+        normal = "<CR>",
+        -- insert = "<C-s>",
+        insert = "<C-j>",
+      },
+      --   toggle_sticky = {
+      --     normal = "grr",
+      --   },
+      --   clear_stickies = {
+      --     normal = "grx",
+      --   },
+      --   accept_diff = {
+      --     normal = "<C-y>",
+      --     insert = "<C-y>",
+      --   },
+      --   jump_to_diff = {
+      --     normal = "gj",
+      --   },
+      --   quickfix_answers = {
+      --     normal = "gqa",
+      --   },
+      --   quickfix_diffs = {
+      --     normal = "gqd",
+      --   },
+      --   yank_diff = {
+      --     normal = "gy",
+      --     register = '"', -- Default register to use for yanking
+      --   },
+      --   show_diff = {
+      --     normal = "gd",
+      --     full_diff = false, -- Show full diff instead of unified diff when showing diff window
+      --   },
+      --   show_info = {
+      --     normal = "gi",
+      --   },
+      --   show_context = {
+      --     normal = "gc",
+      --   },
+      --   show_help = {
+      --     normal = "gh",
+      --   },
+    },
   })
+  -- vim.api.nvim_create_autocmd("FileType", {
+  --   pattern = "copilot-chat",
+  --   callback = function()
+  --     vim.keymap.set("i", "<C-j>", function()
+  --       local keys = vim.api.nvim_replace_termcodes("<C-s>", true, false, true)
+  --       vim.api.nvim_feedkeys(keys, "i", false)
+  --     end, { buffer = true })
+  --   end,
+  -- })
 end
