@@ -2,9 +2,7 @@
 
 # MEMO: ilog/elog/wlog
 com_log() {
-  local stdin
-  stdin=
   # shellcheck disable=SC2145
-  echo -n "$(date +"%Y-%m-%d %H:%M:%S") $stdin${@:2}" | ink "$1"
+  echo -n "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | ink "$1"
   # printf "%s %s%s\n" "$(date +"%Y-%m-%d %H:%M:%S")" "$stdin" "${@:2}" | ink "$1"
 }

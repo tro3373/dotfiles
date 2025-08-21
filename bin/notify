@@ -28,7 +28,7 @@ main() {
   body="${@:2}"
   [[ -z $title ]] && title="Notify"
   [[ -z $body ]] && body="No message provided"
-  notify_slk
+  # notify_slk
   os mac && notify_mac && return
   os win && notify_win && return
   notify_linux

@@ -67,6 +67,11 @@ sed -e 's/\(.*\)/\L\1/'
 # Upper
 sed -e 's/\(.*\)/\U\1/'
 ```
+## Delete empty row
+
+```bash
+sed '/^$/d' /path/to/file
+```
 
 ## Delete specify row
 
