@@ -87,9 +87,10 @@ alias gs="git status"
 gt() {
   result=$(git_worktree "$@")
   if [[ ! $result =~ ^cd.*$ ]]; then
+    echo -e "$result"
     return
   fi
-  echo "==> Executing: $result" | wlog
+  wlog "==> Executing: $result"
   eval "$result"
 }
 if has git-sim; then

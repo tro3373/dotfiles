@@ -1,6 +1,7 @@
 #!/usr/bin/env -S bash -e
 
 command_name=$(basename "$0") && readonly command_name
+worktree_dir_name="___$command_name" && readonly worktree_dir_name
 readonly depends=(git fzf)
 mode=list
 branch=
@@ -60,32 +61,63 @@ add_args() { args+=("$@"); }
 has() { command -v "${1}" >&/dev/null; }
 hass() { for arg in "$@"; do has "$arg" || elog "==> No $arg command exist."; done; }
 
+get_git_root() {
+  # NOTE: Can not to use `git rev-parse` if current directory is in:
+  #   - `/path/to/repo-root/.git/___git_worktree/`
+  #   - `/path/to/repo-root/.tasks/`
+  # git rev-parse --show-toplevel |
+  pwd |
+    sed -e "s,/.git/$worktree_dir_name.*,,g" -e 's,.tasks.*,,g'
+}
+
 get_worktree_branch_name() {
   # Replace slashes with hyphens for the branch name
   echo "${branch//\//-}"
 }
 
-list_worktrees() {
-  git_root_dir=$(get_git_root)
-  cd "$git_root_dir" || {
-    elog "Failed to change directory to git root: $git_root_dir"
-  }
-  # ilog "==> Listing all worktrees in the repository:"
-  while read -r brach_path _ branch_name; do
-    [[ -z $brach_path ]] && continue
-    [[ $brach_path =~ ^#.* ]] && continue
-    echo cd "$brach_path"
-  done < <(
-    _select_worktrees "Switching directory.. Select worktree branches: " --no-multi
-  )
+show_change_directory_command() {
+  _list_changeable_directories |
+    fzf \
+      --exit-0 \
+      --no-multi \
+      --reverse \
+      --height=20% \
+      --bind 'ctrl-l:toggle-all' \
+      --prompt="Select worktree branches to change directory: " |
+    awk '{print $NF}' |
+    while read -r brach_path; do
+      [[ -z $brach_path ]] && continue
+      [[ $brach_path =~ ^#.* ]] && continue
+      echo cd "$brach_path"
+    done
+}
+
+_list_changeable_directories() {
+  {
+    # show worktrees sorted by updated time
+    ls -td "$git_root_dir/.git/$worktree_dir_name"/*/
+    # show repo root directory
+    echo "$git_root_dir"
+  } |
+    while read -r _target_path; do
+      [[ -z $_target_path ]] && continue
+      [[ $_target_path =~ ^#.* ]] && continue
+      label="RepositoryRoot"
+      if [[ $_target_path =~ ^$git_root_dir/.git/$worktree_dir_name/ ]]; then
+        label=$(basename "$_target_path")
+        local task_file="$_target_path/.tasks.md"
+        if [[ -e $task_file ]]; then
+          label=$(head -1 "$task_file" | sed -e 's,^#* ,,')
+        fi
+      fi
+      _time=$(stat -c %y "$_target_path" | cut -d. -f1 | sed -e 's, ,_,g')
+      printf "%s\t%s\t%s\n" "$_time" "$label" "$_target_path"
+    done | column -t -s $'\t'
+
 }
 
 add_worktree() {
-  git_root_dir=$(get_git_root)
-  cd "$git_root_dir" || {
-    elog "Failed to change directory to git root: $git_root_dir"
-  }
-  dst_dir="$git_root_dir/.git/___$command_name/$(get_worktree_branch_name)"
+  dst_dir="$git_root_dir/.git/$worktree_dir_name/$(get_worktree_branch_name)"
   ilog "==> Adding worktree to $dst_dir for $branch branch hash:$commit_hash.."
   # shellcheck disable=SC2086
   git worktree add -b "$branch" "$dst_dir" $commit_hash || {
@@ -107,8 +139,8 @@ ln_ignored_if_needed() {
   # Get ignored files/directories (directories shown with trailing /)
   git status --ignored --porcelain 2>/dev/null |
     grep '^!!' |
-    grep -v '.tasks.md' |
     cut -c4- |
+    grep -Ev '(\.tasks\.md|\.trash)' |
     sed -e 's,/$,,g' |
     while read -r line; do
       [[ -z $line ]] && continue
@@ -123,42 +155,30 @@ ln_ignored_if_needed() {
     done
 }
 
-# /path/to/worktree xxxxhashxx [feature/xxxx]
-_list_worktrees() {
-  git worktree list
-}
-
-_select_worktrees() {
-  msg="$1"
-  # shellcheck disable=SC2124
-  query_opt="${@:2}"
-  [[ -n $branch ]] && {
-    query_opt="--query $branch $query_opt"
-  }
-  # --no-color
-  # shellcheck disable=SC2086
-  _list_worktrees |
-    fzf $query_opt \
-      --exit-0 \
-      --reverse \
-      --height=20% \
-      --bind 'ctrl-l:toggle-all' \
-      --prompt="$msg"
-}
-
 remove_worktree() {
-  removal_list=$(_list_worktrees)
+  removal_list=$(_list_removal_worktrees)
   if [[ -z $removal_list ]]; then
     elog "No worktrees exist to remove."
   fi
-  if [[ ! $removal_list =~ ^.*___.* ]]; then
-    elog "No worktrees exist to remove. (Only worktrees created by this script can be removed.)"
-  fi
 
-  _select_worktrees "Select branch to remove worktree for: " --multi |
+  _list_removal_worktrees |
+    fzf \
+      --exit-0 \
+      --multi \
+      --reverse \
+      --height=20% \
+      --bind 'ctrl-l:toggle-all' \
+      --prompt="Select branch to remove worktree for: " |
     while read -r brach_path _ branch_name; do
       [[ -z $brach_path ]] && continue
       [[ $brach_path =~ ^#.* ]] && continue
+
+      local task_file="$brach_path"/.tasks.md
+      if [[ -e $task_file ]]; then
+        linked_path=$(readlink "$task_file")
+        mv "$linked_path" "$brach_path/.tasks/done/"
+      fi
+
       # Remove []: ex [feature/xxxx] => feature/xxxx
       branch_name=${branch_name//[\[\]]/}
       ilog "==> Removing worktree path: '$brach_path'.."
@@ -168,8 +188,18 @@ remove_worktree() {
     done
 }
 
+_list_removal_worktrees() {
+  git worktree list |
+    grep "$worktree_dir_name"
+}
+
 main() {
   initialize "$@"
+
+  git_root_dir=$(get_git_root)
+  cd "$git_root_dir" || {
+    elog "Failed to change directory to git root: $git_root_dir"
+  }
 
   if [[ $mode == "add" ]]; then
     add_worktree
@@ -179,6 +209,6 @@ main() {
     remove_worktree
     return
   fi
-  list_worktrees
+  show_change_directory_command
 }
 main "$@"
