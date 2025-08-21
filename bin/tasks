@@ -2,6 +2,7 @@
 
 readonly depends=(curl fzf jq)
 command_name=$(basename "$0") && readonly command_name
+worktree_dir_name="___git_worktree" && readonly worktree_dir_name
 args=()
 mode=list
 
@@ -15,6 +16,7 @@ Manage repository tasks.
     Options
       -h|--help  : Show this usage
       -s|--split : Split tasks into multiple files
+      -n|--next  : Show next task chunk
 
 EOF
 }
@@ -25,6 +27,7 @@ initialize() {
     case "$1" in
       -h | --help) usage && exit 0 ;;
       -s | --split) mode="split" ;;
+      -n | --next) mode="next" ;;
       # -f*|--file*) file=${1#*=} ;;
       # -f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
@@ -47,24 +50,101 @@ warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
 
 init_link_tasks() {
+  info "==> Initialize tasks directory.."
   repo_name=$(basename "$git_root")
   srcd="$HOME/.mo/tasks/$repo_name"
-  mkdir -p "$srcd/.tasks/done"
-  touch "$srcd"/.tasks.md
-  ln -s "$srcd/.tasks" "$git_root/.tasks"
-  ln -s "$srcd/.tasks.md" "$git_root/.tasks.md"
+  info "==> Creating tasks directory at $srcd"
+  mkdir -p "$srcd"/tasks/done
+  touch "$srcd"/tasks.md
+  info "==> Linking .tasks/ directory to $git_root"
+  ln -s "$srcd/tasks" "$git_root/.tasks"
+  info "==> Linking .tasks.md to $git_root"
+  ln -s "$srcd/tasks.md" "$git_root/.tasks.md"
 }
 
 find_tasks() {
   echo .tasks.md
-  find .tasks/ -maxdepth 1 -mindepth 1 -type f -name '*.md' |
-    sort
+  rg --files .tasks/ | sort
+}
+
+cat_first_task() {
+  parse_first_task
+  sed -n "${first_line},${end_line}p" "$target_file"
 }
 
 split_tasks() {
+  # tempファイルに抽出
+  local temp_file
+  temp_file=$(mktemp)
+  cat_first_task >"$temp_file"
+
+  # 元ファイルから削除
+  sed -i "${first_line},${end_line}d" "$target_file"
+
+  # prpコマンドでJSON取得
+  local json_result
+  json_result=$(cat "$temp_file" | prp -ne gen-task-title-and-branch.md$ | llm -c tgpt -p groq)
+
+  # JSON解析
+  local branch name title
+  branch=$(echo "$json_result" | jq -r '.branch')
+  name=$(echo "$json_result" | jq -r '.name')
+  title=$(echo "$json_result" | jq -r '.title')
+
+  # タスクファイル作成
+  local timestamp
+  timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+  local task_file=".tasks/${timestamp}_${name}.md"
+
+  # worktree ブランチ作成
+  local worktree_dir
+  worktree_dir=$(git_worktree -a "${branch}")
+
+  # マークダウン形式でファイル作成
+  cat >"$task_file" <<EOF
+## ${title}
+### ブランチ名
+- ${branch}
+### 作業ディレクトリ
+- ${worktree_dir}
+### タスク内容
+$(cat "$temp_file")
+EOF
+
+  # link task_file
+  ln -s "$task_file" "$worktree_dir/.tasks.md"
+
+  # tempファイル削除
+  rm -f "$temp_file"
+
+  info "==> Task split to: $task_file"
+  info "==> Branch: $branch"
+
+  # まだタスクが残っていれば再帰的に処理
+  if grep -qE '^- \[ \]' "$target_file"; then
+    split_tasks
+  fi
+}
+
+parse_first_task() {
   if [[ ! -s $target_file ]] || ! grep -qE '^- \[ \]' "$target_file"; then
     error "==> Empty tasks. $target_file"
   fi
+
+  # チェックボックス行の行番号を取得
+  line_numbers=$(grep -nE '^- \[ \]' "$target_file" | cut -d: -f1)
+
+  # 最初の行番号を取得
+  first_line=$(echo "$line_numbers" | head -n1)
+
+  # 2番目の行番号を取得（なければファイル末尾）
+  second_line=$(echo "$line_numbers" | sed -n '2p')
+  if [[ -z $second_line ]]; then
+    second_line=$(($(wc -l <"$target_file") + 1))
+  fi
+
+  # 範囲を計算（2番目の直前まで）
+  end_line=$((second_line - 1))
 }
 
 main() {
@@ -72,7 +152,16 @@ main() {
   git_root=$(git rev-parse --show-toplevel)
   cd "$git_root" || exit 1
   target_file="$git_root/.tasks.md"
-  [[ ! -e $target_file ]] && init_link_tasks
+  # [[ ! -e $target_file ]] && init_link_tasks
+  if [[ ! -e $target_file ]] && ! [[ $git_root =~ ^.*/${worktree_dir_name}/.*$ ]]; then
+    # Initialize if Not exist and Not in worktree directory
+    init_link_tasks
+  fi
+
+  if [[ $mode == "next" ]]; then
+    cat_first_task
+    return
+  fi
   if [[ $mode == "split" ]]; then
     split_tasks
     return
