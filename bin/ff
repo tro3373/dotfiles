@@ -28,7 +28,7 @@ findf() {
 }
 
 rgf() {
-  rg --files . |
+  rg --files -u . |
     if [[ $# -eq 0 ]]; then
       cat -
     else
