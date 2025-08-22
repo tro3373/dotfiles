@@ -13,4 +13,5 @@ execute 'luafile' s:lua_file
 lua copilot_chat_setup()
 
 nnoremap <C-l> :<C-u>CopilotChat<CR>
-vnoremap <C-l> :<C-u>CopilotChat<CR>
+" vnoremap <C-l> :<C-u>CopilotChat<CR>
+vnoremap <C-l> :<C-u>CopilotChatExplainJp<CR>

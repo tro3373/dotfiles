@@ -93,9 +93,17 @@ _G.copilot_chat_setup = function()
     --   quickfix = {},
     --   system = {},
     -- },
-
+    --
     -- -- default prompts
     -- -- see config/prompts.lua for implementation
+    prompts = {
+      ExplainJp = {
+        prompt = "これなに？",
+        system_prompt = "あなたは優秀なプログラマーです。",
+        -- mapping = "<leader>ccmc",
+        -- description = "My custom prompt description",
+      },
+    },
     -- prompts = {
     --   Explain = {
     --     prompt = "Write an explanation for the selected code as paragraphs of text.",
