@@ -19,7 +19,7 @@ _dynamic() {
   _cache_load manpath
   _cache_load lscolors
 
-  _cache_loads sheldon uv direnv gh
+  _cache_loads sheldon uv direnv gh glab
 }
 
 _cache_loads() {
@@ -199,6 +199,10 @@ _cat_uv() {
 
 _cat_gh() {
   gh completion -s zsh
+}
+
+_cat_glab() {
+  glab completion -s zsh
 }
 
 _dynamic
