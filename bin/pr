@@ -126,8 +126,27 @@ create_pr_with_push() {
   ilog "==> Pushing commits.."
   git push -u origin "$current_branch"
   _target_branch=${target_branch#origin/}
-  ilog "==> Creating PR!.."
-  echo -e "cat <$target_tmp_dir/body | gh pr create --base \"$_target_branch\" --web --title \"$(cat <"$target_tmp_dir"/title)\" --body-file -"
+  is_origin_is_gitlab && {
+    dump_pr_or_mr MR
+    create_mr
+    return
+  }
+  dump_pr_or_mr PR
+  create_pr
+}
+
+is_origin_is_gitlab() { git remote get-url origin 2>/dev/null | grep -q gitlab; }
+dump_pr_or_mr() {
+  ilog "==> Creating $1!.."
+  # shellcheck disable=SC2016
+  cat <<EOF | ink yellow
+branch: $current_branch ==> $_target_branch
+ title: $(cat <"$target_tmp_dir"/title)
+  body:
+$(cat <"$target_tmp_dir"/body | sed 's/"/\\"/g; s/`/\\`/g')
+EOF
+}
+create_pr() {
   cat <"$target_tmp_dir"/body |
     gh pr create \
       --base "$_target_branch" \
@@ -135,6 +154,15 @@ create_pr_with_push() {
       --web \
       --title "$(cat <"$target_tmp_dir"/title)" \
       --body-file -
+}
+create_mr() {
+  glab mr create \
+    --target-branch "$_target_branch" \
+    --source-branch "$current_branch" \
+    --web \
+    --title "$(cat <"$target_tmp_dir"/title)" \
+    --description "$(cat <"$target_tmp_dir"/body)"
+  # --description "$(cat <"$target_tmp_dir"/body | sed 's/"/\\"/g; s/`/\\`/g')"
 }
 
 end() {
