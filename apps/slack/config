@@ -1,14 +1,33 @@
 #!/usr/bin/env bash
 
 install_common() {
+  install_clis
+}
+install_clis() {
+  install_slack_term
+  install_slack_cli
+}
+install_slack_term() {
+  go_install github.com/erroneousboat/slack-term@latest
+}
+setup_slack_term() {
+  target="$HOME/.config/slack-term/config"
+  [[ -e $target ]] && return
+  cat cat_tee "$target" <<'EOF'
+{
+  "slack_token": "set-slack-token-here"
+}
+EOF
+}
+install_slack_cli() {
   exe cd "$HOME"/bin
   exe curl -O https://raw.githubusercontent.com/rockymadden/slack-cli/master/src/slack
   exe chmod +x slack
 }
 install_arch() {
   # install_removed_menu_slack
-  # def_install slack-desktop
-  exe snap install slack
+  def_install slack-desktop
+  # exe snap install slack
   install_common
 }
 
@@ -40,10 +59,11 @@ install_removed_menu_slack() {
 # install_ubuntu() { not_supported; }
 # install_redhat() { not_supported; }
 setting_common() {
-  if grep -q "SLACK_CLI_TOKEN=token" "$HOME"/.works.zsh; then
+  setup_slack_term
+  if grep -q "SLACK_CLI_TOKEN=" "$HOME"/.works.zsh; then
     return
   fi
-  exe "echo 'export SLACK_CLI_TOKEN=token' >> $HOME/.works.zsh"
+  exe "echo 'export SLACK_CLI_TOKEN=set-slack-token-here' >> $HOME/.works.zsh"
 }
 # setting_arch()   { not_supported; }
 # setting_msys()   { not_supported; }
