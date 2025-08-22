@@ -6,13 +6,13 @@ endif
 " vim-quickrun
 "=============================================
 " -args "a b c" で引数指定
-"\       "outputter/buffer/split" : ":botright 8",
 "\       "outputter" : "multi:buffer:quickfix",
 " terminal not supported in Neovim
 "\       "runner" : "terminal",
 let g:quickrun_config = {
 \   "*" : {
 \       "hook/time/enable": "1",
+\       "outputter/buffer/opener": "belowright new",
 \   },
 \   "_" : {
 \       "hook/close_buffer/enable_empty_data" : 1,
