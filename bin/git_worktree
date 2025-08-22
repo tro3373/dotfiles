@@ -95,7 +95,7 @@ show_change_directory_command() {
 _list_changeable_directories() {
   {
     # show worktrees sorted by updated time
-    ls -td "$git_root_dir/.git/$worktree_dir_name"/*/
+    ls -td "$git_root_dir/.git/$worktree_dir_name"/*/ 2>/dev/null || :
     # show repo root directory
     echo "$git_root_dir"
   } |
@@ -120,10 +120,10 @@ add_worktree() {
   dst_dir="$git_root_dir/.git/$worktree_dir_name/$(get_worktree_branch_name)"
   ilog "==> Adding worktree to $dst_dir for $branch branch hash:$commit_hash.."
   # shellcheck disable=SC2086
-  git worktree add -b "$branch" "$dst_dir" $commit_hash || {
+  git worktree add -b "$branch" "$dst_dir" $commit_hash 1>&2 || {
     elog "Failed to add worktree to $dst_dir for branch '$branch'."
   }
-  ln_ignored_if_needed
+  ln_ignored_if_needed 1>&2
   ilog "==> Added worktree for branch '$branch' at '$dst_dir'."
 
   if [[ $switch -ne 1 ]]; then
@@ -176,6 +176,7 @@ remove_worktree() {
       local task_file="$brach_path"/.tasks.md
       if [[ -e $task_file ]]; then
         linked_path=$(readlink "$task_file")
+        ilog "==> Moving task file '$task_file' to .tasks/done/.."
         mv "$linked_path" "$brach_path/.tasks/done/"
       fi
 
