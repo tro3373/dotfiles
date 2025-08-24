@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
 
 install_common() {
-  exe cd "$HOME"
-  normal_install
+  npm_install @anthropic-ai/claude-code
   suggest
-}
-
-normal_install() {
-  exe npm install -g @anthropic-ai/claude-code
-  exe asdf reshim
 }
 
 suggest() {

@@ -5,7 +5,5 @@
 # }
 install_common() {
   # go_install github.com/mackee/go-readability/cmd/readability@latest
-  exe cd "$HOME"
-  exe npm install -g @mizchi/readability
-  exe asdf reshim
+  npm_install @mizchi/readability
 }

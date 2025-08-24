@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
 install_common() {
-  exe npm install -g npm-check-updates
-  exe asdf reshim
+  npm_install npm-check-updates
 }

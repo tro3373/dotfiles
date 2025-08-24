@@ -523,6 +523,17 @@ go_install() {
   # exe asdf reshim golang
 }
 
+npm_install() {
+  if ! has npm; then
+    log "npm not installed."
+    return
+  fi
+  exe pushd "$HOME"
+  exe npm install -g "$*"
+  exe asdf reshim nodejs
+  exe popd
+}
+
 gsettings_if_needed() {
   local _scheme=$1
   local _path=$2
