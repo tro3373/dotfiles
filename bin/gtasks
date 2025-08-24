@@ -6,16 +6,23 @@ cache_token=$HOME/.$command_name.token && readonly cache_token
 tasks_api_endpoint="https://tasks.googleapis.com" && readonly tasks_api_endpoint
 
 readonly depends=(curl)
+mode=list
 args=()
 usage() {
   cat <<EOF
 
-Google Tasks CLI
+Google Tasks to tsv or move CLI
 
   Usage:
       $command_name [option]
     Options
       -h|--help : Show this usage
+      -t|--tsv  : Output tasks in TSV format (default)
+                 Usage: $command_name <source_list_1> [source_list_2 ...]
+                 Example: $command_name "To Do" "In Progress"
+      -m|--move : Move tasks from source lists to destination list
+                 Usage: $command_name -m <source_list_1> [source_list_2 ...] <destination_list>
+                 Example: $command_name -m "To Do" "In Progress" "Done"
 
 EOF
 }
@@ -27,6 +34,8 @@ initialize() {
       # -e) dummy= ;;
       # -f*|--file*) file=${1#*=} ;;
       # -f|--file) shift && file=$1 ;;
+      -t | --tsv) mode=tsv ;;
+      -m | --move) mode=move ;;
       *) add_args "$1" ;;
     esac
     shift
@@ -96,6 +105,23 @@ get_access_token() {
   cat_access_token_from_cache_token_file
 }
 
+check_expired_token() {
+  # Get file modification time (epoch seconds)
+  mod_time=$(stat -c %Y "$cache_token")
+  expires_in=$(jq -r '.expires_in' <"$cache_token")
+  refresh_token_expires_in=$(jq -r '.refresh_token_expires_in' <"$cache_token")
+  access_expiry=$((mod_time + expires_in))
+  refresh_token_expiry=$((mod_time + refresh_token_expires_in))
+  now=$(date +%s)
+  access_expired=$((now > access_expiry))
+  refresh_expired=$((now > refresh_token_expiry))
+  echo $access_expired $refresh_expired
+}
+
+cat_access_token_from_cache_token_file() {
+  cat <"$cache_token" | jq -r '.access_token'
+}
+
 generate_access_token() {
   local grant_type="$1"
   local code_or_token
@@ -142,23 +168,6 @@ request_access_token() {
   "${commands[@]}"
 }
 
-cat_access_token_from_cache_token_file() {
-  cat <"$cache_token" | jq -r '.access_token'
-}
-
-check_expired_token() {
-  # Get file modification time (epoch seconds)
-  mod_time=$(stat -c %Y "$cache_token")
-  expires_in=$(jq -r '.expires_in' <"$cache_token")
-  refresh_token_expires_in=$(jq -r '.refresh_token_expires_in' <"$cache_token")
-  access_expiry=$((mod_time + expires_in))
-  refresh_token_expiry=$((mod_time + refresh_token_expires_in))
-  now=$(date +%s)
-  access_expired=$((now > access_expiry))
-  refresh_expired=$((now > refresh_token_expiry))
-  echo $access_expired $refresh_expired
-}
-
 request_tasks_api() {
   local commands=()
   commands+=(curl)
@@ -176,6 +185,14 @@ get_lists() {
 }
 
 get_list_tasks() {
+  local list_name="$1"
+  # リスト名からリストIDを取得
+  local lists_json
+  lists_json=$(get_lists)
+  # 移動先リストIDを取得
+  local list_id
+  list_id=$(get_task_list_id "$list_name")
+
   info "===> Getting tasks for list $list_id"
   pager=
   if [[ -n $next_page_token ]]; then
@@ -192,16 +209,14 @@ move_task() {
 move_tasks() {
   local -a list_names=("$@")
   local list_count=${#list_names[@]}
-
   # 最低2つのリスト名が必要（移動元と移動先）
   if [[ $list_count -lt 2 ]]; then
-    error "===> Usage: move_tasks <source_list_1> [source_list_2 ...] <destination_list>"
+    error "===> Usage: $command_name -m <source_listname_1> [source_listname_2 ...] <destination_listname>"
   fi
 
   # 最後の引数が移動先リスト
   local dest_list_name="${list_names[-1]}"
   local -a source_list_names=("${list_names[@]:0:$((list_count - 1))}")
-
   info "===> Moving tasks from [${source_list_names[*]}] to [$dest_list_name]"
 
   # リスト名からリストIDを取得
@@ -210,67 +225,30 @@ move_tasks() {
 
   # 移動先リストIDを取得
   local dest_list_id
-  dest_list_id=$(echo "$lists_json" | jq -r --arg name "$dest_list_name" '.items[] | select(.title == $name) | .id')
-
+  dest_list_id=$(get_task_list_id "$dest_list_name")
   if [[ -z $dest_list_id ]]; then
     error "===> Destination list not found: $dest_list_name"
   fi
-
   info "===> Destination list ID: $dest_list_id"
 
   # タスクを格納する一時ファイル
   timestamp=$(date +%Y-%m-%d.%H%M%S)
-  local target_tsv_file="$HOME/.gtasks.$timestamp.tsv"
+  local target_tsv_file="/tmp/.gtasks.$timestamp.tsv"
   : >"$target_tsv_file" # ファイルを初期化
 
   # 各移動元リストからタスクを取得
   for source_list_name in "${source_list_names[@]}"; do
     local source_list_id
-    source_list_id=$(echo "$lists_json" | jq -r --arg name "$source_list_name" '.items[] | select(.title == $name) | .id')
-
+    source_list_id=$(get_task_list_id "$source_list_name")
     if [[ -z $source_list_id ]]; then
       warn "===> Source list not found, skipping: $source_list_name"
       continue
     fi
-
     info "===> Fetching tasks from $source_list_name (ID: $source_list_id)"
-
-    # ページネーションでタスクを全て取得
-    local next_page_token=""
-    local page_count=0
-
-    while true; do
-      page_count=$((page_count + 1))
-      info "===> Fetching page $page_count for $source_list_name"
-
-      local pager=""
-      if [[ -n $next_page_token ]]; then
-        pager="&pageToken=$next_page_token"
-      fi
-
-      local tasks_json
-      tasks_json=$(request_tasks_api "$tasks_api_endpoint/tasks/v1/lists/$source_list_id/tasks?showCompleted=false$pager")
-
-      # タスクをTSV形式で保存（parent を持たないタスクのみ）
-      echo "$tasks_json" | jq -r --arg list_name "$source_list_name" --arg list_id "$source_list_id" \
-        '.items[] | select(.parent == null) | "\(.updated)\t\($list_name)\t\($list_id)\t\(.id)\t\(.title)"' >>"$target_tsv_file"
-
-      # 次のページトークンを取得
-      next_page_token=$(echo "$tasks_json" | jq -r '.nextPageToken // empty')
-
-      if [[ -z $next_page_token ]]; then
-        break
-      fi
-    done
+    cat_sorted_all_tasks_as_tsv "$source_list_id" "$source_list_name" >>"$target_tsv_file"
   done
 
-  # TSVファイルをソート（updatedカラムで古い順）
-  local sorted_file="${target_tsv_file}.sorted"
-  sort "$target_tsv_file" >"$sorted_file"
-  mv -f "$sorted_file" "$target_tsv_file"
-
   info "===> Found $(wc -l <"$target_tsv_file") tasks to move"
-
   # タスクを移動
   while IFS=$'\t' read -r updated source_list_name list_id task_id task_title; do
     info "===> Moving task: $task_title (from $source_list_name, updated: $updated)"
@@ -281,10 +259,82 @@ move_tasks() {
   info "===> Task move completed. Target List: $target_tsv_file"
 }
 
+cat_sorted_all_tasks_as_tsv() {
+  cat_all_tasks_as_tsv "$@" | sort
+}
+
+cat_all_tasks_as_tsv() {
+  local list_id="$1"
+  local list_name="$2"
+  # ページネーションでタスクを全て取得
+  local next_page_token=""
+  local page_count=0
+  while true; do
+    page_count=$((page_count + 1))
+    info "===> Fetching page $page_count for $list_name"
+
+    local pager=""
+    if [[ -n $next_page_token ]]; then
+      pager="&pageToken=$next_page_token"
+    fi
+
+    local tasks_json
+    tasks_json=$(request_tasks_api "$tasks_api_endpoint/tasks/v1/lists/$list_id/tasks?showCompleted=false$pager")
+
+    # タスクをTSV形式で保存（parent を持たないタスクのみ）
+    echo "$tasks_json" | jq -r --arg list_name "$list_name" --arg list_id "$list_id" \
+      '.items[] | select(.parent == null) | "\(.updated)\t\($list_name)\t\($list_id)\t\(.id)\t\(.title)"'
+
+    # 次のページトークンを取得
+    next_page_token=$(echo "$tasks_json" | jq -r '.nextPageToken // empty')
+
+    if [[ -z $next_page_token ]]; then
+      break
+    fi
+  done
+}
+
+# need lists_json variable
+get_task_list_id() {
+  local list_name="$1"
+  echo "$lists_json" | jq -r --arg name "$list_name" '.items[] | select(.title == $name) | .id'
+}
+
+tsv_tasks() {
+  local -a list_names=("$@")
+  local list_count=${#list_names[@]}
+  # 最低1つのリスト名が必要
+  if [[ $list_count -eq 0 ]]; then
+    error "===> Usage: $command_name <source_listname_1> [source_listname_2 ...]"
+  fi
+  # リスト名からリストIDを取得
+  local lists_json
+  lists_json=$(get_lists)
+
+  for list_name in "${list_names[@]}"; do
+    local list_id
+    list_id=$(get_task_list_id "$list_name")
+    if [[ -z $list_id ]]; then
+      warn "===> List not found, skipping: $list_name"
+      continue
+    fi
+    info "===> Fetching tasks from $list_name (ID: $list_id)"
+    cat_sorted_all_tasks_as_tsv "$list_id" "$list_name"
+  done
+}
+
 main() {
   set -eo pipefail
   access_token=$(get_access_token)
 
-  move_tasks "$@"
+  if [[ $mode == "move" ]]; then
+    move_tasks "$@"
+    return
+  fi
+  if [[ $mode == "tsv" ]]; then
+    tsv_tasks "$@"
+    return
+  fi
+  get_list_tasks "$@"
 }
 main "$@"
