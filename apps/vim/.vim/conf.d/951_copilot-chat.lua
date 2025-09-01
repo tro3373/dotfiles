@@ -134,9 +134,11 @@ _G.copilot_chat_setup = function()
     -- -- default mappings
     -- -- see config/mappings.lua for implementation
     mappings = {
-      --   complete = {
-      --     insert = "<Tab>",
-      --   },
+      complete = {
+        -- NOTE: CopilotChat画面でCopilotの補完を受けたいので、Tabマッピングをずらす
+        -- insert = "<Tab>",
+        insert = "<C-k>",
+      },
       --   close = {
       --     normal = "q",
       --     insert = "<C-c>",

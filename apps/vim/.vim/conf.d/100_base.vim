@@ -540,7 +540,9 @@ augroup END
 augroup url_no_auto_comment
   autocmd!
   " filetypeが設定されていない時のみ、URL行の後の自動挿入された//を削除
-  autocmd TextChangedI * if &filetype == '' | call s:RemoveAutoCommentAfterURL() | endif
+  " autocmd TextChangedI * if &filetype == '' | call s:RemoveAutoCommentAfterURL() | endif
+  " indev(['a','b'], &filetype) >= 0 で filetype が a または b の場合に true を返す
+  autocmd TextChangedI * if index(['go','java','sh'], &filetype) < 0 | call s:RemoveAutoCommentAfterURL() | endif
 augroup END
 
 function! s:RemoveAutoCommentAfterURL()

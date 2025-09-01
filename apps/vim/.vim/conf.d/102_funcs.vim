@@ -379,7 +379,7 @@ endfunction
 function! GenerateViaLLM(prpName, tmpfile) abort
   " システムコマンドへ渡す
   " MEMO: tmp内容が反映されないケースがるので、0.2秒待機
-  let title = Chomp(system('sleep 0.2 && cat '..a:tmpfile..' | prp -ne '..a:prpName..' | llm'))
+  let title = Chomp(system('sleep 0.2 && cat '..a:tmpfile..' | prp -ne '..a:prpName..' | llm -c tgpt -p groq'))
   " 一時ファイルを削除
   call delete(a:tmpfile)
   return title
@@ -395,7 +395,7 @@ nnoremap sT :<C-u>SaveKnowledge<CR>
 
 function! SaveMd() abort
   let tmpfile = WriteToTemp()
-  let title = GenerateViaLLM("gen-content-title-en.md", tmpfile)
+  let title = GenerateViaLLM("gen-content-title.md", tmpfile)
   call SaveMemoInner("~/.md/content/posts", title, 1, 1)
 endfun
 command! SaveMd call SaveMd()
@@ -1062,7 +1062,8 @@ function! ToggleLinting() abort
     let g:lsp_diagnostics_enabled = 0
     let g:lsp_diagnostics_echo_cursor = 0
     " let g:lsp_diagnostics_highlights_enabled = 0
-    echo "==> ALE and LSP disabled."
+    let b:EditorConfig_disable = 1
+    echo "==> ALE and LSP EditorConfig disabled."
   else
     ALEEnable
     " LspStartServer => Not Such command Exist
@@ -1070,7 +1071,8 @@ function! ToggleLinting() abort
     let g:lsp_diagnostics_enabled = 1
     let g:lsp_diagnostics_echo_cursor = 1
     " let g:lsp_diagnostics_highlights_enabled = 1
-    echo "==> ALE and LSP enabled."
+    let b:EditorConfig_disable = 0
+    echo "==> ALE and LSP EditorConfig enabled."
   endif
 endfunction
 command! ToggleLinting call ToggleLinting()
@@ -1207,3 +1209,34 @@ function! Issue(args) abort
   call jobstart(cmd)
 endfunction
 command! -nargs=* Issue call Issue(expand('<args>'))
+
+" Goto file under cursor
+" - `gf`: カーソル下のファイル名を開く
+" - `gF`: カーソル下のファイル名＋行番号を開く（例: `foo.txt:42` なら 42 行目で開く）
+" noremap gf <C-W>gF
+" noremap gF <C-W>gf
+function! JumpToFileAndLineUnderCursor()
+  let l:word = expand('<cWORD>')
+  let l:word = substitute(l:word, '[`''"<>]', '', 'g')
+  if l:word =~ '\v(.+)(:\+?|:|#L)(\d+)$'
+    let l:file = substitute(l:word, '\v(:\+?|:|#L)\d+$', '', '')
+    let l:lnum = matchstr(l:word, '\v(\d+)$')
+    execute 'tabedit ' . fnameescape(l:file)
+    execute l:lnum
+  else
+    execute 'tabedit ' . fnameescape(l:word)
+  endif
+endfunction
+nnoremap gf :call JumpToFileAndLineUnderCursor()<CR>
+
+function! Bom()
+  set bomb
+  write
+endfunction
+command! Bom call Bom()
+
+function! BomRemove()
+  set nobomb
+  write
+endfunction
+command! BomRemove call BomRemove()

@@ -55,11 +55,6 @@ cnoremap <expr> / (getcmdtype() == '/') ? '\/' : '/'
 cnoremap <C-o> <C-\>e(getcmdtype() == '' <Bar><Bar> getcmdtype() == '?') ? '\<' . getcmdline() . '\>' : getcmdline()<CR>
 
 
-" Goto file under cursor
-noremap gf <C-W>gF
-noremap gF <C-W>gf
-
-
 " 貼り付けたテキストを選択
 noremap gV `[v`]
 
