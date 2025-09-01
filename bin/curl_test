@@ -57,17 +57,18 @@ execute_curl() {
 
   req_json="$(get_req_json_path)"
   if [[ -e $req_json ]]; then
-    info "==> Requesting Data: $(cat <"$req_json")"
+    info "==> Requesting Data: $(cat <"$req_json" | envsubst)"
     if [[ $method == POST || $method == PUT || $method == PATCH ]]; then
       commands+=(-d @-)
     fi
   fi
 
   dump_request
-  cat_req_data | jq -c | "${commands[@]}" | jq . >"$dst"
+  cat_req_data | jq -c | "${commands[@]}" >"$dst"
+  cat <"$dst" | jq . >"$dst.tmp" && mv "$dst.tmp" "$dst"
   info "==> Response Saved to: $dst"
   info "==> Response:"
-  cat <"$dst" | jq .
+  cat <"$dst"
 
   [[ -z $save_env_vals || $save_env_vals == _ ]] && return
   echo -e "$save_env_vals" |

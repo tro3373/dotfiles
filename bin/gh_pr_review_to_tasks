@@ -13,6 +13,7 @@ Usage: $command_name <pr_number> [--all]
 EOF
 }
 
+# TODO: commentのURLも追記したい
 fire_comments() {
   # ファイルへのレビューコメント
   # gh api "repos/${repo}/pulls/${pr_number}/comments" --jq '.[] | {user: .user.login, body: .body}' 2>/dev/null || true

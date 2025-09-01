@@ -6,6 +6,6 @@ main() {
     echo "Usage: $0 <todo message here>"
     return 1
   fi
-  ln -s /warning-"$timestamp" "$*"
+  ln -s warning-"$timestamp" "$*"
 }
 main "$@"

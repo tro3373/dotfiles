@@ -93,7 +93,7 @@ _claude() {
 }
 
 _gemini() {
-  command gemini -y -p ""
+  command gemini -y -p "" | grep -v '^Data collection is disabled.'
 }
 
 _eliben_gemini_cli() {

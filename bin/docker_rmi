@@ -9,8 +9,9 @@ main() {
     while read -r img tag hash _; do
       [[ -z $img ]] && continue
       [[ $img =~ ^#.* ]] && continue
-      echo "==> Removing $img:$tag ImageId:$hash .." | ink yellow
-      docker rmi "$hash" "$@"
+      echo "==> Removing $img:$tag hash:$hash .." | ink yellow
+      echo "====> docker rmi $img:$tag $*" | ink yellow
+      docker rmi "$img:$tag" "$@"
     done
 }
 main "$@"

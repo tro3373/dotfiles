@@ -41,7 +41,7 @@ initialize() {
     shift
   done
   check
-  set -euo pipefail
+  set -eo pipefail
 }
 check() { hass "${depends[@]}"; }
 add_args() { args+=("$@"); }
@@ -245,7 +245,7 @@ move_tasks() {
       continue
     fi
     info "===> Fetching tasks from $source_list_name (ID: $source_list_id)"
-    cat_sorted_all_tasks_as_tsv "$source_list_id" "$source_list_name" >>"$target_tsv_file"
+    cat_all_no_completed_no_parent_tasks_as_tsv "$source_list_id" "$source_list_name" >>"$target_tsv_file"
   done
 
   info "===> Found $(wc -l <"$target_tsv_file") tasks to move"
@@ -259,35 +259,28 @@ move_tasks() {
   info "===> Task move completed. Target List: $target_tsv_file"
 }
 
-cat_sorted_all_tasks_as_tsv() {
-  cat_all_tasks_as_tsv "$@" | sort
-}
-
-cat_all_tasks_as_tsv() {
-  local list_id="$1"
-  local list_name="$2"
+export_all_no_completed_tasks_as_json() {
+  local list_id="$1" list_name="$2" dst_dir="$3"
   # ページネーションでタスクを全て取得
   local next_page_token=""
   local page_count=0
   while true; do
     page_count=$((page_count + 1))
+    dst_file_name=$(printf "%05d.json" "$page_count")
     info "===> Fetching page $page_count for $list_name"
 
-    local pager=""
+    local tasks_json pager=""
     if [[ -n $next_page_token ]]; then
       pager="&pageToken=$next_page_token"
     fi
-
-    local tasks_json
     tasks_json=$(request_tasks_api "$tasks_api_endpoint/tasks/v1/lists/$list_id/tasks?showCompleted=false$pager")
 
-    # タスクをTSV形式で保存（parent を持たないタスクのみ）
-    echo "$tasks_json" | jq -r --arg list_name "$list_name" --arg list_id "$list_id" \
-      '.items[] | select(.parent == null) | "\(.updated)\t\($list_name)\t\($list_id)\t\(.id)\t\(.title)"'
+    # 取得結果をJSON保存
+    dst="$dst_dir/$dst_file_name"
+    echo "$tasks_json" >"$dst"
 
     # 次のページトークンを取得
     next_page_token=$(echo "$tasks_json" | jq -r '.nextPageToken // empty')
-
     if [[ -z $next_page_token ]]; then
       break
     fi
@@ -311,6 +304,11 @@ tsv_tasks() {
   local lists_json
   lists_json=$(get_lists)
 
+  # タスクを格納する一時ファイル
+  timestamp=$(date +%Y-%m-%d.%H%M%S)
+  local target_tsv_file="/tmp/.gtasks.$timestamp.tsv"
+  : >"$target_tsv_file" # ファイルを初期化
+
   for list_name in "${list_names[@]}"; do
     local list_id
     list_id=$(get_task_list_id "$list_name")
@@ -319,22 +317,70 @@ tsv_tasks() {
       continue
     fi
     info "===> Fetching tasks from $list_name (ID: $list_id)"
-    cat_sorted_all_tasks_as_tsv "$list_id" "$list_name"
+    cat_all_no_completed_tasks_as_tsv "$list_id" "$list_name" >>"$target_tsv_file"
   done
+  info "==> Deploying tsv file to current directory: gtasks.$timestamp.tsv"
+  mv -v "$target_tsv_file" "./gtasks.$timestamp.tsv" 1>&2
+}
+
+cat_all_no_completed_no_parent_tasks_as_tsv() {
+  _cat_all_no_completed_tasks_as_tsv "$@" converter_for_move
+}
+
+cat_all_no_completed_tasks_as_tsv() {
+  _cat_all_no_completed_tasks_as_tsv "$@" converter_for_tsv
+}
+
+converter_for_move() {
+  jq -r --arg list_name "$list_name" --arg list_id "$list_id" \
+    '.items[] | select(.parent == null) | "\(.updated)\t\($list_name)\t\($list_id)\t\(.id)\t\(.title)"'
+}
+
+converter_for_tsv() {
+  # .title と .notes の改行やタブをgsubでスペースに置換
+  jq -r --arg list_name "$list_name" --arg list_id "$list_id" \
+    '.items[] | "\(.updated)\t\($list_name)\t\($list_id)\t\(.id)\t\(.links[0].link // "")\t\((.title // "") | gsub("[\t\r\n]"; " "))\t\((.notes // "") | gsub("[\t\r\n]"; " "))"'
+}
+
+_cat_all_no_completed_tasks_as_tsv() {
+  local list_id="$1" list_name="$2" converter="$3" dst_dir
+  dst_dir=$(mktemp -d)
+
+  # ページネーションでタスクを全て取得してJSON保存
+  info "===> Fetching all no completed tasks as JSON to $dst_dir for $list_name.."
+  export_all_no_completed_tasks_as_json "$list_id" "$list_name" "$dst_dir"
+
+  # 各JSONをTSVに変換（parent を持たないタスクのみ）
+  info "===> Converting all no completed tasks JSON to TSV for $list_name.."
+  find "$dst_dir" -type f -name '*.json' |
+    sort |
+    while read -r src_path; do
+      [[ -z $src_path ]] && continue
+      [[ $src_path =~ ^#.* ]] && continue
+      local dst_path
+      dst_path="${src_path%.json}.tsv"
+      cat <"$src_path" |
+        eval "$converter" >"$dst_path"
+    done
+
+  # 全てのTSVを結合してソートして出力
+  info "===> Merging all no completed tasks TSV only no parent for $list_name.."
+  find "$dst_dir" -type f -name '*.tsv' -print0 |
+    xargs -0 cat | sort
 }
 
 main() {
-  set -eo pipefail
+  initialize "$@"
   access_token=$(get_access_token)
 
   if [[ $mode == "move" ]]; then
-    move_tasks "$@"
+    move_tasks "${args[@]}"
     return
   fi
   if [[ $mode == "tsv" ]]; then
-    tsv_tasks "$@"
+    tsv_tasks "${args[@]}"
     return
   fi
-  get_list_tasks "$@"
+  get_list_tasks "${args[@]}"
 }
 main "$@"

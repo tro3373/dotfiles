@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+main() {
+  ilog "=> Updating Node -g.."
+  set -eo pipefail
+
+  # ncuコマンドを実行して出力を取得
+  local ncu_output
+  ncu_output=$(ncu -g -u)
+
+  # npm installコマンドを探してパッケージ情報を抽出
+  local npm_command
+  npm_command=$(echo "$ncu_output" | grep -E "^npm -g install" | head -1)
+  if [[ -z $npm_command ]]; then
+    ilog "=> No updates available"
+    return
+  fi
+
+  # パッケージ部分を抽出（npm -g install以降の部分）
+  local packages
+  packages=${npm_command#npm -g install }
+  if [[ -z $packages ]]; then
+    ilog "=> No packages to update"
+    return
+  fi
+
+  for pkg in $packages; do
+    ilog "=> Installing updated packages: $pkg"
+    npm -g install "$pkg"
+  done
+  ilog "=> Updating Node Done!"
+}
+main "$@"

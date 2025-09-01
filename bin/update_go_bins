@@ -14,10 +14,12 @@ find_gup() {
 }
 
 main() {
+  ilog "=> Updating Go.."
   src_path=$(find_gup)
   if [[ -z $src_path ]]; then
     elog "==> gup not found, please install it first."
   fi
   $src_path update
+  ilog "=> Updating Go Done!"
 }
 main "$@"
