@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 install_common() {
+  add_dependency_args xclip
   # Use socat to forward the port
   def_install socat
   go_install github.com/wincent/clipper@latest
