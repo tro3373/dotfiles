@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+install_common() {
+  def_install cloc
+}
+install_arch() {
+  def_install cloc-git
+}
