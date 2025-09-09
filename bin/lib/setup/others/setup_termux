@@ -1,5 +1,14 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
+###############################################################################
+# Setup Termux
+# 1. Download & Install Termux from F-Droid
+# 2. Send this script to your Android device Download dir via USB or Quickk Share.
+# 3. Open Termux and run:
+#   termux-setup-storage
+#   cd ~/storage/downloads
+#   bash setup_termux
+###############################################################################
 ink() {
   local stdin=
   if [[ -p /dev/stdin ]]; then
@@ -68,8 +77,9 @@ EOF
 setup_pkgs() {
   log "==> Update & Upgradeing pkgs...(termux-change-repo needed...)"
   apt update -y
-  apt upgrade -y
-  pkg install -y proot jq which
+  # apt upgrade -y
+  apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
+  pkg install -y proot jq which git
 }
 
 setup_ssh_auth_keys() {
@@ -131,6 +141,15 @@ setup_ydl() {
   cd ~/bin
   ghdl tro3373 ydl Android
   tar xvfpz ydl_Android*tar.gz
+}
+
+setup_ogp() {
+  log "==> Setup ogp..."
+  has ogp && log_skip && return
+  setup_ghdl
+  cd ~/bin
+  ghdl tro3373 ogp Android
+  tar xvfpz ogp_Android*tar.gz
 }
 
 setup_start_ydl() {
@@ -211,10 +230,19 @@ setup_url_opener() {
   # setup_youtubedl
   setup_ytdlp
   setup_ydl
+  setup_ogp
   setup_start_ydl
   # setup_upd
-  cat_url_opener >>~/bin/$target
-  chmod 755 ~/bin/$target
+
+  # setup url opener for ydl
+  cat_url_opener >>~/bin/$target.ydl
+  chmod 755 ~/bin/$target.ydl
+  # setup url opener
+  git clone https://github.com/tro3373/setup-termux-url-opener.git ~/setup-termux-url-opener
+  cd ~/setup-termux-url-opener
+  ln -s ~/setup-termux-url-opener/termux-url-opener ~/bin/$target
+  ln -s ~/setup-termux-url-opener/{k,n,prompt.md} ~/bin/
+  log "==> You need to send .env, cookies.json to ~/bin/ manually."
 }
 
 setup_ghdl() {
