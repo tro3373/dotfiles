@@ -2,7 +2,7 @@
 
 command_name=$(basename "$0") && readonly command_name
 readonly depends=(gh curl fzf jq llm)
-issue=
+issues=
 title=
 body=
 target_tmp_dir=
@@ -35,7 +35,7 @@ initialize() {
       # -e) dummy= ;;
       # -f*|--file*) file=${1#*=} ;;
       # -f|--file) shift && file=$1 ;;
-      -i | --issue) shift && issue="$1" ;;
+      -i | --issue) shift && issues="$1" ;;
       -t | --title) shift && title="$1" ;;
       -b | --body) shift && body="$1" ;;
       -d | --dir) shift && target_tmp_dir=$1 ;;
@@ -80,7 +80,7 @@ cat_issue() {
 
 ## 関連Issue
 
-- 関連Issue: #$issue
+$(echo "$issues" | tr ',' '\n' | sed -e 's/^/- #/')
 
 EOF
 }
@@ -129,7 +129,7 @@ create_pr_parts() {
   }
   jq -r '.title' "$target_tmp_dir"/messages.json >"$target_tmp_dir"/title
   jq -r '.body' "$target_tmp_dir"/messages.json >"$target_tmp_dir"/body
-  if [[ -n $issue ]]; then
+  if [[ -n $issues ]]; then
     cat_issue >>"$target_tmp_dir"/body
   fi
   cat_commit_list >>"$target_tmp_dir"/body
