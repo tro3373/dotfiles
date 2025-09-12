@@ -21,7 +21,11 @@ main() {
       # printf '%s\n' 'Hello World!' | xxd -p | tr -d '\n' | sed 's/../%&/g'
       # echo -e "$line" | xxd -p | tr -d '\n' | sed 's/../%&/g'
       # echo -e "$line" | nkf -WwMQ | sed 's/=$//g' | tr '=' %
-      echo -e "$line" | jq -Rr @uri
+      # -R: Read raw input
+      # -r: Output raw strings, not JSON-encoded strings
+      # -s: Slurp mode: read the entire input stream into a large array
+      #     入力全体を配列にまとめる
+      echo -e "$line" | jq -sRr @uri
     done
 }
 main "$@"
