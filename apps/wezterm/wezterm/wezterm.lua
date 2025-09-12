@@ -41,7 +41,7 @@ config.font_size = mac and 18.0 or 15.0
 -- その他設定
 -------------------------------------------------------------------------------
 -- -- システムのビープ音を鳴らす（デフォルト）
--- config.audible_bell = "SystemBeep"
+config.audible_bell = "SystemBeep"
 -- 背景の非透過率（1なら完全に透過させない）
 config.window_background_opacity = 1 -- 0.90
 -- タブを下に表示（デフォルトでは上にある）
@@ -159,6 +159,12 @@ config.keys = {
     mods = "SHIFT|CTRL",
     action = wezterm.action.ToggleFullScreen,
     -- action = wezterm.window:maximize(),
+  },
+  -- Shift Enter で改行コードを送信(Claudeコンソールでの改行用)
+  {
+    key = "Enter",
+    mods = "SHIFT",
+    action = wezterm.action.SendString("\n"),
   },
   -- -- ⌘ Ctrl ,で下方向にペイン分割
   -- {
