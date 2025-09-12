@@ -82,6 +82,7 @@ alias gb="git branch -vv"
 alias gc="git commit"
 alias gr="git remote -v"
 alias gs="git status"
+alias gn="git_no_merges"
 # alias gt="git tag"
 # alias gt="git_worktree"
 gt() {

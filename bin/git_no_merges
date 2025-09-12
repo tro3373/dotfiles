@@ -1,30 +1,116 @@
 #!/usr/bin/env bash
 
-main() {
-  set -e
-  local main_branch target_branch preview
-  # shellcheck disable=SC2089
-  local git_opt="log --color=always --graph --pretty=format:'%Cred%h %Cgreen(%cd)%Creset -%C(yellow)%d%Creset %s %C(bold blue)<%an>%Creset' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S'"
-  if [[ $# -ge 2 ]]; then
-    main_branch="$1"
-    target_branch="$2"
-  elif [[ $# -eq 1 ]]; then
-    main_branch=$(git_branch)
-    target_branch="$1"
-  else
-    main_branch=$(git_branch)
-    # preview="git log --color=always --oneline --no-merges '$main_branch..{}'"
-    preview="git $git_opt --no-merges '$main_branch..{}'"
-    target_branch=$(
-      git for-each-ref --format='%(refname:short)' --no-merged |
-        fzf --prompt="Select branch to compare: " \
-          --preview "$preview" \
-          --preview-window=down,border-top,50% \
-          --select-1 \
-          --exit-0 \
-          --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
-    )
-  fi
-  tig --no-merges "$main_branch..$target_branch"
+readonly depends=(fzf git tig)
+command_name=$(basename "$0") && readonly command_name
+base_branch=
+target_branch=
+use_tig=0
+# dummy="echo"
+args=()
+usage() {
+  cat <<EOF
+
+Show git log without merges between two branches using tig.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+      -t|--tig  : Use tig to show log
+
+EOF
 }
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      # -e) dummy= ;;
+      # -f*|--file*) file=${1#*=} ;;
+      # -f|--file) shift && file=$1 ;;
+      -t | --tig) use_tig=1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+  set -euo pipefail
+}
+check() { hass "${depends[@]}"; }
+add_args() { args+=("$@"); }
+# is_dummy() { [[ -n "$dummy" ]]; }
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+detect_base_branch() {
+  # _branch=$(suggested_base_branch)
+  read -r _branch < <(suggested_base_branch)
+  if [[ -z $_branch ]]; then
+    error "==> No main or master branch found in remote."
+  fi
+  echo "$_branch"
+}
+
+suggested_base_branch() {
+  local grep_key='origin/develop'
+  [[ $target_branch == develop ]] && grep_key='origin/(main|master)'
+  git branch -r |
+    grep -v 'origin/HEAD' |
+    grep origin |
+    grep -E "$grep_key" |
+    head -1
+}
+
+set_base_and_target_branches() {
+  count=${#args[*]}
+  if [[ $count -eq 1 ]]; then
+    base_branch=$(git_branch)
+    target_branch="${args[0]}"
+    return
+  fi
+  if [[ $count -ge 2 ]]; then
+    base_branch="${args[0]}"
+    target_branch="${args[1]}"
+    return
+  fi
+  # # shellcheck disable=SC2089
+  # local preview git_opt="log --color=always --graph --pretty=format:'%Cred%h %Cgreen(%cd)%Creset -%C(yellow)%d%Creset %s %C(bold blue)<%an>%Creset' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S'"
+  # base_branch=$(git_branch)
+  # # preview="git log --color=always --oneline --no-merges '$base_branch..{}'"
+  # preview="git $git_opt --no-merges '$base_branch..{}'"
+  # target_branch=$(
+  #   git for-each-ref --format='%(refname:short)' --no-merged |
+  #     fzf --prompt="Select branch to compare: " \
+  #       --preview "$preview" \
+  #       --preview-window=down,border-top,50% \
+  #       --select-1 \
+  #       --exit-0 \
+  #       --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
+  # )
+  target_branch=$(git_branch)
+  base_branch=$(detect_base_branch)
+}
+
+show_no_merges() {
+  if [[ $use_tig -eq 1 ]]; then
+    tig --no-merges "$base_branch..$target_branch"
+    return
+  fi
+  git log --oneline develop..feature/impl-phase2-api
+}
+
+main() {
+  initialize "$@"
+  set_base_and_target_branches
+  info "==> Showing no merges between $base_branch and $target_branch.."
+  show_no_merges
+}
+
 main "$@"
