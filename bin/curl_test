@@ -33,15 +33,30 @@ get_svc_dir() {
   echo "$script_dir/lib/$command_name/$req_res/$svc"
 }
 
+url_encoded_url() {
+  local params encoded_params
+  [[ $url == *\?* ]] && params=${url#*\?}
+  if [[ -n $params ]]; then
+    encoded_params=$(
+      echo "$params" |
+        tr '&' '\n' |
+        while IFS='=' read -r key value; do
+          echo "$key=$(echo "$value" | jq -rR '@uri')"
+        done | paste -sd '&' -
+    )
+    encoded_params="?$encoded_params"
+  fi
+  printf "%s%s\n" "${url%%\?*}" "$encoded_params"
+}
+
 execute_curl() {
   dst=$(get_dst_path)
   mkdir -p "$(dirname "$dst")"
-
   local commands=()
   commands+=(curl)
   # commands+=(-L)
   commands+=(-sSL)
-  commands+=("$url")
+  commands+=("$(url_encoded_url)")
   commands+=(-X "$method")
   while read -r line; do
     [[ -z $line ]] && continue
@@ -65,10 +80,14 @@ execute_curl() {
 
   dump_request
   cat_req_data | jq -c | "${commands[@]}" >"$dst"
-  cat <"$dst" | jq . >"$dst.tmp" && mv "$dst.tmp" "$dst"
+  is_json_response=0
+  if cat <"$dst" | jq . >"$dst.tmp"; then
+    is_json_response=1
+    mv "$dst.tmp" "$dst"
+  fi
   info "==> Response Saved to: $dst"
   info "==> Response:"
-  cat <"$dst"
+  cat <"$dst" | if [[ $is_json_response -eq 1 ]]; then jq .; else cat -; fi
 
   [[ -z $save_env_vals || $save_env_vals == _ ]] && return
   echo -e "$save_env_vals" |
