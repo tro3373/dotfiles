@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+readonly depends=()
+command_name=$(basename "$0") && readonly command_name
+args=()
+remote=
+usage() {
+  cat <<EOF
+
+Clean clipper socket
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+
+EOF
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      # -f*|--file*) file=${1#*=} ;;
+      # -f|--file) shift && file=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+  set -euo pipefail
+  if [[ ${#args[@]} -gt 0 ]]; then
+    remote="${args[0]}"
+    return
+  fi
+  local conf="$HOME/.$command_name"
+  if [[ -e $conf ]]; then
+    # shellcheck source=/dev/null
+    source "$conf"
+  fi
+  if [[ -z $remote ]]; then
+    error "Usage: $command_name <remote> or set remote in $conf"
+  fi
+}
+check() { hass "${depends[@]}"; }
+add_args() { args+=("$@"); }
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+main() {
+  initialize "$@"
+  info "==> Cleaning clipper socket on $remote ..."
+  ssh "$remote" 'rm -fv ~/.clipper.r.sock'
+  info "==> Cleaning local clipper socket for $remote ..."
+  find ~/.ssh/socks/ | grep "@$remote:" | xargs rm -fv
+  info "==> Done."
+}
+main "$@"
