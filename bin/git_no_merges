@@ -103,7 +103,7 @@ show_no_merges() {
     tig --no-merges "$base_branch..$target_branch"
     return
   fi
-  git log --oneline develop..feature/impl-phase2-api
+  git log --oneline --no-decorate "$base_branch..$target_branch"
 }
 
 main() {
