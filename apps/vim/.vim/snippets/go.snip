@@ -801,30 +801,33 @@ snippet	for_each_field
 			fmt.Printf("Field: %s\tValue: %v\n", t.Field(i).Name, v.Field(i).Interface())
 	}
 
+#snippet	stdinnn
+#	stdin := os.Stdin
+#	stat, err := stdin.Stat()
+#	if err != nil {
+#		return err
+#	}
+#	#if stat.Size() == 0 {
+#	#	return fmt.Errorf("stdin is empty")
+#	#}
+#	scanner := bufio.NewScanner(os.Stdin)
+#	for scanner.Scan() {
+#		fmt.Println(scanner.Text())
+#	}
+
 snippet	stdinnn
-	stdin := os.Stdin
-	stat, err := stdin.Stat()
+snippet	pipe_or_nottt
+	fm, err := os.Stdin.Stat()
 	if err != nil {
 		return err
 	}
-	if stat.Size() == 0 {
-		return fmt.Errorf("stdin is empty")
+	if (fm.Mode() & os.ModeCharDevice) != 0 {
+		return fmt.Errorf("no stdin")
 	}
+	// pipe (if stdin is not charactor device(like keyboard, etc))
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		fmt.Println(scanner.Text())
-	}
-
-snippet	pipe_or_nottt
-	fi, _ := os.Stdin.Stat()
-	if (fi.Mode() & os.ModeCharDevice) == 0 {
-		// pipe (if stdin is not charactor device(like keyboard, etc))
-		scanner = :bufio.NewScanner(os.Stdin)
-		for scanner.Scan() {
-			fmt.Println(scanner.Text())
-		}
-	} else {
-		// not pipe
 	}
 
 snippet loop_stucttt
