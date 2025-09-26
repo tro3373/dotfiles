@@ -6,10 +6,11 @@ dotenv := $(PWD)/.env
 -include $(dotenv)
 
 app := sample
+profile := sample
 service := api
 stage := dev
-profile_dev := t${app}
-profile_prd := ${app}
+profile_dev := t${profile}
+profile_prd := ${profile}
 sls_container := sls_aws
 sls_version := 16-3.21.0
 
@@ -56,14 +57,14 @@ _sls:
 	@make _vault_cmd ENTRYPOINT='--entrypoint sls' cmd='${cmd} --stage ${stage} --verbose'
 _vault_cmd:
 	${prev_commands} \
- 		&& docker run -it --rm \
-			-v ${PWD}:/app \
-			-w /app \
-			--env-file <(${vault} env | grep ^AWS_) \
-			${ENTRYPOINT} \
-			${sls_container}:${sls_version} \
-			${cmd} \
-		&& echo "Done!"
+	&& docker run -it --rm \
+		-v ${PWD}:/app \
+		-w /app \
+		--env-file <(${vault} env | grep ^AWS_) \
+		${ENTRYPOINT} \
+		${sls_container}:${sls_version} \
+		${cmd} \
+	&& echo "Done!"
 
 
 

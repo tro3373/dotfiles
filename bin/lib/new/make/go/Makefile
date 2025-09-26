@@ -8,9 +8,6 @@ PATH := $(mkfile_dir)/bin:$(PATH)
 dotenv := $(PWD)/.env
 -include $(dotenv)
 
-app := app
-stage := dev
-
 export
 
 dst := /tmp/api

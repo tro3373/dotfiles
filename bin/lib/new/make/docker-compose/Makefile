@@ -9,7 +9,7 @@ dotenv := $(PWD)/.env
 -include $(dotenv)
 
 app := sample
-stage := dev
+env := dev
 timestamp := $(shell date '+%Y%m%d.%H%M%S')
 local_ip := $(shell ipa 2>/dev/null || echo localhost)
 docker_uid := $(shell id -u)
@@ -21,7 +21,7 @@ export
 vault_envs := $(shell vault_envs -n)
 
 tag:
-	@tag="Release_${app}_${timestamp}" && git tag "$$tag" && echo "==> $$tag tagged."
+	@tag="Release_$(app)_$(timestamp)" && git tag "$$tag" && echo "==> $$tag tagged."
 zip:
 	@zip -r envs.zip path/to/creds
 unzip:

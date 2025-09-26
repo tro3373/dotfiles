@@ -1,122 +1,111 @@
-SHELL := bash
-.SHELLFLAGS := -eu -o pipefail -c # -c: Needed in .SHELLFLAGS. Default is -c.
-.DEFAULT_GOAL := plan
+tf_service := $(service)
+tf_env := $(env)
+tf_env_dir := terraform/envs/$(tf_env)
 
-dotenv := $(PWD)/.env
--include $(dotenv)
-
-app := sample
-svc := tf
-region := ap-northeast-1
-stage := dev
-profile_dev := t${app}
-profile_prd := ${app}
-tf_container := tf_aws
-tf_version := 1.2.5
-bucket_tfstate := ${app}-${stage}-tfstate
-validate_cd := ([[ ! -e envs/${stage} ]] && echo 'No such stage:envs/${stage} exist.' && exit 1) || \
-	cd envs/${stage} && \
-	if [[ ${stage} == "prd" ]]; then export PROFILE=${profile_prd}; else export PROFILE=${profile_dev}; fi
-# vault=export AWS_PROFILE="$${PROFILE}"; export AWS_DEFAULT_PROFILE="$${PROFILE}";
-# vault := export GPG_TTY=$$(tty); aws-vault exec $${PROFILE} -n --
-vault := export GPG_TTY=$$(tty); aws-vault exec $${PROFILE} --
-timestamp := $(shell date '+%Y%m%d.%H%M%S')
-
-export
-
-tag:
-	@tag="Release_${svc}_${timestamp}" && git tag "$$tag" && echo "==> $$tag tagged."
-zip:
-	@zip -r envs.zip envs/{dev,prd}/{.env,keys,terraform.tfvars}
-unzip:
-	@test -e envs.zip
-	@unzip envs.zip
-
-
-session:
-	@make _sh cmd='-c "exit"'
-check_aws:
-	@make _aws cmd='s3 ls'
-check_env:
-	@make _sh cmd='-c "env"'
-check: check_aws check_env
-_aws:
-	@make _vault_cmd entrypoint='--entrypoint aws'
-_tf:
-	@make _vault_cmd
-_sh:
-	@make _vault_cmd entrypoint='--entrypoint /bin/sh'
-_vault_cmd:
-	${validate_cd} \
- 		&& docker run -it --rm \
-			-v ${PWD}:/app \
-			-w /app/envs/${stage} \
-			--env-file <(${vault} env | grep ^AWS_) \
-			${entrypoint} \
-			${tf_container}:${tf_version} \
-			${cmd}
-
-
-init_tfstate_s3:
-	@if make _aws cmd='s3 ls |grep ${bucket_tfstate}' &>/dev/null; then \
-		echo '> Already bucket exist'; \
+###############################################
+# For GCP
+###############################################
+tf-check:
+	@echo "==> Listing configs..."
+	@gcloud config list
+	@echo "==> Listing buckets..."
+	@gsutil ls
+tf_state_bucket := gs://tf-state-$(tf_service)
+tf-state-bucket:
+	@if gsutil ls $(tf_state_bucket) >&/dev/null; then \
+		echo "==> $(tf_state_bucket) already exists."; \
 	else \
-		echo '> No tf bucket exist. creating...'; \
-		make _aws cmd='s3 mb s3://${bucket_tfstate} --region ${region}' && \
-		make _aws cmd='s3api put-bucket-versioning --bucket "${bucket_tfstate}" --versioning-configuration "Status=Enabled"' && \
-		echo '> Bucket created.'; \
+		echo "==> Creating $(tf_state_bucket)... Press Enter to continue..(Cancel: Ctrl+C)"; \
+		read -r _; \
+		gcloud storage buckets create \
+			$(tf_state_bucket) \
+			--location=us \
+			--default-storage-class=NEARLINE \
+			--uniform-bucket-level-access \
+			--public-access-prevention; \
 	fi
-fmt:
-	@make _tf cmd=fmt
-init: init_tfstate_s3
+
+# ###############################################
+# # For AWS
+# ###############################################
+# tf_state_bucket := $(tf_env)-$(tf_service)-tfstate
+# tf-state-bucket:
+# 	@if aws s3 ls | grep "$(tf_state_bucket)" >&/dev/null; then \
+# 		echo "==> $(tf_state_bucket) already exists."; \
+# 	else \
+# 		echo "==> Creating $(tf_state_bucket)... Press Enter to continue..(Cancel: Ctrl+C)"; \
+# 		read -r _; \
+# 		aws s3 mb "s3://$(tf_state_bucket)" --region "$(region)"
+# 		aws s3api put-bucket-versioning --bucket "$(tf_state_bucket)" --versioning-configuration "Status=Enabled"
+# 	fi
+
+
+tf-init:
 	@make _tf cmd=init
-init_upgrade:
-	@make _tf cmd='init -upgrade=true'
-plan:
+tf-init-upgrade:
+	@make _tf cmd=init opt="-upgrade=true"
+tf-init-migrate-state:
+	@make _tf cmd=init opt="-migrate-state"
+
+tf-plan:
 	@make _tf cmd=plan
-apply:
+tf-plan-%:
+	@make tf-plan opt="-target=$(*)"
+
+tf-apply:
 	@make _tf cmd=apply
-apply-refresh:
-	@make _tf cmd='apply -refresh-only'
-destroy:
-	@make _tf cmd=destroy
-refresh:
+tf-apply-%:
+	@make tf-apply opt="-target=$(*)"
+tf-apply-auto-approve:
+	@make _tf cmd=apply opt=-auto-approve
+tf-apply-refresh:
+	@make _tf cmd=apply opt=-refresh-only
+
+tf-refresh:
 	@make _tf cmd=refresh
-show:
+tf-show:
 	@make _tf cmd=show
-list-state:
-	@make _tf cmd='state list'
-output:
+tf-output:
 	@make _tf cmd=output
+tf-console:
+	@make _tf cmd=console
+tf-validate:
+	@make _tf cmd=validate
+tf-state:
+	@make _tf cmd=state opt=list
 
+tf-destroy:
+	@make _tf cmd=destroy
+tf-rm:
+	# @make _tf cmd=state opt="rm 'module.relational_database.google_firebase_data_connect_service.this'"
+	@make _tf cmd=state opt="rm 'module.relational_database.google_sql_database.this'"
+	@make _tf cmd=state opt="rm 'module.relational_database.google_sql_database_instance.this'"
 
+_tf_check_env:
+	@echo "==> Validating environment... env=$(tf_env)"
+	@test -n $(tf_env) || (echo 'Error: env is not set.' && exit 1)
+	@test -e $(tf_env_dir) || (echo 'No such env:$(tf_env_dir) exist.' && exit 1)
 
-asm_get_db_auth:
-	make _asm_get SECRET_ID=${stage}-${app}-secret-db-auth
-asm_put_db_auth:
-	@${validate_cd} && \
-		export h=$$(grep db_proxy .env |cut -d= -f2 |tr -d '"' |tr -d ' ') && \
-		export d=$$(grep database_name terraform.tfvars |cut -d= -f2 |tr -d '"' |tr -d ' ') && \
-		export u=$$(grep database_username terraform.tfvars |cut -d= -f2 |tr -d '"' |tr -d ' ') && \
-		export p=$$(grep database_password terraform.tfvars |cut -d= -f2 |tr -d '"' |tr -d ' ') && \
-		@make SECRET_ID=${stage}-${app}-secret-db-auth \
-			SECRET_STRING='{\"host\":\"$$h\", \"database\":\"$$d\", \"username\":\"$$u\", \"password\":\"$$p\"}' \
-			_asm_put
-asm_remove_db_auth:
-	make _asm_remove_force SECRET_ID=${stage}-${app}-secret-db-auth
-_asm_get:
-	@make _aws cmd='secretsmanager get-secret-value --secret-id ${SECRET_ID}'
-_asm_put:
-	@make _aws cmd='secretsmanager put-secret-value --secret-id ${SECRET_ID} --secret-string "${SECRET_STRING}"'
-_asm_remove_force:
-	@make _aws cmd='secretsmanager delete-secret --secret-id ${SECRET_ID} --force-delete-without-recovery'
+_tf: _tf_check_env
+	@cd $(tf_env_dir) && \
+		terraform $(tf_opt) $(cmd) $(opt)
 
+tf-lint-init:
+	@tflint --init
+tf-lint: _tf_check_env
+	@tflint --config $(PWD)/.tflint.hcl --recursive
 
-bastion_status:
-	@${validate_cd} && bash -c '. .env && ${vault} aws ec2 describe-instance-status --instance-ids $$ec2_id | jq ".InstanceStatuses[] | {InstanceId, InstanceState: .InstanceState.Name, SystemStatus: .SystemStatus.Status, InstanceStatus: .InstanceStatus.Status}"'
-bastion_start:
-	@${validate_cd} && bash -c '. ./.env && ${vault} aws ec2 start-instances --instance-ids $$ec2_id'
-bastion_stop:
-	@${validate_cd} && bash -c '. ./.env && ${vault} aws ec2 stop-instances --instance-ids $$ec2_id'
-tunnel: session
-	@${validate_cd} && bash -c '. ./.env && echo "==> Tunneling $$db_proxy via $$bastion..." && ssh -g -N -L 3306:$$db_proxy:3306 $$bastion'
+tf-fmt:
+	@make -s _tf cmd=fmt opt="-check -recursive"
+
+tf_export_dir_name := terraform_exported
+tf-bulk-export:
+	@docker run --rm -it \
+		-v ~/.config/gcloud:/root/.config/gcloud-ro:ro \
+		-v $(PWD)/$(tf_export_dir_name):/$(tf_export_dir_name) \
+		-e COMPONENTS='google-cloud-cli-config-connector' \
+		gcr.io/google.com/cloudsdktool/google-cloud-cli:stable \
+		bash -c "cp -rfvp /root/.config/gcloud-ro/* /root/.config/gcloud/ && gcloud beta resource-config bulk-export \
+			--path=/$(tf_export_dir_name) \
+			--project=$(project_id) \
+			--resource-format=terraform"
