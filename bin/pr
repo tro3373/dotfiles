@@ -8,6 +8,7 @@ body=
 target_tmp_dir=
 target_branch=
 current_branch=
+compact=0
 
 usage() {
   cat <<EOF
@@ -22,6 +23,7 @@ Make a pull request via llm from git diff and commit list.
       -t|--title "" : Specify title directly
       -b|--body ""  : Specify body directly
       -d|--dir      : Specify target_tmp_dir
+      -c|--compact  : Compact mode
 
 EOF
 }
@@ -39,6 +41,7 @@ initialize() {
       -t | --title) shift && title="$1" ;;
       -b | --body) shift && body="$1" ;;
       -d | --dir) shift && target_tmp_dir=$1 ;;
+      -c | --compact) compact=1 ;;
       *) target_branch=$1 ;;
     esac
     shift
@@ -95,19 +98,32 @@ $(sed -e 's/^/- /' "$target_tmp_dir"/commit_list)
 EOF
 }
 
-create_pr_parts() {
+clear_tmp_dir() {
   ilog "==> Cleaning $target_tmp_dir.."
   rm -rf "$target_tmp_dir"
   mkdir -p "$target_tmp_dir"
+}
+
+create_diff() {
+  ilog "==> Creating diff.."
+  git_diff_ignored "$target_branch"...HEAD >"$target_tmp_dir"/diff
+}
+
+create_commit_list() {
+  ilog "==> Creating commit_list.."
+  git log --oneline "$target_branch"...HEAD >"$target_tmp_dir"/commit_list
+}
+
+create_pr_parts() {
+  clear_tmp_dir
   if [[ -n $title && -n $body ]]; then
     echo "$title" >"$target_tmp_dir"/title
     echo "$body" >"$target_tmp_dir"/body
     return
   fi
-  ilog "==> Creating diff.."
-  git_diff_ignored "$target_branch"...HEAD >"$target_tmp_dir"/diff
-  ilog "==> Creating commit_list.."
-  git log --oneline "$target_branch"...HEAD >"$target_tmp_dir"/commit_list
+
+  create_diff
+  create_commit_list
 
   if [[ ! -s $target_tmp_dir/diff ]]; then
     wlog "No changes"
@@ -133,6 +149,13 @@ create_pr_parts() {
     cat_issue >>"$target_tmp_dir"/body
   fi
   cat_commit_list >>"$target_tmp_dir"/body
+}
+
+create_compact_pr_parts() {
+  clear_tmp_dir
+  echo "Merge $current_branch to $target_branch" >"$target_tmp_dir"/title
+  create_commit_list
+  cat_commit_list >"$target_tmp_dir"/body
 }
 
 create_pr_with_push() {
@@ -193,6 +216,11 @@ main() {
     fi
   fi
   ilog "==> Target branch: $target_branch"
+
+  if [[ $compact -eq 1 ]]; then
+    target_tmp_dir=/tmp/pr
+    create_compact_pr_parts
+  fi
 
   if [[ -z $target_tmp_dir ]]; then
     target_tmp_dir=/tmp/pr

@@ -41,7 +41,7 @@ check() { hass "${depends[@]}"; }
 add_args() { args+=("$@"); }
 has() { command -v "${1}" >&/dev/null; }
 hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
-_ink() { cat - | if [[ $color -eq 1 ]] && has ink; then ink "$@"; else cat - 1>&2; fi; }
+_ink() { if [[ $color -eq 1 ]] && has ink; then cat - | ink "$@"; else cat - 1>&2; fi; }
 # shellcheck disable=SC2145
 _log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
 log() { _log white "$*"; }
@@ -50,7 +50,7 @@ warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
 
 fire() {
-  if [[ $# -eq 0 && ! -p /dev/stdin ]]; then
+  if [[ ${#args[@]} -eq 0 && ! -p /dev/stdin ]]; then
     # No arguments and no stdin, use fzf to select files in current directory
     find . -mindepth 1 -maxdepth 1 -not -path "./.trash" |
       sed 's|^\./||' |
@@ -68,26 +68,33 @@ fire() {
     cat <&0
   fi
 
-  if [[ $# -ne 0 ]]; then
-    for arg in "$@"; do
+  if [[ ${#args[@]} -ne 0 ]]; then
+    for arg in "${args[@]}"; do
       echo "$arg"
     done
   fi
 }
 
 trash_files() {
-  fire "${args[@]}" |
+  fire |
     while read -r line; do
       [[ -z $line ]] && continue
       [[ $line =~ ^#.* ]] && continue
-      name=$(basename "$line")
+      # Check if the file/directory actually exists
+      if [[ ! -e $line ]]; then
+        warn "==> File/directory does not exist: $line"
+        continue
+      fi
+      warn "==> Trashing $line ..."
+      name=$(basename -- "$line")
       if [[ $name == ".trash" ]]; then
         warn "==> Cannot trash '.trash' directory."
         continue
       fi
-      dir_path=$(dirname "$line")
+      dir_path=$(dirname -- "$line")
       trash_dir="$dir_path/.trash"
       if [[ ! -e $trash_dir ]]; then
+        warn "==> Creating $trash_dir ..."
         mkdir -p "$trash_dir"
       fi
       dst_path="$trash_dir/$name"

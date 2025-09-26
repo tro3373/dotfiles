@@ -2,5 +2,6 @@
 
 main() {
   npx ccusage@latest "$@"
+  npx @ccusage/codex@latest "$@"
 }
 main "$@"
