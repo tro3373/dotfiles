@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+install_arch() {
+  def_install libreoffice-fresh
+}

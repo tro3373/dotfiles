@@ -14,7 +14,10 @@ _install_common() {
 install_wsl() { not_supported; }
 install_arch() {
   def_install rustup
-  exe rustup default stable
+  exe rustup default nightly
+  # exe rustup default stable
+  # exe rustup toolchain install 1.85.0
+  # exe rustup default 1.85.0
   _install_common
 }
 install_msys() { not_supported; }
