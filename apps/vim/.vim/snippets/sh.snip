@@ -214,7 +214,7 @@ snippet	logsettt
 snippet	logcolorrr
 	has() { command -v "\${1}" >&/dev/null; }
 	hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
-	_ink() { cat - | if has ink; then ink "$@"; else cat - 1>&2; fi; }
+	_ink() { if has ink; then cat - | ink "$@"; else cat - 1>&2; fi; }
 	#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | _ink "\$1"; }
 	# shellcheck disable=SC2145
 	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "\$1"; }
@@ -419,7 +419,7 @@ snippet	initializzzz
 	add_args() { args+=("$@"); }
 	has() { command -v "\${1}" >&/dev/null; }
 	hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
-	_ink() { cat - | if has ink; then ink "$@"; else cat - 1>&2; fi; }
+	_ink() { if has ink; then cat - | ink "$@"; else cat - 1>&2; fi; }
 	# shellcheck disable=SC2145
 	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "\$1"; }
 	log() { _log white "$*"; }
@@ -667,3 +667,12 @@ snippet empty_dirrr
 
 snippet indiret_variablesss
 	indirect_val () { echo "${!1}"; }
+
+snippet must_set
+  : "${1:?arg required}"
+
+snippet defer
+	defer() {
+		echo "Done"
+	}
+	trap defer EXIT

@@ -1043,3 +1043,6 @@ snippet gen_passworddd
 		}
 		return string(result)
 	}
+
+snippet defer_closeee
+	defer resp.Body.Close() //nolint:errcheck
