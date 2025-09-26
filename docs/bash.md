@@ -147,6 +147,10 @@ ${VAR:-expression}   ==> 値がセットされていない(NULL)場合、   :-�
 ${VAR:+expression}   ==> 値がセットされている(NONE-NULL)場合、:+以降の式を評価結果を返す。
 ${VAR:=expression}   ==> 値がセットされていない(NULL)場合、   :=以降の式を評価結果を返し変数に代入。
 ${VAR:?[expression]} ==> 値がセットされていない(NULL)場合、    式が標準エラーに出力。
+  ```bash
+  # VAR がセットされていなければエラー終了
+  : "${VAR:?env \`VAR\` is required}"
+  ```
 
 
 { commands ; }, ( commands ) ==> サブシェルでコマンドを実行
