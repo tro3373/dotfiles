@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# Claude Code をブラウザから操作できるクライアントを自作したらめちゃくちゃ捗った
+# https://zenn.dev/bm_sms/articles/claude_code_viewer
+main() {
+  set -eo pipefail
+  open http://localhost:3400 &
+  PORT=3400 npx -y @kimuson/claude-code-viewer@latest
+}
+main "$@"
