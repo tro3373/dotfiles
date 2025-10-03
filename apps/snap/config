@@ -20,7 +20,8 @@ setting_common() {
   if grep /snap/bin ~/.works.zsh >&/dev/null; then
     return
   fi
-  exe "echo 'add_path /snap/bin' >> ~/.works.zsh"
+  # exe "echo 'add_path /snap/bin' >> ~/.works.zsh"
+  add_path "/snap/bin"
   rm_dotpath
 }
 # setting_arch() { not_supported; }

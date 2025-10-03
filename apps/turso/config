@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+install_common() {
+  exe 'curl -sSfL https://get.tur.so/install.sh | bash'
+  setup_path_for_turso
+}
+install_mac() {
+  def_install tursodatabase/tap/turso
+}
+
+setup_path_for_turso() {
+  grep -Eq "^# Turso" "$HOME"/.zshrc && {
+    log "==> turso settings exist in zshrc removing..."
+    # Remove `^export.*/.turso`
+    # shellcheck disable=SC2016
+    exe 'sed -i -e "/^export.*\/.turso/d" "$HOME/.zshrc"'
+    # Remove `# Turso`
+    # shellcheck disable=SC2016
+    exe 'sed -i -e "/# Turso/d" "$HOME/.zshrc"'
+  }
+  # shellcheck disable=SC2016
+  add_path '$HOME/.turso'
+  rm_dotpath
+}

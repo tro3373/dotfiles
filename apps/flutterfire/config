@@ -12,6 +12,7 @@ install_common() {
 }
 
 setting_common() {
-  exe "echo 'add_path \$HOME/.pub-cache/bin' >> ~/.works.zsh"
+  # exe "echo 'add_path \$HOME/.pub-cache/bin' >> ~/.works.zsh"
+  add_path "$HOME/.pub-cache/bin"
   rm_dotpath
 }

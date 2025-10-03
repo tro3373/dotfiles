@@ -18,7 +18,14 @@ install_redhat() { not_supported; }
 setting_common() { no_settings; }
 setting_wsl() { no_settings; }
 setting_arch() {
-  exe ykman list
+  # exe ykman list
+  fix_launcher_to_use_x11
+}
+fix_launcher_to_use_x11() {
+  local _src=/usr/share/applications/com.yubico.yubioath.desktop _dst=$HOME/.local/share/applications/com.yubico.yubioath.desktop
+  # shellcheck disable=SC2016
+  exe 'sed -e "s,Exec=\"\(.*\)\",Exec=env GDK_BACKEND=x11 \\1,g" '"$_src > $_dst"
+  exe update-desktop-database "$HOME"/.local/share/applications
 }
 setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }

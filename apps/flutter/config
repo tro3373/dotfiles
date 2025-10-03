@@ -12,7 +12,7 @@ install_common() {
     add_dependency_args asdf sdkmanager
     return
   fi
-  if ! asdf plugin-list | grep flutter >&/dev/null; then
+  if ! asdf plugin list | grep flutter >&/dev/null; then
     exe asdf plugin-add flutter
   fi
   exe asdf install flutter latest

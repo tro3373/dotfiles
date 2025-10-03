@@ -5,7 +5,7 @@ install_common() {
     add_dependency_args asdf
     return
   fi
-  if ! asdf plugin-list | grep deno >&/dev/null; then
+  if ! asdf plugin list | grep deno >&/dev/null; then
     exe asdf plugin-add deno
   fi
   exe asdf install deno latest
