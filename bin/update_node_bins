@@ -10,7 +10,7 @@ main() {
 
   # npm installコマンドを探してパッケージ情報を抽出
   local npm_command
-  npm_command=$(echo "$ncu_output" | grep -E "^npm -g install" | head -1)
+  npm_command=$(echo "$ncu_output" | grep -E "^npm -g install" | head -1 || :)
   if [[ -z $npm_command ]]; then
     ilog "=> No updates available"
     return

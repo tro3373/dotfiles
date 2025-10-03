@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd) && readonly current_dir
+
+main() {
+  set -eo pipefail
+  if [[ -z $1 ]]; then
+    elog "Usage: gif /path/to/video.mp4"
+  fi
+  src="$(realpath "$1")"
+  dst="$current_dir/$(basename "${src%.*}.gif")"
+  ffmpeg -i "$src" -vf "fps=10,scale=320:-1:flags=lanczos" -c:v gif -f gif "$dst"
+}
+main "$@"

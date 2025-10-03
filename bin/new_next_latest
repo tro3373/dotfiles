@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd) && readonly current_dir
+
+main() {
+  set -eo pipefail
+
+  git status -s | grep -q . && {
+    elog "Please run this script from a clean working tree"
+  }
+
+  dir_name=$(basename "$current_dir")
+  app=${1:-$dir_name} # default to current directory
+  pnpm dlx create-next-app@latest "$app" \
+    --use-pnpm \
+    --ts \
+    --turbopack \
+    --no-eslint \
+    --tailwind \
+    --app \
+    --src-dir \
+    --import-alias "@/*"
+  cd "$app" || exit
+
+  setup biome -e
+  pnpm dlx shadcn-ui@latest init
+  shopt -s dotglob # include hidden files in this session
+  mv -- * ../
+}
+main "$@"

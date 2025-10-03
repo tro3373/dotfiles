@@ -653,6 +653,22 @@ sudo_tee() {
   cat_do sudo tee "$@"
 }
 
+add_path() {
+  log "==> Adding path to $HOME/.works.zsh"
+  local _path="$1"
+  local _target="$HOME"/.works.zsh
+  if [[ -z $_path ]]; then
+    elog "add_path: argument is blank"
+    return
+  fi
+  grep -q "$_path" "$_target" >&/dev/null && {
+    log "add_path: already exists $_path"
+    return
+  }
+  echo "add_path $_path" |
+    cat_tee -a "$_target"
+}
+
 tee_to_works_zsh() {
   local key="$*"
   local target="$HOME"/.works.zsh
@@ -721,13 +737,9 @@ load_update_arg_apps() {
   args=()
 }
 
-not_supported() {
-  log "=> Not supported"
-}
-
-no_settings() {
-  log "=> Nothing to do in setting"
-}
+# not_supported() {
+#   log "=> Not supported"
+# }
 
 is_bootstrapped() { test -e $bootstrapped_path; }
 bootstrapped() { date | cat_tee $bootstrapped_path; }

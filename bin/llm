@@ -92,6 +92,10 @@ _claude() {
   command claude --dangerously-skip-permissions -p "Execute the instructions from standard input."
 }
 
+_codex() {
+  command codex exec -
+}
+
 _gemini() {
   command gemini -y -p "" | grep -v '^Data collection is disabled.'
 }
@@ -106,6 +110,8 @@ _llm() {
   cat - |
     if [[ $cmd == "claude" ]]; then
       _claude
+    elif [[ $cmd == "codex" ]]; then
+      _codex
     elif [[ $cmd == "gemini" ]]; then
       _gemini
     elif [[ $cmd == "gemini-cli" ]]; then
