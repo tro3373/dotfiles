@@ -2,19 +2,32 @@
 
 # shellcheck disable=SC2154
 is_installed() { [[ -e $current_dir/node_modules/.bin/biome ]]; }
+
 install_common() {
+  local _pm _pmx _pmi
+  read -r _pm _pmx _pmi <<<"$(use_pm_tool)"
   if [[ ! -e $current_dir/package.json ]]; then
-    exe "(cd $current_dir && npm init)"
+    exe "(cd $current_dir && $_pm init)"
   fi
-  exe "(cd $current_dir && npm install -D @biomejs/biome)"
-  exe "(cd $current_dir && npx json -I -f package.json -e 'this.scripts[\"checkfix\"]=\"npx biome check --write --unsafe\"')"
+  exe "(cd $current_dir && $_pm install -D @biomejs/biome)"
+  exe "(cd $current_dir && $_pm install -D json)"
+  exe "(cd $current_dir && $_pmx json -I -f package.json -e 'this.scripts[\"checkfix\"]=\"$_pmx biome check --write --unsafe\"')"
 }
+
 setting_common() {
+  local _pm _pmx _pmi
+  read -r _pm _pmx _pmi <<<"$(use_pm_tool)"
   config_json_name="biome.jsonc"
   if is_force || ! test -e "$current_dir"/$config_json_name; then
     # shellcheck disable=SC2154
     exe cp "$app_dir"/$config_json_name "$current_dir"/$config_json_name
   fi
   log "==> Check the biome configuration"
-  log "npx biome check --verbose"
+  log "$_pmx biome check --verbose"
+}
+
+use_pm_tool() {
+  [[ -e $current_dir/yarn.lock ]] && echo yarn yarn add
+  [[ -e $current_dir/pnpm-lock.yaml ]] && echo pnpm pnpm add
+  echo npm npx install
 }

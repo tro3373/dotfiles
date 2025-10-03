@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
   "vcs": {
     "enabled": false,
     "clientKind": "git",
@@ -7,42 +7,38 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": [
-      "public",
-      "**/node_modules/**",
-      "**/.next/**",
-      "**/dist/**",
-      "**/out/**",
-      "**/build/**",
-      "**/coverage/**",
-      "**/package-lock.json",
-      "**/yarn.lock",
-      "**/pnpm-lock.yaml",
-      "**/obj/**",
-      "**/components/ui/**" // Ignore shadcn/ui components
-      // "**/lib/**"
+    "includes": [
+      "**",
+      "!**/public",
+      "!**/node_modules",
+      "!**/.next",
+      "!**/dist",
+      "!**/out",
+      "!**/build",
+      "!**/coverage",
+      "!**/package-lock.json",
+      "!**/yarn.lock",
+      "!**/pnpm-lock.yaml",
+      "!**/obj",
+      "!**/components/ui"
     ]
   },
   "formatter": {
     "enabled": true,
     "formatWithErrors": false, // エラー時にもフォーマットを実行するか
-    "ignore": [],
+    "includes": ["**"],
     "attributePosition": "auto",
     "indentStyle": "space",
     "indentWidth": 2,
     "lineEnding": "lf",
     "lineWidth": 80
   },
-  "organizeImports": {
-    "enabled": true
-  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
-      "all": true,
       "suspicious": {
         "noConsole": "off",
-        "noConsoleLog": "off",
         "noReactSpecificProps": "off"
       },
       "correctness": {
@@ -78,3 +74,4 @@
     ]
   }
 }
+
