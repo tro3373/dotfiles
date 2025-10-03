@@ -58,10 +58,13 @@ is_force() { [[ $force -eq 1 ]]; }
 # _log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") ${*:2}" | ink "$1" 1>&2; }
 # shellcheck disable=SC2145
 _log() { echo -e "$(date +"%Y-%m-%d %H:%M:%S") $(test -p /dev/stdin && cat -) ${@:2}" | ink "$1" 1>&2; }
-log() { _log cyan "$*"; }
+log() { _log white "$*"; }
 ilog() { _log green "$*"; }
 elog() { _log red "$*"; }
 dlog() { if is_debug; then _log yellow "$*"; fi; }
+inki() { cat - | ink green; }
+inke() { cat - | ink red; }
+inkd() { cat - | ink yellow; }
 has() { command -v "${1}" >&/dev/null; }
 hasp() { command -p -v "${1}" >&/dev/null; } # -p: Search command in default PATH entries
 has_exclude_dot() { type -a "$1" 2>/dev/null | grep -v '.dot/bin/' | grep -q "$1"; }
@@ -626,9 +629,8 @@ find_trans() {
 
 cat_do() {
   if is_dry; then
-    log "===> below stdin will be pass to '$*'"
     cat -
-    log "------------------------------------"
+    log "===> the output will be pass to '$*'"
   else
     # MEMO: This debug log not work
     # log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
