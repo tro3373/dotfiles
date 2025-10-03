@@ -106,6 +106,17 @@ fi
 if has aws; then
   alias awsl='aws --endpoint-url=http://localhost:4566'
 fi
+if has piknik; then
+  alias pc='piknik -copy'
+  alias pp='piknik -paste'
+  # NOTE:
+  # - Move: Copy the content of the clipboard to the piknik storage and clear the clipboard.
+  #   Retrieve the content of the clipboard, spit it to the standard output and clear the clipboard.
+  #   Not necessarily in this order. Only one lucky client will have the privilege to see the content.
+  alias pm='piknik -move'
+  alias pz='piknik -copy < /dev/null'
+  pf() { piknik -copy <$1; }
+fi
 alias_with_compdef() {
   local cmd=$1
   if ! has $cmd; then

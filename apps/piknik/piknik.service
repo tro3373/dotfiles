@@ -1,0 +1,18 @@
+[Unit]
+Description=piknik ~ Shared Clipboard over the network
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/piknik -server -config /root/.piknik.toml
+Restart=always
+# Restart service after 10 seconds if service crashes
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=piknik
+
+[Install]
+WantedBy=multi-user.target
+
+

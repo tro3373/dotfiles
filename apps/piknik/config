@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+install_common() {
+  go_install github.com/jedisct1/piknik@latest
+}
+setting_common() {
+  _cat_tips_for_setup_as_server
+}
+
+_cat_tips_for_setup_as_server() {
+  ilog "===> Client Mode Setup Tips"
+  # shellcheck disable=SC2154
+  cat <<EOF
+  piknik -genkeys > ~/.piknik.toml
+EOF
+  ilog "===> Server Mode Setup Tips"
+  # shellcheck disable=SC2154
+  cat <<EOF
+  ## Install piknik to/usr/local/bin/piknik
+  sudo cp -fpv "$GOBIN/piknik" /usr/local/bin/piknik
+  ## Generate keys if not yet done
+  sudo piknik -genkeys > /root/.piknik.toml
+  ## Copy piknik.service to /etc/systemd/system
+  sudo cp "$app_dir"/piknik.service /etc/systemd/system/
+  # Reload systemd manager configuration
+  sudo systemctl daemon-reload
+  # Enable the service to start on boot
+  sudo systemctl enable piknik.service
+  # Start the service
+  sudo systemctl start piknik.service
+EOF
+}
