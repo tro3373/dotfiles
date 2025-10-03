@@ -1046,3 +1046,12 @@ snippet gen_passworddd
 
 snippet defer_closeee
 	defer resp.Body.Close() //nolint:errcheck
+
+snippet tsvvv
+	w := csv.NewWriter(os.Stdout)
+	w.Comma = '\t' // タブ区切りに設定
+	w.Write([]string{"foo", "bar", "baz"})
+	w.Flush()
+	if err := w.Error(); err != nil {
+		// エラーハンドリング
+	}

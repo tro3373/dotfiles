@@ -14,6 +14,10 @@ _G.copilot_chat_setup = function()
     system_prompt = "あなたは優秀なプログラマーで、Github上の広範な情報やベストプラクティスにも精通しています。質問には日本語で、分かりやすく、具体的に答えてください。",
 
     -- model = "gpt-4.1", -- Default model to use, see ':CopilotChatModels' for available models (can be specified manually in prompt via $).
+    -- model = "gpt-5-codex",
+    model = "claude-sonnet-4.5",
+    -- model = "grok-code-fast-1",
+
     -- agent = "copilot", -- Default agent to use, see ':CopilotChatAgents' for available agents (can be specified manually in prompt via @).
     -- context = nil, -- Default context or array of contexts to use (can be specified manually in prompt via #).
     -- sticky = nil, -- Default sticky prompt or array of sticky prompts to use at start of every new chat.
@@ -151,7 +155,9 @@ _G.copilot_chat_setup = function()
       submit_prompt = {
         normal = "<CR>",
         -- insert = "<C-s>",
-        insert = "<C-j>",
+        -- insert = "<C-j>",
+        -- insert = "<C-m>",
+        insert = "<C-]>",
       },
       --   toggle_sticky = {
       --     normal = "grr",

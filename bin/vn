@@ -1,3 +1,8 @@
-#!/usr/bin/env -S bash -e
+#!/usr/bin/env bash
 
-nvim -u NONE "$@"
+main() {
+  tmp=$(mktemp)
+  mv "$tmp" "$tmp.md"
+  nvim "$tmp.md"
+}
+main "$@"
