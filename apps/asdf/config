@@ -18,24 +18,29 @@ install_common() {
 #   def_install coreutils git bash
 # }
 setting_common() {
+  setup_completion
+
   setup_asdf_lang golang
   setup_asdf_lang nodejs
   setup_asdf_lang python
   setup_asdf_lang terraform
-
-  setup_completion
 }
 
 setup_completion() {
+  local _target="$HOME/.asdf/completions/_asdf"
+  if [[ -e $_target ]]; then
+    log "==> asdf completion already set."
+    return
+  fi
   exe mkdir -p "$HOME/.asdf/completions"
-  exe asdf completion zsh | cat_tee "$HOME/.asdf/completions/_asdf"
+  exe asdf completion zsh | cat_tee "$_target"
 }
 
 setup_asdf_lang() {
   has asdf || return
   p="$1"
   v="$2"
-  grep -q "$p" "$HOME/.tool-versions" || return
+  grep -q "$p" "$HOME/.tool-versions" || return 0
   if ! asdf plugin list | grep -q "$p"; then
     exe asdf plugin add "$p"
   fi

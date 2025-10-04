@@ -99,7 +99,7 @@ update_mac() {
   # $dummy brew update
   $dummy brew upgrade
   ilog "=> Checking.."
-  $dummy brew doctor
+  $dummy brew doctor || :
 }
 
 main() {
