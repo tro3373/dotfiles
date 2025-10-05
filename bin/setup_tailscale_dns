@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+for_mac() {
+  # Wi-FiインターフェースのDNS設定を確認
+  trap 'networksetup -getdnsservers Wi-Fi' RETURN
+
+  if [[ $# -ne 0 ]]; then
+    # リセット（自動取得に戻す）
+    sudo networksetup -setdnsservers Wi-Fi empty
+    return
+  fi
+  # # 現在のWi-Fiデバイス名を確認
+  # networksetup -listallhardwareports
+  # DNSサーバーを指定（例: Cloudflare 1.1.1.1 と Google 8.8.8.8）
+  sudo networksetup -setdnsservers Wi-Fi 100.100.100.100 1.1.1.1 8.8.8.8
+}
+
+main() {
+  set -eo pipefail
+  os mac && {
+    for_mac "$@"
+    return
+  }
+  elog "Not supported OS"
+}
+main "$@"
