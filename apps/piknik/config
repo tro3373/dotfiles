@@ -4,22 +4,30 @@ install_common() {
   go_install github.com/jedisct1/piknik@latest
 }
 setting_common() {
+  _setup_toml_if_needed
   _cat_tips_for_setup_as_server
 }
 
+_setup_toml_if_needed() {
+  local _target="$HOME/.pikknik.toml"
+  if [[ -e $_target ]]; then
+    wlog "$_target already exists, skipping creation."
+    return
+  fi
+  exe piknik -genkeys >"$_target"
+  exe chmod 600 "$_target"
+}
+
 _cat_tips_for_setup_as_server() {
-  ilog "===> Client Mode Setup Tips"
-  # shellcheck disable=SC2154
-  cat <<EOF
-  piknik -genkeys > ~/.piknik.toml
-EOF
+  local _target="$HOME/.pikknik.toml"
   ilog "===> Server Mode Setup Tips"
   # shellcheck disable=SC2154
   cat <<EOF
   ## Install piknik to/usr/local/bin/piknik
   sudo cp -fpv "$GOBIN/piknik" /usr/local/bin/piknik
-  ## Generate keys if not yet done
-  sudo piknik -genkeys > /root/.piknik.toml
+  ## Move Generated keys
+  sudo mv $_target /root/.piknik.toml
+  sudo chown root:root /root/.piknik.toml
   ## Copy piknik.service to /etc/systemd/system
   sudo cp "$app_dir"/piknik.service /etc/systemd/system/
   # Reload systemd manager configuration
