@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 install_common() {
-  dl_unzip https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+  _arch=$(uname -m)
+  dl_unzip https://awscli.amazonaws.com/awscli-exe-linux-"$_arch".zip
   exe sudo ./aws/install
 }
 
