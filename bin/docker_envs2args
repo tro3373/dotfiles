@@ -1,0 +1,9 @@
+#!/usr/bin/env -S bash -e
+
+main() {
+  [[ ! -p /dev/stdin ]] && return
+  cat - |
+    sed -e 's,\(^\|$\),",g' -e 's,^,-e ,g' |
+    tr '\n' ' '
+}
+main "$@"
