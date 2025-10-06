@@ -1,7 +1,7 @@
 #!/usr/bin/env -S bash -e
 
 main() {
-  npx ccusage@latest "$@"
-  npx @ccusage/codex@latest "$@"
+  npx -y ccusage@latest "$@"
+  npx -y @ccusage/codex@latest "$@"
 }
 main "$@"
