@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 command_name=$(basename "$0") && readonly command_name
+timestamp=$(date +%Y%m%d.%H%M%S) && readonly timestamp
 args=()
 private=0
 usage() {
@@ -44,7 +45,7 @@ main() {
     log "Specify repository name"
     exit 1
   fi
-  local tmpd=/tmp/ghq_new/$name
+  local tmpd=/tmp/ghq_new/$name.$timestamp
 
   mkdir -p "$tmpd"
   cd "$tmpd"
