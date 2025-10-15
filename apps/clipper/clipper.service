@@ -2,8 +2,9 @@
 Description=Clipper ~ Clipboard proxy
 
 [Service]
-Environment=DISPLAY=:0
-ExecStart=/usr/local/bin/clipper
+#Environment=DISPLAY=:0
+#ExecStart=/usr/local/bin/clipper
+ExecStart=/bin/bash -c 'export DISPLAY=${DISPLAY:-:0} && /usr/local/bin/clipper'
 Restart=always
 # Restart service after 10 seconds if service crashes
 RestartSec=10

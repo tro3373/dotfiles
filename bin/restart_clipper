@@ -2,6 +2,8 @@
 
 main() {
   set -eo pipefail
-  systemctl --user restart clipper.service
+  systemctl --user stop clipper.service
+  rm -rfv ~/.clipper*sock
+  systemctl --user start clipper.service
 }
 main "$@"

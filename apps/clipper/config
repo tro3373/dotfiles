@@ -35,8 +35,8 @@ _setup_for_linux() {
   _deploy_user_local_bin
   local conf_systemd_user_dir="${HOME}/.config/systemd/user"
   exe mkdir -p "$conf_systemd_user_dir"
-  # shellcheck disable=SC2154
-  exe cp "$app_dir"/clipper.service "$conf_systemd_user_dir/"
+  # exe cp "$app_dir"/clipper.service "$conf_systemd_user_dir/"
+  make_lnk_with_bkup "$app_dir"/clipper.service "$conf_systemd_user_dir/clipper.service"
   exe systemctl --user daemon-reload
   exe systemctl --user enable clipper.service
   exe systemctl --user start clipper.service
