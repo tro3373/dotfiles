@@ -20,7 +20,7 @@ func main() {
 	}
 	log.Infof("==> Start")
 	if err := sub(); err != nil {
-		log.Error("==> Error occured: %v", err)
+		log.Errorf("==> Error occured: %v", err)
 		panic(err)
 	}
 }

@@ -12,6 +12,11 @@ linters:
     - staticcheck
   # 無効なlinterを設定
   disable: []
+  # 個別のlinter設定
+  # settings:
+  #   gosec:
+  #     excludes:
+  #       - G115
   # 特定の除外設定
   exclusions:
     # 自動生成ファイルを除外
