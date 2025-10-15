@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+install_arch() {
+  _build_arch
+  # _install_from_release_build
+}
+
+_install_from_release_build() {
+  # platform=$(get_platform)
+  arch=$(get_arch)
+  dl_gh_release cjpais/Handy latest "*_${arch}.AppImage"
+  exe "sudo mv Handy_*.AppImage /usr/local/bin/handy"
+  exe "sudo chmod +x /usr/local/bin/handy"
+}
+
+_build_arch() {
+  if ! has asdf; then
+    add_dependency_args asdf
+    return
+  fi
+
+  def_install base-devel alsa-lib pkgconf openssl vulkan-devel gtk3 webkit2gtk-4.1 libappindicator-gtk3 librsvg
+  cd_work
+  exe git clone git@github.com:cjpais/Handy.git
+  exe cd Handy
+  exe bun install
+}
