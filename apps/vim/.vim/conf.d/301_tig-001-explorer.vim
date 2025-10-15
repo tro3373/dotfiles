@@ -25,4 +25,5 @@ endif
 " nnoremap sv :<C-u>vs<CR>
 " nnoremap <Leader>s :TigStatus<CR>
 nnoremap <Leader>t :tabnew %<cr>:TigOpenProjectRootDir<cr>
-nnoremap <Leader>T :tabnew %<cr>:TigOpenCurrentFile<cr>
+" nnoremap <Leader>T :tabnew %<cr>:TigOpenCurrentFile<cr>
+nnoremap <leader>T :execute 'tabnew \| Tig ' . expand('%:p') . ' --follow'<cr>

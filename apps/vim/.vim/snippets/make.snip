@@ -84,6 +84,7 @@ snippet	ifeqqqq
 		VAULT := $(VAULT_PRD)
 	endif
 snippet iffilterrr
+alias	evalll
 	@$(eval stage := $(if $(filter local,$(stage)),dev,$(stage)))
 
 snippet	variable_argssss
@@ -181,3 +182,9 @@ snippet	confirmmm
 alias	readdddd
 	echo "==> ${1} Press Enter to continue..(Cancel: Ctrl+C)"
 	read -r _
+
+snippet	passs
+	_go:
+		@$(MAKE) -C api $(subst go-,,$(MAKECMDGOALS))
+	go-all: _go
+

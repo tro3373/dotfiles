@@ -1055,3 +1055,732 @@ snippet tsvvv
 	if err := w.Error(); err != nil {
 		// エラーハンドリング
 	}
+
+snippet externalll
+	package external
+
+	import (
+		"bytes"
+		"encoding/json"
+		"errors"
+		"fmt"
+		"io"
+		"log"
+		"net"
+		"net/http"
+		"os"
+		"strings"
+		"time"
+	)
+
+	const (
+		APITimeout = 30 * time.Second
+		prefix     = "==> [APIClient]"
+	)
+
+	type APIHandler interface {
+		Do(req *http.Request, opts ...RequestOption) ([]byte, int, error)
+	}
+
+	var _ APIHandler = (*APIClient)(nil)
+
+	type APIClient struct {
+		Client *http.Client
+	}
+
+	// RequestOption applies a modification to an http.Request before it is sent.
+	type RequestOption func(req *http.Request)
+
+	// Authorizationヘッダ名の定数
+	const defaultAuthorizationHeader = "Authorization"
+
+	// WithHeader returns a RequestOption that sets a custom header.
+	func WithHeader(key, value string) RequestOption {
+		return func(req *http.Request) {
+			if key != "" && value != "" {
+				req.Header.Set(key, value)
+			}
+		}
+	}
+
+	// WithAuthorization returns a RequestOption that sets the Authorization header.
+	func WithAuthorization(value string) RequestOption {
+		return WithHeader(defaultAuthorizationHeader, value)
+	}
+
+	// WithAuthorizationBearer returns a RequestOption that sets the Authorization header with a Bearer token.
+	func WithAuthorizationBearer(token string) RequestOption {
+		return WithHeader(defaultAuthorizationHeader, "Bearer "+token)
+	}
+
+	func NewAPIClient() *APIClient {
+		return &APIClient{
+			Client: &http.Client{
+				Timeout: (APITimeout),
+			},
+		}
+	}
+
+	func (c *APIClient) Do(req *http.Request, opts ...RequestOption) ([]byte, int, error) {
+		// Option適用
+		for _, opt := range opts {
+			opt(req)
+		}
+
+		if isDebug() {
+			c.DumpRequest(req, prefix)
+		}
+
+		res, err := c.Client.Do(req)
+		if err != nil {
+			var ne net.Error
+			if ok := errors.As(err, &ne); ok {
+				return nil, http.StatusRequestTimeout, err
+			}
+
+			return nil, http.StatusInternalServerError, err
+		}
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				log.Printf("Failed to close response body: %v", err)
+			}
+		}()
+
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+		if isDebug() {
+			c.DumpResponse(res.StatusCode, body, prefix)
+		}
+
+		return body, res.StatusCode, nil
+	}
+
+	func isDebug() bool {
+		return os.Getenv("DEBUG_EXT_HTTP_CLIENT") == "true"
+	}
+
+	func isDebugPretty() bool {
+		return os.Getenv("DEBUG_EXT_HTTP_CLIENT_PRETTY") == "true"
+	}
+
+	func (c *APIClient) DumpRequest(req *http.Request, prefix string) {
+		if prefix != "" {
+			prefix += " "
+		}
+		if req == nil {
+			// slog.Info(prefix + "Request is nil")
+			log.Printf("%sRequest is nil", prefix)
+			return
+		}
+
+		// // ヘッダをダンプ
+		// for k, v := range req.Header {
+		// 	log.Printf("%sRequest  >>> Header: %s: %v", prefix, k, v)
+		// }
+		log.Println(prefix+"Request  >>>", "URL", req.URL.String(), "Method", req.Method, "body", func() string {
+			if req.Body == nil {
+				return "(empty)"
+			}
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				return fmt.Sprintf("Failed to read body: %s", err)
+			}
+			// 一度読んだら読めなくなるので、戻す
+			req.Body = io.NopCloser(bytes.NewBuffer(body))
+			return c.humanReadableBody(body)
+		}())
+	}
+
+	func (c *APIClient) DumpResponse(code int, b []byte, prefix string) {
+		if prefix != "" {
+			prefix += " "
+		}
+		log.Printf("%sResponse <<< code: %d, body:%s", prefix, code, c.humanReadableBody(b))
+	}
+
+	func (c *APIClient) humanReadableBody(b []byte) string {
+		bodyStr := string(b)
+		if len(bodyStr) == 0 {
+			return "(empty)"
+		}
+		if !isDebugPretty() {
+			return bodyStr
+		}
+		tab := "  "
+		var js any
+		if json.Unmarshal(b, &js) == nil {
+			// JSONであればインデント付きで出力
+			pretty, err := json.MarshalIndent(js, "", tab)
+			if err == nil {
+				return "\n" + string(pretty)
+			}
+		}
+		// JSONでなければ従来通り
+		readableBody := "\n" + tab + bodyStr
+		readableBody = strings.ReplaceAll(readableBody, "\n", "\n"+tab)
+		readableBody = strings.ReplaceAll(readableBody, "\r", "")
+		readableBody = strings.ReplaceAll(readableBody, "\t", tab)
+		return readableBody
+	}
+snippet external_testtt
+	package external
+
+	import (
+		"bytes"
+		"errors"
+		"io"
+		"log"
+		"net"
+		"net/http"
+		"net/http/httptest"
+		"net/url"
+		"testing"
+		"time"
+
+		"github.com/stretchr/testify/assert"
+		"github.com/stretchr/testify/require"
+	)
+
+	func WriteJSONStringUtil(w http.ResponseWriter, data string) {
+		_, _ = w.Write([]byte(data))
+	}
+
+	func TestNewAPIClient(t *testing.T) {
+		client := NewAPIClient()
+
+		assert.NotNil(t, client)
+		assert.NotNil(t, client.Client)
+		assert.Equal(t, APITimeout, client.Client.Timeout)
+	}
+
+	func TestWithAuthorization(t *testing.T) {
+		tests := []struct {
+			name       string
+			authValue  string
+			wantHeader string
+		}{
+			{
+				name:       "with auth token",
+				authValue:  "Bearer test-token",
+				wantHeader: "Bearer test-token",
+			},
+			{
+				name:       "empty auth value",
+				authValue:  "",
+				wantHeader: "",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				req := httptest.NewRequest(http.MethodGet, "http://example.com", nil)
+
+				opt := WithAuthorization(tt.authValue)
+				opt(req)
+
+				if tt.wantHeader == "" {
+					assert.Empty(t, req.Header.Get(defaultAuthorizationHeader))
+				} else {
+					assert.Equal(t, tt.wantHeader, req.Header.Get(defaultAuthorizationHeader))
+				}
+			})
+		}
+	}
+
+	func TestAPIClient_Request(t *testing.T) {
+		tests := []struct {
+			name           string
+			setupServer    func() *httptest.Server
+			setupRequest   func() *http.Request
+			opts           []RequestOption
+			wantBody       []byte
+			wantStatusCode int
+			wantErr        bool
+		}{
+			{
+				name: "successful GET request",
+				setupServer: func() *httptest.Server {
+					return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.WriteHeader(http.StatusOK)
+						WriteJSONStringUtil(w, \`{"status":"ok"}\`)
+					}))
+				},
+				setupRequest: func() *http.Request {
+					req, _ := http.NewRequest(http.MethodGet, "", nil)
+					return req
+				},
+				wantBody:       []byte(\`{"status":"ok"}\`),
+				wantStatusCode: http.StatusOK,
+				wantErr:        false,
+			},
+			{
+				name: "request with authorization header",
+				setupServer: func() *httptest.Server {
+					return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						assert.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
+						w.WriteHeader(http.StatusOK)
+						WriteJSONStringUtil(w, \`{"authenticated":true}\`)
+					}))
+				},
+				setupRequest: func() *http.Request {
+					req, _ := http.NewRequest(http.MethodGet, "", nil)
+					return req
+				},
+				opts:           []RequestOption{WithAuthorization("Bearer test-token")},
+				wantBody:       []byte(\`{"authenticated":true}\`),
+				wantStatusCode: http.StatusOK,
+				wantErr:        false,
+			},
+			{
+				name: "server returns error status",
+				setupServer: func() *httptest.Server {
+					return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						WriteJSONStringUtil(w, \`{"error":"internal server error"}\`)
+					}))
+				},
+				setupRequest: func() *http.Request {
+					req, _ := http.NewRequest(http.MethodGet, "", nil)
+					return req
+				},
+				wantBody:       []byte(\`{"error":"internal server error"}\`),
+				wantStatusCode: http.StatusInternalServerError,
+				wantErr:        false,
+			},
+			{
+				name: "POST request with body",
+				setupServer: func() *httptest.Server {
+					return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						body, _ := io.ReadAll(r.Body)
+						assert.Equal(t, \`{"name":"test"}\`, string(body))
+						w.WriteHeader(http.StatusCreated)
+						WriteJSONStringUtil(w, \`{"id":123}\`)
+					}))
+				},
+				setupRequest: func() *http.Request {
+					req, _ := http.NewRequest(http.MethodPost, "", bytes.NewBufferString(\`{"name":"test"}\`))
+					return req
+				},
+				wantBody:       []byte(\`{"id":123}\`),
+				wantStatusCode: http.StatusCreated,
+				wantErr:        false,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				server := tt.setupServer()
+				defer server.Close()
+
+				client := NewAPIClient()
+				req := tt.setupRequest()
+				parsedServerURL, err := url.Parse(server.URL)
+				if err != nil {
+					t.Fatalf("Failed to parse server URL: %v", err)
+				}
+				req.URL.Scheme = parsedServerURL.Scheme
+				req.URL.Host = parsedServerURL.Host
+
+				body, statusCode, err := client.Do(req, tt.opts...)
+
+				if tt.wantErr {
+					assert.Error(t, err)
+				} else {
+					assert.NoError(t, err)
+					assert.Equal(t, tt.wantBody, body)
+					assert.Equal(t, tt.wantStatusCode, statusCode)
+				}
+			})
+		}
+	}
+
+	func TestAPIClient_Request_NetworkError(t *testing.T) {
+		client := NewAPIClient()
+		client.Client.Timeout = 1 * time.Millisecond
+
+		// Create a server that sleeps longer than timeout
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			time.Sleep(10 * time.Millisecond)
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		req, _ := http.NewRequest(http.MethodGet, server.URL, nil)
+
+		body, statusCode, err := client.Do(req)
+
+		assert.Error(t, err)
+		assert.Nil(t, body)
+		assert.Equal(t, http.StatusRequestTimeout, statusCode)
+
+		// Check if it's a network timeout error
+		var netErr net.Error
+		assert.True(t, errors.As(err, &netErr))
+	}
+
+	func TestAPIClient_Request_InvalidURL(t *testing.T) {
+		client := NewAPIClient()
+		client.Client.Timeout = 1 * time.Second // Short timeout
+		req, _ := http.NewRequest(http.MethodGet, "http://invalid-domain-that-does-not-exist-12345.com", nil)
+
+		body, statusCode, err := client.Do(req)
+
+		assert.Error(t, err)
+		assert.Nil(t, body)
+		// Network errors may return different status codes
+		assert.Contains(t, []int{http.StatusRequestTimeout, http.StatusInternalServerError}, statusCode)
+	}
+
+	func TestAPIClient_DumpRequest(t *testing.T) {
+		client := NewAPIClient()
+
+		// Set environment for pretty printing
+		t.Setenv("DEBUG_EXT_HTTP_CLIENT_PRETTY", "true")
+
+		tests := []struct {
+			name       string
+			req        *http.Request
+			prefix     string
+			wantOutput []string
+		}{
+			{
+				name:       "nil request",
+				req:        nil,
+				prefix:     "[TEST]",
+				wantOutput: []string{"[TEST] Request is nil"},
+			},
+			{
+				name: "GET request without body",
+				req: func() *http.Request {
+					req, _ := http.NewRequest(http.MethodGet, "http://example.com/test", nil)
+					return req
+				}(),
+				prefix:     "[TEST]",
+				wantOutput: []string{"[TEST] Request  >>>", "URL http://example.com/test", "Method GET", "body (empty)"},
+			},
+			{
+				name: "POST request with body",
+				req: func() *http.Request {
+					req, _ := http.NewRequest(http.MethodPost, "http://example.com/test", bytes.NewBufferString(\`{"key":"value"}\`))
+					return req
+				}(),
+				prefix:     "[TEST]",
+				wantOutput: []string{"[TEST] Request  >>>", "URL http://example.com/test", "Method POST", "body", "\"key\": \"value\""},
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				// Capture log output in a buffer
+				var buf bytes.Buffer
+				origLogger := log.Writer()
+				log.SetOutput(&buf)
+				defer log.SetOutput(origLogger)
+
+				client.DumpRequest(tt.req, tt.prefix)
+
+				output := buf.String()
+				for _, want := range tt.wantOutput {
+					assert.Contains(t, output, want)
+				}
+			})
+		}
+	}
+
+	func TestAPIClient_DumpResponse(t *testing.T) {
+		client := NewAPIClient()
+
+		// Set environment for pretty printing
+		t.Setenv("DEBUG_EXT_HTTP_CLIENT_PRETTY", "true")
+
+		tests := []struct {
+			name       string
+			code       int
+			body       []byte
+			prefix     string
+			wantOutput []string
+		}{
+			{
+				name:       "successful response",
+				code:       200,
+				body:       []byte(\`{"status":"ok"}\`),
+				prefix:     "[TEST]",
+				wantOutput: []string{"[TEST] Response <<<", "code: 200", "body:", "\"status\": \"ok\""},
+			},
+			{
+				name:       "empty response body",
+				code:       204,
+				body:       []byte{},
+				prefix:     "[TEST]",
+				wantOutput: []string{"[TEST] Response <<<", "code: 204", "body:(empty)"},
+			},
+			{
+				name:       "error response",
+				code:       500,
+				body:       []byte(\`{"error":"internal server error"}\`),
+				prefix:     "",
+				wantOutput: []string{"Response <<<", "code: 500", "body:", "\"error\": \"internal server error\""},
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				// Capture log output in a buffer
+				var buf bytes.Buffer
+				origLogger := log.Writer()
+				log.SetOutput(&buf)
+				defer log.SetOutput(origLogger)
+
+				client.DumpResponse(tt.code, tt.body, tt.prefix)
+
+				output := buf.String()
+				for _, want := range tt.wantOutput {
+					assert.Contains(t, output, want)
+				}
+			})
+		}
+	}
+
+	func TestAPIClient_humanReadableBody(t *testing.T) {
+		client := NewAPIClient()
+
+		tests := []struct {
+			name  string
+			input []byte
+			want  string
+			env   map[string]string
+		}{
+			{
+				name:  "empty body",
+				input: []byte{},
+				want:  "(empty)",
+			},
+			{
+				name:  "plain text body",
+				input: []byte("Hello, World!"),
+				want:  "\n    Hello, World!",
+				env:   map[string]string{"DEBUG_EXT_HTTP_CLIENT_PRETTY": "true"},
+			},
+			{
+				name:  "JSON body without pretty print",
+				input: []byte(\`{"key":"value","number":123}\`),
+				want:  \`{"key":"value","number":123}\`,
+				env:   map[string]string{"DEBUG_EXT_HTTP_CLIENT_PRETTY": "false"},
+			},
+			{
+				name:  "JSON body with pretty print",
+				input: []byte(\`{"key":"value","number":123}\`),
+				want:  "\n{\n  \"key\": \"value\",\n  \"number\": 123\n}",
+				env:   map[string]string{"DEBUG_EXT_HTTP_CLIENT_PRETTY": "true"},
+			},
+			{
+				name:  "invalid JSON with pretty print enabled",
+				input: []byte(\`not a json\`),
+				want:  "\n    not a json",
+				env:   map[string]string{"DEBUG_EXT_HTTP_CLIENT_PRETTY": "true"},
+			},
+			{
+				name:  "text with newlines and tabs",
+				input: []byte("line1\nline2\tindented"),
+				want:  "\n    line1\n  line2  indented",
+				env:   map[string]string{"DEBUG_EXT_HTTP_CLIENT_PRETTY": "true"},
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				for k, v := range tt.env {
+					t.Setenv(k, v)
+				}
+
+				result := client.humanReadableBody(tt.input)
+				assert.Equal(t, tt.want, result)
+			})
+		}
+	}
+
+	func TestIsDebug(t *testing.T) {
+		tests := []struct {
+			name     string
+			envValue string
+			want     bool
+		}{
+			{
+				name:     "debug enabled",
+				envValue: "true",
+				want:     true,
+			},
+			{
+				name:     "debug disabled",
+				envValue: "false",
+				want:     false,
+			},
+			{
+				name:     "debug not set",
+				envValue: "",
+				want:     false,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Setenv("DEBUG_EXT_HTTP_CLIENT", tt.envValue)
+
+				assert.Equal(t, tt.want, isDebug())
+			})
+		}
+	}
+
+	func TestIsDebugPretty(t *testing.T) {
+		tests := []struct {
+			name     string
+			envValue string
+			want     bool
+		}{
+			{
+				name:     "pretty debug enabled",
+				envValue: "true",
+				want:     true,
+			},
+			{
+				name:     "pretty debug disabled",
+				envValue: "false",
+				want:     false,
+			},
+			{
+				name:     "pretty debug not set",
+				envValue: "",
+				want:     false,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				t.Setenv("DEBUG_EXT_HTTP_CLIENT_PRETTY", tt.envValue)
+
+				assert.Equal(t, tt.want, isDebugPretty())
+			})
+		}
+	}
+
+	func TestAPIClient_Request_WithDebugEnabled(t *testing.T) {
+		t.Setenv("DEBUG_EXT_HTTP_CLIENT", "true")
+
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			WriteJSONStringUtil(w, \`{"debug":"enabled"}\`)
+		}))
+		defer server.Close()
+
+		client := NewAPIClient()
+		req, err := http.NewRequest(http.MethodGet, server.URL, nil)
+		require.NoError(t, err)
+
+		// Capture log output in a buffer
+		var buf bytes.Buffer
+		origLogger := log.Writer()
+		log.SetOutput(&buf)
+		defer log.SetOutput(origLogger)
+
+		body, statusCode, err := client.Do(req)
+
+		// Verify request was successful
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, statusCode)
+		assert.Equal(t, []byte(\`{"debug":"enabled"}\`), body)
+
+		// Verify debug output was generated
+		debugOutput := buf.String()
+		assert.Contains(t, debugOutput, "[APIClient] Request  >>>")
+		assert.Contains(t, debugOutput, "[APIClient] Response <<<")
+	}
+
+	// errorReader simulates an io.Reader that always returns an error
+	type errorReader struct{}
+
+	func (e errorReader) Read([]byte) (int, error) {
+		return 0, errors.New("read error")
+	}
+
+	func (e errorReader) Close() error {
+		return nil
+	}
+
+	func TestAPIClient_Request_ReadAllError(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			// The response body will be replaced with an error reader in the test
+		}))
+		defer server.Close()
+
+		client := NewAPIClient()
+
+		// Create a custom transport that returns a response with an errorReader
+		client.Client.Transport = &errorTransport{originalURL: server.URL}
+
+		req, err := http.NewRequest(http.MethodGet, server.URL, nil)
+		require.NoError(t, err)
+
+		body, statusCode, err := client.Do(req)
+
+		// Should return error from ReadAll
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "read error")
+		assert.Equal(t, http.StatusInternalServerError, statusCode)
+		assert.Nil(t, body)
+	}
+
+	// errorTransport is a custom transport that returns responses with errorReader bodies
+	type errorTransport struct {
+		originalURL string
+	}
+
+	func (et *errorTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     make(http.Header),
+			Body:       errorReader{},
+			Request:    req,
+		}, nil
+	}
+
+	func TestAPIClient_DumpRequest_ReadBodyError(t *testing.T) {
+		client := NewAPIClient()
+
+		// Create a request with an errorReader body
+		req, err := http.NewRequest(http.MethodPost, "http://example.com", errorReader{})
+		require.NoError(t, err)
+
+		// Capture log output
+		var buf bytes.Buffer
+		origLogger := log.Writer()
+		log.SetOutput(&buf)
+		defer log.SetOutput(origLogger)
+
+		// Call DumpRequest which should handle the read error gracefully
+		client.DumpRequest(req, "TEST")
+
+		// Verify that the error is handled and logged
+		logOutput := buf.String()
+		assert.Contains(t, logOutput, "TEST Request  >>>")
+		assert.Contains(t, logOutput, "Failed to read body: read error")
+	}
+
+	func TestAPIClient_DumpRequest_NilRequest(t *testing.T) {
+		client := NewAPIClient()
+
+		// Capture log output
+		var buf bytes.Buffer
+		origLogger := log.Writer()
+		log.SetOutput(&buf)
+		defer log.SetOutput(origLogger)
+
+		// Call DumpRequest with nil request
+		client.DumpRequest(nil, "TEST")
+
+		// Verify that nil request is handled
+		logOutput := buf.String()
+		assert.Contains(t, logOutput, "TEST Request is nil")
+	}

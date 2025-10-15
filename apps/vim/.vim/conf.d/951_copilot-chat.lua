@@ -155,9 +155,9 @@ _G.copilot_chat_setup = function()
       submit_prompt = {
         normal = "<CR>",
         -- insert = "<C-s>",
-        -- insert = "<C-j>",
+        insert = "<C-j>",
         -- insert = "<C-m>",
-        insert = "<C-]>",
+        -- insert = "<C-]>",
       },
       --   toggle_sticky = {
       --     normal = "grr",

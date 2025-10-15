@@ -16,7 +16,7 @@ autocmd FileType gitcommit,gitrebase,gitconfig set bufhidden=delete
 
 " nnoremap <silent> <Leader>t :<C-u>silent call <SID>tig_status()<CR>
 nnoremap <silent> <Leader>t :<C-u>silent call <SID>tig_start()<CR>
-nnoremap <silent> <Leader>T :<C-u>silent call <SID>tig_start(expand('%'))<CR>
+nnoremap <silent> <Leader>T :<C-u>silent call <SID>tig_start(expand('%'), '--follow')<CR>
 
 function! s:tig_start(...) abort
   let l:optf = ''
