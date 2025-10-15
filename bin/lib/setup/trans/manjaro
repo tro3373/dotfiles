@@ -7,6 +7,7 @@ pre_setup() {
 
   _setup_user_group
   _install_apps
+  # _setup_x11_instead_wayland
   _setup_visudo_editor
   _setup_home_dir_names
   _setup_custom_shortcut
@@ -200,6 +201,13 @@ get_keys() {
     echo "$key"
     gsettings get "$scheme_1" "$name_ck" | tr "'" '\n' | grep org
   } | sort -u | sed -e "s,^,',g" -e "s,$,',g" | tr '\n' ',' | sed -e 's/,$//g'
+}
+
+_setup_x11_instead_wayland() {
+  sudo grep -E '^WaylandEnable=false' /etc/gdm/custom.conf >&/dev/null && return
+  echo "Current session is $XDG_SESSION_TYPE"
+  backup /etc/gdm/custom.conf
+  exe sudo sed -i -e 's,#WaylandEnable=false,WaylandEnable=false,g' /etc/gdm/custom.conf
 }
 
 _setup_improve_monitor_scale() {
