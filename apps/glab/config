@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
 install_common() {
-  go_install gitlab.com/gitlab-org/cli/cmd/glab@main
+  # go_install gitlab.com/gitlab-org/cli/cmd/glab@main
+  install_via_os_default
 }
