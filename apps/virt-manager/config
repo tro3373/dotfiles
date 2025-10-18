@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+install_common() { not_supported; }
+install_wsl() { not_supported; }
+install_arch() {
+  def_install qemu-full virt-manager virt-viewer
+  # def_install dnsmasq vde2 bridge-utils openbsd-netcat ebtables iptables-nft
+}
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+# setting_common() { no_settings; }
+# setting_wsl()    { no_settings; }
+setting_arch() {
+  exe sudo systemctl enable --now libvirtd
+  id | grep libvirt &>/dev/null || {
+    exe sudo usermod -aG libvirt "$USER"
+    log "You must logout/login or restart your session to apply libvirt group change"
+  }
+  exe virsh list --all
+}
+# setting_msys()   { no_settings; }
+# setting_cygwin() { no_settings; }
+# setting_mac()    { no_settings; }
+# setting_ubuntu() { no_settings; }
+# setting_redhat() { no_settings; }
+#add_dependency_args
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#no_settings
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
+#sudo_tee
