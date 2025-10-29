@@ -29,7 +29,7 @@ function! s:find_rip_grep(q, d) abort
   endif
   " fzf#vim#with_preview で ctrl+h/l で左右するようにできないか？
   call fzf#vim#grep(
-      \   'rg --ignore-file ~/.vim/.rgignore --glob "!.git/" --column --line-number --no-heading --hidden --smart-case "'.a:q.'" '.l:target_dir,
+      \   'rg --ignore-file ~/.vim/.rgignore_for_go --glob "!.git/" --column --line-number --no-heading --hidden --smart-case "'.a:q.'" '.l:target_dir,
       \   1,
       \   fzf#vim#with_preview({'options': '--query="' . a:q . '" --delimiter : --nth 4..'}, 'down:50%', '?'),
       \   0,
@@ -48,7 +48,7 @@ function! s:find_rip_grep_fuzzy(q, d) abort
     let l:target_dir = GetGitRoot()
   endif
   call fzf#vim#grep(
-      \   'rg --ignore-file ~/.vim/.rgignore --glob "!.git/" --column --line-number --no-heading --hidden --smart-case .+ ' . l:target_dir,
+      \   'rg --ignore-file ~/.vim/.rgignore --glob "!.git/" --column --line-number --no-heading --hidden --smart-case "'.a:q.'" '.l:target_dir,
       \   1,
       \   fzf#vim#with_preview({'options': '--query="' . a:q . '" --delimiter : --nth 4..'}, 'down:50%', '?'),
       \   0,
