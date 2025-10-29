@@ -250,7 +250,7 @@ set line-graphics = ascii
 #set ignore-space = some
 #set commit-order = topo
 set ignore-case = yes
-#set wrap-lines = no
+set wrap-lines = yes
 #set focus-child = yes
 #set show-line-numbers = yes
 #
