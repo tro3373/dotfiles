@@ -310,50 +310,105 @@ function! Chomp(string)
   return trim(a:string)
 endfunction
 
-function! SaveMemoInner(outdir, defaultTitle, createDirectory, withHugolize) abort
-  let dir = a:outdir
-  if !isdirectory(expand(dir))
-    " pオプション: 親ディレクトリが存在しない場合は作成する (parents)
-    call mkdir(expand(dir), "p")
-  endif
-  let now = localtime()
-  let stryyyy = strftime("%Y", now)
-  let strymd = strftime("%Y-%m-%d", now)
-  let title = input("Title: ", a:defaultTitle,  "file")
-  redraw
-  if title != ""
-    let title = "-" . title
-  endif
-  let name = strymd . title
-  let dir = dir . "/" . stryyyy
-  call mkdir(expand(dir), "p")
-  if a:createDirectory == 1
-    let dir = dir . "/" . name
-    call mkdir(expand(dir), "p")
-  elseif a:createDirectory == 2
-    call mkdir(expand(dir), "p")
-  endif
-  if a:withHugolize == 1
-    let name = "index"
-  endif
-  exe ":w " . dir . "/" . name . ".md"
-  exe ":e " . dir . "/" . name . ".md"
-  if a:withHugolize == 1
-    call Hugolize()
-    exe ":w"
-  endif
-  return 0
-endfun
+" function! _SaveMemoInner(outdir, defaultTitle, createDirectory, withHugolize) abort
+"   let dir = a:outdir
+"   if !isdirectory(expand(dir))
+"     " pオプション: 親ディレクトリが存在しない場合は作成する (parents)
+"     call mkdir(expand(dir), "p")
+"   endif
+"   let now = localtime()
+"   let stryyyy = strftime("%Y", now)
+"   let strymd = strftime("%Y-%m-%d", now)
+"   let title = input("Title: ", a:defaultTitle,  "file")
+"   redraw
+"   if title != ""
+"     let title = "-" . title
+"   endif
+"   let name = strymd . title
+"   let dir = dir . "/" . stryyyy
+"   call mkdir(expand(dir), "p")
+"   if a:createDirectory == 1
+"     " Save to {outdir}/{yyyy}/{yyyy-mm-dd}-{title}/
+"     let dir = dir . "/" . name
+"     call mkdir(expand(dir), "p")
+"   elseif a:createDirectory == 2
+"     " Save to {outdir}/{yyyy}
+"     call mkdir(expand(dir), "p")
+"   endif
+"   if a:withHugolize == 1
+"     let name = "index"
+"   endif
+"   exe ":w " . dir . "/" . name . ".md"
+"   exe ":e " . dir . "/" . name . ".md"
+"   if a:withHugolize == 1
+"     call Hugolize()
+"     exe ":w"
+"   endif
+"   return 0
+" endfun
+
+" function! SaveKnowledge() abort
+"   let tmpfile = WriteToTemp()
+"   let title = GenerateViaLLM("gen-knowledge-filename-ja.md", tmpfile)
+"   call SaveMemoInner("~/.mo/knowledge", title, 0, 0)
+" endfun
+" command! SaveKnowledge call SaveKnowledge()
+" nnoremap sT :<C-u>SaveKnowledge<CR>
 
 function! SaveMemoPrv() abort
-  call SaveMemoInner("~/.mo/prv", "log", 2, 0)
+  call SaveMemoLog("prv")
 endfun
 command! SaveMemoPrv call SaveMemoPrv()
 
 function! SaveMemoJob() abort
-  call SaveMemoInner("~/.mo/job", "log", 2, 0)
+  call SaveMemoLog("job")
 endfun
 command! SaveMemoJob call SaveMemoJob()
+
+function! SaveMemoLog(category) abort
+  let now = localtime()
+  let dir = "~/.mo/" .. a:category .. "/" .. strftime("%Y", now)
+  let title = strftime("%Y-%m-%d", now) .. "-log"
+  let title = input("Title: ", title,  "file")
+  redraw
+  call SaveMemoInner(dir, title)
+endfunction
+
+function! SaveMdPost() abort
+  call SaveMdCommon("~/.md/content/posts")
+endfun
+command! SaveMdPost call SaveMdPost()
+function! SaveMdDraftCh() abort
+  call SaveMdCommon("~/.ch/.draft")
+endfun
+command! SaveMdDraftCh call SaveMdDraftCh()
+function! SaveMdDraft() abort
+  call SaveMdCommon("~/.md/.draft")
+endfun
+command! SaveMdDraft call SaveMdDraft()
+
+function! SaveMdCommon(dir) abort
+  let now = localtime()
+  let tmpfile = WriteToTemp()
+  let title = GenerateViaLLM("gen-content-title.md", tmpfile)
+  let title = strftime("%Y-%m-%d", now) .. "-" .. title
+  let title = input("Title: ", title,  "file")
+  let dir = a:dir .. "/" .. strftime("%Y", now) .. title
+  call Hugolize()
+  call SaveMemoInner(dir, "index")
+endfun
+
+function! SaveMemoInner(dir, title) abort
+  let dir = a:dir
+  let name = a:title
+  if !isdirectory(expand(dir))
+    " pオプション: 親ディレクトリが存在しない場合は作成する (parents)
+    call mkdir(expand(dir), "p")
+  endif
+  exe ":w " . dir . "/" . name . ".md"
+  exe ":e " . dir . "/" . name . ".md"
+  return 0
+endfun
 
 function! WriteToTemp() abort
   let tmpfile = tempname()
@@ -389,21 +444,6 @@ function! GenerateViaLLM(prpName, tmpfile) abort
   call delete(a:tmpfile)
   return title
 endfun
-
-function! SaveKnowledge() abort
-  let tmpfile = WriteToTemp()
-  let title = GenerateViaLLM("gen-knowledge-filename-ja.md", tmpfile)
-  call SaveMemoInner("~/.mo/knowledge", title, 0, 0)
-endfun
-command! SaveKnowledge call SaveKnowledge()
-nnoremap sT :<C-u>SaveKnowledge<CR>
-
-function! SaveMd() abort
-  let tmpfile = WriteToTemp()
-  let title = GenerateViaLLM("gen-content-title.md", tmpfile)
-  call SaveMemoInner("~/.md/content/posts", title, 1, 1)
-endfun
-command! SaveMd call SaveMd()
 
 function! CorrectEnglish() abort
   " 選択範囲を一時ファイルに保存
