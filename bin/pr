@@ -134,8 +134,11 @@ create_pr_parts() {
   cat <"$target_tmp_dir"/diff |
     # head -200 |
     prp -ne gen-git-pr-message.md$ >"$target_tmp_dir"/prompt.md
+  # cat <"$target_tmp_dir"/prompt.md |
+  #   llm >"$target_tmp_dir"/messages.json
+  _model=gemini-2.5-flash-lite
   cat <"$target_tmp_dir"/prompt.md |
-    llm >"$target_tmp_dir"/messages.json
+    llm -c gemini -m $_model >"$target_tmp_dir"/messages.json
 
   ilog "==> Creating title/body.."
   jq -r '.title' "$target_tmp_dir"/messages.json >/dev/null 2>&1 || {
