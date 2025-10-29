@@ -153,9 +153,9 @@ config.keys = {
     mods = "ALT",
     action = wezterm.action.PasteFrom("Clipboard"),
   },
-  -- Ctrl+Shift n で 全画面トグル
+  -- Ctrl+Shift f で 全画面トグル(Ctrl+Shift n は新規ウィンドウ)
   {
-    key = "n",
+    key = "f",
     mods = "SHIFT|CTRL",
     action = wezterm.action.ToggleFullScreen,
     -- action = wezterm.window:maximize(),
