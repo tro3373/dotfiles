@@ -20,6 +20,7 @@ Add a new git worktree for the specified branch(or Remove it).
       -l        : List all worktrees with switch (default)
       -a        : Add a worktree for the specified branch
       -r        : Remove the worktree instead of adding it
+      -e        : Edit ignore config
       -sw       : Change directory
                     -a -sw: Switch to the newly added worktree directory
 
@@ -33,6 +34,7 @@ initialize() {
       -l) mode=list ;;
       -r) mode=remove ;;
       -a) mode=add ;;
+      -e) mode=edit_ignore ;;
       -sw) switch=1 ;;
       *) add_args "$1" ;;
     esac
@@ -102,7 +104,7 @@ _list_changeable_directories() {
     while read -r _target_path; do
       [[ -z $_target_path ]] && continue
       [[ $_target_path =~ ^#.* ]] && continue
-      label="RepositoryRoot"
+      label="(RepositoryRoot)"
       if [[ $_target_path =~ ^$git_root_dir/.git/$worktree_dir_name/ ]]; then
         label=$(basename "$_target_path")
         local task_file="$_target_path/.tasks.md"
@@ -116,7 +118,7 @@ _list_changeable_directories() {
 
 }
 
-add_worktree() {
+_add_worktree() {
   dst_dir="$git_root_dir/.git/$worktree_dir_name/$(get_worktree_branch_name)"
   ilog "==> Adding worktree to $dst_dir for $branch branch hash:$commit_hash.."
   # shellcheck disable=SC2086
@@ -136,26 +138,70 @@ add_worktree() {
 }
 
 ln_ignored_if_needed() {
-  # Get ignored files/directories (directories shown with trailing /)
-  git status --ignored --porcelain 2>/dev/null |
-    grep '^!!' |
-    cut -c4- |
-    grep -Ev '(\.tasks\.md|\.trash)' |
-    sed -e 's,/$,,g' |
-    while read -r line; do
-      [[ -z $line ]] && continue
-      [[ $line =~ ^#.* ]] && continue
-      src="$git_root_dir/$line"
-      # src="../../../${line/.*\//../}" # TODO Test
-      dst="$dst_dir/$line"
-      dst_ln_dir="$(dirname "$dst")"
-      [[ ! -e $dst_ln_dir ]] && mkdir -p "$dst_ln_dir"
-      ilog "==> Linking $line"
+  # # Get ignored files/directories (directories shown with trailing /)
+  # git status --ignored --porcelain 2>/dev/null |
+  #   grep '^!!' |
+  #   cut -c4- |
+  #   grep -Ev '(\.tasks\.md|\.trash)' |
+  #   sed -e 's,/$,,g' |
+  #   while read -r line; do
+  #     [[ -z $line ]] && continue
+  #     [[ $line =~ ^#.* ]] && continue
+  #     src="$git_root_dir/$line"
+  #     # src="../../../${line/.*\//../}" # TODO Test
+  #     dst="$dst_dir/$line"
+  #     dst_ln_dir="$(dirname "$dst")"
+  #     [[ ! -e $dst_ln_dir ]] && mkdir -p "$dst_ln_dir"
+  #     ilog "==> Linking $line"
+  #     ln -s "$src" "$dst"
+  #   done
+  if [[ ! -e $ln_ignored_config ]]; then
+    create_ln_ignored_config_if_needed
+  fi
+  ln_ignored_from_config
+}
+
+ln_ignored_from_config() {
+  cat <"$ln_ignored_config" |
+    while read -r rel_path; do
+      [[ -z $rel_path ]] && continue
+      [[ $rel_path =~ ^#.* ]] && continue
+      src="$git_root_dir/$rel_path"
+      [[ ! -e $src ]] && {
+        wlog "==> Ignored path '$rel_path' does not exist in the repository. Skipping linking."
+        continue
+      }
+      dst="$dst_dir/$rel_path"
+      dst=${dst%/}
+      _dst_dir="$(dirname "$dst")"
+      [[ ! -e $_dst_dir ]] && mkdir -p "$_dst_dir"
+      ilog "==> Linking $rel_path"
+      ilog "==>   via: ln -s '$src' '$dst'"
       ln -s "$src" "$dst"
     done
 }
 
-remove_worktree() {
+create_ln_ignored_config_if_needed() {
+  wlog "==> No .ln_ignored config file exist."
+  read -r -n 1 -p "==> Create config file? (Y/n): "
+  if [[ $REPLY =~ ^[Nn]$ ]]; then
+    touch "$ln_ignored_config"
+    wlog "==> Created empty .ln_ignored config file. No ignored files/directories will be linked."
+    return
+  fi
+  git status --ignored --porcelain 2>/dev/null |
+    grep '^!!' |
+    cut -c4- |
+    fzf \
+      --prompt="Select ignored files/directories to link in new worktree: " \
+      --height=20% \
+      --bind 'ctrl-l:toggle-all' \
+      --reverse \
+      --multi \
+      --exit-0 >"$ln_ignored_config"
+}
+
+_remove_worktree() {
   removal_list=$(_list_removal_worktrees)
   if [[ -z $removal_list ]]; then
     elog "No worktrees exist to remove."
@@ -194,6 +240,11 @@ _list_removal_worktrees() {
     grep "$worktree_dir_name"
 }
 
+_edit_ignore() {
+  wlog "==> Editing .ln_ignored config file.."
+  echo "$ln_ignored_config" | v
+}
+
 main() {
   initialize "$@"
 
@@ -202,12 +253,18 @@ main() {
     elog "Failed to change directory to git root: $git_root_dir"
   }
 
+  local ln_ignored_config="$git_root_dir/.git/$worktree_dir_name/.ln_ignored"
+
   if [[ $mode == "add" ]]; then
-    add_worktree
+    _add_worktree
     return
   fi
   if [[ $mode == "remove" ]]; then
-    remove_worktree
+    _remove_worktree
+    return
+  fi
+  if [[ $mode == "edit_ignore" ]]; then
+    _edit_ignore
     return
   fi
   show_change_directory_command

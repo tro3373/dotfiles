@@ -86,6 +86,10 @@ alias gn="git_no_merges"
 # alias gt="git tag"
 # alias gt="git_worktree"
 gt() {
+  if [[ $1 == '-e' ]]; then
+    git_worktree "$@"
+    return
+  fi
   result=$(git_worktree "$@")
   if [[ ! $result =~ ^cd.*$ ]]; then
     echo -e "$result"
