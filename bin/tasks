@@ -48,9 +48,22 @@ log() { _log white "$*"; }
 info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
+current_is_worktree_dir() { [[ $git_root =~ ^.*/${worktree_dir_name}/.*$ ]]; }
+
+initialize_links_if_needed() {
+  [[ -e $target_file ]] && return
+
+  if current_is_worktree_dir; then
+    init_link_tasks_for_worktree
+    return
+  fi
+
+  # Initialize if Not exist and Not in worktree directory
+  init_link_tasks
+}
 
 init_link_tasks() {
-  info "==> Initialize tasks directory.."
+  info "==> Initialize tasks for repository root directory.."
   repo_name=$(basename "$git_root")
   srcd="$HOME/.mo/tasks/$repo_name"
   info "==> Creating tasks directory at $srcd"
@@ -60,6 +73,20 @@ init_link_tasks() {
   ln -s "$srcd/tasks" "$git_root/.tasks"
   info "==> Linking .tasks.md to $git_root"
   ln -s "$srcd/tasks.md" "$git_root/.tasks.md"
+}
+
+init_link_tasks_for_worktree() {
+  info "==> Initialize tasks for worktree directory.."
+  worktree_name=$(basename "$git_root")
+  repo_name=$(basename "${git_root%%/.git/*}")
+  srcd="$HOME/.mo/tasks/$repo_name"
+  info "==> Creating tasks directory at $srcd"
+  mkdir -p "$srcd"/tasks/done
+  touch "$srcd"/tasks.md
+  mkdir -p "$srcd"/tasks/"$worktree_name"
+  touch "$srcd"/tasks/"$worktree_name"/tasks.md
+  info "==> Linking .tasks.md to $git_root"
+  ln -s "$srcd"/tasks/"$worktree_name"/tasks.md "$git_root/.tasks.md"
 }
 
 find_tasks() {
@@ -152,11 +179,7 @@ main() {
   git_root=$(git rev-parse --show-toplevel)
   cd "$git_root" || exit 1
   target_file="$git_root/.tasks.md"
-  # [[ ! -e $target_file ]] && init_link_tasks
-  if [[ ! -e $target_file ]] && ! [[ $git_root =~ ^.*/${worktree_dir_name}/.*$ ]]; then
-    # Initialize if Not exist and Not in worktree directory
-    init_link_tasks
-  fi
+  initialize_links_if_needed
 
   if [[ $mode == "next" ]]; then
     cat_first_task
