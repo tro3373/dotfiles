@@ -138,25 +138,14 @@ _add_worktree() {
 }
 
 ln_ignored_if_needed() {
-  # # Get ignored files/directories (directories shown with trailing /)
-  # git status --ignored --porcelain 2>/dev/null |
-  #   grep '^!!' |
-  #   cut -c4- |
-  #   grep -Ev '(\.tasks\.md|\.trash)' |
-  #   sed -e 's,/$,,g' |
-  #   while read -r line; do
-  #     [[ -z $line ]] && continue
-  #     [[ $line =~ ^#.* ]] && continue
-  #     src="$git_root_dir/$line"
-  #     # src="../../../${line/.*\//../}" # TODO Test
-  #     dst="$dst_dir/$line"
-  #     dst_ln_dir="$(dirname "$dst")"
-  #     [[ ! -e $dst_ln_dir ]] && mkdir -p "$dst_ln_dir"
-  #     ilog "==> Linking $line"
-  #     ln -s "$src" "$dst"
-  #   done
   if [[ ! -e $ln_ignored_config ]]; then
-    create_ln_ignored_config_if_needed
+    wlog "==> No .ln_ignored config file exist."
+    read -r -n 1 -p "==> Create config file? (Y/n): "
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+      wlog "==> Skipping linking ignored files."
+      return
+    fi
+    create_default_ln_ignored_config
   fi
   ln_ignored_from_config
 }
@@ -171,34 +160,38 @@ ln_ignored_from_config() {
         wlog "==> Ignored path '$rel_path' does not exist in the repository. Skipping linking."
         continue
       }
+      src_is_file=0
+      [[ -f $src ]] && src_is_file=1
       dst="$dst_dir/$rel_path"
-      dst=${dst%/}
+      # dst=${dst%/}
       _dst_dir="$(dirname "$dst")"
       [[ ! -e $_dst_dir ]] && mkdir -p "$_dst_dir"
-      ilog "==> Linking $rel_path"
-      ilog "==>   via: ln -s '$src' '$dst'"
-      ln -s "$src" "$dst"
+      [[ $src_is_file -eq 1 ]] && _ln "$src" "$dst" && continue
+      mkdir -p "$dst"
+      find "$src" -maxdepth 1 -mindepth 1 |
+        while read -r item_path; do
+          item_name=$(basename "$item_path")
+          _ln "$item_path" "$dst/$item_name"
+        done || :
     done
 }
 
-create_ln_ignored_config_if_needed() {
-  wlog "==> No .ln_ignored config file exist."
-  read -r -n 1 -p "==> Create config file? (Y/n): "
-  if [[ $REPLY =~ ^[Nn]$ ]]; then
-    touch "$ln_ignored_config"
-    wlog "==> Created empty .ln_ignored config file. No ignored files/directories will be linked."
-    return
-  fi
+_ln() {
+  ilog "==> Linking via: ln -s '$1' '$2'"
+  ln -s "$1" "$2"
+}
+
+create_default_ln_ignored_config() {
   git status --ignored --porcelain 2>/dev/null |
     grep '^!!' |
-    cut -c4- |
-    fzf \
-      --prompt="Select ignored files/directories to link in new worktree: " \
-      --height=20% \
-      --bind 'ctrl-l:toggle-all' \
-      --reverse \
-      --multi \
-      --exit-0 >"$ln_ignored_config"
+    grep -Ev '(\.tasks\.md|\.trash|node_modules|.next)' |
+    cut -c4- >"$ln_ignored_config"
+  # fzf \
+  #   --prompt="Select ignored files/directories to link in new worktree: " \
+  #   --bind 'ctrl-l:toggle-all' \
+  #   --reverse \
+  #   --multi \
+  #   --exit-0 >"$ln_ignored_config"
 }
 
 _remove_worktree() {
@@ -241,6 +234,9 @@ _list_removal_worktrees() {
 }
 
 _edit_ignore() {
+  if [[ ! -e $ln_ignored_config ]]; then
+    create_default_ln_ignored_config
+  fi
   wlog "==> Editing .ln_ignored config file.."
   echo "$ln_ignored_config" | v
 }
