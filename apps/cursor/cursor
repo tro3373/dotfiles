@@ -1,7 +1,9 @@
 #!/usr/bin/env -S bash -e
 
 find_cursor_bin() {
-  local cursor_bin=/opt/cursor/usr/share/cursor/cursor
+  local cursor_bin
+  # cursor_bin=/opt/cursor/usr/share/cursor/cursor
+  cursor_bin=$(find "$HOME"/tools/Cursor-*.AppImage -type f | sort | tail -1)
   if [[ -x $cursor_bin ]]; then
     echo "$cursor_bin"
     return

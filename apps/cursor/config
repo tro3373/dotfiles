@@ -5,18 +5,18 @@
 settings_d_mac="${HOME}/Library/Application Support/Cursor/User"
 settings_d_linux="$HOME/.config/Cursor/User"
 
-install_arch() {
-  def_install cursor-extracted
-  _link_bin_cursor_if_needed
-}
+# install_arch() {
+#   def_install cursor-extracted
+#   _link_bin_cursor_if_needed
+# }
 
 _fnm=
 install_common() {
   if is_mac; then
     def_install --cask cursor
   else
-    log "==> Install from https://cursor.sh/"
-    exe open https://cursor.sh/
+    log "==> Install from https://cursor.com/ja/download. Use Linux AppImage"
+    exe open https://cursor.com/ja/download
     exe read -p "Press Enter after download"
     local _bin
     _bin=$(_find_binary)
