@@ -33,6 +33,7 @@ lint:
 	@echo "==> Running golangci-lint run" >&2
 	@golangci-lint run
 
+build: build-linux-amd
 build-linux-arm: _build-linux-arm64
 build-linux-amd: _build-linux-amd64
 build-android-arm: _build-android-arm64
@@ -45,7 +46,7 @@ build-windows-amd: _build-windows-amd64
 # -trimpath: Remove all file system paths from the resulting executable.
 # -s: Omit the symbol table and debug information.
 # -w: Omit the DWARF symbol table.
-_build-%: check clean sec
+_build-%: clean lint
 	@echo "==> Go Building" >&2
 	$(eval goos=$(firstword $(subst -, ,$*)))
 	$(eval goarch=$(word 2, $(subst -, ,$*)))
