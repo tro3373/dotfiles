@@ -106,12 +106,12 @@ clear_tmp_dir() {
 
 create_diff() {
   ilog "==> Creating diff.."
-  git_diff_ignored "$target_branch"...HEAD >"$target_tmp_dir"/diff
+  git_diff_ignored "$target_branch"..HEAD >"$target_tmp_dir"/diff
 }
 
 create_commit_list() {
   ilog "==> Creating commit_list.."
-  git log --oneline "$target_branch"...HEAD >"$target_tmp_dir"/commit_list
+  git log --oneline "$target_branch"..HEAD >"$target_tmp_dir"/commit_list
 }
 
 create_pr_parts() {
@@ -136,9 +136,11 @@ create_pr_parts() {
     prp -ne gen-git-pr-message.md$ >"$target_tmp_dir"/prompt.md
   # cat <"$target_tmp_dir"/prompt.md |
   #   llm >"$target_tmp_dir"/messages.json
-  _model=gemini-2.5-flash-lite
+  # _model=gemini-2.5-flash-lite
+  # cat <"$target_tmp_dir"/prompt.md |
+  #   llm -c gemini -m $_model >"$target_tmp_dir"/messages.json
   cat <"$target_tmp_dir"/prompt.md |
-    llm -c gemini -m $_model >"$target_tmp_dir"/messages.json
+    llm -p groq >"$target_tmp_dir"/messages.json
 
   ilog "==> Creating title/body.."
   jq -r '.title' "$target_tmp_dir"/messages.json >/dev/null 2>&1 || {
@@ -163,7 +165,7 @@ create_compact_pr_parts() {
 
 create_pr_with_push() {
   ilog "==> Pushing commits.."
-  git push -u origin "$current_branch"
+  git push -u origin "$current_branch" 1>&2
   _target_branch=${target_branch#origin/}
   is_origin_is_gitlab && {
     dump_pr_or_mr MR
@@ -187,22 +189,27 @@ EOF
 }
 
 create_pr() {
+  # Make PR
   cat <"$target_tmp_dir"/body |
     gh pr create \
       --base "$_target_branch" \
       --head "$current_branch" \
-      --web \
       --title "$(cat <"$target_tmp_dir"/title)" \
-      --body-file -
+      --body-file - 1>&2
+  # Mark PR as ready
+  # --draft
+  # gh pr ready 1>&2
+  gh pr view --json url --jq '.url'
 }
 
 create_mr() {
+  # --draft
   glab mr create \
     --target-branch "$_target_branch" \
     --source-branch "$current_branch" \
-    --web \
     --title "$(cat <"$target_tmp_dir"/title)" \
-    --description "$(cat <"$target_tmp_dir"/body)"
+    --description "$(cat <"$target_tmp_dir"/body)" 1>&2
+  glab mr view --json webUrl --jq '.webUrl'
 }
 
 end() {
@@ -229,6 +236,8 @@ main() {
     target_tmp_dir=/tmp/pr
     create_pr_parts
   fi
-  create_pr_with_push
+  web_url=$(create_pr_with_push)
+  ilog "==> PR created successfully! see: $web_url"
+  open "$web_url"
 }
 main "$@"

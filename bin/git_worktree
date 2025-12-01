@@ -2,6 +2,7 @@
 
 command_name=$(basename "$0") && readonly command_name
 worktree_dir_name="___$command_name" && readonly worktree_dir_name
+repo_root_label="RepositoryRoot" && readonly repo_root_label
 readonly depends=(git fzf)
 mode=list
 branch=
@@ -20,7 +21,7 @@ Add a new git worktree for the specified branch(or Remove it).
       -l        : List all worktrees with switch (default)
       -a        : Add a worktree for the specified branch
       -r        : Remove the worktree instead of adding it
-      -e        : Edit ignore config
+      -e        : Edit config
       -sw       : Change directory
                     -a -sw: Switch to the newly added worktree directory
 
@@ -34,7 +35,7 @@ initialize() {
       -l) mode=list ;;
       -r) mode=remove ;;
       -a) mode=add ;;
-      -e) mode=edit_ignore ;;
+      -e) mode=edit_config ;;
       -sw) switch=1 ;;
       *) add_args "$1" ;;
     esac
@@ -78,7 +79,7 @@ get_worktree_branch_name() {
 }
 
 show_change_directory_command() {
-  _list_changeable_directories |
+  _list_root_and_worktree_directories |
     fzf \
       --exit-0 \
       --no-multi \
@@ -94,7 +95,7 @@ show_change_directory_command() {
     done
 }
 
-_list_changeable_directories() {
+_list_root_and_worktree_directories() {
   {
     # show worktrees sorted by updated time
     ls -td "$git_root_dir/.git/$worktree_dir_name"/*/ 2>/dev/null || :
@@ -104,12 +105,15 @@ _list_changeable_directories() {
     while read -r _target_path; do
       [[ -z $_target_path ]] && continue
       [[ $_target_path =~ ^#.* ]] && continue
-      label="(RepositoryRoot)"
+      label="($repo_root_label)"
       if [[ $_target_path =~ ^$git_root_dir/.git/$worktree_dir_name/ ]]; then
         label=$(basename "$_target_path")
         local task_file="$_target_path/.tasks.md"
-        if [[ -e $task_file ]]; then
-          label=$(head -1 "$task_file" | sed -e 's,^#* ,,')
+        if [[ -s $task_file ]]; then
+          task_file_title=$(head -1 "$task_file" | sed -e 's,^#* ,,')
+          if [[ -n $task_file_title ]]; then
+            label="$label [${task_file_title}]"
+          fi
         fi
       fi
       _time=$(stat -c %y "$_target_path" | cut -d. -f1 | sed -e 's, ,_,g')
@@ -138,20 +142,20 @@ _add_worktree() {
 }
 
 ln_ignored_if_needed() {
-  if [[ ! -e $ln_ignored_config ]]; then
-    wlog "==> No .ln_ignored config file exist."
+  if [[ ! -e $ln_config ]]; then
+    wlog "==> No config file exist."
     read -r -n 1 -p "==> Create config file? (Y/n): "
     if [[ $REPLY =~ ^[Nn]$ ]]; then
       wlog "==> Skipping linking ignored files."
       return
     fi
-    create_default_ln_ignored_config
+    create_default_ln_config
   fi
   ln_ignored_from_config
 }
 
 ln_ignored_from_config() {
-  cat <"$ln_ignored_config" |
+  cat <"$ln_config" |
     while read -r rel_path; do
       [[ -z $rel_path ]] && continue
       [[ $rel_path =~ ^#.* ]] && continue
@@ -160,15 +164,20 @@ ln_ignored_from_config() {
         wlog "==> Ignored path '$rel_path' does not exist in the repository. Skipping linking."
         continue
       }
-      src_is_file=0
-      [[ -f $src ]] && src_is_file=1
       dst="$dst_dir/$rel_path"
-      # dst=${dst%/}
       _dst_dir="$(dirname "$dst")"
       [[ ! -e $_dst_dir ]] && mkdir -p "$_dst_dir"
-      [[ $src_is_file -eq 1 ]] && _ln "$src" "$dst" && continue
+
+      if [[ -f $src ]]; then
+        # File case
+        _ln "$src" "$dst"
+        continue
+      fi
+
+      # Directory case
       mkdir -p "$dst"
-      find "$src" -maxdepth 1 -mindepth 1 |
+      src="$(cd "$src" && pwd)" # Remove the trailing slash for directory paths
+      find "$src/" -maxdepth 1 -mindepth 1 |
         while read -r item_path; do
           item_name=$(basename "$item_path")
           _ln "$item_path" "$dst/$item_name"
@@ -181,17 +190,17 @@ _ln() {
   ln -s "$1" "$2"
 }
 
-create_default_ln_ignored_config() {
+create_default_ln_config() {
   git status --ignored --porcelain 2>/dev/null |
     grep '^!!' |
     grep -Ev '(\.tasks\.md|\.trash|node_modules|.next)' |
-    cut -c4- >"$ln_ignored_config"
+    cut -c4- >"$ln_config"
   # fzf \
   #   --prompt="Select ignored files/directories to link in new worktree: " \
   #   --bind 'ctrl-l:toggle-all' \
   #   --reverse \
   #   --multi \
-  #   --exit-0 >"$ln_ignored_config"
+  #   --exit-0 >"$ln_config"
 }
 
 _remove_worktree() {
@@ -200,7 +209,35 @@ _remove_worktree() {
     elog "No worktrees exist to remove."
   fi
 
-  _list_removal_worktrees |
+  # _list_removal_worktrees |
+  #   fzf \
+  #     --exit-0 \
+  #     --multi \
+  #     --reverse \
+  #     --height=20% \
+  #     --bind 'ctrl-l:toggle-all' \
+  #     --prompt="Select branch to remove worktree for: " |
+  #   while read -r brach_path _ branch_name; do
+  #     [[ -z $brach_path ]] && continue
+  #     [[ $brach_path =~ ^#.* ]] && continue
+
+  #     local task_file="$brach_path"/.tasks.md
+  #     if [[ -s $task_file ]]; then
+  #       linked_path=$(readlink "$task_file")
+  #       ilog "==> Moving task file '$task_file' to .tasks/done/.."
+  #       # TODO: Handle name conflicts
+  #       mv "$linked_path" "$git_root_dir/.tasks/done/"
+  #     fi
+
+  #     # Remove []: ex [feature/xxxx] => feature/xxxx
+  #     branch_name=${branch_name//[\[\]]/}
+  #     ilog "==> Removing worktree path: '$brach_path'.."
+  #     git worktree remove "$brach_path"
+  #     # ilog "==> Removing branch '$branch_name'.."
+  #     # git branch -d "$branch_name"
+  #   done
+  _list_root_and_worktree_directories |
+    grep -v "$repo_root_label" |
     fzf \
       --exit-0 \
       --multi \
@@ -208,21 +245,21 @@ _remove_worktree() {
       --height=20% \
       --bind 'ctrl-l:toggle-all' \
       --prompt="Select branch to remove worktree for: " |
-    while read -r brach_path _ branch_name; do
+    awk '{print $NF " " $2}' |
+    while read -r brach_path name; do
       [[ -z $brach_path ]] && continue
       [[ $brach_path =~ ^#.* ]] && continue
 
       local task_file="$brach_path"/.tasks.md
-      if [[ -e $task_file ]]; then
+      if [[ -s $task_file ]]; then
         linked_path=$(readlink "$task_file")
         ilog "==> Moving task file '$task_file' to .tasks/done/.."
-        mv "$linked_path" "$brach_path/.tasks/done/"
+        mv "$linked_path" "$git_root_dir/.tasks/done/$name.tasks.md"
       fi
 
-      # Remove []: ex [feature/xxxx] => feature/xxxx
-      branch_name=${branch_name//[\[\]]/}
       ilog "==> Removing worktree path: '$brach_path'.."
       git worktree remove "$brach_path"
+      # TODO get branch name
       # ilog "==> Removing branch '$branch_name'.."
       # git branch -d "$branch_name"
     done
@@ -233,12 +270,12 @@ _list_removal_worktrees() {
     grep "$worktree_dir_name"
 }
 
-_edit_ignore() {
-  if [[ ! -e $ln_ignored_config ]]; then
-    create_default_ln_ignored_config
+_edit_config() {
+  if [[ ! -e $ln_config ]]; then
+    create_default_ln_config
   fi
-  wlog "==> Editing .ln_ignored config file.."
-  echo "$ln_ignored_config" | v
+  wlog "==> Editing config file.."
+  echo "$ln_config" | v
 }
 
 main() {
@@ -249,7 +286,7 @@ main() {
     elog "Failed to change directory to git root: $git_root_dir"
   }
 
-  local ln_ignored_config="$git_root_dir/.git/$worktree_dir_name/.ln_ignored"
+  local ln_config="$git_root_dir/.git/$worktree_dir_name/config"
 
   if [[ $mode == "add" ]]; then
     _add_worktree
@@ -259,8 +296,8 @@ main() {
     _remove_worktree
     return
   fi
-  if [[ $mode == "edit_ignore" ]]; then
-    _edit_ignore
+  if [[ $mode == "edit_config" ]]; then
+    _edit_config
     return
   fi
   show_change_directory_command

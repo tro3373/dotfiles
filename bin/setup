@@ -195,6 +195,10 @@ not_supported() {
   log "$_message"
 }
 
+no_settings() {
+  not_supported
+}
+
 setup_for_app() {
   dlog "================================================"
   ilog "=> $app"

@@ -39,6 +39,7 @@ main() {
     '^## Pull Request Overview.*$'
     '^## Code Review.*$'
     '^## Summary of Changes.*$'
+    '^/gemini.*$'
   )
 
   repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)

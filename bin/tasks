@@ -147,10 +147,10 @@ EOF
   info "==> Task split to: $task_file"
   info "==> Branch: $branch"
 
-  # まだタスクが残っていれば再帰的に処理
-  if grep -qE '^- \[ \]' "$target_file"; then
-    split_tasks
-  fi
+  # # まだタスクが残っていれば再帰的に処理
+  # if grep -qE '^- \[ \]' "$target_file"; then
+  #   split_tasks
+  # fi
 }
 
 parse_first_task() {
