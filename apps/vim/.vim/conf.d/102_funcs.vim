@@ -29,11 +29,11 @@ endfunction
 " GitRoot取得
 function! GetGitRoot() abort
   try
-    let l:result = system("cd " . expand('%:p:h') . " && git rev-parse --is-inside-work-tree")
+    let l:result = system("cd '" . expand('%:p:h') . "' && git rev-parse --is-inside-work-tree")
     let l:result = substitute(l:result, '\(\r\|\n\)\+', '', 'g')
     let l:isgitrepo = matchstr(l:result, "true")
     if l:isgitrepo == "true"
-      let l:gitroot = system("cd " . expand('%:p:h') . " && git rev-parse --show-toplevel")
+      let l:gitroot = system("cd '" . expand('%:p:h') . "' && git rev-parse --show-toplevel")
       return substitute(l:gitroot, '\(\r\|\n\)\+', '', 'g')
     else
       return "."
@@ -378,14 +378,23 @@ function! SaveMdPost() abort
   call SaveMdCommon("~/.md/content/posts")
 endfun
 command! SaveMdPost call SaveMdPost()
+
 function! SaveMdDraftCh() abort
   call SaveMdCommon("~/.ch/.draft")
 endfun
 command! SaveMdDraftCh call SaveMdDraftCh()
+
 function! SaveMdDraft() abort
   call SaveMdCommon("~/.md/.draft")
 endfun
 command! SaveMdDraft call SaveMdDraft()
+
+function! SaveTemp() abort
+  let tmpfile = tempname() . '.md'
+  execute 'write! ' . tmpfile
+  exe ":e " . tmpfile
+endfun
+command! SaveTemp call SaveTemp()
 
 function! SaveMdCommon(dir) abort
   let now = localtime()

@@ -23,4 +23,16 @@ setting_common() {
   if [[ -e $src_settings ]]; then
     make_lnk_with_bkup "$src_settings" "$HOME/.claude/settings.json"
   fi
+  show_usage
+}
+
+show_usage() {
+  cat <<'EOF'
+/plugin marketplace add anthropics/skills
+  /plugin install document-skills@anthropic-agent-skills
+  /plugin install example-skills@anthropic-agent-skills
+# https://x.com/_catwu/status/1993791353051074687?t=pVVyagazUFIcfG33Xb5PHw&s=09
+/plugin marketplace add anthropics/claude-code
+  /plugin install frontend-design@claude-code-plugins
+EOF
 }

@@ -1,3 +1,5 @@
 mocks.go
-*_test.go
+#*_test.go
+*.md
+*test*
 .nouse

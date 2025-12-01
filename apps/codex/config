@@ -10,4 +10,5 @@ setting_common() {
   make_dir_if_needed "$HOME/.codex"
   make_lnk_with_bkup "$HOME/.mo/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
   make_lnk_with_bkup "$HOME/.mo/codex/config.toml" "$HOME/.codex/config.toml"
+  make_lnk_with_bkup "$HOME/.mo/claude/commands" "$HOME/.codex/prompts"
 }
