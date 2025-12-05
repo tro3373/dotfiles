@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd) && readonly current_dir
+timestamp=$(date +%Y%m%d.%H%M%S) && readonly timestamp
+
+downsize() {
+  ilog "==> Downsizing $src_file..."
+  file_name=$(basename "${src_file%.*}")
+  dst_dir="$tmp_dir/work/$file_name"
+  mkdir -p "$dst_dir"
+  cd "$dst_dir" || exit 1
+
+  # PDFをページごとに分割
+  pdftk "$src_file" burst output page_%04d.pdf
+  # 全ての.pdfファイルをJPEGに変換
+  # -density 150 : DPIを150に設定 (元のスキャンDPIより低い値に設定)
+  # -quality 80 : JPEGの圧縮率を80%に設定 (0～100で、低いほどサイズが縮小)
+  # -resize 50% : さらに画像を50%に縮小 (必要な場合のみ)
+  magick convert -density 150 page_*.pdf -quality 50 output_img_%04d.jpg
+  # 処理済みのJPEGファイルを連番で結合して新しいPDFを作成
+  magick convert output_img_*.jpg output_final.pdf
+  mv output_final.pdf "$tmp_dir/${file_name}.pdf"
+}
+
+main() {
+  hass pdftk magick
+  [[ ! -p /dev/stdin ]] && {
+    elog "==> Specify pdf list from stdin"
+    exit 1
+  }
+  tmp_dir="$current_dir/dst_$timestamp"
+  ilog "==> Downsizing pdfs into $tmp_dir"
+  set -eo pipefail
+  cat <&0 |
+    xargs realpath |
+    while read -r src_file; do
+      [[ -z $src_file ]] && continue
+      [[ $src_file =~ ^#.* ]] && continue
+      [[ ! -e $src_file ]] && continue
+      downsize
+    done
+  ilog "==> Done! see $tmp_dir for downsized pdfs"
+}
+main "$@"

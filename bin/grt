@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+current_dir=$(pwd) && readonly current_dir
+
+main() {
+  set -eo pipefail
+  local dst="$current_dir/.tasks.md"
+  if [[ ! -e $dst ]]; then
+    elog "==> Error: .tasks.md not found in the current directory."
+    exit 1
+  fi
+  local pr_no=$1
+  if [[ -z $pr_no ]]; then
+    ilog "==> Input PR No! Press Enter to continue..(Cancel: Ctrl+C)"
+    read -r pr_no
+  fi
+  if [[ -z $pr_no || ! $pr_no =~ ^[0-9]+$ ]]; then
+    elog "==> Error: Invalid PR number. $pr_no"
+    exit 1
+  fi
+  gh_pr_review_to_tasks "$pr_no" | tee -a "$dst"
+}
+main "$@"
