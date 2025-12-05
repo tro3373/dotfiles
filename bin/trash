@@ -97,10 +97,7 @@ trash_files() {
         warn "==> Creating $trash_dir ..."
         mkdir -p "$trash_dir"
       fi
-      dst_path="$trash_dir/$name"
-      if [[ -e $dst_path ]]; then
-        dst_path="$dst_path.$timestamp"
-      fi
+      dst_path="$trash_dir/$timestamp.$name"
       mv "$line" "$dst_path"
       info "==> Trashed $line to $trash_dir"
     done
