@@ -11,13 +11,18 @@ main() {
   fi
   local pr_no=$1
   if [[ -z $pr_no ]]; then
-    ilog "==> Input PR No! Press Enter to continue..(Cancel: Ctrl+C)"
-    read -r pr_no
+    # 現在のブランチのPR番号を取得
+    pr_no=$(gh pr view --json number -q .number 2>/dev/null)
+    if [[ -z $pr_no ]]; then
+      ilog "==> Input PR No! Press Enter to continue..(Cancel: Ctrl+C)"
+      read -r pr_no
+    fi
   fi
   if [[ -z $pr_no || ! $pr_no =~ ^[0-9]+$ ]]; then
     elog "==> Error: Invalid PR number. $pr_no"
     exit 1
   fi
-  gh_pr_review_to_tasks "$pr_no" | tee -a "$dst"
+  gh_pr_review_to_tasks "$pr_no" >>"$dst"
+  echo "$dst" | v
 }
 main "$@"
