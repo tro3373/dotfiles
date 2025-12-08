@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+is_installed() {
+  npm list -g ccusage &>/dev/null
+}
+
+install_common() {
+  npm_install ccusage@latest
+}
