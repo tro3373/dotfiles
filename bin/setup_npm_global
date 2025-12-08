@@ -26,6 +26,9 @@ main() {
 
   # 新しいディレクトリパスを使用するようにnpmを設定
   npm config set prefix "$global_npm_dir" # ~/.npmrc に設定が追加される
+  # インストール時のスクリプト実行を無効化
+  # [【npm】11月21日以降にnpm installした人へ - Shai-Hulud感染チェック & 多層防御ガイド](https://zenn.dev/hand_dot/articles/04542a91bc432e)
+  npm config set ignore-scripts true
 
   ilog "==> Installing global npm packages to $global_npm_dir.."
   xargs npm install -g <$package_list_file
