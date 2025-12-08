@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+main() {
+  set -eo pipefail
+  git_root_dir=$(get_git_root)
+  opens_conf="$git_root_dir/.opens"
+  if [[ ! -e $opens_conf ]]; then
+    touch "$opens_conf"
+  fi
+  if [[ $1 == "-e" || ! -s $opens_conf ]]; then
+    echo "$opens_conf" | v
+    return
+  fi
+  cat <"$opens_conf" |
+    fzf --exit-0 \
+      --select-1 |
+    awk '{print $NF}' |
+    xargs -r open
+}
+main "$@"

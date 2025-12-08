@@ -2,6 +2,7 @@
 .tasks
 .tasks.md
 .done.md
+.opens
 
 # **/.claude
 **/.claude/settings.local.json
