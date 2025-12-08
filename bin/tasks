@@ -17,6 +17,7 @@ Manage repository tasks.
       -h|--help  : Show this usage
       -s|--split : Split tasks into multiple files
       -n|--next  : Show next task chunk
+      -c|--clean : Move completed tasks to .tasks/done/done.md
 
 EOF
 }
@@ -28,6 +29,7 @@ initialize() {
       -h | --help) usage && exit 0 ;;
       -s | --split) mode="split" ;;
       -n | --next) mode="next" ;;
+      -c | --clean) mode="clean" ;;
       # -f*|--file*) file=${1#*=} ;;
       # -f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
@@ -95,8 +97,72 @@ find_tasks() {
 }
 
 cat_first_task() {
-  parse_first_task
+  # awk '
+  #   /^- / {
+  #     if (in_task) {
+  #       exit
+  #     }
+  #   }
+  #   /^- \[ \]/ {
+  #     in_task = 1
+  #     print
+  #     next
+  #   }
+  #   {
+  #     if (in_task) {
+  #       print
+  #     }
+  #   }
+  # ' "$target_file"
+  # parse_first_task
+  parse_tasks 0
   sed -n "${first_line},${end_line}p" "$target_file"
+}
+
+# parse_first_task() {
+#   if [[ ! -s $target_file ]] || ! grep -qE '^- \[ \]' "$target_file"; then
+#     error "==> Empty tasks. $target_file"
+#   fi
+
+#   # チェックボックス行の行番号を取得
+#   line_numbers=$(grep -nE '^- \[ \]' "$target_file" | cut -d: -f1)
+
+#   # 最初の行番号を取得
+#   first_line=$(echo "$line_numbers" | head -n1)
+
+#   # 2番目の行番号を取得（なければファイル末尾）
+#   second_line=$(echo "$line_numbers" | sed -n '2p')
+#   if [[ -z $second_line ]]; then
+#     second_line=$(($(wc -l <"$target_file") + 1))
+#   fi
+
+#   # 範囲を計算（2番目の直前まで）
+#   end_line=$((second_line - 1))
+# }
+
+parse_tasks() {
+  comp=$1
+  grep_key='- \[ \]'
+  [[ $comp -eq 1 ]] && grep_key='- \[[xX]\]'
+  if [[ ! -s $target_file ]] || ! grep -qE "^$grep_key" "$target_file"; then
+    error "==> Empty tasks. $target_file"
+  fi
+
+  read -r first_line second_line <<<"$(
+    grep -nE '^- ' "$target_file" |
+      grep -A1 -E "[0-9]+:$grep_key" |
+      head -2 |
+      cut -d: -f1 |
+      tr '\n' ' '
+  )"
+
+  # 2番目の行番号がなければファイル末尾
+  if [[ -z $second_line ]]; then
+    second_line=$(($(wc -l <"$target_file") + 1))
+  fi
+
+  # 範囲を計算（2番目の直前まで）
+  end_line=$((second_line - 1))
 }
 
 split_tasks() {
@@ -140,6 +206,9 @@ EOF
 
   # link task_file
   ln -s "$task_file" "$worktree_dir/.tasks.md"
+  if [[ ! -e "$worktree_dir/.tasks" ]]; then
+    ln -s "$git_root/.tasks" "$worktree_dir/.tasks"
+  fi
 
   # tempファイル削除
   rm -f "$temp_file"
@@ -153,25 +222,19 @@ EOF
   # fi
 }
 
-parse_first_task() {
-  if [[ ! -s $target_file ]] || ! grep -qE '^- \[ \]' "$target_file"; then
-    error "==> Empty tasks. $target_file"
+clean_tasks() {
+  local done_file="$git_root/.tasks/done/done.md"
+  parse_tasks 1
+  sed -n "${first_line},${end_line}p" "$target_file" | tee -a "$done_file"
+  # 元ファイルから削除
+  sed -i "${first_line},${end_line}d" "$target_file"
+
+  # まだタスクが残っていれば再帰的に処理
+  if grep -qE '^- \[[xX]\]' "$target_file"; then
+    clean_tasks
+    return
   fi
-
-  # チェックボックス行の行番号を取得
-  line_numbers=$(grep -nE '^- \[ \]' "$target_file" | cut -d: -f1)
-
-  # 最初の行番号を取得
-  first_line=$(echo "$line_numbers" | head -n1)
-
-  # 2番目の行番号を取得（なければファイル末尾）
-  second_line=$(echo "$line_numbers" | sed -n '2p')
-  if [[ -z $second_line ]]; then
-    second_line=$(($(wc -l <"$target_file") + 1))
-  fi
-
-  # 範囲を計算（2番目の直前まで）
-  end_line=$((second_line - 1))
+  info "==> Task cleaned"
 }
 
 main() {
@@ -187,6 +250,10 @@ main() {
   fi
   if [[ $mode == "split" ]]; then
     split_tasks
+    return
+  fi
+  if [[ $mode == "clean" ]]; then
+    clean_tasks
     return
   fi
   find_tasks | v
