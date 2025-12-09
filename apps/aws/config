@@ -11,6 +11,7 @@ install_arch() {
 }
 
 install_mac() {
-  dl_unzip https://awscli.amazonaws.com/AWSCLIV2.pkg
+  cd_work
+  dl https://awscli.amazonaws.com/AWSCLIV2.pkg AWSCLIV2.pkg
   exe sudo installer -pkg AWSCLIV2.pkg -target /
 }
