@@ -2,15 +2,21 @@
 
 current_dir=$(pwd)
 _is_url=0
+_is_xlsx=0
+_is_docx=0
 
 has() { command -v "${1}" >&/dev/null; }
 is_url() { [[ $_is_url -eq 1 ]]; }
+is_xlsx() { [[ $_is_xlsx -eq 1 ]]; }
+is_docx() { [[ $_is_docx -eq 1 ]]; }
 set_ostype() {
   _ostype=${OSTYPE}
   os wsl && _ostype=wsl
   os orb && _ostype=orb
 }
 set_open_command() {
+  is_xlsx && has xleak && _open=xleak && return
+  is_docx && has doxx && _open=doxx && return
   _open=$(type -a open | grep -v "$0" | head -1 | cut -d' ' -f3)
   case "$_ostype" in
     cygwin*) _open=cygstart ;;
@@ -37,6 +43,12 @@ set_args() {
   fi
   if [[ ${args[*]} =~ ^https?://.* ]]; then
     _is_url=1
+  fi
+  if [[ ${args[*]} =~ ^.*.xlsx? ]]; then
+    _is_xlsx=1
+  fi
+  if [[ ${args[*]} =~ ^.*.docx? ]]; then
+    _is_docx=1
   fi
 
   case "$_ostype" in
