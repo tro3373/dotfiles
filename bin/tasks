@@ -14,10 +14,11 @@ Manage repository tasks.
   Usage:
       $command_name [option]
     Options
-      -h|--help  : Show this usage
-      -s|--split : Split tasks into multiple files
-      -n|--next  : Show next task chunk
-      -c|--clean : Move completed tasks to .tasks/done/done.md
+      -h|--help       : Show this usage
+      -s|--split      : Split tasks into multiple files
+      -sa|--split-all : Split all tasks into multiple files
+      -n|--next       : Show next task chunk
+      -c|--clean      : Move completed tasks to .tasks/done/done.md
 
 EOF
 }
@@ -28,6 +29,7 @@ initialize() {
     case "$1" in
       -h | --help) usage && exit 0 ;;
       -s | --split) mode="split" ;;
+      -sa | --split-all) mode="split-all" ;;
       -n | --next) mode="next" ;;
       -c | --clean) mode="clean" ;;
       # -f*|--file*) file=${1#*=} ;;
@@ -188,6 +190,8 @@ split_tasks() {
   local timestamp
   timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
   local task_file=".tasks/${timestamp}_${name}.md"
+  # NOTE: git_worktree -a で link まで貼られるので、事前にファイル作成しておく
+  touch "$task_file"
 
   # worktree ブランチ作成
   local worktree_dir
@@ -215,11 +219,14 @@ EOF
 
   info "==> Task split to: $task_file"
   info "==> Branch: $branch"
+}
 
-  # # まだタスクが残っていれば再帰的に処理
-  # if grep -qE '^- \[ \]' "$target_file"; then
-  #   split_tasks
-  # fi
+split_tasks_all() {
+  split_tasks
+  # まだタスクが残っていれば再帰的に処理
+  if grep -qE '^- \[ \]' "$target_file"; then
+    split_tasks_all
+  fi
 }
 
 clean_tasks() {
@@ -250,6 +257,10 @@ main() {
   fi
   if [[ $mode == "split" ]]; then
     split_tasks
+    return
+  fi
+  if [[ $mode == "split-all" ]]; then
+    split_tasks_all
     return
   fi
   if [[ $mode == "clean" ]]; then

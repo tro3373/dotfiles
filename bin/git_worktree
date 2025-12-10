@@ -1,7 +1,7 @@
 #!/usr/bin/env -S bash -e
 
 command_name=$(basename "$0") && readonly command_name
-worktree_dir_name="___$command_name" && readonly worktree_dir_name
+worktree_dir_suffix="worktree" && readonly worktree_dir_suffix
 repo_root_label="RepositoryRoot" && readonly repo_root_label
 readonly depends=(git fzf)
 mode=list
@@ -64,13 +64,13 @@ add_args() { args+=("$@"); }
 has() { command -v "${1}" >&/dev/null; }
 hass() { for arg in "$@"; do has "$arg" || elog "==> No $arg command exist."; done; }
 
-get_git_root() {
-  # NOTE: Can not to use `git rev-parse` if current directory is in:
-  #   - `/path/to/repo-root/.git/___git_worktree/`
-  #   - `/path/to/repo-root/.tasks/`
-  # git rev-parse --show-toplevel |
-  pwd |
-    sed -e "s,/.git/$worktree_dir_name.*,,g" -e 's,.tasks.*,,g'
+get_org_git_root() {
+  # NOTE: git rev-parse --git-common-dir: Get the common git directory path
+  #   - this show               .git if in original repo root directory
+  #   - this show            ../.git if in original repo sub-directory
+  #   - this show /path/to/repo/.git if in worktree
+  #   - this show            ../.git if in worktree sub-directory
+  realpath "$(dirname "$(git rev-parse --git-common-dir)")"
 }
 
 get_worktree_branch_name() {
@@ -98,15 +98,15 @@ show_change_directory_command() {
 _list_root_and_worktree_directories() {
   {
     # show worktrees sorted by updated time
-    ls -td "$git_root_dir/.git/$worktree_dir_name"/*/ 2>/dev/null || :
+    ls -td "$git_worktree_dir"/*/ 2>/dev/null || :
     # show repo root directory
-    echo "$git_root_dir"
+    echo "$git_org_root_dir"
   } |
     while read -r _target_path; do
       [[ -z $_target_path ]] && continue
       [[ $_target_path =~ ^#.* ]] && continue
       label="($repo_root_label)"
-      if [[ $_target_path =~ ^$git_root_dir/.git/$worktree_dir_name/ ]]; then
+      if [[ $_target_path =~ ^$git_worktree_dir/ ]]; then
         label=$(basename "$_target_path")
         local task_file="$_target_path/.tasks.md"
         if [[ -s $task_file ]]; then
@@ -123,7 +123,7 @@ _list_root_and_worktree_directories() {
 }
 
 _add_worktree() {
-  dst_dir="$git_root_dir/.git/$worktree_dir_name/$(get_worktree_branch_name)"
+  dst_dir="$git_worktree_dir/$(get_worktree_branch_name)"
   ilog "==> Adding worktree to $dst_dir for $branch branch hash:$commit_hash.."
   # shellcheck disable=SC2086
   git worktree add -b "$branch" "$dst_dir" $commit_hash 1>&2 || {
@@ -159,7 +159,7 @@ ln_ignored_from_config() {
     while read -r rel_path; do
       [[ -z $rel_path ]] && continue
       [[ $rel_path =~ ^#.* ]] && continue
-      src="$git_root_dir/$rel_path"
+      src="$git_org_root_dir/$rel_path"
       [[ ! -e $src ]] && {
         wlog "==> Ignored path '$rel_path' does not exist in the repository. Skipping linking."
         continue
@@ -193,7 +193,7 @@ _ln() {
 create_default_ln_config() {
   git status --ignored --porcelain 2>/dev/null |
     grep '^!!' |
-    grep -Ev '(\.tasks\.md|\.trash|node_modules|.next)' |
+    grep -Ev '(\.tasks\.md|\.trash|node_modules|.next|tsconfig.tsbuildinfo|.data|-data)' |
     cut -c4- >"$ln_config"
   # fzf \
   #   --prompt="Select ignored files/directories to link in new worktree: " \
@@ -209,65 +209,50 @@ _remove_worktree() {
     elog "No worktrees exist to remove."
   fi
 
-  # _list_removal_worktrees |
-  #   fzf \
-  #     --exit-0 \
-  #     --multi \
-  #     --reverse \
-  #     --height=20% \
-  #     --bind 'ctrl-l:toggle-all' \
-  #     --prompt="Select branch to remove worktree for: " |
-  #   while read -r brach_path _ branch_name; do
-  #     [[ -z $brach_path ]] && continue
-  #     [[ $brach_path =~ ^#.* ]] && continue
+  force_remove=0
+  _brach_path=
+  while read -r brach_path name; do
+    [[ -z $brach_path ]] && continue
+    [[ $brach_path =~ ^#.* ]] && continue
 
-  #     local task_file="$brach_path"/.tasks.md
-  #     if [[ -s $task_file ]]; then
-  #       linked_path=$(readlink "$task_file")
-  #       ilog "==> Moving task file '$task_file' to .tasks/done/.."
-  #       # TODO: Handle name conflicts
-  #       mv "$linked_path" "$git_root_dir/.tasks/done/"
-  #     fi
+    local task_file="$brach_path"/.tasks.md
+    if [[ -s $task_file ]]; then
+      linked_path=$(readlink "$task_file")
+      ilog "==> Moving task file '$task_file' to .tasks/done/.."
+      mv "$linked_path" "$git_org_root_dir/.tasks/done/$name.tasks.md"
+    fi
 
-  #     # Remove []: ex [feature/xxxx] => feature/xxxx
-  #     branch_name=${branch_name//[\[\]]/}
-  #     ilog "==> Removing worktree path: '$brach_path'.."
-  #     git worktree remove "$brach_path"
-  #     # ilog "==> Removing branch '$branch_name'.."
-  #     # git branch -d "$branch_name"
-  #   done
-  _list_root_and_worktree_directories |
-    grep -v "$repo_root_label" |
-    fzf \
-      --exit-0 \
-      --multi \
-      --reverse \
-      --height=20% \
-      --bind 'ctrl-l:toggle-all' \
-      --prompt="Select branch to remove worktree for: " |
-    awk '{print $NF " " $2}' |
-    while read -r brach_path name; do
-      [[ -z $brach_path ]] && continue
-      [[ $brach_path =~ ^#.* ]] && continue
-
-      local task_file="$brach_path"/.tasks.md
-      if [[ -s $task_file ]]; then
-        linked_path=$(readlink "$task_file")
-        ilog "==> Moving task file '$task_file' to .tasks/done/.."
-        mv "$linked_path" "$git_root_dir/.tasks/done/$name.tasks.md"
+    ilog "==> Removing worktree path: '$brach_path'.."
+    git worktree remove "$brach_path" || {
+      if [[ -e $brach_path ]]; then
+        force_remove=1
+        _brach_path="$brach_path"
       fi
-
-      ilog "==> Removing worktree path: '$brach_path'.."
-      git worktree remove "$brach_path"
-      # TODO get branch name
-      # ilog "==> Removing branch '$branch_name'.."
-      # git branch -d "$branch_name"
-    done
+    }
+    # ilog "==> Removing branch '$branch_name'.."
+    # git branch -d "$branch_name"
+  done < <(
+    _list_root_and_worktree_directories |
+      grep -v "$repo_root_label" |
+      fzf \
+        --exit-0 \
+        --multi \
+        --reverse \
+        --height=20% \
+        --bind 'ctrl-l:toggle-all' \
+        --prompt="Select branch to remove worktree for: " |
+      awk '{print $NF " " $2}'
+  )
+  if [[ $force_remove -eq 1 ]]; then
+    wlog "==> Worktree path '$_brach_path' still exist. Removing..(Cancel: Ctrl+C)"
+    read -r _
+    rm -rfv "$_brach_path"
+  fi
 }
 
 _list_removal_worktrees() {
   git worktree list |
-    grep "$worktree_dir_name"
+    grep "$git_worktree_dir"
 }
 
 _edit_config() {
@@ -281,12 +266,13 @@ _edit_config() {
 main() {
   initialize "$@"
 
-  git_root_dir=$(get_git_root)
-  cd "$git_root_dir" || {
-    elog "Failed to change directory to git root: $git_root_dir"
+  git_org_root_dir=$(get_org_git_root)
+  cd "$git_org_root_dir" || {
+    elog "Failed to change directory to git root: $git_org_root_dir"
   }
+  git_worktree_dir="${git_org_root_dir}-$worktree_dir_suffix"
 
-  local ln_config="$git_root_dir/.git/$worktree_dir_name/config"
+  local ln_config="$git_worktree_dir/config"
 
   if [[ $mode == "add" ]]; then
     _add_worktree

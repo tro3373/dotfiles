@@ -45,6 +45,7 @@ main() {
   repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 
   ilog "==> 📋 Fetching PR #${pr_number} code review comments..."
+  echo '- [ ] **Code Review Tasks**'
   # コードレビューコメントのみ取得
   fire_comments |
     jq -s '.' |
@@ -73,12 +74,12 @@ main() {
       [[ -n $ref ]] && ref="\`${ref}\`"
 
       # Markdown形式でタスクリストを出力（ファイルパスと行番号付き）
-      echo "- [ ] 📝 ${ref} by 👤 ${user}"
+      echo "  - [ ] 📝 ${ref} by 👤 ${user}"
 
-      # bodyの各行に2スペースのインデントを追加
+      # bodyの各行に4スペースのインデントを追加
       while IFS= read -r line; do
         [[ -z $line ]] && continue
-        echo "  ${line}"
+        echo "    ${line}"
       done <<<"$body"
       echo ""
     done
