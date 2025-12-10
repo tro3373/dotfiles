@@ -80,11 +80,11 @@ apply = ["defer"]
 local = "~/.dot/apps/zsh/.zsh/Completion"
 apply = ["fpath"]
 
-# NOT WORK
-[plugins.fzf]
-local = "~/.fzf"
-use = ["shell/key-bindings.zsh", "shell/completion.zsh"]
-apply = ["defer"]
+# # NOT WORK
+# [plugins.fzf]
+# local = "~/.fzf"
+# use = ["shell/key-bindings.zsh", "shell/completion.zsh"]
+# apply = ["defer"]
 
 [plugins.asdf-completion]
 local = "~/.asdf/completions"

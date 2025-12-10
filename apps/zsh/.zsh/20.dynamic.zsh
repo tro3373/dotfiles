@@ -117,7 +117,7 @@ _cat_path() {
   add_path /usr/local/heroku/bin     # for heroku
   add_path /opt/google-cloud-cli/bin # for gcloud
 
-  add_path ${HOME}/.fzf/bin
+  # add_path ${HOME}/.fzf/bin
   # add_path ${HOME}/.anyenv/bin
   add_path $GOBIN
   add_path $CARGO_HOME/bin
