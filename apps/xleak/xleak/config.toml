@@ -1,0 +1,18 @@
+[theme]
+# default = "GitHub Dark"
+default = "Dracula"
+# default = "Nord"
+
+# [ui]
+# max_rows = 100
+# column_width = 40
+
+[keybindings]
+# profile = "default"
+profile = "vim"
+
+# [keybindings.custom]
+# quit = "x"
+# search = "s"
+# copy_cell = "Ctrl+c"
+# copy_row = "Ctrl+Shift+c"

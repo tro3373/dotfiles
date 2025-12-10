@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+install_common() {
+  exe cargo install xleak
+}
+install_arch() {
+  def_install xleak-bin
+}
+install_mac() {
+  def_install bgreenwell/tap/xleak
+}
+
+setting_common() {
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/xleak" "${HOME}/.config/xleak"
+}
+setting_mac() {
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/xleak" "${HOME}/Library/Application Support/xleak"
+}
