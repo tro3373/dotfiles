@@ -1,119 +1,120 @@
 #!/usr/bin/env bash
 
-timestamp=$(date +%Y%m%d_%H%M%S) && readonly timestamp
-command_name=$(basename "$0") && readonly command_name
-# current_dir=$(pwd) && readonly current_dir
-mode=trash
-readonly depends=()
-args=()
-color=1
-usage() {
-  cat <<EOF
+# timestamp=$(date +%Y%m%d_%H%M%S) && readonly timestamp
+# command_name=$(basename "$0") && readonly command_name
+# # current_dir=$(pwd) && readonly current_dir
+# mode=trash
+# readonly depends=()
+# args=()
+# color=1
+# usage() {
+#   cat <<EOF
 
-Trash a file or directory to .trash directory.
+# Trash a file or directory to .trash directory.
 
-  Usage:
-      $command_name [option]
-    Options
-      -h|--help      : Show this usage
-      -l|--list      : Find .trash directory
-      -nc|--no-color : Disable color output
+#   Usage:
+#       $command_name [option]
+#     Options
+#       -h|--help      : Show this usage
+#       -l|--list      : Find .trash directory
+#       -nc|--no-color : Disable color output
 
-EOF
-}
-initialize() {
-  while true; do
-    [[ -z $1 ]] && break
-    case "$1" in
-      -h | --help) usage && exit 0 ;;
-      # -f*|--file*) file=${1#*=} ;;
-      # -f|--file) shift && file=$1 ;;
-      -nc | --no-color) color=0 ;;
-      -l | --list) mode=list ;;
-      *) add_args "$1" ;;
-    esac
-    shift
-  done
-  check
-  set -euo pipefail
-}
-check() { hass "${depends[@]}"; }
-add_args() { args+=("$@"); }
-has() { command -v "${1}" >&/dev/null; }
-hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
-_ink() { if [[ $color -eq 1 ]] && has ink; then cat - | ink "$@"; else cat - 1>&2; fi; }
-# shellcheck disable=SC2145
-_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
-log() { _log white "$*"; }
-info() { _log cyan "$*"; }
-warn() { _log yellow "$*"; }
-error() { _log red "$*" && exit 1; }
+# EOF
+# }
+# initialize() {
+#   while true; do
+#     [[ -z $1 ]] && break
+#     case "$1" in
+#       -h | --help) usage && exit 0 ;;
+#       # -f*|--file*) file=${1#*=} ;;
+#       # -f|--file) shift && file=$1 ;;
+#       -nc | --no-color) color=0 ;;
+#       -l | --list) mode=list ;;
+#       *) add_args "$1" ;;
+#     esac
+#     shift
+#   done
+#   check
+#   set -euo pipefail
+# }
+# check() { hass "${depends[@]}"; }
+# add_args() { args+=("$@"); }
+# has() { command -v "${1}" >&/dev/null; }
+# hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+# _ink() { if [[ $color -eq 1 ]] && has ink; then cat - | ink "$@"; else cat - 1>&2; fi; }
+# # shellcheck disable=SC2145
+# _log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+# log() { _log white "$*"; }
+# info() { _log cyan "$*"; }
+# warn() { _log yellow "$*"; }
+# error() { _log red "$*" && exit 1; }
 
-fire() {
-  if [[ ${#args[@]} -eq 0 && ! -p /dev/stdin ]]; then
-    # No arguments and no stdin, use fzf to select files in current directory
-    find . -mindepth 1 -maxdepth 1 -not -path "./.trash" |
-      sed 's|^\./||' |
-      fzf \
-        --exit-0 \
-        -m \
-        --bind 'ctrl-l:toggle-all' \
-        --prompt="Select files to trash: " \
-        --height=20% \
-        --preview '[[ -d {} ]] && {echo "Directory Name: {}/" && ls -la {}} || {echo "File Name: {}" && bat {}}'
-    return
-  fi
+# fire() {
+#   if [[ ${#args[@]} -eq 0 && ! -p /dev/stdin ]]; then
+#     # No arguments and no stdin, use fzf to select files in current directory
+#     find . -mindepth 1 -maxdepth 1 -not -path "./.trash" |
+#       sed 's|^\./||' |
+#       fzf \
+#         --exit-0 \
+#         -m \
+#         --bind 'ctrl-l:toggle-all' \
+#         --prompt="Select files to trash: " \
+#         --height=20% \
+#         --preview '[[ -d {} ]] && {echo "Directory Name: {}/" && ls -la {}} || {echo "File Name: {}" && bat {}}'
+#     return
+#   fi
 
-  if [[ -p /dev/stdin ]]; then
-    cat <&0
-  fi
+#   if [[ -p /dev/stdin ]]; then
+#     cat <&0
+#   fi
 
-  if [[ ${#args[@]} -ne 0 ]]; then
-    for arg in "${args[@]}"; do
-      echo "$arg"
-    done
-  fi
-}
+#   if [[ ${#args[@]} -ne 0 ]]; then
+#     for arg in "${args[@]}"; do
+#       echo "$arg"
+#     done
+#   fi
+# }
 
-trash_files() {
-  fire |
-    while read -r line; do
-      [[ -z $line ]] && continue
-      [[ $line =~ ^#.* ]] && continue
-      # Check if the file/directory actually exists
-      if [[ ! -e $line ]]; then
-        warn "==> File/directory does not exist: $line"
-        continue
-      fi
-      warn "==> Trashing $line ..."
-      name=$(basename -- "$line")
-      if [[ $name == ".trash" ]]; then
-        warn "==> Cannot trash '.trash' directory."
-        continue
-      fi
-      dir_path=$(dirname -- "$line")
-      trash_dir="$dir_path/.trash"
-      if [[ ! -e $trash_dir ]]; then
-        warn "==> Creating $trash_dir ..."
-        mkdir -p "$trash_dir"
-      fi
-      dst_path="$trash_dir/$timestamp.$name"
-      mv "$line" "$dst_path"
-      info "==> Trashed $line to $trash_dir"
-    done
-}
+# trash_files() {
+#   fire |
+#     while read -r line; do
+#       [[ -z $line ]] && continue
+#       [[ $line =~ ^#.* ]] && continue
+#       # Check if the file/directory actually exists
+#       if [[ ! -e $line ]]; then
+#         warn "==> File/directory does not exist: $line"
+#         continue
+#       fi
+#       warn "==> Trashing $line ..."
+#       name=$(basename -- "$line")
+#       if [[ $name == ".trash" ]]; then
+#         warn "==> Cannot trash '.trash' directory."
+#         continue
+#       fi
+#       dir_path=$(dirname -- "$line")
+#       trash_dir="$dir_path/.trash"
+#       if [[ ! -e $trash_dir ]]; then
+#         warn "==> Creating $trash_dir ..."
+#         mkdir -p "$trash_dir"
+#       fi
+#       dst_path="$trash_dir/$timestamp.$name"
+#       mv "$line" "$dst_path"
+#       info "==> Trashed $line to $trash_dir"
+#     done
+# }
 
-find_trash_directories() {
-  find . -type d -name '.trash'
-}
+# find_trash_directories() {
+#   find . -type d -name '.trash'
+# }
 
-main() {
-  initialize "$@"
-  if [[ $mode == list ]]; then
-    find_trash_directories
-    return
-  fi
-  trash_files
-}
+# main() {
+#   initialize "$@"
+#   if [[ $mode == list ]]; then
+#     find_trash_directories
+#     return
+#   fi
+#   trash_files
+# }
 
-main "$@"
+# main "$@"
+gomi "$@"
