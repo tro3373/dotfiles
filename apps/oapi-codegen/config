@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
 install_common() {
-  go_install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
+  # go_install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
+  go_install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 }
