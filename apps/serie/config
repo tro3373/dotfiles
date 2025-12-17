@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
 install_arch() {
-  install_via_os_default
-}
-install_mac() {
+  # MEMO: Graph Not work in tmux
   install_via_os_default
 }
