@@ -17,6 +17,6 @@ main() {
       --multi \
       --bind 'ctrl-l:toggle-all' |
     awk '{print $NF}' |
-    xargs -r open
+    xargs -n 1 -r open
 }
 main "$@"

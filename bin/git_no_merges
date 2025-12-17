@@ -60,7 +60,7 @@ detect_base_branch() {
 
 suggested_base_branch() {
   local grep_key='origin/develop'
-  [[ $target_branch == develop ]] && grep_key='origin/(main|master)'
+  [[ $target_branch == main ]] && grep_key='origin/(main|master)'
   git branch -r |
     grep -v 'origin/HEAD' |
     grep origin |

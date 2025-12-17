@@ -25,7 +25,8 @@ function! s:vaffle_get_current_path() abort
 endfunction
 
 function! s:vaffle_trash_file() abort
-  echo system('trash --no-color ' . shellescape(s:vaffle_get_current_path()))
+  " echo system('trash --no-color ' . shellescape(s:vaffle_get_current_path()))
+  echo system('trash ' . shellescape(s:vaffle_get_current_path()))
   let l:pos = getpos('.')
   call vaffle#refresh()
   call setpos('.', l:pos)

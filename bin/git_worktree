@@ -88,10 +88,10 @@ show_change_directory_command() {
       --bind 'ctrl-l:toggle-all' \
       --prompt="Select worktree branches to change directory: " |
     awk '{print $NF}' |
-    while read -r brach_path; do
-      [[ -z $brach_path ]] && continue
-      [[ $brach_path =~ ^#.* ]] && continue
-      echo cd "$brach_path"
+    while read -r branch_path; do
+      [[ -z $branch_path ]] && continue
+      [[ $branch_path =~ ^#.* ]] && continue
+      echo cd "$branch_path"
     done
 }
 
@@ -123,13 +123,20 @@ _list_root_and_worktree_directories() {
 }
 
 _add_worktree() {
+  if [[ ! -e $ln_config ]]; then
+    wlog "==> No config file exist."
+    read -r -n 1 -p "==> Create config file? (Y/n): "
+    if ! [[ $REPLY =~ ^[Nn]$ ]]; then
+      create_default_ln_config
+    fi
+  fi
   dst_dir="$git_worktree_dir/$(get_worktree_branch_name)"
   ilog "==> Adding worktree to $dst_dir for $branch branch hash:$commit_hash.."
   # shellcheck disable=SC2086
   git worktree add -b "$branch" "$dst_dir" $commit_hash 1>&2 || {
     elog "Failed to add worktree to $dst_dir for branch '$branch'."
   }
-  ln_ignored_if_needed 1>&2
+  ln_ignored_from_config 1>&2
   ilog "==> Added worktree for branch '$branch' at '$dst_dir'."
 
   if [[ $switch -ne 1 ]]; then
@@ -141,20 +148,11 @@ _add_worktree() {
   echo cd "$dst_dir"
 }
 
-ln_ignored_if_needed() {
-  if [[ ! -e $ln_config ]]; then
-    wlog "==> No config file exist."
-    read -r -n 1 -p "==> Create config file? (Y/n): "
-    if [[ $REPLY =~ ^[Nn]$ ]]; then
-      wlog "==> Skipping linking ignored files."
-      return
-    fi
-    create_default_ln_config
-  fi
-  ln_ignored_from_config
-}
-
 ln_ignored_from_config() {
+  [[ ! -e $ln_config ]] && {
+    wlog "==> No config file exist. Skipping linking ignored files."
+    return
+  }
   cat <"$ln_config" |
     while read -r rel_path; do
       [[ -z $rel_path ]] && continue
@@ -176,7 +174,7 @@ ln_ignored_from_config() {
 
       # Directory case
       mkdir -p "$dst"
-      src="$(cd "$src" && pwd)" # Remove the trailing slash for directory paths
+      src="$(realpath "$src")" # Resolve to absolute path
       find "$src/" -maxdepth 1 -mindepth 1 |
         while read -r item_path; do
           item_name=$(basename "$item_path")
@@ -211,22 +209,22 @@ _remove_worktree() {
 
   force_remove=0
   _brach_path=
-  while read -r brach_path name; do
-    [[ -z $brach_path ]] && continue
-    [[ $brach_path =~ ^#.* ]] && continue
+  while read -r branch_path _; do
+    [[ -z $branch_path ]] && continue
+    [[ $branch_path =~ ^#.* ]] && continue
 
-    local task_file="$brach_path"/.tasks.md
+    local task_file="$branch_path"/.tasks.md
     if [[ -s $task_file ]]; then
-      linked_path=$(readlink "$task_file")
+      absolute_path=$(realpath "$task_file")
       ilog "==> Moving task file '$task_file' to .tasks/done/.."
-      mv "$linked_path" "$git_org_root_dir/.tasks/done/$name.tasks.md"
+      mv "$absolute_path" "$git_org_root_dir/.tasks/done/"
     fi
 
-    ilog "==> Removing worktree path: '$brach_path'.."
-    git worktree remove "$brach_path" || {
-      if [[ -e $brach_path ]]; then
+    ilog "==> Removing worktree path: '$branch_path'.."
+    git worktree remove "$branch_path" || {
+      if [[ -e $branch_path ]]; then
         force_remove=1
-        _brach_path="$brach_path"
+        _brach_path="$branch_path"
       fi
     }
     # ilog "==> Removing branch '$branch_name'.."
@@ -271,7 +269,9 @@ main() {
     elog "Failed to change directory to git root: $git_org_root_dir"
   }
   git_worktree_dir="${git_org_root_dir}-$worktree_dir_suffix"
-
+  if [[ ! -e $git_worktree_dir ]]; then
+    mkdir -p "$git_worktree_dir"
+  fi
   local ln_config="$git_worktree_dir/config"
 
   if [[ $mode == "add" ]]; then
