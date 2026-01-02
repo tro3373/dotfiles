@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  git log --name-only -1 --pretty=format: "$@"
+}
+main "$@"

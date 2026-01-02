@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+fire() {
+  [[ $# -gt 0 ]] && echo "$@" && return
+  if [[ -p /dev/stdin ]]; then
+    cat
+  fi
+}
+
+main() {
+  set -eo pipefail
+  if [[ ! -p /dev/stdin && $# -eq 0 ]]; then
+    elog "No stdin or arguments given"
+    exit 1
+  fi
+  fire "$@" |
+    while read -r file; do
+      [[ -z $file ]] && continue
+      [[ $file =~ ^#.* ]] && continue
+      [[ ! -e $file ]] && continue
+      pdftotext -layout "$file" -
+    done
+}
+main "$@"

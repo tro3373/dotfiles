@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 
+fire() {
+  if [[ $1 == "-c" ]]; then
+    git_last_commit_files "$@"
+    return
+  fi
+  git_mod "$@"
+}
+
 main() {
-  git_mod "$@" | v
+  fire "$@" | v
 }
 main "$@"

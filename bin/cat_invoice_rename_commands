@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+find_files() {
+  find . -maxdepth 1 -mindepth 1 -type f -name '*.pdf'
+}
+
+# MEMO: pdftotextの出力例
+#   発行者 Amazon Services International, LLC.
+#   請求書発行日               2025-01-01
+#   合計                   JPY 980.00
+# --------------------------------------------
+#   発行者 アマゾンジャパン合同会社
+#   請求書発行日               2025-01-24
+#   合計                     ￥1,935
+cat_invoice_file_name() {
+  cat_pdf "$pdf" |
+    awk 'date=="" && /請求書発行日/ {date=$NF}
+        issuer=="" && /発行者/ {sub(/.*発行者[[:space:]]+/, ""); issuer=$0}
+        amount=="" && /合計/ && ($0 ~ /JPY/ || $0 ~ /￥/) {
+            if ($0 ~ /JPY/) {
+                for(i=1;i<=NF;i++) if($i=="JPY") {amount=$(i+1); gsub(/[^0-9.]/,"",amount);}
+            } else {
+                for(i=1;i<=NF;i++) if($i ~ /￥/) {amount=$i; gsub(/[^0-9.]/,"",amount);}
+            }
+        }
+      END {print date, amount, issuer}' |
+    while read -r d amount issuer; do
+      [[ -z $d ]] && continue
+      [[ $d =~ ^#.* ]] && continue
+      ymd=$(echo "$d" | tr -d '-')
+      amt=${amount%.00}
+      issuer=${issuer// /_}
+      # echo "$d|$issuer|$amount"
+      [[ $issuer =~ ^.*[Aa]mazon.*$ ]] && issuer="Amazon"
+      [[ $issuer =~ ^.*アマゾン.*$ ]] && issuer="Amazon"
+      echo "${ymd}_${issuer}_${amt}.pdf"
+    done
+}
+
+cat_mv_cmd() {
+  ilog "==> $pdf"
+  dst=$(cat_invoice_file_name)
+  echo "mv '$pdf' '$dst'"
+}
+
+main() {
+  set -eo pipefail
+  # files=$(find_files)
+  # 配列に格納（空白を含むファイル名に対応）
+  mapfile -t files < <(find_files)
+  if [[ ${#files[@]} -eq 0 ]]; then
+    elog "==> No PDF files found."
+    exit 1
+  fi
+
+  for pdf in "${files[@]}"; do
+    cat_mv_cmd
+  done
+}
+main "$@"

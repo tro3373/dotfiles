@@ -125,10 +125,11 @@ _list_root_and_worktree_directories() {
 _add_worktree() {
   if [[ ! -e $ln_config ]]; then
     wlog "==> No config file exist."
-    read -r -n 1 -p "==> Create config file? (Y/n): "
-    if ! [[ $REPLY =~ ^[Nn]$ ]]; then
-      create_default_ln_config
-    fi
+    # read -r -n 1 -p "==> Create config file? (Y/n): "
+    # if ! [[ $REPLY =~ ^[Nn]$ ]]; then
+    #   create_default_ln_config
+    # fi
+    create_default_ln_config
   fi
   dst_dir="$git_worktree_dir/$(get_worktree_branch_name)"
   ilog "==> Adding worktree to $dst_dir for $branch branch hash:$commit_hash.."
@@ -217,7 +218,7 @@ _remove_worktree() {
     if [[ -s $task_file ]]; then
       absolute_path=$(realpath "$task_file")
       ilog "==> Moving task file '$task_file' to .tasks/done/.."
-      mv "$absolute_path" "$git_org_root_dir/.tasks/done/"
+      mv -v "$absolute_path" "$git_org_root_dir/.tasks/done/"
     fi
 
     ilog "==> Removing worktree path: '$branch_path'.."

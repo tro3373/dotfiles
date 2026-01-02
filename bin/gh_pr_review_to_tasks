@@ -35,6 +35,7 @@ main() {
   pr_number="$1"
 
   # 無視するパターンの配列
+  # '^## Plan Result.*$'
   ignore_patterns=(
     '^## Pull Request Overview.*$'
     '^## Code Review.*$'

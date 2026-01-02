@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+fire() {
+  if [[ $1 == "-c" ]]; then
+    git_last_commit_files "${@:2}"
+    return
+  fi
+  git_mod "$@"
+}
+
+main() {
+  git_root_dir=$(get_git_root)
+  fire "$@" |
+    fzf -0 -1 |
+    sed "s|^|$git_root_dir/|" |
+    xargs -r dirname # -r: no run if no input
+}
+main "$@"

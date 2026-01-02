@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  mod -c "$@"
+}
+main "$@"

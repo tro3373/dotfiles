@@ -71,8 +71,8 @@ suggested_base_branch() {
 set_base_and_target_branches() {
   count=${#args[*]}
   if [[ $count -eq 1 ]]; then
-    base_branch=$(git_branch)
-    target_branch="${args[0]}"
+    base_branch="${args[0]}"
+    target_branch=$(git_branch)
     return
   fi
   if [[ $count -ge 2 ]]; then

@@ -50,9 +50,8 @@ fire_files() {
   fire "$fire_ff_arg" |
     fzf -m \
       -q "$query" \
+      -0 -1 \
       --preview 'bat --color=always --line-range=:500 {}' \
-      --select-1 \
-      --exit-0 \
       --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
 }
 

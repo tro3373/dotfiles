@@ -209,7 +209,7 @@ $(cat "$temp_file")
 EOF
 
   # link task_file
-  ln -s "$task_file" "$worktree_dir/.tasks.md"
+  ln -s "$git_root/$task_file" "$worktree_dir/.tasks.md"
   if [[ ! -e "$worktree_dir/.tasks" ]]; then
     ln -s "$git_root/.tasks" "$worktree_dir/.tasks"
   fi

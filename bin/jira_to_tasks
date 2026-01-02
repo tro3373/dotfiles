@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+fire() {
+  # TODO file path
+  if [[ ! -p /dev/stdin ]]; then
+    elog "==> Please provide input via a pipe."
+  fi
+  cat -
+}
+
+main() {
+  set -eo pipefail
+  fire |
+    prp -ne gen-tasks-from-jira-csv.md$ |
+    claude --allow-dangerously-skip-permissions -p ""
+}
+main "$@"
