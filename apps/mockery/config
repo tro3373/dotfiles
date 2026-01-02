@@ -4,3 +4,14 @@ install_common() {
   tag=$(gh release view --repo vektra/mockery --json tagName -q .tagName)
   go_install github.com/vektra/mockery/v3@"$tag"
 }
+
+setting_common() {
+  _config=".mockery.yaml"
+  # shellcheck disable=SC2154
+  if ! is_force && test -e "$current_dir"/$_config; then
+    log "==> Skip existing mockery configuration"
+    return
+  fi
+  # shellcheck disable=SC2154
+  exe cp "$app_dir/$_config" "$current_dir/$_config"
+}

@@ -192,6 +192,7 @@ bind diff    0      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/nu
 
 # Open the version in vim
 bind diff    O      !bash -c "git show %(commit):%(file) | ~/.dot/bin/tovim >&/dev/null"
+bind generic E      !bash -c 'tmux split-window -h "echo %(file) |v" &'
 
 # gh
 # ; で GitHub の該当コミットを開く ※要 gh インストール

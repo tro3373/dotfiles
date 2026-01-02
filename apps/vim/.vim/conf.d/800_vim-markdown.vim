@@ -3,6 +3,23 @@ if !g:plug.is_installed("vim-markdown")
 endif
 
 "=============================================
+" Colorscheme for Markdown files
+" NOTE: check syntax group
+"   `:echo synIDattr(synID(line('.'), col('.'), 1), 'name')`
+function! s:MarkdownHighlight()
+  highlight mkdLink guifg=#ff8800 ctermfg=208
+  " highlight htmlH1 guifg=#81a1c1 ctermfg=109
+  " highlight htmlH2 guifg=#5e81ac ctermfg=67
+  " highlight htmlH3 guifg=#4c566a ctermfg=60
+  highlight htmlH1 guifg=#a3be8c ctermfg=144
+  highlight htmlH2 guifg=#81a1c1 ctermfg=109
+  highlight htmlH3 guifg=#d08770 ctermfg=173
+  highlight mkdHeading guifg=#81a1c1 ctermfg=173
+endfunction
+autocmd FileType markdown call s:MarkdownHighlight()
+"=============================================
+"
+"=============================================
 " Markdown Syntax etc
 " 'preservim/vim-markdown'
 "=============================================

@@ -1271,6 +1271,7 @@ command! -nargs=* Issue call Issue(expand('<args>'))
 " noremap gF <C-W>gf
 function! JumpToFileAndLineUnderCursor()
   let l:word = expand('<cWORD>')
+  let l:word = substitute(l:word, '^@', '', '')
   let l:word = substitute(l:word, '[`''"<>]', '', 'g')
   if l:word =~ '\v(.+)(:\+?|:|#L)(\d+)$'
     let l:file = substitute(l:word, '\v(:\+?|:|#L)\d+$', '', '')
@@ -1294,3 +1295,17 @@ function! BomRemove()
   write
 endfunction
 command! BomRemove call BomRemove()
+
+" NOTE: check syntax group
+"   `:echo synIDattr(synID(line('.'), col('.'), 1), 'name')`
+function! s:show_syntax_info() abort
+  let synid = synID(line('.'), col('.'), 1)
+  let transid = synIDtrans(synid)
+  echo 'Syntax Group:'
+  echo '  Name:      ' . synIDattr(synid, 'name')
+  echo '  Highlight: ' . synIDattr(transid, 'name')
+  echo '  FG:        ' . synIDattr(transid, 'fg')
+  echo '  BG:        ' . synIDattr(transid, 'bg')
+endfunction
+
+command! SyntaxInfo call s:show_syntax_info()

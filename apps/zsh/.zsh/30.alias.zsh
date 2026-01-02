@@ -98,6 +98,12 @@ gt() {
   wlog "==> Executing: $result"
   eval "$result"
 }
+modd() {
+  res=$(git_select_modified_directory "$@")
+  [[ -z $res ]] && return
+  wlog "==> Changing directory to: $res"
+  eval "cd $res"
+}
 if has git-sim; then
   alias gsm="git-sim"
 fi
