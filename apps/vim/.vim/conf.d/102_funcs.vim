@@ -1309,3 +1309,26 @@ function! s:show_syntax_info() abort
 endfunction
 
 command! SyntaxInfo call s:show_syntax_info()
+
+" Close special buffers if only
+" https://zenn.dev/vim_jp/articles/ff6cd224fab0c7
+function! s:close_special_windows() abort
+  " 現在のウィンドウ番号を取得
+  let current_win = winnr()
+  " すべてのウィンドウをループして調べる
+  for winnr in range(1, winnr('$'))
+    " カレント以外を調査
+    if winnr != current_win
+      let buftype = getbufvar(winbufnr(winnr), '&buftype')
+      " buftypeが空文字（通常のバッファ）があればループ終了
+      if buftype ==# ''
+        return
+      endif
+    endif
+  endfor
+  " ここまで来たらカレント以外がすべて特殊ウィンドウということなので
+  " カレント以外をすべて閉じる
+  only!
+  " この後、ウィンドウ1つの状態でquitが実行されるので、Vimが終了する
+endfunction
+autocmd QuitPre * call s:close_special_windows()
