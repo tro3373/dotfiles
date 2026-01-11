@@ -81,9 +81,9 @@ EOF
 }
 cat_fcitx_env() {
   cat <<'EOF'
-export GTK_IM_MODULE=fcitx
-export QT_IM_MODULE=fcitx
-export XMODIFIERS=@im=fcitx
+GTK_IM_MODULE=fcitx
+QT_IM_MODULE=fcitx
+XMODIFIERS=@im=fcitx
 EOF
 }
 cat_fcitx_clipboard_conf() {
