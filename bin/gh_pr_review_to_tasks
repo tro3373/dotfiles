@@ -2,6 +2,7 @@
 
 # gh_pr_review_tasks - GitHub PR のレビューコメントからタスクを表示
 command_name=$(basename "$0") && readonly command_name
+debug=0
 
 usage() {
   cat <<EOF
@@ -41,6 +42,7 @@ main() {
     '^## Code Review.*$'
     '^## Summary of Changes.*$'
     '^/gemini.*$'
+    '^.*jest coverage report action.*$'
   )
 
   repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)
@@ -54,14 +56,19 @@ main() {
     while IFS= read -r json_line; do
       body=$(echo "$json_line" | jq -r '.body')
       # 無視パターンのチェック
-      skip=false
+      skip_pattern=
       for pattern in "${ignore_patterns[@]}"; do
         if [[ $body =~ $pattern ]]; then
-          skip=true
+          skip_pattern="$pattern"
           break
         fi
       done
-      [[ $skip == true ]] && continue
+      if [[ $debug -eq 1 ]]; then
+        echo "==> [DEBUG] skip_pattern: $skip_pattern (Empaty means not skipped)"
+        echo "==> [DEBUG] body: $body"
+        skip_pattern="SkipForDebug"
+      fi
+      [[ -n $skip_pattern ]] && continue
       [[ -z $body ]] && continue
       ## Summary of Changes
       user=$(echo "$json_line" | jq -r '.user')
