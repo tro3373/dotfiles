@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+install_common() {
+  not_supported
+}
+install_arch() {
+  # def_install winboat-bin
+  _install_from_release_build
+  exe sudo usermod -aG docker "$USER"
+  exe sudo usermod -aG kvm "$USER"
+  # USBデバイスへのアクセス権限を確実にするため 'uucp' (Archでのシリアル/USB用) にも追加
+  exe sudo usermod -aG uucp "$USER"
+}
+_install_from_release_build() {
+  # platform=$(get_platform)
+  arch=$(uname -m)
+  # https://github.com/TibixDev/winboat/releases
+  dl_gh_release TibixDev/winboat latest "*${arch}.AppImage"
+  exe "sudo mv winboat-*.AppImage /usr/local/bin/winboat"
+  exe "sudo chmod +x /usr/local/bin/winboat"
+}
+
+setting_arch() {
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/winboat.desktop" "$HOME/.local/share/applications/winboat.desktop"
+  make_lnk_with_bkup "$app_dir/winboat.svg" "$HOME/.local/share/icons/winboat.svg"
+}
