@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+install_arch() {
+  def_install voxtype-bin wtype ydotool
+  exe voxtype setup --download
+}
+
+setting_arch() {
+  exe sudo usermod -aG input "$USER"
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/voxtype" "${HOME}/.config/voxtype"
+  log "==> Use GPU acceleration by running: voxtype setup gpu --enable"
+}
