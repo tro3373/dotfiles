@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+is_installed() {
+  npm list -g claude-code-viewer &>/dev/null
+}
+install_common() {
+  npm_install @kimuson/claude-code-viewer@latest
+}
