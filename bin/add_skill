@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+main() {
+  set -eo pipefail
+  npx -y add-skill "$@"
+}
+main "$@"
