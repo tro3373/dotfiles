@@ -23,6 +23,7 @@ Generate freee importable csv
       -t | --template : Gen mode template
       -m | --matcher : Gen mode matcher
       -b | --banks : Gen mode banks
+      -s | --sync-list : Gen mode sync-list (sync bank/card/amazon page export data)
 
 EOF
 }
@@ -44,6 +45,7 @@ initialize() {
       -t | --template) mode=template ;;
       -m | --matcher) mode=matcher ;;
       -b | --banks) mode=banks ;;
+      -s | --sync-list) mode=sync-list ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
@@ -72,17 +74,18 @@ cat_src() {
 }
 
 header() {
-  cat_src 1 |
-    if [[ $mode == deals ]]; then
-      # src: 収支区分,管理番号,発生日,決済期日,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,決済日,決済口座,決済金額
-      echo "収支区分,管理番号,発生日,決済期日,取引先コード,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,セグメント1,セグメント2,セグメント3,決済日,決済口座,決済金額"
-    elif [[ $mode == banks ]]; then
-      echo -e "取引日_出金額	取引内容"
-    else
-      # template: 収支区分,グループ名,テンプレート名,ショートカット,口座,取引先,管理番号,勘定科目,税区分,備考,金額,税計算区分,税額,品目,部門,メモタグ
-      # matcher: 収支区分,取引口座,取引内容,マッチ条件,金額（最小値）,金額（最大値）,優先度,マッチ後のアクション,振替口座,取引テンプレート,勘定科目,税区分,取引先,品目,部門,メモタグ（複数指定可・カンマ区切り）,セグメント1,セグメント2,セグメント3,備考,消込を実行する際の差額
-      cat -
-    fi
+  if [[ $mode == deals || $mode == sync-list ]]; then
+    # src: 収支区分,管理番号,発生日,決済期日,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,決済日,決済口座,決済金額
+    echo -e "収支区分,管理番号,発生日,決済期日,取引先コード,取引先,勘定科目,税区分,金額,税計算区分,税額,備考,品目,部門,メモタグ（複数指定可、カンマ区切り）,セグメント1,セグメント2,セグメント3,決済日,決済口座,決済金額"
+    return
+  fi
+  if [[ $mode == banks ]]; then
+    echo -e "取引日_出金額	取引内容"
+    return
+  fi
+  # template: 収支区分,グループ名,テンプレート名,ショートカット,口座,取引先,管理番号,勘定科目,税区分,備考,金額,税計算区分,税額,品目,部門,メモタグ
+  # matcher: 収支区分,取引口座,取引内容,マッチ条件,金額（最小値）,金額（最大値）,優先度,マッチ後のアクション,振替口座,取引テンプレート,勘定科目,税区分,取引先,品目,部門,メモタグ（複数指定可・カンマ区切り）,セグメント1,セグメント2,セグメント3,備考,消込を実行する際の差額
+  cat_src 1
 }
 
 gen_deals_biko() {
@@ -130,6 +133,16 @@ handle_deals() {
     echo "$c01,$c02,$c03,$c04,,$c05,$c06,$c07,$c08,$c09,$c10,$c11,$c12,$c13,$c14,,,,$c15,$c16,$c17"
   done
 }
+
+handle_sync_list() {
+  awk -F'","' '{gsub(/"/, "", $5); gsub(/-/, "/", $5); gsub(/"/, "", $6); gsub(/"/, "", $8); gsub(/,/, "", $8); print $5"\t"$6"\t"$8}' |
+    while IFS=$'\t' read -r d c a; do
+      [[ -z $d ]] && continue
+      [[ $d =~ ^#.* ]] && continue
+      t=$(echo "$a/11" | bc)
+      echo "支出,,$d,,,,消耗品費or新聞図書費,課対仕入10%,$a,内税,$t,$c,,,\"converted\",,,,$d,事業主借,$a"
+    done
+}
 handle_banks() {
   # 1,     2,3,4, 5,     6,       7,     8,     9,   10,  11,    12,    13
   # _,口座名, , , 取引日,取引内容,入金額,出金額,残高,状態,更新日,取得日,_
@@ -172,6 +185,8 @@ gen() {
   cat_src |
     if [[ $mode == deals ]]; then
       cat - | handle_deals
+    elif [[ $mode == sync-list ]]; then
+      cat - | handle_sync_list
     elif [[ $mode == banks ]]; then
       cat - | handle_banks
     elif [[ $mode == template ]]; then
