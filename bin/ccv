@@ -4,7 +4,9 @@
 # https://zenn.dev/bm_sms/articles/claude_code_viewer
 main() {
   set -eo pipefail
-  open http://localhost:3400 &
-  PORT=3400 npx -y @kimuson/claude-code-viewer@latest
+  h=0.0.0.0
+  p=3400
+  open http://localhost:$p &
+  npx -y @kimuson/claude-code-viewer@latest --port $p --hostname $h
 }
 main "$@"
