@@ -31,6 +31,7 @@ cat_commit_msg() {
     # llm -c gemini -m $_model |
     # llm -c codex |
     llm -c tgpt -p groq |
+    # llm -c claude |
     sed -e 's/\r//g' -e 's/^M//g' -e 's/^```//' -e 's/```$//' -e '/^Loaded cached credentials/d'
 }
 

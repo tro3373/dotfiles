@@ -141,6 +141,8 @@ create_pr_parts() {
   #   llm -c gemini -m $_model >"$target_tmp_dir"/messages.json
   cat <"$target_tmp_dir"/prompt.md |
     llm -p groq >"$target_tmp_dir"/messages.json
+  # cat <"$target_tmp_dir"/prompt.md |
+  #   llm -c claude >"$target_tmp_dir"/messages.json
 
   ilog "==> Creating title/body.."
   jq -r '.title' "$target_tmp_dir"/messages.json >/dev/null 2>&1 || {
