@@ -379,10 +379,10 @@ function! SaveMdPost() abort
 endfun
 command! SaveMdPost call SaveMdPost()
 
-function! SaveMdDraftCh() abort
-  call SaveMdCommon("~/.ch/.draft")
-endfun
-command! SaveMdDraftCh call SaveMdDraftCh()
+" function! SaveMdDraftCh() abort
+"   call SaveMdCommon("~/.ch/.draft")
+" endfun
+" command! SaveMdDraftCh call SaveMdDraftCh()
 
 function! SaveMdDraft() abort
   call SaveMdCommon("~/.md/.draft")
@@ -397,12 +397,12 @@ endfun
 command! SaveTemp call SaveTemp()
 
 function! SaveMdCommon(dir) abort
-  let now = localtime()
   let tmpfile = WriteToTemp()
   let title = GenerateViaLLM("gen-content-title.md", tmpfile)
+  let now = localtime()
   let title = strftime("%Y-%m-%d", now) .. "-" .. title
   let title = input("Title: ", title,  "file")
-  let dir = a:dir .. "/" .. strftime("%Y", now) .. title
+  let dir = a:dir .. "/" .. strftime("%Y", now) .. "/" .. title
   call Hugolize()
   call SaveMemoInner(dir, "index")
 endfun
