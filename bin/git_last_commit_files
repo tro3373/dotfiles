@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 main() {
-  git log --name-only -1 --pretty=format: "$@"
+  git_root_dir=$(get_git_root)
+  git log --name-only -1 --pretty=format: "$@" |
+    sed "s|^|$git_root_dir/|"
 }
 main "$@"

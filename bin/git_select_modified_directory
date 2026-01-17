@@ -9,10 +9,22 @@ fire() {
 }
 
 main() {
-  git_root_dir=$(get_git_root)
+  # # git_root_dir=$(get_git_root)
+  # dir_name=$(
+  #   fire "$@" |
+  #     # -r: no run if no input
+  #     xargs -r dirname |
+  #     uniq |
+  #     fzf -0 -1
+  #     # sed "s|^|$git_root_dir/|"
+  # )
+  # [[ -z $dir_name ]] && return
+  # echo "$git_root_dir/$dir_name"
   fire "$@" |
-    fzf -0 -1 |
-    sed "s|^|$git_root_dir/|" |
-    xargs -r dirname # -r: no run if no input
+    # -r: no run if no input
+    xargs -r dirname |
+    uniq |
+    fzf -0 -1
+  # sed "s|^|$git_root_dir/|"
 }
 main "$@"
