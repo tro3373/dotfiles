@@ -289,37 +289,37 @@ set ruler
 
 " カーソル行・列表示設定
 " " カーソル行・列を常に表示
-" set cursorline cursorcolumn
-" カーソル行・列を一定時間入力なし時、ウィンドウ移動直後に表示
-augroup vimrc-auto-cursorline
-  autocmd!
-  autocmd CursorMoved,CursorMovedI * call s:auto_cursorline('CursorMoved')
-  autocmd CursorHold,CursorHoldI * call s:auto_cursorline('CursorHold')
-  autocmd WinEnter * call s:auto_cursorline('WinEnter')
-  autocmd WinLeave * call s:auto_cursorline('WinLeave')
+set cursorline cursorcolumn
+" " カーソル行・列を一定時間入力なし時、ウィンドウ移動直後に表示
+" augroup vimrc-auto-cursorline
+"   autocmd!
+"   autocmd CursorMoved,CursorMovedI * call s:auto_cursorline('CursorMoved')
+"   autocmd CursorHold,CursorHoldI * call s:auto_cursorline('CursorHold')
+"   autocmd WinEnter * call s:auto_cursorline('WinEnter')
+"   autocmd WinLeave * call s:auto_cursorline('WinLeave')
 
-  let s:cursorline_lock = 0
-  function! s:auto_cursorline(event)
-    if a:event ==# 'WinEnter'
-      setlocal cursorline cursorcolumn
-      let s:cursorline_lock = 2
-    elseif a:event ==# 'WinLeave'
-      setlocal nocursorline nocursorcolumn
-    elseif a:event ==# 'CursorMoved'
-      if s:cursorline_lock
-        if 1 < s:cursorline_lock
-          let s:cursorline_lock = 1
-        else
-          setlocal nocursorline nocursorcolumn
-          let s:cursorline_lock = 0
-        endif
-      endif
-    elseif a:event ==# 'CursorHold'
-      setlocal cursorline cursorcolumn
-      let s:cursorline_lock = 1
-    endif
-  endfunction
-augroup END
+"   let s:cursorline_lock = 0
+"   function! s:auto_cursorline(event)
+"     if a:event ==# 'WinEnter'
+"       setlocal cursorline cursorcolumn
+"       let s:cursorline_lock = 2
+"     elseif a:event ==# 'WinLeave'
+"       setlocal nocursorline nocursorcolumn
+"     elseif a:event ==# 'CursorMoved'
+"       if s:cursorline_lock
+"         if 1 < s:cursorline_lock
+"           let s:cursorline_lock = 1
+"         else
+"           setlocal nocursorline nocursorcolumn
+"           let s:cursorline_lock = 0
+"         endif
+"       endif
+"     elseif a:event ==# 'CursorHold'
+"       setlocal cursorline cursorcolumn
+"       let s:cursorline_lock = 1
+"     endif
+"   endfunction
+" augroup END
 
 " hi=highlight
 " " カーソル行・列表示色設定
