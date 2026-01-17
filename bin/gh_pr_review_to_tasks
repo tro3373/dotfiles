@@ -43,6 +43,8 @@ main() {
     '^## Summary of Changes.*$'
     '^/gemini.*$'
     '^.*jest coverage report action.*$'
+    '## Plan Result'
+    '^### This PR is being reviewed by Cursor Bugbot'
   )
 
   repo=$(gh repo view --json nameWithOwner -q .nameWithOwner)
