@@ -25,12 +25,13 @@ cat_prompt() {
 
 cat_commit_msg() {
   # _model=gemini-2.5-flash-lite-preview-06-17
-  _model=gemini-2.5-flash-lite
+  # _model=gemini-2.5-flash-lite
+  _model=gemini-3-flash-preview
   cat <"$tmp_prp" |
     # llm -c gemini |
-    # llm -c gemini -m $_model |
+    llm -c gemini -m $_model |
     # llm -c codex |
-    llm -c tgpt -p groq |
+    # llm -c tgpt -p groq |
     # llm -c claude |
     sed -e 's/\r//g' -e 's/^M//g' -e 's/^```//' -e 's/```$//' -e '/^Loaded cached credentials/d'
 }

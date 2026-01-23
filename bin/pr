@@ -136,11 +136,11 @@ create_pr_parts() {
     prp -ne gen-git-pr-message.md$ >"$target_tmp_dir"/prompt.md
   # cat <"$target_tmp_dir"/prompt.md |
   #   llm >"$target_tmp_dir"/messages.json
-  # _model=gemini-2.5-flash-lite
-  # cat <"$target_tmp_dir"/prompt.md |
-  #   llm -c gemini -m $_model >"$target_tmp_dir"/messages.json
+  _model=gemini-2.5-flash-lite
   cat <"$target_tmp_dir"/prompt.md |
-    llm -p groq >"$target_tmp_dir"/messages.json
+    llm -c gemini -m $_model >"$target_tmp_dir"/messages.json
+  # cat <"$target_tmp_dir"/prompt.md |
+  #   llm -p groq >"$target_tmp_dir"/messages.json
   # cat <"$target_tmp_dir"/prompt.md |
   #   llm -c claude >"$target_tmp_dir"/messages.json
 
