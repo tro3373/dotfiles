@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 install_common() {
-  npm_install @anthropic-ai/claude-code
-  suggest
+  exe 'curl -fsSL https://claude.ai/install.sh | bash'
+  # npm_install @anthropic-ai/claude-code
+  # suggest
 }
 
 suggest() {
