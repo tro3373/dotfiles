@@ -20,10 +20,9 @@ suggest() {
 setting_common() {
   log "==> claude"
   log "===> /init"
-  local src_settings="$HOME/.mo/.claude/settings.json"
-  if [[ -e $src_settings ]]; then
-    make_lnk_with_bkup "$src_settings" "$HOME/.claude/settings.json"
-  fi
+  for item in CLAUDE.md settings.json commands agents skills; do
+    make_lnk_with_bkup "$HOME/.mo/claude/$item" "$HOME/.claude/$item"
+  done
   show_usage
 }
 
