@@ -94,6 +94,9 @@ function! ClipComm()
     let @0 = getreg('*')
     call PassThroughClip()
   endif
+  if (!empty($REMOTEHOST) || !empty($SSH_CONNECTION)) && executable('clip')
+    call system('clip', @*)
+  endif
   echo "Clip!=> ".@*
 endfunction
 function! ClipDir()
