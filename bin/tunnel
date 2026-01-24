@@ -123,8 +123,10 @@ _tunnel() {
   fi
   # see [Reverse ssh tunnel を安定運用する - Qiita](https://qiita.com/syoyo/items/d31e9db6851dfee3ef82)
   #
+  # -n: Redirects stdin from /dev/null (actually, prevents reading from stdin). This must be used when ssh is run in the background.
   # -N: Do not execute a remote command.
   # -g: Allows remote hosts to connect to local forwarded ports.
+  # -S none: Disable the use of a control socket for connection sharing.
   # -f: Requests ssh to go to background just before command execution.
   # -T: Disable pseudo-tty allocation.
   # -t: Force pseudo-tty allocation.
@@ -135,7 +137,7 @@ _tunnel() {
   # -D: Specifies a local “dynamic” application-level port forwarding.
   # -C: Requests compression of all data.
   # opt="-N -g -o ServerAliveInterval=60"
-  opt="-N -g -o ServerAliveInterval=60 -o ExitOnForwardFailure=yes -o TCPKeepAlive=no"
+  opt="-n -N -g -S none -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o TCPKeepAlive=yes"
   # shellcheck disable=SC2086
   if is_reverse; then
     log ">> Reverse Tunneling localhost:$lp ===> $remote:$rp .."
@@ -147,33 +149,20 @@ _tunnel() {
   add_pid $!
 }
 
-is_exist_pid() {
-  kill -s 0 "$pid" >&/dev/null
-}
-
 kill_tunnel() {
   for pid in "${pids[@]}"; do
-    is_exist_pid || continue
-    log ">> killing $pid .."
-    kill "$pid"
+    if kill -s 0 "$pid" 2>/dev/null; then
+      log ">> killing $pid .."
+      kill "$pid" 2>/dev/null || true
+    fi
   done
 }
 
 wait_loop() {
-  while true; do
-    sleep 1
-    local _exist=0
-    for pid in "${pids[@]}"; do
-      if is_exist_pid; then
-        _exist=1
-        break
-      fi
-    done
-    [[ $_exist -eq 1 ]] && continue
-    # ps aux |grep ssh |grep localhost |awk '{print $2}'
-    log "> Done."
-    exit
+  for pid in "${pids[@]}"; do
+    wait "$pid" 2>/dev/null || true
   done
+  log "> Done."
 }
 
 main() {
