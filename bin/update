@@ -102,6 +102,11 @@ update_mac() {
   $dummy brew doctor || :
 }
 
+update_claude() {
+  has claude || return
+  claude update
+}
+
 main() {
   initialize "$@"
   set -e
@@ -119,6 +124,7 @@ main() {
   fi
   update_go_bins
   update_node_bins
+  update_claude
   ilog "Done!"
 }
 main "$@"
