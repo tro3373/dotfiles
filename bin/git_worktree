@@ -245,7 +245,7 @@ _remove_worktree() {
   if [[ $force_remove -eq 1 ]]; then
     wlog "==> Worktree path '$_brach_path' still exist. Removing..(Cancel: Ctrl+C)"
     read -r _
-    rm -rfv "$_brach_path"
+    sudo rm -rfv "$_brach_path"
   fi
 }
 
