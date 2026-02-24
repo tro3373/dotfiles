@@ -48,6 +48,8 @@ update_arch() {
     local _cmd=yay
   fi
   ilog "=> Updating.."
+  # NOTE /usr/binを優先させて、システムアップグレード時は/usr/bin/pythonが使われるようにする
+  export PATH="/usr/bin:$PATH"
   # shellcheck disable=SC2086
   $dummy $_cmd -Syyu --noconfirm "${args[@]}"
 }
@@ -104,7 +106,9 @@ update_mac() {
 
 update_claude() {
   has claude || return
+  ilog "=> Updating claude code.."
   claude update
+  ilog "=> Updating claude code Done!"
 }
 
 main() {
@@ -122,9 +126,9 @@ main() {
   if os wsl; then
     update_scoop
   fi
+  update_claude
   update_go_bins
   update_node_bins
-  update_claude
   ilog "Done!"
 }
 main "$@"
