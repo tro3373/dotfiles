@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+install_arch() {
+  def_install redis
+}
+install_msys() { not_supported; }

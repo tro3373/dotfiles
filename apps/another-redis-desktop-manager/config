@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+install_arch() {
+  _install_from_release_build
+}
+
+_install_from_release_build() {
+  # platform=$(get_platform)
+  arch=$(uname -m)
+  # https://github.com/qishibo/AnotherRedisDesktopManager/releases
+  dl_gh_release qishibo/AnotherRedisDesktopManager latest "*${arch}.AppImage"
+  exe "sudo mv Another-*.AppImage /usr/local/bin/another-redis-desktop-manager"
+  exe "sudo chmod +x /usr/local/bin/another-redis-desktop-manager"
+}
+
+setting_common() {
+  _link_bin_if_needed
+}
+
+_link_bin_if_needed() {
+  local target=~/bin/valkeyv
+  if [[ -e $target ]]; then
+    log "==> $target already exists"
+    return
+  fi
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/valkeyv" "$target"
+}
