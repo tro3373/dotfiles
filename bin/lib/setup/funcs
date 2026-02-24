@@ -259,6 +259,17 @@ make_link_dot2home() {
   done
 }
 
+make_link_to_bin() {
+  local name=$1
+  local target=~/bin/$name
+  if [[ -e $target ]]; then
+    log "==> $target already exists"
+    return
+  fi
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/$name" "$target"
+}
+
 # 同じリンクかどうか
 is_same_link() {
   local src1=$1

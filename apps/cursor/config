@@ -7,7 +7,7 @@ settings_d_linux="$HOME/.config/Cursor/User"
 
 # install_arch() {
 #   def_install cursor-extracted
-#   _link_bin_cursor_if_needed
+#   make_link_to_bin cursor
 # }
 
 _fnm=
@@ -28,17 +28,7 @@ install_common() {
     _fnm=$(basename "$_bin")
     exe mv -v "$_bin" ~/tools/
   fi
-  _link_bin_cursor_if_needed
-}
-
-_link_bin_cursor_if_needed() {
-  local target=~/bin/cursor
-  if [[ -e $target ]]; then
-    log "==> $target already exists"
-    return
-  fi
-  # shellcheck disable=SC2154
-  make_lnk_with_bkup "$app_dir/cursor" "$target"
+  make_link_to_bin cursor
 }
 
 _find_binary() {

@@ -14,16 +14,6 @@ install_mac() {
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
 
-_link_bin_code_if_needed() {
-  local target=~/bin/code
-  if [[ -e $target ]]; then
-    log "==> $target already exists"
-    return
-  fi
-  # shellcheck disable=SC2154
-  make_lnk_with_bkup "$app_dir/code" "$target"
-}
-
 _add_term_config() {
   local target="$HOME/.works.zsh"
   if grep -q 'TERM_PROGRAM == "vscode"' "$target"; then
@@ -44,7 +34,7 @@ EOF
 
 setting_common() {
   _add_term_config
-  _link_bin_code_if_needed
+  make_link_to_bin code
 }
 # setting_arch() { no_settings; }
 setting_msys() {
