@@ -136,7 +136,9 @@ update_dot_env() {
 
 cat_req_data() {
   if [[ -e $req_json ]]; then
-    envsubst <"$req_json"
+    eval "cat <<_ENDOFTEMPLATE_
+$(cat "$req_json")
+_ENDOFTEMPLATE_"
     return
   fi
   echo ""
