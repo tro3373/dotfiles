@@ -111,6 +111,10 @@ bind main    B      ?git checkout -b "%(prompt Enter branch name: )" %(branch)
 bind refs    B      ?git checkout -b "%(prompt Enter branch name: )" %(branch)
 bind main    <Esc>b ?git checkout -b "%(prompt Enter branch name: )" %(commit)
 
+# W で worktree 追加
+bind main    W      ?git_worktree -a %(branch) %(branch)
+bind refs    W      ?git_worktree -a %(branch) %(branch)
+
 # M で merge
 bind main    M      ?git merge %(branch)
 bind diff    M      ?git merge %(branch)
