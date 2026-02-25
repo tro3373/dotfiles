@@ -63,6 +63,9 @@ EOF
 add_args() { args+=("$@"); }
 has() { command -v "${1}" >&/dev/null; }
 hass() { for arg in "$@"; do has "$arg" || elog "==> No $arg command exist."; done; }
+is_exist_branch() {
+  git show-ref --verify --quiet "refs/heads/$1" || git show-ref --verify --quiet "refs/remotes/origin/$1"
+}
 
 get_org_git_root() {
   # NOTE: git rev-parse --git-common-dir: Get the common git directory path
@@ -132,11 +135,18 @@ _add_worktree() {
     create_default_ln_config
   fi
   dst_dir="$git_worktree_dir/$(get_worktree_branch_name)"
+
   ilog "==> Adding worktree to $dst_dir for $branch branch hash:$commit_hash.."
-  # shellcheck disable=SC2086
-  git worktree add -b "$branch" "$dst_dir" $commit_hash 1>&2 || {
+  # shellcheck disable=SC2206
+  local cmd_args=(-b "$branch" "$dst_dir" $commit_hash)
+  if is_exist_branch "$branch"; then
+    ilog "==> Branch '$branch' already exists. Using existing branch."
+    cmd_args=("$dst_dir" "$branch")
+  fi
+  git worktree add "${cmd_args[@]}" 1>&2 || {
     elog "Failed to add worktree to $dst_dir for branch '$branch'."
   }
+
   ln_ignored_from_config 1>&2
   ilog "==> Added worktree for branch '$branch' at '$dst_dir'."
 
