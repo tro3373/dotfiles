@@ -2,9 +2,10 @@
 
 readonly depends=(curl fzf jq)
 command_name=$(basename "$0") && readonly command_name
-worktree_dir_name="___git_worktree" && readonly worktree_dir_name
+worktree_dir_name="-worktree" && readonly worktree_dir_name
 args=()
 mode=list
+target_dir=
 
 usage() {
   cat <<EOF
@@ -14,12 +15,14 @@ Manage repository tasks.
   Usage:
       $command_name [option]
     Options
-      -h|--help       : Show this usage
-      -s|--split      : Split tasks into multiple files
-      -sa|--split-all : Split all tasks into multiple files
-      -n|--next       : Show next task chunk
-      -c|--clean      : Move completed tasks to .tasks/done/done.md
-
+      -h|--help           : Show this usage
+      -d|--directory      : Show task directory
+      -s|--split          : Split tasks into multiple files
+      -sa|--split-all     : Split all tasks into multiple files
+      -n|--next           : Show next task chunk
+      -c|--clean          : Move completed tasks to .tasks/done/done.md
+      ok|v|done|complete  : Mark next task chunk as completed
+      --summary           : Show title of tasks
 EOF
 }
 
@@ -28,10 +31,13 @@ initialize() {
     [[ -z $1 ]] && break
     case "$1" in
       -h | --help) usage && exit 0 ;;
+      -d | --directory) shift && target_dir=$1 ;;
       -s | --split) mode="split" ;;
       -sa | --split-all) mode="split-all" ;;
       -n | --next) mode="next" ;;
       -c | --clean) mode="clean" ;;
+      ok | v | done | complete) mode="complete" ;;
+      --summary) mode="summary" ;;
       # -f*|--file*) file=${1#*=} ;;
       # -f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
@@ -52,7 +58,7 @@ log() { _log white "$*"; }
 info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
-current_is_worktree_dir() { [[ $git_root =~ ^.*/${worktree_dir_name}/.*$ ]]; }
+current_is_worktree_dir() { [[ $git_root =~ ^.*${worktree_dir_name}/.*$ ]]; }
 
 initialize_links_if_needed() {
   [[ -e $target_file ]] && return
@@ -82,15 +88,28 @@ init_link_tasks() {
 init_link_tasks_for_worktree() {
   info "==> Initialize tasks for worktree directory.."
   worktree_name=$(basename "$git_root")
-  repo_name=$(basename "${git_root%%/.git/*}")
+  # repo_name=$(basename "${git_root%%/.git/*}")
+  worktree_root_name=$(basename "$(dirname "$git_root")")
+  repo_name=${worktree_root_name%"$worktree_dir_name"}
   srcd="$HOME/.mo/tasks/$repo_name"
+  src_tasks_dir="$srcd/tasks"
+
   info "==> Creating tasks directory at $srcd"
-  mkdir -p "$srcd"/tasks/done
+  mkdir -p "$src_tasks_dir"/done
   touch "$srcd"/tasks.md
-  mkdir -p "$srcd"/tasks/"$worktree_name"
-  touch "$srcd"/tasks/"$worktree_name"/tasks.md
-  info "==> Linking .tasks.md to $git_root"
-  ln -s "$srcd"/tasks/"$worktree_name"/tasks.md "$git_root/.tasks.md"
+  mkdir -p "$src_tasks_dir/$worktree_name"
+
+  src_tasks_md="$src_tasks_dir/$worktree_name/$worktree_name.md"
+  touch "$src_tasks_md"
+  dst_tasks_md="$git_root/.tasks.md"
+  info "==> Linking $src_tasks_md to $dst_tasks_md"
+  ln -s "$src_tasks_md" "$dst_tasks_md"
+
+  dst_tasks_dir="$git_root/.tasks"
+  if [[ ! -e $dst_tasks_dir ]]; then
+    info "==> Linking $src_tasks_dir to $dst_tasks_dir"
+    ln -s "$src_tasks_dir" "$dst_tasks_dir"
+  fi
 }
 
 find_tasks() {
@@ -209,9 +228,9 @@ $(cat "$temp_file")
 EOF
 
   # link task_file
-  ln -s "$git_root/$task_file" "$worktree_dir/.tasks.md"
+  ln -s "$(realpath "$git_root/$task_file")" "$worktree_dir/.tasks.md"
   if [[ ! -e "$worktree_dir/.tasks" ]]; then
-    ln -s "$git_root/.tasks" "$worktree_dir/.tasks"
+    ln -s "$(realpath "$git_root/.tasks")" "$worktree_dir/.tasks"
   fi
 
   # tempファイル削除
@@ -230,6 +249,18 @@ split_tasks_all() {
 }
 
 clean_tasks() {
+  if current_is_worktree_dir; then
+    real_task_file=$(realpath "$git_root/.tasks.md")
+    real_done_dir=$(realpath "$git_root/.tasks/done")
+    if [[ ! -e $real_task_file ]] || [[ ! -e $real_done_dir ]]; then
+      error "==> Invalid state. real_task_file=$real_task_file, real_done_dir=$real_done_dir"
+    fi
+    # TODO dst is exist
+    info "==> Moving $real_task_file to $real_done_dir/"
+    mv -v "$real_task_file" "$real_done_dir/"
+    return
+  fi
+
   local done_file="$git_root/.tasks/done/done.md"
   parse_tasks 1
   sed -n "${first_line},${end_line}p" "$target_file" | tee -a "$done_file"
@@ -244,10 +275,60 @@ clean_tasks() {
   info "==> Task cleaned"
 }
 
+complete_task() {
+  local complete_mark="✅️"
+  first_line=$(head -1 "$target_file")
+  if [[ $first_line =~ ^##\ (.*)$ ]]; then
+    complete_title_task
+    return
+  fi
+  complete_normal_task
+}
+
+complete_title_task() {
+  completed=0
+  if echo "$first_line" | grep -qE $complete_mark; then
+    warn "==> Task already marked as completed. $target_file"
+    completed=1
+  fi
+  if [[ $completed -eq 0 ]]; then
+    sed -i "1s/^## \(.*\)$/## $complete_mark \1/" "$target_file"
+    info "==> $complete_mark Task title marked as completed"
+  fi
+  # show target task title
+  sed -n "1p" "$target_file"
+}
+
+complete_normal_task() {
+  # はじめに見つかるタスクを完了にする
+  parse_tasks 0
+  # タスクを完了にする
+  sed -i "${first_line}s/^- \[ \]/- [x]/" "$target_file"
+  info "==> $complete_mark Task marked as completed"
+  sed -n "${first_line}p" "$target_file"
+}
+
+summary_tasks() {
+  task_dir_name=$(basename "$git_root")
+  # タスクの概要を抽出して表示
+  first_line=$(head -1 "$target_file")
+  task_summary=
+  if [[ -n $first_line && $first_line =~ ^(#)+\ .*$ ]]; then
+    task_summary=" [${first_line##*# }]"
+  fi
+  echo "$task_dir_name$task_summary"
+}
+
 main() {
   initialize "$@"
-  git_root=$(git rev-parse --show-toplevel)
+
+  git_root="$target_dir"
+  if [[ -z $git_root ]]; then
+    # git_rootはworktree内にいる場合はそのworktreeのルートを指す
+    git_root=$(git rev-parse --show-toplevel)
+  fi
   cd "$git_root" || exit 1
+
   target_file="$git_root/.tasks.md"
   initialize_links_if_needed
 
@@ -267,6 +348,15 @@ main() {
     clean_tasks
     return
   fi
+  if [[ $mode == "complete" ]]; then
+    complete_task
+    return
+  fi
+  if [[ $mode == "summary" ]]; then
+    summary_tasks
+    return
+  fi
+
   find_tasks | v
 }
 main "$@"

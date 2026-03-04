@@ -110,14 +110,7 @@ _list_root_and_worktree_directories() {
       [[ $_target_path =~ ^#.* ]] && continue
       label="($repo_root_label)"
       if [[ $_target_path =~ ^$git_worktree_dir/ ]]; then
-        label=$(basename "$_target_path")
-        local task_file="$_target_path/.tasks.md"
-        if [[ -s $task_file ]]; then
-          task_file_title=$(head -1 "$task_file" | sed -e 's,^#* ,,')
-          if [[ -n $task_file_title ]]; then
-            label="$label [${task_file_title}]"
-          fi
-        fi
+        label=$(tasks --summary --directory "$_target_path")
       fi
       _time=$(stat -c %y "$_target_path" | cut -d. -f1 | sed -e 's, ,_,g')
       printf "%s\t%s\t%s\n" "$_time" "$label" "$_target_path"
@@ -202,7 +195,7 @@ _ln() {
 create_default_ln_config() {
   git status --ignored --porcelain 2>/dev/null |
     grep '^!!' |
-    grep -Ev '(\.tasks\.md|\.trash|node_modules|.next|tsconfig.tsbuildinfo|.data|-data)' |
+    grep -Ev '(\.tasks(\.md|/|$)|\.trash|node_modules|.next|tsconfig.tsbuildinfo|.data|-data)' |
     cut -c4- >"$ln_config"
   # fzf \
   #   --prompt="Select ignored files/directories to link in new worktree: " \
@@ -224,12 +217,7 @@ _remove_worktree() {
     [[ -z $branch_path ]] && continue
     [[ $branch_path =~ ^#.* ]] && continue
 
-    local task_file="$branch_path"/.tasks.md
-    if [[ -s $task_file ]]; then
-      absolute_path=$(realpath "$task_file")
-      ilog "==> Moving task file '$task_file' to .tasks/done/.."
-      mv -v "$absolute_path" "$git_org_root_dir/.tasks/done/"
-    fi
+    tasks --clean --directory "$branch_path" 1>&2 || :
 
     ilog "==> Removing worktree path: '$branch_path'.."
     git worktree remove "$branch_path" || {
