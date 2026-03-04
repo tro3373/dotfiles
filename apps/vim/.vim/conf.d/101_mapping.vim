@@ -78,6 +78,7 @@ nnoremap - <C-x>
 
 " alias save
 nnoremap <Leader>w :w<CR>
+nnoremap <Leader>W :w!<CR>
 " alias force quit
 nnoremap <Leader>q :q<CR>
 nnoremap <Leader>Q :q!<CR>
