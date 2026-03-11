@@ -2,11 +2,15 @@
 
 current_dir=$(pwd)
 _is_url=0
+_is_file=0
+_is_md=0
 _is_xlsx=0
 _is_docx=0
 
 has() { command -v "${1}" >&/dev/null; }
 is_url() { [[ $_is_url -eq 1 ]]; }
+is_file() { [[ $_is_file -eq 1 ]]; }
+is_md() { [[ $_is_md -eq 1 ]]; }
 is_xlsx() { [[ $_is_xlsx -eq 1 ]]; }
 is_docx() { [[ $_is_docx -eq 1 ]]; }
 set_ostype() {
@@ -17,6 +21,7 @@ set_ostype() {
 set_open_command() {
   is_xlsx && has xleak && _open=xleak && return
   is_docx && has doxx && _open=doxx && return
+  is_md && has wezterm && _open="wezterm cli spawn --cwd $(pwd) --new-window -- nvim -p" && return
   _open=$(type -a open | grep -v "$0" | head -1 | cut -d' ' -f3)
   case "$_ostype" in
     cygwin*) _open=cygstart ;;
@@ -41,14 +46,21 @@ set_args() {
   if [[ $# -eq 0 ]]; then
     args=("$current_dir")
   fi
-  if [[ ${args[*]} =~ ^https?://.* ]]; then
+  arg="${args[0]}"
+  if [[ $arg =~ ^https?://.* ]]; then
     _is_url=1
   fi
-  if [[ ${args[*]} =~ ^.*.xlsx? ]]; then
-    _is_xlsx=1
-  fi
-  if [[ ${args[*]} =~ ^.*.docx? ]]; then
-    _is_docx=1
+  if [[ -f $arg ]]; then
+    _is_file=1
+    if [[ $arg =~ ^.*.md ]]; then
+      _is_md=1
+    fi
+    if [[ $arg =~ ^.*.xlsx? ]]; then
+      _is_xlsx=1
+    fi
+    if [[ $arg =~ ^.*.docx? ]]; then
+      _is_docx=1
+    fi
   fi
 
   case "$_ostype" in

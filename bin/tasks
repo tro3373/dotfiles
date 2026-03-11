@@ -207,7 +207,7 @@ split_tasks() {
 
   # タスクファイル作成
   local timestamp
-  timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+  timestamp=$(date +"%Y-%m-%d_%H%M%S")
   local task_file=".tasks/${timestamp}_${name}.md"
   # NOTE: git_worktree -a で link まで貼られるので、事前にファイル作成しておく
   touch "$task_file"

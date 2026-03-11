@@ -33,6 +33,12 @@ get_svc_dir() {
   echo "$script_dir/lib/$command_name/$req_res/$svc"
 }
 
+# 標準入力のURLエンコード済み文字列をデコードする
+# %XX → 実バイト、+ → スペース に変換
+url_decode() {
+  sed 's/+/ /g;s/%\([0-9a-fA-F][0-9a-fA-F]\)/\\x\1/g' | xargs -0 printf '%b'
+}
+
 url_encoded_url() {
   local params encoded_params
   [[ $url == *\?* ]] && params=${url#*\?}
@@ -41,7 +47,10 @@ url_encoded_url() {
       echo "$params" |
         tr '&' '\n' |
         while IFS='=' read -r key value; do
-          echo "$key=$(echo "$value" | jq -rR '@uri')"
+          # 二重エンコード防止: decode してから re-encode する
+          # 例: "2026/03/05%2000:00:00" → decode → "2026/03/05 00:00:00" → encode → "2026%2F03%2F05%2000%3A00%3A00"
+          echo "$key=$(echo "$value" | url_decode | jq -rR '@uri')"
+          # original: echo "$key=$(echo "$value" | jq -rR '@uri')"
         done | paste -sd '&' -
     )
     encoded_params="?$encoded_params"
