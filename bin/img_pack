@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+main() {
+  set -eo pipefail
+  [[ ! -e in ]] && elog "==> No input directory 'in' found!"
+  # collage -i ./photos -o ./output --size 24x36in --harmony
+  # collage -i ./in -o ./out -s 1920x1080px
+  # ImageMagick v7の場合
+  magick "in/*.jpg[500x500>]" ashlar:digest.jpg
+}
+main "$@"
