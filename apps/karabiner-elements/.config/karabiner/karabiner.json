@@ -4,7 +4,7 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "left_control to left_command(without iterm2/Wezterm)",
+                        "description": "left_control to left_command (Ctrl+H fix included)",
                         "manipulators": [
                             {
                                 "conditions": [
@@ -16,11 +16,27 @@
                                         "type": "frontmost_application_unless"
                                     }
                                 ],
+                                "description": "ブラウザ等で化けたCtrl+H(Cmd+H)を削除に変換",
                                 "from": {
-                                    "key_code": "left_control",
-                                    "modifiers": { "optional": ["any"] }
+                                    "key_code": "h",
+                                    "modifiers": {
+                                        "mandatory": ["command"],
+                                        "optional": ["any"]
+                                    }
                                 },
-                                "to": [{ "key_code": "left_command" }],
+                                "to": [{ "key_code": "delete_or_backspace" }],
+                                "type": "basic"
+                            },
+                            {
+                                "description": "WezTerm等ではCtrl+HをそのままBackspaceとして通す",
+                                "from": {
+                                    "key_code": "h",
+                                    "modifiers": {
+                                        "mandatory": ["control"],
+                                        "optional": ["any"]
+                                    }
+                                },
+                                "to": [{ "key_code": "delete_or_backspace" }],
                                 "type": "basic"
                             },
                             {
@@ -33,8 +49,9 @@
                                         "type": "frontmost_application_unless"
                                     }
                                 ],
+                                "description": "それ以外のControlをCommandに変換(WezTerm等を除く)",
                                 "from": {
-                                    "key_code": "caps_lock",
+                                    "key_code": "left_control",
                                     "modifiers": { "optional": ["any"] }
                                 },
                                 "to": [{ "key_code": "left_command" }],
@@ -223,7 +240,7 @@
                         ]
                     },
                     {
-                        "description": "左オプションキーを単体で押したときに、Launchpad を起動する。",
+                        "description": "左オプションキーを単体で押したときに、Spotlight を起動する。",
                         "manipulators": [
                             {
                                 "from": {
@@ -237,17 +254,25 @@
                                         "lazy": true
                                     }
                                 ],
-                                "to_if_alone": [{ "shell_command": "open /System/Applications/Launchpad.app" }],
+                                "to_if_alone": [{ "shell_command": "open /System/Applications/Apps.app" }],
                                 "to_if_held_down": [{ "key_code": "left_option" }],
                                 "type": "basic"
                             }
                         ]
                     },
                     {
-                        "description": "Disable Cmd+H Hide (rev 2)",
+                        "description": "Ctrl+Hを確実にBackspaceにする設定",
                         "manipulators": [
                             {
-                                "description": "",
+                                "from": {
+                                    "key_code": "h",
+                                    "modifiers": { "mandatory": ["control"] }
+                                },
+                                "to": [{ "key_code": "delete_or_backspace" }],
+                                "type": "basic"
+                            },
+                            {
+                                "description": "Disable Cmd+H Hide (既存の設定)",
                                 "from": {
                                     "key_code": "h",
                                     "modifiers": { "mandatory": ["command"] }
