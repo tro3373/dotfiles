@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# fix_links() {
+#   find ~/.mo/claude/skills/ -maxdepth 1 -mindepth 1 -type l |
+#     while read -r lnk_dst; do
+#       [[ -z $lnk_dst ]] && continue
+#       [[ $lnk_dst =~ ^#.* ]] && continue
+#       lnk_src=$(readlink "$lnk_dst")
+#       [[ ! $lnk_src =~ ^\.\./ ]] && continue
+#       echo "==> Re Linking via abs path.."
+#       rm "$lnk_dst"
+#       lnk_src="$HOME/${lnk_src##*../}"
+#       ln -s "$lnk_src" "$lnk_dst"
+#     done
+# }
+
+main() {
+  set -eo pipefail
+  # npx -y add-skill "$@"
+  # bunx skills "$@"
+  # bunx skills -h
+  # npx -y skills "$@" -g -y --agent claude-code
+  npx -y skills "$@" -g -y
+  # fix_links
+}
+main "$@"
