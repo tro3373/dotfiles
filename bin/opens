@@ -1,5 +1,45 @@
 #!/usr/bin/env bash
 
+_edit() {
+  echo "$opens_conf" | v
+}
+
+_open() {
+  # cat <"$opens_conf" |
+  #   fzf --exit-0 \
+  #     --select-1 \
+  #     --multi \
+  #     --bind 'ctrl-l:toggle-all' |
+  #   awk '{print $NF}' |
+  #   xargs -n 1 -r open
+
+  # cat -n "$opens_conf" |
+  #   fzf --exit-0 \
+  #     --select-1 \
+  #     --multi \
+  #     --bind 'ctrl-l:toggle-all' |
+  #   while read -r line_num rest; do
+  #     echo "$rest" | awk '{print $NF}' | xargs -r open
+  #     {
+  #       sed -n "${line_num}p" "$opens_conf"
+  #       sed "${line_num}d" "$opens_conf"
+  #     } >"$opens_conf.tmp" && mv "$opens_conf.tmp" "$opens_conf"
+  #   done
+
+  selected=$(cat <"$opens_conf" |
+    fzf --exit-0 \
+      --select-1 \
+      --multi \
+      --bind 'ctrl-l:toggle-all')
+  echo "$selected" | awk '{print $NF}' | xargs -n 1 -r open
+  [[ -z $selected ]] && return
+  {
+    echo "$selected"
+    grep -vFx "$selected" "$opens_conf"
+  } >"$opens_conf.tmp"
+  mv "$opens_conf.tmp" "$opens_conf"
+}
+
 main() {
   set -eo pipefail
   git_root_dir=$(get_git_root)
@@ -8,15 +48,9 @@ main() {
     touch "$opens_conf"
   fi
   if [[ $1 == "-e" || ! -s $opens_conf ]]; then
-    echo "$opens_conf" | v
+    _edit
     return
   fi
-  cat <"$opens_conf" |
-    fzf --exit-0 \
-      --select-1 \
-      --multi \
-      --bind 'ctrl-l:toggle-all' |
-    awk '{print $NF}' |
-    xargs -n 1 -r open
+  _open
 }
 main "$@"
