@@ -7,3 +7,7 @@ install_mac() {
   exe brew install tailscale
   exe sudo brew services start tailscale
 }
+
+setting_common() {
+  log 'sudo tailscale up --accept-dns=true'
+}
