@@ -63,6 +63,8 @@ call plug#begin('$HOME/.vim/plugged')
 
   Plug 'junegunn/goyo.vim'                                " TODO: Distraction-free writing in Vim. (Toggle with :Goyo)
 
+  Plug 'sphamba/smear-cursor.nvim'                        " Cursor effect like Neovide
+
   " =================================================================
   " Filer
   " =================================================================
