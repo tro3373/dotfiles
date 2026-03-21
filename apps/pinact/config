@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+install_common() {
+  go_install github.com/suzuki-shunsuke/pinact/v3/cmd/pinact@latest
+}
