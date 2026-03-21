@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+entries=("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+has() { command -v "${1}" >&/dev/null; }
+
+bin_path() {
+  for arg in google-chrome-stable google-chrome chromium-browser chromium; do
+    has "${arg}" && echo "$arg" && return
+  done
+  for arg in "${entries[@]}"; do
+    if [[ -e ${arg} ]]; then
+      echo "${arg}"
+      return
+    fi
+  done
+}
+
+main() {
+  set -eo pipefail
+  _bin="$(bin_path)"
+  [[ -z $_bin ]] && elog "==> No Chrome binary found"
+  set -x
+  exec "$_bin" "$@" >&/dev/null &
+}
+main "$@"
