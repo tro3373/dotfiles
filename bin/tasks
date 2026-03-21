@@ -3,6 +3,8 @@
 readonly depends=(curl fzf jq)
 command_name=$(basename "$0") && readonly command_name
 worktree_dir_name="-worktree" && readonly worktree_dir_name
+grep_key_task_exists='- \[ \]' && readonly grep_key_task_exists
+grep_key_task_completed='- \[[xX]\]' && readonly grep_key_task_completed
 args=()
 mode=list
 target_dir=
@@ -163,8 +165,8 @@ cat_first_task() {
 
 parse_tasks() {
   comp=$1
-  grep_key='- \[ \]'
-  [[ $comp -eq 1 ]] && grep_key='- \[[xX]\]'
+  grep_key=$grep_key_task_exists
+  [[ $comp -eq 1 ]] && grep_key=$grep_key_task_completed
   if [[ ! -s $target_file ]] || ! grep -qE "^$grep_key" "$target_file"; then
     error "==> Empty tasks. $target_file"
   fi
@@ -243,9 +245,17 @@ EOF
 split_tasks_all() {
   split_tasks
   # まだタスクが残っていれば再帰的に処理
-  if grep -qE '^- \[ \]' "$target_file"; then
+  if has_tasks; then
     split_tasks_all
   fi
+}
+
+has_tasks() {
+  grep -qE "^$grep_key_task_exists" "$target_file"
+}
+
+has_completed_tasks() {
+  grep -qE "^$grep_key_task_completed" "$target_file"
 }
 
 clean_tasks() {
@@ -268,7 +278,7 @@ clean_tasks() {
   sed -i "${first_line},${end_line}d" "$target_file"
 
   # まだタスクが残っていれば再帰的に処理
-  if grep -qE '^- \[[xX]\]' "$target_file"; then
+  if has_completed_tasks; then
     clean_tasks
     return
   fi
@@ -278,9 +288,11 @@ clean_tasks() {
 complete_task() {
   local complete_mark="✅️"
   first_line=$(head -1 "$target_file")
-  if [[ $first_line =~ ^##\ (.*)$ ]]; then
-    complete_title_task
-    return
+  if [[ $first_line =~ ^#+\ (.*)$ ]]; then
+    if ! has_tasks; then
+      complete_title_task
+      return
+    fi
   fi
   complete_normal_task
 }
