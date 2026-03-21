@@ -3,3 +3,37 @@
 install_arch() {
   def_install gogcli
 }
+setting_common() {
+  log
+  cat <<'EOF' | inki
+- setup gog
+  - build gog for android arm
+    - Modify Makefile in steipete/gogcli and run `make`
+      - see setup-termux-url-opener/README.md
+      - bin/gog file will be generated
+      - scp bin/gotg termux:bin
+  - setup gog credentials
+    - setup gog to use file auth
+      - `gog auth keyring file`
+      - or
+        ```bash
+        export GOG_KEYRING_BACKEND=file
+        export GOG_KEYRING_PASSWORD=SetPasswordHere
+       ```
+    - create client secret and download credentials from gcp
+    - add cred
+      - `gog auth credentials ~/Downloads/client_secret_....json`
+      -
+    - add account in pc(browser open and login)
+      - `gog auth add you@gmail.com`
+    - archive and send termux
+      ```sh
+      cd ~/.config
+      tar -czvf g.tar.gz gogcli
+      scp g.tar.gz termux:bin
+      ssh termux "cd bin && tar -xzvf g.tar.gz && rm g.tar.gz && mv gogcli ~/.config"
+      ```
+- re auth
+  - `gog auth add you@gmail.com`
+EOF
+}
