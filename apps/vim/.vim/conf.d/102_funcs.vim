@@ -1335,3 +1335,23 @@ function! s:close_special_windows() abort
   " この後、ウィンドウ1つの状態でquitが実行されるので、Vimが終了する
 endfunction
 autocmd QuitPre * call s:close_special_windows()
+
+" Markdownバッファをリッチテキストとしてクリップボードにコピー
+function! CopyAsRichText() abort
+  if !executable('pandoc')
+    echo "pandoc not found."
+    return
+  endif
+  if !executable('clip')
+    echo "clip not found."
+    return
+  endif
+  let tmpfile = tempname() . '.md'
+  execute 'write! ' . tmpfile
+  call system('pandoc -f markdown -t html ' . shellescape(tmpfile) . ' | clip')
+  call delete(tmpfile)
+  echo "Copied as rich text!"
+endfunction
+command! CopyAsRichText call CopyAsRichText()
+nnoremap <silent> <M-Y> :call CopyAsRichText()<CR>
+
