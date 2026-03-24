@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Open popupped parent task in browser.
+#   url like: https://xxx.atlassian.net/jira/software/projects/{PROJECT_ID}/boards/XXX?selectedIssue={PARENT_TASK_ID}
+# type: サブタスク
+
 main() {
   set -eo pipefail
   if [[ ! -p /dev/stdin ]]; then
@@ -9,13 +13,16 @@ main() {
   cat |
     grep -vE '^project	.*body$' |
     grep -vE '^#.*$' |
+    nl -ba -w1 -s$'\t' |
     fzf --exit-0 \
       --select-1 \
       --multi \
       --tac \
       --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' |
-    sort |
+    sort -t$'\t' -k1,1n |
+    cut -f2- |
     while IFS=$'\t' read -r project parent type summary body; do
+      echo "$summary"
       [[ -z $project ]] && continue
       [[ $project =~ ^#.* ]] && continue
       echo -e "$body" |
