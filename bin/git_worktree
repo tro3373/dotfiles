@@ -81,14 +81,22 @@ get_worktree_branch_name() {
   echo "${branch//\//-}"
 }
 
+_fzf_worktrees() {
+  # shellcheck disable=SC2016
+  fzf \
+    --exit-0 \
+    --reverse \
+    --height=100% \
+    --bind 'ctrl-l:toggle-all' \
+    --preview='echo {} | awk "{print \$NF \"/.tasks.md\"}" |xargs bat --color=always' \
+    --preview-window=down:70% \
+    "$@"
+}
+
 show_change_directory_command() {
   _list_root_and_worktree_directories |
-    fzf \
-      --exit-0 \
+    _fzf_worktrees \
       --no-multi \
-      --reverse \
-      --height=20% \
-      --bind 'ctrl-l:toggle-all' \
       --prompt="Select worktree branches to change directory: " |
     awk '{print $NF}' |
     while read -r branch_path; do
@@ -114,7 +122,7 @@ _list_root_and_worktree_directories() {
       fi
       _time=$(stat -c %y "$_target_path" | cut -d. -f1 | sed -e 's, ,_,g')
       printf "%s\t%s\t%s\n" "$_time" "$label" "$_target_path"
-    done | column -t -s $'\t'
+    done | sort -k 2 | column -t -s $'\t'
 
 }
 
@@ -213,6 +221,7 @@ _remove_worktree() {
 
   force_remove=0
   _brach_path=
+  # shellcheck disable=SC2016
   while read -r branch_path _; do
     [[ -z $branch_path ]] && continue
     [[ $branch_path =~ ^#.* ]] && continue
@@ -231,12 +240,8 @@ _remove_worktree() {
   done < <(
     _list_root_and_worktree_directories |
       grep -v "$repo_root_label" |
-      fzf \
-        --exit-0 \
+      _fzf_worktrees \
         --multi \
-        --reverse \
-        --height=20% \
-        --bind 'ctrl-l:toggle-all' \
         --prompt="Select branch to remove worktree for: " |
       awk '{print $NF " " $2}'
   )
