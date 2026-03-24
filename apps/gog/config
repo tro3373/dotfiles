@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 install_arch() {
-  def_install gogcli
+  go_install github.com/steipete/gogcli/cmd/gog@latest
 }
 setting_common() {
   log
