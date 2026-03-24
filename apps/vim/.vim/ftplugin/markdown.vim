@@ -7,13 +7,21 @@ iab tl - [ ]
 function Check()
   let l:line=getline('.')
   let l:curs=winsaveview()
+
   if l:line=~?'\s*-\s*\[\s*\].*'
     s/\[.\]/[x]/
   elseif l:line=~?'\s*-\s*\[x\].*'
     s/\[x\]/[ ]/
+  elseif l:line=~?'^\s*#\+\s\+\[\s*\].*'
+    s/\[.\]/[x]/
+  elseif l:line=~?'^\s*#\+\s\+\[x\].*'
+    s/\[x\]/[ ]/
+  elseif l:line=~?'^\s*#\+\s.*'
+    s/^\(\s*#\+\s\)/\1[ ] /
   else
-    s/- /- [ ] /
+    s/^\(\s*\)\(- \)\?/\1- [ ] /
   endif
+
   call winrestview(l:curs)
 endfunction
 nnoremap <silent> - :call Check()<CR>
