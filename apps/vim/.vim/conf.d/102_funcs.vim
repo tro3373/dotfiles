@@ -396,6 +396,7 @@ function! SaveTemp() abort
   let tmpfile = tempname() . '.md'
   execute 'write! ' . tmpfile
   exe ":e " . tmpfile
+  call SetTabs(2)
 endfun
 command! SaveTemp call SaveTemp()
 
