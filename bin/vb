@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-readonly DOT_BIN=${DOTPATH:-$HOME/.dot}/bin
 main() {
-  cd $DOT_BIN
-  $DOT_BIN/v "$@"
+  cd "$DOTPATH/bin" || exit 1
+  v "$@"
 }
 main "$@"
