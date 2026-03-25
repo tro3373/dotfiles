@@ -331,16 +331,6 @@ function cd_dir() {
   fi
   zle -R -c # refresh
 }
-function _find_src_root() {
-  # find $HOME/src/ -maxdepth 1 -mindepth 1 -type d
-  # find $HOME/go/src -type d -name '.git' 2>/dev/null | xargs dirname
-  {
-    find $HOME/.dot/bin/lib/bootstrap -maxdepth 1 -mindepth 1 -type d
-    find $HOME/.dot/bin/lib/setup -maxdepth 1 -mindepth 1 -type d
-    find $HOME/.dot/apps -maxdepth 1 -mindepth 1 -type d
-    ghq list --full-path 2>/dev/null
-  } | tac
-}
 function cd_src_root() {
   supported fzf || return
   supported ghq || return
@@ -349,8 +339,8 @@ function cd_src_root() {
   # LBUFFER: 現在のカーソル位置よりも左のバッファ
   # RBUFFER: 現在のカーソル位置を含む右のバッファ
   local src=$(
-    _find_src_root |
-      fzf --query "$LBUFFER" --preview "$preview_cmd"
+    find_repos |
+      fzf --tac --query "$LBUFFER" --preview "$preview_cmd"
   )
   cd_dir "$src"
 }
