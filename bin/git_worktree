@@ -8,6 +8,7 @@ mode=list
 branch=
 commit_hash=
 switch=0
+remove_after_merge=0
 args=()
 usage() {
   cat <<EOF
@@ -21,6 +22,8 @@ Add a new git worktree for the specified branch(or Remove it).
       -l        : List all worktrees with switch (default)
       -a        : Add a worktree for the specified branch
       -r        : Remove the worktree instead of adding it
+      -m        : Merge a worktree branch into the current branch
+      -mr       : Merge and then remove the worktree
       -e        : Edit config
       -sw       : Change directory
                     -a -sw: Switch to the newly added worktree directory
@@ -35,6 +38,8 @@ initialize() {
       -l) mode=list ;;
       -r) mode=remove ;;
       -a) mode=add ;;
+      -m) mode=merge ;;
+      -mr) mode=merge && remove_after_merge=1 ;;
       -e) mode=edit_config ;;
       -sw) switch=1 ;;
       *) add_args "$1" ;;
@@ -213,43 +218,78 @@ create_default_ln_config() {
   #   --exit-0 >"$ln_config"
 }
 
+_do_remove_worktree() {
+  local target_path="$1"
+
+  tasks --clean --directory "${target_path}" 1>&2 || :
+
+  ilog "==> Removing worktree path: '${target_path}'.."
+  if git worktree remove "${target_path}"; then
+    return 0
+  fi
+
+  if [[ ! -e ${target_path} ]]; then
+    return 0
+  fi
+
+  wlog "==> Worktree path '${target_path}' still exists. Force remove? (Cancel: Ctrl+C)"
+  read -r _
+  sudo rm -rfv "${target_path}"
+}
+
+_merge_worktree() {
+  # shellcheck disable=SC2016
+  while read -r branch_path; do
+    [[ -z ${branch_path} ]] && continue
+
+    local merge_branch
+    merge_branch=$(git -C "${branch_path}" rev-parse --abbrev-ref HEAD)
+
+    ilog "==> Merging branch '${merge_branch}' into current branch at '${git_org_root_dir}'.."
+    if ! git merge "${merge_branch}"; then
+      elog "Failed to merge branch '${merge_branch}'."
+    fi
+    ilog "==> Successfully merged branch '${merge_branch}'."
+
+    if [[ ${remove_after_merge} -ne 1 ]]; then
+      continue
+    fi
+
+    local merged_branch="merged/${merge_branch#*/}"
+    ilog "==> Renaming branch '${merge_branch}' -> '${merged_branch}'.."
+    git branch -m "${merge_branch}" "${merged_branch}"
+
+    _do_remove_worktree "${branch_path}"
+  done < <(
+    _list_root_and_worktree_directories |
+      grep -v "${repo_root_label}" |
+      _fzf_worktrees \
+        --no-multi \
+        --prompt="Select worktree branch to merge: " |
+      awk '{print $NF}'
+  )
+}
+
 _remove_worktree() {
   removal_list=$(_list_removal_worktrees)
-  if [[ -z $removal_list ]]; then
+  if [[ -z ${removal_list} ]]; then
     elog "No worktrees exist to remove."
   fi
 
-  force_remove=0
-  _brach_path=
   # shellcheck disable=SC2016
   while read -r branch_path _; do
-    [[ -z $branch_path ]] && continue
-    [[ $branch_path =~ ^#.* ]] && continue
+    [[ -z ${branch_path} ]] && continue
+    [[ ${branch_path} =~ ^#.* ]] && continue
 
-    tasks --clean --directory "$branch_path" 1>&2 || :
-
-    ilog "==> Removing worktree path: '$branch_path'.."
-    git worktree remove "$branch_path" || {
-      if [[ -e $branch_path ]]; then
-        force_remove=1
-        _brach_path="$branch_path"
-      fi
-    }
-    # ilog "==> Removing branch '$branch_name'.."
-    # git branch -d "$branch_name"
+    _do_remove_worktree "${branch_path}"
   done < <(
     _list_root_and_worktree_directories |
-      grep -v "$repo_root_label" |
+      grep -v "${repo_root_label}" |
       _fzf_worktrees \
         --multi \
         --prompt="Select branch to remove worktree for: " |
       awk '{print $NF " " $2}'
   )
-  if [[ $force_remove -eq 1 ]]; then
-    wlog "==> Worktree path '$_brach_path' still exist. Removing..(Cancel: Ctrl+C)"
-    read -r _
-    sudo rm -rfv "$_brach_path"
-  fi
 }
 
 _list_removal_worktrees() {
@@ -280,6 +320,10 @@ main() {
 
   if [[ $mode == "add" ]]; then
     _add_worktree
+    return
+  fi
+  if [[ $mode == "merge" ]]; then
+    _merge_worktree
     return
   fi
   if [[ $mode == "remove" ]]; then
