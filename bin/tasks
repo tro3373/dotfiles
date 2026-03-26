@@ -8,6 +8,7 @@ grep_key_task_completed='- \[[xX]\]' && readonly grep_key_task_completed
 args=()
 mode=list
 target_dir=
+comment_type=
 
 usage() {
   cat <<EOF
@@ -24,6 +25,7 @@ Manage repository tasks.
       -n|--next           : Show next task chunk
       -c|--clean          : Move completed tasks to .tasks/done/done.md
       ok|v|done|complete  : Mark next task chunk as completed
+      -m|--comment [type] : Add comment to first task (type: requirement|review|complete)
       --summary           : Show title of tasks
 EOF
 }
@@ -38,6 +40,12 @@ initialize() {
       -sa | --split-all) mode="split-all" ;;
       -n | --next) mode="next" ;;
       -c | --clean) mode="clean" ;;
+      -m | --comment)
+        if [[ -z ${2:-} ]]; then
+          error "==> -m|--comment requires a type argument: requirement|review|complete"
+        fi
+        shift && comment_type=$1 && mode="comment"
+        ;;
       ok | v | done | complete) mode="complete" ;;
       --summary) mode="summary" ;;
       # -f*|--file*) file=${1#*=} ;;
@@ -167,7 +175,7 @@ parse_tasks() {
   grep_key=$grep_key_task_exists
   [[ $comp -eq 1 ]] && grep_key=$grep_key_task_completed
   if [[ ! -s $target_file ]] || ! grep -qE "^$grep_key" "$target_file"; then
-    error "==> Empty tasks. $target_file"
+    error "==> Empty tasks."
   fi
 
   read -r first_line second_line <<<"$(
@@ -300,7 +308,7 @@ complete_task() {
 complete_title_task() {
   completed=0
   if echo "$first_line" | grep -qE $complete_mark; then
-    warn "==> Task already marked as completed. $target_file"
+    warn "==> Task already marked as completed."
     completed=1
   fi
   if [[ $completed -eq 0 ]]; then
@@ -318,6 +326,47 @@ complete_normal_task() {
   sed -i "${first_line}s/^- \[ \]/- [x]/" "$target_file"
   info "==> $complete_mark Task marked as completed"
   sed -n "${first_line}p" "$target_file"
+}
+
+get_comment_header() {
+  case "${comment_type}" in
+    requirement) echo "🎭 要件(ふるまい)" ;;
+    review) echo "👍 レビュー修正" ;;
+    complete) echo "✅ 完了" ;;
+    *) error "==> Invalid comment type: ${comment_type}. Use: requirement|review|complete" ;;
+  esac
+}
+
+comment_task() {
+  local header
+  header=$(get_comment_header)
+
+  if [[ -t 0 ]]; then
+    error "==> No stdin input. Usage: echo 'comment' | tasks -m ${comment_type}"
+  fi
+
+  local stdin_content
+  stdin_content=$(cat)
+  if [[ -z ${stdin_content} ]]; then
+    error "==> Empty stdin input."
+  fi
+
+  parse_tasks 0
+
+  local temp_file
+  temp_file=$(mktemp)
+  trap 'rm -f "${temp_file}"' EXIT
+
+  echo "  - ${header}" >"${temp_file}"
+  while IFS= read -r line; do
+    echo "    ${line}" >>"${temp_file}"
+  done <<<"${stdin_content}"
+
+  sed -i "${end_line}r ${temp_file}" "${target_file}"
+  rm -f "${temp_file}"
+  trap - EXIT
+
+  info "==> Comment added to task"
 }
 
 summary_tasks() {
@@ -343,6 +392,8 @@ main() {
 
   target_file="$git_root/.tasks.md"
   initialize_links_if_needed
+  # NOTE: fix sed -i overwrite symlink and break link, so use realpath
+  target_file=$(realpath "$target_file")
 
   if [[ $mode == "next" ]]; then
     cat_first_task
@@ -358,6 +409,10 @@ main() {
   fi
   if [[ $mode == "clean" ]]; then
     clean_tasks
+    return
+  fi
+  if [[ ${mode} == "comment" ]]; then
+    comment_task
     return
   fi
   if [[ $mode == "complete" ]]; then
