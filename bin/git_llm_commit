@@ -2,6 +2,7 @@
 
 command_name=$(basename "$0") && readonly command_name
 readonly depends=(jq llm)
+use_claude=1
 
 trap_error() {
   cat <<EOF | ink red
@@ -49,8 +50,14 @@ cat_commit_msg() {
 
 main() {
   mode=en
-  [[ $1 == --ja ]] && mode=ja
   [[ $1 == --help ]] && echo "Usage: $command_name [--ja]" && exit 0
+  [[ $1 == --ja ]] && mode=ja
+  if [[ $use_claude -eq 1 ]]; then
+    lang="in English"
+    [[ $mode == ja ]] && lang="in Japanese"
+    claude --dangerously-skip-permissions --enable-auto-mode --model haiku -p "/commit-ctx $lang. no ask. force do commit."
+    return
+  fi
   hass "${depends[@]}"
 
   # もしコミットする変更がなければエラーを出力して終了
