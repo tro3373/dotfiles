@@ -393,12 +393,17 @@ endfun
 command! SaveMdDraft call SaveMdDraft()
 
 function! SaveTemp() abort
-  let tmpfile = tempname() . '.md'
-  execute 'write! ' . tmpfile
-  exe ":e " . tmpfile
-  call SetTabs(2)
+  " let tmpfile = tempname() . '.md'
+  " execute 'write! ' . tmpfile
+  " exe ":e " . tmpfile
+  " call SetTabs(2)
+  let mdpath = Chomp(system('md -ne'))
+  execute 'write! ' . mdpath
+  exe ":e " . mdpath
 endfun
 command! SaveTemp call SaveTemp()
+command! Md call SaveTemp()
+nnoremap <silent> <Leader>m :<C-u>call SaveTemp()<CR>
 
 function! SaveMdCommon(dir) abort
   let tmpfile = WriteToTemp()

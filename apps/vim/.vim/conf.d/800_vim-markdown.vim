@@ -48,7 +48,8 @@ let g:vim_markdown_frontmatter=1
 let g:vim_markdown_toml_frontmatter=1
 let g:vim_markdown_json_frontmatter=0
 
-" 自動インデントのサイズを4(default)=>2に変更
-let g:vim_markdown_new_list_item_indent = 2
+" 自動インデントのサイズを4(default)=>0に変更
+" NOTE: 0 で次の行の開始位置を前の行と同じにする!
+let g:vim_markdown_new_list_item_indent = 0
 
 set nofoldenable
