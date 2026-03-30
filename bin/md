@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+timestamp=$(date +%Y%m%d.%H%M%S) && readonly timestamp
+main() {
+  set -eo pipefail
+  dst="${DOTPATH:-~/.dot}/.trash/md/md-${timestamp}.md"
+  mkdir -p "$(dirname "$dst")"
+  touch "$dst"
+  if [[ $1 == "-ne" ]]; then
+    echo "$dst"
+    return
+  fi
+  echo "$dst" | v
+}
+main "$@"
