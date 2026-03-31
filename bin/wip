@@ -19,7 +19,7 @@ main() {
     return
   fi
   local msg="$*"
-  [[ -z $msg ]] && msg=wip
+  [[ -z $msg ]] && msg="wip: $(date +"%Y-%m-%d %H:%M:%S")"
   if ! has_staged_changes; then
     git add -A
   fi

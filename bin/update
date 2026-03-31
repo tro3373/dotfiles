@@ -128,7 +128,7 @@ main() {
   fi
   update_claude
   update_go_bins
-  update_node_bins
+  # update_node_bins
   ilog "Done!"
 }
 main "$@"

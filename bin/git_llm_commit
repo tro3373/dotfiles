@@ -2,7 +2,7 @@
 
 command_name=$(basename "$0") && readonly command_name
 readonly depends=(jq llm)
-use_claude=1
+use_claude=0
 
 trap_error() {
   cat <<EOF | ink red
