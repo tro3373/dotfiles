@@ -9,6 +9,7 @@ args=()
 mode=list
 target_dir=
 comment_type=
+comment_file=
 
 usage() {
   cat <<EOF
@@ -26,6 +27,7 @@ Manage repository tasks.
       -c|--clean          : Move completed tasks to .tasks/done/done.md
       ok|v|done|complete  : Mark next task chunk as completed
       -m|--comment [type] : Add comment to first task (type: requirement|review|complete)
+      -f|--file [path]    : Specify file to read comment content from (use with -m)
       --summary           : Show title of tasks
 EOF
 }
@@ -46,10 +48,9 @@ initialize() {
         fi
         shift && comment_type=$1 && mode="comment"
         ;;
+      -f | --file) shift && comment_file=$1 ;;
       ok | v | done | complete) mode="complete" ;;
       --summary) mode="summary" ;;
-      # -f*|--file*) file=${1#*=} ;;
-      # -f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
     esac
     shift
@@ -341,14 +342,23 @@ comment_task() {
   local header
   header=$(get_comment_header)
 
-  if [[ -t 0 ]]; then
-    error "==> No stdin input. Usage: echo 'comment' | tasks -m ${comment_type}"
+  local input_content
+  if [[ -n ${comment_file} ]]; then
+    if [[ ! -f ${comment_file} ]]; then
+      error "==> File not found: ${comment_file}"
+    fi
+    input_content=$(cat "${comment_file}")
   fi
 
-  local stdin_content
-  stdin_content=$(cat)
-  if [[ -z ${stdin_content} ]]; then
-    error "==> Empty stdin input."
+  if [[ -z ${input_content:-} ]]; then
+    if [[ -t 0 ]]; then
+      error "==> No input. Usage: echo 'comment' | tasks -m ${comment_type} or tasks -m ${comment_type} -f <file>"
+    fi
+    input_content=$(cat)
+  fi
+
+  if [[ -z ${input_content} ]]; then
+    error "==> Empty input."
   fi
 
   parse_tasks 0
@@ -360,7 +370,7 @@ comment_task() {
   echo "  - ${header}" >"${temp_file}"
   while IFS= read -r line; do
     echo "    ${line}" >>"${temp_file}"
-  done <<<"${stdin_content}"
+  done <<<"${input_content}"
 
   sed -i "${end_line}r ${temp_file}" "${target_file}"
   rm -f "${temp_file}"
