@@ -105,8 +105,14 @@ _G.copilot_chat_setup = function()
       ExplainJp = {
         prompt = "これなに？",
         system_prompt = "あなたは優秀なプログラマーです。",
-        -- mapping = "<leader>ccmc",
-        -- description = "My custom prompt description",
+        mapping = "<leader>;",
+        description = "what's this?",
+      },
+      LangAssist = {
+        prompt = "選択されたテキストを判定してください。英語の場合は文法・表現を添削して改善版を提示してください。日本語の場合は自然な英語に翻訳してください。結果には、文法の説明、使えるイディオムや慣用句、より自然な表現の提案も含めてください。",
+        system_prompt = "あなたはプロの英語ネイティブ翻訳者・校正者です。",
+        mapping = "<leader>l",
+        description = "英語添削 / 日本語→英訳",
       },
     },
     -- prompts = {
