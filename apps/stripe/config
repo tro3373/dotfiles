@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+install_arch() {
+  def_install stripe-cli
+}
+install_mac() {
+  def_install stripe/stripe-cli/stripe
+}
