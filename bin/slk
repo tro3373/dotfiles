@@ -154,59 +154,115 @@ lchannel() {
       fi
       echo "${_channel}"
       ;;
+    \#*)
+      local _resp
+      _resp=$(
+        curl -k -s -X POST https://slack.com/api/conversations.list \
+          --data-urlencode "token=${token}" \
+          --data-urlencode "types=public_channel" \
+          --data-urlencode "limit=1000" 2>&1
+      )
+      dlog "==> conversations.list response: ${_resp}"
+      _channel=$(echo "${_resp}" | jq -r ".channels | map(select(.name == \"${channel/#\#/}\")) | .[0].id")
+      if [[ -z ${_channel} || ${_channel} == "null" ]]; then
+        echo "==> Error: Channel not found: ${channel}" >&2
+        return 1
+      fi
+      echo "${_channel}"
+      ;;
     *) echo "${channel}" ;;
   esac
 }
 
+upload_file_v2() {
+  local file_path="$1"
+  local file_size="$2"
+  local filename="$3"
+  local _channel="${4:-}"
+
+  local upload_url_resp
+  upload_url_resp=$($dummy curl -k -fSsL -X GET \
+    "https://slack.com/api/files.getUploadURLExternal?filename=${filename}&length=${file_size}" \
+    -H "Authorization: Bearer ${token}")
+  dlog "==> getUploadURLExternal response: ${upload_url_resp}"
+
+  local ok
+  ok=$(echo "${upload_url_resp}" | jq -r '.ok')
+  if [[ ${ok} != "true" ]]; then
+    echo "${upload_url_resp}"
+    return 1
+  fi
+
+  local upload_url file_id
+  upload_url=$(echo "${upload_url_resp}" | jq -r '.upload_url')
+  file_id=$(echo "${upload_url_resp}" | jq -r '.file_id')
+
+  $dummy curl -k -fSsL -X POST "${upload_url}" \
+    -F "file=@${file_path}" >/dev/null
+  dlog "==> Uploaded to ${upload_url}"
+
+  local files_param="[{\"id\":\"${file_id}\",\"title\":\"${filename}\"}]"
+  local complete_args=(-k -fSsL -X POST "https://slack.com/api/files.completeUploadExternal"
+    -H "Authorization: Bearer ${token}"
+    -H "Content-Type: application/json; charset=utf-8")
+
+  local body="{\"files\":${files_param}"
+  if [[ -n ${_channel} ]]; then
+    body="${body},\"channel_id\":\"${_channel}\""
+  fi
+  body="${body}}"
+
+  $dummy curl "${complete_args[@]}" -d "${body}"
+}
+
 send() {
-  local _filename
   export http_proxy=
   export https_proxy=
-  if [[ -n $upload_file_path ]]; then
-    dlog "==> Uploading file from $upload_file_path"
-    _filename=$(basename "$upload_file_path")
-    # ${filetype:+ --form "filetype=${filetype}"} \
-    # ${title:+ --form "title=${title}"} \
-    $dummy curl -k -fSsL -X POST https://slack.com/api/files.upload \
-      ${channel:+ --form-string "channels=$(lchannel)"} \
-      ${upload_file_path:+ --form "file=@${upload_file_path}"} \
-      ${_filename:+ --form "filename=${_filename}"} \
-      --form "token=${token}"
+
+  if [[ -n ${upload_file_path} ]]; then
+    dlog "==> Uploading file from ${upload_file_path}"
+    local _filename _filesize _ch
+    _filename=$(basename "${upload_file_path}")
+    _filesize=$(wc -c <"${upload_file_path}")
+    _ch=""
+    if [[ -n ${channel} ]]; then
+      _ch=$(lchannel)
+    fi
+    upload_file_v2 "${upload_file_path}" "${_filesize}" "${_filename}" "${_ch}"
     return
   fi
 
-  if [[ $upload_file -eq 1 || $should_upload_file -eq 1 ]]; then
-    dlog "==> Uploading as file. upload_file: $upload_file, should_upload_file: $should_upload_file"
-    # ${_filename:+ --data-urlencode "filename=${_filename}"} \
-    # ${filetype:+ --data-urlencode "filetype=${filetype}"} \
-    # ${title:+ --data-urlencode "title=${title}"} \
-    echo -e "$message" |
-      $dummy curl -k -fSsL -X POST https://slack.com/api/files.upload \
-        ${channel:+ --data-urlencode "channels=$(lchannel)"} \
-        ${icon:+ --data-urlencode "icon_emoji=$icon"} \
-        ${name:+ --data-urlencode "username=$name"} \
-        --data-urlencode "token=${token}" \
-        --data-urlencode content@-
+  if [[ ${upload_file} -eq 1 || ${should_upload_file} -eq 1 ]]; then
+    dlog "==> Uploading as file. upload_file: ${upload_file}, should_upload_file: ${should_upload_file}"
+    local _tmpfile _tmpsize _ch
+    _tmpfile=$(mktemp)
+    echo -e "${message}" >"${_tmpfile}"
+    _tmpsize=$(wc -c <"${_tmpfile}")
+    _ch=""
+    if [[ -n ${channel} ]]; then
+      _ch=$(lchannel)
+    fi
+    upload_file_v2 "${_tmpfile}" "${_tmpsize}" "message.txt" "${_ch}"
+    rm -f "${_tmpfile}"
     return
   fi
 
   dlog "==> Sending message"
-  echo -e "$message" |
+  echo -e "${message}" |
     $dummy curl -k -fSsL -X POST https://slack.com/api/chat.postMessage \
       ${channel:+ --data-urlencode "channel=$(lchannel)"} \
-      ${icon:+ --data-urlencode "icon_emoji=$icon"} \
-      ${name:+ --data-urlencode "username=$name"} \
-      --data-urlencode "token=$token" \
+      ${icon:+ --data-urlencode "icon_emoji=${icon}"} \
+      ${name:+ --data-urlencode "username=${name}"} \
+      --data-urlencode "token=${token}" \
       --data-urlencode text@-
 }
 
 main() {
   initialize "$@"
-  send |
-    if [[ $debug -eq 1 ]]; then
-      cat - | jq .
-    else
-      cat - | jq ".ok"
-    fi
+  local jq_filter=".ok"
+  if [[ ${debug} -eq 1 ]]; then
+    jq_filter="."
+  fi
+  send | jq "${jq_filter}"
 }
 main "$@"
