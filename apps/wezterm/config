@@ -21,10 +21,34 @@ install_ubuntu() {
 }
 install_redhat() { not_supported; }
 setting_common() {
+  tips_cwd_fork
   if os orb; then
     not_supported
     return
   fi
   # shellcheck disable=SC2154
   make_lnk_with_bkup "$app_dir/wezterm" "${HOME}/.config/wezterm"
+}
+
+tips_cwd_fork() {
+  cat <<'EOF' | inki
+- Tips for cwd fork
+  - Check or add below to .tmux.conf
+    ```tmux
+    # For wezterm cwd fork: wezterm osc7用に追加
+    set -g allow-passthrough on
+    ```
+  - Check or add below to .works.zsh
+    ```zsh
+    # For wezterm cwd fork
+    __wezterm_osc7() {
+      if [[ -n $TMUX ]]; then
+        printf '\ePtmux;\e\033]7;file://%s%s\033\\\e\\' "${HOST}" "${PWD}"
+        return
+      fi
+      printf '\e]7;file://%s%s\e\\' "${HOST}" "${PWD}"
+    }
+    precmd_functions+=(__wezterm_osc7)
+    ```
+EOF
 }
