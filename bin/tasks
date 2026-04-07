@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 readonly depends=(curl fzf jq)
+timestamp=$(date +%Y%m%d-%H%M%S) && readonly timestamp
 command_name=$(basename "$0") && readonly command_name
 worktree_dir_name="-worktree" && readonly worktree_dir_name
 grep_key_task_exists='- \[ \]' && readonly grep_key_task_exists
@@ -72,54 +73,37 @@ error() { _log red "$*" && exit 1; }
 current_is_worktree_dir() { [[ $git_root =~ ^.*${worktree_dir_name}/.*$ ]]; }
 
 initialize_links_if_needed() {
-  [[ -e $target_file ]] && return
-
-  if current_is_worktree_dir; then
-    init_link_tasks_for_worktree
-    return
-  fi
-
-  # Initialize if Not exist and Not in worktree directory
-  init_link_tasks
-}
-
-init_link_tasks() {
-  info "==> Initialize tasks for repository root directory.."
-  repo_name=$(basename "$git_root")
-  srcd="$HOME/.mo/tasks/$repo_name"
-  info "==> Creating tasks directory at $srcd"
-  mkdir -p "$srcd"/tasks/done
-  touch "$srcd"/tasks.md
-  info "==> Linking .tasks/ directory to $git_root"
-  ln -s "$srcd/tasks" "$git_root/.tasks"
-  info "==> Linking .tasks.md to $git_root"
-  ln -s "$srcd/tasks.md" "$git_root/.tasks.md"
-}
-
-init_link_tasks_for_worktree() {
-  info "==> Initialize tasks for worktree directory.."
-  worktree_name=$(basename "$git_root")
-  # repo_name=$(basename "${git_root%%/.git/*}")
-  worktree_root_name=$(basename "$(dirname "$git_root")")
-  repo_name=${worktree_root_name%"$worktree_dir_name"}
-  srcd="$HOME/.mo/tasks/$repo_name"
-  src_tasks_dir="$srcd/tasks"
-
-  info "==> Creating tasks directory at $srcd"
-  mkdir -p "$src_tasks_dir"/done
-  touch "$srcd"/tasks.md
-
-  src_tasks_md="$src_tasks_dir/$worktree_name.md"
-  touch "$src_tasks_md"
   dst_tasks_md="$git_root/.tasks.md"
-  info "==> Linking $src_tasks_md to $dst_tasks_md"
-  ln -s "$src_tasks_md" "$dst_tasks_md"
-
   dst_tasks_dir="$git_root/.tasks"
-  if [[ ! -e $dst_tasks_dir ]]; then
-    info "==> Linking $src_tasks_dir to $dst_tasks_dir"
-    ln -s "$src_tasks_dir" "$dst_tasks_dir"
+  [[ -e $dst_tasks_md && -e $dst_tasks_dir ]] && return
+
+  info "==> Initialize tasks files.."
+  repo_name=$(basename "$git_root")
+  suffix="tasks"
+  if current_is_worktree_dir; then
+    worktree_root_name=$(basename "$(dirname "$git_root")")
+    repo_name=${worktree_root_name%"$worktree_dir_name"}
+    worktree_name=$(basename "$git_root")
+    suffix="${worktree_name}_tasks"
   fi
+  tasks_dir="$HOME/.mo/tasks/$repo_name"
+  tasks_md="$(find "$tasks_dir/" -type f -name "*_${suffix}.md" | sort | tail -1 || :)"
+  if [[ -z $tasks_md ]]; then
+    tasks_md="$tasks_dir/${timestamp}_${suffix}.md"
+  fi
+  if [[ ! -e $dst_tasks_dir ]]; then
+    mkdir -p "$tasks_dir/done"
+    _ln "$tasks_dir" "$dst_tasks_dir"
+  fi
+  if [[ ! -e $dst_tasks_md ]]; then
+    touch "$tasks_md"
+    _ln "$tasks_md" "$dst_tasks_md"
+  fi
+}
+
+_ln() {
+  info "==> Linking $1 to $2"
+  ln -s "$1" "$2"
 }
 
 find_tasks() {
@@ -217,7 +201,7 @@ split_tasks() {
 
   # タスクファイル作成
   worktree_name=${branch/\//-}
-  local task_file=".tasks/${worktree_name}_${name}.md"
+  local task_file=".tasks/${timestamp}_${worktree_name}_${name}.md"
   # NOTE: git_worktree -a で link まで貼られるので、事前にファイル作成しておく
   touch "$task_file"
 
@@ -237,9 +221,9 @@ $(cat "$temp_file")
 EOF
 
   # link task_file
-  ln -s "$(realpath "$git_root/$task_file")" "$worktree_dir/.tasks.md"
+  _ln "$(realpath "$git_root/$task_file")" "$worktree_dir/.tasks.md"
   if [[ ! -e "$worktree_dir/.tasks" ]]; then
-    ln -s "$(realpath "$git_root/.tasks")" "$worktree_dir/.tasks"
+    _ln "$(realpath "$git_root/.tasks")" "$worktree_dir/.tasks"
   fi
 
   # tempファイル削除
@@ -276,11 +260,11 @@ clean_tasks() {
     info "==> Moving $real_task_file to $real_done_dir/"
     mv -v "$real_task_file" "$real_done_dir/"
     worktree_name=$(basename "$git_root")
-    find "$git_root/.tasks/" -maxdepth 1 -mindepth 1 -type f -name "${worktree_name}_*.md" -exec mv -v {} "$git_root/.tasks/done/" \;
+    find "$git_root/.tasks/" -maxdepth 1 -mindepth 1 -type f -name "*_${worktree_name}_*.md" -exec mv -v {} "$git_root/.tasks/done/" \;
     return
   fi
 
-  local done_file="$git_root/.tasks/done/done.md"
+  local done_file="$git_root/.tasks/done/${timestamp}_done.md"
   parse_tasks 1
   sed -n "${first_line},${end_line}p" "$target_file" | tee -a "$done_file"
   # 元ファイルから削除
