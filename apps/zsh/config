@@ -15,7 +15,7 @@ install_ubuntu() {
 
 setting_common() {
   # .works.zsh
-  [ ! -e ~/.works.zsh ] && exe touch ~/.works.zsh && exe chmod 755 ~/.works.zsh
+  [ ! -e ~/.works.zsh ] && exe touch ~/.works.zsh && exe chmod 700 ~/.works.zsh
 
   ## ZPlug
   #local zplug_home=~/.zplug

@@ -39,6 +39,7 @@ _zcompile_ifneeded() {
   [[ -e $1.zwc && $1 -ot $1.zwc ]] && return
   log "==> zcompiling $1 .."
   zcompile $1
+  chmod 400 $1.zwc
 }
 _zshrc() {
   #===========================================
