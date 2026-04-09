@@ -48,6 +48,8 @@ tips_cwd_fork() {
       fi
       printf '\e]7;file://%s%s\e\\' "${HOST}" "${PWD}"
     }
+    # Setting to always keep the contents of the array unique (no duplicates)
+    typeset -gU precmd_functions
     precmd_functions+=(__wezterm_osc7)
     ```
 EOF
