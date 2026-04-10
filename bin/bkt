@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+args=()
+dummy="echo"
+to_his=0
+add_args() { args+=("$@"); }
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -e) dummy= ;;
+      -h) to_his=1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  set -euo pipefail
+}
+
+fire() {
+  if [[ ${#args[@]} -gt 0 ]]; then
+    echo "${args[@]}"
+  fi
+  if [[ -p /dev/stdin ]]; then
+    cat -
+  fi
+}
+
+last_mod_at() {
+  if [[ "$(uname)" == "Darwin" ]]; then
+    stat -f '%m' "$1"
+    return
+  fi
+  stat -c '%Y' "$1"
+}
+
+main() {
+  initialize "$@"
+  if [[ -n $dummy ]]; then
+    warn "==> This is dry-run mode. Use -e to execute."
+  fi
+  fire |
+    tr ' ' '\n' |
+    while IFS= read -r f; do
+      [[ -z $f ]] && continue
+      [[ $f =~ ^#.* ]] && continue
+      [[ ! -e $f ]] && continue
+      dir="$(dirname "$f")"
+      if [[ $to_his -eq 1 ]]; then
+        dir="${dir}/.history"
+        if [[ ! -e $dir ]]; then
+          $dummy mkdir -p "$dir"
+        fi
+      fi
+      last_mod_at_sec="$(last_mod_at "$f")"
+      formatted="$(date -d "@${last_mod_at_sec}" '+%Y%m%d-%H%M%S')"
+      basename="$(basename "$f")"
+      new_name="${dir}/${formatted}.${basename}"
+      if [[ -e ${new_name} ]]; then
+        new_name="${dir}/${formatted}.$(date +%Y%m%d.%H%M%S).${basename}"
+      fi
+      $dummy mv -v "$f" "${new_name}"
+    done
+  info "Done!"
+}
+
+main "$@"
