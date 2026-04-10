@@ -264,9 +264,14 @@ clean_tasks() {
     return
   fi
 
-  local done_file="$git_root/.tasks/done/${timestamp}_done.md"
+  ymd=$(date +%Y%m%d)
+  local done_file="$git_root/.tasks/done/${ymd}_done.md"
   parse_tasks 1
-  sed -n "${first_line},${end_line}p" "$target_file" | tee -a "$done_file"
+  {
+    echo "## $timestamp"
+    sed -n "${first_line},${end_line}p" "$target_file"
+  } | tee -a "$done_file"
+
   # 元ファイルから削除
   sed -i "${first_line},${end_line}d" "$target_file"
 
