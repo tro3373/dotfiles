@@ -13,3 +13,4 @@ nmap <Leader>c  <Plug>CommentaryLine
 
 autocmd FileType markdown setlocal commentstring=>\ %s
 autocmd FileType sql setlocal commentstring=--\ %s
+autocmd FileType bru setlocal commentstring=#\ %s

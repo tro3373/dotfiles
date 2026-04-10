@@ -190,6 +190,7 @@ if has("autocmd")
   autocmd BufNewFile,BufRead *.vba setlocal ft=vb ts=4 sts=4 sw=4
   autocmd BufNewFile,BufRead Jenkinsfile setlocal ft=groovy
   autocmd BufNewFile,BufRead settings.json set filetype=jsonc
+  autocmd BufNewFile,BufRead *.bru setlocal ft=bru
 
   " ctagsファイルの設定ファイル
   " autocmd BufNewFile,BufRead *.rb set tags+=;$HOME/.ruby.ctags;
