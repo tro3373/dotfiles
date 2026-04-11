@@ -250,37 +250,44 @@ has_completed_tasks() {
 }
 
 clean_tasks() {
+  trap 'info "==> Task cleaned"' EXIT
   if current_is_worktree_dir; then
-    real_task_file=$(realpath "$git_root/.tasks.md")
-    real_done_dir=$(realpath "$git_root/.tasks/done")
-    if [[ ! -e $real_task_file ]] || [[ ! -e $real_done_dir ]]; then
-      error "==> Invalid state. real_task_file=$real_task_file, real_done_dir=$real_done_dir"
-    fi
-    # TODO dst is exist
-    info "==> Moving $real_task_file to $real_done_dir/"
-    mv -v "$real_task_file" "$real_done_dir/"
-    worktree_name=$(basename "$git_root")
-    find "$git_root/.tasks/" -maxdepth 1 -mindepth 1 -type f -name "*_${worktree_name}_*.md" -exec mv -v {} "$git_root/.tasks/done/" \;
+    clean_worktree_tasks
     return
   fi
+  clean_normal_tasks
+}
 
+clean_worktree_tasks() {
+  real_task_file=$(realpath "$git_root/.tasks.md")
+  real_done_dir=$(realpath "$git_root/.tasks/done")
+  if [[ ! -e $real_task_file ]] || [[ ! -e $real_done_dir ]]; then
+    error "==> Invalid state. real_task_file=$real_task_file, real_done_dir=$real_done_dir"
+  fi
+  # TODO dst is exist
+  info "==> Moving $real_task_file to $real_done_dir/"
+  mv -v "$real_task_file" "$real_done_dir/"
+  worktree_name=$(basename "$git_root")
+  find "$git_root/.tasks/" -maxdepth 1 -mindepth 1 -type f -name "*_${worktree_name}_*.md" -exec mv -v {} "$git_root/.tasks/done/" \;
+}
+
+clean_normal_tasks() {
+  has_completed_tasks || return 0
   ymd=$(date +%Y%m%d)
   local done_file="$git_root/.tasks/done/${ymd}_done.md"
-  parse_tasks 1
-  {
-    echo "## $timestamp"
-    sed -n "${first_line},${end_line}p" "$target_file"
-  } | tee -a "$done_file"
+  echo "## $timestamp" | tee -a "$done_file"
+  clean_normal_tasks_recursive
+}
 
+clean_normal_tasks_recursive() {
+  parse_tasks 1
+  sed -n "${first_line},${end_line}p" "$target_file" |
+    tee -a "$done_file"
   # 元ファイルから削除
   sed -i "${first_line},${end_line}d" "$target_file"
-
   # まだタスクが残っていれば再帰的に処理
-  if has_completed_tasks; then
-    clean_tasks
-    return
-  fi
-  info "==> Task cleaned"
+  has_completed_tasks || return 0
+  clean_normal_tasks_recursive
 }
 
 complete_task() {
