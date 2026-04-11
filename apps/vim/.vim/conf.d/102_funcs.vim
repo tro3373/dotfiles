@@ -1361,3 +1361,46 @@ endfunction
 command! CopyAsRichText call CopyAsRichText()
 nnoremap <silent> <M-Y> :call CopyAsRichText()<CR>
 
+" カーソル行のURL または Markdownリンク [text](url) をブラウザで開く
+function! OpenUrlOnCursor() abort
+  let line = getline('.')
+  let col = col('.')
+
+  " カーソル位置を含む [text](url) を探す
+  let pos = 0
+  while pos < len(line)
+    let m = matchstrpos(line, '\[.\{-}\](https\?://[^)]\+)', pos)
+    if m[1] == -1
+      break
+    endif
+    " カーソルがこのマッチ範囲内にあるか (col は 1-based, matchstrpos は 0-based)
+    if col >= m[1] + 1 && col <= m[2]
+      let url = matchstr(m[0], '(\zshttps\?://[^)]\+\ze)')
+      call openbrowser#open(url)
+      return
+    endif
+    let pos = m[2]
+  endwhile
+
+  " フォールバック: カーソル行から bare URL を探す
+  let url_pattern = 'https\?://[^ \t)\]>]\+'
+  let pos = 0
+  while pos < len(line)
+    let m = matchstrpos(line, url_pattern, pos)
+    if m[1] == -1
+      break
+    endif
+    if col >= m[1] + 1 && col <= m[2]
+      call openbrowser#open(m[0])
+      return
+    endif
+    let pos = m[2]
+  endwhile
+
+  echo "No URL found on cursor line."
+endfunction
+augroup markdown-open-url
+  au!
+  au FileType markdown nnoremap <buffer> <silent> <Leader>j :call OpenUrlOnCursor()<CR>
+augroup END
+
