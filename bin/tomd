@@ -1,0 +1,47 @@
+#!/usr/bin/env -S bash -e
+
+current_dir=$(pwd) && readonly current_dir
+timestamp=$(date +%Y%m%d-%H%M%S) && readonly timestamp
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
+sanitize() {
+  [[ -t 0 ]] && error "==> No string provided."
+  sed -e 's/[\/\:*?"<>|]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//'
+}
+
+fire() {
+  {
+    if [[ -p /dev/stdin ]]; then
+      cat -
+    fi
+    if [[ $# -ne 0 ]]; then
+      echo "$@"
+    fi
+  } | tr " " "\n"
+}
+
+main() {
+  set -euo pipefail
+  [[ ! -p /dev/stdin && $# -eq 0 ]] && error "==> No URL provided."
+  fire "$@" |
+    while read -r url; do
+      [[ -z $url ]] && continue
+      [[ $url =~ ^#.* ]] && continue
+      tmp_md=/tmp/"$timestamp".md
+      markitdown "$url" -o "$tmp_md"
+      title=$(grep '^#' "$tmp_md" | head -1 | sed -e 's/^[# \t]\+//' -e 's/ /_/g' | sanitize || :)
+      [[ -z $title ]] && title=$(basename "$tmp_md" .md)
+      dst="$current_dir/$title.md"
+      [[ -e $dst ]] && dst=${dst%.md}_"$timestamp".md
+      mv -v "$tmp_md" "$dst"
+    done
+}
+main "$@"
