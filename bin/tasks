@@ -11,6 +11,7 @@ mode=list
 target_dir=
 comment_type=
 comment_file=
+task_index=1
 
 usage() {
   cat <<EOF
@@ -24,7 +25,8 @@ Manage repository tasks.
       -d|--directory      : Show task directory
       -s|--split          : Split tasks into multiple files
       -sa|--split-all     : Split all tasks into multiple files
-      -n|--next           : Show next task chunk
+      -n|--next [N]       : Show next task chunk (N=1..: Nth task, default 1)
+                            Also: -nN, --next=N
       -c|--clean          : Move completed tasks to .tasks/done/done.md
       ok|v|done|complete  : Mark next task chunk as completed
       -m|--comment [type] : Add comment to first task (type: requirement|review|complete)
@@ -41,7 +43,22 @@ initialize() {
       -d | --directory) shift && target_dir=$1 ;;
       -s | --split) mode="split" ;;
       -sa | --split-all) mode="split-all" ;;
-      -n | --next) mode="next" ;;
+      -n | --next)
+        mode="next"
+        if [[ ${2:-} =~ ^[0-9]+$ ]]; then
+          shift && task_index=$1
+        fi
+        ;;
+      -n[0-9]*)
+        mode="next"
+        task_index=${1#-n}
+        [[ $task_index =~ ^[1-9][0-9]*$ ]] || error "==> Invalid option: $1"
+        ;;
+      --next=*)
+        mode="next"
+        task_index=${1#--next=}
+        [[ $task_index =~ ^[1-9][0-9]*$ ]] || error "==> Invalid option: $1"
+        ;;
       -c | --clean) mode="clean" ;;
       -m | --comment)
         if [[ -z ${2:-} ]]; then
@@ -130,7 +147,7 @@ cat_first_task() {
   #   }
   # ' "$target_file"
   # parse_first_task
-  parse_tasks 0
+  parse_tasks 0 "$task_index"
   sed -n "${first_line},${end_line}p" "$target_file"
 }
 
@@ -157,19 +174,21 @@ cat_first_task() {
 
 parse_tasks() {
   comp=$1
+  local index=${2:-1}
   grep_key=$grep_key_task_exists
   [[ $comp -eq 1 ]] && grep_key=$grep_key_task_completed
   if [[ ! -s $target_file ]] || ! grep -qE "^$grep_key" "$target_file"; then
     error "==> Empty tasks."
   fi
 
-  read -r first_line second_line <<<"$(
-    grep -nE '^- ' "$target_file" |
-      grep -A1 -E "[0-9]+:$grep_key" |
-      head -2 |
-      cut -d: -f1 |
-      tr '\n' ' '
-  )"
+  # N番目のタスク行を取得
+  first_line=$(grep -nE "^$grep_key" "$target_file" | sed -n "${index}p" | cut -d: -f1)
+  if [[ -z $first_line ]]; then
+    error "==> Task index ${index} not found."
+  fi
+
+  # first_line 以降の次の `- ` 行を取得（タスクの終端）
+  second_line=$(grep -nE '^- ' "$target_file" | awk -F: -v fl="$first_line" '$1 > fl {print $1; exit}')
 
   # 2番目の行番号がなければファイル末尾
   if [[ -z $second_line ]]; then
