@@ -1,37 +1,87 @@
 #!/usr/bin/env bash
 
-# Open popupped parent task in browser.
-#   url like: https://xxx.atlassian.net/jira/software/projects/{PROJECT_ID}/boards/XXX?selectedIssue={PARENT_TASK_ID}
-# type: サブタスク
+# Create Jira sub-task(s) from a markdown task list via stdin.
+#
+# Input example (stdin):
+#   - [ ] タスク名
+#     - タスクの説明1
+#       - タスクの説明1の詳細
+#     - タスクの説明2
+#
+# Required environment variables:
+#   JIRA_PROJECT      - Jira project key
+#   JIRA_ISSUE_TYPE   - Issue type (e.g., "サブタスク")
+#   JIRA_ISSUE_PARENT - Parent task key
+
+require_env() {
+  local name=$1
+  if [[ -z ${!name:-} ]]; then
+    echo "==> Error: ${name} is not set" >&2
+    return 1
+  fi
+}
+
+validate_env() {
+  require_env JIRA_PROJECT
+  require_env JIRA_ISSUE_TYPE
+  require_env JIRA_ISSUE_PARENT
+}
+
+validate_stdin() {
+  if [[ -t 0 ]]; then
+    echo "==> Error: No stdin input" >&2
+    echo "Usage: cat task.md | $0" >&2
+    return 1
+  fi
+}
+
+emit_task() {
+  [[ -z ${summary} ]] && return 0
+  echo "==> Creating: ${summary}" >&2
+  printf '%s' "${body}" |
+    jira issue create \
+      -p "${JIRA_PROJECT}" \
+      -t "${JIRA_ISSUE_TYPE}" \
+      -P "${JIRA_ISSUE_PARENT}" \
+      -s "${summary}" \
+      --no-input
+  summary=""
+  body=""
+}
+
+process_tasks() {
+  local task_re='^- \[[x ]\] (.*)$'
+  local line=""
+  local summary=""
+  local body=""
+  while IFS='' read -r line || [[ -n ${line} ]]; do
+    if [[ ${line} =~ ${task_re} ]]; then
+      emit_task
+      summary="${BASH_REMATCH[1]}"
+      body=""
+      continue
+    fi
+    [[ -z ${summary} ]] && continue
+    body+="${line#  }"$'\n'
+  done
+  emit_task
+}
+
+issue_list() {
+  jira issue list \
+    -p "${JIRA_PROJECT}" \
+    -t "${JIRA_ISSUE_TYPE}" \
+    -P "${JIRA_ISSUE_PARENT}"
+}
 
 main() {
-  set -eo pipefail
-  if [[ ! -p /dev/stdin ]]; then
-    elog "Usage: echo -e 'project\tparent\ttype\tsummary\tbody' | $0"
+  set -euo pipefail
+  validate_env
+  if [[ $# -gt 0 && $1 == "list" ]]; then
+    issue_list
+    return
   fi
-
-  cat |
-    grep -vE '^project	.*body$' |
-    grep -vE '^#.*$' |
-    nl -ba -w1 -s$'\t' |
-    fzf --exit-0 \
-      --select-1 \
-      --multi \
-      --tac \
-      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' |
-    sort -t$'\t' -k1,1n |
-    cut -f2- |
-    while IFS=$'\t' read -r project parent type summary body; do
-      echo "$summary"
-      [[ -z $project ]] && continue
-      [[ $project =~ ^#.* ]] && continue
-      echo -e "$body" |
-        jira issue create \
-          -p "${project}" \
-          -t "${type}" \
-          -P "${parent}" \
-          -s "${summary}" \
-          --no-input
-    done
+  validate_stdin
+  process_tasks
 }
 main "$@"
