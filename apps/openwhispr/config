@@ -3,3 +3,48 @@
 install_arch() {
   install_via_os_default
 }
+
+# FIXME: NOT WORK!!!
+# - remote desktop dialog open, and close with escape, then start hering...
+setting_arch() {
+  cat <<'EOF' | inki
+- Setup manjaro gnome
+  - Set hotkey to shift+1 in openwhispr gui.
+  - and exec below
+    ```sh
+    openwhispr_key=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/openwhispr/
+    key="org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$openwhispr_key"
+    # 1. Set shortcut name
+    gsettings set $key name "OpenWhispr Toggle"
+    # 2. Set bind key.
+    gsettings set $key binding "F8"
+    # 3. Set command to execute. If openwhispr waiting for shift+1
+    gsettings set $key command "xdotool key --clearmodifiers shift+1"
+    # 4. Get to custom shortcut list(Current settings)
+    # e.g. "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/']"
+    gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings
+    # 5. Add to custom shortcut list and set
+    gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings \
+      "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/', '$openwhispr_key']"
+    ```
+  - TLDR:
+    - xdotool: key bind tool for X11
+    - wtype: key bind tool for Wayland
+    - openwhispr running in xwayland, waiting for shift+1 to toggle recording
+    - chrome and wezterm running in wayland native
+    - d-bus not working for openwhispr, so using xdotool as a workaround
+    - F8 pressed → GNOME catches (Wayland level) → runs xdotool key shift+1 → X11 side gets shift+1 event → OpenWhispr catches → toggles recording
+- Reset
+  ```sh
+  openwhispr_key=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/openwhispr/
+  key="org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$openwhispr_key"
+  # Reset shortcut
+  gsettings reset $key name
+  gsettings reset $key binding
+  gsettings reset $key command
+  # Remove from list
+  gsettings set org.gnome.settings-daemon.plugins.media-keys \
+    custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom2/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom3/']"
+  ```
+EOF
+}
