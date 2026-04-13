@@ -30,7 +30,8 @@ Manage repository tasks.
       -c|--clean          : Move completed tasks to .tasks/done/done.md
       ok|v|done|complete  : Mark next task chunk as completed
       -m|--comment [type] : Add comment to first task (type: requirement|review|complete)
-      -f|--file [path]    : Specify file to read comment content from (use with -m)
+      -a|--add            : Add task from stdin or file (prepends "- [ ] " if missing)
+      -f|--file [path]    : Specify file to read content from (use with -m or -a)
       --summary           : Show title of tasks
 EOF
 }
@@ -66,6 +67,7 @@ initialize() {
         fi
         shift && comment_type=$1 && mode="comment"
         ;;
+      -a | --add) mode="add" ;;
       -f | --file) shift && comment_file=$1 ;;
       ok | v | done | complete) mode="complete" ;;
       --summary) mode="summary" ;;
@@ -353,11 +355,8 @@ get_comment_header() {
   esac
 }
 
-comment_task() {
-  local header
-  header=$(get_comment_header)
-
-  local input_content
+read_input_content() {
+  input_content=
   if [[ -n ${comment_file} ]]; then
     if [[ ! -f ${comment_file} ]]; then
       error "==> File not found: ${comment_file}"
@@ -365,9 +364,9 @@ comment_task() {
     input_content=$(cat "${comment_file}")
   fi
 
-  if [[ -z ${input_content:-} ]]; then
+  if [[ -z ${input_content} ]]; then
     if [[ -t 0 ]]; then
-      error "==> No input. Usage: echo 'comment' | tasks -m ${comment_type} or tasks -m ${comment_type} -f <file>"
+      error "==> No input from stdin."
     fi
     input_content=$(cat)
   fi
@@ -375,6 +374,13 @@ comment_task() {
   if [[ -z ${input_content} ]]; then
     error "==> Empty input."
   fi
+}
+
+comment_task() {
+  local header input_content
+  header=$(get_comment_header)
+
+  read_input_content
 
   parse_tasks 0
 
@@ -392,6 +398,23 @@ comment_task() {
   trap - EXIT
 
   info "==> Comment added to task"
+}
+
+add_task() {
+  local input_content first_input_line
+  read_input_content
+
+  first_input_line=$(printf '%s\n' "${input_content}" | head -n1)
+  if [[ ! ${first_input_line} =~ ^-\ \[\ \] ]]; then
+    input_content="- [ ] ${input_content}"
+  fi
+
+  if [[ -s ${target_file} ]] && [[ -n $(tail -c1 "${target_file}") ]]; then
+    printf '\n' >>"${target_file}"
+  fi
+  printf '%s\n' "${input_content}" >>"${target_file}"
+
+  info "==> Task added"
 }
 
 summary_tasks() {
@@ -438,6 +461,10 @@ main() {
   fi
   if [[ ${mode} == "comment" ]]; then
     comment_task
+    return
+  fi
+  if [[ ${mode} == "add" ]]; then
+    add_task
     return
   fi
   if [[ $mode == "complete" ]]; then
