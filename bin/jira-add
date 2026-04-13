@@ -12,6 +12,10 @@
 #   JIRA_PROJECT      - Jira project key
 #   JIRA_ISSUE_TYPE   - Issue type (e.g., "サブタスク")
 #   JIRA_ISSUE_PARENT - Parent task key
+#
+# Optional environment variables:
+#   JIRA_ASSIGNEE     - Assignee (username / email / display name).
+#                       Defaults to "$$" (current logged-in user).
 
 require_env() {
   local name=$1
@@ -44,6 +48,7 @@ emit_task() {
       -t "${JIRA_ISSUE_TYPE}" \
       -P "${JIRA_ISSUE_PARENT}" \
       -s "${summary}" \
+      -a "${assignee}" \
       --no-input
   summary=""
   body=""
@@ -77,6 +82,8 @@ issue_list() {
 main() {
   set -euo pipefail
   validate_env
+  local assignee="${JIRA_ASSIGNEE:-}"
+  [[ -z ${assignee} ]] && assignee='$$'
   if [[ $# -gt 0 && $1 == "list" ]]; then
     issue_list
     return

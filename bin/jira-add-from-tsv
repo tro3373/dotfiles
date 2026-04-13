@@ -10,6 +10,9 @@ main() {
     elog "Usage: echo -e 'project\tparent\ttype\tsummary\tbody' | $0"
   fi
 
+  local assignee="${JIRA_ASSIGNEE:-}"
+  [[ -z ${assignee} ]] && assignee='$$'
+
   cat |
     grep -vE '^project	.*body$' |
     grep -vE '^#.*$' |
@@ -31,6 +34,7 @@ main() {
           -t "${type}" \
           -P "${parent}" \
           -s "${summary}" \
+          -a "${assignee}" \
           --no-input
     done
 }
