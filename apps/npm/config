@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+setting_common() {
+  make_link_dot2home
+}
