@@ -1399,8 +1399,5 @@ function! OpenUrlOnCursor() abort
 
   echo "No URL found on cursor line."
 endfunction
-augroup markdown-open-url
-  au!
-  au FileType markdown nnoremap <buffer> <silent> <Leader>j :call OpenUrlOnCursor()<CR>
-augroup END
+nnoremap <silent> <Leader>j :call OpenUrlOnCursor()<CR>
 
