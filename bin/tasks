@@ -127,7 +127,9 @@ _ln() {
 
 find_tasks() {
   echo .tasks.md
-  rg --files .tasks/ | sort
+  for d in .tasks .tasks/done; do
+    find "$d"/ -maxdepth 1 -mindepth 1 -type f -name '*.md' 2>/dev/null | sort -nr || :
+  done
 }
 
 cat_first_task() {
@@ -349,8 +351,8 @@ complete_normal_task() {
 get_comment_header() {
   case "${comment_type}" in
     requirement) echo "🎭 要件(ふるまい)" ;;
-    review) echo "👍 レビュー修正" ;;
-    complete) echo "✅ 完了" ;;
+    review) echo "👀 レビュー修正" ;;
+    complete) echo "🎉 完了" ;;
     *) error "==> Invalid comment type: ${comment_type}. Use: requirement|review|complete" ;;
   esac
 }
