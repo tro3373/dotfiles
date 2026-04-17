@@ -51,6 +51,9 @@ config.hide_tab_bar_if_only_one_tab = true
 -- Explicitly set the name of the IME server to which wezterm will connect via the XIM protocol
 -- config.use_ime = true
 -- config.xim_im_name = "fcitx"
+-- 起動時のウィンドウサイズ（列数と行数）
+config.initial_cols = 80
+config.initial_rows = 20
 
 -------------------------------------------------------------------------------
 -- マウス操作の挙動設定
