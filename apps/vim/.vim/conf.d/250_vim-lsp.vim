@@ -23,10 +23,10 @@ function! s:on_lsp_buffer_enabled() abort
   nmap <buffer> <C-p> <plug>(lsp-previouse-error)
 
   " Official settings
-  " nmap <buffer> gd <plug>(lsp-definition)
-  " nmap <buffer> gr <plug>(lsp-references)
-  " nmap <buffer> gi <plug>(lsp-implementation)
-  " nmap <buffer> gt <plug>(lsp-type-definition)
+  nmap <buffer> gd <plug>(lsp-definition)
+  nmap <buffer> gr <plug>(lsp-references)
+  nmap <buffer> gi <plug>(lsp-implementation)
+  nmap <buffer> gt <plug>(lsp-type-definition)
   " nmap <buffer> <leader>rn <plug>(lsp-rename)
   " nmap <buffer> [g <Plug>(lsp-previous-diagnostic)
   " nmap <buffer> ]g <Plug>(lsp-next-diagnostic)
