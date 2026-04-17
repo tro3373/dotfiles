@@ -1,6 +1,11 @@
 Vim Tips
 =================================================================
 
+## Check current mapping
+
+- Ctrl-K にマッピングされているコマンドを確認する
+  `:verbose map <C-K>`
+
 ## Function
 
 ### fnamemodify
