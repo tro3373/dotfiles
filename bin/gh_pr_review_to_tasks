@@ -92,7 +92,9 @@ main() {
         echo "    ${line}"
       done <<<"$body"
       echo ""
-    done
+    done |
+    # 空白行を削除
+    sed '/^\s*$/d'
   ilog "✅ Task extraction complete!"
 }
 main "$@"
