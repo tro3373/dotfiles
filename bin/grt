@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+main() {
+  set -eo pipefail
+  git_root=$(get_git_root)
+  [[ -z $git_root ]] && elog "==> Error: Failed to get git root: $git_root"
+  local dst="$git_root/.tasks.md"
+  if [[ ! -e $dst ]]; then
+    elog "==> Error: .tasks.md not found in this repository."
+    exit 1
+  fi
+  gtasks_to_tasks >>"$dst"
+  echo "$dst" | v
+}
+main "$@"

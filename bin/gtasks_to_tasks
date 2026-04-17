@@ -1,0 +1,259 @@
+#!/usr/bin/env bash
+
+# gtasks_to_tasks - Google Tasks を選択して Markdown を標準出力に吐き出す
+#   リスト選択 (fzf 単一) → タスク選択 (fzf 複数) → Markdown を stdout → 完了マーク
+command_name=$(basename "$0") && readonly command_name
+readonly depends=(gog fzf jq git)
+readonly gog_complete_enabled=0
+
+usage() {
+  cat <<EOF
+Usage: ${command_name}
+
+Google Tasks からタスクを選択し、Markdown 形式で標準出力に出力する。
+
+  Flow:
+    1. fzf でタスクリストを選択 (単一)
+    2. fzf でタスクを選択 (複数)
+    3. 選択タスクを Markdown 形式で stdout に出力
+    4. gog_complete_enabled=1 のとき、選択した親タスクを完了扱いにする
+
+  Requires: ${depends[*]}
+EOF
+}
+
+check_deps() {
+  local dep
+  for dep in "${depends[@]}"; do
+    if ! command -v "${dep}" >/dev/null 2>&1; then
+      echo "==> Error: required command not found: ${dep}" >&2
+      return 1
+    fi
+  done
+}
+
+emit_task_block() {
+  local task_json="${1:-}"
+  local checkbox_indent="${2:-}"
+  local notes_indent="${3:-}"
+
+  if [[ -z ${task_json} ]]; then
+    echo "==> Error: emit_task_block: task_json required" >&2
+    return 1
+  fi
+
+  local title notes links_json
+  title=$(printf '%s' "${task_json}" | jq -r '.title // ""') || return 1
+  notes=$(printf '%s' "${task_json}" | jq -r 'if .notes == null then "" else .notes end') || return 1
+  links_json=$(printf '%s' "${task_json}" | jq -c '.links // []') || return 1
+
+  # タイトル内 CR/改行は Markdown 構造を壊すので除去 (CR は削除、LF は空白化)
+  title=${title//$'\r'/}
+  title=${title//$'\n'/ }
+
+  printf -- '%s- [ ] %s\n' "${checkbox_indent}" "${title}"
+
+  if [[ -n ${notes} ]]; then
+    local line
+    while IFS= read -r line; do
+      line=${line%$'\r'}
+      [[ ${line} =~ ^[[:space:]]*$ ]] && continue
+      # 行頭の bullet マーカー ("- ", "* ", "+ ") を剥がす（先頭空白も許容）
+      if [[ ${line} =~ ^[[:space:]]*[-*+][[:space:]]+(.*)$ ]]; then
+        line="${BASH_REMATCH[1]}"
+      fi
+      printf -- '%s- %s\n' "${notes_indent}" "${line}"
+    done <<<"${notes}"
+  fi
+
+  # links フィールド (email / generic URL など) を bullet 化
+  [[ ${links_json} == "[]" || ${links_json} == "null" ]] && return 0
+  local link_desc link_url
+  while IFS=$'\t' read -r link_desc link_url; do
+    [[ -z ${link_url} ]] && continue
+    if [[ -z ${link_desc} || ${link_desc} == "${link_url}" ]]; then
+      printf -- '%s- %s\n' "${notes_indent}" "${link_url}"
+      continue
+    fi
+    printf -- '%s- [%s](%s)\n' "${notes_indent}" "${link_desc}" "${link_url}"
+  done < <(printf '%s' "${links_json}" | jq -r '.[] | "\(.description // "")\t\(.link // "")"')
+}
+
+format_task() {
+  local task_json="${1:-}"
+  local subtasks_json="${2:-"[]"}"
+
+  if [[ -z ${task_json} ]]; then
+    echo "==> Error: format_task: task_json required" >&2
+    return 1
+  fi
+
+  emit_task_block "${task_json}" "" "  " || return 1
+
+  local sub_json
+  while IFS= read -r sub_json; do
+    [[ -z ${sub_json} ]] && continue
+    emit_task_block "${sub_json}" "  " "    " || return 1
+  done < <(printf '%s' "${subtasks_json}" | jq -c '.[]')
+}
+
+filter_subtasks() {
+  local tasks_json="${1:-}"
+  local parent_id="${2:-}"
+
+  if [[ -z ${tasks_json} ]]; then
+    echo "==> Error: filter_subtasks: tasks_json required" >&2
+    return 1
+  fi
+  if [[ -z ${parent_id} ]]; then
+    echo "==> Error: filter_subtasks: parent_id required" >&2
+    return 1
+  fi
+
+  printf '%s' "${tasks_json}" | jq --arg pid "${parent_id}" '[.[] | select(.parent == $pid)] | sort_by(.position)' || return 1
+}
+
+build_markdown() {
+  local tasks_json="${1:-}"
+  local task_ids="${2:-}"
+
+  if [[ -z ${tasks_json} || -z ${task_ids} ]]; then
+    echo "==> Error: build_markdown: tasks_json and task_ids required" >&2
+    return 1
+  fi
+
+  local task_id task_json subtasks_json
+  while IFS= read -r task_id; do
+    [[ -z ${task_id} ]] && continue
+    task_json=$(printf '%s' "${tasks_json}" | jq -c --arg id "${task_id}" 'first(.[] | select(.id == $id)) // empty') || return 1
+    if [[ -z ${task_json} ]]; then
+      echo "==> Warn: task not found, skipped: ${task_id}" >&2
+      continue
+    fi
+    subtasks_json=$(filter_subtasks "${tasks_json}" "${task_id}") || return 1
+    format_task "${task_json}" "${subtasks_json}" || return 1
+  done <<<"${task_ids}"
+}
+
+fetch_lists_json() {
+  gog tasks lists list --json --results-only --all
+}
+
+fetch_tasks_json() {
+  local list_id="${1:-}"
+  if [[ -z ${list_id} ]]; then
+    echo "==> Error: fetch_tasks_json: list_id required" >&2
+    return 1
+  fi
+  gog tasks list "${list_id}" --json --results-only --all
+}
+
+select_list_id() {
+  local lists_json="${1:-}"
+  printf '%s' "${lists_json}" |
+    jq -r '.[] | "\(.id)\t\(.title)"' |
+    { fzf --no-multi --prompt='List> ' --with-nth=2.. --delimiter=$'\t' || true; } |
+    cut -f1
+}
+
+select_task_ids() {
+  local tasks_json="${1:-}"
+  printf '%s' "${tasks_json}" |
+    jq -r '[.[] | select((.parent // "") == "")] | sort_by(.position) | .[] | "\(.id)\t\(.title)"' |
+    {
+      fzf --multi \
+        --prompt='Tasks> ' \
+        --with-nth=2.. \
+        --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' \
+        --delimiter=$'\t' ||
+        true
+    } |
+    cut -f1
+}
+
+complete_tasks() {
+  local list_id="${1:-}"
+  local task_ids="${2:-}"
+
+  if [[ -z ${list_id} || -z ${task_ids} ]]; then
+    echo "==> Error: complete_tasks: list_id and task_ids required" >&2
+    return 1
+  fi
+
+  local task_id
+  while IFS= read -r task_id; do
+    [[ -z ${task_id} ]] && continue
+    echo "==> Completing task: ${task_id}" >&2
+    # shellcheck disable=SC1010 # 'done' は gog のサブコマンドでループキーワードではない
+    gog tasks done "${list_id}" "${task_id}" >&2
+  done <<<"${task_ids}"
+}
+
+run() {
+  echo "==> 📋 Fetching Google Tasks lists..." >&2
+  local lists_json
+  lists_json=$(fetch_lists_json) || {
+    echo "==> Error: failed to fetch task lists (gog error)" >&2
+    return 1
+  }
+  if [[ -z ${lists_json} || ${lists_json} == "[]" || ${lists_json} == "null" ]]; then
+    echo "==> Error: No task lists found" >&2
+    return 1
+  fi
+
+  local list_id
+  list_id=$(select_list_id "${lists_json}")
+  if [[ -z ${list_id} ]]; then
+    echo "==> No list selected. Aborted." >&2
+    return 1
+  fi
+
+  echo "==> 📋 Fetching tasks from list: ${list_id}" >&2
+  local tasks_json
+  tasks_json=$(fetch_tasks_json "${list_id}") || {
+    echo "==> Error: failed to fetch tasks (gog error)" >&2
+    return 1
+  }
+  if [[ -z ${tasks_json} || ${tasks_json} == "[]" || ${tasks_json} == "null" ]]; then
+    echo "==> Error: No tasks in list" >&2
+    return 1
+  fi
+
+  local task_ids
+  task_ids=$(select_task_ids "${tasks_json}")
+  if [[ -z ${task_ids} ]]; then
+    echo "==> No task selected. Aborted." >&2
+    return 1
+  fi
+
+  local markdown
+  markdown=$(build_markdown "${tasks_json}" "${task_ids}") || return 1
+
+  printf '%s\n' "${markdown}"
+  local count
+  count=$(printf '%s\n' "${task_ids}" | grep -c .)
+  echo "==> ✅ Output ${count} task(s)" >&2
+
+  if [[ ${gog_complete_enabled} -eq 1 ]]; then
+    complete_tasks "${list_id}" "${task_ids}"
+    return
+  fi
+
+  echo "==> ⏭  gog_complete_enabled=0 のため完了処理をスキップ" >&2
+}
+
+main() {
+  set -euo pipefail
+
+  case "${1:-}" in
+    -h | --help) usage && return 0 ;;
+  esac
+
+  check_deps
+  run
+}
+
+# 直接実行時のみ main を起動（テストで source するときは main を起動しない）
+if [[ ${BASH_SOURCE[0]} == "${0}" ]]; then
+  main "$@"
+fi
