@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd) && readonly current_dir
-
 main() {
   set -eo pipefail
-  local dst="$current_dir/.tasks.md"
+  git_root=$(get_git_root)
+  [[ -z $git_root ]] && elog "==> Error: Failed to get git root: $git_root"
+  local dst="$git_root/.tasks.md"
   if [[ ! -e $dst ]]; then
-    elog "==> Error: .tasks.md not found in the current directory."
+    elog "==> Error: .tasks.md not found in this repository."
     exit 1
   fi
   local pr_no=$1
