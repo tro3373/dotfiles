@@ -5,7 +5,7 @@ pub_key="$script_dir/pub"
 
 ink() {
   local stdin=
-  if [[ -p /dev/stdin ]]; then
+  if [[ ! -t 0 ]]; then
     stdin="$(cat <&0)"
   fi
   if [[ $# -eq 0 && -z $stdin ]]; then
@@ -34,8 +34,8 @@ ink() {
       ;;
   esac
 
-  # shellcheck disable=SC2059
-  printf "${open}${color}${text}${close}\n" 1>&2
+  # %b: ${open}="\033[" などバックスラッシュエスケープを printf に解釈させる（%s だと ANSI コードが文字列として出力される）
+  printf "%b%b%b%b\n" "${open}" "${color}" "${text}" "${close}" 1>&2
 }
 log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink red; }
 log_skip() { log "===> Already setupped."; }

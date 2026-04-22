@@ -113,7 +113,7 @@ check_root() {
 }
 ink() {
   local stdin=
-  if [[ -p /dev/stdin ]]; then
+  if [[ ! -t 0 ]]; then
     stdin="$(cat <&0)"
   fi
   if [[ $# -eq 0 && -z $stdin ]]; then
@@ -138,13 +138,12 @@ ink() {
   case $1 in
     black | red | green | yellow | blue | purple | cyan | gray | white)
       eval color="\$$1"
-      # text="$stdin${*:2}"
-      text=$(echo -e "$stdin${*:2}" | sed -e 's,%,%%,g')
+      text="$stdin${*:2}"
       ;;
   esac
 
-  # shellcheck disable=SC2059
-  printf "${open}${color}${text}${close}\n" 1>&2
+  # %b: ${open}="\033[" などバックスラッシュエスケープを printf に解釈させる（%s だと ANSI コードが文字列として出力される）
+  printf "%b%b%b%b\n" "${open}" "${color}" "${text}" "${close}" 1>&2
 }
 _usage() {
   if type -t usage; then

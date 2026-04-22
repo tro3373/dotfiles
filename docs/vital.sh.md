@@ -176,38 +176,38 @@ e_failure() {
 }
 
 ink() {
-    if [ "$#" -eq 0 -o "$#" -gt 2 ]; then
-        echo "Usage: ink <color> <text>"
-        echo "Colors:"
-        echo "  black, white, red, green, yellow, blue, purple, cyan, gray"
-        return 1
-    fi
+  local stdin=
+  if [[ ! -t 0 ]]; then
+    stdin="$(cat <&0)"
+  fi
+  if [[ $# -eq 0 && -z $stdin ]]; then
+    return
+  fi
 
-    local open="\033["
-    local close="${open}0m"
-    local black="0;30m"
-    local red="1;31m"
-    local green="1;32m"
-    local yellow="1;33m"
-    local blue="1;34m"
-    local purple="1;35m"
-    local cyan="1;36m"
-    local gray="0;37m"
-    local white="$close"
+  local open="\033["
+  local close="${open}0m"
+  export black="0;30m"
+  export red="1;31m"
+  export green="1;32m"
+  export yellow="1;33m"
+  export blue="1;34m"
+  export purple="1;35m"
+  export cyan="1;36m"
+  export gray="0;37m"
+  export white="$close"
 
-    local text="$1"
-    local color="$close"
+  local text="$stdin$*"
+  local color="$close"
 
-    if [ "$#" -eq 2 ]; then
-        text="$2"
-        case "$1" in
-            black | red | green | yellow | blue | purple | cyan | gray | white)
-            eval color="\$$1"
-            ;;
-        esac
-    fi
+  case $1 in
+    black | red | green | yellow | blue | purple | cyan | gray | white)
+      eval color="\$$1"
+      text="$stdin${*:2}"
+      ;;
+  esac
 
-    printf "${open}${color}${text}${close}"
+  # %b: ${open}="\033[" などバックスラッシュエスケープを printf に解釈させる（%s だと ANSI コードが文字列として出力される）
+  printf "%b%b%b%b\n" "${open}" "${color}" "${text}" "${close}" 1>&2
 }
 
 logging() {

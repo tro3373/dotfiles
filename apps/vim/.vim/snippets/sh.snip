@@ -467,13 +467,12 @@ snippet	innnk
 		case \$1 in
 			black | red | green | yellow | blue | purple | cyan | gray | white)
 				eval color="\\$\$1"
-				# text="$stdin${*:2}"
-				text=$(echo -e "$stdin${*:2}" | sed -e 's,%,%%,g')
+				text="$stdin${*:2}"
 				;;
 		esac
 
-		# shellcheck disable=SC2059
-		printf "${open}${color}${text}${close}\n" 1>&2
+		# %b: ${open}="\033[" などバックスラッシュエスケープを printf に解釈させる（%s だと ANSI コードが文字列として出力される）
+		printf "%b%b%b%b\n" "${open}" "${color}" "${text}" "${close}" 1>&2
 	}
 
 snippet	innnk_off
