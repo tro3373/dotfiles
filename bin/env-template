@@ -21,7 +21,7 @@ main() {
     info "==> Overwrite .env.template? Press Enter to continue..(Cancel: Ctrl+C)"
     read -r _
   fi
-  sed -E 's/^([^#=]*)=.*/\1=/' "$src" >"$dst"
+  sed -E '/^# ([^#=]*)=.*/d; s/^([^#=]*)=.*/\1=/' "$src" >"$dst"
   info "==> Generated: $dst"
 }
 main "$@"
