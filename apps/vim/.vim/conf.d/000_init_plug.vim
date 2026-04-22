@@ -320,6 +320,11 @@ call plug#begin('$HOME/.vim/plugged')
   Plug 'digitaltoad/vim-pug'                                " pug
   Plug 'dart-lang/dart-vim-plugin'                          " dart
   Plug 'udalov/kotlin-vim'                                  " kotlin
+  " hurl.nvim (runner) depends on nui.nvim / plenary.nvim (already above) / nvim-treesitter
+  Plug 'MunifTanjim/nui.nvim'
+  " main branch requires nvim 0.12+ nightly, pin to master for backward compat
+  Plug 'nvim-treesitter/nvim-treesitter', { 'branch': 'master', 'do': ':TSUpdate' }
+  Plug 'jellydn/hurl.nvim'                                  " Run HTTP requests from .hurl files
 
   Plug 'tyru/open-browser.vim'                              " Open browser
   Plug 'preservim/vim-markdown'                             " Markdown syntax
