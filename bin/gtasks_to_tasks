@@ -135,8 +135,16 @@ build_markdown() {
   done <<<"${task_ids}"
 }
 
+_gog() {
+  args=()
+  if [[ -n $GOG_USE_CLIENT_ID ]]; then
+    args+=("--client=$GOG_USE_CLIENT_ID")
+  fi
+  gog "${args[@]}" "$@"
+}
+
 fetch_lists_json() {
-  gog tasks lists list --json --results-only --all
+  _gog tasks lists list --json --results-only --all
 }
 
 fetch_tasks_json() {
@@ -145,7 +153,7 @@ fetch_tasks_json() {
     echo "==> Error: fetch_tasks_json: list_id required" >&2
     return 1
   fi
-  gog tasks list "${list_id}" --json --results-only --all
+  _gog tasks list "${list_id}" --json --results-only --all
 }
 
 select_list_id() {
@@ -185,7 +193,7 @@ complete_tasks() {
     [[ -z ${task_id} ]] && continue
     echo "==> Completing task: ${task_id}" >&2
     # shellcheck disable=SC1010 # 'done' は gog のサブコマンドでループキーワードではない
-    gog tasks done "${list_id}" "${task_id}" >&2
+    _gog tasks done "${list_id}" "${task_id}" >&2
   done <<<"${task_ids}"
 }
 
