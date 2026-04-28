@@ -18,3 +18,5 @@ endif
 "   \ 'svn': 0,
 "   \ 'cvs': 0,
 "   \ '.': 0}
+" .env という名前のファイル、または .secret で終わるファイルで Copilot を無効化
+autocmd BufRead,BufNewFile .env,.env.*,*.secret,.works.zsh let b:copilot_enabled = v:false
