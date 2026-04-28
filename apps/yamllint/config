@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+install_common() {
+  exe uv tool install yamllint
+}
+
+setting_common() {
+  target=${XDG_CONFIG_HOME:-~/.config}/yamllint/config
+  if [[ -e $target ]]; then
+    return
+  fi
+  exe mkdir -p "$(dirname "$target")"
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/.yamllint" "$target"
+}

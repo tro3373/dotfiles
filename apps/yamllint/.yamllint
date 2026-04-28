@@ -1,0 +1,14 @@
+# .yamllint
+extends: default
+rules:
+  comments:
+    min-spaces-from-content: 1
+    require-starting-space: true
+  # comments-indentation: enable
+  document-start: disable
+  comments-indentation: disable
+  line-length:
+    max: 200
+    level: warning
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off']
