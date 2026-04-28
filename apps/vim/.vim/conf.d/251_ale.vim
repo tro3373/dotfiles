@@ -93,6 +93,7 @@ let g:ale_fixers['go']         = ['goimports', 'gopls', 'gofmt' ]
 let g:ale_fixers['terraform']  = ['trim_whitespace', 'remove_trailing_lines']
 let g:ale_fixers['yaml']       = ['yamlfmt']
 let g:ale_fixers['lua']        = ['stylua']
+let g:ale_fixers['hurl']       = ['hurlfmt']
 " let g:ale_fixers['markdown']   = ['prettier']
 " let g:ale_fixers['markdown'] = [{buffer, lines -> {'command': 'textlint -c ~/.config/textlintrc -o /dev/null --fix --no-color --quiet %t', 'read_temporary_file': 1}}]
 " let g:ale_fixers['java']       = ['google_java_format']
@@ -207,6 +208,7 @@ let g:ale_pattern_options = {
 \   '\.min\.js$': {'ale_linters': [], 'ale_fixers': []},
 \   '\.min\.css$': {'ale_linters': [], 'ale_fixers': []},
 \   'md$': {'ale_linters': []},
+\   '\.github/actions/.*/action\.ya\?ml$': {'ale_linters': ['yamllint'], 'ale_fixers': ['yamlfmt']},
 \   '.*/node_modules/.*.ts$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/node_modules/.*.js$': {'ale_linters': [], 'ale_fixers': []},
 \   '.*/components/ui/.*.tsx$': {'ale_linters': [], 'ale_fixers': []},
