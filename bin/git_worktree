@@ -147,6 +147,9 @@ _add_worktree() {
   local cmd_args=(-b "$branch" "$dst_dir" $commit_hash)
   if is_exist_branch "$branch"; then
     ilog "==> Branch '$branch' already exists. Using existing branch."
+    # NOTE: commit_hash is intentionally ignored here;
+    # an existing branch already has its own tip and
+    # `git worktree add <path> <branch>` does not accept a base ref.
     cmd_args=("$dst_dir" "$branch")
   fi
   git worktree add "${cmd_args[@]}" 1>&2 || {
@@ -238,6 +241,20 @@ _do_remove_worktree() {
 }
 
 _merge_worktree() {
+  local merge_target_dir="$git_org_root_dir"
+  if is_invoked_from_worktree; then
+    # When invoked from a worktree, target that worktree's branch.
+    # NOTE: keep elog calls at simple-command position; bash -e cannot
+    # propagate from inside $(...) since command substitution does not
+    # inherit errexit (and external elog's exit only kills the subshell).
+    local current_branch
+    current_branch=$(git -C "$initial_toplevel" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+    if [[ -z $current_branch || $current_branch == "HEAD" ]]; then
+      elog "==> Worktree '$initial_toplevel' is in detached HEAD or branch detection failed. Move to repository root or checkout a branch first."
+    fi
+    merge_target_dir="$initial_toplevel"
+  fi
+
   # shellcheck disable=SC2016
   while read -r branch_path; do
     [[ -z ${branch_path} ]] && continue
@@ -245,8 +262,8 @@ _merge_worktree() {
     local merge_branch
     merge_branch=$(git -C "${branch_path}" rev-parse --abbrev-ref HEAD)
 
-    ilog "==> Merging branch '${merge_branch}' into current branch at '${git_org_root_dir}'.."
-    if ! git merge "${merge_branch}"; then
+    ilog "==> Merging branch '${merge_branch}' into current branch at '${merge_target_dir}'.."
+    if ! git -C "${merge_target_dir}" merge "${merge_branch}"; then
       elog "Failed to merge branch '${merge_branch}'."
     fi
     ilog "==> Successfully merged branch '${merge_branch}'."
@@ -305,10 +322,47 @@ _edit_config() {
   echo "$ln_config" | v
 }
 
+capture_initial_toplevel() {
+  # Capture the worktree we were invoked from BEFORE main cd's into the
+  # original repository root. Used by add/merge to honor the current
+  # worktree's branch instead of forcing the org root.
+  local toplevel
+  toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || return 0
+  [[ -z $toplevel ]] && return 0
+  initial_toplevel=$(realpath "$toplevel")
+}
+
+is_invoked_from_worktree() {
+  [[ -n $initial_toplevel && $initial_toplevel != "$git_org_root_dir" ]]
+}
+
+resolve_commit_hash_from_current_worktree() {
+  # When adding a new worktree from inside another worktree directory without
+  # an explicit commit/branch base, use that worktree's current branch as the
+  # base instead of falling back to the original repository root's HEAD.
+  [[ $mode != "add" ]] && return
+  [[ -n $commit_hash ]] && return
+  is_invoked_from_worktree || return
+
+  local current_branch
+  current_branch=$(git -C "$initial_toplevel" rev-parse --abbrev-ref HEAD 2>/dev/null) || return
+  # Guard: detached HEAD returns the literal string "HEAD".
+  if [[ -z $current_branch || $current_branch == "HEAD" ]]; then
+    wlog "==> Worktree '$initial_toplevel' is in detached HEAD. Falling back to default base."
+    return
+  fi
+
+  commit_hash=$current_branch
+  ilog "==> Running inside worktree '$initial_toplevel'. Using its current branch '$commit_hash' as base."
+}
+
 main() {
   initialize "$@"
 
   git_org_root_dir=$(get_org_git_root)
+  initial_toplevel=
+  capture_initial_toplevel
+  resolve_commit_hash_from_current_worktree
   cd "$git_org_root_dir" || {
     elog "Failed to change directory to git root: $git_org_root_dir"
   }
