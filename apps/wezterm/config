@@ -41,16 +41,18 @@ tips_cwd_fork() {
   - Check or add below to .works.zsh
     ```zsh
     # For wezterm cwd fork
-    __wezterm_osc7() {
-      if [[ -n $TMUX ]]; then
-        printf '\ePtmux;\e\033]7;file://%s%s\033\\\e\\' "${HOST}" "${PWD}"
-        return
-      fi
-      printf '\e]7;file://%s%s\e\\' "${HOST}" "${PWD}"
-    }
-    # Setting to always keep the contents of the array unique (no duplicates)
-    typeset -gU precmd_functions
-    precmd_functions+=(__wezterm_osc7)
+    if [[ $TERM_PROGRAM == "WezTerm" ]]; then
+      __wezterm_osc7() {
+        if [[ -n $TMUX ]]; then
+          printf '\ePtmux;\e\033]7;file://%s%s\033\\\e\\' "${HOST}" "${PWD}"
+          return
+        fi
+        printf '\e]7;file://%s%s\e\\' "${HOST}" "${PWD}"
+      }
+      # Setting to always keep the contents of the array unique (no duplicates)
+      typeset -gU precmd_functions
+      precmd_functions+=(__wezterm_osc7)
+    fi
     ```
 EOF
 }
