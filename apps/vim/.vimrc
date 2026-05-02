@@ -1,5 +1,8 @@
 " " ${HOME}/.vim/conf.d/ 以下にある *.vim(分割された設定ファイル) を全て適用
 set runtimepath+=$HOME/.vim/
+" Neovim default は ~/.config/nvim/after しか rtp に入らないので、
+" Vim 互換で ~/.vim/after/ftplugin/*.lua 等を有効にするため明示的に追加する
+set runtimepath+=$HOME/.vim/after
 " runtime! conf.d/*.vim
 
 " MacVim付属のgvimrcで、独自のmacvimと名付けられたカラースキームを勝手に読むのを防ぐ
