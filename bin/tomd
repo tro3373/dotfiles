@@ -1,7 +1,6 @@
 #!/usr/bin/env -S bash -e
 
 current_dir=$(pwd) && readonly current_dir
-timestamp=$(date +%Y%m%d-%H%M%S) && readonly timestamp
 has() { command -v "${1}" >&/dev/null; }
 hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
 _ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
@@ -17,6 +16,39 @@ sanitize() {
   sed -e 's/[\/\:*?"<>|]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//'
 }
 
+get_title_from_md() {
+  f="$*"
+  [[ ! -e $f ]] && error "==> No such file: $f"
+  title=$(grep '^#' "$tmp_md" | head -1 | sed -e 's/^[# \t]\+//' -e 's/ /_/g')
+  if [[ -z $title ]]; then
+    title=$(basename "$tmp_md" .md)
+  fi
+  echo "$title" | sanitize
+}
+
+download_to_markdown() {
+  timestamp=$(date +%Y%m%d-%H%M%S)
+  tmp_md=/tmp/"$timestamp".md
+  bunx @mizchi/readability "$url" -o "$tmp_md"
+  if [[ ! -s $tmp_md ]]; then
+    markitdown "$url" -o "$tmp_md"
+  fi
+  echo "$tmp_md"
+}
+
+handle_url() {
+  tmp_md=$(download_to_markdown)
+  title=$(get_title_from_md "$tmp_md")
+  timestamp=$(date +%Y%m%d-%H%M%S)
+  dst="$current_dir/${timestamp}_$title.md"
+  while [[ -e $dst ]]; do
+    timestamp=$(date +%Y%m%d-%H%M%S)
+    dst="$current_dir/${timestamp}_$title.md"
+  done
+  mv "$tmp_md" "$dst"
+  info "==> Saved: $dst"
+}
+
 fire() {
   {
     if [[ -p /dev/stdin ]]; then
@@ -30,18 +62,13 @@ fire() {
 
 main() {
   set -euo pipefail
+  hass bunx markitdown
   [[ ! -p /dev/stdin && $# -eq 0 ]] && error "==> No URL provided."
   fire "$@" |
     while read -r url; do
       [[ -z $url ]] && continue
       [[ $url =~ ^#.* ]] && continue
-      tmp_md=/tmp/"$timestamp".md
-      markitdown "$url" -o "$tmp_md"
-      title=$(grep '^#' "$tmp_md" | head -1 | sed -e 's/^[# \t]\+//' -e 's/ /_/g' | sanitize || :)
-      [[ -z $title ]] && title=$(basename "$tmp_md" .md)
-      dst="$current_dir/$title.md"
-      [[ -e $dst ]] && dst=${dst%.md}_"$timestamp".md
-      mv -v "$tmp_md" "$dst"
+      handle_url
     done
 }
 main "$@"
