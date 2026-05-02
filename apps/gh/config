@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 
-# install_common() { not_supported; }
+install_common() {
+  platform=$(get_platform)
+  arch=$(get_arch)
+  # https://github.com/cli/cli/releases/download/v2.92.0/gh_2.92.0_linux_arm64.tar.gz
+  dl_gh_release cli/cli latest "*${platform}_${arch}.tar.gz"
+  exe 'tar -xzf gh*.tar.gz'
+  exe 'sudo cp gh*/bin/gh /usr/local/bin/'
+}
 # install_common() {
 #   if ! has go; then
 #     log "golang not installed."
@@ -9,15 +16,20 @@
 #   # Not work
 #   exe go install github.com/cli/cli/cmd/gh@latest
 # }
-install_arch_by_snap() {
-  if ! has snap; then
-    log "No snap command exist. install snap first." 1>&2
-    return
-  fi
-  exe sudo snap install gh --edge
-}
+# install_arch_by_snap() {
+#   if ! has snap; then
+#     log "No snap command exist. install snap first." 1>&2
+#     return
+#   fi
+#   exe sudo snap install gh --edge
+# }
 install_arch() {
+  # NOTE: install latest `gh` command via `gh` command.
+  # - yay install gh command to /usr/bin
+  # - dl_gh_release install gh command to /usr/local/bin
+  # - /usr/local/bin is higher priority than /usr/bin, so dl_gh_release is used to install latest version.
   def_install github-cli
+  install_common
 }
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
