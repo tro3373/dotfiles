@@ -14,7 +14,7 @@ function! s:MarkdownHighlight()
   highlight htmlH1 guifg=#a3be8c ctermfg=144
   highlight htmlH2 guifg=#81a1c1 ctermfg=109
   highlight htmlH3 guifg=#d08770 ctermfg=173
-  highlight mkdHeading guifg=#81a1c1 ctermfg=173
+  highlight mkdHeading guifg=#81a1c1 ctermfg=109
 endfunction
 autocmd FileType markdown call s:MarkdownHighlight()
 "=============================================
