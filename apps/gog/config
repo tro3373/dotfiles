@@ -4,7 +4,6 @@ install_arch() {
   go_install github.com/steipete/gogcli/cmd/gog@latest
 }
 setting_common() {
-  log
   cat <<'EOF' | inki
 - setup gog
   - build gog for android arm
@@ -34,6 +33,6 @@ setting_common() {
       ssh termux "cd bin && tar -xzvf g.tar.gz && rm g.tar.gz && mv gogcli ~/.config"
       ```
 - re auth
-  - `gog auth add you@gmail.com`
+  - gog-reauth
 EOF
 }
