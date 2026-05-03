@@ -9,7 +9,7 @@ main() {
     elog "==> Error: .tasks.md not found in this repository."
     exit 1
   fi
-  gtasks_to_tasks >>"$dst"
+  gtasks_to_tasks "$@" >>"$dst"
   echo "$dst" | v
 }
 main "$@"

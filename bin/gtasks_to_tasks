@@ -4,13 +4,17 @@
 #   リスト選択 (fzf 単一) → タスク選択 (fzf 複数) → Markdown を stdout → 完了マーク
 command_name=$(basename "$0") && readonly command_name
 readonly depends=(gog fzf jq git)
-readonly gog_complete_enabled=0
+gog_complete_enabled=0
 
 usage() {
   cat <<EOF
-Usage: ${command_name}
+Usage: ${command_name} [-c|--complete]
 
 Google Tasks からタスクを選択し、Markdown 形式で標準出力に出力する。
+
+  Options:
+    -c, --complete   選択した親タスクを完了扱いにする (gog_complete_enabled=1)
+    -h, --help       このヘルプを表示
 
   Flow:
     1. fzf でタスクリストを選択 (単一)
@@ -253,9 +257,23 @@ run() {
 main() {
   set -euo pipefail
 
-  case "${1:-}" in
-    -h | --help) usage && return 0 ;;
-  esac
+  while [[ $# -gt 0 ]]; do
+    case "${1}" in
+      -h | --help)
+        usage
+        return 0
+        ;;
+      -c | --complete)
+        gog_complete_enabled=1
+        shift
+        ;;
+      *)
+        echo "==> Error: unknown option: ${1}" >&2
+        usage >&2
+        return 1
+        ;;
+    esac
+  done
 
   check_deps
   run
