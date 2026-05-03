@@ -4,8 +4,11 @@ install_common() {
   exe 'curl -fsSL https://tailscale.com/install.sh | sh'
 }
 install_mac() {
-  exe brew install --cask tailscale
-  # exe sudo brew services start tailscale
+  # # GUIバージョン
+  # exe brew install --cask tailscale
+  # CLIバージョン
+  exe brew install tailscale
+  exe sudo brew services start tailscale
 }
 
 setting_common() {
@@ -13,6 +16,15 @@ setting_common() {
 }
 
 setting_mac() {
-  # log 'sudo tailscale up --accept-dns=true'
-  :
+  # macOS で Tailscale SSH を使うために CLI 版に切り替えた話
+  # https://zenn.dev/madebyjun/articles/049af144ac3fbf
+  cat <<'EOF' | inki
+- setup Tailscale SSH with DNS
+  # 1. Tailscale の起動
+  tailscale up --accept-dns --accept-routes
+  # 2. スプリット DNS の設定
+  printf "nameserver 100.100.100.100\\nsearch {your-domain-name}.ts.net\\n" | sudo tee /etc/resolver/ts.net
+  # 3. DNS キャッシュのフラッシュ
+  sudo killall -HUP mDNSResponder && sudo dscacheutil -flushcache
+EOF
 }
