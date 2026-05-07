@@ -1,15 +1,30 @@
 #!/usr/bin/env -S bash -e
 
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
 main() {
   local branch_name=${1:-}
   if [[ -z $branch_name ]]; then
     branch_name=$(git_branch)
   fi
-  read -e -p "Input new branch name: " -i "$branch_name" new_branch_name
+  local new_branch_name=${2:-}
   if [[ -z $new_branch_name ]]; then
-    echo "Branch name is required" >&2
-    exit 1
+    read -r -e -p "Input new branch name: " -i "$branch_name" new_branch_name
+  fi
+  if [[ -z $new_branch_name ]]; then
+    error "==> Branch name is required"
   fi
   git branch -m "$branch_name" "$new_branch_name"
+  info "==> Branch renamed:"
+  info "    from: $branch_name"
+  info "      to: $new_branch_name"
 }
 main "$@"

@@ -129,6 +129,8 @@ bind refs    <Ctrl-r> ?git rebase %(branch)
 
 # R で rename
 bind refs    R      !git_rename_branch %(branch)
+# T で rename to trash
+bind refs    T      !git_rename_branch %(branch) trash/%(branch)
 
 # I で rebase -i
 bind main    I      ?git rebase -i %(branch)
