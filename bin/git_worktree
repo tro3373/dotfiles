@@ -1,4 +1,4 @@
-#!/usr/bin/env -S bash -e
+#!/usr/bin/env bash
 
 command_name=$(basename "$0") && readonly command_name
 worktree_dir_suffix="worktree" && readonly worktree_dir_suffix
@@ -47,6 +47,7 @@ initialize() {
     shift
   done
   check
+  set -euo pipefail
 }
 check() {
   hass "${depends[@]}"
@@ -340,16 +341,16 @@ resolve_commit_hash_from_current_worktree() {
   # When adding a new worktree from inside another worktree directory without
   # an explicit commit/branch base, use that worktree's current branch as the
   # base instead of falling back to the original repository root's HEAD.
-  [[ $mode != "add" ]] && return
-  [[ -n $commit_hash ]] && return
-  is_invoked_from_worktree || return
+  [[ $mode != "add" ]] && return 0
+  [[ -n $commit_hash ]] && return 0
+  is_invoked_from_worktree || return 0
 
   local current_branch
-  current_branch=$(git -C "$initial_toplevel" rev-parse --abbrev-ref HEAD 2>/dev/null) || return
+  current_branch=$(git -C "$initial_toplevel" rev-parse --abbrev-ref HEAD 2>/dev/null) || return 0
   # Guard: detached HEAD returns the literal string "HEAD".
   if [[ -z $current_branch || $current_branch == "HEAD" ]]; then
     wlog "==> Worktree '$initial_toplevel' is in detached HEAD. Falling back to default base."
-    return
+    return 0
   fi
 
   commit_hash=$current_branch
