@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+install_common() {
+  cd_work
+  exe wget git.io/trans
+  exe chmod +x trans
+  exe mv trans ~/bin/
+}
