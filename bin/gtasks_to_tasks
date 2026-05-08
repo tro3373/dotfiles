@@ -1,40 +1,39 @@
 #!/usr/bin/env bash
 
-# gtasks_to_tasks - Google Tasks を選択して Markdown を標準出力に吐き出す
-#   リスト選択 (fzf 単一) → タスク選択 (fzf 複数) → Markdown を stdout → 完了マーク
-command_name=$(basename "$0") && readonly command_name
-readonly depends=(gog fzf jq git)
+## Usage: gtasks_to_tasks [-c|--complete] [list_id] [task_id|all|id1,id2,...]
+##
+## Google Tasks からタスクを選択し、Markdown 形式で標準出力に出力する。
+##
+##   Options:
+##     -c, --complete   選択した親タスクを完了扱いにする (gog_complete_enabled=1)
+##     -h, --help       このヘルプを表示
+##
+##   Arguments:
+##     list_id          タスクリストID (省略時 fzf で選択)
+##     task_id          タスクID (省略時 fzf で複数選択)
+##                      "all" で全親タスク、 "id1,id2" でカンマ区切り複数指定
+##
+##   Flow:
+##     1. list_id を引数 or fzf で決定
+##     2. task_ids を引数 (all/カンマ区切り/単一) or fzf で決定
+##     3. 選択タスクを Markdown 形式で stdout に出力
+##     4. gog_complete_enabled=1 のとき、選択した親タスクを完了扱いにする
+readonly depends=(gog fzf jq git base64)
 gog_complete_enabled=0
 
-usage() {
-  cat <<EOF
-Usage: ${command_name} [-c|--complete]
-
-Google Tasks からタスクを選択し、Markdown 形式で標準出力に出力する。
-
-  Options:
-    -c, --complete   選択した親タスクを完了扱いにする (gog_complete_enabled=1)
-    -h, --help       このヘルプを表示
-
-  Flow:
-    1. fzf でタスクリストを選択 (単一)
-    2. fzf でタスクを選択 (複数)
-    3. 選択タスクを Markdown 形式で stdout に出力
-    4. gog_complete_enabled=1 のとき、選択した親タスクを完了扱いにする
-
-  Requires: ${depends[*]}
-EOF
+has() { command -v "${1}" >&/dev/null; }
+hass() {
+  local arg
+  for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done
 }
-
-check_deps() {
-  local dep
-  for dep in "${depends[@]}"; do
-    if ! command -v "${dep}" >/dev/null 2>&1; then
-      echo "==> Error: required command not found: ${dep}" >&2
-      return 1
-    fi
-  done
-}
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+usage() { grep '^##' "$0" | sed -E 's/^## ?//'; }
 
 emit_task_block() {
   local task_json="${1:-}"
@@ -42,8 +41,7 @@ emit_task_block() {
   local notes_indent="${3:-}"
 
   if [[ -z ${task_json} ]]; then
-    echo "==> Error: emit_task_block: task_json required" >&2
-    return 1
+    error "==> Error: emit_task_block: task_json required"
   fi
 
   local title notes links_json
@@ -88,8 +86,7 @@ format_task() {
   local subtasks_json="${2:-"[]"}"
 
   if [[ -z ${task_json} ]]; then
-    echo "==> Error: format_task: task_json required" >&2
-    return 1
+    error "==> Error: format_task: task_json required"
   fi
 
   emit_task_block "${task_json}" "" "  " || return 1
@@ -101,162 +98,159 @@ format_task() {
   done < <(printf '%s' "${subtasks_json}" | jq -c '.[]')
 }
 
-filter_subtasks() {
-  local tasks_json="${1:-}"
-  local parent_id="${2:-}"
-
-  if [[ -z ${tasks_json} ]]; then
-    echo "==> Error: filter_subtasks: tasks_json required" >&2
-    return 1
-  fi
-  if [[ -z ${parent_id} ]]; then
-    echo "==> Error: filter_subtasks: parent_id required" >&2
-    return 1
-  fi
-
-  printf '%s' "${tasks_json}" | jq --arg pid "${parent_id}" '[.[] | select(.parent == $pid)] | sort_by(.position)' || return 1
-}
-
-build_markdown() {
-  local tasks_json="${1:-}"
-  local task_ids="${2:-}"
-
-  if [[ -z ${tasks_json} || -z ${task_ids} ]]; then
-    echo "==> Error: build_markdown: tasks_json and task_ids required" >&2
-    return 1
-  fi
-
-  local task_id task_json subtasks_json
-  while IFS= read -r task_id; do
-    [[ -z ${task_id} ]] && continue
-    task_json=$(printf '%s' "${tasks_json}" | jq -c --arg id "${task_id}" 'first(.[] | select(.id == $id)) // empty') || return 1
-    if [[ -z ${task_json} ]]; then
-      echo "==> Warn: task not found, skipped: ${task_id}" >&2
-      continue
-    fi
-    subtasks_json=$(filter_subtasks "${tasks_json}" "${task_id}") || return 1
-    format_task "${task_json}" "${subtasks_json}" || return 1
-  done <<<"${task_ids}"
-}
-
 _gog() {
-  args=()
-  if [[ -n $GOG_USE_CLIENT_ID ]]; then
-    args+=("--client=$GOG_USE_CLIENT_ID")
+  local args=()
+  if [[ -n ${GOG_USE_CLIENT_ID:-} ]]; then
+    args+=("--client=${GOG_USE_CLIENT_ID}")
   fi
   gog "${args[@]}" "$@"
 }
 
-fetch_lists_json() {
-  _gog tasks lists list --json --results-only --all
-}
+# 親タスク全件をバンドル (id\ttitle\t<base64(parent+subtasks JSON)>) のTSV行に展開する jq フィルタ。
+# 完了済み (status=="completed") は親・子ともに除外する。
+# 3カラム目を base64 化することで notes 等に含まれる改行/タブが @tsv のエスケープで潰れるのを防ぐ。
+# fzf に流して --with-nth=2..2 で title だけ表示し、選択行から bundle を取り出して使う。
+# shellcheck disable=SC2016 # jq の変数なのでシェル展開させない
+readonly bundle_jq_filter='
+  [(. // [])[] | select((.status // "") != "completed")] as $all |
+  [$all[] | select((.parent // "") == "")] | sort_by(.position) | .[] as $p |
+  ([$all[] | select(.parent == $p.id)] | sort_by(.position)) as $subs |
+  [$p.id, $p.title, ({parent: $p, subtasks: $subs} | @json | @base64)] | @tsv
+'
 
-fetch_tasks_json() {
-  local list_id="${1:-}"
-  if [[ -z ${list_id} ]]; then
-    echo "==> Error: fetch_tasks_json: list_id required" >&2
-    return 1
-  fi
-  _gog tasks list "${list_id}" --json --results-only --all
-}
+# 引数 $ids (JSON配列) で指定された親タスクのみ bundle TSV に展開する jq フィルタ
+# 完了済み (status=="completed") は親・子ともに除外する。
+# shellcheck disable=SC2016 # jq の変数なのでシェル展開させない
+readonly bundle_by_ids_jq_filter='
+  [(. // [])[] | select((.status // "") != "completed")] as $all |
+  $ids[] as $id |
+  ([$all[] | select(.id == $id)] | first) | select(. != null) as $p |
+  ([$all[] | select(.parent == $id)] | sort_by(.position)) as $subs |
+  [$p.id, $p.title, ({parent: $p, subtasks: $subs} | @json | @base64)] | @tsv
+'
 
-select_list_id() {
-  local lists_json="${1:-}"
-  printf '%s' "${lists_json}" |
-    jq -r '.[] | "\(.id)\t\(.title)"' |
+select_list_id_via_fzf() {
+  _gog tasks lists list --json --results-only --all |
+    jq -r '(. // [])[] | "\(.id)\t\(.title)"' |
     { fzf --no-multi --prompt='List> ' --with-nth=2.. --delimiter=$'\t' || true; } |
     cut -f1
 }
 
-select_task_ids() {
-  local tasks_json="${1:-}"
-  printf '%s' "${tasks_json}" |
-    jq -r '[.[] | select((.parent // "") == "")] | sort_by(.position) | .[] | "\(.id)\t\(.title)"' |
+resolve_list_id() {
+  local arg="${1:-}"
+  if [[ -n ${arg} ]]; then
+    printf '%s\n' "${arg}"
+    return
+  fi
+  info "==> 📋 Fetching Google Tasks lists..."
+  select_list_id_via_fzf
+}
+
+# task_arg を解釈し (id\ttitle\tbundle_json) のTSVストリームを stdout に出力する。
+#   ""              → fzf で複数選択
+#   "all"           → 全親タスク
+#   "id1,id2,..."   → カンマ区切り指定IDのみ
+#   "<single_id>"   → 単一ID
+stream_target_bundles() {
+  local list_id="$1"
+  local task_arg="${2:-}"
+
+  if [[ ${task_arg} == "all" ]]; then
+    _gog tasks list "${list_id}" --json --results-only --all |
+      jq -r "${bundle_jq_filter}"
+    return
+  fi
+
+  if [[ -n ${task_arg} ]]; then
+    local ids_json
+    ids_json=$(
+      printf '%s' "${task_arg}" |
+        tr ',' '\n' |
+        jq -R . |
+        jq -cs 'map(select(length > 0))'
+    )
+    _gog tasks list "${list_id}" --json --results-only --all |
+      jq -r --argjson ids "${ids_json}" "${bundle_by_ids_jq_filter}"
+    return
+  fi
+
+  _gog tasks list "${list_id}" --json --results-only --all |
+    jq -r "${bundle_jq_filter}" |
     {
       fzf --multi \
         --prompt='Tasks> ' \
-        --with-nth=2.. \
+        --with-nth=2..2 \
         --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' \
-        --delimiter=$'\t' ||
-        true
-    } |
-    cut -f1
+        --delimiter=$'\t' || true
+    }
+}
+
+emit_from_bundle() {
+  local bundle_b64="${1:-}"
+  if [[ -z ${bundle_b64} ]]; then
+    error "==> Error: emit_from_bundle: bundle_b64 required"
+  fi
+  local bundle_json
+  bundle_json=$(printf '%s' "${bundle_b64}" | base64 -d) || return 1
+  local task_json subtasks_json
+  task_json=$(printf '%s' "${bundle_json}" | jq -c '.parent') || return 1
+  subtasks_json=$(printf '%s' "${bundle_json}" | jq -c '.subtasks') || return 1
+  format_task "${task_json}" "${subtasks_json}"
 }
 
 complete_tasks() {
   local list_id="${1:-}"
-  local task_ids="${2:-}"
-
-  if [[ -z ${list_id} || -z ${task_ids} ]]; then
-    echo "==> Error: complete_tasks: list_id and task_ids required" >&2
-    return 1
+  shift || true
+  if [[ -z ${list_id} || $# -eq 0 ]]; then
+    error "==> Error: complete_tasks: list_id and task_ids required"
   fi
-
   local task_id
-  while IFS= read -r task_id; do
+  for task_id in "$@"; do
     [[ -z ${task_id} ]] && continue
-    echo "==> Completing task: ${task_id}" >&2
-    # shellcheck disable=SC1010 # 'done' は gog のサブコマンドでループキーワードではない
-    _gog tasks done "${list_id}" "${task_id}" >&2
-  done <<<"${task_ids}"
+    info "==> Completing task: ${task_id}"
+    _gog tasks "done" "${list_id}" "${task_id}" 1>&2
+  done
 }
 
 run() {
-  echo "==> 📋 Fetching Google Tasks lists..." >&2
-  local lists_json
-  lists_json=$(fetch_lists_json) || {
-    echo "==> Error: failed to fetch task lists (gog error)" >&2
-    return 1
-  }
-  if [[ -z ${lists_json} || ${lists_json} == "[]" || ${lists_json} == "null" ]]; then
-    echo "==> Error: No task lists found" >&2
-    return 1
-  fi
+  local arg_list_id="${1:-}"
+  local arg_task_id="${2:-}"
 
   local list_id
-  list_id=$(select_list_id "${lists_json}")
+  list_id=$(resolve_list_id "${arg_list_id}")
   if [[ -z ${list_id} ]]; then
-    echo "==> No list selected. Aborted." >&2
-    return 1
+    error "==> No list selected. Aborted."
   fi
 
-  echo "==> 📋 Fetching tasks from list: ${list_id}" >&2
-  local tasks_json
-  tasks_json=$(fetch_tasks_json "${list_id}") || {
-    echo "==> Error: failed to fetch tasks (gog error)" >&2
-    return 1
-  }
-  if [[ -z ${tasks_json} || ${tasks_json} == "[]" || ${tasks_json} == "null" ]]; then
-    echo "==> Error: No tasks in list" >&2
-    return 1
+  info "==> 📋 Fetching tasks from list: ${list_id}"
+
+  local count=0
+  local selected_ids=()
+  local id title bundle_json
+  while IFS=$'\t' read -r id title bundle_json; do
+    [[ -z ${id} ]] && continue
+    emit_from_bundle "${bundle_json}"
+    count=$((count + 1))
+    selected_ids+=("${id}")
+  done < <(stream_target_bundles "${list_id}" "${arg_task_id}")
+
+  if ((count == 0)); then
+    error "==> No task selected. Aborted."
   fi
 
-  local task_ids
-  task_ids=$(select_task_ids "${tasks_json}")
-  if [[ -z ${task_ids} ]]; then
-    echo "==> No task selected. Aborted." >&2
-    return 1
-  fi
+  info "==> ✅ Output ${count} task(s)"
 
-  local markdown
-  markdown=$(build_markdown "${tasks_json}" "${task_ids}") || return 1
-
-  printf '%s\n' "${markdown}"
-  local count
-  count=$(printf '%s\n' "${task_ids}" | grep -c .)
-  echo "==> ✅ Output ${count} task(s)" >&2
-
-  if [[ ${gog_complete_enabled} -eq 1 ]]; then
-    complete_tasks "${list_id}" "${task_ids}"
+  if [[ ${gog_complete_enabled} -ne 1 ]]; then
+    info "==> 完了処理スキップ"
     return
   fi
-
-  echo "==> ⏭  gog_complete_enabled=0 のため完了処理をスキップ" >&2
+  complete_tasks "${list_id}" "${selected_ids[@]}"
 }
 
 main() {
   set -euo pipefail
 
+  local positional=()
   while [[ $# -gt 0 ]]; do
     case "${1}" in
       -h | --help)
@@ -267,16 +261,23 @@ main() {
         gog_complete_enabled=1
         shift
         ;;
+      --)
+        shift
+        positional+=("$@")
+        break
+        ;;
+      -*)
+        error "==> Error: unknown option: ${1}"
+        ;;
       *)
-        echo "==> Error: unknown option: ${1}" >&2
-        usage >&2
-        return 1
+        positional+=("${1}")
+        shift
         ;;
     esac
   done
 
-  check_deps
-  run
+  hass "${depends[@]}"
+  run "${positional[@]+"${positional[@]}"}"
 }
 
 # 直接実行時のみ main を起動（テストで source するときは main を起動しない）
