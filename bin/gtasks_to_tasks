@@ -18,7 +18,7 @@
 ##     2. task_ids を引数 (all/カンマ区切り/単一) or fzf で決定
 ##     3. 選択タスクを Markdown 形式で stdout に出力
 ##     4. gog_complete_enabled=1 のとき、選択した親タスクを完了扱いにする
-readonly depends=(gog fzf jq git base64)
+readonly depends=(gog jq git base64)
 gog_complete_enabled=0
 
 has() { command -v "${1}" >&/dev/null; }
@@ -215,6 +215,9 @@ complete_tasks() {
 run() {
   local arg_list_id="${1:-}"
   local arg_task_id="${2:-}"
+  if [[ -z $arg_list_id || -z $arg_task_id ]]; then
+    hass fzf
+  fi
 
   local list_id
   list_id=$(resolve_list_id "${arg_list_id}")
