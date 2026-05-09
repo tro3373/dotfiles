@@ -17,7 +17,7 @@ main() {
     fzf -1 --prompt='Account> ' --delimiter=$'\t' --with-nth=1,2 |
     while IFS=$'\t' read -r email client; do
       services=$(gog auth list | awk -F'\t' -v e="${email}" -v c="${client}" '$1==e {print $3}')
-      services=
+      # services=
       svcs=
       if [[ -n ${services} ]]; then
         svcs="--services ${services}"
