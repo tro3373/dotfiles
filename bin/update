@@ -42,7 +42,7 @@ initialize() {
 not_supported() { echo "Not supported." 1>&2 && exit 1; }
 update_arch() {
   ilog "=> Cleaning.."
-  clear_pkg_cache
+  $dummy clear_pkg_cache
   local _cmd="sudo pacman"
   if has yay; then
     local _cmd=yay
@@ -107,7 +107,7 @@ update_mac() {
 update_claude() {
   has claude || return
   ilog "=> Updating claude code.."
-  claude update
+  $dummy claude update
   ilog "=> Updating claude code Done!"
 }
 
@@ -127,8 +127,8 @@ main() {
     update_scoop
   fi
   update_claude
-  update_go_bins
-  # update_node_bins
+  $dummy update_go_bins
+  $dummy update_node_bins
   ilog "Done!"
 }
 main "$@"
