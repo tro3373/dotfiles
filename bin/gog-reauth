@@ -16,7 +16,7 @@ main() {
   jq -r '.account_clients // {} | to_entries[] | "\(.key)\t\(.value)"' ~/.config/gogcli/config.json |
     fzf -1 --prompt='Account> ' --delimiter=$'\t' --with-nth=1,2 |
     while IFS=$'\t' read -r email client; do
-      services=$(gog auth list | awk -F'\t' -v e="${email}" -v c="${client}" '$1==e {print $3}')
+      services=$(gog auth list | awk -F'\t' -v e="${email}" -v c="${client}" '$1==e && $2==c {print $3}')
       # services=
       svcs=
       if [[ -n ${services} ]]; then
