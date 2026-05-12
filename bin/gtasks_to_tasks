@@ -20,6 +20,7 @@
 ##     4. gog_complete_enabled=1 のとき、選択した親タスクを完了扱いにする
 readonly depends=(gog jq git base64)
 gog_complete_enabled=0
+gog_use_client_id="${GOG_USE_CLIENT_ID:-default}"
 
 has() { command -v "${1}" >&/dev/null; }
 hass() {
@@ -100,8 +101,8 @@ format_task() {
 
 _gog() {
   local args=()
-  if [[ -n ${GOG_USE_CLIENT_ID:-} ]]; then
-    args+=("--client=${GOG_USE_CLIENT_ID}")
+  if [[ -n $gog_use_client_id ]]; then
+    args+=("--client=$gog_use_client_id")
   fi
   gog "${args[@]}" "$@"
 }
@@ -250,6 +251,11 @@ run() {
   complete_tasks "${list_id}" "${selected_ids[@]}"
 }
 
+is_gog_valid() {
+  res=$(gog auth list --check --json | jq -r --arg client "$gog_use_client_id" '.accounts[] | select(.client == $client) | .valid' | head -1)
+  [[ ${res} == "true" ]]
+}
+
 main() {
   set -euo pipefail
 
@@ -280,6 +286,7 @@ main() {
   done
 
   hass "${depends[@]}"
+  is_gog_valid || error "==> Error: gog auth status invalid for client '$gog_use_client_id'"
   run "${positional[@]+"${positional[@]}"}"
 }
 
