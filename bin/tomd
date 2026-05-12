@@ -1,6 +1,12 @@
 #!/usr/bin/env -S bash -e
 
 current_dir=$(pwd) && readonly current_dir
+command_name=$(basename "$0") && readonly command_name
+readonly depends=(bunx markitdown)
+dst_dir="$current_dir"
+args=()
+
+add_args() { args+=("$@"); }
 has() { command -v "${1}" >&/dev/null; }
 hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
 _ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
@@ -11,9 +17,23 @@ info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
 
+usage() {
+  cat <<EOF
+
+Save web page as markdown file.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+      -d|--dst  : Destination directory (default: current directory)
+
+EOF
+}
+
 sanitize() {
   [[ -t 0 ]] && error "==> No string provided."
-  sed -e 's/[\/\:*?"<>|]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//'
+  sed -e 's/[\/\:*?"<>|!]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//'
 }
 
 get_title_from_md() {
@@ -40,10 +60,10 @@ handle_url() {
   tmp_md=$(download_to_markdown)
   title=$(get_title_from_md "$tmp_md")
   timestamp=$(date +%Y%m%d-%H%M%S)
-  dst="$current_dir/${timestamp}_$title.md"
+  dst="$dst_dir/${timestamp}_$title.md"
   while [[ -e $dst ]]; do
     timestamp=$(date +%Y%m%d-%H%M%S)
-    dst="$current_dir/${timestamp}_$title.md"
+    dst="$dst_dir/${timestamp}_$title.md"
   done
   mv "$tmp_md" "$dst"
   info "==> Saved: $dst"
@@ -60,11 +80,33 @@ fire() {
   } | tr " " "\n"
 }
 
-main() {
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -d | --dst) shift && dst_dir=$1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check "${args[@]}"
+  if [[ ! -d $dst_dir ]]; then
+    mkdir -p "$dst_dir"
+  fi
   set -euo pipefail
-  hass bunx markitdown
-  [[ ! -p /dev/stdin && $# -eq 0 ]] && error "==> No URL provided."
-  fire "$@" |
+}
+
+check() {
+  hass "${depends[@]}"
+  if [[ ! -p /dev/stdin && $# -eq 0 ]]; then
+    error "==> No URL provided."
+  fi
+}
+
+main() {
+  initialize "$@"
+  fire "${args[@]}" |
     while read -r url; do
       [[ -z $url ]] && continue
       [[ $url =~ ^#.* ]] && continue
