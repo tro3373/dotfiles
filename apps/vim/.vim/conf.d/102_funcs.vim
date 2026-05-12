@@ -1116,28 +1116,53 @@ function! ReplaceTsvNewlines()
 endfunction
 command! ReplaceTsvNewlines call ReplaceTsvNewlines()
 
+function! DisableLinting() abort
+  ALEDisable
+  LspStopServer
+  let g:ale_enabled = 0
+  let g:lsp_diagnostics_enabled = 0
+  let g:lsp_diagnostics_echo_cursor = 0
+  " let g:lsp_diagnostics_highlights_enabled = 0
+  " editorconfig-vim (Vim) 用
+  if g:plug.is_installed('editorconfig-vim')
+    let b:EditorConfig_disable = 1
+  endif
+  " Neovim 組み込み editorconfig 用: 登録済み BufWritePre を解除
+  " グループ名は Neovim 0.11+ で 'nvim.editorconfig' (ドット入り) なので Lua API を使う
+  if has('nvim')
+    let g:editorconfig = v:false
+    lua vim.api.nvim_clear_autocmds({event='BufWritePre', group='nvim.editorconfig'})
+  endif
+  echo "==> ALE/LSP/EditorConfig disabled."
+endfunction
+command! DisableLinting call DisableLinting()
+
+function! EnableLinting() abort
+  ALEEnable
+  " LspStartServer => Not Such command Exist
+  let g:ale_enabled = 1
+  let g:lsp_diagnostics_enabled = 1
+  let g:lsp_diagnostics_echo_cursor = 1
+  " let g:lsp_diagnostics_highlights_enabled = 1
+  if g:plug.is_installed('editorconfig-vim')
+    let g:EditorConfig_disable = 0
+  endif
+  if has('nvim')
+    let b:editorconfig = v:true
+    " 再適用したいなら :edit でバッファ再読込
+  endif
+  echo "==> ALE/LSP/EditorConfig enabled."
+endfunction
+command! EnableLinting call EnableLinting()
+
 function! ToggleLinting() abort
   if !exists('g:ale_enabled')
     return
   endif
   if g:ale_enabled
-    ALEDisable
-    LspStopServer
-    let g:ale_enabled = 0
-    let g:lsp_diagnostics_enabled = 0
-    let g:lsp_diagnostics_echo_cursor = 0
-    " let g:lsp_diagnostics_highlights_enabled = 0
-    let b:EditorConfig_disable = 1
-    echo "==> ALE and LSP EditorConfig disabled."
+    call DisableLinting()
   else
-    ALEEnable
-    " LspStartServer => Not Such command Exist
-    let g:ale_enabled = 1
-    let g:lsp_diagnostics_enabled = 1
-    let g:lsp_diagnostics_echo_cursor = 1
-    " let g:lsp_diagnostics_highlights_enabled = 1
-    let b:EditorConfig_disable = 0
-    echo "==> ALE and LSP EditorConfig enabled."
+    call EnableLinting()
   endif
 endfunction
 command! ToggleLinting call ToggleLinting()

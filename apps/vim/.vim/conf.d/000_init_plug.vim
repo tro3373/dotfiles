@@ -243,7 +243,11 @@ call plug#begin('$HOME/.vim/plugged')
 
     Plug 'dense-analysis/ale'                                 " 構文解析(非同期)
     Plug 'maximbaz/lightline-ale'                             " ALE indicator for the lightline vim plugin.
-    Plug 'editorconfig/editorconfig-vim'                      " Official editorconfig
+
+    if !has('nvim')
+      " Neovim は組み込み editorconfig を使うのでプラグイン設定はスキップ
+      Plug 'editorconfig/editorconfig-vim'                    " Official editorconfig
+    endif
     Plug 'mattn/sonictemplate-vim'
 
     " Code Formatter
