@@ -204,33 +204,27 @@ parse_tasks() {
 }
 
 split_tasks() {
-  # tempファイルに抽出
-  local temp_file
-  temp_file=$(mktemp)
-  cat_first_task >"$temp_file"
-
-  # 元ファイルから削除
-  sed -i "${first_line},${end_line}d" "$target_file"
-
   # prpコマンドでJSON取得
-  local json_result
-  json_result=$(cat "$temp_file" | prp -ne gen-task-title-and-branch.md$ | llm -c tgpt -p groq)
+  local tmp_file json_result branch name title worktree_dir task_file tasks_dir
+
+  # NOTE: cat_first_task で first_line/end_line をセットしている
+  # sub processでは変数にセットされないので、ファイル出力している
+  tmp_file=$(mktemp)
+  cat_first_task >"$tmp_file"
+  json_result=$(cat <"$tmp_file" | prp -ne gen-task-title-and-branch.md$ | llm -c tgpt -p groq)
 
   # JSON解析
-  local branch name title
   branch=$(echo "$json_result" | jq -r '.branch')
   name=$(echo "$json_result" | jq -r '.name')
   title=$(echo "$json_result" | jq -r '.title')
 
+  # worktree ブランチ作成
+  worktree_dir=$(git_worktree -a "${branch}")
+
   # タスクファイル作成
   worktree_name=${branch/\//-}
-  local task_file=".tasks/${timestamp}_${worktree_name}_${name}.md"
-  # NOTE: git_worktree -a で link まで貼られるので、事前にファイル作成しておく
-  touch "$task_file"
-
-  # worktree ブランチ作成
-  local worktree_dir
-  worktree_dir=$(git_worktree -a "${branch}")
+  task_file="$(realpath "$git_root/.tasks/${timestamp}_${worktree_name}_${name}.md")"
+  tasks_dir="$(realpath "$git_root/.tasks")"
 
   # マークダウン形式でファイル作成
   cat >"$task_file" <<EOF
@@ -240,17 +234,17 @@ split_tasks() {
 ### 作業ディレクトリ
 - ${worktree_dir}
 ### タスク内容
-$(cat "$temp_file")
+$(cat <"$tmp_file")
 EOF
 
   # link task_file
-  _ln "$(realpath "$git_root/$task_file")" "$worktree_dir/.tasks.md"
+  _ln "$task_file" "$worktree_dir/.tasks.md"
   if [[ ! -e "$worktree_dir/.tasks" ]]; then
-    _ln "$(realpath "$git_root/.tasks")" "$worktree_dir/.tasks"
+    _ln "$tasks_dir" "$worktree_dir/.tasks"
   fi
 
-  # tempファイル削除
-  rm -f "$temp_file"
+  # 元ファイルから削除
+  sed -i "${first_line},${end_line}d" "$target_file"
 
   info "==> Task split to: $task_file"
   info "==> Branch: $branch"
