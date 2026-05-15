@@ -175,6 +175,7 @@ ln_ignored_from_config() {
     return
   }
   cat <"$ln_config" |
+    sed -e "s|/$||" |
     while read -r rel_path; do
       [[ -z $rel_path ]] && continue
       [[ $rel_path =~ ^#.* ]] && continue
@@ -187,20 +188,23 @@ ln_ignored_from_config() {
       _dst_dir="$(dirname "$dst")"
       [[ ! -e $_dst_dir ]] && mkdir -p "$_dst_dir"
 
-      if [[ -f $src ]]; then
-        # File case
-        _ln "$src" "$dst"
-        continue
-      fi
-
-      # Directory case
-      mkdir -p "$dst"
-      src="$(realpath "$src")" # Resolve to absolute path
-      find "$src/" -maxdepth 1 -mindepth 1 |
-        while read -r item_path; do
-          item_name=$(basename "$item_path")
-          _ln "$item_path" "$dst/$item_name"
-        done || :
+      _ln "$src" "$dst"
+      # # NOTE: For support git ignored `xxxx/` pattern
+      # #   - Make directory and link all its content instead of
+      # #     linking the directory itself to avoid detect directory changed
+      # if [[ -f $src ]]; then
+      #   # File case
+      #   _ln "$src" "$dst"
+      #   continue
+      # fi
+      # # Directory case
+      # mkdir -p "$dst"
+      # src="$(realpath "$src")" # Resolve to absolute path
+      # find "$src/" -maxdepth 1 -mindepth 1 |
+      #   while read -r item_path; do
+      #     item_name=$(basename "$item_path")
+      #     _ln "$item_path" "$dst/$item_name"
+      #   done || :
     done
 }
 
