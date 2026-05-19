@@ -2,6 +2,6 @@
 
 main() {
   set -eo pipefail
-  bunx ccusage "$@"
+  bunx ccusage@latest "$@"
 }
 main "$@"
