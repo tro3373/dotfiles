@@ -57,15 +57,19 @@ emit_task_block() {
   printf -- '%s- [ ] %s\n' "${checkbox_indent}" "${title}"
 
   if [[ -n ${notes} ]]; then
-    local line
+    # bullet マーカー (- / * / +) がある行はそのまま尊重、
+    # ない行は 1 行目のみ "- " を付与し 2 行目以降は "  " で継続行扱い。
+    local line marker="- "
     while IFS= read -r line; do
       line=${line%$'\r'}
       [[ ${line} =~ ^[[:space:]]*$ ]] && continue
-      # 行頭の bullet マーカー ("- ", "* ", "+ ") を剥がす（先頭空白も許容）
-      if [[ ${line} =~ ^[[:space:]]*[-*+][[:space:]]+(.*)$ ]]; then
-        line="${BASH_REMATCH[1]}"
+      if [[ ${line} =~ ^[[:space:]]*[-*+][[:space:]] ]]; then
+        printf -- '%s%s\n' "${notes_indent}" "${line}"
+        marker="  "
+        continue
       fi
-      printf -- '%s- %s\n' "${notes_indent}" "${line}"
+      printf -- '%s%s%s\n' "${notes_indent}" "${marker}" "${line}"
+      marker="  "
     done <<<"${notes}"
   fi
 
