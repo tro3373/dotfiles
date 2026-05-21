@@ -1,0 +1,301 @@
+#!/usr/bin/env bash
+
+## figma_dump - Figma API から画面設計用データ (JSON + 遷移図PNG) を書き出す
+##
+## 各画面の構造を絞り込んだ JSON と遷移図の PNG を取得し、出力ディレクトリに
+## まとめる。出力一式を LLM (claude.ai 等) に渡し、画面遷移表・画面定義書を
+## 起こすことを想定したデータダンプツール。
+##
+##   Usage:
+##     figma_dump <FIGMA_URL> [OUT_DIR]
+##     figma_dump <FILE_KEY> <NODE_ID> [OUT_DIR]
+##     figma_dump -h
+##
+##   Options:
+##     -h, --help   このヘルプを表示
+##
+##   Arguments:
+##     FIGMA_URL    フレームを右クリック → Copy link で得た URL。
+##                  FILE_KEY と node-id を自動抽出する。
+##     FILE_KEY     Figma ファイルキー (URL の /design/<KEY>/ 部分)。
+##     NODE_ID      ノードID。URL 形式 (1234-5678) / API 形式 (1234:5678) の
+##                  どちらでも可。カンマ区切りで複数指定できる。
+##     OUT_DIR      出力先ディレクトリ (省略時: figma_out)。
+##
+##   Environment:
+##     FIGMA_TOKEN  Figma personal access token (必須)。
+##                  Figma の Settings → Security で発行 (read-only で十分)。
+##
+##   Output:
+##     <OUT_DIR>/raw.json     /v1/files/.../nodes の生レスポンス
+##     <OUT_DIR>/screen.json  画面名/種別/テキスト/コンポーネントに絞った JSON
+##     <OUT_DIR>/flow.png     遷移図 PNG (scale=2)。複数 node 指定時は
+##                            flow-<node-id>.png として個別保存。
+##     <OUT_DIR>/prompt.md    画面遷移表・画面定義書を起こすための指示テンプレ。
+##                            screen.json と PNG と一緒に LLM へ渡す。
+##
+##   Example:
+##     export FIGMA_TOKEN='figd_xxxxxxxx'
+##     figma_dump 'https://www.figma.com/design/abcDEF123/App?node-id=1-234' out_login
+##     figma_dump abcDEF123 1:234,5:678 out_all
+
+readonly depends=(curl jq)
+
+has() { command -v "${1}" >&/dev/null; }
+hass() { for arg in "$@"; do has "${arg}" || error "==> No ${arg} command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+usage() { grep '^##' "$0" | sed -E 's/^## ?//'; }
+
+# 引数が http(s) URL かどうかを判定する。
+is_url() { [[ ${1:-} =~ ^https?:// ]]; }
+
+# Figma の design/file URL から FILE_KEY を抽出する。非該当時は何も出力しない。
+extract_file_key() {
+  local url="${1:-}"
+  [[ ${url} =~ figma\.com/[a-zA-Z]+/([A-Za-z0-9]+) ]] || return 0
+  echo "${BASH_REMATCH[1]}"
+}
+
+# Figma URL のクエリから node-id の生値を抽出する。非該当時は何も出力しない。
+extract_node_id() {
+  local url="${1:-}"
+  [[ ${url} =~ [?\&]node-id=([^&\#]+) ]] || return 0
+  echo "${BASH_REMATCH[1]}"
+}
+
+# node-id を Figma API 形式へ正規化する。URL 形式のハイフン (1234-5678) と
+# URL エンコードされたコロン (%3A) を API 形式 (1234:5678) に直す。
+# カンマ区切りの複数 ID は各 ID へ個別適用する。
+to_api_node_id() {
+  local raw="${1:-}" id out=""
+  raw="${raw//%3A/:}"
+  raw="${raw//%3a/:}"
+  local -a ids
+  IFS=, read -ra ids <<<"${raw}"
+  for id in "${ids[@]}"; do
+    [[ -z ${id} ]] && continue
+    id="${id//-/:}"
+    if [[ ! ${id} =~ ^[0-9]+:[0-9]+$ ]]; then
+      error "==> Error: node-id の形式が不正です: ${id} (期待: 1234:5678 または 1234-5678)"
+    fi
+    out+="${id},"
+  done
+  if [[ -z ${out} ]]; then
+    error "==> Error: 有効な node-id がありません"
+  fi
+  echo "${out%,}"
+}
+
+# 位置引数 (positional) から file_key / node_id / out_dir を決定する。
+resolve_target() {
+  if is_url "${positional[0]}"; then
+    file_key=$(extract_file_key "${positional[0]}")
+    local raw_node
+    raw_node=$(extract_node_id "${positional[0]}")
+    if [[ -z ${file_key} ]]; then
+      error "==> Error: URL から FILE_KEY を抽出できません: ${positional[0]}"
+    fi
+    if [[ -z ${raw_node} ]]; then
+      error "==> Error: URL に node-id がありません。フレームを右クリック → Copy link した URL を渡してください"
+    fi
+    node_id=$(to_api_node_id "${raw_node}")
+    out_dir="${positional[1]:-figma_out}"
+    return 0
+  fi
+
+  if [[ ${#positional[@]} -lt 2 ]]; then
+    usage >&2
+    error "==> Error: FILE_KEY を直接指定する場合は NODE_ID も必要です"
+  fi
+  file_key="${positional[0]}"
+  if [[ ! ${file_key} =~ ^[A-Za-z0-9]+$ ]]; then
+    error "==> Error: FILE_KEY の形式が不正です: ${file_key} (URL の /design/<KEY>/ 部分のみを渡してください)"
+  fi
+  node_id=$(to_api_node_id "${positional[1]}")
+  out_dir="${positional[2]:-figma_out}"
+}
+
+# コマンドライン引数を解釈し、対象を確定する。
+initialize() {
+  local -a positional=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      -*)
+        usage >&2
+        error "==> Error: 不明なオプション: $1"
+        ;;
+      *)
+        positional+=("$1")
+        ;;
+    esac
+    shift
+  done
+
+  if [[ ${#positional[@]} -eq 0 ]]; then
+    usage >&2
+    error "==> Error: 引数が不足しています"
+  fi
+
+  resolve_target
+}
+
+# 画面ノードの生 JSON を取得する。
+fetch_json() {
+  if ! curl -fsS "${hdr[@]}" \
+    "https://api.figma.com/v1/files/${file_key}/nodes?ids=${node_id}" \
+    -o "${out_dir}/raw.json"; then
+    error "==> Error: Figma files API リクエストに失敗しました (FILE_KEY / FIGMA_TOKEN を確認してください)"
+  fi
+  if ! jq -e . "${out_dir}/raw.json" >/dev/null 2>&1; then
+    error "==> Error: raw.json が不正な JSON です (API レスポンスを確認してください)"
+  fi
+}
+
+# 生 JSON を設計書向けの要素 (画面名/種別/テキスト/コンポーネント) に絞り込む。
+filter_json() {
+  local node_count
+  node_count=$(jq '(.nodes | length) // 0' "${out_dir}/raw.json")
+  if [[ ${node_count} -eq 0 ]]; then
+    error "==> Error: ノードが空です。node-id を確認してください (API 形式: ${node_id})"
+  fi
+  jq '[ .nodes[].document
+        | recurse(.children[]?)
+        | select(.type? != null)
+        | {name, type, text: .characters?, component: .componentProperties?}
+        | select(.text != null or .type == "FRAME" or .type == "INSTANCE" or .type == "COMPONENT") ]' \
+    "${out_dir}/raw.json" >"${out_dir}/screen.json"
+}
+
+# 1 ノード分の PNG をダウンロードして保存する。
+# id / images_json / ids は呼び出し元 fetch_images のスコープを参照する。
+save_image() {
+  local img_url
+  img_url=$(jq -r --arg id "${id}" '.images[$id] // empty' <<<"${images_json}")
+  if [[ -z ${img_url} ]]; then
+    warn "==> Warn: node ${id} の画像 URL が取得できませんでした (スキップ)"
+    return 0
+  fi
+
+  local out_name="flow.png"
+  [[ ${#ids[@]} -gt 1 ]] && out_name="flow-${id//:/-}.png"
+
+  # 個別の DL 失敗は警告のみ。複数ノード一括取得で 1 枚失敗しても残りは処理する。
+  if ! curl -fsS "${img_url}" -o "${out_dir}/${out_name}"; then
+    warn "==> Warn: node ${id} の画像ダウンロードに失敗しました (スキップ)"
+    return 0
+  fi
+  info "==> Saved ${out_dir}/${out_name}"
+}
+
+# 遷移図画像を 2 段構え (URL 取得 → 実体 DL) で取得する。
+fetch_images() {
+  local images_json
+  if ! images_json=$(curl -fsS "${hdr[@]}" \
+    "https://api.figma.com/v1/images/${file_key}?ids=${node_id}&format=png&scale=2"); then
+    error "==> Error: Figma images API リクエストに失敗しました"
+  fi
+
+  local api_err
+  api_err=$(jq -r '.err // empty' <<<"${images_json}")
+  if [[ -n ${api_err} ]]; then
+    error "==> Error: Figma images API エラー: ${api_err}"
+  fi
+
+  local -a ids
+  IFS=, read -ra ids <<<"${node_id}"
+  local id
+  for id in "${ids[@]}"; do
+    save_image
+  done
+}
+
+# 設計書化用のプロンプトテンプレートを出力する。
+# screen.json と遷移図 PNG に添えて LLM へ渡す指示書。
+write_prompt() {
+  cat >"${out_dir}/prompt.md" <<'PROMPT_EOF'
+# 画面遷移図・画面定義書 生成プロンプト
+
+このディレクトリの `screen.json` と遷移図 PNG (`flow.png` または `flow-*.png`)
+を LLM にアップロードしたうえで、本プロンプトを指示として渡してください。
+
+## 入力ファイル
+
+- `screen.json` — Figma から抽出した各画面の構造データ。
+  画面名・要素の種別 (type)・テキスト内容 (text)・コンポーネント (component) を含む。
+- `flow.png` / `flow-*.png` — 遷移図フレームのスクリーンショット (PNG, scale=2)。
+
+## 役割分担
+
+- 遷移の矢印・画面のつながり・遷移条件: PNG 画像を読んで解釈する。
+- 各画面の配置要素・項目・ラベル: `screen.json` から埋める。
+
+## 出力 1: 画面遷移表
+
+次の列で表を作成する。
+
+| 遷移元画面 | トリガー (操作) | 遷移先画面 | 条件・備考 |
+| --- | --- | --- | --- |
+
+## 出力 2: 画面定義書 (1 画面 1 枚)
+
+各画面ごとに次の項目を記載する。
+
+- 画面名 / 画面ID
+- 画面の目的
+- 配置要素一覧 (要素名 / 種別 / 初期値 / 必須・任意)
+- アクション (ボタン等) と遷移先
+- 表示条件・バリデーション
+- 備考
+
+## ルール
+
+- `screen.json` に無い情報 (遷移条件など) は PNG から読み取る。
+- 画像からもデータからも判断できない項目は推測で埋めず「(要確認)」と明記する。
+- 画面名・画面ID は `screen.json` の FRAME ノードの name を基準にする。
+PROMPT_EOF
+}
+
+main() {
+  set -euo pipefail
+
+  local file_key="" node_id="" out_dir=""
+
+  initialize "$@"
+  hass "${depends[@]}"
+
+  if [[ -z ${FIGMA_TOKEN:-} ]]; then
+    error "==> Error: FIGMA_TOKEN が未設定です。'export FIGMA_TOKEN=figd_xxx' を設定してください"
+  fi
+
+  local -a hdr=(-H "X-Figma-Token: ${FIGMA_TOKEN}")
+
+  mkdir -p "${out_dir}"
+  info "==> Fetching node JSON: file=${file_key} ids=${node_id}"
+  fetch_json
+  filter_json
+  info "==> Fetching transition image (PNG scale=2)"
+  fetch_images
+  write_prompt
+
+  local screen_count
+  screen_count=$(jq '(length) // 0' "${out_dir}/screen.json")
+  if [[ ${screen_count} -eq 0 ]]; then
+    warn "==> Warn: screen.json が空です。node-id が画面フレームを指しているか確認してください"
+  fi
+  info "==> Done: ${out_dir}/ (raw.json, screen.json [${screen_count} elems], flow*.png, prompt.md)"
+}
+
+# source されたとき (関数の検証・再利用) は main を実行しない
+if [[ ${BASH_SOURCE[0]} == "${0}" ]]; then
+  main "$@"
+fi
