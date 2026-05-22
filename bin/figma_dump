@@ -28,7 +28,8 @@
 ##
 ##   Output:
 ##     <OUT_DIR>/raw.json     /v1/files/.../nodes の生レスポンス
-##     <OUT_DIR>/screen.json  画面名/種別/テキスト/コンポーネントに絞った JSON
+##     <OUT_DIR>/screen.json  画面名/種別/テキスト/コンポーネントに絞った JSON。
+##                            Figma 上で非表示 (visible=false) の要素は除外。
 ##     <OUT_DIR>/flow.png     遷移図 PNG (scale=2)。複数 node 指定時は
 ##                            flow-<node-id>.png として個別保存。
 ##     <OUT_DIR>/prompt.md    画面遷移表・画面定義書を起こすための指示テンプレ。
@@ -162,6 +163,7 @@ fetch_json() {
 }
 
 # 生 JSON を設計書向けの要素 (画面名/種別/テキスト/コンポーネント) に絞り込む。
+# Figma 上で非表示 (visible=false) のノードは、その子孫ごと除外する。
 filter_json() {
   local node_count
   node_count=$(jq '(.nodes | length) // 0' "${out_dir}/raw.json")
@@ -169,7 +171,7 @@ filter_json() {
     error "==> Error: ノードが空です。node-id を確認してください (API 形式: ${node_id})"
   fi
   jq '[ .nodes[].document
-        | recurse(.children[]?)
+        | recurse(.children[]?; .visible != false)
         | select(.type? != null)
         | {name, type, text: .characters?, component: .componentProperties?}
         | select(.text != null or .type == "FRAME" or .type == "INSTANCE" or .type == "COMPONENT") ]' \
@@ -232,6 +234,7 @@ write_prompt() {
 
 - `screen.json` — Figma から抽出した各画面の構造データ。
   画面名・要素の種別 (type)・テキスト内容 (text)・コンポーネント (component) を含む。
+  Figma 上で非表示 (visible=false) の要素は除外済みで、表示状態の要素のみを含む。
 - `flow.png` / `flow-*.png` — 遷移図フレームのスクリーンショット (PNG, scale=2)。
 
 ## 役割分担
