@@ -1,8 +1,8 @@
 .trash
 .tasks
 .tasks.md
-.done.md
 .opens
+.memo
 
 # **/.claude
 **/.claude/settings.local.json

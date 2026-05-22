@@ -1,16 +1,54 @@
 #!/usr/bin/env -S bash -e
 
+current_dir=$(realpath "$(pwd)") && readonly current_dir
 src_root_dir="$HOME/.mo" && readonly src_root_dir
 
-main() {
-  local src_dir="$src_root_dir/job"
-  if [[ $1 == "p" ]]; then
-    src_dir="$src_root_dir/prv"
+find_log_files() {
+  rg --files --type md "$src_root_dir/$1/" |
+    sort |
+    tail -10
+}
+
+fire_logs() {
+  {
+    find_log_files job
+    find_log_files prv
+  } |
+    while read -r f; do
+      [[ -z $f ]] && continue
+      [[ $f =~ ^#.* ]] && continue
+      [[ ! -e $f ]] && continue
+      printf "%s\t%s\n" "$(stat -c %Y "$f" 2>/dev/null || echo 0)" "$f"
+    done |
+    sort -nr |
+    cut -f2-
+}
+
+cat_memos() {
+  memo="$1/.memo"
+  if [[ -e $memo ]]; then
+    cat <"$memo"
   fi
-  rg --files --type md "$src_dir/" |
-    sed -e 's,^\(.*/\(job\|prv\)\)/,\1 ,g' |
-    sort -k2 -r |
-    sed -e 's,\(job\|\prv\) ,\1/,g' |
-    v
+}
+
+fire_memos() {
+  git_root=$(realpath "$(get_git_root)")
+  if [[ $current_dir != "$git_root" ]]; then
+    cat_memos "$git_root"
+  fi
+  cat_memos "$current_dir"
+}
+
+fire() {
+  {
+    fire_memos
+    fire_logs
+  } |
+    sed -e "s|$current_dir/||g"
+}
+
+main() {
+  fire | v "$@"
 }
 main "$@"
+# fire_logs
