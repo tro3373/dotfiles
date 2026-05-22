@@ -689,3 +689,13 @@ snippet sanitizeee
 		[[ -t 0 ]] && error "==> No string provided."
 		sed -e 's/[\/\\:*?"<>|]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//'
 	}
+
+snippet sort_by_timestamppp
+	while read -r line; do
+		[[ -z $line ]] && continue
+		[[ $line =~ ^#.* ]] && continue
+		[[ ! -e $line ]] && continue
+		printf "%s\t%s\n" "$(stat -c %Y "$line" 2>/dev/null || echo 0)" "$line"
+	done |
+	sort -nr |
+	cut -f2-
