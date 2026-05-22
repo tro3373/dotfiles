@@ -237,6 +237,8 @@ gnome-tweaks
 # for nautilus smb:// access
 gvfs-smb
 python-pip
+# for clipboard in wayland(fix large file copy from nvim(no use xsel))
+wl-clipboard
 EOF
   )
 
