@@ -240,8 +240,19 @@ noremap <F3> <ESC>:call append(line(".")-1, "## ".strftime("%Y-%m-%d"))<CR>
 noremap <F4> <ESC>:call append(line(".")-1, "### ".strftime("%Y%m%d_%H%M%S"))<CR>
 noremap <F5> <ESC>:call append(line(".")-1, "### ".strftime("%Y-%m-%dT%H:%M:%S%z"))<CR>
 
-" 画面分割(横分割)
-nnoremap ss :<C-u>sp<CR><C-w>j
+" 画面分割(横分割): 上ペインの表示位置を分割前のまま固定する
+" nnoremap ss :<C-u>sp<CR><C-w>j
+function! SplitKeepTopView()
+  let l:topline = line('w0')
+  split
+  " 上(新規)ウィンドウ: 高さが半分になっても表示開始行を変えない。
+  " カーソルを 'scrolloff' 行ぶん下げ、上方向の余白で topline が押し上げられるのを防ぐ
+  let l:lnum = min([l:topline + &scrolloff, line('$')])
+  call winrestview({'topline': l:topline, 'lnum': l:lnum})
+  " 下(元)ウィンドウへ移動して作業する
+  wincmd j
+endfunction
+nnoremap ss :<C-u>call SplitKeepTopView()<CR>
 " 画面分割(縦分割)
 nnoremap sv :<C-u>vnew<CR>
 nnoremap sV :<C-u>vs<CR>
