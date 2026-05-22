@@ -160,7 +160,7 @@ nnoremap <silent> <C-K> :call ClipPath()<CR>
 command! CopyFilePath   call ClipPath()
 " command! Copy           call ClipFullPath()
 command! CopyFullPath   call ClipFullPath()
-nnoremap <silent> <C-I> :call ClipFullPath()<CR>
+nnoremap <silent> <C-H> :call ClipFullPath()<CR>
 command! CopyFileName   call ClipFileName()
 command! CopyTimestamp  call ClipTimestamp()
 command! CopyDate       call ClipDate()
