@@ -57,12 +57,14 @@ fire_files() {
 
 main() {
   ! has fzf && echo "No fzf exist" 1>&2 && exit 1
-  local files
-  files=$(fire_files "$@" | tr '\n' ' ')
-  [[ -z $files ]] && return
+  local f
+  local -a files=()
+  while IFS= read -r f; do
+    [[ -n $f ]] && files+=("$f")
+  done < <(fire_files "$@")
+  [[ ${#files[@]} -eq 0 ]] && return
   local _vim=vim
   has nvim && _vim=nvim
-  # shellcheck disable=SC2086
-  $_vim -p $files </dev/tty
+  $_vim -p "${files[@]}" </dev/tty
 }
 main "$@"
