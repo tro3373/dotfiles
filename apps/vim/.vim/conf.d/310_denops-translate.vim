@@ -10,13 +10,13 @@ let g:translate_winsize = 10 " set buffer window height size if you doesn't use 
 let g:translate_ui = ""  "popup / buffer
 
 " カーソル下の単語を翻訳
-nmap <Leader>n :Translate <C-R><C-W><CR>
+nmap <Leader>tr :Translate <C-R><C-W><CR>
 " 選択行を翻訳
-vmap <Leader>n :'<,'>Translate<CR>
+vmap <Leader>tr :'<,'>Translate<CR>
 " 選択部分を翻訳(Not work)
 " vmap <Leader>n y:Translate <C-r>"
 
 " カーソル下の単語を逆翻訳
-nmap <Leader>N :Translate! <C-R><C-W><CR>
+nmap <Leader>Tr :Translate! <C-R><C-W><CR>
 " 選択行を逆翻訳
-vmap <Leader>N :'<,'>Translate!<CR>
+vmap <Leader>Tr :'<,'>Translate!<CR>

@@ -14,8 +14,8 @@ _G.copilot_chat_setup = function()
     system_prompt = "あなたは優秀なプログラマーで、Github上の広範な情報やベストプラクティスにも精通しています。質問には日本語で、分かりやすく、具体的に答えてください。",
 
     -- model = "gpt-4.1", -- Default model to use, see ':CopilotChatModels' for available models (can be specified manually in prompt via $).
-    -- model = "gpt-5-codex",
-    model = "claude-sonnet-4.5",
+    -- model = "gpt-5.5",
+    model = "claude-sonnet-4.6",
     -- model = "grok-code-fast-1",
 
     -- agent = "copilot", -- Default agent to use, see ':CopilotChatAgents' for available agents (can be specified manually in prompt via @).
@@ -105,13 +105,14 @@ _G.copilot_chat_setup = function()
       ExplainJp = {
         prompt = "これなに？",
         system_prompt = "あなたは優秀なプログラマーです。",
-        mapping = "s;",
+        mapping = "<Leader>,",
         description = "what's this?",
       },
       LangAssist = {
         prompt = "選択されたテキストを判定してください。英語の場合は文法・表現を添削して改善版を提示してください。日本語の場合は自然な英語に翻訳してください。結果には、文法の説明、使えるイディオムや慣用句、より自然な表現の提案も含めてください。",
         system_prompt = "あなたはプロの英語ネイティブ翻訳者・校正者です。",
-        mapping = "sl",
+        -- TODO: sl: apps/vim/.vim/conf.d/101_mapping.vim move window is mapped.
+        mapping = "<Leader>.",
         description = "英語添削 / 日本語→英訳",
       },
     },
