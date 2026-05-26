@@ -21,6 +21,9 @@ main() {
   # - ~/.agents linked to ~/.mo/.agents
   # - no `--agent`: Add to all agents
   # npx -y skills "$@" -g -y --agent claude-code
-  npx -y skills "$@" -g -y
+  # npx -y skills "$@" -g -y
+  # npx -y skills "$@"
+  # bunx skills@latest "$@"
+  bunx skills@latest "$@" -y --agent claude-code
 }
 main "$@"
