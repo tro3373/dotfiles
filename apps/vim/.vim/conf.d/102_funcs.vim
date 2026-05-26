@@ -954,9 +954,11 @@ command! FindC2A0 call FindC2A0()
 
 " 開いているファイルのディレクトリをエクスプローラで開く
 function! Open()
-  let l:current_file_d = expand('%:p:h')
-  " execute system('open ' . l:current_file_d)
-  call system('open ' . l:current_file_d)
+  let modifiers = '%:p:h'
+  if expand('%:e') ==? 'html'
+    let modifiers = '%:p'
+  endif
+  call system('open ' . expand(modifiers))
 endfunction
 command! Open call Open()
 map <silent> qn :!open %:h>&/dev/null<ENTER>
