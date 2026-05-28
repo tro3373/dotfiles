@@ -954,6 +954,11 @@ command! FindC2A0 call FindC2A0()
 
 " 開いているファイルのディレクトリをエクスプローラで開く
 function! Open()
+  " SSH 越しではリモートで `open` を実行しても意味がないのでスキップ
+  if !empty($SSH_CONNECTION) || !empty($REMOTEHOST)
+    echo "Skip Open: SSH session detected (would open on remote)"
+    return
+  endif
   let modifiers = '%:p:h'
   if expand('%:e') ==? 'html'
     let modifiers = '%:p'
@@ -1302,26 +1307,6 @@ function! Issue(args) abort
 endfunction
 command! -nargs=* Issue call Issue(expand('<args>'))
 
-" Goto file under cursor
-" - `gf`: カーソル下のファイル名を開く
-" - `gF`: カーソル下のファイル名＋行番号を開く（例: `foo.txt:42` なら 42 行目で開く）
-" noremap gf <C-W>gF
-" noremap gF <C-W>gf
-function! JumpToFileAndLineUnderCursor()
-  let l:word = expand('<cWORD>')
-  let l:word = substitute(l:word, '^@', '', '')
-  let l:word = substitute(l:word, '[`''"<>]', '', 'g')
-  if l:word =~ '\v(.+)(:\+?|:|#L)(\d+)$'
-    let l:file = substitute(l:word, '\v(:\+?|:|#L)\d+$', '', '')
-    let l:lnum = matchstr(l:word, '\v(\d+)$')
-    execute 'tabedit ' . fnameescape(l:file)
-    execute l:lnum
-  else
-    execute 'tabedit ' . fnameescape(l:word)
-  endif
-endfunction
-nnoremap gf :call JumpToFileAndLineUnderCursor()<CR>
-
 function! Bom()
   set bomb
   write
@@ -1390,8 +1375,99 @@ endfunction
 command! CopyAsRichText call CopyAsRichText()
 nnoremap <silent> <M-Y> :call CopyAsRichText()<CR>
 
+
+" Goto file under cursor
+" - `gf`: カーソル下のファイル名を開く
+" - `gF`: カーソル下のファイル名＋行番号を開く（例: `foo.txt:42` なら 42 行目で開く）
+" noremap gf <C-W>gF
+" noremap gF <C-W>gf
+" カーソル下の word からパス文字列を抽出 (クォート / @ を除去)
+function! s:extract_path_from_word(word) abort
+  let l:w = substitute(a:word, '^@', '', '')
+  return substitute(l:w, '[`''"<>()[\]]', '', 'g')
+endfunction
+
+" 行全体からカーソル位置を含む Markdown link `[text](path)` の path を返す
+function! s:extract_md_link_at_cursor() abort
+  let l:line = getline('.')
+  let l:col = col('.')
+  let l:pos = 0
+  while l:pos < len(l:line)
+    let l:m = matchstrpos(l:line, '\v\[.{-}\]\([^)]+\)', l:pos)
+    if l:m[1] == -1
+      return ''
+    endif
+    if l:col >= l:m[1] + 1 && l:col <= l:m[2]
+      return matchstr(l:m[0], '\v\(\zs[^)]+\ze\)')
+    endif
+    let l:pos = l:m[2]
+  endwhile
+  return ''
+endfunction
+
+" path の実体を解決。見つからなければ '' を返す
+function! s:resolve_path(path) abort
+  if empty(a:path)
+    return ''
+  endif
+  if a:path =~# '^\~'
+    let l:p = expand(a:path)
+    return (filereadable(l:p) || isdirectory(l:p)) ? l:p : ''
+  endif
+  if a:path =~# '^/'
+    return (filereadable(a:path) || isdirectory(a:path)) ? a:path : ''
+  endif
+  if filereadable(a:path) || isdirectory(a:path)
+    return a:path
+  endif
+  let l:base = expand('%:p:h')
+  if empty(l:base)
+    return ''
+  endif
+  let l:resolved = l:base . '/' . a:path
+  if filereadable(l:resolved) || isdirectory(l:resolved)
+    return l:resolved
+  endif
+  return ''
+endfunction
+
+function! JumpToFileAndLineUnderCursor() abort
+  " 行全体から Markdown link を優先的に探す (日本語などで <cWORD> が切れる対策)
+  let l:word = s:extract_md_link_at_cursor()
+  if empty(l:word)
+    let l:cword = expand('<cWORD>')
+    if empty(l:cword)
+      echo "No word under cursor."
+      return
+    endif
+    let l:word = s:extract_path_from_word(l:cword)
+  endif
+  if empty(l:word)
+    echo "No path under cursor."
+    return
+  endif
+
+  " 行番号抽出 (`path:42`, `path:+42`, `path#L42`)
+  let l:lnum = 0
+  if l:word =~# '\v(.+)(:\+?|:|#L)(\d+)$'
+    let l:lnum = matchstr(l:word, '\v(\d+)$')
+    let l:word = substitute(l:word, '\v(:\+?|:|#L)\d+$', '', '')
+  endif
+
+  let l:path = s:resolve_path(l:word)
+  if empty(l:path)
+    echo "File not found: " . l:word
+    return
+  endif
+
+  execute 'tabedit ' . fnameescape(l:path)
+  if l:lnum > 0
+    execute l:lnum
+  endif
+endfunction
+
 " カーソル行のURL または Markdownリンク [text](url) をブラウザで開く
-function! OpenUrlOnCursor() abort
+function! OpenUrlOrFilePathOnCursor() abort
   let line = getline('.')
   let col = col('.')
 
@@ -1426,7 +1502,9 @@ function! OpenUrlOnCursor() abort
     let pos = m[2]
   endwhile
 
-  echo "No URL found on cursor line."
+  " URL が無ければ、カーソル下をパスとみなして新しいタブで開く (gf と同じ動き)
+  call JumpToFileAndLineUnderCursor()
 endfunction
-nnoremap <silent> <Leader>j :call OpenUrlOnCursor()<CR>
+nnoremap <silent> <Leader>j :call OpenUrlOrFilePathOnCursor()<CR>
+nnoremap <silent> gf :call OpenUrlOrFilePathOnCursor()<CR>
 
