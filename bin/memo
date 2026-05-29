@@ -5,8 +5,9 @@ src_root_dir="$HOME/.mo" && readonly src_root_dir
 
 find_log_files() {
   rg --files --type md "$src_root_dir/$1/" |
+    grep '\-log.md' |
     sort |
-    tail -10
+    tail -1
 }
 
 fire_logs() {
