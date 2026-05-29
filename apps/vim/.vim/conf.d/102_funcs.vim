@@ -1387,22 +1387,23 @@ function! s:extract_path_from_word(word) abort
   return substitute(l:w, '[`''"<>()[\]]', '', 'g')
 endfunction
 
-" 行全体からカーソル位置を含む Markdown link `[text](path)` の path を返す
-function! s:extract_md_link_at_cursor() abort
-  let l:line = getline('.')
-  let l:col = col('.')
-  let l:pos = 0
-  while l:pos < len(l:line)
-    let l:m = matchstrpos(l:line, '\v\[.{-}\]\([^)]+\)', l:pos)
-    if l:m[1] == -1
-      return ''
-    endif
-    if l:col >= l:m[1] + 1 && l:col <= l:m[2]
-      return matchstr(l:m[0], '\v\(\zs[^)]+\ze\)')
-    endif
-    let l:pos = l:m[2]
-  endwhile
-  return ''
+" token (空白区切りの 1 語) をファイルパスと行番号に解決する
+" 戻り値: [resolved_path, lnum]。解決できなければ ['', 0]
+function! s:resolve_token_as_path(token) abort
+  " Markdown link `[text](path)` の括弧内 path を優先的に拾う
+  let l:cand = a:token
+  let l:md = matchstr(a:token, '\v\(\zs[^)]+\ze\)')
+  if !empty(l:md)
+    let l:cand = l:md
+  endif
+  let l:cand = s:extract_path_from_word(l:cand)
+  " 行番号抽出 (`path:42`, `path:+42`, `path#L42`)
+  let l:lnum = 0
+  if l:cand =~# '\v(.+)(:\+?|:|#L)(\d+)$'
+    let l:lnum = str2nr(matchstr(l:cand, '\v(\d+)$'))
+    let l:cand = substitute(l:cand, '\v(:\+?|:|#L)\d+$', '', '')
+  endif
+  return [s:resolve_path(l:cand), l:lnum]
 endfunction
 
 " path の実体を解決。見つからなければ '' を返す
@@ -1431,79 +1432,28 @@ function! s:resolve_path(path) abort
   return ''
 endfunction
 
-function! JumpToFileAndLineUnderCursor() abort
-  " 行全体から Markdown link を優先的に探す (日本語などで <cWORD> が切れる対策)
-  let l:word = s:extract_md_link_at_cursor()
-  if empty(l:word)
-    let l:cword = expand('<cWORD>')
-    if empty(l:cword)
-      echo "No word under cursor."
-      return
-    endif
-    let l:word = s:extract_path_from_word(l:cword)
-  endif
-  if empty(l:word)
-    echo "No path under cursor."
-    return
-  endif
-
-  " 行番号抽出 (`path:42`, `path:+42`, `path#L42`)
-  let l:lnum = 0
-  if l:word =~# '\v(.+)(:\+?|:|#L)(\d+)$'
-    let l:lnum = matchstr(l:word, '\v(\d+)$')
-    let l:word = substitute(l:word, '\v(:\+?|:|#L)\d+$', '', '')
-  endif
-
-  let l:path = s:resolve_path(l:word)
-  if empty(l:path)
-    echo "File not found: " . l:word
-    return
-  endif
-
-  execute 'tabedit ' . fnameescape(l:path)
-  if l:lnum > 0
-    execute l:lnum
-  endif
-endfunction
-
-" カーソル行のURL または Markdownリンク [text](url) をブラウザで開く
+" 現在行を空白区切りで走査し、最初に見つかった URL/ファイルパスで処理する
+" (カーソル位置には依存しない)
+"   - URL (bare / Markdownリンク [text](url) の url) → ブラウザで開く
+"   - ファイルパス → 新しいタブで開く (gf と同じ動き)
 function! OpenUrlOrFilePathOnCursor() abort
-  let line = getline('.')
-  let col = col('.')
-
-  " カーソル位置を含む [text](url) を探す
-  let pos = 0
-  while pos < len(line)
-    let m = matchstrpos(line, '\[.\{-}\](https\?://[^)]\+)', pos)
-    if m[1] == -1
-      break
-    endif
-    " カーソルがこのマッチ範囲内にあるか (col は 1-based, matchstrpos は 0-based)
-    if col >= m[1] + 1 && col <= m[2]
-      let url = matchstr(m[0], '(\zshttps\?://[^)]\+\ze)')
-      call openbrowser#open(url)
+  for l:token in split(getline('.'), '\s\+')
+    " URL を優先 (Markdownリンクの url も同パターンで `)` 手前まで拾える)
+    let l:url = matchstr(l:token, 'https\?://[^ \t)\]>]\+')
+    if !empty(l:url)
+      call openbrowser#open(l:url)
       return
     endif
-    let pos = m[2]
-  endwhile
-
-  " フォールバック: カーソル行から bare URL を探す
-  let url_pattern = 'https\?://[^ \t)\]>]\+'
-  let pos = 0
-  while pos < len(line)
-    let m = matchstrpos(line, url_pattern, pos)
-    if m[1] == -1
-      break
-    endif
-    if col >= m[1] + 1 && col <= m[2]
-      call openbrowser#open(m[0])
+    let [l:path, l:lnum] = s:resolve_token_as_path(l:token)
+    if !empty(l:path)
+      execute 'tabedit ' . fnameescape(l:path)
+      if l:lnum > 0
+        execute l:lnum
+      endif
       return
     endif
-    let pos = m[2]
-  endwhile
-
-  " URL が無ければ、カーソル下をパスとみなして新しいタブで開く (gf と同じ動き)
-  call JumpToFileAndLineUnderCursor()
+  endfor
+  echo "No URL or file path found in line."
 endfunction
 nnoremap <silent> <Leader>j :call OpenUrlOrFilePathOnCursor()<CR>
 nnoremap <silent> gf :call OpenUrlOrFilePathOnCursor()<CR>
