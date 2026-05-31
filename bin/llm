@@ -1,7 +1,7 @@
 #!/usr/bin/env -S bash -e
 
 command_name=$(basename "$0") && readonly command_name
-readonly depends=(gemini-cli tgpt claude gemini)
+# readonly depends=(gemini-cli tgpt claude gemini)
 add_args() { args+=("$@"); }
 args=()
 cmd=
@@ -42,11 +42,6 @@ initialize() {
     esac
     shift
   done
-  check
-}
-
-check() {
-  hass "${depends[@]}"
 }
 
 fire() {
@@ -59,6 +54,7 @@ fire() {
 }
 
 _tgpt() {
+  hass tgpt
   # ## aandrew-me/tgpt: AI Chatbots in terminal without needing API keys
   # - https://github.com/aandrew-me/tgpt?tab=readme-ov-file
   # ### Provider
@@ -85,6 +81,7 @@ _tgpt() {
 }
 
 _claude() {
+  hass claude
   # tmp_org=/tmp/llm-claude-prompt-org.md
   # cat - >$tmp_org
   # command claude -p "$tmp_org の指示を実行して"
@@ -93,14 +90,17 @@ _claude() {
 }
 
 _codex() {
+  hass codex
   command codex exec -
 }
 
 _gemini() {
+  hass gemini
   command gemini -y -p "" | grep -v '^Data collection is disabled.'
 }
 
 _eliben_gemini_cli() {
+  hass gemini-cli
   [[ -z $model ]] && model=$GEMINI_MODEL
   [[ -z $key ]] && key=$GEMINI_API_KEY
   command gemini-cli --model "$model" --key "$key" prompt -
