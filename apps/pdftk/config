@@ -8,7 +8,7 @@ install_arch() {
 install_msys() { not_supported; }
 install_cygwin() { not_supported; }
 install_mac() {
-  install_via_os_default
+  def_install pdftk-java
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
