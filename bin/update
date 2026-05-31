@@ -94,7 +94,8 @@ update_msys() {
 }
 update_mac() {
   ilog "=> Cleaning.."
-  $dummy brew cleanup
+  $dummy brew cleanup -s
+  $dummy rm -rf "$(brew --cache)"
   # $dummy brew cask cleanup --outdated
   ilog "=> Updating.."
   # no needed. brew upgrade execute brew update too
@@ -102,6 +103,19 @@ update_mac() {
   $dummy brew upgrade
   ilog "=> Checking.."
   $dummy brew doctor || :
+}
+
+clean_npm_cache() {
+  $dummy npm cache clean --force
+}
+clean_go_cache() {
+  # -cache:  ビルドキャッシュを削除
+  # -modcache:  モジュールキャッシュ（`~/go/pkg/mod`）を削除
+  # -i:  インストール済みバイナリ（`.a`ファイル）を削除
+  # -r:  依存パッケージも再帰的に対象にする
+  # -testcache:  テストキャッシュを削除
+  # $dummy go clean -cache -modcache -i -r -testcache
+  $dummy go clean -cache -modcache
 }
 
 update_claude() {
