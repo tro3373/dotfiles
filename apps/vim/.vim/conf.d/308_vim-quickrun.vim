@@ -48,3 +48,12 @@ command! QuickRunAuto call QuickRunAuto()
 command! QuickRunDo QuickRun do
 " nmap <Leader>r :QuickRun<CR>
 nmap <Leader>r :QuickRunAuto<CR>
+
+" visual mode: run selected lines with sh, append output below selection
+"   => No remove selection, just run selected lines and append output below
+function! s:RunShBelow() range
+  let l:lines = getline(a:firstline, a:lastline)
+  let l:output = systemlist(join(l:lines, "\n"))
+  call append(a:lastline, l:output)
+endfunction
+xnoremap <Leader>r :call <SID>RunShBelow()<CR>
