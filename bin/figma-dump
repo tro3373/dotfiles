@@ -53,6 +53,14 @@ warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
 usage() { grep '^##' "$0" | sed -E 's/^## ?//'; }
 
+# curl を発行コマンドのログ付きで実行する。info は stderr 出力 (ink/_ink とも
+# 1>&2) なのでコマンド置換に混ざらない。トークンは頭 3 文字だけ残してマスクする。
+# 引数はそのまま curl へ渡す。
+run_curl() {
+  info "==> $(echo "curl $*" | sed -E 's|(X-Figma-Token: ...)[^ ]*|\1...|g')"
+  curl "$@"
+}
+
 # 引数が http(s) URL かどうかを判定する。
 is_url() { [[ ${1:-} =~ ^https?:// ]]; }
 
@@ -152,7 +160,7 @@ initialize() {
 
 # 画面ノードの生 JSON を取得する。
 fetch_json() {
-  if ! curl -fsS "${hdr[@]}" \
+  if ! run_curl -fsS "${hdr[@]}" \
     "https://api.figma.com/v1/files/${file_key}/nodes?ids=${node_id}" \
     -o "${out_dir}/raw.json"; then
     error "==> Error: Figma files API リクエストに失敗しました (FILE_KEY / FIGMA_TOKEN を確認してください)"
@@ -192,7 +200,7 @@ save_image() {
   [[ ${#ids[@]} -gt 1 ]] && out_name="flow-${id//:/-}.png"
 
   # 個別の DL 失敗は警告のみ。複数ノード一括取得で 1 枚失敗しても残りは処理する。
-  if ! curl -fsS "${img_url}" -o "${out_dir}/${out_name}"; then
+  if ! run_curl -fsS "${img_url}" -o "${out_dir}/${out_name}"; then
     warn "==> Warn: node ${id} の画像ダウンロードに失敗しました (スキップ)"
     return 0
   fi
@@ -202,7 +210,7 @@ save_image() {
 # 遷移図画像を 2 段構え (URL 取得 → 実体 DL) で取得する。
 fetch_images() {
   local images_json
-  if ! images_json=$(curl -fsS "${hdr[@]}" \
+  if ! images_json=$(run_curl -fsS "${hdr[@]}" \
     "https://api.figma.com/v1/images/${file_key}?ids=${node_id}&format=png&scale=2"); then
     error "==> Error: Figma images API リクエストに失敗しました"
   fi
