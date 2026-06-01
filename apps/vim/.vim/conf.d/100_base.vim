@@ -241,6 +241,11 @@ syntax enable
 " default syntax for No syntax
 au BufNewFile,BufRead * if &syntax == '' | set syntax=sh | endif
 au BufNewFile,BufRead * if &syntax == 'conf' | set syntax=sh | endif
+" 新規で開いた無名バッファ(:enew や起動直後の空バッファ)は markdown をデフォルトにする
+augroup default_filetype_markdown
+  autocmd!
+  autocmd VimEnter,BufNewFile,BufWinEnter * if bufname('%') == '' && &buftype == '' && &filetype == '' | setlocal filetype=markdown | endif
+augroup END
 
 
 
