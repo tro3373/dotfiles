@@ -3,6 +3,20 @@
 current_dir=$(realpath "$(pwd)") && readonly current_dir
 src_root_dir="$HOME/.mo" && readonly src_root_dir
 
+has() { command -v "${1}" >&/dev/null; }
+hass() {
+  local arg
+  for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done
+}
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test ! -t 0 && cat -) ${@:2}" | _ink "$1"; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+error() { _log red "$*" && exit 1; }
+
 find_log_files() {
   rg --files --type md "$src_root_dir/$1/" |
     grep '\-log.md' |
@@ -25,21 +39,19 @@ fire_logs() {
     cut -f2-
 }
 
-cat_memos() {
-  memo="$1/.memo"
-  if [[ -e $memo ]]; then
-    cat <"$memo"
-  fi
-}
-
 fire_memos() {
-  git_root="$(get_git_root || :)"
+  git_root="$(realpath "$(get_git_root)" 2>/dev/null || :)"
   [[ -z $git_root ]] && return 0
-  git_root=$(realpath "$(get_git_root)")
-  if [[ $current_dir != "$git_root" ]]; then
-    cat_memos "$git_root"
+  memo="$git_root/.memo"
+  if [[ ! -L $memo ]]; then
+    if [[ -e $memo ]]; then
+      error "==> $memo is not a symlink!"
+    fi
+    src_memo="$src_root_dir/tasks/$(basename "$git_root")/.memo"
+    touch "$src_memo"
+    ln -s "$src_memo" "$memo"
   fi
-  cat_memos "$current_dir"
+  cat <"$memo"
 }
 
 fire() {
