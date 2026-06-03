@@ -2,7 +2,7 @@
 .tasks
 .tasks.md
 .opens
-.memo
+/.memo
 
 # **/.claude
 **/.claude/settings.local.json
