@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-## figma_dump - Figma API から画面設計用データ (JSON + 遷移図PNG) を書き出す
+## figma-dump - Figma API から画面設計用データ (JSON + 遷移図PNG) を書き出す
 ##
 ## 各画面の構造を絞り込んだ JSON と遷移図の PNG を取得し、出力ディレクトリに
 ## まとめる。出力一式を LLM (claude.ai 等) に渡し、画面遷移表・画面定義書を
 ## 起こすことを想定したデータダンプツール。
 ##
 ##   Usage:
-##     figma_dump <FIGMA_URL> [OUT_DIR]
-##     figma_dump <FILE_KEY> <NODE_ID> [OUT_DIR]
-##     figma_dump -h
+##     figma-dump <FIGMA_URL> [OUT_DIR]
+##     figma-dump <FILE_KEY> <NODE_ID> [OUT_DIR]
+##     figma-dump -h
 ##
 ##   Options:
 ##     -h, --help   このヘルプを表示
@@ -37,8 +37,8 @@
 ##
 ##   Example:
 ##     export FIGMA_TOKEN='figd_xxxxxxxx'
-##     figma_dump 'https://www.figma.com/design/abcDEF123/App?node-id=1-234' out_login
-##     figma_dump abcDEF123 1:234,5:678 out_all
+##     figma-dump 'https://www.figma.com/design/abcDEF123/App?node-id=1-234' out_login
+##     figma-dump abcDEF123 1:234,5:678 out_all
 
 readonly depends=(curl jq)
 
