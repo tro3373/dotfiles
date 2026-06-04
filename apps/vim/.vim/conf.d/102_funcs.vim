@@ -107,6 +107,10 @@ function! ClipPath()
   let @*=GetGitRelativePath()
   call ClipComm()
 endfunction
+function! ClipPathWithLine()
+  let @*=GetGitRelativePath() . ':' . line('.')
+  call ClipComm()
+endfunction
 function! GetGitRelativePath()
   let l:gitroot = GetGitRoot()
   if l:gitroot == "."
@@ -156,7 +160,9 @@ command! ClipTime       call ClipTime()
 command! ShowPath       call ShowPath()
 command! CopyDir        call ClipDir()
 command! CopyPath       call ClipPath()
+command! ClipPathLine   call ClipPathWithLine()
 nnoremap <silent> <C-K> :call ClipPath()<CR>
+nnoremap <silent> g<C-K> :call ClipPathWithLine()<CR>
 command! CopyFilePath   call ClipPath()
 " command! Copy           call ClipFullPath()
 command! CopyFullPath   call ClipFullPath()
