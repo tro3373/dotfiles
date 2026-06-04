@@ -351,7 +351,8 @@ call plug#begin('$HOME/.vim/plugged')
   " Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npx --yes yarn install' }
   " Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
   Plug 'selimacerbas/live-server.nvim'
-  Plug 'selimacerbas/markdown-preview.nvim'
+  " Plug 'selimacerbas/markdown-preview.nvim'
+  Plug 'tro3373/markdown-preview.nvim'
 
   if g:is_windows
     " Plug 'mattn/webapi-vim'                               " vim interface to Web API
