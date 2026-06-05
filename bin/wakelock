@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+mac() {
+  # -d: Create an assertion to prevent the display from sleeping.
+  # -i: Create an assertion to prevent the system from idle sleeping.
+  caffeinate -i -d
+}
+
+main() {
+  set -eo pipefail
+  case "$(os)" in
+    mac) mac ;;
+    *)
+      echo "==> Not supported on $(os)"
+      exit 1
+      ;;
+  esac
+}
+main "$@"
