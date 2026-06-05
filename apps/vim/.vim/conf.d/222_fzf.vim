@@ -66,7 +66,20 @@ function! s:find_rip_grep_files(q, d) abort
   if a:d == ''
     let l:target_dir = GetGitRoot()
   endif
-  :call fzf#vim#files(l:target_dir, {'options': ['--query=' . a:q, '--layout=reverse', '--info=inline', '--preview', 'cat {}']})
+  " 選択した(Enter)ファイルをデフォルトで新しいタブで開く。
+  " fzf#vim#files は内部で g:fzf_action を参照してキー別アクションを決めるため、
+  " ここで一時的に 'enter' を追加して上書きする。
+  " 'tab split' は Ctrl-t と同じ挙動(新タブで開く)。Ctrl-t/x/v の既存設定は extend で温存。
+  let l:original_action = get(g:, 'fzf_action', {})
+  let g:fzf_action = extend(copy(l:original_action), {'enter': 'tab split'})
+  " アクションは fzf#vim#files 呼び出し時に同期的にキャプチャされるため、
+  " 呼び出し直後に g:fzf_action を元へ戻しても選択時の挙動は変わらない。
+  " finally で復元することで他の fzf コマンドへ影響を残さない。
+  try
+    :call fzf#vim#files(l:target_dir, {'options': ['--query=' . a:q, '--layout=reverse', '--info=inline', '--preview', 'cat {}']})
+  finally
+    let g:fzf_action = l:original_action
+  endtry
 endfunction
 " nnoremap <silent> <Leader>; :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), '')<CR>
 " nnoremap <silent> <Leader>: :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), expand('%:p:h'))<CR>
