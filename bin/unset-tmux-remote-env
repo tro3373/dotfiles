@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  tmux set-environment -u SSH_CONNECTION
+}
+main "$@"
