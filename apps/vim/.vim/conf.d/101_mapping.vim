@@ -174,7 +174,7 @@ map sx :set lcs=tab:>\ ,trail:_,extends:\<Enter>
 " ハードタブ表示
 map sz :set lcs=tab:>.,trail:_,extends:\<Enter>
 " 開いているファイルのディレクトリをリスティング
-map sd :e %:h<Enter>
+map sd :e <C-R>=empty(expand('%')) ? '.' : expand('%:h')<Enter><Enter>
 " 開いているファイルのディレクトリをカレントにする
 map s. :cd %:h<Enter><Enter>
 " " エンコード指定の再読み込みメニューの表示
