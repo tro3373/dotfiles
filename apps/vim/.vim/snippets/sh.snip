@@ -41,7 +41,8 @@ snippet	mkdir_if_needed
 	}
 
 snippet	error_method
-	error() { echo "$*" 1>&2; }
+alias	die_method
+	die() { echo "$*" 1>&2 && exit 1; }
 
 snippet	command_name
 alias	script_name
@@ -77,7 +78,7 @@ snippet	has
 snippet	hasp
 	hasp() { command -p -v "\${1}" >&/dev/null; }
 snippet	hass
-	hass() { local arg; for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+	hass() { local arg; for arg in "$@"; do has "$arg" || die "==> No $arg command exist."; done; }
 
 snippet	shellcheckignore
 alias	ignore
@@ -209,11 +210,11 @@ snippet	logggg
 
 snippet	logsettt
 	log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" 1>&2; }
-	error() { log "$*" && exit 1; }
+	die() { log "$*" && exit 1; }
 
 snippet	logcolorrr
 	has() { command -v "\${1}" >&/dev/null; }
-	hass() { local arg; for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+	hass() { local arg; for arg in "$@"; do has "$arg" || die "==> No $arg command exist."; done; }
 	_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
 	#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test ! -t 0 && cat -) ${@:2}" | _ink "\$1"; }
 	# shellcheck disable=SC2145
@@ -221,7 +222,7 @@ snippet	logcolorrr
 	log() { _log white "$*"; }
 	info() { _log cyan "$*"; }
 	warn() { _log yellow "$*"; }
-	error() { _log red "$*" && exit 1; }
+	die() { _log red "$*" && exit 1; }
 
 snippet	dlog
 	dlog() {
@@ -336,7 +337,7 @@ snippet	check_commandsss
 alias	dependsss
 	readonly depends=(curl fzf jq)
 	has() { command -v "\${1}" >&/dev/null; }
-	hass() { local arg; for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+	hass() { local arg; for arg in "$@"; do has "$arg" || die "==> No $arg command exist."; done; }
 	# hass "${depends[@]}"
 
 
@@ -422,14 +423,14 @@ snippet	initializzzz
 	check() { hass "${depends[@]}"; }
 	add_args() { args+=("$@"); }
 	has() { command -v "\${1}" >&/dev/null; }
-	hass() { local arg; for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
+	hass() { local arg; for arg in "$@"; do has "$arg" || die "==> No $arg command exist."; done; }
 	_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
 	# shellcheck disable=SC2145
 	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "\$1"; }
 	log() { _log white "$*"; }
 	info() { _log cyan "$*"; }
 	warn() { _log yellow "$*"; }
-	error() { _log red "$*" && exit 1; }
+	die() { _log red "$*" && exit 1; }
 	# main() {
 	# 	initialize "$@"
 	# 	for arg in "${args[@]}"; do
@@ -686,7 +687,7 @@ snippet noticeee
 
 snippet sanitizeee
 	sanitize() {
-		[[ -t 0 ]] && error "==> No string provided."
+		[[ -t 0 ]] && die "==> No string provided."
 		sed -e 's/[\/\\:*?"<>|]/-/g' -e 's/--*/-/g' -e 's/^-//' -e 's/-$//'
 	}
 
