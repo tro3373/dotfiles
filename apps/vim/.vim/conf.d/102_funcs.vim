@@ -1443,13 +1443,16 @@ endfunction
 "   - URL (bare / Markdownリンク [text](url) の url) → ブラウザで開く
 "   - ファイルパス → 新しいタブで開く (gf と同じ動き)
 function! OpenUrlOrFilePathOnCursor() abort
-  for l:token in split(getline('.'), '\s\+')
-    " URL を優先 (Markdownリンクの url も同パターンで `)` 手前まで拾える)
-    let l:url = matchstr(l:token, 'https\?://[^ \t)\]>]\+')
-    if !empty(l:url)
-      call openbrowser#open(l:url)
-      return
-    endif
+  let l:line = getline('.')
+  " URL を優先。行内に複数あっても最初の URL を開く
+  " (Markdownリンクの url も同パターンで `)` 手前まで拾える)
+  let l:url = matchstr(l:line, 'https\?://[^ \t)\]>]\+')
+  if !empty(l:url)
+    call openbrowser#open(l:url)
+    return
+  endif
+  " URL が無いときだけ token を走査してファイルパス判定
+  for l:token in split(l:line, '\s\+')
     let [l:path, l:lnum] = s:resolve_token_as_path(l:token)
     if !empty(l:path)
       execute 'tabedit ' . fnameescape(l:path)
