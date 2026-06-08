@@ -80,10 +80,26 @@ set_args() {
       ;;
   esac
 }
+open_forward_if_remote_detected() {
+  [[ -n "${REMOTEHOST}${SSH_CONNECTION}" ]] || return 1
+  port=${REMOTE_FORWARD_REVERSE_PORT}
+  [[ -z $port ]] && return 1
+  if [[ $_is_url -eq 1 ]]; then
+    ssh localhost -p "$port" "open ${args[*]}" &>/dev/null &
+    return 0
+  fi
+  if [[ $_is_file -eq 1 ]]; then
+    scp "${args[0]}" -p "$port" localhost:/tmp/
+    ssh localhost -p "$port" "open /tmp/$(basename "${args[0]}")" &>/dev/null &
+    return 0
+  fi
+  return 1
+}
 main() {
   local _ostype args _open
   set_ostype
   set_args "$@"
+  open_forward_if_remote_detected || return
   set_open_command
   echo "==> open via $_open ${args[*]}" 1>&2
   $_open "${args[@]}" &>/dev/null &
