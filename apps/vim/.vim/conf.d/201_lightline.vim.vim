@@ -164,13 +164,25 @@ function! MyGitGutter()
   return join(ret, ' ')
 endfunction
 
+" NOTE: ステータスラインは再描画ごとに評価されるため、:LspSettingsStatus を
+" 毎回実行すると j/k 連打(accelerated-jk)時に大量に走り重くなる。
+" 状態をキャッシュし、LSP の起動/終了とバッファ移動時のみ更新する。
+let s:lsp_status = ''
 function! MyLspRunning()
-  if !exists(":LspSettingsStatus")
-    return ''
-  endif
-  let l:status = execute('LspSettingsStatus')
-  return (l:status =~# 'running') ? 'LSP:RUN' : 'LSP:OFF'
+  return s:lsp_status
 endfunction
+function! s:UpdateLspStatus() abort
+  if !exists(":LspSettingsStatus")
+    let s:lsp_status = ''
+    return
+  endif
+  let s:lsp_status = (execute('LspSettingsStatus') =~# 'running') ? 'LSP:RUN' : 'LSP:OFF'
+endfunction
+augroup MyLspStatus
+  autocmd!
+  autocmd User lsp_server_init,lsp_server_exit call s:UpdateLspStatus()
+  autocmd BufEnter * call s:UpdateLspStatus()
+augroup END
 
 " https://github.com/Lokaltog/vim-powerline/blob/develop/autoload/Powerline/Functions.vim
 function! MyCharCode()
