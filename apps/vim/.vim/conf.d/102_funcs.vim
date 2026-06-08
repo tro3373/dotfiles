@@ -960,11 +960,11 @@ command! FindC2A0 call FindC2A0()
 
 " 開いているファイルのディレクトリをエクスプローラで開く
 function! Open()
-  " SSH 越しではリモートで `open` を実行しても意味がないのでスキップ
-  if !empty($SSH_CONNECTION) || !empty($REMOTEHOST)
-    echo "Skip Open: SSH session detected (would open on remote)"
-    return
-  endif
+  " " SSH 越しではリモートで `open` を実行しても意味がないのでスキップ
+  " if !empty($SSH_CONNECTION) || !empty($REMOTEHOST)
+  "   echo "Skip Open: SSH session detected (would open on remote)"
+  "   return
+  " endif
   let modifiers = '%:p:h'
   if expand('%:e') ==? 'html'
     let modifiers = '%:p'
