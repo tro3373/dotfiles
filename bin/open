@@ -100,7 +100,7 @@ main() {
   local _ostype args _open
   set_ostype
   set_args "$@"
-  open_forward_if_remote_detected || return
+  open_forward_if_remote_detected && return
   set_open_command
   echo "==> open via $_open ${args[*]}" 1>&2
   $_open "${args[@]}" &>/dev/null &
