@@ -6,8 +6,6 @@ _additional() {
 }
 _additional
 
-_is_remote() { [[ -n "${REMOTEHOST}${SSH_CONNECTION}" ]]; }
-
 _start_process() {
   if is_vagrant; then
     # is_vagrant && source ${DOTPATH}/bin/start_xvfb
@@ -25,7 +23,7 @@ _start_process() {
     fi
   fi
 
-  if _is_remote; then
+  if _remote_now; then
     # ! is_orb && return
     return
   fi

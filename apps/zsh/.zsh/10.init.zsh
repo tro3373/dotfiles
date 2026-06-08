@@ -104,6 +104,42 @@ _init() {
   # -z: 関数を zsh 形式で読み込む
   autoload -Uz colors
   colors
+
+  # SSH_CONNECTION を「今アクティブなクライアント」の実環境から毎プロンプト同期する。
+  # tmux の session env(update-environment) は attach 時しか更新されず SSH で一度
+  # セットされると居座るため使わない。env 本体を直すので vim/bin/* など $SSH_CONNECTION
+  # を直接見る消費側も追従する。tmux 外は sshd が正しくセット済みなので触らない。
+  # client プロセスの実環境から SSH_CONNECTION の値を取り出す
+  _ssh_conn_of_client() {
+    local cpid=$1
+    [[ -r /proc/$cpid/environ ]] && {
+      tr '\0' '\n' </proc/$cpid/environ 2>/dev/null | sed -n 's/^SSH_CONNECTION=//p' # Linux
+      return
+    }
+    ps eww -p "$cpid" 2>/dev/null | tr ' ' '\n' | grep -A3 '^SSH_CONNECTION=' |
+      tr '\n' ' ' | sed 's/^SSH_CONNECTION=//; s/ *$//' # macOS フォールバック
+  }
+  _sync_ssh_connection() {
+    [[ -z $TMUX ]] && return
+    local cpid val
+    cpid=$(tmux display-message -p '#{client_pid}' 2>/dev/null) || return
+    val=$(_ssh_conn_of_client "$cpid")
+    [[ -n $val ]] && {
+      export SSH_CONNECTION="$val"
+      return
+    }
+    unset SSH_CONNECTION
+  }
+  precmd_functions+=(_sync_ssh_connection)
+
+  # remote 判定: 同期済みの env を見るだけ (SSoT)
+  _remote_now() { [[ -n "${REMOTEHOST}${SSH_CONNECTION}" ]]; }
+  # remote の時だけホスト名を magenta で先頭に出す断片。PROMPT に $() で噛ませる。
+  _remote_host_prompt() {
+    _remote_now && print -rn -- "%{${fg[magenta]}%}${HOST%%.*} "
+  }
+  setopt prompt_subst # PROMPT 内の $(_remote_host_prompt) を描画毎に評価させる
+
   case ${UID} in
     0)
       PROMPT="%{${fg[red]}%}$(echo ${HOST%%.*} | tr '[a-z]' '[A-Z]') %B%{${fg[red]}%}%/#%{${reset_color}%}%b "
@@ -141,9 +177,7 @@ _init() {
       PROMPT=$'%{\e[38;5;%(?.012.013)m%}%D{%H:%M:%S} %c>%{\e[m%} '
       PROMPT2=$'%{\e[38;5;%(?.012.013)m%}%_> %{\e[m%} '
       SPROMPT="%{${fg[red]}%}%r is correct? [n,y,a,e]:%{${reset_color}%} "
-      [ -n "${REMOTEHOST}${SSH_CONNECTION}" ] &&
-        #PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*} | tr '[a-z]' '[A-Z]') ${PROMPT}"
-        PROMPT="%{${fg[magenta]}%}$(echo ${HOST%%.*}) ${PROMPT}"
+      PROMPT='$(_remote_host_prompt)'"${PROMPT}"
 
       # if [[ ${OSTYPE} != "msys" ]]; then
       #   setopt prompt_subst
