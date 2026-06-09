@@ -29,7 +29,7 @@ vim.cmd("syntax enable")
 au({
   events = { "BufNewFile", "BufRead" },
   cb = function()
-    local syntax = vim.api.nvim_buf_get_option(0, "syntax")
+    local syntax = vim.bo[0].syntax
     if syntax ~= "" then
       return
     end
@@ -380,7 +380,7 @@ local function set_yank_post_in_remote()
     cb = yank_post_in_remote,
   })
 end
-if vim.fn.executable(winclip) then
+if vim.fn.executable(winclip) == 1 then
   set_yank_post_for_win()
 else
   set_yank_post_in_remote()

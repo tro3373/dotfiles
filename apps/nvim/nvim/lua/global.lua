@@ -14,10 +14,12 @@ _G.is_mac = not is_windows
     or (vim.fn.executable("xdg-open") == 0 and vim.fn.system("uname"):match("^darwin"))
   )
 _G.is_linux = not is_windows and not is_cygmsys2 and not is_mac and vim.fn.has("unix") == 1
-_G.is_wsl = vim.fn.getenv("WSL_DISTRO_NAME") ~= ""
+-- vim.fn.* は 0/1 数値を返す。Lua では 0 も truthy なので必ず明示比較する。
+_G.is_wsl = vim.fn.empty(vim.fn.getenv("WSL_DISTRO_NAME")) == 0
+_G.is_orb = vim.fn.system("uname -r"):lower():match("orbstack") ~= nil
 _G.is_ubuntu = is_linux
-  and not vim.fn.filereadable("/etc/debian_version")
-  and not vim.fn.filereadable("/etc/lsb-release")
+  and vim.fn.filereadable("/etc/debian_version") == 0
+  and vim.fn.filereadable("/etc/lsb-release") == 0
 if is_windows then
   vim.opt.shellslash = true
 end
@@ -50,11 +52,12 @@ _G.getenv = function(name, def)
 end
 
 local function get_au_group_name(events, group, make_group)
-  if not make_group then
-    return nil
-  end
   local res = group
   if res == nil or #res == 0 then
+    -- グループ未指定: aug(既存グループ追加)では無名、aumg(新規作成)のみ event 名から導出
+    if not make_group then
+      return nil
+    end
     res = events
     if type(events) == "table" then
       -- events is table
@@ -64,7 +67,12 @@ local function get_au_group_name(events, group, make_group)
       end
     end
   end
-  vim.api.nvim_create_augroup(res, {})
+  -- make_group のときのみ augroup を生成する。
+  -- aumg が event 名(FileType/BufRead 等)で augroup を作ると、後続の sourced vimscript の
+  -- `autocmd FileType ...` が group 名と誤認され E216 になるため、必ず指定 group 名を使う。
+  if make_group then
+    vim.api.nvim_create_augroup(res, {})
+  end
   return res
 end
 
@@ -88,24 +96,24 @@ local function _create_au(args)
 end
 -- _G.au = function(events, cb, pat)
 _G.au = function(args)
-  _create_au({ events = args.events, groups = nil, make_group = false, cb = args.cb, pat = args.pat })
+  _create_au({ events = args.events, group = nil, make_group = false, cb = args.cb, pat = args.pat })
 end
 -- _G.aumg = function(events, group, cb, pat)
 _G.aumg = function(args)
   -- _create_au(events, group, true, cb, pat)
-  _create_au({ events = args.events, groups = args.group, make_group = true, cb = args.cb, pat = args.pat })
+  _create_au({ events = args.events, group = args.group, make_group = true, cb = args.cb, pat = args.pat })
 end
 -- _G.aug = function(events, group, cb, pat)
 _G.aug = function(args)
   -- _create_au(events, group, false, cb, pat)
-  _create_au({ events = args.events, groups = args.group, make_group = false, cb = args.cb, pat = args.pat })
+  _create_au({ events = args.events, group = args.group, make_group = false, cb = args.cb, pat = args.pat })
 end
 _G.au_ft_map = function(pat, ft)
   local function cb()
     vim.opt_local.ft = ft
   end
   -- _create_au({ "BufNewFile", "BufRead" }, nil, false, cb, pat)
-  _create_au({ events = { "BufNewFile", "BufRead" }, groups = nil, make_group = false, cb = cb, pat = pat })
+  _create_au({ events = { "BufNewFile", "BufRead" }, group = nil, make_group = false, cb = cb, pat = pat })
 end
 
 -- Call Script
