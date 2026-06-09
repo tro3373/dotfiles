@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+
+die() {
+  echo "Error: $1" >&2
+  exit 1
+}
+
+detect_realpath_cmd() {
+  [[ $OSTYPE == "darwin"* ]] && {
+    echo "grealpath"
+    return
+  }
+  echo "realpath"
+}
+
+detect_fd_cmd() {
+  command -v fd >/dev/null 2>&1 && {
+    echo "fd"
+    return
+  }
+  command -v fdfind >/dev/null 2>&1 && {
+    echo "fdfind"
+    return
+  }
+  die "Required command 'fd' or 'fdfind' not found. Please install it."
+}
+
+detect_dir_preview_cmd() {
+  command -v tree >/dev/null 2>&1 && {
+    echo 'tree -C {} | head -n 30'
+    return
+  }
+  echo 'ls -ap --color=always {}'
+}
+
+detect_file_viewer() {
+  command -v bat >/dev/null 2>&1 && {
+    echo 'bat --style=numbers --color=always {}'
+    return
+  }
+  command -v batcat >/dev/null 2>&1 && {
+    echo 'batcat --style=numbers --color=always {}'
+    return
+  }
+  echo 'cat {}'
+}
+
+detect_file_preview_cmd() {
+  echo "[[ -d {} ]] && tree -C {} | head -n 30 || $(detect_file_viewer)"
+}
+
+is_at_prefix_mode() {
+  pgrep -P "$1" -f ".*claude.*|node.*gemini|codex" >/dev/null
+}
+
+# Resolve the directory to search in: the path argument if given, else the
+# current pane directory. Always returns a canonical absolute path.
+resolve_search_dir() {
+  local path_arg="$1" pane_dir="$2" realpath_cmd="$3"
+
+  local dir="${path_arg:-$pane_dir}"
+  [[ $dir == /* ]] || dir="$pane_dir/$dir"
+  command -v "$realpath_cmd" >/dev/null 2>&1 && dir=$("$realpath_cmd" -m "$dir")
+
+  [[ -d $dir ]] || die "Directory '$dir' does not exist."
+  echo "$dir"
+}
+
+# Map fd's selection (paths relative to search_dir) to the paths we emit,
+# one per line:
+#   - explicit path arg        -> absolute paths
+#   - inside a git repository  -> relative to the git root
+#   - otherwise                -> relative to the pane directory (as-is)
+relativize_paths() {
+  local search_dir="$1" git_root="$2" path_arg="$3" realpath_cmd="$4"
+  shift 4
+  local selected=("$@")
+
+  if [[ -n $path_arg ]]; then
+    printf '%s\n' "${selected[@]/#/${search_dir}/}"
+    return
+  fi
+
+  if [[ -n $git_root ]]; then
+    local full=("${selected[@]/#/${search_dir}/}")
+    "$realpath_cmd" --relative-to="$git_root" "${full[@]}"
+    return
+  fi
+
+  printf '%s\n' "${selected[@]}"
+}
+
+# Join paths into a single line for tmux send-keys. In at-prefix mode each
+# path is prefixed with '@'; otherwise each is shell-escaped.
+format_output() {
+  local at_prefix="$1"
+  shift
+  local paths=("$@")
+
+  if [[ $at_prefix == true ]]; then
+    printf '@%s ' "${paths[@]}"
+    return
+  fi
+
+  local path escaped
+  for path in "${paths[@]}"; do
+    printf -v escaped '%q' "$path"
+    printf '%s ' "$escaped"
+  done
+}
+
+main() {
+  set -euo pipefail
+
+  [[ -n ${TMUX-} ]] || die "This script must be run inside a tmux session."
+
+  local pane_id pane_dir pane_pid
+  pane_id=$(tmux display-message -p '#{pane_id}')
+  pane_dir=$(tmux display-message -p '#{pane_current_path}')
+  pane_pid=$(tmux display-message -p '#{pane_pid}')
+
+  # --- Argument Parsing ---
+  local select_directories=false
+  local path_arg=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --directories | -d)
+        select_directories=true
+        shift
+        ;;
+      -*)
+        die "Unknown option '$1'"
+        ;;
+      *)
+        [[ -z $path_arg ]] || die "Only one path argument is allowed."
+        path_arg="$1"
+        shift
+        ;;
+    esac
+  done
+
+  local realpath_cmd fd_cmd search_dir git_root
+  realpath_cmd=$(detect_realpath_cmd)
+  fd_cmd=$(detect_fd_cmd)
+  search_dir=$(resolve_search_dir "$path_arg" "$pane_dir" "$realpath_cmd")
+  git_root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+
+  local at_prefix_mode=false
+  if is_at_prefix_mode "$pane_pid"; then
+    at_prefix_mode=true
+  fi
+
+  # --- fd flags & preview command ---
+  # Default: file + directory selection with a grep-mode toggle.
+  local fd_flags=()
+  local preview_cmd
+  local grep_toggle_flags=()
+  read -ra fd_flags <<<"${TMUX_FILE_PICKER_FD_FLAGS:--H --follow --type f --type d --exclude .git --exclude .DS_Store}"
+  preview_cmd=$(detect_file_preview_cmd)
+
+  # Grep mode toggle (C-s to switch between file search and content grep)
+  # $FZF_PROMPT is available in preview commands since fzf 0.50+
+  # shellcheck disable=SC2016
+  grep_toggle_flags=(
+    --prompt 'Files> '
+    --header 'C-s: toggle grep mode'
+    --preview 'if [[ $FZF_PROMPT == Grep* ]]; then [[ -f {} ]] && rg --color=always --line-number --smart-case --context 3 -- {q} {} 2>/dev/null; else '"$preview_cmd"'; fi'
+    --bind 'start:unbind(change)'
+    --bind "change:reload:rg --files-with-matches --hidden --glob '!.git' --color=never -- {q} 2>/dev/null || true"
+    --bind "ctrl-s:transform:[[ \$FZF_PROMPT == \"Files> \" ]] && echo \"change-prompt(Grep> )+disable-search+clear-query+reload(: || true)+rebind(change)\" || echo \"change-prompt(Files> )+enable-search+clear-query+unbind(change)+reload($fd_cmd ${fd_flags[*]})\""
+  )
+
+  # Directory-only mode: narrow to directories and drop the grep toggle.
+  if $select_directories; then
+    read -ra fd_flags <<<"${TMUX_FILE_PICKER_FD_FLAGS:--H --follow --type d --exclude .git}"
+    preview_cmd=$(detect_dir_preview_cmd)
+    grep_toggle_flags=()
+  fi
+
+  # --- File/Directory Selection (cd in for cleaner relative paths) ---
+  local selected_files_str
+  selected_files_str=$(cd "$search_dir" && "$fd_cmd" "${fd_flags[@]}" | ~/.fzf/bin/fzf --multi --reverse --freeze-right=1 --bind 'tab:toggle' --preview "$preview_cmd" "${grep_toggle_flags[@]}" || true)
+  [[ -n $selected_files_str ]] || exit 0
+
+  local selected_files=()
+  while IFS= read -r line; do
+    [[ -n $line ]] && selected_files+=("$line")
+  done <<<"$selected_files_str"
+
+  local final_paths=()
+  while IFS= read -r line; do
+    [[ -n $line ]] && final_paths+=("$line")
+  done < <(relativize_paths "$search_dir" "$git_root" "$path_arg" "$realpath_cmd" "${selected_files[@]}")
+
+  local files_oneline
+  files_oneline=$(format_output "$at_prefix_mode" "${final_paths[@]}")
+  tmux send-keys -t "$pane_id" "$files_oneline"
+}
+
+main "$@"
