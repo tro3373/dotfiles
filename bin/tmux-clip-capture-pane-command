@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+main() {
+  pane_id=$(tmux display-message -p '#{pane_id}')
+  echo "tmux capture-pane -p -t $pane_id" | clip
+}
+main "$@"
