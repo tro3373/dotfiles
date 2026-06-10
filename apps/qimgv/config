@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+install_arch() {
+  def_install qimgv-git
+}
+setting_arch() {
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/qimgv.conf" "${HOME}/.config/qimgv/qimgv.conf"
+}
