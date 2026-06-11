@@ -343,9 +343,9 @@ function cd_src_root() {
     find_repos |
       fzf --tac --query "$LBUFFER" --preview "$preview_cmd"
   )
-  if [[ -n $src ]]; then
-    tmux rename-session "$(basename $src)"
-  fi
+  # if [[ -n $src ]]; then
+  #   tmux rename-session "$(basename $src)"
+  # fi
   cd_dir "$src"
 }
 zle -N cd_src_root
