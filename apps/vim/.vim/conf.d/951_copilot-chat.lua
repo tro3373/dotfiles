@@ -15,7 +15,7 @@ _G.copilot_chat_setup = function()
 
     -- model = "gpt-4.1", -- Default model to use, see ':CopilotChatModels' for available models (can be specified manually in prompt via $).
     -- model = "gpt-5.5",
-    model = "claude-sonnet-4.6",
+    -- model = "claude-sonnet-4.6",
     -- model = "grok-code-fast-1",
 
     -- agent = "copilot", -- Default agent to use, see ':CopilotChatAgents' for available agents (can be specified manually in prompt via @).
