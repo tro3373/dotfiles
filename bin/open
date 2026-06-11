@@ -1,108 +1,80 @@
 #!/usr/bin/env bash
 
-current_dir=$(pwd)
-_is_url=0
-_is_file=0
-_is_md=0
-_is_html=0
-_is_xlsx=0
-_is_docx=0
+current_dir=$(pwd) && readonly current_dir
+readonly r=reverse
+readonly rroot=.dot/.trash
 
 has() { command -v "${1}" >&/dev/null; }
-is_url() { [[ $_is_url -eq 1 ]]; }
-is_file() { [[ $_is_file -eq 1 ]]; }
-is_md() { [[ $_is_md -eq 1 ]]; }
-is_html() { [[ $_is_html -eq 1 ]]; }
-is_xlsx() { [[ $_is_xlsx -eq 1 ]]; }
-is_docx() { [[ $_is_docx -eq 1 ]]; }
-set_ostype() {
+hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+is_url() { [[ $1 =~ ^https?://.* ]]; }
+
+open_remote_if_detected() {
+  [[ -n "${REMOTEHOST}${SSH_CONNECTION}" ]] || return 1
+  [[ -z $REMOTE_FORWARD_REVERSE_PORT ]] && die "==> No REMOTE_FORWARD_REVERSE_PORT env var found, cannot open remotely."
+  [[ ${#files[@]} -eq 0 && ${#urls[@]} -eq 0 ]] && die "==> No urls or files to open remotely."
+  if [[ ${#files[@]} -gt 0 ]]; then
+    scp "${files[@]}" $r:$rroot/ &>/dev/null || {
+      die "==> Failed to send files to remote"
+    }
+  fi
+  # shellcheck disable=SC2029
+  ssh reverse open "${urls[@]}" "${rfiles[@]}" &>/dev/null &
+  return 0
+}
+main() {
+  local urls=() files=() rfiles=()
+  for arg in "$@"; do
+    is_url "$arg" && urls+=("$arg") && continue
+    [[ -f $arg ]] && {
+      files+=("$arg")
+      rfiles+=("$rroot/$(basename "$arg")")
+    }
+  done
+  open_remote_if_detected && return
+  [[ ${#files[@]} -eq 0 && ${#urls[@]} -eq 0 ]] && files=("$current_dir")
+  [[ ${#urls[@]} -ne 0 ]] && chrome "${urls[@]}" &>/dev/null &
+  [[ ${#files[@]} -eq 0 ]] && return
+
   _ostype=${OSTYPE}
   os wsl && _ostype=wsl
   os orb && _ostype=orb
-}
-set_open_command() {
-  is_xlsx && has xleak && _open=xleak && return
-  is_docx && has doxx && _open=doxx && return
-  is_md && has wezterm && _open="wezterm cli spawn --cwd $(pwd) --new-window -- nvim -p" && return
-  is_html && has chrome && _open=chrome && return
   _open=$(type -a open | grep -v "$0" | head -1 | cut -d' ' -f3)
   case "$_ostype" in
     cygwin*) _open=cygstart ;;
     msys*) _open=explorer ;;
-    wsl*)
-      _open=explorer.exe
-      if is_url; then
-        _open=cmd.exe
-      fi
-      ;;
+    wsl*) _open=explorer.exe ;;
     orb*) _open=/opt/orbstack-guest/bin/open ;;
     linux*)
       _open=xdg-open
-      if ! is_url && has nautilus; then
+      if has nautilus; then
         _open=nautilus
       fi
       ;;
   esac
-}
-set_args() {
-  args=("$@")
-  if [[ $# -eq 0 ]]; then
-    args=("$current_dir")
-  fi
-  arg="${args[0]}"
-  if [[ $arg =~ ^https?://.* ]]; then
-    _is_url=1
-  fi
-  if [[ -f $arg ]]; then
-    _is_file=1
-    if [[ $arg =~ ^.*.md ]]; then
-      _is_md=1
-    fi
-    if [[ $arg =~ ^.*.html ]]; then
-      _is_html=1
-    fi
-    if [[ $arg =~ ^.*.xlsx? ]]; then
-      _is_xlsx=1
-    fi
-    if [[ $arg =~ ^.*.docx? ]]; then
-      _is_docx=1
-    fi
-  fi
 
-  case "$_ostype" in
-    cygwin | msys) args=("$(cygpath -aw "${args[@]}")") ;;
-    wsl)
-      if is_url; then
-        args=("/C" "start" "${args[@]}")
-      else
-        args=("$(wslpath -w "${args[@]}")")
-      fi
-      ;;
-  esac
-}
-open_forward_if_remote_detected() {
-  [[ -n "${REMOTEHOST}${SSH_CONNECTION}" ]] || return 1
-  port=${REMOTE_FORWARD_REVERSE_PORT}
-  [[ -z $port ]] && return 1
-  if [[ $_is_url -ne 1 && $_is_file -ne 1 ]]; then
-    return 1
-  fi
-  arg="${args[0]}"
-  if [[ $_is_file -eq 1 ]]; then
-    scp "$arg" reverse:.dot/.trash/
-    arg=".dot/.trash/$(basename "$arg")"
-  fi
-  # shellcheck disable=SC2029
-  ssh reverse "open $arg" &>/dev/null &
-  return 0
-}
-main() {
-  local _ostype args _open
-  set_ostype
-  set_args "$@"
-  open_forward_if_remote_detected && return
-  set_open_command
-  echo "==> open via $_open ${args[*]}" 1>&2
-  $_open "${args[@]}" &>/dev/null &
+  for f in "${files[@]}"; do
+    local mds=() imgs=() htmls=() xlsx=() docx=() others=()
+    case "${f}" in
+      *.md) mds+=("${f}") ;;
+      *.html) htmls+=("${f}") ;;
+      *.png | *.jpg | *.jpeg | *.gif | *.bmp | *.webp) has qimgv && imgs+=("${f}") || others+=("${f}") ;;
+      *.xlsx | *.xls) has xleak && xlsx+=("${f}") || others+=("${f}") ;;
+      *.docx | *.doc) has doxx && docx+=("${f}") || others+=("${f}") ;;
+      *) others+=("${f}") ;;
+    esac
+  done
+  [[ ${#mds[@]} -ne 0 ]] && wezterm cli spawn --cwd "$(pwd)" --new-window -- nvim -p "${mds[@]}" &>/dev/null &
+  [[ ${#imgs[@]} -ne 0 ]] && qimgv "${imgs[@]}" &>/dev/null &
+  [[ ${#htmls[@]} -ne 0 ]] && chrome "${htmls[@]}" &>/dev/null &
+  [[ ${#xlsx[@]} -ne 0 ]] && xleak "${xlsx[@]}" &>/dev/null &
+  [[ ${#docx[@]} -ne 0 ]] && doxx "${docx[@]}" &>/dev/null &
+  [[ ${#others[@]} -ne 0 ]] && $_open "${others[@]}" &>/dev/null &
 }
 main "$@"
