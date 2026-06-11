@@ -254,8 +254,8 @@ function! SplitKeepTopView()
 endfunction
 nnoremap ss :<C-u>call SplitKeepTopView()<CR>
 " 画面分割(縦分割)
-nnoremap sv :<C-u>vnew<CR>
-nnoremap sV :<C-u>vs<CR>
+nnoremap sv :<C-u>vs<CR>
+nnoremap sV :<C-u>vnew<CR>
 nnoremap sN :<C-u>bn<CR>
 nnoremap sP :<C-u>bp<CR>
 " タブで現在のファイルを開いて Unite 全部検索

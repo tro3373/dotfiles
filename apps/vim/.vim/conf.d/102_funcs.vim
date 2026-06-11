@@ -965,11 +965,12 @@ function! Open()
   "   echo "Skip Open: SSH session detected (would open on remote)"
   "   return
   " endif
-  let modifiers = '%:p:h'
-  if expand('%:e') ==? 'html'
-    let modifiers = '%:p'
-  endif
-  call system('open ' . expand(modifiers))
+  " let modifiers = '%:p:h'
+  " if expand('%:e') ==? 'html'
+  "   let modifiers = '%:p'
+  " endif
+  " call system('open ' . expand(modifiers))
+  call system('open ' . expand('%:p'))
 endfunction
 command! Open call Open()
 map <silent> qn :!open %:h>&/dev/null<ENTER>
