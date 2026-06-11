@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nvim 設定移行 (init.vim → lua) — 解説</title>
+<style>
+:root{
+  color-scheme: light dark;
+  --bg:#ffffff; --surface:#f5f8f7; --surface2:#eaf0ee; --border:#dfe7e5; --border2:#c5d0cd;
+  --text:#1a1a1a; --text2:#5a5a5a; --muted:#8a8a8a;
+  --primary:#2563eb; --primary-l:#eff6ff;
+  --success:#16a34a; --success-l:#dcfce7;
+  --warning:#d97706; --warning-l:#fef3e2;
+  --danger:#dc2626; --danger-l:#fdeaea;
+  --info:#0284c7; --info-l:#e8f4fd;
+  --purple:#7048c6; --purple-l:#f0ecf9;
+  --font:'Hiragino Kaku Gothic ProN','Hiragino Sans',Meiryo,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'SF Mono','Fira Code',Menlo,Consolas,monospace;
+  --radius:12px; --radius-sm:8px;
+  --shadow:0 4px 16px rgba(0,0,0,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#16191c; --surface:#1e2227; --surface2:#262b31; --border:#333a42; --border2:#454d57;
+    --text:#e8eaed; --text2:#aab2bd; --muted:#7a828d;
+    --primary:#5b9aff; --primary-l:#1d2b45;
+    --success:#4ade80; --success-l:#16301f;
+    --warning:#f5b342; --warning-l:#3a2c12;
+    --danger:#ff6b6b; --danger-l:#3a1c1c;
+    --info:#38bdf8; --info-l:#102a3a;
+    --purple:#a98be6; --purple-l:#28203a;
+    --shadow:0 4px 16px rgba(0,0,0,.5);
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);font-size:16px;line-height:1.75;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:2rem 1.25rem 5rem;display:grid;grid-template-columns:220px 1fr;gap:2.5rem}
+@media(max-width:860px){.wrap{grid-template-columns:1fr;gap:1rem}.toc{position:static!important;max-height:none!important}}
+header.hero{grid-column:1/-1;border-bottom:2px solid var(--border);padding-bottom:1.25rem;margin-bottom:.5rem}
+h1{font-size:1.9rem;line-height:1.3;letter-spacing:-.01em}
+.sub{color:var(--text2);margin-top:.4rem;font-size:1.02rem}
+.meta{margin-top:.6rem;font-size:.85rem;color:var(--muted)}
+nav.toc{position:sticky;top:1rem;align-self:start;max-height:calc(100vh - 2rem);overflow:auto;font-size:.9rem}
+nav.toc strong{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.5rem}
+nav.toc a{display:block;color:var(--text2);text-decoration:none;padding:.25rem 0;border-left:2px solid transparent;padding-left:.6rem}
+nav.toc a:hover{color:var(--primary);border-left-color:var(--primary)}
+main{min-width:0}
+section{margin-bottom:2.5rem;scroll-margin-top:1rem}
+h2{font-size:1.4rem;margin-bottom:.9rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
+h3{font-size:1.1rem;margin:1.4rem 0 .6rem}
+p{margin-bottom:.7rem}
+ul,ol{margin:.3rem 0 .9rem 1.3rem}
+li{margin-bottom:.3rem}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface2);padding:.1em .4em;border-radius:5px}
+pre{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;overflow:auto;margin:.7rem 0}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.92rem}
+th,td{text-align:left;padding:.55rem .7rem;border:1px solid var(--border);vertical-align:top}
+th{background:var(--surface2);font-weight:600}
+tbody tr:nth-child(even){background:var(--surface)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1rem 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;box-shadow:var(--shadow)}
+.card .k{font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.card .v{font-size:1.5rem;font-weight:700;margin:.2rem 0}
+.card .d{font-size:.85rem;color:var(--text2)}
+.badge{display:inline-block;font-size:.72rem;font-weight:700;padding:.12em .6em;border-radius:99px;vertical-align:middle}
+.b-danger{background:var(--danger-l);color:var(--danger)}
+.b-warn{background:var(--warning-l);color:var(--warning)}
+.b-ok{background:var(--success-l);color:var(--success)}
+.b-info{background:var(--info-l);color:var(--info)}
+.callout{border-radius:var(--radius);padding:1rem 1.1rem;margin:1rem 0;border-left:5px solid}
+.callout h4{margin:0 0 .3rem;font-size:1rem}
+.c-danger{background:var(--danger-l);border-color:var(--danger)}
+.c-warn{background:var(--warning-l);border-color:var(--warning)}
+.c-ok{background:var(--success-l);border-color:var(--success)}
+.c-info{background:var(--info-l);border-color:var(--info)}
+figure{margin:1.2rem 0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
+figcaption{font-size:.83rem;color:var(--text2);margin-top:.6rem;text-align:center}
+.fix{font-size:.86rem;background:var(--surface2);border-radius:6px;padding:.5rem .7rem;margin-top:.4rem}
+.fix b{color:var(--success)}
+svg{max-width:100%;height:auto;display:block;margin:0 auto}
+.arrow{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <h1>nvim 設定移行 <span class="arrow">(init.vim → lua)</span> 解説</h1>
+  <p class="sub">vim-plug + init.vim から lazy.nvim + init.lua への移行内容・既知の問題・直し方を 1 枚で把握する</p>
+  <p class="meta">対象: <code>apps/nvim/nvim/</code> ／ 検証: <code>nvim --headless +q</code> エラー警告 0 達成 ／ 詳細は同梱 <code>MIGRATION.md</code></p>
+</header>
+
+<nav class="toc">
+  <strong>目次</strong>
+  <a href="#tldr">ひと目で要点</a>
+  <a href="#broken">⚠ いま壊れている3つ</a>
+  <a href="#mechanism">仕組み (自前func再利用)</a>
+  <a href="#plugins">プラグイン 廃止/新規/維持</a>
+  <a href="#notmig">未対応・残置事項</a>
+  <a href="#switch">モード切替</a>
+</nav>
+
+<main>
+
+<section id="tldr">
+  <h2>ひと目で要点</h2>
+  <div class="cards">
+    <div class="card"><div class="k">エントリ</div><div class="v">init.lua</div><div class="d">init.vim から置換。lua ネイティブ + 一部 vimscript を source</div></div>
+    <div class="card"><div class="k">プラグイン管理</div><div class="v">lazy.nvim</div><div class="d">vim-plug から移行。70 個導入</div></div>
+    <div class="card"><div class="k">起動エラー</div><div class="v" style="color:var(--success)">0</div><div class="d">実config・各FT・挿入モードで警告も0</div></div>
+    <div class="card"><div class="k">設計</div><div class="v">Hybrid SSoT</div><div class="d">動く vimscript は書き直さず source 再利用</div></div>
+  </div>
+  <p><strong>考え方:</strong> 全部を lua に書き直すのではなく、<b>プラグイン管理・LSP・補完・statusline・オプション</b>を lua ネイティブ化し、<b>自前コマンド(102_funcs の109個)・キーマップ(101_mapping)・残す vim プラグインの設定</b>は既存 <code>~/.vim/conf.d/*.vim</code> をそのまま <code>source</code> して二重管理を避けたのだ。</p>
+</section>
+
+<section id="broken">
+  <h2>⚠ いま「変・効かない」の正体は3つ</h2>
+
+  <div class="callout c-danger">
+    <h4><span class="badge b-danger">要対応</span> ① LSP が効かない</h4>
+    <p><strong>原因:</strong> LSP サーバ本体が未インストール（<code>lua-language-server</code> / <code>pylsp</code> / <code>yaml-language-server</code> が無い）。旧 vim は <code>vim-lsp-settings</code> が自動で入れていたが、新構成は起動を汚さないため自動インストールしない（存在するサーバだけ <code>executable()</code> で有効化）。</p>
+    <div class="fix"><b>直し方 ▶</b> <code>:Mason</code> を開いて導入、または <code>:MasonInstall lua-language-server pylsp yaml-language-server</code>。導入後にファイルを開けば自動 attach。</div>
+  </div>
+
+  <div class="callout c-danger">
+    <h4><span class="badge b-danger">無効化</span> ② <code>space p</code> 等のキーが効かない</h4>
+    <p><strong>原因:</strong> <code>&lt;Space&gt;p</code>（=<code>&lt;Leader&gt;p</code>）は CtrlP の <code>:CtrlPMRU</code>（最近使ったファイル）だった。<b>CtrlP と Unite はレガシーのため廃止</b>し fzf に集約したので、これらに紐づくマップが未割当になった。</p>
+    <table>
+      <thead><tr><th>キー</th><th>旧動作</th><th>状態</th></tr></thead>
+      <tbody>
+        <tr><td><code>&lt;Space&gt;p</code></td><td>:CtrlPMRU 最近使ったファイル</td><td><span class="badge b-danger">無効</span></td></tr>
+        <tr><td><code>sf / sb / sB / sm / sa / sr</code></td><td>Unite 各種一覧</td><td><span class="badge b-danger">無効</span></td></tr>
+      </tbody>
+    </table>
+    <div class="fix"><b>直し方 ▶</b> fzf へ再割当（例: <code>&lt;Space&gt;p</code> → <code>:History</code>）。希望あれば設定追加するのだ。</div>
+  </div>
+
+  <div class="callout c-warn">
+    <h4><span class="badge b-warn">見た目変化</span> ③ statusline / tab の色が違う</h4>
+    <p><strong>原因:</strong> statusline を <b>lightline(theme: seoul256) → lualine(theme: auto)</b> に置換したため配色・構成が別物。tab 行も lightline が描いていたのが <b>nvim デフォルトの tabline</b> に戻った（<code>showtabline=2</code> は維持だが装飾なし）。</p>
+    <div class="fix"><b>直し方 ▶</b> lualine の theme を好みに固定 ＋ lualine の tabline 機能を有効化すれば近い見た目に戻せる。希望あれば調整するのだ。</div>
+  </div>
+</section>
+
+<section id="mechanism">
+  <h2>仕組み — 自前 function をどう参照させたか</h2>
+  <p>自前コマンド(<code>:Clip</code>/<code>:SaveTemp</code>/<code>:Translate</code> 等109個) と関数(<code>GetGitRoot()</code> 等80個) は全て <code>102_funcs.vim</code> に定義済み。これを <b>書き直さず起動時に source</b> することで nvim ネイティブのまま全部使えるようにしたのだ。</p>
+
+  <figure>
+  <svg viewBox="0 0 760 320" role="img" aria-label="init.lua の読み込み順と g:plug shim の仕組み図">
+    <defs>
+      <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+        <path d="M0,0 L9,4.5 L0,9 z" fill="currentColor"/>
+      </marker>
+    </defs>
+    <style>
+      .box{fill:var(--surface2);stroke:var(--border2);stroke-width:1.5;rx:8}
+      .lbl{font:600 13px var(--font);fill:var(--text)}
+      .sm{font:11px var(--font);fill:var(--text2)}
+      .ln{stroke:var(--muted);stroke-width:1.6;fill:none}
+      .hot{fill:var(--primary-l);stroke:var(--primary)}
+    </style>
+    <!-- load order chain -->
+    <g text-anchor="middle" color="var(--muted)">
+      <rect class="box" x="20" y="20" width="120" height="44"/><text class="lbl" x="80" y="38">global.lua</text><text class="sm" x="80" y="54">_G.is_* / helpers</text>
+      <rect class="box" x="170" y="20" width="120" height="44"/><text class="lbl" x="230" y="38">compat.lua</text><text class="sm" x="230" y="54">g:plug / _G.src</text>
+      <rect class="box" x="320" y="20" width="110" height="44"/><text class="lbl" x="375" y="38">base.lua</text><text class="sm" x="375" y="54">options</text>
+      <rect class="box hot" x="460" y="20" width="110" height="44"/><text class="lbl" x="515" y="38">pm.lua</text><text class="sm" x="515" y="54">lazy.setup</text>
+      <rect class="box" x="600" y="20" width="140" height="44"/><text class="lbl" x="670" y="34">source 101/102</text><text class="sm" x="670" y="50">自前cmd/keymap</text>
+      <line class="ln" x1="140" y1="42" x2="168" y2="42" marker-end="url(#ah)"/>
+      <line class="ln" x1="290" y1="42" x2="318" y2="42" marker-end="url(#ah)"/>
+      <line class="ln" x1="430" y1="42" x2="458" y2="42" marker-end="url(#ah)"/>
+      <line class="ln" x1="570" y1="42" x2="598" y2="42" marker-end="url(#ah)"/>
+    </g>
+    <!-- g:plug shim flow -->
+    <g text-anchor="middle" color="var(--muted)">
+      <rect class="box hot" x="60" y="150" width="180" height="56"/><text class="lbl" x="150" y="172">lazy spec (plugins/*.lua)</text><text class="sm" x="150" y="190">config = _G.src("204_*.vim")</text>
+      <rect class="box" x="300" y="150" width="180" height="56"/><text class="lbl" x="390" y="172">conf.d/204_*.vim</text><text class="sm" x="390" y="190">if !g:plug.is_installed()…finish</text>
+      <rect class="box" x="540" y="150" width="180" height="56"/><text class="lbl" x="630" y="172">g:plug.is_installed()</text><text class="sm" x="630" y="190">lazy spec に有れば 1</text>
+      <line class="ln" x1="240" y1="178" x2="298" y2="178" marker-end="url(#ah)"/>
+      <line class="ln" x1="480" y1="178" x2="538" y2="178" marker-end="url(#ah)"/>
+      <text class="sm" x="270" y="168">source</text>
+      <text class="sm" x="512" y="168">self-gate</text>
+    </g>
+    <text class="sm" text-anchor="middle" x="380" y="250" fill="var(--text2)">既存 vim 設定を一切書き直さず、プラグインがロードされた後に source して再利用</text>
+    <text class="sm" text-anchor="middle" x="380" y="285" fill="var(--text2)">同じ conf.d が vim モードでも lua モードでも動く（SSoT）</text>
+  </svg>
+  <figcaption>init.lua の読み込み順（上段）と、残す vim プラグインの設定を <code>g:plug</code> shim 経由で再利用する流れ（下段）</figcaption>
+  </figure>
+
+  <ul>
+    <li><code>_G.src(name)</code> … <code>source ~/.vim/conf.d/&lt;name&gt;</code> するだけのヘルパ（compat.lua 定義）</li>
+    <li>各 conf.d 設定は先頭の <code>if !g:plug.is_installed("name") | finish</code> で自己ゲート</li>
+    <li>shim は lazy spec にその名前が有れば 1 を返す → 残すプラグインの設定だけが通る</li>
+    <li><code>102_funcs</code> 内の <code>g:is_wsl</code>/<code>g:winclip</code> 参照は全て関数内（実行時）→ source 時エラーなし。これら <code>g:</code> 変数は compat.lua が <code>_G.is_*</code> から派生</li>
+  </ul>
+
+  <div class="callout c-info">
+    <h4><span class="badge b-info">裏話</span> 起動エラーの根治</h4>
+    <p>旧 <code>global.lua</code> の autocmd ヘルパが引数キー <code>groups</code>/<code>group</code> 不一致で、<b>イベント名(FileType/BufRead)の augroup を生成</b>していた。これが source した <code>autocmd FileType …</code> の event 名を shadow し <code>E216</code>/<code>E1155</code> を起こしていた。キー統一＋<code>make_group</code> 時のみ生成で根治。なお <code>nvim --headless -es</code> はエラーを握り潰すので検証では <code>-es</code> を外す必要があったのだ。</p>
+  </div>
+</section>
+
+<section id="plugins">
+  <h2>プラグイン — 廃止 / 新規 / 維持</h2>
+
+  <h3><span class="badge b-danger">廃止</span> モダン/ネイティブへ置換</h3>
+  <table>
+    <thead><tr><th>廃止</th><th>置換先</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td>vim-plug</td><td>lazy.nvim</td><td>nvim 標準マネージャ</td></tr>
+      <tr><td>lightline (+ale/lsp)</td><td>lualine.nvim</td><td>nvim ネイティブ statusline</td></tr>
+      <tr><td>vim-lsp (+settings/icons)</td><td>nvim-lspconfig</td><td>nvim 標準 LSP</td></tr>
+      <tr><td>asyncomplete (+各source)</td><td>nvim-cmp</td><td>nvim ネイティブ補完</td></tr>
+      <tr><td>neosnippet (+vsnip)</td><td>LuaSnip + friendly-snippets</td><td>nvim ネイティブスニペット</td></tr>
+      <tr><td>unite + neomru + ctrlp(系)</td><td>fzf へ集約</td><td>レガシー（開発停止）</td></tr>
+      <tr><td>vimproc / taglist</td><td>(廃止)</td><td>レガシー依存</td></tr>
+      <tr><td>norcalli/nvim-colorizer</td><td>catgoose/nvim-colorizer</td><td>本家 unmaintained</td></tr>
+      <tr><td>syntastic</td><td>ALE が担当</td><td>旧 passive で実質未使用</td></tr>
+    </tbody>
+  </table>
+
+  <h3><span class="badge b-ok">新規</span> nvim ネイティブ追加</h3>
+  <p><code>lazy.nvim</code> ／ <code>lualine.nvim</code> ／ <code>nvim-lspconfig</code> ／ <code>mason.nvim</code> ／ <code>nvim-cmp</code>(+cmp-nvim-lsp/buffer/path/cmp_luasnip) ／ <code>LuaSnip</code> + <code>friendly-snippets</code> ／ <code>catgoose/nvim-colorizer.lua</code> ／ <code>claude-code.nvim</code>（vim ではコメントアウトだったものを有効化）</p>
+
+  <h3><span class="badge b-info">維持</span> 既存プラグイン + 設定を source 再利用</h3>
+  <ul>
+    <li><b>外観:</b> Apprentice, nvim-web-devicons, vim-indent-guides, vim-gitgutter, nvim-blame-line, vim-fugitive, goyo, smear-cursor, fidget</li>
+    <li><b>編集:</b> vim-surround/repeat/commentary, vim-smartinput(+context_filetype)/-endwise, vim-submode, accelerated-jk, vim-expand-region, clever-f, jumpcursor, vim-quickhl, Align, vim-easy-align, vim-quickrun(+shabadou), vim-ambicmd, open-browser, sudo.vim</li>
+    <li><b>検索/ファイラ/git:</b> fzf + fzf.vim, vaffle, tig-explorer</li>
+    <li><b>解析:</b> ALE(lint/fix), nvim-treesitter, hurl.nvim(+nui+plenary)</li>
+    <li><b>言語:</b> Dockerfile/toml/vue/typescript/dbml/pug/kotlin/dart/sqlfmt/terraform/yapf/markdown, sqls.vim, sonictemplate, markdown-preview.nvim(fork), live-server.nvim</li>
+    <li><b>AI:</b> copilot.vim, CopilotChat.nvim, denops.vim + denops-translate.vim</li>
+  </ul>
+</section>
+
+<section id="notmig">
+  <h2>未対応・残置事項</h2>
+
+  <div class="callout c-warn">
+    <h4><span class="badge b-warn">挙動差</span> lazy 遅延ロードとキーマップの齟齬</h4>
+    <p>旧 vim-plug は全プラグインを起動時一括ロード → 全キーが即有効。新 lazy は <code>ft</code>/<code>cmd</code>/<code>event</code> 遅延のため、source したキーマップが未ロードのプラグインコマンドを叩くと初回タイミングで効かない場合がある（例: <code>&lt;Space&gt;s</code> MarkdownPreview は markdown を開くまで未ロード）。起動エラーにはならない。</p>
+  </div>
+
+  <table>
+    <thead><tr><th>項目</th><th>内容</th><th>種別</th></tr></thead>
+    <tbody>
+      <tr><td><code>&lt;CR&gt;</code> 衝突</td><td>nvim-cmp 確定 vs smartinput-endwise の括弧/end 補完の優先順位</td><td><span class="badge b-warn">実機確認</span></td></tr>
+      <tr><td>denops 翻訳</td><td><code>&lt;Leader&gt;tr</code> 等は denops 非同期起動の初回待ちあり</td><td><span class="badge b-warn">実機確認</span></td></tr>
+      <tr><td>100_base 未移植</td><td>DisableLintInThisRepository / HighlightMixedIndent / RemoveAutoCommentAfterURL / highlight_notes</td><td><span class="badge b-info">軽微</span></td></tr>
+      <tr><td>taglist</td><td>ソースブラウザは未置換（レガシー）</td><td><span class="badge b-info">軽微</span></td></tr>
+    </tbody>
+  </table>
+  <p class="sub" style="font-size:.85rem"><code>&lt;CR&gt;</code> と denops は「起動時」でなく「キー実行時」の挙動のため headless 検証（エラー0）の範囲外なのだ。実機で対話確認が必要。</p>
+</section>
+
+<section id="switch">
+  <h2>モード切替 (bin/nvim_switch)</h2>
+  <ul>
+    <li>lua モードへ: <code>bin/nvim_switch</code>（init.lua が無い状態で実行）</li>
+    <li>vim モードへ戻す: <code>bin/nvim_switch</code>（init.lua が有る状態で実行）</li>
+    <li>現在モード確認: <code>ls -la ~/.config/nvim/</code> → <code>init.lua</code>=lua / <code>init.vim</code>=vim</li>
+  </ul>
+  <p class="sub" style="font-size:.85rem">モード状態は <code>~/.config/nvim</code> のローカル symlink。リポジトリにはコミットされないのだ。いつでも 1 コマンドで戻せる。</p>
+</section>
+
+</main>
+</div>
+</body>
+</html>
