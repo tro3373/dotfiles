@@ -27,17 +27,64 @@ return {
   {
     "nvim-lualine/lualine.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
-    event = { "BufReadPost", "BufNewFile" },
-    opts = {
-      options = {
-        theme = "auto",
-        icons_enabled = true,
-        globalstatus = true,
-      },
-      sections = {
-        lualine_c = { { "filename", path = 1 } },
-      },
-    },
+    -- 空バッファ([No Name])起動でも statusline/tabline を確実に出すため起動時ロード
+    lazy = false,
+    config = function()
+      -- Apprentice カラースキームの syntax 配色に揃えた自前テーマ。
+      -- normal を markdown 見出し相当の light-blue(#87afd7=Statement) にし、
+      -- insert=green/visual=orange/replace=red/command=teal を syntax アクセントから採る。
+      local p = {
+        bg = "#262626",
+        bg_dark = "#1c1c1c",
+        surface = "#303030",
+        surface2 = "#444444",
+        fg = "#bcbcbc",
+        dim = "#6c6c6c",
+        blue = "#87afd7", -- Statement (markdown 見出し)
+        green = "#87af87",
+        orange = "#ff8700", -- Constant
+        red = "#af5f5f",
+        teal = "#5f8787", -- PreProc
+        purple = "#8787af", -- Type
+      }
+      local function mode(accent)
+        return {
+          a = { fg = p.bg_dark, bg = accent, gui = "bold" },
+          b = { fg = p.fg, bg = p.surface2 },
+          c = { fg = p.fg, bg = p.surface },
+        }
+      end
+      local apprentice = {
+        normal = mode(p.blue),
+        insert = mode(p.green),
+        visual = mode(p.orange),
+        replace = mode(p.red),
+        command = mode(p.teal),
+        terminal = mode(p.purple),
+        inactive = {
+          a = { fg = p.dim, bg = p.surface },
+          b = { fg = p.dim, bg = p.surface },
+          c = { fg = p.dim, bg = p.bg },
+        },
+      }
+      require("lualine").setup({
+        options = {
+          theme = apprentice,
+          icons_enabled = true,
+          globalstatus = true,
+        },
+        sections = {
+          -- 既定の branch アイコン U+E0A0() はセル高さをはみ出すため
+          -- セルに収まる nf-dev-git_branch () へ変更
+          -- lualine_b = { { "branch", icon = "" }, "diff", "diagnostics" },
+          lualine_c = { { "filename", path = 1 } },
+        },
+        -- tab 行も同テーマで描画 (旧 lightline の tabline 相当)
+        tabline = {
+          lualine_a = { { "tabs", mode = 2, max_length = vim.o.columns } },
+        },
+      })
+    end,
   },
 
   -- カラーコードのインライン着色。
