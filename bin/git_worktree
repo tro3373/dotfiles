@@ -226,10 +226,28 @@ create_default_ln_config() {
   #   --exit-0 >"$ln_config"
 }
 
+_rename_removed_branch() {
+  # Rename the worktree's branch to removed/<branch> so it can be cleaned up
+  # later with `git branch -d` (which refuses unmerged branches as a safety
+  # net). No merge detection here on purpose: git itself is the authority on
+  # whether the branch is safe to delete.
+  local target_path="$1"
+  local cur
+  cur=$(git -C "${target_path}" rev-parse --abbrev-ref HEAD 2>/dev/null) || return 0
+  [[ -z $cur || $cur == "HEAD" || $cur == removed/* ]] && return 0
+
+  local renamed="removed/${cur}"
+  ilog "==> Renaming branch '${cur}' -> '${renamed}'.."
+  git branch -m "${cur}" "${renamed}" ||
+    wlog "==> Failed to rename branch '${cur}' -> '${renamed}'. Continuing removal."
+}
+
 _do_remove_worktree() {
   local target_path="$1"
 
   tasks --clean --directory "${target_path}" 1>&2 || :
+
+  _rename_removed_branch "${target_path}"
 
   ilog "==> Removing worktree path: '${target_path}'.."
   if git worktree remove "${target_path}"; then
@@ -276,10 +294,6 @@ _merge_worktree() {
     if [[ ${remove_after_merge} -ne 1 ]]; then
       continue
     fi
-
-    local merged_branch="merged/${merge_branch#*/}"
-    ilog "==> Renaming branch '${merge_branch}' -> '${merged_branch}'.."
-    git branch -m "${merge_branch}" "${merged_branch}"
 
     _do_remove_worktree "${branch_path}"
   done < <(
