@@ -2,6 +2,25 @@
 -- グローバル変数として公開(Vimスクリプトから呼び出す)
 -- CopilotC-Nvim/CopilotChat.nvim
 _G.copilot_chat_setup = function()
+  local base = require("CopilotChat.config.providers").copilot
+  -- OpenAI 互換エンドポイント(Anthropic/Groq)は空の tools 配列(tools: [])を
+  -- 400 invalid_request_error で弾く。copilot の prepare_input をラップし、
+  -- tools が空なら省く。関数/エージェント使用時は tools がちゃんと乗る。
+  local function prepare_input(inputs, opts)
+    local request, headers = base.prepare_input(inputs, opts)
+    if type(request) == "table" then
+      -- 空 tools 配列(tools: [])は 400 で弾かれるので省く
+      if request.tools and #request.tools == 0 then
+        request.tools = nil
+      end
+      -- Claude 4.x 系は temperature と top_p の併用を 400 で弾く。
+      -- プラグインは top_p=1(実質デフォルト)を常にセットするので、これを落として
+      -- temperature 側を残す。Groq でも top_p=1 除去は無害。
+      request.top_p = nil
+    end
+    return request, headers
+  end
+
   require("CopilotChat").setup({
     auto_insert_mode = true, -- チャットウィンドウを開いたときに自動で挿入モードに入る
 
@@ -17,6 +36,8 @@ _G.copilot_chat_setup = function()
     -- model = "gpt-5.5",
     -- model = "claude-sonnet-4.6",
     -- model = "grok-code-fast-1",
+    model = "claude-haiku-4-5",
+    -- model = "openai/gpt-oss-120b", -- not work
 
     -- agent = "copilot", -- Default agent to use, see ':CopilotChatAgents' for available agents (can be specified manually in prompt via @).
     -- context = nil, -- Default context or array of contexts to use (can be specified manually in prompt via #).
@@ -84,6 +105,121 @@ _G.copilot_chat_setup = function()
     --   github_models = {},
     --   copilot_embeddings = {},
     -- },
+    --
+    -- Copilot を経由せず、各ベンダの OpenAI 互換エンドポイント(/v1/chat/completions)を
+    -- 直接叩くカスタムプロバイダ。リクエスト/レスポンス形式は OpenAI 互換なので
+    -- copilot の prepare_input/prepare_output をそのまま流用できる。
+    -- 既定の copilot プロバイダはディープマージで残るため、引き続き併用可能。
+    --
+    -- モデル id は素のまま(provider サフィックス無し)。理由:
+    --  1. provider はアルファベット順処理で、同名 id が衝突したとき後勝ちで ':provider' が
+    --     付く仕様(client.lua)。anthropic は最先頭で勝つし、groq のモデル(Llama/gpt-oss 等)は
+    --     Copilot 側に存在しないので、そもそも衝突しない=素の id のまま解決される。
+    --  2. プロンプトのインライン指定 $model は ':' を含めず拾う仕様(prompts.lua の WORD)なので、
+    --     ':provider' 付き id はインライン指定できない。素の id なら $claude-sonnet-4-6 で切替可能。
+    -- どの provider のモデルかは :CopilotChatModels の一覧に provider 名が表示されるので判別できる。
+    providers = {
+      -- Anthropic API 直叩き。
+      anthropic = {
+        get_url = function()
+          return "https://api.anthropic.com/v1/chat/completions"
+        end,
+        get_headers = function()
+          local key = os.getenv("COPILOT_ANTHROPIC_API_KEY")
+          if not key or key == "" then
+            error("COPILOT_ANTHROPIC_API_KEY が未設定です。")
+          end
+          return {
+            ["Authorization"] = "Bearer " .. key,
+          }
+        end,
+        get_models = function()
+          return {
+            {
+              id = "claude-haiku-4-5", -- 最安・最速($1/$5 per MTok)。翻訳/構文解析向き
+              name = "Claude Haiku 4.5",
+              tokenizer = "o200k_base", -- 互換用の近似トークナイザ
+              max_input_tokens = 200000,
+              max_output_tokens = 32000,
+              streaming = true,
+              tools = true,
+            },
+            {
+              id = "claude-sonnet-4-6", -- バランス型($3/$15 per MTok)
+              name = "Claude Sonnet 4.6",
+              tokenizer = "o200k_base",
+              max_input_tokens = 200000,
+              max_output_tokens = 32000,
+              streaming = true,
+              tools = true,
+            },
+            {
+              id = "claude-opus-4-8", -- 最高性能・最高価格($5/$25 per MTok)
+              name = "Claude Opus 4.8",
+              tokenizer = "o200k_base",
+              max_input_tokens = 200000,
+              max_output_tokens = 32000,
+              streaming = true,
+              tools = true,
+            },
+          }
+        end,
+        prepare_input = prepare_input,
+        prepare_output = base.prepare_output,
+      },
+
+      -- Groq API 直叩き(LPU で OSS モデルを超高速・激安に実行)。OpenAI 互換。
+      -- ※ xAI の "Grok" とは別物。
+      -- キー未設定なら認証に失敗してモデル一覧に出ないだけ(pcall で握られる)で害はない。
+      -- モデル id は入れ替わりが早いので、出ない/増やしたい時は console.groq.com/docs/models で確認。
+      groq = {
+        get_url = function()
+          return "https://api.groq.com/openai/v1/chat/completions"
+        end,
+        get_headers = function()
+          local key = os.getenv("GROQ_API_KEY")
+          if not key or key == "" then
+            error("GROQ_API_KEY が未設定です。")
+          end
+          return {
+            ["Authorization"] = "Bearer " .. key,
+          }
+        end,
+        get_models = function()
+          return {
+            {
+              id = "llama-3.1-8b-instant", -- 最安・最速。翻訳/構文解析ならこれで十分
+              name = "Llama 3.1 8B Instant (Groq)",
+              tokenizer = "o200k_base",
+              max_input_tokens = 120000,
+              max_output_tokens = 32000,
+              streaming = true,
+              tools = true,
+            },
+            {
+              id = "llama-3.3-70b-versatile", -- 汎用・高品質
+              name = "Llama 3.3 70B Versatile (Groq)",
+              tokenizer = "o200k_base",
+              max_input_tokens = 120000,
+              max_output_tokens = 32000,
+              streaming = true,
+              tools = true,
+            },
+            {
+              id = "openai/gpt-oss-120b", -- 推論強め(OpenAI のオープンモデル)
+              name = "GPT-OSS 120B (Groq)",
+              tokenizer = "o200k_base",
+              max_input_tokens = 120000,
+              max_output_tokens = 32000,
+              streaming = true,
+              tools = true,
+            },
+          }
+        end,
+        prepare_input = prepare_input,
+        prepare_output = base.prepare_output,
+      },
+    },
 
     -- -- default contexts
     -- -- see config/contexts.lua for implementation
