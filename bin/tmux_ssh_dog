@@ -75,7 +75,10 @@ add_enable_server() {
   grep "$export_prefix=" "$target"
 }
 before() {
-  is_dog_enable_server && change_tmux_key b
+  if is_dog_enable_server; then
+    change_tmux_key b
+    tmux set-option -g key-table off # prefixなしバインド(root table)をリモートへ透過
+  fi
   tmux display -p '#{window_name}'
   tmux rename-window "$server"
 }
@@ -85,6 +88,7 @@ after() {
   ! is_dog_enable_server && return
   is_exists_still_connection && return
   change_tmux_key a
+  tmux set-option -gu key-table # root table を復元
 }
 main() {
   initialize "$@" || return
