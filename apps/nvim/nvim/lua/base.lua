@@ -307,6 +307,35 @@ au({
   end,
 })
 
+-- 起動時引数で渡したバッファ (startup buffer, 例: `nvim foo.md`) は、lazy が rtp へ
+-- ~/.vim を載せ切る前に ftplugin パスが走るため、~/.vim/ftplugin/markdown.vim
+-- (キーマップ等) や ~/.vim/after/ftplugin/markdown.lua (treesitter 停止) が適用されず、
+-- vim-markdown syntax も読まれない (nvim 標準 markdown syntax/treesitter のままになる)。
+-- VimEnter 時点では rtp が揃っているので、開いている markdown バッファの filetype を
+-- 再適用して post-startup (`:edit`) と同じ ftplugin/syntax 経路に乗せ直す。
+aumg({
+  events = "VimEnter",
+  group = "markdown-startup-refire",
+  cb = function()
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].filetype == "markdown" then
+        vim.bo[buf].filetype = "markdown"
+      end
+    end
+    -- vim-markdown の fenced code 言語別ハイライト (s:MarkdownHighlightSources) は
+    -- ftplugin の BufWinEnter autocmd 契機の force refresh でしか走らない。上の filetype
+    -- 再適用は ftplugin を読み直すだけで BufWinEnter を再発火しないため、startup buffer の
+    -- ```go ``` 等が `mkdCode` 止まり (言語別 syntax が当たらない) になる。表示中の markdown
+    -- ウィンドウで BufWinEnter を明示発火し、正しいバッファコンテキストで refresh を走らせる。
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if vim.bo[buf].filetype == "markdown" then
+        vim.fn.win_execute(win, "doautocmd <nomodeline> BufWinEnter")
+      end
+    end
+  end,
+})
+
 if vim.fn.exists("##TermOpen") then
   -- tig から開く vim? にTermOpenイベントがないため
   -- エラーが発生するので有効な場合のみ
@@ -362,20 +391,33 @@ local function set_yank_post_for_win()
 end
 
 -- リモート接続時のクリップボードフォワード設定
+-- OSC52 対応端末なら OSC52、未対応なら clipper(bin/clip) にフォールバック
 local function set_yank_post_in_remote()
   -- if vim.fn.getenv("IS_VAGRANT") == "1" or vim.fn.getenv("IS_ORB") == "1" then
   if vim.fn.getenv("IS_VAGRANT") == "1" then
     return
   end
   local remote_state = getenv("REMOTEHOST", "") .. getenv("SSH_CONNECTION", "")
-  if vim.fn.empty(remote_state) then
+  if remote_state == "" then
     return
   end
-  local function yank_post_in_remote()
+  local clip = getenv("HOME", "") .. "/.dot/bin/clip"
+  local osc52_copy = require("vim.ui.clipboard.osc52").copy("+")
+  local function yank_post_via_clipper()
     local cliptmp = vim.fn.getenv("HOME") .. "/.vim/.clip.tmp"
     local clip_content = vim.fn.split(vim.fn.getreg("0"), "\n")
     vim.fn.writefile(clip_content, cliptmp)
-    vim.fn.system("cat <" .. cliptmp .. "| clip")
+    vim.fn.system("cat <" .. cliptmp .. "| " .. clip)
+  end
+  local function yank_post_in_remote()
+    -- g:termfeatures.osc52 は TUI が起動時に非同期で検出するため yank 時に判定する
+    if (vim.g.termfeatures or {}).osc52 then
+      osc52_copy(vim.split(vim.fn.getreg("0"), "\n", { plain = true }))
+      return
+    end
+    if vim.fn.executable(clip) == 1 then
+      yank_post_via_clipper()
+    end
   end
   aumg({
     events = { "TextYankPost" },

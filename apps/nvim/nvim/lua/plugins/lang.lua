@@ -36,7 +36,11 @@ return {
   },
   {
     "preservim/vim-markdown",
-    ft = "markdown",
+    -- ft 遅延ロードだと、起動時に渡された .md (startup buffer) で nvim 標準 markdown
+    -- syntax が先に b:current_syntax を確定させ、後追いロードの vim-markdown syntax が
+    -- finish で負ける (htmlH1/mkdLink/独自見出し色が当たらない)。旧 vim の Plug と同様に
+    -- eager ロードして rtp 先頭に置き、syntax を先取りさせる。
+    lazy = false,
     config = function()
       _G.src("800_vim-markdown.vim")
     end,

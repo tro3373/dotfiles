@@ -1,6 +1,6 @@
 -- luacheck: ignore 112 113
 -- LSP / 補完 / スニペット / lint
---   vim-lsp(+vim-lsp-settings) → nvim-lspconfig(+mason)
+--   vim-lsp(+vim-lsp-settings) → nvim-lspconfig(+mason+mason-lspconfig)
 --   asyncomplete → nvim-cmp
 --   neosnippet/vsnip → LuaSnip(+friendly-snippets)
 --   ALE は linting/fixing 専用として残し、設定は 251_ale.vim を SSoT で source
@@ -67,15 +67,27 @@ return {
     end,
   },
 
-  -- LSP サーバ管理 (バイナリのインストールは :Mason で手動)
-  -- lspconfig の dependency にして mason/bin の PATH 追加を server enable より前に走らせる。
-  { "williamboman/mason.nvim", cmd = "Mason", opts = {} },
+  -- LSP サーバ管理 (バイナリは :Mason / :LspInstall でインストール)
+  -- cmd は :Mason 系を全て lazy トリガーに登録 (起動直後の :MasonInstall も効く)
+  {
+    "williamboman/mason.nvim",
+    cmd = { "Mason", "MasonInstall", "MasonUpdate", "MasonUninstall", "MasonUninstallAll", "MasonLog" },
+    opts = {},
+  },
 
-  -- LSP 設定本体 (vim.lsp.config/enable で有効化。lsp/<name>.lua を提供)
+  -- mason 導入済みサーバを vim.lsp.enable で自動有効化 (vim-lsp-settings 相当)。
+  -- setup は nvim-lspconfig の config 末尾で settings 登録後に呼ぶ。
+  { "mason-org/mason-lspconfig.nvim", lazy = true },
+
+  -- LSP 設定本体 (settings のみ定義。enable は mason-lspconfig 任せ)
   {
     "neovim/nvim-lspconfig",
     event = { "BufReadPre", "BufNewFile" },
-    dependencies = { "hrsh7th/cmp-nvim-lsp", "williamboman/mason.nvim" },
+    dependencies = {
+      "hrsh7th/cmp-nvim-lsp",
+      "williamboman/mason.nvim",
+      "mason-org/mason-lspconfig.nvim",
+    },
     config = function()
       -- 診断表示 (vim-lsp 設定踏襲: virtual_text 無効 / sign 有効 / cursor float)
       vim.diagnostic.config({
@@ -106,56 +118,46 @@ return {
         end,
       })
 
-      -- nvim 0.11+ ネイティブ API (vim.lsp.config/enable)。
-      -- nvim-lspconfig の lsp/<name>.lua (cmd/filetypes/root_markers) に設定をマージする。
-      -- 旧 require('lspconfig').xxx.setup() は deprecated のため使わない。
+      -- nvim 0.11+ ネイティブ API。nvim-lspconfig の lsp/<name>.lua
+      -- (cmd/filetypes/root_markers) に下記設定をマージする。
       vim.lsp.config("*", { capabilities = capabilities })
 
-      -- 各サーバの実行バイナリ。未インストールなら enable せず spawn 失敗を出さない。
-      local servers = {
-        lua_ls = {
-          bin = "lua-language-server",
-          settings = { Lua = { diagnostics = { globals = { "vim" } } } },
-        },
-        pylsp = {
-          bin = "pylsp",
-          settings = {
-            pylsp = {
-              configurationSources = { "flake8" },
-              plugins = {
-                flake8 = { enabled = true, ignore = { "W503", "E501", "E203" } },
-                pycodestyle = { ignore = { "W503", "E501", "E203" } },
-                jedi_definition = { follow_imports = true, follow_builtin_imports = true },
-                pylsp_mypy = { enabled = true, strict = true },
-              },
+      -- サーバ固有 settings のみ定義 (g:lsp_settings 相当)。
+      -- cmd/filetypes は lspconfig プリセット、enable は mason-lspconfig が担当。
+      vim.lsp.config("lua_ls", {
+        settings = { Lua = { diagnostics = { globals = { "vim" } } } },
+      })
+      vim.lsp.config("pylsp", {
+        settings = {
+          pylsp = {
+            configurationSources = { "flake8" },
+            plugins = {
+              flake8 = { enabled = true, ignore = { "W503", "E501", "E203" } },
+              pycodestyle = { ignore = { "W503", "E501", "E203" } },
+              jedi_definition = { follow_imports = true, follow_builtin_imports = true },
+              pylsp_mypy = { enabled = true, strict = true },
             },
           },
         },
-        yamlls = {
-          bin = "yaml-language-server",
-          settings = {
-            yaml = {
-              schemaStore = { enable = true },
-              schemas = {
-                ["https://json.schemastore.org/github-workflow.json"] = ".github/workflows/*.{yml,yaml}",
-              },
-              customTags = {
-                "!Ref", "!Sub", "!GetAtt", "!GetAZs", "!ImportValue", "!Select",
-                "!Split", "!Join sequence", "!And", "!If", "!Not", "!Equals", "!Or",
-                "!FindInMap sequence", "!Base64", "!Cidr",
-              },
+      })
+      vim.lsp.config("yamlls", {
+        settings = {
+          yaml = {
+            schemaStore = { enable = true },
+            schemas = {
+              ["https://json.schemastore.org/github-workflow.json"] = ".github/workflows/*.{yml,yaml}",
+            },
+            customTags = {
+              "!Ref", "!Sub", "!GetAtt", "!GetAZs", "!ImportValue", "!Select",
+              "!Split", "!Join sequence", "!And", "!If", "!Not", "!Equals", "!Or",
+              "!FindInMap sequence", "!Base64", "!Cidr",
             },
           },
         },
-      }
-      for name, cfg in pairs(servers) do
-        local bin = cfg.bin
-        cfg.bin = nil
-        if vim.fn.executable(bin) == 1 then
-          vim.lsp.config(name, cfg)
-          vim.lsp.enable(name)
-        end
-      end
+      })
+
+      -- mason 導入済みサーバを自動 enable (settings 登録後に実行する)
+      require("mason-lspconfig").setup({ automatic_enable = true })
 
       -- 保存時フォーマット (rs/go/yml: organizeImports + format)
       vim.api.nvim_create_autocmd("BufWritePre", {
@@ -181,6 +183,118 @@ return {
       _G.src("251_ale.vim")
       vim.g.ale_disable_lsp = 1
       vim.g.ale_completion_enabled = 0
+    end,
+  },
+
+  -- kakehashi: Tree-sitter ベースの汎用 LS。markdown のコードブロック内を
+  -- 既存 LSP へブリッジする (md内 Lua/Python 等で definition/hover/補完)。
+  -- attach は filetypes=markdown に限定 (host ハイライトは nvim-treesitter 任せ)。
+  -- VeryLazy で起動直後に一度だけロードし vim.lsp.enable する (ft/event の遅延
+  -- ロードは `nvim file.md` 起動引数だと発火しないため)。enable 済みサーバが
+  -- 揃った後に config が走るので bridge も正しく生成。バイナリ未導入なら no-op。
+  {
+    "atusy/kakehashi.nvim",
+    event = "VeryLazy",
+    config = function()
+      if vim.fn.executable("kakehashi") ~= 1 then
+        return
+      end
+      -- バンドルされた commentstring/endwise クエリ用にプラグイン dir を searchPaths へ
+      local src = vim.api.nvim_get_runtime_file("lua/kakehashi.lua", false)[1]
+      local plugin_dir = src and vim.fn.fnamemodify(src, ":h:h") or nil
+
+      -- md コードブロックのブリッジ対象 (言語名)。サーバが無い言語を有効化しても
+      -- 無害なため、よく使う言語を静的に列挙する。実際の転送先 LS は LspAttach の
+      -- inherit_nvim_lsp_config が enable 済みサーバから動的に解決する。
+      local bridge = {}
+      local langs = "go lua python yaml json typescript javascript rust bash c cpp html css sql"
+      for _, lang in ipairs(vim.split(langs, " ")) do
+        bridge[lang] = { enabled = true }
+      end
+
+      vim.lsp.config("kakehashi", {
+        cmd = { "kakehashi" },
+        filetypes = { "markdown" },
+        init_options = {
+          searchPaths = plugin_dir and { plugin_dir } or nil,
+          languages = { markdown = { bridge = bridge } },
+        },
+        on_init = function(client)
+          -- semanticTokens/full/delta を使う (range 要求は無効化)
+          local stp = client.server_capabilities.semanticTokensProvider
+          if stp then
+            stp.range = false
+          end
+        end,
+      })
+      vim.lsp.enable("kakehashi")
+
+      -- kakehashi.nvim の inherit_nvim_lsp_config は effectiveConfiguration 応答の
+      -- languageServers が JSON null (vim.NIL) で返ると configured_servers を index して
+      -- 落ちる (kakehashi.lua:37 attempt to index 'configured_servers')。複数 md を
+      -- 同時に開くと発火しやすい。プラグイン本体は lazy 管理で編集が上書きされるため、
+      -- nil/vim.NIL を握る安全版へ差し替える (上流修正されたら撤去可)。
+      local function denil(v)
+        if v == nil or v == vim.NIL then
+          return nil
+        end
+        return v
+      end
+      local kh = require("kakehashi")
+      kh.inherit_nvim_lsp_config = function(client, servers, behavior)
+        behavior = behavior or "keep"
+        client:request("kakehashi/internal/effectiveConfiguration", vim.empty_dict(), function(err, result)
+          if err then
+            return
+          end
+          result = denil(result) or {}
+          local settings = denil(result.settings) or {}
+          local configured_servers = denil(settings.languageServers) or {}
+          local ignored_servers = { copilot = true, kakehashi = true, denols = true }
+          for _, name in pairs(servers) do
+            local ok, config = pcall(function()
+              return vim.lsp._enabled_configs[name].resolved_config
+            end)
+            if not ok then
+              config = (vim.lsp.config and vim.lsp.config[name]) or (vim.lsp.configs and vim.lsp.configs[name])
+            end
+            if config and not ignored_servers[name] then
+              local new_config = vim.tbl_extend(behavior, configured_servers[name] or {}, {
+                cmd = type(config.cmd) == "table" and config.cmd or nil,
+                languages = config.filetypes,
+              })
+              if new_config.cmd then
+                configured_servers[name] = new_config
+              end
+            end
+          end
+          client:notify("workspace/didChangeConfiguration", {
+            settings = { languageServers = configured_servers },
+          })
+        end)
+      end
+
+      -- 既存 vim.lsp.config 定義を継承してブリッジ先 LS に流用 (二重設定回避)。
+      -- inherit は client へ didChangeConfiguration を送るだけなので 1 クライアント 1 回で十分。
+      local inherited = {}
+      vim.api.nvim_create_autocmd("LspAttach", {
+        group = vim.api.nvim_create_augroup("my-kakehashi-attach", {}),
+        callback = function(ev)
+          local client = vim.lsp.get_client_by_id(ev.data.client_id)
+          if client and client.name == "kakehashi" and not inherited[client.id] then
+            inherited[client.id] = true
+            kh.inherit_nvim_lsp_config(client, vim.tbl_keys(vim.lsp._enabled_configs), "keep")
+          end
+        end,
+      })
+
+      -- extra 機能トグル (conceal: backtick 等を隠す / context: sticky header)
+      vim.api.nvim_create_user_command("KakehashiConceal", function()
+        require("kakehashi.extra.conceal").toggle()
+      end, {})
+      vim.api.nvim_create_user_command("KakehashiContext", function()
+        require("kakehashi.extra.context").toggle()
+      end, {})
     end,
   },
 }

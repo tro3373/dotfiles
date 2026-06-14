@@ -21,7 +21,7 @@
 - 方針: 全 vimscript を lua へ書き直さない。動く vimscript は source して二重管理を避ける
 - lua ネイティブ化した領域
   - プラグイン管理 (lazy.nvim)
-  - LSP (nvim-lspconfig + vim.lsp.config/enable)
+  - LSP (nvim-lspconfig + mason-lspconfig の automatic_enable)
   - 補完 (nvim-cmp + LuaSnip)
   - statusline (lualine)
   - オプション/autocmd (`lua/base.lua`)
@@ -91,8 +91,10 @@
 |---|---|
 | lazy.nvim | プラグインマネージャ |
 | lualine.nvim | statusline |
-| nvim-lspconfig | LSP クライアント設定 |
+| nvim-lspconfig | LSP クライアント設定 (lsp/<name>.lua プリセット) |
 | mason.nvim | LSP サーバのインストール管理 |
+| mason-lspconfig.nvim | mason 導入済みサーバを自動 enable (vim-lsp-settings 相当) |
+| kakehashi (+ kakehashi.nvim) | Tree-sitter ベース汎用 LS。md コードブロックを他 LS へブリッジ |
 | nvim-cmp (+ cmp-nvim-lsp/buffer/path/cmp_luasnip) | 補完エンジン |
 | LuaSnip + friendly-snippets | スニペット |
 | catgoose/nvim-colorizer.lua | カラーコード着色 (fork) |
@@ -109,14 +111,22 @@
 
 ## 4. 既知の懸念・動作しないもの・未対応
 
-### 4.1 LSP が効かない (要対応)
+### 4.1 LSP サーバの導入と自動有効化 (mason-lspconfig)
 
-- 原因: LSP サーバ本体が未インストール (`lua-language-server` / `pylsp` / `yaml-language-server` が MISSING)
-- 旧 vim は `vim-lsp-settings` が自動インストールしていた
-- 新構成は起動を汚さないため自動インストールしない (`executable()` で存在するサーバのみ有効化)
-- 対応: `:Mason` で必要なサーバをインストール
-  - `:MasonInstall lua-language-server pylsp yaml-language-server`
-  - インストール後、対象ファイルを開けば自動で attach
+- enable 方式: mason-lspconfig の `automatic_enable` (デフォルト true)
+  - mason 導入済みサーバを `vim.lsp.enable()` で自動有効化 (vim-lsp-settings 相当)
+  - 旧構成の `executable()` ガード + 手動 enable ループは廃止
+- 設定の分担
+  - cmd / filetypes / root_markers: nvim-lspconfig の `lsp/<name>.lua` プリセット
+  - サーバ固有 settings: `lsp.lua` の `vim.lsp.config(name, {settings=...})` (lua_ls/pylsp/yamlls)
+  - `setup({automatic_enable=true})` は settings 登録後に呼ぶ (順序依存)
+- 導入手順: `:Mason` または `:LspInstall <server>`
+  - 例: `:MasonInstall lua-language-server python-lsp-server yaml-language-server`
+  - 導入後 nvim 再起動 → 対象ファイルを開けば自動 attach
+- 注意点
+  - 自動 enable 対象は **mason 管理下のみ**。system 導入のみのサーバは mason へ寄せる
+  - pylsp の `pylsp_mypy` / `flake8` プラグインは mason 同梱外
+    - `python-lsp-server` の venv に別途 pip 導入が必要 (`:PylspInstall` 等)
 
 ### 4.2 廃止プラグインに紐づくキーマップが死んでいる
 
@@ -156,6 +166,24 @@
   - `HighlightMixedIndent` (make の混在インデント警告)
   - `RemoveAutoCommentAfterURL`, `highlight_notes` augroup
 - 必要なら個別に lua 移植 or 該当部のみ source
+
+### 4.7 kakehashi (md コードブロックの LSP ブリッジ)
+
+- 役割: md の ```lang コードブロックを各言語の LS へブリッジ
+  - md 内の Lua/Python/Go 等で hover / definition / 補完が効く
+  - host のハイライトは nvim-treesitter に任せ、attach は markdown に限定
+- 構成 (`lsp.lua`)
+  - バイナリ: `apps/kakehashi` で GitHub Releases から導入 (`bin/setup kakehashi`)
+  - `vim.lsp.config("kakehashi", {...})` + `vim.lsp.enable` (VeryLazy ロード)
+    - `ft=`/`event=` 遅延は `nvim file.md` 起動引数で発火しないため VeryLazy
+  - `inherit_nvim_lsp_config` で enable 済み LS 設定を継承しブリッジ先に流用
+  - bridge 対象言語は静的列挙 (サーバ無しでも無害、転送先は inherit が動的解決)
+  - `:KakehashiConceal` / `:KakehashiContext` で extra 機能トグル
+- vim との非対称
+  - vim 側は vim-lsp-settings の `settings/kakehashi.vim` が全 LS を自動検出しブリッジ構築
+  - nvim 側は mason で enable したサーバのみが対象 (gopls 等は `:Mason` 導入が必要)
+- 前提: 初回に C コンパイラ + ネットワークで tree-sitter parser を自動コンパイル
+- 未検証: 実機での attach / bridge 補完は要確認 (headless 起動エラーは0)
 
 ## 5. 検証状況
 

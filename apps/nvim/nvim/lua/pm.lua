@@ -24,6 +24,10 @@ require("lazy").setup({
   -- nvim 組み込みプラグインの無効化 (.vimrc の loaded_* 相当)
   performance = {
     rtp = {
+      -- lazy は rtp.reset で runtimepath を初期化するため、~/.vim と ~/.vim/after を
+      -- ここで再登録する (compat.lua の append は reset で消えるため)。
+      -- これで ~/.vim/ftplugin/markdown.vim や ~/.vim/after/ftplugin/markdown.lua が効く。
+      paths = { _G.vimdir, _G.vimdir .. "/after" },
       disabled_plugins = {
         "gzip",
         "tarPlugin",

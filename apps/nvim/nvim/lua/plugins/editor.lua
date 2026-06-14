@@ -17,15 +17,15 @@ return {
   -- () 等の入力補完
   {
     "kana/vim-smartinput",
-    dependencies = { "Shougo/context_filetype.vim" },
+    dependencies = { "Shougo/context_filetype.vim", "cohama/vim-smartinput-endwise" },
     event = "InsertEnter",
     config = function()
       _G.src("301_vim-smartinput.vim")
     end,
   },
   { "Shougo/context_filetype.vim", lazy = true },
-  -- ruby の end 補完
-  { "cohama/vim-smartinput-endwise", ft = "ruby" },
+  -- end 補完 (vim-smartinput の dependency としてロード)
+  { "cohama/vim-smartinput-endwise", lazy = true },
 
   -- ウィンドウサイズ変更等のサブモード
   {

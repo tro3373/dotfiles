@@ -17,10 +17,11 @@ vim.g.winclip = "/mnt/c/Windows/System32/clip.exe"
 -- leader は lazy.setup より前に確定させる必要がある (101_mapping.vim と同値)
 vim.g.mapleader = " "
 
--- ~/.vim を runtimepath に載せて ftplugin/snippets/conf.d を解決可能にする
-local vimdir = vim.fn.expand("~/.vim")
-vim.opt.runtimepath:append(vimdir)
-vim.opt.runtimepath:append(vimdir .. "/after")
+-- ~/.vim を runtimepath に載せて ftplugin/after/snippets/conf.d を解決可能にする。
+-- 実際の rtp 登録は pm.lua の lazy performance.rtp.paths で行う。lazy.setup は
+-- performance.rtp.reset で runtimepath を初期化するため、ここで append しても消える。
+_G.vimdir = vim.fn.expand("~/.vim")
+local vimdir = _G.vimdir
 
 -- g:plug.is_installed() shim
 -- 各 conf.d 設定は `if !g:plug.is_installed("name") | finish | endif` で自己ゲートする。

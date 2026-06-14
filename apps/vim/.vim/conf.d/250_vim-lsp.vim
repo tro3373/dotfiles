@@ -171,6 +171,10 @@ let g:lsp_settings = {
   \       }
   \     }
   \   },
+  \   'kakehashi': {
+  \     'disabled': v:false,
+  \     'allowlist': ['markdown'],
+  \   },
 \}
 
 " 補完表示時のEnterで改行をしない
