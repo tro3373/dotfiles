@@ -111,7 +111,9 @@ return {
   -- git 差分表示 (vim-gitgutter)
   {
     "airblade/vim-gitgutter",
-    event = { "BufReadPost", "BufNewFile" },
+    -- event 遅延は nvim 起動引数 (`nvim file`) で発火漏れし初期 gutter が出ない
+    -- (MIGRATION.md 4.4/4.7 参照)。起動時ロードで旧 vim-plug 挙動に戻す
+    lazy = false,
     config = function()
       _G.src("303_vim-gitgutter.vim")
     end,
