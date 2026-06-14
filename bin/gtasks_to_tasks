@@ -36,6 +36,17 @@ warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
 usage() { grep '^##' "$0" | sed -E 's/^## ?//'; }
 
+# RFC3339 (UTC) タイムスタンプを JST の "[YYYY-MM-DD HH:MM:SS] " 形式に変換する。
+# 空文字/null/変換失敗時は空文字を返し、呼び出し側でそのまま prefix に使えるようにする。
+format_ts_prefix() {
+  local ts="${1:-}"
+  [[ -z ${ts} || ${ts} == "null" ]] && return 0
+  local formatted
+  formatted=$(TZ='Asia/Tokyo' date -d "${ts}" +"%Y%m%d_%H%M%S" 2>/dev/null) || return 0
+  [[ -z ${formatted} ]] && return 0
+  printf '[%s] ' "${formatted}"
+}
+
 emit_task_block() {
   local task_json="${1:-}"
   local checkbox_indent="${2:-}"
@@ -45,16 +56,19 @@ emit_task_block() {
     error "==> Error: emit_task_block: task_json required"
   fi
 
-  local title notes links_json
+  local title notes links_json updated
   title=$(printf '%s' "${task_json}" | jq -r '.title // ""') || return 1
   notes=$(printf '%s' "${task_json}" | jq -r 'if .notes == null then "" else .notes end') || return 1
   links_json=$(printf '%s' "${task_json}" | jq -c '.links // []') || return 1
+  updated=$(printf '%s' "${task_json}" | jq -r '.updated // ""') || return 1
 
   # タイトル内 CR/改行は Markdown 構造を壊すので除去 (CR は削除、LF は空白化)
   title=${title//$'\r'/}
   title=${title//$'\n'/ }
 
-  printf -- '%s- [ ] %s\n' "${checkbox_indent}" "${title}"
+  local ts_prefix
+  ts_prefix=$(format_ts_prefix "${updated}")
+  printf -- '%s- [ ] %s%s\n' "${checkbox_indent}" "${ts_prefix}" "${title}"
 
   if [[ -n ${notes} ]]; then
     # bullet マーカー (- / * / +) がある行はそのまま尊重、

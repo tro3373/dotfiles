@@ -90,6 +90,7 @@ info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 error() { _log red "$*" && exit 1; }
 current_is_worktree_dir() { [[ $git_root =~ ^.*${worktree_dir_name}/.*$ ]]; }
+get_timestamp_prefix() { date +"[%Y%m%d_%H%M%S]"; }
 
 initialize_links_if_needed() {
   dst_tasks_md="$git_root/.tasks.md"
@@ -228,7 +229,7 @@ split_tasks() {
 
   # マークダウン形式でファイル作成
   cat >"$task_file" <<EOF
-## ${title}
+## $(get_timestamp_prefix) ${title}
 ### ブランチ名
 - ${branch}
 ### 作業ディレクトリ
@@ -344,9 +345,9 @@ complete_normal_task() {
 
 get_comment_header() {
   case "${comment_type}" in
-    requirement) echo "🎭 要件(ふるまい)" ;;
-    review) echo "👀 レビュー修正" ;;
-    complete) echo "🎉 完了" ;;
+    requirement) echo "$(get_timestamp_prefix) 🎭 要件(ふるまい)" ;;
+    review) echo "$(get_timestamp_prefix) 👀 レビュー修正" ;;
+    complete) echo "$(get_timestamp_prefix) 🎉 完了" ;;
     *) error "==> Invalid comment type: ${comment_type}. Use: requirement|review|complete" ;;
   esac
 }
@@ -397,13 +398,10 @@ comment_task() {
 }
 
 add_task() {
-  local input_content first_input_line
+  local input_content
   read_input_content
 
-  first_input_line=$(printf '%s\n' "${input_content}" | head -n1)
-  if [[ ! ${first_input_line} =~ ^-\ \[\ \] ]]; then
-    input_content="- [ ] ${input_content}"
-  fi
+  input_content=$(echo "${input_content}" | sed -e '1s/- \[ \] //' -e '1s/- //' -e "1s/^/- [ ] $(get_timestamp_prefix) /")
 
   if [[ -s ${target_file} ]] && [[ -n $(tail -c1 "${target_file}") ]]; then
     printf '\n' >>"${target_file}"
