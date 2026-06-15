@@ -78,10 +78,17 @@ function! s:find_rip_grep_files(q, d) abort
   " finally で復元することで他の fzf コマンドへ影響を残さない。
   " 元々未設定だった場合に空 dict {} を残すと、後続の fzf#wrap が '--expect='(キー無し)
   " を生成して fzf がエラー終了(code 2)するため、未設定状態へ正しく戻す。
+  " ambiwidth=double(日本語環境)では Unicode の pointer/marker の幅判定がずれ、
+  " カーソル行が1桁左へずれて末尾文字が二重に見える。fzf#vim#with_preview と同じく
+  " ASCII 記号へ倒して防ぐ(with_preview を通さない files 系には自動付与されないため)。
+  let l:options = ['--query=' . a:q, '--info=inline']
+  if &ambiwidth ==# 'double'
+    call add(l:options, '--no-unicode')
+  endif
   try
     " source を rg の更新日時降順に差し替え、最近更新したファイルを上位に出す。
     " '--sortr modified' = 新しい順。dir 指定で target_dir 配下を相対パス列挙する。
-    :call fzf#vim#files(l:target_dir, {'source': 'rg --files --sortr modified', 'options': ['--query=' . a:q, '--info=inline']})
+    :call fzf#vim#files(l:target_dir, {'source': 'rg --files --sortr modified', 'options': l:options})
   finally
     if l:had_action
       let g:fzf_action = l:original_action
