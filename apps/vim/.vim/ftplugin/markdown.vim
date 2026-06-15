@@ -59,6 +59,11 @@ function! s:TimestampSubCmd()
     return 's/\[.\] /&' . l:ts . '/'
   endif
 
+  " 見出しなら # の後ろに挿入
+  if getline('.')=~'^\s*#\+\s'
+    return 's/^\s*#\+\s\+\zs/' . l:ts . '/'
+  endif
+
   " 無ければ行頭(- の後)に挿入
   return 's/^\s*\%(- \)\?\zs/' . l:ts . '/'
 endfunction
