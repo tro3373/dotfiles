@@ -70,17 +70,24 @@ function! s:find_rip_grep_files(q, d) abort
   " fzf#vim#files は内部で g:fzf_action を参照してキー別アクションを決めるため、
   " ここで一時的に 'enter' を追加して上書きする。
   " 'tab split' は Ctrl-t と同じ挙動(新タブで開く)。Ctrl-t/x/v の既存設定は extend で温存。
+  let l:had_action = exists('g:fzf_action')
   let l:original_action = get(g:, 'fzf_action', {})
   let g:fzf_action = extend(copy(l:original_action), {'enter': 'tab split'})
   " アクションは fzf#vim#files 呼び出し時に同期的にキャプチャされるため、
   " 呼び出し直後に g:fzf_action を元へ戻しても選択時の挙動は変わらない。
   " finally で復元することで他の fzf コマンドへ影響を残さない。
+  " 元々未設定だった場合に空 dict {} を残すと、後続の fzf#wrap が '--expect='(キー無し)
+  " を生成して fzf がエラー終了(code 2)するため、未設定状態へ正しく戻す。
   try
     " source を rg の更新日時降順に差し替え、最近更新したファイルを上位に出す。
     " '--sortr modified' = 新しい順。dir 指定で target_dir 配下を相対パス列挙する。
     :call fzf#vim#files(l:target_dir, {'source': 'rg --files --sortr modified', 'options': ['--query=' . a:q, '--info=inline']})
   finally
-    let g:fzf_action = l:original_action
+    if l:had_action
+      let g:fzf_action = l:original_action
+    else
+      unlet! g:fzf_action
+    endif
   endtry
 endfunction
 " nnoremap <silent> <Leader>; :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), '')<CR>
@@ -110,5 +117,5 @@ endfunction
 " ctrlp を廃止した環境(nvim)でのみ cwd 優先 History へ再割当する。
 if !g:plug.is_installed('ctrlp.vim')
   nnoremap <silent> st :<C-u>tabnew<CR>:call <SID>history_cwd_first()<CR>
-  nnoremap <silent> <Leader>p :<C-u>tabnew<CR>:call <SID>history_cwd_first()<CR>
+  nnoremap <silent> <Leader>p :<C-u>silent call <SID>history_cwd_first()<CR>
 endif
