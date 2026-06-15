@@ -4,24 +4,38 @@ iab <buffer> tl - [ ]
 " " 入れ子のリストを折りたたむ
 " setlocal foldmethod=indent
 
-function! Check()
+" 現在行に対して実行する :s コマンドを返す
+function! s:CheckSubCmd()
   let l:line=getline('.')
-  let l:curs=winsaveview()
 
+  " リストのチェックボックスをトグル
   if l:line=~?'\s*-\s*\[\s*\].*'
-    s/\[.\]/[x]/
-  elseif l:line=~?'\s*-\s*\[x\].*'
-    s/\[x\]/[ ]/
-  elseif l:line=~?'^\s*#\+\s\+\[\s*\].*'
-    s/\[.\]/[x]/
-  elseif l:line=~?'^\s*#\+\s\+\[x\].*'
-    s/\[x\]/[ ]/
-  elseif l:line=~?'^\s*#\+\s.*'
-    s/^\(\s*#\+\s\)/\1[ ] /
-  else
-    s/^\(\s*\)\(- \)\?/\1- [ ] /
+    return 's/\[.\]/[x]/'
+  endif
+  if l:line=~?'\s*-\s*\[x\].*'
+    return 's/\[x\]/[ ]/'
   endif
 
+  " 見出しのチェックボックスをトグル
+  if l:line=~?'^\s*#\+\s\+\[\s*\].*'
+    return 's/\[.\]/[x]/'
+  endif
+  if l:line=~?'^\s*#\+\s\+\[x\].*'
+    return 's/\[x\]/[ ]/'
+  endif
+
+  " 見出しならチェックボックスを付与
+  if l:line=~?'^\s*#\+\s.*'
+    return 's/^\(\s*#\+\s\)/\1[ ] /'
+  endif
+
+  " それ以外はリストのチェックボックスを付与
+  return 's/^\(\s*\)\(- \)\?/\1- [ ] /'
+endfunction
+
+function! Check()
+  let l:curs=winsaveview()
+  execute s:CheckSubCmd()
   call winrestview(l:curs)
 endfunction
 " expand-region 等が張る global の _/- に上書きされないよう <buffer> で定義する
