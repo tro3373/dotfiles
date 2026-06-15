@@ -30,7 +30,7 @@ au({
   events = { "BufNewFile", "BufRead" },
   cb = function()
     local syntax = vim.bo[0].syntax
-    if syntax ~= "" then
+    if syntax ~= "" and syntax ~= "conf" then
       return
     end
     vim.cmd("set syntax=sh")
