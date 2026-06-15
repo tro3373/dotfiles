@@ -29,20 +29,30 @@ nnoremap <silent> <buffer> - :call Check()<CR>
 " nnoremap <buffer> <Leader><Leader> :call Check()<CR>
 " vnoremap <buffer> <Leader><Leader> :call Check()<CR>
 
+" 現在行に対して実行する :s コマンドを返す
+function! s:TimestampSubCmd()
+  let l:tsre='\[\d\{4}\d\{2}\d\{2}_\d\{2}\d\{2}\d\{2}\] '
+
+  " 既にタイムスタンプがあれば削除してトグルオフ
+  if getline('.')=~l:tsre
+    return 's/' . l:tsre . '//'
+  endif
+
+  let l:ts='[' . strftime('%Y%m%d_%H%M%S') . '] '
+
+  " チェックボックスがあればその直後に挿入
+  if getline('.')=~'\[.\] '
+    return 's/\[.\] /&' . l:ts . '/'
+  endif
+
+  " 無ければ行頭(- の後)に挿入
+  return 's/^\s*\%(- \)\?\zs/' . l:ts . '/'
+endfunction
+
 " _ : 日付スタンプ [20260612_170000] の挿入/削除をトグル
 function! ToggleTimestamp()
   let l:curs=winsaveview()
-  let l:tsre='\[\d\{4}\d\{2}\d\{2}_\d\{2}\d\{2}\d\{2}\] '
-  if getline('.')=~l:tsre
-    execute 's/' . l:tsre . '//'
-  else
-    let l:ts='[' . strftime('%Y%m%d_%H%M%S') . '] '
-    if getline('.')=~'\[.\] '
-      execute 's/\[.\] /&' . l:ts . '/'
-    else
-      execute 's/^\s*\%(- \)\?\zs/' . l:ts . '/'
-    endif
-  endif
+  execute s:TimestampSubCmd()
   call winrestview(l:curs)
 endfunction
 nnoremap <silent> <buffer> _ :call ToggleTimestamp()<CR>
