@@ -85,3 +85,10 @@ endfunction
 " nnoremap <silent> <Leader>: :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), expand('%:p:h'))<CR>
 nnoremap <silent> <Leader>l :<C-u>silent call <SID>find_rip_grep_files('', '')<CR>
 nnoremap <silent> <Leader>L :<C-u>silent call <SID>find_rip_grep_files('', expand('%:p:h'))<CR>
+
+" st: 新規タブで MRU(最近使ったファイル)を開く。
+" 旧 ctrlp 環境(vim)では 220_ctrlp.vim.vim の `st`(CtrlPMRU)を温存し、
+" ctrlp を廃止した環境(nvim)でのみ fzf の :History へ再割当する。
+if !g:plug.is_installed('ctrlp.vim')
+  nnoremap <silent> st :<C-u>tabnew<CR>:History<CR>
+endif
