@@ -106,7 +106,17 @@ return {
         callback = function(ev)
           local opts = { buffer = ev.buf, silent = true }
           vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-          vim.keymap.set("n", "<C-]>", vim.lsp.buf.definition, opts)
+          -- <C-]> は定義を新規タブで開く (vim版 `:tab LspDefinition` 踏襲)。
+          -- on_list は定義が見つかった時のみ呼ばれるので、空振り時はタブを作らない。
+          vim.keymap.set("n", "<C-]>", function()
+            vim.lsp.buf.definition({
+              on_list = function(result)
+                vim.cmd.tabnew()
+                vim.fn.setqflist({}, " ", result)
+                vim.cmd.cfirst()
+              end,
+            })
+          end, opts)
           vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
           vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
           vim.keymap.set("n", "gt", vim.lsp.buf.type_definition, opts)
