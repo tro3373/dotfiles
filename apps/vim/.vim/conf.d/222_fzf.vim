@@ -76,7 +76,9 @@ function! s:find_rip_grep_files(q, d) abort
   " 呼び出し直後に g:fzf_action を元へ戻しても選択時の挙動は変わらない。
   " finally で復元することで他の fzf コマンドへ影響を残さない。
   try
-    :call fzf#vim#files(l:target_dir, {'options': ['--query=' . a:q, '--info=inline']})
+    " source を rg の更新日時降順に差し替え、最近更新したファイルを上位に出す。
+    " '--sortr modified' = 新しい順。dir 指定で target_dir 配下を相対パス列挙する。
+    :call fzf#vim#files(l:target_dir, {'source': 'rg --files --sortr modified', 'options': ['--query=' . a:q, '--info=inline']})
   finally
     let g:fzf_action = l:original_action
   endtry
@@ -86,10 +88,27 @@ endfunction
 nnoremap <silent> <Leader>l :<C-u>silent call <SID>find_rip_grep_files('', '')<CR>
 nnoremap <silent> <Leader>L :<C-u>silent call <SID>find_rip_grep_files('', expand('%:p:h'))<CR>
 
+" :History(MRU) を、cwd 配下のファイルを先頭へ寄せて表示する。
+" fzf には特定項目だけ上位ブーストする機能が無いため、独自に source を組み立てる。
+" fzf#vim#_recent_files() は :History と同じソース([現在ファイル]+[開いている
+" バッファ]+[oldfiles] を uniq した :~:. 表示パス)。:~:. は cwd 配下のみ相対
+" パスになるため、先頭が ~ or / でないものを cwd 配下と判定し前方へ寄せる
+" (各グループ内の MRU 順は維持する安定パーティション)。
+function! s:history_cwd_first() abort
+  let l:files = fzf#vim#_recent_files()
+  let l:under = filter(copy(l:files), 'v:val !~# "^[~/]"')
+  let l:other = filter(copy(l:files), 'v:val =~# "^[~/]"')
+  call fzf#run(fzf#wrap('history-cwd-first',
+        \ fzf#vim#with_preview({
+        \   'source':  l:under + l:other,
+        \   'options': ['-m', '--prompt', 'Hist> ', '--info=inline'],
+        \ }), 0))
+endfunction
+
 " st: 新規タブで MRU(最近使ったファイル)を開く。
 " 旧 ctrlp 環境(vim)では 220_ctrlp.vim.vim の `st`(CtrlPMRU)を温存し、
-" ctrlp を廃止した環境(nvim)でのみ fzf の :History へ再割当する。
+" ctrlp を廃止した環境(nvim)でのみ cwd 優先 History へ再割当する。
 if !g:plug.is_installed('ctrlp.vim')
-  nnoremap <silent> st :<C-u>tabnew<CR>:History<CR>
-  nnoremap <silent> <Leader>p :<C-u>tabnew<CR>:History<CR>
+  nnoremap <silent> st :<C-u>tabnew<CR>:call <SID>history_cwd_first()<CR>
+  nnoremap <silent> <Leader>p :<C-u>tabnew<CR>:call <SID>history_cwd_first()<CR>
 endif
