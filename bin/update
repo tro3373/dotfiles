@@ -2,6 +2,7 @@
 
 command_name=$(basename "$0") && readonly command_name
 dummy="echo"
+all=0
 args=()
 
 usage() {
@@ -30,6 +31,7 @@ initialize() {
     case "$1" in
       -h | --help) usage && exit 0 ;;
       -e) dummy= ;;
+      -a) all=1 ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
@@ -44,7 +46,7 @@ update_arch() {
   ilog "=> Cleaning.."
   $dummy clear_pkg_cache
   local _cmd="sudo pacman"
-  if has yay; then
+  if has yay && [[ $all -eq 1 ]]; then
     local _cmd=yay
   fi
   ilog "=> Updating.."
