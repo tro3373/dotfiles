@@ -15,7 +15,7 @@ endif
 " vnoremap ,j y:FZF -q <C-R>"
 
 
-let $FZF_DEFAULT_OPTS="--ansi --preview-window 'right:50%' --layout reverse --preview 'bat --color=always --style=header,grid --line-range :500 {}'"
+let $FZF_DEFAULT_OPTS="--ansi --preview-window 'right:50%' --preview 'bat --color=always --style=header,grid --line-range :500 {}'"
 
 " ウィンドウサイズ変更したい場合
 let g:fzf_layout = { 'window': { 'width': 1.0, 'height': 1.0, 'yoffset': 0.5, 'xoffset': 0.5, 'border': 'sharp' } }
@@ -76,7 +76,7 @@ function! s:find_rip_grep_files(q, d) abort
   " 呼び出し直後に g:fzf_action を元へ戻しても選択時の挙動は変わらない。
   " finally で復元することで他の fzf コマンドへ影響を残さない。
   try
-    :call fzf#vim#files(l:target_dir, {'options': ['--query=' . a:q, '--layout=reverse', '--info=inline', '--preview', 'cat {}']})
+    :call fzf#vim#files(l:target_dir, {'options': ['--query=' . a:q, '--info=inline']})
   finally
     let g:fzf_action = l:original_action
   endtry
@@ -91,4 +91,5 @@ nnoremap <silent> <Leader>L :<C-u>silent call <SID>find_rip_grep_files('', expan
 " ctrlp を廃止した環境(nvim)でのみ fzf の :History へ再割当する。
 if !g:plug.is_installed('ctrlp.vim')
   nnoremap <silent> st :<C-u>tabnew<CR>:History<CR>
+  nnoremap <silent> <Leader>p :<C-u>tabnew<CR>:History<CR>
 endif
