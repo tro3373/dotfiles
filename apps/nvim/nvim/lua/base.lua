@@ -326,6 +326,26 @@ aumg({
         vim.fn.win_execute(win, "doautocmd <nomodeline> BufWinEnter")
       end
     end
+    -- 起動引数の markdown は read 系イベント (BufRead) が発火せず、shada のカーソル位置が
+    -- バッファへ読み込まれない (restore-rownum が動かず常に 1 行目になる)。shada を読み直して
+    -- '" マークを回収し、未復元 (カーソルが 1 行目) の markdown ウィンドウで前回位置へ戻す。
+    local md_wins = {}
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if
+        vim.bo[buf].filetype == "markdown"
+        and vim.bo[buf].buftype == ""
+        and vim.api.nvim_win_get_cursor(win)[1] == 1
+      then
+        table.insert(md_wins, win)
+      end
+    end
+    if #md_wins > 0 then
+      vim.cmd("rshada!")
+      for _, win in ipairs(md_wins) do
+        vim.fn.win_execute(win, 'normal! g`"')
+      end
+    end
   end,
 })
 
