@@ -6,9 +6,13 @@ return {
   { "tpope/vim-repeat", lazy = true },
 
   -- コメントアウト
+  -- VeryLazy だと 302 内の `autocmd FileType markdown setlocal commentstring=> %s` が
+  -- バッファの FileType より後に登録され、組み込み ftplugin の `<!-- %s -->` が残る。
+  -- 起動時ロード(lazy=false)で commentstring autocmd を FileType より前に張る。
+  -- (vim-commentary は軽量で起動コストは無視できる)
   {
     "tpope/vim-commentary",
-    event = "VeryLazy",
+    lazy = false,
     config = function()
       _G.src("302_commentary.vim")
     end,

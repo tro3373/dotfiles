@@ -21,16 +21,19 @@ return {
     end,
   },
 
-  -- Claude Code (vim 側ではコメントアウトされていたが、ユーザ要望で lazy spec へ取り込み有効化)
-  {
-    "greggh/claude-code.nvim",
-    dependencies = { "nvim-lua/plenary.nvim" },
-    cmd = { "ClaudeCode", "ClaudeCodeContinue", "ClaudeCodeResume", "ClaudeCodeVerbose" },
-    keys = { { "<leader>cc", mode = { "n", "t" } } },
-    config = function()
-      _G.src("952_claude_code.vim")
-    end,
-  },
+  -- Claude Code は無効化 (コメントアウト)。
+  -- 理由: <leader>cc が commentary の <leader>c の prefix になり timeoutlen 待ちで
+  -- コメントトグルが遅くなる。vim 側も claude-code は無効のため挙動を揃える。
+  -- 再有効化する場合は <leader>c と競合しないキーへ移すこと。
+  -- {
+  --   "greggh/claude-code.nvim",
+  --   dependencies = { "nvim-lua/plenary.nvim" },
+  --   cmd = { "ClaudeCode", "ClaudeCodeContinue", "ClaudeCodeResume", "ClaudeCodeVerbose" },
+  --   keys = { { "<leader>cc", mode = { "n", "t" } } },
+  --   config = function()
+  --     _G.src("952_claude_code.vim")
+  --   end,
+  -- },
 
   -- denops + 翻訳 (deno 必須)
   {
