@@ -188,6 +188,7 @@ map s. :cd %:h<Enter><Enter>
 " 設定ファイルディレクトリを開く
 function! Settings()
     :tabe $HOME/.vim/conf.d/
+    :tabe $HOME/.config/nvim/
 endfunction
 command! Settings call Settings()
 command! Editvimrc call Settings()
