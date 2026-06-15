@@ -16,7 +16,10 @@ return {
   -- シンプルファイラ (作者 fork)
   {
     "tro3373/vaffle.vim",
-    cmd = "Vaffle",
+    -- BufEnter で netrw を乗っ取りディレクトリ buffer を vaffle 化するため、
+    -- cmd 遅延ロードだと autocmd 未登録で「ディレクトリを開いても出ない」状態になる。
+    -- eager ロードして起動時に plugin/vaffle.vim の BufEnter autocmd を登録する。
+    lazy = false,
     config = function()
       _G.src("210_vaffle.vim")
     end,
