@@ -45,14 +45,18 @@ return {
     "skanehira/denops-translate.vim",
     cond = vim.fn.executable("deno") == 1,
     dependencies = { "vim-denops/denops.vim" },
-    keys = {
-      { "<Leader>tr", mode = { "n", "x" } },
-      { "<Leader>Tr", mode = { "n", "x" } },
-      { "<Leader>n", mode = { "n", "x" } },
-      { "<Leader>N", mode = { "n", "x" } },
-    },
+    -- 初回 <Leader>tr を速くするため keys ではなく VeryLazy で起動時にロードし、
+    -- アイドル時に translate プラグインを登録しておく(キー押下時はネットワークのみ)。
+    -- denops サーバは元々 VeryLazy で毎セッション起動するため追加コストは登録分のみ。
+    event = "VeryLazy",
     config = function()
       _G.src("310_denops-translate.vim")
+      -- denops 本体が先に起動し plugin discovery を終えていると、後からロードされる
+      -- 本プラグインは discovery 対象外で登録されず :Translate(denops#request) が
+      -- 永久に待つ。server 稼働中なら rtp を再 discover して translate を登録する。
+      if vim.fn.exists("*denops#server#status") == 1 and vim.fn["denops#server#status"]() == "running" then
+        vim.fn["denops#plugin#discover"]()
+      end
     end,
   },
 }
