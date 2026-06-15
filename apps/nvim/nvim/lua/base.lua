@@ -226,36 +226,27 @@ vim.opt.autoindent = true -- オートインデント
 vim.opt.smartindent = true -- 賢いインデント
 -- tw  = textwidth
 -- ft  = filetype
-vim.opt.tabstop = 4 -- ts  = tabstop     ファイル中の<TAB>を見た目x文字に展開する(既に存在する<TAB>の見た目の設定)
-vim.opt.softtabstop = 4 -- sts = softtabstop TABキーを押した際に挿入される空白の量を設定
-vim.opt.shiftwidth = 4 -- sw  = shiftwidth  インデントやシフトオペレータで挿入/削除されるインデントの幅を設定
+-- 既定は 2 スペース (100_base.vim と同値)。リスト外の FT (markdown/json 等) もこれに従う
+vim.opt.tabstop = 2 -- ts  = tabstop     ファイル中の<TAB>を見た目x文字に展開する(既に存在する<TAB>の見た目の設定)
+vim.opt.softtabstop = 2 -- sts = softtabstop TABキーを押した際に挿入される空白の量を設定
+vim.opt.shiftwidth = 2 -- sw  = shiftwidth  インデントやシフトオペレータで挿入/削除されるインデントの幅を設定
 vim.opt.expandtab = true -- expandtab         <TAB>を空白スペース文字に置き換える
--- インデントサイズを2に設定する
+-- 特定 FT のみインデントを 4 にする (100_base.vim の FileType 設定と同値)
 au({
   events = "FileType",
-  pat = {
-    "sh",
-    "zsh",
-    "bash",
-    "vim",
-    "html",
-    "xhtml",
-    "css",
-    "scss",
-    "javascript",
-    "typescript",
-    "typescriptreact",
-    "yaml",
-    "toml",
-    "ruby",
-    "coffee",
-    "sql",
-    "vue",
-  },
+  pat = { "python", "java", "go", "make", "Dockerfile", "lua" },
   cb = function()
-    vim.opt_local.tabstop = 2
-    vim.opt_local.softtabstop = 2
-    vim.opt_local.shiftwidth = 2
+    vim.opt_local.tabstop = 4
+    vim.opt_local.softtabstop = 4
+    vim.opt_local.shiftwidth = 4
+  end,
+})
+-- go はタブを空白に変換しない (100_base.vim と同値)
+au({
+  events = "FileType",
+  pat = { "go" },
+  cb = function()
+    vim.opt_local.expandtab = false
   end,
 })
 -- 改行時にコメントを続けるか等の自動整形オプション
