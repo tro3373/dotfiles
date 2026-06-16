@@ -80,6 +80,13 @@ fix_dst_fnm_no_ext() {
 # out_xclip() {
 #   xclip -selection clipboard -t "image/$ext" -o >"$dst"
 # }
+# gclip -paste reads text before image and ignores the extension, so a
+# non-image clipboard yields a file that is not a PNG. Validate by signature.
+is_png() {
+  local f=$1
+  [[ -s $f ]] || return 1
+  head -c 8 "$f" | cmp -s - <(printf '\x89PNG\r\n\x1a\n')
+}
 tmp_png_to_dst() {
   if [[ $opt_webp -ne 1 ]]; then
     mv "$tmp_png_path" "$dst"
@@ -106,6 +113,11 @@ output() {
   dst=$dst_root_dir/$dst_fnm_no_ext.$ext
 
   gclip -paste -f "$tmp_png_path"
+  if ! is_png "$tmp_png_path"; then
+    rm -f "$tmp_png_path"
+    echo "$command_name: clipboard does not contain a PNG image" 1>&2
+    exit 1
+  fi
   tmp_png_to_dst
   echo "$dst"
 }
