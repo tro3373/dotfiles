@@ -1449,7 +1449,8 @@ function! OpenUrlOrFilePathOnCursor() abort
   " (Markdownリンクの url も同パターンで `)` 手前まで拾える)
   let l:url = matchstr(l:line, 'https\?://[^ \t)\]>]\+')
   if !empty(l:url)
-    call openbrowser#open(l:url)
+    " call openbrowser#open(l:url)
+    call system('open ' . l:url)
     return
   endif
   " URL が無いときだけ token を走査してファイルパス判定
