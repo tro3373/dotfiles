@@ -16,11 +16,14 @@ nmap <Leader>n :Translate <C-R><C-W><CR>
 " NOTE: ':'<,'>Translate' は ex の行範囲となり、選択文字ではなく行全体が翻訳される。
 "       選択文字列を引数として渡す関数経由にすることで選択部分のみを翻訳する。
 function! s:TranslateVisual(bang) abort
-  let l:save = getreginfo('"')
-  normal! gvy
-  let l:text = substitute(@", '\n', ' ', 'g')
-  call setreg('"', l:save)
-  execute 'Translate' . a:bang . ' "' . escape(l:text, '"') . '"'
+  " getregion で選択範囲を取得 (yank しないので "N lines yanked" ログもクリップボード
+  " 上書きも発生しない)。execute を使わず translate#translate 直接呼びなので改行も保持できる。
+  let l:lines = getregion(getpos("'<"), getpos("'>"), {'type': visualmode()})
+  " buildOption は " でトークン境界を切り替えるため、選択内に " が複数あると語が
+  " source/target 言語コード扱いになり翻訳が失敗する。" を ' に置換して回避する。
+  let l:text = substitute(join(l:lines, "\n"), '"', "'", 'g')
+  " buildOption の語句グループ化用に "..." で包む (内側の " は除去済み)。
+  call translate#translate(a:bang, line('.'), line('.'), '"' . l:text . '"')
 endfunction
 xnoremap <silent> <Leader>tr :<C-u>call <SID>TranslateVisual('')<CR>
 xnoremap <silent> <Leader>n :<C-u>call <SID>TranslateVisual('')<CR>
