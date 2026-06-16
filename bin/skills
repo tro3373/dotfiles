@@ -16,6 +16,7 @@
 # see https://github.com/vercel-labs/skills/blob/main/README.md
 main() {
   set -eo pipefail
+  # cd ~/.mo || return 1
   # MEMO:
   # - g: global. ~/.agents
   # - ~/.agents linked to ~/.mo/.agents
@@ -24,6 +25,6 @@ main() {
   # npx -y skills "$@" -g -y
   # npx -y skills "$@"
   # bunx skills@latest "$@"
-  bunx skills@latest "$@" -y --agent claude-code
+  bunx skills@latest "$@" -g -y --agent pi
 }
 main "$@"
