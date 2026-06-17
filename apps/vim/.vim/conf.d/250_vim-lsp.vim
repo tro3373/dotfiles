@@ -175,7 +175,7 @@ let g:lsp_settings = {
   \     }
   \   },
   \   'kakehashi': {
-  \     'disabled': v:false,
+  \     'disabled': v:true,
   \     'allowlist': ['markdown'],
   \   },
 \}
