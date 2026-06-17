@@ -40,7 +40,7 @@ cat_git_configs_dynamic() {
   fi
   cat <<EOF
 # git config --global core.editor "$_editor --remote-tab-wait-silent -f -c 'set fenc=utf-8'"
-git config --global core.editor "vim -c 'set fenc=utf-8'"
+git config --global core.editor "nvim -c 'set fenc=utf-8'"
 EOF
 }
 cat_git_configs_fixed() {
