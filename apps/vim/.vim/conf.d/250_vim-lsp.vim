@@ -106,10 +106,13 @@ set completeopt=menuone,noinsert,noselect
 " E501 line too long
 let g:lsp_settings = {
   \  'yaml-language-server': {
+  \     'schemas': [
+  \       {'url': 'https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/tasks', 'fileMatch': []}
+  \     ],
   \     'workspace_config': {
   \       'yaml': {
   \         'schemaStore': {
-  \           'enable': v:true
+  \           'enable': v:false
   \         },
   \         'schemas': {
   \           'https://json.schemastore.org/github-workflow.json': '.github/workflows/*.{yml,yaml}'
