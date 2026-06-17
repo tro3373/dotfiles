@@ -1,4 +1,4 @@
-if !g:plug.is_installed("smear-cursor.nvim")
+if ! has('nvim') || !g:plug.is_installed("smear-cursor.nvim")
   finish
 endif
 
