@@ -123,8 +123,22 @@ return {
           vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
           vim.keymap.set("n", "<F2>", vim.lsp.buf.rename, opts)
           vim.keymap.set("n", "<F1>", vim.lsp.buf.code_action, opts)
-          vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
-          vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
+          -- vim.diagnostic.jump へ移行 (goto_prev/next は 0.13、opts.float は 0.14 で廃止)。
+          -- 旧 goto_* の float=true 既定を on_jump で踏襲し、カーソル位置に診断 float を出す。
+          local function diag_jump(count)
+            vim.diagnostic.jump({
+              count = count,
+              on_jump = function(_, bufnr)
+                vim.diagnostic.open_float({ bufnr = bufnr, scope = "cursor", focus = false })
+              end,
+            })
+          end
+          vim.keymap.set("n", "<C-p>", function()
+            diag_jump(-1)
+          end, opts)
+          vim.keymap.set("n", "<C-n>", function()
+            diag_jump(1)
+          end, opts)
         end,
       })
 
