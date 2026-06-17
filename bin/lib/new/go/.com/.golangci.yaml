@@ -13,10 +13,16 @@ linters:
   # 無効なlinterを設定
   disable: []
   # 個別のlinter設定
-  # settings:
-  #   gosec:
-  #     excludes:
-  #       - G115
+  settings:
+    # staticcheck のチェックを全有効化(SA/ST/S/QF)。
+    # エディタの素の staticcheck と検知範囲を揃えるため。
+    # ST1000(パッケージコメント), QF1008(埋め込みフィールドの冗長selector)は
+    # エディタ側でも無効化しているため除外する。
+    staticcheck:
+      checks:
+        - all
+        - -ST1000
+        - -QF1008
   # 特定の除外設定
   exclusions:
     # 自動生成ファイルを除外
@@ -24,13 +30,13 @@ linters:
     # 事前定義された除外設定
     presets: []
     # パス・ルール・テキスト単位での除外設定
-    rules: []
+    rules:
+      # テストファイルのダミー認証情報(sk_test_xxx 等)は gosec の誤検知のため除外
+      - path: _test\.go
+        linters:
+          - gosec
     # パス・ファイルごとの除外設定
     paths: []
-  settings:
-    gosec:
-      excludes:
-        - G304 # CWE-22: Potential file inclusion via variable
 formatters:
   # フォーマッタは、Go標準を利用するので無効化
   enable: []
@@ -39,9 +45,8 @@ issues:
   max-issues-per-linter: 50
   max-same-issues: 3
   uniq-by-line: true
-  # HEADとの差分や新しいファイル等のみを検出対象とする
-  # NOTE: この場合、fetch-depth: 1だと差分が取れないので注意
-  # また導入時はfalseにして全体をチェックすることを推奨
+  # true: HEADとの差分や新しいファイル等のみを検出対象とする
+  # false: すべてのコードを検出対象とする
   new: true
   # 修正可能なlinterの問題を自動修正する
   fix: true
@@ -50,7 +55,7 @@ run:
   timeout: 10m
   relative-path-mode: gomod
   issues-exit-code: 1
-  tests: false
+  tests: true
   allow-parallel-runners: true
   allow-serial-runners: true
   concurrency: 0
