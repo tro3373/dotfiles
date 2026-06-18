@@ -41,6 +41,13 @@ main() {
       tmux kill-session -t "$session"
       ;;
     __list) list_sessions ;;
+    __new)
+      # 新しいセッションを detached で作成し (名前は tmux 自動採番)、
+      # 作成したセッションへ switch-client する。呼び出し元 fzf 側で accept して抜ける。
+      local name
+      name=$(tmux new-session -dP -F '#{session_name}')
+      tmux switch-client -t "$name"
+      ;;
     __preview)
       shift
       # 選択行 ("<session_name>") が属するセッションの全 window×pane を縦に積んで表示する。
@@ -90,6 +97,7 @@ main() {
           --bind 'j:down,k:up' \
           --bind 'J:preview-down,K:preview-up' \
           --bind 'enter:execute(tmux switch-client -t {1})+accept' \
+          --bind "n:execute($self __new)+accept" \
           --bind "x:execute-silent($self __kill {1})+reload($self __list)"
       ;;
   esac
