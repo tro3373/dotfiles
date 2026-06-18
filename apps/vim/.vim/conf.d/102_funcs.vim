@@ -1439,33 +1439,87 @@ function! s:resolve_path(path) abort
   return ''
 endfunction
 
-" 現在行を空白区切りで走査し、最初に見つかった URL/ファイルパスで処理する
-" (カーソル位置には依存しない)
+" 現在行 (ビジュアル選択時は選択範囲の各行) を空白区切りで走査し、
+" 見つかった URL/ファイルパスを「全件」処理する (カーソル位置には依存しない)
 "   - URL (bare / Markdownリンク [text](url) の url) → ブラウザで開く
 "   - ファイルパス → 新しいタブで開く (gf と同じ動き)
-function! OpenUrlOrFilePathOnCursor() abort
-  let l:line = getline('.')
-  " URL を優先。行内に複数あっても最初の URL を開く
-  " (Markdownリンクの url も同パターンで `)` 手前まで拾える)
-  let l:url = matchstr(l:line, 'https\?://[^ \t)\]>]\+')
-  if !empty(l:url)
-    " call openbrowser#open(l:url)
-    call system('open ' . l:url)
-    return
-  endif
-  " URL が無いときだけ token を走査してファイルパス判定
-  for l:token in split(l:line, '\s\+')
+" URL を含む行はその行のパス判定をしない (URL 優先)
+function! s:collect_urls(line) abort
+  let l:urls = []
+  let l:start = 0
+  while 1
+    let [l:m, l:s, l:e] = matchstrpos(a:line, 'https\?://[^ \t)\]>]\+', l:start)
+    if l:s == -1
+      break
+    endif
+    call add(l:urls, l:m)
+    let l:start = l:e
+  endwhile
+  return l:urls
+endfunction
+
+function! s:collect_paths(line) abort
+  let l:paths = []
+  " 1. Markdownリンク [text](path) の () 内を行全体から抽出 (空白を含むパス対応)
+  "    () で境界が一意に決まるので token split より先に拾う
+  let l:start = 0
+  while 1
+    let [l:m, l:s, l:e] = matchstrpos(a:line, '\v\[[^\]]*\]\(\zs[^)]+\ze\)', l:start)
+    if l:s == -1
+      break
+    endif
+    let [l:path, l:lnum] = s:resolve_token_as_path(l:m)
+    if !empty(l:path)
+      call add(l:paths, [l:path, l:lnum])
+    endif
+    let l:start = l:e
+  endwhile
+  " 2. Markdownリンクを除去した残りを空白区切り token として走査 (bare パス)
+  let l:rest = substitute(a:line, '\v\[[^\]]*\]\([^)]+\)', ' ', 'g')
+  for l:token in split(l:rest, '\s\+')
     let [l:path, l:lnum] = s:resolve_token_as_path(l:token)
     if !empty(l:path)
-      execute 'tabedit ' . fnameescape(l:path)
-      if l:lnum > 0
-        execute l:lnum
-      endif
-      return
+      call add(l:paths, [l:path, l:lnum])
     endif
   endfor
-  echo "No URL or file path found in line."
+  return l:paths
+endfunction
+
+function! OpenUrlOrFilePathOnCursor() range abort
+  " tabedit でカレントバッファが変わるので、対象行は先に集める
+  let l:lines = getline(a:firstline, a:lastline)
+  let l:urls = []
+  let l:paths = []
+  for l:line in l:lines
+    " URL を優先。行内に複数あっても全 URL を拾う
+    " (Markdownリンクの url も同パターンで `)` 手前まで拾える)
+    let l:line_urls = s:collect_urls(l:line)
+    if !empty(l:line_urls)
+      call extend(l:urls, l:line_urls)
+      continue
+    endif
+    " URL が無い行だけ token を走査してファイルパス判定
+    call extend(l:paths, s:collect_paths(l:line))
+  endfor
+  if empty(l:urls) && empty(l:paths)
+    echo "No URL or file path found."
+    return
+  endif
+  " URL はブラウザで全部開く
+  for l:url in l:urls
+    " call openbrowser#open(l:url)
+    call system('open ' . l:url)
+  endfor
+  " ファイルパスは全部タブで開く
+  for [l:path, l:lnum] in l:paths
+    execute 'tabedit ' . fnameescape(l:path)
+    if l:lnum > 0
+      execute l:lnum
+    endif
+  endfor
 endfunction
 nnoremap <silent> <Leader>j :call OpenUrlOrFilePathOnCursor()<CR>
 nnoremap <silent> gf :call OpenUrlOrFilePathOnCursor()<CR>
+xnoremap <silent> <Leader>j :call OpenUrlOrFilePathOnCursor()<CR>
+xnoremap <silent> gf :call OpenUrlOrFilePathOnCursor()<CR>
 
