@@ -74,21 +74,28 @@ endfunction
 
 " 【解説】開発ライブ実況 #1 (Vim / Go) 編 by メルペイ Architect チーム Backend エンジニア #mercari_codecast | メルカリエンジニアリング
 " https://engineering.mercari.com/blog/entry/mercari_codecast_1/
-function! s:find_rip_grep(q, d) abort
+" rg + fzf による grep 検索の共通処理。除外スコープ(ignore_file)だけを引数で
+" 切り替える。q=検索語, d=対象ディレクトリ(空なら git root)。
+" 選択(複数可)した各マッチは s:open_grep_in_tabs で個別タブに展開する。
+function! s:rip_grep(q, d, ignore_file) abort
   let l:target_dir = a:d
   if a:d == ''
     let l:target_dir = GetGitRoot()
   endif
   " fzf#vim#with_preview で ctrl+h/l で左右するようにできないか？
-  " 選択(複数可)した各マッチを個別タブで開くため sink* を s:open_grep_in_tabs で上書き。
   let l:spec = fzf#vim#with_preview({'options': '--query="' . a:q . '" --delimiter : --nth 4.. --reverse'}, 'right:50%', '?')
   let l:spec['sink*'] = function('s:open_grep_in_tabs')
   call fzf#vim#grep(
-      \   'rg --ignore-file ~/.vim/.rgignore_for_go --glob "!.git/" --column --line-number --no-heading --hidden --smart-case "'.a:q.'" '.l:target_dir,
+      \   'rg --ignore-file ' . a:ignore_file . ' --glob "!.git/" --column --line-number --no-heading --hidden --smart-case "'.a:q.'" '.l:target_dir,
       \   1,
       \   l:spec,
       \   0,
       \)
+endfunction
+
+" <Leader>g/G: テスト・モック・md を除外した絞り込み grep。
+function! s:find_rip_grep(q, d) abort
+  call s:rip_grep(a:q, a:d, '~/.vim/.rgignore_for_go')
 endfunction
 nnoremap <silent> <Leader>g :<C-u>silent call <SID>find_rip_grep(expand('<cword>'), '')<CR>
 " nnoremap <silent> <Leader>G :<C-u>silent call <SID>find_rip_grep(expand('<cword>'), expand('%:p:h'))<CR>
@@ -97,20 +104,9 @@ vnoremap <silent> <Leader>g "zy:<C-u>silent call <SID>find_rip_grep(expand(@z), 
 " vnoremap <silent> <Leader>G "zy:<C-u>silent call <SID>find_rip_grep(expand(@z), expand('%:p:h'))<CR>
 vnoremap <silent> <Leader>G "zy:<C-u>silent call <SID>find_rip_grep(expand(@z), getcwd())<CR>
 
+" <Leader>f/F: .nouse のみ除外した広い grep。
 function! s:find_rip_grep_fuzzy(q, d) abort
-  let l:target_dir = a:d
-  if a:d == ''
-    let l:target_dir = GetGitRoot()
-  endif
-  " 選択(複数可)した各マッチを個別タブで開くため sink* を s:open_grep_in_tabs で上書き。
-  let l:spec = fzf#vim#with_preview({'options': '--query="' . a:q . '" --delimiter : --nth 4.. --reverse'}, 'right:50%', '?')
-  let l:spec['sink*'] = function('s:open_grep_in_tabs')
-  call fzf#vim#grep(
-      \   'rg --ignore-file ~/.vim/.rgignore --glob "!.git/" --column --line-number --no-heading --hidden --smart-case "'.a:q.'" '.l:target_dir,
-      \   1,
-      \   l:spec,
-      \   0,
-      \)
+  call s:rip_grep(a:q, a:d, '~/.vim/.rgignore')
 endfunction
 nnoremap <silent> <Leader>f :<C-u>silent call <SID>find_rip_grep_fuzzy(expand('<cword>'), '')<CR>
 " nnoremap <silent> <Leader>F :<C-u>silent call <SID>find_rip_grep_fuzzy(expand('<cword>'), expand('%:p:h'))<CR>
