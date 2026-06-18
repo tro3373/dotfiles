@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+# Unit tests for bin/tmuxs.
+# A fake `tmux` on PATH records mutating calls and answers queries from env,
+# so no real tmux server is touched.
+
+set -uo pipefail
+
+here=$(cd "$(dirname "$0")" && pwd)
+tmuxs="$here/tmuxs"
+
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+
+fakebin="$tmpdir/bin"
+mkdir -p "$fakebin"
+cat >"$fakebin/tmux" <<'FAKE'
+#!/usr/bin/env bash
+log=${FAKE_TMUX_LOG:?}
+case "$1" in
+  display-message) printf '%s\n' "${FAKE_CURRENT:-}" ;;
+  list-sessions)   printf '%s\n' "${FAKE_SESSIONS:-}" | grep -v '^$' || true ;;
+  list-windows)    printf '%s\n' "$*" >>"$log"
+                   printf '%s\n' "${FAKE_WINDOWS:-}" | grep -v '^$' || true ;;
+  switch-client | kill-session) printf '%s\n' "$*" >>"$log" ;;
+  *) printf 'UNHANDLED %s\n' "$*" >>"$log" ;;
+esac
+FAKE
+chmod +x "$fakebin/tmux"
+
+export FAKE_TMUX_LOG="$tmpdir/calls.log"
+
+pass=0
+fail=0
+check() { # desc expected actual
+  if [[ $2 == "$3" ]]; then
+    pass=$((pass + 1))
+    printf 'ok   - %s\n' "$1"
+  else
+    fail=$((fail + 1))
+    printf 'FAIL - %s\n  expected: %q\n  actual:   %q\n' "$1" "$2" "$3"
+  fi
+}
+
+run_kill() { # target
+  : >"$FAKE_TMUX_LOG"
+  PATH="$fakebin:$PATH" "$tmuxs" __kill "$1"
+}
+
+# 1. kill 対象が現在セッション以外: そのまま kill (switch しない)
+export FAKE_CURRENT=A FAKE_SESSIONS=$'A\nB'
+run_kill 'B:0'
+check 'kill 対象が現在セッション以外: kill-session のみ' \
+  'kill-session -t B' "$(cat "$FAKE_TMUX_LOG")"
+
+# 2. kill 対象が現在セッション かつ 他セッション有: switch 後に kill (順序込み)
+export FAKE_CURRENT=A FAKE_SESSIONS=$'A\nB'
+run_kill 'A:1'
+check 'kill 対象が現在セッション: switch-client 後に kill-session' \
+  $'switch-client -t B\nkill-session -t A' "$(cat "$FAKE_TMUX_LOG")"
+
+# 3. kill 対象が現在セッション かつ 唯一: switch せず kill
+export FAKE_CURRENT=A FAKE_SESSIONS=$'A'
+run_kill 'A:0'
+check 'kill 対象が唯一セッション: switch せず kill-session' \
+  'kill-session -t A' "$(cat "$FAKE_TMUX_LOG")"
+
+# 4. list は tmux list-windows -a で全セッションの window を列挙
+export FAKE_WINDOWS=$'A:0 bash *\nA:1 vim'
+: >"$FAKE_TMUX_LOG"
+out=$(PATH="$fakebin:$PATH" "$tmuxs" __list)
+check 'list は list-windows -a を使う' 'yes' \
+  "$([[ "$(cat "$FAKE_TMUX_LOG")" == list-windows\ -a* ]] && echo yes || echo no)"
+check 'list 出力は session:window 行' "$FAKE_WINDOWS" "$out"
+
+printf '\n%d passed, %d failed\n' "$pass" "$fail"
+[[ $fail -eq 0 ]]

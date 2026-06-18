@@ -126,6 +126,6 @@ main() {
   if [[ $# -eq 0 && ! -p /dev/stdin ]]; then
     elog "==> No input data."
   fi
-  fire "$@" | _llm
+  fire "${args[@]}" | _llm
 }
 main "$@"

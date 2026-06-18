@@ -1,12 +1,50 @@
 #!/usr/bin/env bash
 
-main() {
-  tmux list-sessions |
-    fzf --reverse \
-      --preview "tmux capture-pane -ep -t {1} 2>/dev/null || echo 'Preview not available'" \
-      --preview-window right:50% \
-      --bind 'enter:execute(tmux switch-client -t {1})+accept' \
-      --bind 'K:execute(tmux kill-session -t {1})+reload(tmux list-sessions)' \
-      --bind 'x:execute(tmux kill-session -t {1})+reload(tmux list-sessions)'
+# 全セッションの window を 1 行ずつ列挙する。
+# 1 列目 = "<session>:<window_index>" (preview / kill のターゲット)。
+list_windows() {
+  tmux list-windows -a \
+    -F '#{session_name}:#{window_index} #{window_name}#{?window_active, *,}'
 }
-main "$@"
+
+main() {
+  set -euo pipefail
+
+  case "${1:-}" in
+    __kill)
+      shift
+      # target ("<session>:<window_index>") が属するセッションを安全に kill する。
+      # 対象が現在 client のセッションなら、別セッションへ switch してから kill し、
+      # 端末が detach されないようにする。
+      local target=$1
+      local session=${target%:*}
+      local current
+      current=$(tmux display-message -p '#{session_name}')
+      if [[ $session == "$current" ]]; then
+        local other
+        other=$(tmux list-sessions -F '#{session_name}' |
+          grep -vFx "$session" | head -n1 || true)
+        if [[ -n $other ]]; then
+          tmux switch-client -t "$other"
+        fi
+      fi
+      tmux kill-session -t "$session"
+      ;;
+    __list) list_windows ;;
+    *)
+      local self
+      self=$(realpath "$0")
+      list_windows |
+        fzf --reverse --disabled \
+          --preview "tmux capture-pane -ep -t {1} 2>/dev/null || echo 'Preview not available'" \
+          --preview-window down:50% \
+          --bind 'j:down,k:up' \
+          --bind 'enter:execute(tmux switch-client -t {1})+accept' \
+          --bind "x:execute-silent($self __kill {1})+reload($self __list)"
+      ;;
+  esac
+}
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
+fi

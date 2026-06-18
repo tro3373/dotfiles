@@ -20,6 +20,58 @@ let $FZF_DEFAULT_OPTS="--ansi --preview-window 'right:50%' --preview 'bat --colo
 " ウィンドウサイズ変更したい場合
 let g:fzf_layout = { 'window': { 'width': 1.0, 'height': 1.0, 'yoffset': 0.5, 'xoffset': 0.5, 'border': 'sharp' } }
 
+" ----------------------------------------------------------------------------
+" fzf で選択した項目を新しいタブで開くための共通ヘルパー
+" ----------------------------------------------------------------------------
+
+" Enter で選択を新タブ('tab split' = Ctrl-t 相当)で開くよう g:fzf_action を
+" 一時上書きして Fn を実行する。fzf#vim#files / fzf#wrap 系は呼び出し時に
+" g:fzf_action を同期キャプチャするため、Fn 実行直後に復元しても選択時の挙動は
+" 変わらない。Ctrl-t/x/v の既存設定は extend で温存する。
+" sink が s:common_sink の files/history では複数選択時に各項目が個別タブで開く。
+function! s:open_in_tab(Fn) abort
+  let l:had = exists('g:fzf_action')
+  let l:orig = get(g:, 'fzf_action', {})
+  let g:fzf_action = extend(copy(l:orig), {'enter': 'tab split'})
+  try
+    call a:Fn()
+  finally
+    call s:restore_fzf_action(l:had, l:orig)
+  endtry
+endfunction
+
+" g:fzf_action を元の状態へ戻す。元々未設定だった場合に空 dict {} を残すと、
+" 後続の fzf#wrap が '--expect='(キー無し) を生成して fzf がエラー終了(code 2)
+" するため、unlet で未設定状態へ正しく戻す。
+function! s:restore_fzf_action(had, orig) abort
+  if a:had
+    let g:fzf_action = a:orig
+    return
+  endif
+  unlet! g:fzf_action
+endfunction
+
+" grep(rg)結果 'file:line:col:text' の選択行を、選択数ぶん個別ウィンドウで開いて
+" 該当行へジャンプする sink。fzf#vim#grep 標準の s:ag_handler は先頭1件のみ
+" 開き残りを quickfix へ送るため、spec の sink* で置き換えて各マッチを展開する。
+" a:lines[0] は fzf の --expect キー。Enter/Ctrl-t は個別タブ、Ctrl-x/v は
+" split/vsplit と既存の files/history 側(g:fzf_action)に挙動を揃える。
+function! s:open_grep_in_tabs(lines) abort
+  if len(a:lines) < 2
+    return
+  endif
+  let l:cmd = get({'ctrl-x': 'split', 'ctrl-v': 'vsplit'}, a:lines[0], 'tabedit')
+  for l:line in a:lines[1:]
+    let l:m = matchlist(l:line, '\(.\{-}\):\(\d\+\):\(\d*\):')
+    if empty(l:m)
+      continue
+    endif
+    execute l:cmd fnameescape(l:m[1])
+    call cursor(str2nr(l:m[2]), str2nr(l:m[3]))
+    normal! zvzz
+  endfor
+endfunction
+
 " 【解説】開発ライブ実況 #1 (Vim / Go) 編 by メルペイ Architect チーム Backend エンジニア #mercari_codecast | メルカリエンジニアリング
 " https://engineering.mercari.com/blog/entry/mercari_codecast_1/
 function! s:find_rip_grep(q, d) abort
@@ -28,10 +80,13 @@ function! s:find_rip_grep(q, d) abort
     let l:target_dir = GetGitRoot()
   endif
   " fzf#vim#with_preview で ctrl+h/l で左右するようにできないか？
+  " 選択(複数可)した各マッチを個別タブで開くため sink* を s:open_grep_in_tabs で上書き。
+  let l:spec = fzf#vim#with_preview({'options': '--query="' . a:q . '" --delimiter : --nth 4.. --reverse'}, 'right:50%', '?')
+  let l:spec['sink*'] = function('s:open_grep_in_tabs')
   call fzf#vim#grep(
       \   'rg --ignore-file ~/.vim/.rgignore_for_go --glob "!.git/" --column --line-number --no-heading --hidden --smart-case "'.a:q.'" '.l:target_dir,
       \   1,
-      \   fzf#vim#with_preview({'options': '--query="' . a:q . '" --delimiter : --nth 4..'}, 'down:50%', '?'),
+      \   l:spec,
       \   0,
       \)
 endfunction
@@ -47,10 +102,13 @@ function! s:find_rip_grep_fuzzy(q, d) abort
   if a:d == ''
     let l:target_dir = GetGitRoot()
   endif
+  " 選択(複数可)した各マッチを個別タブで開くため sink* を s:open_grep_in_tabs で上書き。
+  let l:spec = fzf#vim#with_preview({'options': '--query="' . a:q . '" --delimiter : --nth 4.. --reverse'}, 'right:50%', '?')
+  let l:spec['sink*'] = function('s:open_grep_in_tabs')
   call fzf#vim#grep(
       \   'rg --ignore-file ~/.vim/.rgignore --glob "!.git/" --column --line-number --no-heading --hidden --smart-case "'.a:q.'" '.l:target_dir,
       \   1,
-      \   fzf#vim#with_preview({'options': '--query="' . a:q . '" --delimiter : --nth 4..'}, 'down:50%', '?'),
+      \   l:spec,
       \   0,
       \)
 endfunction
@@ -66,36 +124,18 @@ function! s:find_rip_grep_files(q, d) abort
   if a:d == ''
     let l:target_dir = GetGitRoot()
   endif
-  " 選択した(Enter)ファイルをデフォルトで新しいタブで開く。
-  " fzf#vim#files は内部で g:fzf_action を参照してキー別アクションを決めるため、
-  " ここで一時的に 'enter' を追加して上書きする。
-  " 'tab split' は Ctrl-t と同じ挙動(新タブで開く)。Ctrl-t/x/v の既存設定は extend で温存。
-  let l:had_action = exists('g:fzf_action')
-  let l:original_action = get(g:, 'fzf_action', {})
-  let g:fzf_action = extend(copy(l:original_action), {'enter': 'tab split'})
-  " アクションは fzf#vim#files 呼び出し時に同期的にキャプチャされるため、
-  " 呼び出し直後に g:fzf_action を元へ戻しても選択時の挙動は変わらない。
-  " finally で復元することで他の fzf コマンドへ影響を残さない。
-  " 元々未設定だった場合に空 dict {} を残すと、後続の fzf#wrap が '--expect='(キー無し)
-  " を生成して fzf がエラー終了(code 2)するため、未設定状態へ正しく戻す。
+  " 選択(Enter)したファイルを新しいタブで開く。-m で複数選択した場合は各ファイルが
+  " 個別タブで開く(s:open_in_tab が g:fzf_action を一時上書きする)。
   " ambiwidth=double(日本語環境)では Unicode の pointer/marker の幅判定がずれ、
   " カーソル行が1桁左へずれて末尾文字が二重に見える。fzf#vim#with_preview と同じく
   " ASCII 記号へ倒して防ぐ(with_preview を通さない files 系には自動付与されないため)。
-  let l:options = ['--query=' . a:q, '--info=inline']
+  let l:options = ['--query=' . a:q, '--info=inline', '-m']
   if &ambiwidth ==# 'double'
     call add(l:options, '--no-unicode')
   endif
-  try
-    " source を rg の更新日時降順に差し替え、最近更新したファイルを上位に出す。
-    " '--sortr modified' = 新しい順。dir 指定で target_dir 配下を相対パス列挙する。
-    :call fzf#vim#files(l:target_dir, {'source': 'rg --files --sortr modified', 'options': l:options})
-  finally
-    if l:had_action
-      let g:fzf_action = l:original_action
-    else
-      unlet! g:fzf_action
-    endif
-  endtry
+  " source を rg の更新日時降順に差し替え、最近更新したファイルを上位に出す。
+  " '--sortr modified' = 新しい順。dir 指定で target_dir 配下を相対パス列挙する。
+  call s:open_in_tab({ -> fzf#vim#files(l:target_dir, {'source': 'rg --files --sortr modified', 'options': l:options}) })
 endfunction
 " nnoremap <silent> <Leader>; :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), '')<CR>
 " nnoremap <silent> <Leader>: :<C-u>silent call <SID>find_rip_grep_files(expand('<cword>'), expand('%:p:h'))<CR>
@@ -112,11 +152,13 @@ function! s:history_cwd_first() abort
   let l:files = fzf#vim#_recent_files()
   let l:under = filter(copy(l:files), 'v:val !~# "^[~/]"')
   let l:other = filter(copy(l:files), 'v:val =~# "^[~/]"')
-  call fzf#run(fzf#wrap('history-cwd-first',
+  " 選択(Enter)したファイルを新しいタブで開く。-m で複数選択した場合は各ファイルが
+  " 個別タブで開く(s:open_in_tab が g:fzf_action を一時上書きする)。
+  call s:open_in_tab({ -> fzf#run(fzf#wrap('history-cwd-first',
         \ fzf#vim#with_preview({
         \   'source':  l:under + l:other,
         \   'options': ['-m', '--prompt', 'Hist> ', '--info=inline'],
-        \ }), 0))
+        \ }), 0)) })
 endfunction
 
 " st: 新規タブで MRU(最近使ったファイル)を開く。
