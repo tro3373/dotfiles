@@ -4,74 +4,130 @@
 # A fake `tmux` on PATH records mutating calls and answers queries from env,
 # so no real tmux server is touched.
 
-set -uo pipefail
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) && readonly here
+readonly tmuxs="${here}/tmuxs"
 
-here=$(cd "$(dirname "$0")" && pwd)
-tmuxs="$here/tmuxs"
+# tmpdir 配下に偽 tmux を生成し、$PATH 先頭に差し込む fakebin を作る。
+# FAKE_TMUX_LOG も偽 tmux が参照できるよう export する。
+setup_fake_tmux() {
+  fakebin="${tmpdir}/bin"
+  mkdir -p "${fakebin}"
+  write_fake_tmux
+  chmod +x "${fakebin}/tmux"
+  export FAKE_TMUX_LOG="${tmpdir}/calls.log"
+}
 
-tmpdir=$(mktemp -d)
-trap 'rm -rf "$tmpdir"' EXIT
-
-fakebin="$tmpdir/bin"
-mkdir -p "$fakebin"
-cat >"$fakebin/tmux" <<'FAKE'
+# 偽 tmux 本体を書き出す。mutating 呼び出しはログに記録し、query は env で答える。
+write_fake_tmux() {
+  cat >"${fakebin}/tmux" <<'FAKE'
 #!/usr/bin/env bash
 log=${FAKE_TMUX_LOG:?}
 case "$1" in
   display-message) printf '%s\n' "${FAKE_CURRENT:-}" ;;
+  capture-pane)    printf '%s\n' "${FAKE_CAPTURE:-}" ;;
   list-sessions)   printf '%s\n' "${FAKE_SESSIONS:-}" | grep -v '^$' || true ;;
-  list-windows)    printf '%s\n' "$*" >>"$log"
-                   printf '%s\n' "${FAKE_WINDOWS:-}" | grep -v '^$' || true ;;
+  list-panes)      printf '%s\n' "$*" >>"$log"
+                   printf '%s\n' "${FAKE_PANES:-}" | grep -v '^$' || true ;;
   switch-client | kill-session) printf '%s\n' "$*" >>"$log" ;;
   *) printf 'UNHANDLED %s\n' "$*" >>"$log" ;;
 esac
 FAKE
-chmod +x "$fakebin/tmux"
-
-export FAKE_TMUX_LOG="$tmpdir/calls.log"
-
-pass=0
-fail=0
-check() { # desc expected actual
-  if [[ $2 == "$3" ]]; then
-    pass=$((pass + 1))
-    printf 'ok   - %s\n' "$1"
-  else
-    fail=$((fail + 1))
-    printf 'FAIL - %s\n  expected: %q\n  actual:   %q\n' "$1" "$2" "$3"
-  fi
 }
 
-run_kill() { # target
-  : >"$FAKE_TMUX_LOG"
-  PATH="$fakebin:$PATH" "$tmuxs" __kill "$1"
+# desc / expected / actual を比較し、呼び出し元 main の pass・fail カウンタを更新する。
+check() {
+  local desc="$1" expected="$2" actual="$3"
+
+  if [[ ${expected} != "${actual}" ]]; then
+    fail=$((fail + 1))
+    printf 'FAIL - %s\n  expected: %q\n  actual:   %q\n' "${desc}" "${expected}" "${actual}"
+    return
+  fi
+
+  pass=$((pass + 1))
+  printf 'ok   - %s\n' "${desc}"
+}
+
+# 偽 tmux のログをクリアし、tmuxs __kill を fakebin 経由で実行する。
+run_kill() {
+  local target="$1"
+  : >"${FAKE_TMUX_LOG}"
+  PATH="${fakebin}:${PATH}" "${tmuxs}" __kill "${target}"
 }
 
 # 1. kill 対象が現在セッション以外: そのまま kill (switch しない)
-export FAKE_CURRENT=A FAKE_SESSIONS=$'A\nB'
-run_kill 'B:0'
-check 'kill 対象が現在セッション以外: kill-session のみ' \
-  'kill-session -t B' "$(cat "$FAKE_TMUX_LOG")"
+test_kill_other_session() {
+  export FAKE_CURRENT=A FAKE_SESSIONS=$'A\nB'
+  run_kill 'B:0'
+  check 'kill 対象が現在セッション以外: kill-session のみ' \
+    'kill-session -t B' "$(cat "${FAKE_TMUX_LOG}")"
+}
 
 # 2. kill 対象が現在セッション かつ 他セッション有: switch 後に kill (順序込み)
-export FAKE_CURRENT=A FAKE_SESSIONS=$'A\nB'
-run_kill 'A:1'
-check 'kill 対象が現在セッション: switch-client 後に kill-session' \
-  $'switch-client -t B\nkill-session -t A' "$(cat "$FAKE_TMUX_LOG")"
+test_kill_current_session_with_other() {
+  export FAKE_CURRENT=A FAKE_SESSIONS=$'A\nB'
+  run_kill 'A:1'
+  check 'kill 対象が現在セッション: switch-client 後に kill-session' \
+    $'switch-client -t B\nkill-session -t A' "$(cat "${FAKE_TMUX_LOG}")"
+}
 
 # 3. kill 対象が現在セッション かつ 唯一: switch せず kill
-export FAKE_CURRENT=A FAKE_SESSIONS=$'A'
-run_kill 'A:0'
-check 'kill 対象が唯一セッション: switch せず kill-session' \
-  'kill-session -t A' "$(cat "$FAKE_TMUX_LOG")"
+test_kill_only_session() {
+  export FAKE_CURRENT=A FAKE_SESSIONS=$'A'
+  run_kill 'A:0'
+  check 'kill 対象が唯一セッション: switch せず kill-session' \
+    'kill-session -t A' "$(cat "${FAKE_TMUX_LOG}")"
+}
 
-# 4. list は tmux list-windows -a で全セッションの window を列挙
-export FAKE_WINDOWS=$'A:0 bash *\nA:1 vim'
-: >"$FAKE_TMUX_LOG"
-out=$(PATH="$fakebin:$PATH" "$tmuxs" __list)
-check 'list は list-windows -a を使う' 'yes' \
-  "$([[ "$(cat "$FAKE_TMUX_LOG")" == list-windows\ -a* ]] && echo yes || echo no)"
-check 'list 出力は session:window 行' "$FAKE_WINDOWS" "$out"
+# 4. list は session を列挙し、番号を右寄せパディング、attach 中のみ "*" を付ける。
+#    (FAKE_SESSIONS はタブ区切り: name nwin attached(1 or 空))
+test_list_pads_and_marks_attached() {
+  export FAKE_SESSIONS=$'0\t3\t\n13\t1\t1\n4\t3\t'
 
-printf '\n%d passed, %d failed\n' "$pass" "$fail"
-[[ $fail -eq 0 ]]
+  local out
+  out=$(PATH="${fakebin}:${PATH}" "${tmuxs}" __list)
+
+  check 'list 出力: 番号右寄せ + Nwin + attach の * のみ' \
+    $' 0  3win\n13  1win *\n 4  3win' "${out}"
+}
+
+# 5. __preview は session の全 window×pane をヘッダ付きで縦積みキャプチャする
+#    (FAKE_PANES はタブ区切り: active widx pidx wname cmd pid、active pane に *)
+test_preview_stacks_panes() {
+  export FAKE_PANES=$'1\t1\t1\tzsh\tclaude\t%0\n0\t1\t2\tzsh\tzsh\t%72\n1\t2\t1\tbash\tbash\t%15' \
+    FAKE_CAPTURE='SCREENDUMP'
+
+  # ANSI(青背景含む)と横幅パディングの末尾空白を除去してテキストだけ検証する。
+  local out
+  out=$(PATH="${fakebin}:${PATH}" "${tmuxs}" __preview '4' |
+    sed -e $'s/\033\\[[0-9;]*m//g' -e 's/[[:space:]]*$//')
+  check '__preview: 全 pane をヘッダ付きで縦積み (active pane に *)' \
+    $'4: win=zsh / 1.1 claude *\nSCREENDUMP\n\n4: win=zsh / 1.2 zsh\nSCREENDUMP\n\n4: win=bash / 2.1 bash *\nSCREENDUMP' \
+    "${out}"
+}
+
+main() {
+  # 各テストを最後まで実行して集計するため、あえて -e は付けない。
+  set -uo pipefail
+
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  # shellcheck disable=SC2064 # local 変数を EXIT 時に確実に消すため定義時に展開する
+  trap "rm -rf '${tmpdir}'" EXIT
+
+  local fakebin
+  setup_fake_tmux
+
+  local pass=0 fail=0
+
+  test_kill_other_session
+  test_kill_current_session_with_other
+  test_kill_only_session
+  test_list_pads_and_marks_attached
+  test_preview_stacks_panes
+
+  printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
+  [[ ${fail} -eq 0 ]]
+}
+
+main "$@"

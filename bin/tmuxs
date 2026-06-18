@@ -1,10 +1,20 @@
 #!/usr/bin/env bash
 
-# 全セッションの window を 1 行ずつ列挙する。
-# 1 列目 = "<session>:<window_index>" (preview / kill のターゲット)。
-list_windows() {
-  tmux list-windows -a \
-    -F '#{session_name}:#{window_index} #{window_name}#{?window_active, *,}'
+# preview で各 pane を末尾空行を除いた最新何行に絞るかの既定値。
+# fzf 実行時は FZF_PREVIEW_LINES から 3 pane 一望になるよう上書きする。
+readonly preview_pane_lines=10
+
+# 全セッションを 1 行ずつ列挙する。
+# 1 列目 = "<session_name>" (preview / kill / switch のターゲット)。
+# session 番号を右寄せパディングし、現在 attach 中のセッションには行末に "*" を付ける。
+list_sessions() {
+  tmux list-sessions \
+    -F $'#{session_name}\t#{session_windows}\t#{?session_attached,1,}' |
+    while IFS=$'\t' read -r name nwin attached; do
+      local marker=''
+      [[ -n $attached ]] && marker=' *'
+      printf '%2s  %swin%s\n' "$name" "$nwin" "$marker"
+    done
 }
 
 main() {
@@ -30,15 +40,55 @@ main() {
       fi
       tmux kill-session -t "$session"
       ;;
-    __list) list_windows ;;
+    __list) list_sessions ;;
+    __preview)
+      shift
+      # 選択行 ("<session_name>") が属するセッションの全 window×pane を縦に積んで表示する。
+      # ヘッダは tmux のタブ選択色(青背景・黒太字)で横幅いっぱいに塗る (各 window の active pane に *)。
+      # 末尾空行を除いた最新 cap 行に各 pane を絞る。1 画面に最大 3 pane を収めるが、
+      # pane 数が 3 未満ならその数で割り、少ない pane のときに高さを余らせない。
+      local target=$1 session cols cap divisor
+      session=${target%:*}
+      cols=${FZF_PREVIEW_COLUMNS:-80}
+
+      local -a panes
+      mapfile -t panes < <(tmux list-panes -s -t "$session" \
+        -F $'#{pane_active}\t#{window_index}\t#{pane_index}\t#{window_name}\t#{pane_current_command}\t#{pane_id}')
+
+      divisor=${#panes[@]}
+      ((divisor > 3)) && divisor=3
+      ((divisor < 1)) && divisor=1
+      cap=$preview_pane_lines
+      [[ -n ${FZF_PREVIEW_LINES:-} ]] && cap=$((FZF_PREVIEW_LINES / divisor - 2))
+      ((cap < 3)) && cap=3
+
+      local line active widx pidx wname cmd pid mark
+      for line in "${panes[@]}"; do
+        IFS=$'\t' read -r active widx pidx wname cmd pid <<<"$line"
+        mark=''
+        [[ $active == 1 ]] && mark=' *'
+        printf '\033[1;30;44m%-*s\033[0m\n' "$cols" \
+          "$session: win=$wname / $widx.$pidx $cmd$mark"
+        tmux capture-pane -ep -t "$pid" 2>/dev/null |
+          awk -v n="$cap" '
+            { buf[NR] = $0; if ($0 ~ /[^[:space:]]/) last = NR }
+            END {
+              start = last - n + 1
+              if (start < 1) start = 1
+              for (i = start; i <= last; i++) print buf[i]
+            }'
+        printf '\n'
+      done
+      ;;
     *)
       local self
       self=$(realpath "$0")
-      list_windows |
-        fzf --reverse --disabled \
-          --preview "tmux capture-pane -ep -t {1} 2>/dev/null || echo 'Preview not available'" \
-          --preview-window down:50% \
+      list_sessions |
+        fzf --reverse --no-input \
+          --preview "$self __preview {1}" \
+          --preview-window right:80% \
           --bind 'j:down,k:up' \
+          --bind 'J:preview-down,K:preview-up' \
           --bind 'enter:execute(tmux switch-client -t {1})+accept' \
           --bind "x:execute-silent($self __kill {1})+reload($self __list)"
       ;;
