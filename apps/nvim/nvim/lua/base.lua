@@ -23,8 +23,10 @@ aug({
   cb = [[highlight default ExtraWhitespace ctermbg=darkmagenta guibg=darkmagenta]],
 })
 
--- シンタックスハイライトを有効にする
-vim.cmd("syntax enable")
+-- syntax は nvim 既定で有効 (g:syntax_on=1)。明示 `syntax enable` は冗長なだけでなく、
+-- 起動時に init 途中で引数ファイルを早期ロードさせ、SwapExists autocmd / directory の
+-- 設定前に swap プロンプトを出してしまう (下の swapchoice-readonly が効かなくなる) ため呼ばない。
+-- vim.cmd("syntax enable")
 -- デフォルトのシンタックスハイライトをshにする
 au({
   events = { "BufNewFile", "BufRead" },
@@ -133,6 +135,9 @@ vim.opt.undodir = vim.fn.stdpath("data") .. "/undo"
 vim.opt.undofile = true
 
 -- スワップファイルがある場合は常に Read-Only で開く設定
+-- nvim 0.11+ 標準の nvim.swapfile autocmd は「実行中 Nvim 所有の swap を編集可(E)で開き
+-- W325 を出す」挙動なので無効化し、旧 vim と同様に常に RO で開く (メッセージも出さない)。
+vim.api.nvim_create_augroup("nvim.swapfile", { clear = true })
 aumg({
   events = "SwapExists",
   group = "swapchoice-readonly",

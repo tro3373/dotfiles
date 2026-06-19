@@ -67,6 +67,31 @@ return {
           c = { fg = p.dim, bg = p.bg },
         },
       }
+
+      -- Read-Only (swap RO / nomodifiable) 表示: 鍵アイコンを淡い赤で示す
+      local ro_icon = "\239\128\163" -- U+F023 (nf-fa-lock)
+      local ro_color = "#C94E44"
+      -- 通常ファイル (buftype=="") のみ RO 対象。vaffle(buftype=nowrite)や
+      -- help/terminal/quickfix 等の特殊バッファは nomodifiable でも赤くしない
+      local function buf_is_ro(buf)
+        buf = buf or 0
+        return vim.bo[buf].buftype == "" and (vim.bo[buf].readonly or vim.bo[buf].modifiable == false)
+      end
+      local function tab_is_ro(tab)
+        local buflist = vim.fn.tabpagebuflist(tab.tabnr)
+        local buf = buflist[vim.fn.tabpagewinnr(tab.tabnr)]
+        return buf ~= nil
+          and vim.bo[buf].buftype == ""
+          and (vim.bo[buf].readonly or vim.bo[buf].modifiable == false)
+      end
+      -- tabline は fmt 内で hl を埋め込むため名前付き hl を用意 (colorscheme で消えるので再適用)
+      -- RO タブは番号ごと赤背景にする (前景は白で可読性確保)
+      local function set_ro_hl()
+        vim.api.nvim_set_hl(0, "LualineTabRO", { fg = "#ffffff", bg = ro_color, bold = true })
+      end
+      set_ro_hl()
+      aumg({ events = "ColorScheme", group = "lualine-ro-hl", cb = set_ro_hl })
+
       require("lualine").setup({
         options = {
           theme = apprentice,
@@ -77,11 +102,35 @@ return {
           -- 既定の branch アイコン U+E0A0() はセル高さをはみ出すため
           -- セルに収まる nf-dev-git_branch () へ変更
           -- lualine_b = { { "branch", icon = "" }, "diff", "diagnostics" },
-          lualine_c = { { "filename", path = 1 } },
+          lualine_c = {
+            -- 既定の readonly シンボル [-] は出さず、下の鍵アイコンで示す
+            { "filename", path = 1, symbols = { readonly = "" } },
+            {
+              function()
+                return buf_is_ro() and ro_icon or ""
+              end,
+              color = { fg = ro_color },
+            },
+          },
         },
         -- tab 行も同テーマで描画 (旧 lightline の tabline 相当)
         tabline = {
-          lualine_a = { { "tabs", mode = 2, max_length = vim.o.columns } },
+          lualine_a = {
+            {
+              "tabs",
+              -- mode=1(名前のみ)にして番号も fmt 側で付与する。mode=2 だと番号が fmt の
+              -- 外で前置され着色できないため、RO タブを番号ごと赤背景にできない
+              mode = 1,
+              max_length = vim.o.columns,
+              -- RO タブは「番号 + 鍵 + 名前」をまとめて赤背景にする
+              fmt = function(name, tab)
+                if tab_is_ro(tab) then
+                  return string.format("%%#LualineTabRO# %d %s %s %%*", tab.tabnr, ro_icon, name)
+                end
+                return string.format("%d %s", tab.tabnr, name)
+              end,
+            },
+          },
         },
       })
     end,
