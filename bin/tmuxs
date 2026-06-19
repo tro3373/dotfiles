@@ -6,15 +6,31 @@ readonly preview_pane_lines=10
 
 # 全セッションを 1 行ずつ列挙する。
 # 1 列目 = "<session_name>" (preview / kill / switch のターゲット)。
-# session 番号を右寄せパディングし、現在 attach 中のセッションには行末に "*" を付ける。
+# 最長セッション名に幅を合わせて左寄せパディングし、現在 attach 中のセッションには行末に "*" を付ける。
 list_sessions() {
-  tmux list-sessions \
-    -F $'#{session_name}\t#{session_windows}\t#{?session_attached,1,}' |
-    while IFS=$'\t' read -r name nwin attached; do
-      local marker=''
-      [[ -n $attached ]] && marker=' *'
-      printf '%2s  %swin%s\n' "$name" "$nwin" "$marker"
-    done
+  # セッション単位の pane 総数 format は無いので、全 pane を一度に列挙して集計する。
+  local -A pcount=()
+  local s
+  while read -r s; do
+    pcount[$s]=$((${pcount[$s]:-0} + 1))
+  done < <(tmux list-panes -a -F '#{session_name}')
+
+  # 全行を一旦読み、最長セッション名から幅を決めてから整形する。
+  local -a rows=()
+  local name nwin attached width=0
+  while IFS=$'\t' read -r name nwin attached; do
+    ((${#name} > width)) && width=${#name}
+    rows+=("$name"$'\t'"$nwin"$'\t'"$attached")
+  done < <(tmux list-sessions \
+    -F $'#{session_name}\t#{session_windows}\t#{?session_attached,1,}')
+
+  local row marker
+  for row in "${rows[@]}"; do
+    IFS=$'\t' read -r name nwin attached <<<"$row"
+    marker=''
+    [[ -n $attached ]] && marker=' *'
+    printf '%-*s  %sw%sp%s\n' "$width" "$name" "$nwin" "${pcount[$name]:-0}" "$marker"
+  done
 }
 
 main() {
@@ -60,7 +76,7 @@ main() {
 
       local -a panes
       mapfile -t panes < <(tmux list-panes -s -t "$session" \
-        -F $'#{pane_active}\t#{window_index}\t#{pane_index}\t#{window_name}\t#{pane_current_command}\t#{pane_id}')
+        -F $'#{pane_active}\t#{window_index}\t#{pane_index}\t#{window_name}\t#{pane_current_command}\t#{pane_id}\t#{pane_current_path}')
 
       divisor=${#panes[@]}
       ((divisor > 3)) && divisor=3
@@ -69,13 +85,15 @@ main() {
       [[ -n ${FZF_PREVIEW_LINES:-} ]] && cap=$((FZF_PREVIEW_LINES / divisor - 2))
       ((cap < 3)) && cap=3
 
-      local line active widx pidx wname cmd pid mark
+      local line active widx pidx wname cmd pid path dir mark
       for line in "${panes[@]}"; do
-        IFS=$'\t' read -r active widx pidx wname cmd pid <<<"$line"
+        IFS=$'\t' read -r active widx pidx wname cmd pid path <<<"$line"
         mark=''
         [[ $active == 1 ]] && mark=' *'
+        dir=${path##*/}
+        [[ -z $dir ]] && dir=/
         printf '\033[1;30;44m%-*s\033[0m\n' "$cols" \
-          "$session: win=$wname / $widx.$pidx $cmd$mark"
+          "$session: win=$wname / $widx.$pidx $cmd [$dir]$mark"
         tmux capture-pane -ep -t "$pid" 2>/dev/null |
           awk -v n="$cap" '
             { buf[NR] = $0; if ($0 ~ /[^[:space:]]/) last = NR }
@@ -86,6 +104,20 @@ main() {
             }'
         printf '\n'
       done
+      ;;
+    __rename)
+      shift
+      # 選択中セッションの名前を対話的に変更する。
+      # fzf の execute() は端末を明け渡すので read でプロンプトを出せる。
+      # fzf 実行中はカーソル非表示なので明示再表示し、前回プロンプトの残骸を
+      # 消すため画面をクリアする。read -e で readline 行編集 (inputrc が vi なら
+      # vi バインド)、-i で現在名をプリフィルする。
+      local target=$1
+      local session=${target%:*}
+      local new
+      printf '\033[2J\033[3J\033[H\033[?25h'
+      read -er -p "Rename to: " -i "$session" new || true
+      [[ -n $new && $new != "$session" ]] && tmux rename-session -t "$session" "$new"
       ;;
     *)
       local self
@@ -98,6 +130,7 @@ main() {
           --bind 'J:preview-down,K:preview-up' \
           --bind 'enter:execute(tmux switch-client -t {1})+accept' \
           --bind "n:execute($self __new)+accept" \
+          --bind "r:execute($self __rename {1})+reload($self __list)" \
           --bind "x:execute-silent($self __kill {1})+reload($self __list)"
       ;;
   esac
