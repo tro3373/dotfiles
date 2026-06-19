@@ -4,11 +4,10 @@
 # fzf 実行時は FZF_PREVIEW_LINES から 3 pane 一望になるよう上書きする。
 readonly preview_pane_lines=10
 
-# Claude hook が出力する pane 状態マーカーの保存先。
+# pane 状態マーカーの保存先。書込側 (hook イベント handle_event) と読取側
+# (fzf list/preview) が本ファイル内でこの 1 関数を共有する (SSOT)。
 # テストは TMUXS_MARKER_DIR で一時ディレクトリに上書きする。
-# SSOT 注意: この規約 (パス・env 名) は ~/.mo/claude/hooks/tmux-pane-state.sh:marker_dir()
-# と一致必須。別リポジトリで共有ライブラリを持てないため二重定義。片方だけ変えると
-# マーカーがすれ違い状態が一切反映されなくなるので、変更時は両方を同時に更新すること。
+# (旧 ~/.mo/.../tmux-pane-state.sh との二重定義は本統合で解消済み)
 marker_dir() {
   printf '%s' "${TMUXS_MARKER_DIR:-${XDG_RUNTIME_DIR:-/tmp}/tmuxs}"
 }
@@ -33,16 +32,22 @@ band_sgr() {
   esac
 }
 
+# 現存する全 pane_id を連想配列 (nameref) に集める。死んだ pane の判定に使う。
+collect_alive_panes() {
+  local -n _alive=$1
+  local p
+  while read -r p; do
+    [[ -n $p ]] && _alive["$p"]=1
+  done < <(tmux list-panes -a -F '#{pane_id}' 2>/dev/null)
+}
+
 # 死んだ pane (現存しない pane_id) のマーカーを削除する。
 cleanup_markers() {
   local dir
   dir=$(marker_dir)
   [[ -d $dir ]] || return 0
   local -A alive=()
-  local p
-  while read -r p; do
-    [[ -n $p ]] && alive[$p]=1
-  done < <(tmux list-panes -a -F '#{pane_id}' 2>/dev/null)
+  collect_alive_panes alive
   local f pid
   for f in "$dir"/*; do
     [[ -e $f ]] || continue
@@ -121,7 +126,188 @@ list_sessions() {
   done
 }
 
+# ---- pane 状態の書込側 (Claude hook 統合) --------------------------------
+# settings.json が pane 内で `tmuxs waiting|running|idle|remove` を呼ぶ。
+# waiting が 1 つでも発生したら status bar の待ち表示 (@tmuxs_waiting) に ⏳N を
+# 点灯し、全 pane の waiting が解消したら消す。読取側と marker_dir() を共有する
+# (旧 ~/.mo/.../tmux-pane-state.sh の二重定義を解消)。
+# best-effort のため tmux 呼び出し失敗で Claude を止めないよう常に 0 で抜ける。
+
+# readonly waiting_color='#E5AF1E'
+readonly waiting_color='#4B607F'
+
+# 黄色帯モード。1=ON: waiting 時に status bar 全体を黄色帯で強調 (tmux.conf の
+# @tmuxs_band 条件配色と連動し文字は暗色に切替わる)。0=OFF: status-left の
+# ⏳N インジケータのみ。
+readonly band_enabled=1
+
+# 現存する pane のうち waiting マーカーを持つ数を数える。
+# 死んだ pane のマーカーは無視する (誤って waiting 扱いしない)。
+count_waiting() {
+  local dir n=0
+  dir=$(marker_dir)
+  if [[ -d $dir ]]; then
+    local -A alive=()
+    collect_alive_panes alive
+    local f pid
+    for f in "$dir"/*; do
+      [[ -e $f ]] || continue
+      pid=${f##*/}
+      [[ -n ${alive[$pid]:-} ]] || continue
+      [[ $(<"$f") == waiting ]] && n=$((n + 1))
+    done
+  fi
+  printf '%s' "$n"
+}
+
+# 黄色帯 ON: 現在の status-style を退避してから 黄/黒 へ直接上書きし、フラグ @tmuxs_band を立てる。
+# status-style は style option で format 非展開のため tmux.conf の #{?...} では制御できず直接 set する。
+# 退避済み判定は番兵 @tmuxs_band の有無で行い、二重上書きで黄色を「通常」と誤退避しないようにする。
+# (conf 未リロードでも自己完結で復元できる。通常配色を hook にハードコードしない)
+# 注意: 複数 pane がほぼ同時に band 突入すると show->set 非アトミックで後発が黄色を誤退避する
+# レースがあるが、低頻度かつ best-effort のため未防御。
+# status-left/right は文字列 option なので @tmuxs_band 条件で文字色が追従する。
+band_on() {
+  [[ $(tmux show -gv @tmuxs_band 2>/dev/null) == 1 ]] ||
+    tmux set -g @tmuxs_status_saved "$(tmux show -gv status-style)"
+  tmux set -g @tmuxs_band 1
+  # 末尾に default を付けると tmux style 構文で bg/fg が端末デフォルトへリセットされ
+  # 黄色帯が一切描画されない。色のみ指定する (status-style 基底に余分な属性は元々無い)。
+  tmux set -g status-style "bg=${waiting_color},fg=#000000"
+}
+
+# 黄色帯 OFF: band 中なら退避値から status-style を復元し、番兵・退避値を unset する。
+band_off() {
+  [[ $(tmux show -gv @tmuxs_band 2>/dev/null) == 1 ]] || return 0
+  tmux set -g status-style "$(tmux show -gv @tmuxs_status_saved)"
+  tmux set -gu @tmuxs_status_saved
+  tmux set -gu @tmuxs_band
+}
+
+# 待ち表示枠 (@tmuxs_waiting) と黄色帯を更新する。
+# 入力待ち pane があれば status-left の ⏳N を点灯し、band_enabled=1 なら黄色帯も点灯。
+# 無ければ消灯。同時 waiting でカウントが一時的にずれても次イベントで上書き整合する。
+update_indicator() {
+  local n
+  n=$(count_waiting)
+  if ((n > 0)); then
+    # 黄色帯 ON 時は帯の上で読めるよう ⏳ を暗色、OFF 時は通常背景で映える黄色。
+    local icon_color="$waiting_color"
+    ((band_enabled)) && icon_color='#000000'
+    tmux set -g @tmuxs_waiting "#[fg=${icon_color},bold]⏳${n} #[default]"
+    ((band_enabled)) && band_on
+    return
+  fi
+  tmux set -gu @tmuxs_waiting
+  band_off
+}
+
+# state に応じて pane マーカーを更新する。remove は削除し、それ以外は内容を書き込む。
+write_marker() {
+  local state=$1 dir=$2 file=$3
+  if [[ $state == remove ]]; then
+    rm -f "$file"
+    return
+  fi
+  mkdir -p "$dir"
+  printf '%s' "$state" >"$file"
+}
+
+# hook イベント本体。tmux 外 (TMUX_PANE / TMUX 未設定) では何もせず戻る。
+# best-effort のため set -e を効かせず、呼び出し元が exit 0 する。
+handle_event() {
+  [[ -n ${TMUX_PANE:-} && -n ${TMUX:-} ]] || return 0
+
+  local state=$1 dir file old=''
+  dir=$(marker_dir)
+  file="${dir}/${TMUX_PANE}"
+  [[ -f $file ]] && old=$(<"$file")
+
+  write_marker "$state" "$dir" "$file"
+
+  # 待ち表示の再計算は waiting が絡む遷移時のみ (running 連発時の tmux IPC 抑制)。
+  if [[ $old == waiting || $state == waiting ]]; then
+    update_indicator
+  fi
+  return 0
+}
+
+# ---- 手動確認ツール (`tmuxs __test-event`) -------------------------------
+# 現在の pane を指定状態にし (本物のイベント処理 handle_event をそのまま呼ぶ)、
+# 結果のマーカー/tmux option を表示する。状態設定ロジックは複製せず本体関数を再利用。
+#   tmuxs __test-event waiting|running|idle|remove  # 状態を設定し結果表示
+#   tmuxs __test-event status                       # 現状表示のみ (副作用なし)
+#   tmuxs __test-event                              # fzf で選択
+# tmux 外 (TMUX / TMUX_PANE 未設定) はエラーで抜ける。
+
+# 現在の pane の状態 (マーカー内容・関連 tmux option・全 marker) を表示する。
+show_state() {
+  local dir file
+  dir=$(marker_dir)
+  file="${dir}/${TMUX_PANE}"
+
+  printf '== pane %s state ==\n' "${TMUX_PANE}"
+  printf 'marker 内容    : %s\n' "$([[ -f $file ]] && cat "$file" || printf '(none)')"
+  printf '@tmuxs_waiting : %s\n' "$(tmux show -gv @tmuxs_waiting 2>/dev/null || true)"
+  printf '@tmuxs_band    : %s\n' "$(tmux show -gv @tmuxs_band 2>/dev/null || true)"
+  printf 'status-style   : %s\n' "$(tmux show -gv status-style 2>/dev/null || true)"
+  printf '全 marker リスト (%s):\n' "${dir}"
+  if [[ ! -d $dir ]]; then
+    printf '  (dir なし)\n'
+    return
+  fi
+  local f found=0
+  for f in "${dir}"/*; do
+    [[ -e $f ]] || break
+    found=1
+    printf '  %s = %s\n' "${f##*/}" "$(cat "$f")"
+  done
+  ((found)) || printf '  (empty)\n'
+}
+
+test_event() {
+  set -euo pipefail
+  [[ -n ${TMUX_PANE:-} && -n ${TMUX:-} ]] ||
+    {
+      printf 'error: tmux 外では実行できない (TMUX / TMUX_PANE 未設定)\n' >&2
+      exit 1
+    }
+
+  local status=${1:-}
+  [[ -n $status ]] || status=$(printf '%s\n' waiting running idle remove status |
+    fzf --prompt='tmux-pane-state > ' --height=40% --reverse) ||
+    {
+      printf 'error: cancelled\n' >&2
+      exit 1
+    }
+
+  case "${status}" in
+    waiting | running | idle | remove) handle_event "${status}" ;;
+    status) ;; # 現状表示のみ (副作用なし)
+    *)
+      printf 'error: unknown status: %s (waiting|running|idle|remove|status)\n' \
+        "${status}" >&2
+      exit 1
+      ;;
+  esac
+
+  show_state
+}
+
 main() {
+  case "${1:-}" in
+    waiting | running | idle | remove)
+      # Claude hook エントリ。best-effort のため tmux 失敗でも常に 0 で抜ける。
+      handle_event "$1"
+      exit 0
+      ;;
+    __test-event)
+      shift
+      test_event "$@"
+      exit
+      ;;
+  esac
+
   set -euo pipefail
 
   case "${1:-}" in
