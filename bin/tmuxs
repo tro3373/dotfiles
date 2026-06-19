@@ -126,6 +126,7 @@ main() {
         fzf --reverse --no-input \
           --preview "$self __preview {1}" \
           --preview-window right:80% \
+          --bind 'q:abort' \
           --bind 'j:down,k:up' \
           --bind 'J:preview-down,K:preview-up' \
           --bind 'enter:execute(tmux switch-client -t {1})+accept' \
