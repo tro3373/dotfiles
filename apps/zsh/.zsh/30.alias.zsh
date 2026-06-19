@@ -343,9 +343,20 @@ function cd_src_root() {
     find_repos |
       fzf --tac --query "$LBUFFER" --preview "$preview_cmd"
   )
-  # if [[ -n $src ]]; then
-  #   tmux rename-session "$(basename $src)"
-  # fi
+  if [[ -n $src && -n $TMUX ]]; then
+    local name=$(basename "$src")
+    if tmux list-sessions -F '#S' | grep -Fqx -- "$name"; then
+      # 同名セッションが既にある: そのセッションへ移動し、新規 window でディレクトリを開く
+      tmux new-window -t "$name" -c "$src"
+      tmux switch-client -t "$name"
+      zle -R -c
+      return
+    fi
+    # セッション名が数字(tmux デフォルト)のときだけセッション名を整える。それ以外は何もしない
+    if [[ $(tmux display-message -p '#S') =~ ^[0-9]+$ ]]; then
+      tmux rename-session "$name"
+    fi
+  fi
   cd_dir "$src"
 }
 zle -N cd_src_root
