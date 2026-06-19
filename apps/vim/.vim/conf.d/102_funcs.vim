@@ -1508,7 +1508,7 @@ function! OpenUrlOrFilePathOnCursor() range abort
   " URL はブラウザで全部開く
   for l:url in l:urls
     " call openbrowser#open(l:url)
-    call system('open ' . l:url)
+    call system('open ' . shellescape(l:url))
   endfor
   " ファイルパスは全部タブで開く
   for [l:path, l:lnum] in l:paths
