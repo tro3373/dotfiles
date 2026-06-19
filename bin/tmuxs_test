@@ -28,7 +28,7 @@ case "$1" in
   list-sessions)   printf '%s\n' "${FAKE_SESSIONS:-}" | grep -v '^$' || true ;;
   list-panes)      printf '%s\n' "$*" >>"$log"
                    printf '%s\n' "${FAKE_PANES:-}" | grep -v '^$' || true ;;
-  switch-client | kill-session) printf '%s\n' "$*" >>"$log" ;;
+  switch-client | kill-session | select-window | select-pane) printf '%s\n' "$*" >>"$log" ;;
   *) printf 'UNHANDLED %s\n' "$*" >>"$log" ;;
 esac
 FAKE
@@ -79,16 +79,19 @@ test_kill_only_session() {
     'kill-session -t A' "$(cat "${FAKE_TMUX_LOG}")"
 }
 
-# 4. list は session を列挙し、番号を右寄せパディング、attach 中のみ "*" を付ける。
-#    (FAKE_SESSIONS はタブ区切り: name nwin attached(1 or 空))
+# 4. list は session を列挙し、名前幅で左寄せ、Nwin/Mpane、attach 中のみ "*"。
+#    マーカー無し時は色を付けない。
+#    (FAKE_SESSIONS: name nwin attached(1 or 空) / FAKE_PANES: session pane_id)
 test_list_pads_and_marks_attached() {
+  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
   export FAKE_SESSIONS=$'0\t3\t\n13\t1\t1\n4\t3\t'
+  export FAKE_PANES=$'0\t%1\n0\t%2\n13\t%3\n4\t%4\n4\t%5\n4\t%6'
 
   local out
   out=$(PATH="${fakebin}:${PATH}" "${tmuxs}" __list)
 
-  check 'list 出力: 番号右寄せ + Nwin + attach の * のみ' \
-    $' 0  3win\n13  1win *\n 4  3win' "${out}"
+  check 'list 出力: 左寄せ + Nwin Mpane + attach の * (色なし)' \
+    $'0   3w2p\n13  1w1p *\n4   3w3p' "${out}"
 }
 
 # 5. __preview は session の全 window×pane をヘッダ付きで縦積みキャプチャする
@@ -102,8 +105,101 @@ test_preview_stacks_panes() {
   out=$(PATH="${fakebin}:${PATH}" "${tmuxs}" __preview '4' |
     sed -e $'s/\033\\[[0-9;]*m//g' -e 's/[[:space:]]*$//')
   check '__preview: 全 pane をヘッダ付きで縦積み (active pane に *)' \
-    $'4: win=zsh / 1.1 claude *\nSCREENDUMP\n\n4: win=zsh / 1.2 zsh\nSCREENDUMP\n\n4: win=bash / 2.1 bash *\nSCREENDUMP' \
+    $'4: win=zsh / 1.1 claude [/] *\nSCREENDUMP\n\n4: win=zsh / 1.2 zsh [/]\nSCREENDUMP\n\n4: win=bash / 2.1 bash [/] *\nSCREENDUMP' \
     "${out}"
+}
+
+# 6. cleanup は現存しない pane_id のマーカーのみ削除する。
+test_cleanup_removes_dead_markers() {
+  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  printf 'idle' >"${TMUXS_MARKER_DIR}/%1"
+  printf 'running' >"${TMUXS_MARKER_DIR}/%2"
+  printf 'waiting' >"${TMUXS_MARKER_DIR}/%99"
+  export FAKE_PANES=$'%1\n%2'
+
+  PATH="${fakebin}:${PATH}" "${tmuxs}" __cleanup
+
+  local remain
+  remain=$(cd "${TMUXS_MARKER_DIR}" && printf '%s ' * | sort)
+  check 'cleanup: 死んだ pane (%99) のマーカーのみ削除' \
+    '%1 %2 ' "${remain}"
+}
+
+# 7. list は waiting を含む session を上位へ並べ、状態色で背景強調する。
+#    C は running(%3) と idle(%4) を持つが優先度で running に集約される。
+#    D は idle のみ。A はマーカー無し(色なし)。
+test_list_state_color_and_sort() {
+  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  export FAKE_SESSIONS=$'A\t1\t\nB\t1\t\nC\t1\t\nD\t1\t'
+  export FAKE_PANES=$'A\t%1\nB\t%2\nC\t%3\nC\t%4\nD\t%5'
+  printf 'waiting' >"${TMUXS_MARKER_DIR}/%2"
+  printf 'running' >"${TMUXS_MARKER_DIR}/%3"
+  printf 'idle' >"${TMUXS_MARKER_DIR}/%4"
+  printf 'idle' >"${TMUXS_MARKER_DIR}/%5"
+
+  local raw stripped
+  raw=$(PATH="${fakebin}:${PATH}" "${tmuxs}" __list)
+  stripped=$(printf '%s' "${raw}" | sed -e $'s/\033\\[[0-9;]*m//g')
+
+  check 'list: waiting(B) を上位へ並べ替え + 状態集約 (C=running)' \
+    $'B  1w1p\nA  1w1p\nC  1w2p\nD  1w1p' "${stripped}"
+  check 'list: B 行に waiting 背景色 (#E5AF1E)' yes \
+    "$(printf '%s' "${raw}" | grep -q '48;2;229;175;30' && echo yes || echo no)"
+  check 'list: C 行に running 背景色 (#799478)' yes \
+    "$(printf '%s' "${raw}" | grep -q '48;2;121;148;120' && echo yes || echo no)"
+  check 'list: D 行に idle 背景色 (#4E4E4E)' yes \
+    "$(printf '%s' "${raw}" | grep -q '48;2;78;78;78' && echo yes || echo no)"
+}
+
+# 8. __preview はマーカー保持 pane のヘッダ帯を状態色に塗る。
+test_preview_state_band() {
+  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  export FAKE_PANES=$'1\t1\t1\tzsh\tclaude\t%0\n1\t2\t1\tbash\tbash\t%15' \
+    FAKE_CAPTURE='SCREENDUMP'
+  printf 'waiting' >"${TMUXS_MARKER_DIR}/%0"
+
+  local raw
+  raw=$(PATH="${fakebin}:${PATH}" "${tmuxs}" __preview '4')
+
+  check '__preview: waiting pane(%0) のヘッダ帯に waiting 色' yes \
+    "$(printf '%s' "${raw}" | grep -q '48;2;229;175;30' && echo yes || echo no)"
+  check '__preview: マーカー無し pane(%15) は従来の青背景帯 (44)' yes \
+    "$(printf '%s' "${raw}" | grep -q '1;30;44' && echo yes || echo no)"
+}
+
+# 9. __switch は選択セッションへ switch 後、waiting pane があればそこへ focus を移す。
+#    running(%2) は無視し waiting(%3) へ attach (switch-client => select-window => select-pane)。
+#    (FAKE_PANES タブ区切り: window_index pane_id)
+test_switch_focuses_waiting_pane() {
+  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  export FAKE_PANES=$'1\t%1\n1\t%2\n2\t%3'
+  printf 'running' >"${TMUXS_MARKER_DIR}/%2"
+  printf 'waiting' >"${TMUXS_MARKER_DIR}/%3"
+
+  : >"${FAKE_TMUX_LOG}"
+  PATH="${fakebin}:${PATH}" "${tmuxs}" __switch 'A'
+
+  local got
+  got=$(grep -E '^(switch-client|select-window|select-pane)' "${FAKE_TMUX_LOG}")
+  check '__switch: waiting pane(%3) へ focus (switch-client => select-window => select-pane)' \
+    $'switch-client -t A\nselect-window -t A:2\nselect-pane -t %3' "${got}"
+}
+
+# 10. waiting が無ければ (running/idle のみでも) focus を動かさず switch-client のみ。
+#     tmux の last-active pane を維持する。
+test_switch_no_waiting_keeps_active() {
+  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  export FAKE_PANES=$'1\t%1\n2\t%2'
+  printf 'running' >"${TMUXS_MARKER_DIR}/%1"
+  printf 'idle' >"${TMUXS_MARKER_DIR}/%2"
+
+  : >"${FAKE_TMUX_LOG}"
+  PATH="${fakebin}:${PATH}" "${tmuxs}" __switch 'A'
+
+  local got
+  got=$(grep -E '^(switch-client|select-window|select-pane)' "${FAKE_TMUX_LOG}")
+  check '__switch: waiting 無し (running/idle のみ) は switch-client のみ (focus 移動なし)' \
+    'switch-client -t A' "${got}"
 }
 
 main() {
@@ -115,6 +211,10 @@ main() {
   # shellcheck disable=SC2064 # local 変数を EXIT 時に確実に消すため定義時に展開する
   trap "rm -rf '${tmpdir}'" EXIT
 
+  # 実 marker (XDG_RUNTIME_DIR 配下) を触らないよう一時ディレクトリへ隔離する。
+  export TMUXS_MARKER_DIR="${tmpdir}/markers"
+  mkdir -p "${TMUXS_MARKER_DIR}"
+
   local fakebin
   setup_fake_tmux
 
@@ -125,6 +225,11 @@ main() {
   test_kill_only_session
   test_list_pads_and_marks_attached
   test_preview_stacks_panes
+  test_cleanup_removes_dead_markers
+  test_list_state_color_and_sort
+  test_preview_state_band
+  test_switch_focuses_waiting_pane
+  test_switch_no_waiting_keeps_active
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

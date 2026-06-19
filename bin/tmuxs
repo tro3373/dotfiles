@@ -4,16 +4,78 @@
 # fzf 実行時は FZF_PREVIEW_LINES から 3 pane 一望になるよう上書きする。
 readonly preview_pane_lines=10
 
+# Claude hook が出力する pane 状態マーカーの保存先。
+# テストは TMUXS_MARKER_DIR で一時ディレクトリに上書きする。
+# SSOT 注意: この規約 (パス・env 名) は ~/.mo/claude/hooks/tmux-pane-state.sh:marker_dir()
+# と一致必須。別リポジトリで共有ライブラリを持てないため二重定義。片方だけ変えると
+# マーカーがすれ違い状態が一切反映されなくなるので、変更時は両方を同時に更新すること。
+marker_dir() {
+  printf '%s' "${TMUXS_MARKER_DIR:-${XDG_RUNTIME_DIR:-/tmp}/tmuxs}"
+}
+
+# 状態名 -> リスト行用 ANSI SGR (背景色 + 前景色)。マーカー無し(none)は非ゼロ復帰。
+state_sgr() {
+  case $1 in
+    waiting) printf '48;2;229;175;30;38;2;0;0;0' ;;
+    running) printf '48;2;121;148;120;38;2;255;255;255' ;;
+    idle) printf '48;2;78;78;78;38;2;255;255;255' ;;
+    *) return 1 ;;
+  esac
+}
+
+# 状態名 -> preview ヘッダ帯用 SGR (太字込み)。マーカー無しは従来の青背景。
+band_sgr() {
+  case $1 in
+    waiting) printf '1;38;2;0;0;0;48;2;229;175;30' ;;
+    running) printf '1;38;2;255;255;255;48;2;121;148;120' ;;
+    idle) printf '1;38;2;255;255;255;48;2;78;78;78' ;;
+    *) printf '1;30;44' ;;
+  esac
+}
+
+# 死んだ pane (現存しない pane_id) のマーカーを削除する。
+cleanup_markers() {
+  local dir
+  dir=$(marker_dir)
+  [[ -d $dir ]] || return 0
+  local -A alive=()
+  local p
+  while read -r p; do
+    [[ -n $p ]] && alive[$p]=1
+  done < <(tmux list-panes -a -F '#{pane_id}' 2>/dev/null)
+  local f pid
+  for f in "$dir"/*; do
+    [[ -e $f ]] || continue
+    pid=${f##*/}
+    [[ -n ${alive[$pid]:-} ]] || rm -f "$f"
+  done
+}
+
 # 全セッションを 1 行ずつ列挙する。
 # 1 列目 = "<session_name>" (preview / kill / switch のターゲット)。
 # 最長セッション名に幅を合わせて左寄せパディングし、現在 attach 中のセッションには行末に "*" を付ける。
 list_sessions() {
+  local dir
+  dir=$(marker_dir)
+
   # セッション単位の pane 総数 format は無いので、全 pane を一度に列挙して集計する。
-  local -A pcount=()
-  local s
-  while read -r s; do
+  # 同時にマーカーから代表状態の優先度ランクを集める。
+  # 優先度: waiting(3) > running(2) > idle(1) > マーカー無し(0)。
+  local -A pcount=() prank=()
+  local s pid st r
+  while IFS=$'\t' read -r s pid; do
+    [[ -n $s ]] || continue
     pcount[$s]=$((${pcount[$s]:-0} + 1))
-  done < <(tmux list-panes -a -F '#{session_name}')
+    st=''
+    [[ -f $dir/$pid ]] && st=$(<"$dir/$pid")
+    case $st in
+      waiting) r=3 ;;
+      running) r=2 ;;
+      idle) r=1 ;;
+      *) r=0 ;;
+    esac
+    ((r > ${prank[$s]:-0})) && prank[$s]=$r
+  done < <(tmux list-panes -a -F '#{session_name}'$'\t''#{pane_id}')
 
   # 全行を一旦読み、最長セッション名から幅を決めてから整形する。
   local -a rows=()
@@ -24,12 +86,38 @@ list_sessions() {
   done < <(tmux list-sessions \
     -F $'#{session_name}\t#{session_windows}\t#{?session_attached,1,}')
 
-  local row marker
+  # 入力待ち(waiting=rank3)を含む session を上位へ。
+  # waiting 群・非 waiting 群はそれぞれ元の列挙順を保つ。
+  local -a ordered=() rest=()
+  local row
   for row in "${rows[@]}"; do
+    name=${row%%$'\t'*}
+    if ((${prank[$name]:-0} == 3)); then
+      ordered+=("$row")
+      continue
+    fi
+    rest+=("$row")
+  done
+  ((${#rest[@]})) && ordered+=("${rest[@]}")
+
+  local marker sname sgr
+  for row in "${ordered[@]}"; do
     IFS=$'\t' read -r name nwin attached <<<"$row"
     marker=''
     [[ -n $attached ]] && marker=' *'
-    printf '%-*s  %sw%sp%s\n' "$width" "$name" "$nwin" "${pcount[$name]:-0}" "$marker"
+    case ${prank[$name]:-0} in
+      3) sname=waiting ;;
+      2) sname=running ;;
+      1) sname=idle ;;
+      *) sname='' ;;
+    esac
+    if sgr=$(state_sgr "$sname"); then
+      printf '\033[%sm%-*s  %sw%sp%s\033[0m\n' \
+        "$sgr" "$width" "$name" "$nwin" "${pcount[$name]:-0}" "$marker"
+      continue
+    fi
+    printf '%-*s  %sw%sp%s\n' \
+      "$width" "$name" "$nwin" "${pcount[$name]:-0}" "$marker"
   done
 }
 
@@ -57,6 +145,7 @@ main() {
       tmux kill-session -t "$session"
       ;;
     __list) list_sessions ;;
+    __cleanup) cleanup_markers ;;
     __new)
       # 新しいセッションを detached で作成し (名前は tmux 自動採番)、
       # 作成したセッションへ switch-client する。呼び出し元 fzf 側で accept して抜ける。
@@ -64,15 +153,40 @@ main() {
       name=$(tmux new-session -dP -F '#{session_name}')
       tmux switch-client -t "$name"
       ;;
+    __switch)
+      shift
+      # 選択セッションへ switch する。waiting pane があればそこへ focus を移して
+      # attach し、無ければ focus を動かさず last-active pane を維持する。
+      # 複数 waiting があれば列挙順 (window->pane index) で最初を採用。
+      local target=$1 session mdir
+      session=${target%:*}
+      mdir=$(marker_dir)
+
+      local waitwidx='' waitpid='' widx pid
+      while IFS=$'\t' read -r widx pid; do
+        [[ -n $pid ]] || continue
+        [[ -f $mdir/$pid && $(<"$mdir/$pid") == waiting ]] || continue
+        waitwidx=$widx
+        waitpid=$pid
+        break
+      done < <(tmux list-panes -s -t "$session" \
+        -F $'#{window_index}\t#{pane_id}')
+
+      tmux switch-client -t "$session"
+      [[ -n $waitpid ]] || return 0
+      tmux select-window -t "$session:$waitwidx"
+      tmux select-pane -t "$waitpid"
+      ;;
     __preview)
       shift
       # 選択行 ("<session_name>") が属するセッションの全 window×pane を縦に積んで表示する。
       # ヘッダは tmux のタブ選択色(青背景・黒太字)で横幅いっぱいに塗る (各 window の active pane に *)。
       # 末尾空行を除いた最新 cap 行に各 pane を絞る。1 画面に最大 3 pane を収めるが、
       # pane 数が 3 未満ならその数で割り、少ない pane のときに高さを余らせない。
-      local target=$1 session cols cap divisor
+      local target=$1 session cols cap divisor mdir
       session=${target%:*}
       cols=${FZF_PREVIEW_COLUMNS:-80}
+      mdir=$(marker_dir)
 
       local -a panes
       mapfile -t panes < <(tmux list-panes -s -t "$session" \
@@ -85,14 +199,17 @@ main() {
       [[ -n ${FZF_PREVIEW_LINES:-} ]] && cap=$((FZF_PREVIEW_LINES / divisor - 2))
       ((cap < 3)) && cap=3
 
-      local line active widx pidx wname cmd pid path dir mark
+      local line active widx pidx wname cmd pid path dir mark st band
       for line in "${panes[@]}"; do
         IFS=$'\t' read -r active widx pidx wname cmd pid path <<<"$line"
         mark=''
         [[ $active == 1 ]] && mark=' *'
         dir=${path##*/}
         [[ -z $dir ]] && dir=/
-        printf '\033[1;30;44m%-*s\033[0m\n' "$cols" \
+        st=''
+        [[ -f $mdir/$pid ]] && st=$(<"$mdir/$pid")
+        band=$(band_sgr "$st")
+        printf '\033[%sm%-*s\033[0m\n' "$band" "$cols" \
           "$session: win=$wname / $widx.$pidx $cmd [$dir]$mark"
         tmux capture-pane -ep -t "$pid" 2>/dev/null |
           awk -v n="$cap" '
@@ -122,14 +239,15 @@ main() {
     *)
       local self
       self=$(realpath "$0")
+      cleanup_markers
       list_sessions |
-        fzf --reverse --no-input \
+        fzf --reverse --no-input --ansi \
           --preview "$self __preview {1}" \
           --preview-window right:80% \
           --bind 'q:abort' \
           --bind 'j:down,k:up' \
           --bind 'J:preview-down,K:preview-up' \
-          --bind 'enter:execute(tmux switch-client -t {1})+accept' \
+          --bind "enter:execute($self __switch {1})+accept" \
           --bind "n:execute($self __new)+accept" \
           --bind "r:execute($self __rename {1})+reload($self __list)" \
           --bind "x:execute-silent($self __kill {1})+reload($self __list)"
