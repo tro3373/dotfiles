@@ -352,10 +352,15 @@ function cd_src_root() {
       zle -R -c
       return
     fi
-    # セッション名が数字(tmux デフォルト)のときだけセッション名を整える。それ以外は何もしない
-    if [[ $(tmux display-message -p '#S') =~ ^[0-9]+$ ]]; then
-      tmux rename-session "$name"
+    if [[ ! $(tmux display-message -p '#S') =~ ^[0-9]+$ ]]; then
+      # セッション名が命名済み: name で新規セッションを作成して switch
+      tmux new-session -d -s "$name" -c "$src"
+      tmux switch-client -t "$name"
+      zle -R -c
+      return
     fi
+    # セッション名が数字(tmux デフォルト): 現在セッションを name にリネームしてそのまま cd
+    tmux rename-session "$name"
   fi
   cd_dir "$src"
 }
