@@ -2,19 +2,26 @@ if !g:plug.is_installed("vim-markdown")
   finish
 endif
 
+" 見出し/リンク色の SSOT を読み込む (ロード順非依存にするため明示 source)
+let s:md_palette_file = expand('<sfile>:p:h') . '/010_md_palette.vim'
+if filereadable(s:md_palette_file)
+  execute 'source' s:md_palette_file
+endif
+
 "=============================================
 " Colorscheme for Markdown files
 " NOTE: check syntax group
 "   `:echo synIDattr(synID(line('.'), col('.'), 1), 'name')`
 function! s:MarkdownHighlight()
-  highlight mkdLink guifg=#ff8800 ctermfg=208
-  " highlight htmlH1 guifg=#81a1c1 ctermfg=109
-  " highlight htmlH2 guifg=#5e81ac ctermfg=67
-  " highlight htmlH3 guifg=#4c566a ctermfg=60
-  highlight htmlH1 guifg=#a3be8c ctermfg=144
-  highlight htmlH2 guifg=#81a1c1 ctermfg=109
-  highlight htmlH3 guifg=#d08770 ctermfg=173
-  highlight mkdHeading guifg=#81a1c1 ctermfg=109
+  if !exists('g:md_palette')
+    return
+  endif
+  let p = g:md_palette
+  execute 'highlight mkdLink guifg=' . p.link.gui . ' ctermfg=' . p.link.cterm
+  execute 'highlight htmlH1 guifg=' . p.h1.gui . ' ctermfg=' . p.h1.cterm
+  execute 'highlight htmlH2 guifg=' . p.h2.gui . ' ctermfg=' . p.h2.cterm
+  execute 'highlight htmlH3 guifg=' . p.h3.gui . ' ctermfg=' . p.h3.cterm
+  execute 'highlight mkdHeading guifg=' . p.h2.gui . ' ctermfg=' . p.h2.cterm
 endfunction
 autocmd FileType markdown call s:MarkdownHighlight()
 "=============================================

@@ -299,9 +299,19 @@ au_ft_map("Jenkinsfile", "groovy")
 -- The default conceallevel is 3 in LazyVim
 au({
   events = "FileType",
-  pat = { "json", "jsonc", "markdown" },
+  pat = { "json", "jsonc" },
   cb = function()
     vim.opt.conceallevel = 0
+  end,
+})
+-- markdown は treesitter の conceal で ** ` 等の記号を隠す。
+-- カーソル行は記号を表示して編集しやすくする (concealcursor 空)。
+au({
+  events = "FileType",
+  pat = { "markdown" },
+  cb = function()
+    vim.opt_local.conceallevel = 2
+    vim.opt_local.concealcursor = ""
   end,
 })
 
