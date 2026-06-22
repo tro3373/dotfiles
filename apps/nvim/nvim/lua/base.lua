@@ -62,60 +62,9 @@ vim.opt.colorcolumn = "80,120" -- 80,120 に縦 Line
 vim.opt.signcolumn = "yes" -- サイン列を常時表示 (gutter の出し入れ再描画漏れ防止)
 vim.opt.updatetime = 100 -- CursorHold 発火を高速化 (gitgutter の編集後更新を即時化)
 
--- カーソル行・列を一定時間入力なし時、ウィンドウ移動直後に表示
-local cursorline_lock = 0
-local function auto_cursorline(args)
-  local event = args.event
-  if event == "WinEnter" then
-    vim.opt_local.cursorline = true
-    vim.opt_local.cursorcolumn = true
-    cursorline_lock = 2
-  elseif event == "WinLeave" then
-    vim.opt_local.cursorline = false
-    vim.opt_local.cursorcolumn = false
-  elseif event == "CursorMoved" then
-    if cursorline_lock then
-      if cursorline_lock > 1 then
-        cursorline_lock = 1
-      else
-        vim.opt_local.cursorline = false
-        vim.opt_local.cursorcolumn = false
-        cursorline_lock = 0
-      end
-    end
-  elseif event == "CursorHold" then
-    vim.opt_local.cursorline = true
-    vim.opt_local.cursorcolumn = true
-    cursorline_lock = 1
-  end
-end
-local aug_ac = "vimrc-auto-cursorline"
-vim.api.nvim_create_augroup(aug_ac, {})
-local function auto_cursor_callback(event)
-  return function()
-    auto_cursorline({ event = event })
-  end
-end
-aug({
-  events = { "CursorMoved", "CursorMovedI" },
-  group = aug_ac,
-  cb = auto_cursor_callback("CursorMoved"),
-})
-aug({
-  events = { "CursorHold", "CursorMovedI" },
-  group = aug_ac,
-  cb = auto_cursor_callback("CursorHold"),
-})
-aug({
-  events = { "WinEnter" },
-  group = aug_ac,
-  cb = auto_cursor_callback("WinEnter"),
-})
-aug({
-  events = { "WinLeave" },
-  group = aug_ac,
-  cb = auto_cursor_callback("WinLeave"),
-})
+-- カーソル行・列を常に表示
+vim.opt.cursorline = true
+vim.opt.cursorcolumn = true
 
 -- ステータスラインの表示変更
 vim.opt.laststatus = 2 -- Always display the statusline in all windows
@@ -310,7 +259,7 @@ au({
   events = "FileType",
   pat = { "markdown" },
   cb = function()
-    vim.opt_local.conceallevel = 2
+    vim.opt_local.conceallevel = 0
     vim.opt_local.concealcursor = ""
     -- cindent は `## heading` を C プリプロセッサ行 (#...) とみなし、次行をその直前コード
     -- (前の箇条書き) のインデントに復元してしまう。smartindent も同様。見出しを跨いで
