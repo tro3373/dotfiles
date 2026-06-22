@@ -304,7 +304,7 @@ main() {
   done
 
   hass "${depends[@]}"
-  is_gog_valid || error "==> Error: gog auth status invalid for client '$gog_use_client_id'"
+  is_gog_valid || error "==> Error: you need to re-auth gog for client '$gog_use_client_id'"
   run "${positional[@]+"${positional[@]}"}"
 }
 
