@@ -7,15 +7,20 @@
 -- markdown は従来どおり vim-markdown に任せ、ここでは何も足さない。
 local lua_mode = _G.src ~= nil
 
-local ts_highlight_filetypes = { hurl = true }
+local ts_highlight_filetypes = { hurl = true, dockerfile = true }
 local ts_indent_filetypes = { hurl = true }
-local ensure = { 'hurl' }
+local ensure = { 'hurl', 'dockerfile' }
 if lua_mode then
   ts_highlight_filetypes.markdown = true
   ts_highlight_filetypes.markdown_inline = true
   ensure = { 'hurl', 'markdown', 'markdown_inline' }
 end
 
+-- Dockerfile.vim プラグインが filetype を大文字 'Dockerfile' にするため、
+-- treesitter の parser 'dockerfile'(小文字) と紐付ける
+vim.treesitter.language.register('dockerfile', 'Dockerfile')
+
+---@diagnostic disable-next-line: missing-fields
 require('nvim-treesitter.configs').setup({
   ensure_installed = ensure,
   auto_install = true,
