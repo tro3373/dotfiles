@@ -312,6 +312,11 @@ au({
   cb = function()
     vim.opt_local.conceallevel = 2
     vim.opt_local.concealcursor = ""
+    -- cindent は `## heading` を C プリプロセッサ行 (#...) とみなし、次行をその直前コード
+    -- (前の箇条書き) のインデントに復元してしまう。smartindent も同様。見出しを跨いで
+    -- バレットのインデントを引き継ぐのを防ぐため markdown では無効化 (autoindent のみ残す)。
+    vim.opt_local.cindent = false
+    vim.opt_local.smartindent = false
   end,
 })
 
