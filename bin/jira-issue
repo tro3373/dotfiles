@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+
+# Create or list Jira sub-task(s) for a parent issue.
+#
+# The config file is selected per-project from JIRA_PROJECT:
+#   ${XDG_CONFIG_HOME:-~/.config}/.jira/.config.<JIRA_PROJECT>.yml
+# If it is missing, `jira init` runs once, reusing the connection settings
+# (server/login/auth/installation) from the most recent existing config in
+# that directory when present (otherwise jira init prompts for everything).
+# This matters because issue type names differ per project (team-managed
+# projects in particular), and `jira issue create` decides the sub-task parent
+# from the per-project issue type cache, not from the server.
+#
+# List (default):
+#   jira-issue
+# Create (stdin):
+#   cat task.md | jira-issue add
+#     - [ ] タスク名
+#       - タスクの説明1
+#         - タスクの説明1の詳細
+#       - タスクの説明2
+#
+# Required environment variables:
+#   JIRA_PROJECT      - Jira project key (also selects the config file)
+#   JIRA_ISSUE_TYPE   - Sub-task issue type name for THIS project
+#   JIRA_ISSUE_PARENT - Parent task key
+#
+# Optional environment variables:
+#   JIRA_ASSIGNEE     - Assignee (username / email / display name).
+#                       Defaults to "$$" (current logged-in user).
+#   JIRA_CONFIG_FILE  - Override the per-project config path.
+
+require_env() {
+  local name=$1
+  if [[ -z ${!name:-} ]]; then
+    echo "==> Error: ${name} is not set" >&2
+    return 1
+  fi
+}
+
+validate_env() {
+  require_env JIRA_PROJECT
+  require_env JIRA_ISSUE_TYPE
+  require_env JIRA_ISSUE_PARENT
+}
+
+read_config_value() {
+  # First top-level "<key>: <value>" scalar from a jira config yaml.
+  local file=$1 key=$2 line
+  while IFS= read -r line; do
+    if [[ ${line} == "${key}: "* ]]; then
+      printf '%s\n' "${line#"${key}": }"
+      return 0
+    fi
+  done <"${file}"
+}
+
+newest_config() {
+  # Most recently modified jira config in the dir, used to seed connection
+  # settings for a new project. Empty if none exist yet (first ever run).
+  local dir=$1 newest="" f
+  for f in "${dir}"/.config*.yml; do
+    [[ -f ${f} ]] || continue
+    [[ -z ${newest} || ${f} -nt ${newest} ]] && newest=${f}
+  done
+  printf '%s\n' "${newest}"
+}
+
+init_config() {
+  # Create the per-project config once. Seed the connection settings from the
+  # most recent existing config so only the board prompt (if any) needs the
+  # terminal; on the very first run none exist, so jira init asks for them.
+  local donor
+  donor=$(newest_config "${JIRA_CONFIG_FILE%/*}")
+  echo "==> No config for project ${JIRA_PROJECT}; running 'jira init' -> ${JIRA_CONFIG_FILE}" >&2
+  local args=(--project "${JIRA_PROJECT}")
+  if [[ -n ${donor} ]]; then
+    echo "==> Reusing connection settings from ${donor}" >&2
+    local installation server login auth_type
+    installation=$(read_config_value "${donor}" installation)
+    server=$(read_config_value "${donor}" server)
+    login=$(read_config_value "${donor}" login)
+    auth_type=$(read_config_value "${donor}" auth_type)
+    [[ -n ${installation} ]] && args+=(--installation "${installation,,}")
+    [[ -n ${server} ]] && args+=(--server "${server}")
+    [[ -n ${login} ]] && args+=(--login "${login}")
+    [[ -n ${auth_type} ]] && args+=(--auth-type "${auth_type}")
+  fi
+  jira init "${args[@]}" </dev/tty
+}
+
+resolve_config() {
+  # Pick the per-project config from JIRA_PROJECT; init it on first use.
+  local dir="${XDG_CONFIG_HOME:-${HOME}/.config}/.jira"
+  export JIRA_CONFIG_FILE="${JIRA_CONFIG_FILE:-${dir}/.config.${JIRA_PROJECT}.yml}"
+  [[ -f ${JIRA_CONFIG_FILE} ]] || init_config
+}
+
+validate_stdin() {
+  if [[ -t 0 ]]; then
+    echo "==> Error: No stdin input" >&2
+    echo "Usage: cat task.md | $0 add" >&2
+    return 1
+  fi
+}
+
+emit_task() {
+  [[ -z ${summary} ]] && return 0
+  echo "==> Creating: ${summary}" >&2
+  printf '%s' "${body}" |
+    jira issue create \
+      -p "${JIRA_PROJECT}" \
+      -t "${JIRA_ISSUE_TYPE}" \
+      -P "${JIRA_ISSUE_PARENT}" \
+      -s "${summary}" \
+      -a "${assignee}" \
+      --no-input
+  summary=""
+  body=""
+}
+
+process_tasks() {
+  local task_re='^- \[[x ]\] (.*)$'
+  local line=""
+  local summary=""
+  local body=""
+  while IFS='' read -r line || [[ -n ${line} ]]; do
+    if [[ ${line} =~ ${task_re} ]]; then
+      emit_task
+      summary="${BASH_REMATCH[1]}"
+      body=""
+      continue
+    fi
+    [[ -z ${summary} ]] && continue
+    body+="${line#  }"$'\n'
+  done
+  emit_task
+}
+
+issue_list() {
+  jira issue list \
+    -p "${JIRA_PROJECT}" \
+    -t "${JIRA_ISSUE_TYPE}" \
+    -P "${JIRA_ISSUE_PARENT}"
+}
+
+main() {
+  set -euo pipefail
+  validate_env
+  resolve_config
+  local assignee="${JIRA_ASSIGNEE:-}"
+  [[ -z ${assignee} ]] && assignee='$$'
+  if [[ ${1:-} == "add" ]]; then
+    validate_stdin
+    process_tasks
+    return
+  fi
+  issue_list
+}
+main "$@"
