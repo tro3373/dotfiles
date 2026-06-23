@@ -20,6 +20,25 @@ end
 -- treesitter の parser 'dockerfile'(小文字) と紐付ける
 vim.treesitter.language.register('dockerfile', 'Dockerfile')
 
+-- nvim 0.12 互換シム: nvim-treesitter master の injection ディレクティブ
+-- (set-lang-from-info-string! / set-lang-from-mimetype! / downcase!) は
+-- match[id] が単一ノード前提だが、0.12 の iter_matches は capture ごとに
+-- ノードのリストを渡すため get_node_text 内の node:range() が
+-- "attempt to call method 'range' (a nil value)" でクラッシュする
+-- (add_directive の all=false 互換シムが 0.12 で無視されるため)。
+-- 入口でリスト→末尾ノードに畳んで markdown/hurl/bash/ruby/hcl/php/html の
+-- 全 injection クエリを一括救済する (filetype 横断のため lua_mode 外に置く)。
+if not vim.g._ts_node_list_compat then
+  vim.g._ts_node_list_compat = true
+  local get_node_text = vim.treesitter.get_node_text
+  vim.treesitter.get_node_text = function(node, source, opts)
+    if type(node) == 'table' then
+      node = node[#node]
+    end
+    return get_node_text(node, source, opts)
+  end
+end
+
 ---@diagnostic disable-next-line: missing-fields
 require('nvim-treesitter.configs').setup({
   ensure_installed = ensure,
