@@ -192,8 +192,8 @@ parse_tasks() {
     error "==> Task index ${index} not found."
   fi
 
-  # first_line 以降の次の `- ` 行を取得（タスクの終端）
-  second_line=$(grep -nE '^- ' "$target_file" | awk -F: -v fl="$first_line" '$1 > fl {print $1; exit}')
+  # first_line 以降の次の `- ` 行 or 見出し行(#) を取得（タスクの終端）
+  second_line=$(grep -nE '^(- |#)' "$target_file" | awk -F: -v fl="$first_line" '$1 > fl {print $1; exit}')
 
   # 2番目の行番号がなければファイル末尾
   if [[ -z $second_line ]]; then
