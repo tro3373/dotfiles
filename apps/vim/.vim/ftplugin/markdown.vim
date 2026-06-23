@@ -76,3 +76,41 @@ function! ToggleTimestamp()
 endfunction
 nnoremap <silent> <buffer> _ :call ToggleTimestamp()<CR>
 
+" 見出し + 直後が xxxx 始まり = タイムスタンプ見出し か判定 (判定の SSOT)
+function! s:IsTsHeading(line) abort
+  return a:line =~# '^\s*#\+\s\+\d\d\d\d'
+endfunction
+
+" F3/F4/F5: タイムスタンプ見出しのタグ([JOB]/[PRV])をトグル、無ければ見出しを新規作成
+" a:line=対象行, a:prefix=新規時の見出し記号, a:ts=新規時のタイムスタンプ文字列
+function! MarkdownHeaderTagBuild(line, prefix, ts) abort
+  " タイムスタンプ見出し => タグをトグル
+  if s:IsTsHeading(a:line)
+    if a:line =~# '\[JOB\]'
+      return substitute(a:line, '\[JOB\]', '[PRV]', '')
+    endif
+    if a:line =~# '\[PRV\]'
+      return substitute(a:line, '\[PRV\]', '[JOB]', '')
+    endif
+    " タグ無し: タイムスタンプ(先頭トークン)の直後に [JOB] を挿入
+    return substitute(a:line, '^\(\s*#\+\s\+\S\+\)\s*', '\1 [JOB] ', '')
+  endif
+  " 非該当(空行/形式外): 現在行を見出しに書き換え、既存テキストは後ろに残す
+  return a:prefix . a:ts . ' [JOB] ' . substitute(a:line, '^\s*', '', '')
+endfunction
+
+function! MarkdownHeaderTag(prefix, fmt) abort
+  let l:line=getline('.')
+  let l:create=!s:IsTsHeading(l:line)
+  call setline('.', MarkdownHeaderTagBuild(l:line, a:prefix, strftime(a:fmt)))
+  " 新規作成時のみ行末でインサート開始(見出しに続けて入力)
+  if l:create
+    startinsert!
+  endif
+endfunction
+" normal のみ上書き(101_mapping.vim のグローバル append を markdown で置換)。
+" insert/cmdline の <F3-F6> タイムスタンプ挿入・visual/op-pending は従来どおり残す。
+" nnoremap <silent> <buffer> <F3> :call MarkdownHeaderTag('## ', '%Y-%m-%d')<CR>
+" nnoremap <silent> <buffer> <F4> :call MarkdownHeaderTag('### ', '%Y%m%d_%H%M%S')<CR>
+" nnoremap <silent> <buffer> <F5> :call MarkdownHeaderTag('### ', '%Y-%m-%dT%H:%M:%S%z')<CR>
+
