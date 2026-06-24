@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+
+# bin/tasks の保存先ベースディレクトリ解決のユニットテスト (実 git 使用・NW 不要)。
+# real bin/tasks を subprocess 実行し、XDG_CONFIG_HOME と一時 git repo を差し替える。
+# 検証対象は initialize_links_if_needed の link 先解決:
+#   * config.env の tasks_dir を読み {tasks_dir}/{repo_name} 配下に link 生成
+#   * config 無し          => die (link 未生成)
+#   * tasks_dir 空         => die
+#   * worktree パス        => {tasks_dir}/{repo_name} を使用 (suffix は {worktree}_tasks)
+#
+#   bin/lib/test/tasks   # 全テスト実行
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+tasks_bin=$(cd "${script_dir}/../.." && pwd)/tasks
+
+# desc / expected / actual を比較し、呼び出し元 main の pass・fail カウンタを更新する。
+check() {
+  local desc="$1" expected="$2" actual="$3"
+  if [[ ${expected} != "${actual}" ]]; then
+    fail=$((fail + 1))
+    printf 'FAIL - %s\n  expected: %q\n  actual:   %q\n' "${desc}" "${expected}" "${actual}"
+    return
+  fi
+  pass=$((pass + 1))
+  printf 'ok   - %s\n' "${desc}"
+}
+
+# 隔離環境を用意。envdir/xdg/base/repo をグローバルに設定し、空 git repo を作る。
+# $2 に repo の相対パス (例: myrepo-worktree/feature-x) を渡すと worktree パスを再現できる。
+new_env() {
+  local name="$1" repo_rel="${2:-myrepo}"
+  envdir="${tmproot}/${name}"
+  xdg="${envdir}/xdg"
+  base="${envdir}/base"
+  repo="${envdir}/${repo_rel}"
+  mkdir -p "${repo}"
+  git -C "${repo}" init -q
+}
+
+# config.env に tasks_dir を書き出す。
+write_config() {
+  mkdir -p "${xdg}/tasks"
+  printf 'tasks_dir=%s\n' "$1" >"${xdg}/tasks/config.env"
+}
+
+# repo 内で bin/tasks を実行。XDG_CONFIG_HOME を隔離 dir に差し替える。
+run_tasks() {
+  (cd "${repo}" && XDG_CONFIG_HOME="${xdg}" "${tasks_bin}" "$@") 2>&1
+}
+
+# 1. config の tasks_dir 配下 {tasks_dir}/{repo_name} に link を生成する
+test_creates_links_under_config_base() {
+  new_env t1 myrepo
+  write_config "${base}"
+
+  run_tasks --summary >/dev/null 2>&1 || true
+
+  check 'links: .tasks => {base}/myrepo' \
+    "${base}/myrepo" "$(readlink "${repo}/.tasks")"
+
+  local md_target
+  md_target=$(readlink "${repo}/.tasks.md")
+  check 'links: .tasks.md dir => {base}/myrepo' \
+    "${base}/myrepo" "$(dirname "${md_target}")"
+
+  local name_ok=no
+  [[ $(basename "${md_target}") == *_tasks.md ]] && name_ok=yes
+  check 'links: .tasks.md name matches *_tasks.md' 'yes' "${name_ok}"
+}
+
+# 2. config が無ければ die し、link を生成しない
+test_dies_without_config() {
+  new_env t2 myrepo
+  # config を書かない
+
+  local out rc
+  out=$(run_tasks --summary)
+  rc=$?
+
+  check 'no-config: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'no-config: message points to config path' \
+    '1' "$([[ ${out} == *config.env* ]] && echo 1 || echo 0)"
+  check 'no-config: .tasks.md not created' \
+    '1' "$([[ ! -e ${repo}/.tasks.md ]] && echo 1 || echo 0)"
+}
+
+# 3. tasks_dir が空なら die する
+test_dies_with_empty_tasks_dir() {
+  new_env t3 myrepo
+  write_config ''
+
+  local out rc
+  out=$(run_tasks --summary)
+  rc=$?
+
+  check 'empty-dir: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'empty-dir: message says "is not set"' \
+    '1' "$([[ ${out} == *"is not set"* ]] && echo 1 || echo 0)"
+}
+
+# 3b. 相対パスの tasks_dir は絶対パスでないとして die する
+test_dies_with_relative_tasks_dir() {
+  new_env t3b myrepo
+  write_config 'relative/base'
+
+  local out rc
+  out=$(run_tasks --summary)
+  rc=$?
+
+  check 'relative-dir: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'relative-dir: message says "absolute path"' \
+    '1' "$([[ ${out} == *"absolute path"* ]] && echo 1 || echo 0)"
+  check 'relative-dir: .tasks.md not created' \
+    '1' "$([[ ! -e ${repo}/.tasks.md ]] && echo 1 || echo 0)"
+}
+
+# 5. link 既生成の repo は config 無しでも die せず動作する (早期 return)
+test_skips_config_when_links_exist() {
+  new_env t5 myrepo
+  # config を書かず、link を擬似的に既生成にする
+  mkdir -p "${repo}/.tasks"
+  : >"${repo}/.tasks.md"
+
+  local out rc
+  out=$(run_tasks --summary)
+  rc=$?
+
+  check 'existing-links: exit zero without config' '0' "${rc}"
+  check 'existing-links: summary prints repo name' \
+    '1' "$([[ ${out} == *myrepo* ]] && echo 1 || echo 0)"
+}
+
+# 4. worktree パスでも config の tasks_dir をベースに {tasks_dir}/{repo_name} を使う
+test_worktree_uses_config_base() {
+  new_env t4 myrepo-worktree/feature-x
+  write_config "${base}"
+
+  run_tasks --summary >/dev/null 2>&1 || true
+
+  check 'worktree: .tasks => {base}/myrepo' \
+    "${base}/myrepo" "$(readlink "${repo}/.tasks")"
+
+  local md_target name_ok=no
+  md_target=$(readlink "${repo}/.tasks.md")
+  check 'worktree: .tasks.md dir => {base}/myrepo' \
+    "${base}/myrepo" "$(dirname "${md_target}")"
+  [[ $(basename "${md_target}") == *_feature-x_tasks.md ]] && name_ok=yes
+  check 'worktree: .tasks.md name matches *_feature-x_tasks.md' 'yes' "${name_ok}"
+}
+
+main() {
+  set -uo pipefail
+  tmproot=$(mktemp -d)
+  trap 'rm -rf "${tmproot}"' EXIT
+  local pass=0 fail=0
+
+  test_creates_links_under_config_base
+  test_dies_without_config
+  test_dies_with_empty_tasks_dir
+  test_dies_with_relative_tasks_dir
+  test_worktree_uses_config_base
+  test_skips_config_when_links_exist
+
+  printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
+  [[ ${fail} -eq 0 ]]
+}
+
+main "$@"

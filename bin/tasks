@@ -11,6 +11,7 @@ mode=list
 comment_type=
 task_file=
 task_index=1
+tasks_base_dir=
 
 usage() {
   cat <<EOF
@@ -104,11 +105,27 @@ die() { _log red "$*" && exit 1; }
 current_is_worktree_dir() { [[ $git_root =~ ^.*${worktree_dir_name}/.*$ ]]; }
 get_timestamp_prefix() { date +"[%Y%m%d_%H%M%S]"; }
 
+# 保存先ベースディレクトリを config から読み込む。SSOT は config の tasks_dir。
+load_tasks_config() {
+  local config_file="${XDG_CONFIG_HOME:-$HOME/.config}/tasks/config.env"
+  [[ -f $config_file ]] ||
+    die "==> No config: $config_file => Create it with 'tasks_dir=/path/to/base'"
+  # shellcheck source=/dev/null
+  source "$config_file" ||
+    die "==> Failed to load config (syntax error?): $config_file"
+  [[ -n ${tasks_dir:-} ]] ||
+    die "==> 'tasks_dir' is not set in $config_file"
+  [[ $tasks_dir == /* ]] ||
+    die "==> 'tasks_dir' must be an absolute path: $tasks_dir"
+  tasks_base_dir=$tasks_dir
+}
+
 initialize_links_if_needed() {
   dst_tasks_md="$git_root/.tasks.md"
   dst_tasks_dir="$git_root/.tasks"
   [[ -e $dst_tasks_md && -e $dst_tasks_dir ]] && return
 
+  load_tasks_config
   info "==> Initialize tasks files.."
   repo_name=$(basename "$git_root")
   suffix="tasks"
@@ -118,7 +135,7 @@ initialize_links_if_needed() {
     worktree_name=$(basename "$git_root")
     suffix="${worktree_name}_tasks"
   fi
-  tasks_dir="$HOME/.mo/tasks/$repo_name"
+  tasks_dir="$tasks_base_dir/$repo_name"
   tasks_md="$(find "$tasks_dir/" -type f -name "*_${suffix}.md" | sort | tail -1 || :)"
   if [[ -z $tasks_md ]]; then
     tasks_md="$tasks_dir/${timestamp}_${suffix}.md"
