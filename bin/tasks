@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-readonly depends=(curl fzf jq)
+readonly depends=(curl fzf jq tmux git_worktree)
 timestamp=$(date +%Y%m%d-%H%M%S) && readonly timestamp
 command_name=$(basename "$0") && readonly command_name
 worktree_dir_name="-worktree" && readonly worktree_dir_name
@@ -98,7 +98,12 @@ initialize() {
   check
   set -euo pipefail
 }
-check() { hass "${depends[@]}"; }
+check() {
+  hass "${depends[@]}"
+  if [[ -z $task_file ]]; then
+    git rev-parse --is-inside-work-tree &>/dev/null || die "==> Not inside a git worktree."
+  fi
+}
 add_args() { args+=("$@"); }
 has() { command -v "${1}" >&/dev/null; }
 hass() { for arg in "$@"; do has "$arg" || die "==> No $arg command exist."; done; }
