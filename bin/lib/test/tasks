@@ -1,17 +1,24 @@
 #!/usr/bin/env bash
 
-# bin/tasks の保存先ベースディレクトリ解決のユニットテスト (実 git 使用・NW 不要)。
-# real bin/tasks を subprocess 実行し、XDG_CONFIG_HOME と一時 git repo を差し替える。
-# 検証対象は initialize_links_if_needed の link 先解決:
-#   * config.env の tasks_dir を読み {tasks_dir}/{repo_name} 配下に link 生成
-#   * config 無し          => die (link 未生成)
-#   * tasks_dir 空         => die
-#   * worktree パス        => {tasks_dir}/{repo_name} を使用 (suffix は {worktree}_tasks)
+# tasks の index.md ベース挙動のユニットテスト (実 git 使用・NW 不要)。
+# 対象コマンドを subprocess 実行し、XDG_CONFIG_HOME と一時 git repo を差し替える。
+# split は TASKS_GEN_META_CMD で LLM 生成を fake に差し替え、worktree/tmux に依存しない。
+#
+# 検証対象:
+#   * link 先解決: not-worktree => {tasks_dir}/{repo}/index.md (.tasks.md => index.md)
+#   * config 無し/空/相対 => die、既存 link は config 無しでも動作
+#   * worktree で link 未生成 => 案内付き die
+#   * split: {timestamp}_{name}/index.md(front matter) 生成、元リストは参照行へ置換
+#   * split-all: 参照行を再 split せず終了 (無限ループ回帰)
+#   * summary: front matter title 表示
+#   * complete: front matter done:true + title ✅️ + 親参照 [x]
+#   * complete: 通常サブタスク - [ ] => - [x]
 #
 #   bin/lib/test/tasks   # 全テスト実行
 
+command_name=$(basename "$0") && readonly command_name
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-tasks_bin=$(cd "${script_dir}/../.." && pwd)/tasks
+tasks_bin=$(cd "${script_dir}/../.." && pwd)/${command_name}
 
 # desc / expected / actual を比較し、呼び出し元 main の pass・fail カウンタを更新する。
 check() {
@@ -33,6 +40,7 @@ new_env() {
   xdg="${envdir}/xdg"
   base="${envdir}/base"
   repo="${envdir}/${repo_rel}"
+  meta_counter="${envdir}/meta_n"
   mkdir -p "${repo}"
   git -C "${repo}" init -q
 }
@@ -43,13 +51,31 @@ write_config() {
   printf 'tasks_dir=%s\n' "$1" >"${xdg}/tasks/config.env"
 }
 
-# repo 内で bin/tasks を実行。XDG_CONFIG_HOME を隔離 dir に差し替える。
+# repo 内で bin/tasks を実行。XDG_CONFIG_HOME と LLM 生成 fake を差し替える。
 run_tasks() {
-  (cd "${repo}" && XDG_CONFIG_HOME="${xdg}" "${tasks_bin}" "$@") 2>&1
+  (cd "${repo}" &&
+    XDG_CONFIG_HOME="${xdg}" \
+      TASKS_GEN_META_CMD="${fake_meta}" \
+      FAKE_META_COUNTER="${meta_counter}" \
+      "${tasks_bin}" "$@") 2>&1
 }
 
-# 1. config の tasks_dir 配下 {tasks_dir}/{repo_name} に link を生成する
-test_creates_links_under_config_base() {
+# LLM 生成 fake: stdin を捨て、呼び出し毎に連番の branch/name/title を返す。
+write_fake_meta() {
+  fake_meta="${tmproot}/fake_meta"
+  cat >"${fake_meta}" <<'FAKE'
+#!/usr/bin/env bash
+cat >/dev/null
+n_file="${FAKE_META_COUNTER:-/tmp/fake_meta_n}"
+i=$(( $(cat "${n_file}" 2>/dev/null || echo 0) + 1 ))
+echo "${i}" >"${n_file}"
+printf '{"branch":"feature/test-%s","name":"test-task-%s","title":"Test Title %s"}\n' "${i}" "${i}" "${i}"
+FAKE
+  chmod +x "${fake_meta}"
+}
+
+# 1. config の tasks_dir 配下 {tasks_dir}/{repo}/index.md に link を生成する
+test_creates_index_md_link() {
   new_env t1 myrepo
   write_config "${base}"
 
@@ -60,18 +86,13 @@ test_creates_links_under_config_base() {
 
   local md_target
   md_target=$(readlink "${repo}/.tasks.md")
-  check 'links: .tasks.md dir => {base}/myrepo' \
-    "${base}/myrepo" "$(dirname "${md_target}")"
-
-  local name_ok=no
-  [[ $(basename "${md_target}") == *_tasks.md ]] && name_ok=yes
-  check 'links: .tasks.md name matches *_tasks.md' 'yes' "${name_ok}"
+  check 'links: .tasks.md => {base}/myrepo/index.md' \
+    "${base}/myrepo/index.md" "${md_target}"
 }
 
 # 2. config が無ければ die し、link を生成しない
 test_dies_without_config() {
   new_env t2 myrepo
-  # config を書かない
 
   local out rc
   out=$(run_tasks --summary)
@@ -110,14 +131,30 @@ test_dies_with_relative_tasks_dir() {
   check 'relative-dir: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
   check 'relative-dir: message says "absolute path"' \
     '1' "$([[ ${out} == *"absolute path"* ]] && echo 1 || echo 0)"
-  check 'relative-dir: .tasks.md not created' \
-    '1' "$([[ ! -e ${repo}/.tasks.md ]] && echo 1 || echo 0)"
 }
 
-# 5. link 既生成の repo は config 無しでも die せず動作する (早期 return)
+# 3c. クォート付きリテラル ~ の tasks_dir は $HOME 展開され受理される
+test_accepts_quoted_tilde_tasks_dir() {
+  new_env t3c myrepo
+  local fake_home="${envdir}/home"
+  mkdir -p "${fake_home}"
+  write_config '"~/ttasks"'
+
+  local rc
+  (cd "${repo}" &&
+    HOME="${fake_home}" XDG_CONFIG_HOME="${xdg}" \
+      TASKS_GEN_META_CMD="${fake_meta}" FAKE_META_COUNTER="${meta_counter}" \
+      "${tasks_bin}" --summary) >/dev/null 2>&1
+  rc=$?
+
+  check 'tilde-dir: exit zero (~ expanded, accepted)' '0' "${rc}"
+  check 'tilde-dir: .tasks => {fake_home}/ttasks/myrepo' \
+    "${fake_home}/ttasks/myrepo" "$(readlink "${repo}/.tasks")"
+}
+
+# 4. link 既生成の repo は config 無しでも die せず動作する (早期 return)
 test_skips_config_when_links_exist() {
-  new_env t5 myrepo
-  # config を書かず、link を擬似的に既生成にする
+  new_env t4 myrepo
   mkdir -p "${repo}/.tasks"
   : >"${repo}/.tasks.md"
 
@@ -130,22 +167,168 @@ test_skips_config_when_links_exist() {
     '1' "$([[ ${out} == *myrepo* ]] && echo 1 || echo 0)"
 }
 
-# 4. worktree パスでも config の tasks_dir をベースに {tasks_dir}/{repo_name} を使う
-test_worktree_uses_config_base() {
-  new_env t4 myrepo-worktree/feature-x
+# 5. worktree で link 未生成なら案内付き die
+test_worktree_without_links_dies() {
+  new_env t5 myrepo-worktree/feature-x
   write_config "${base}"
 
+  local out rc
+  out=$(run_tasks --summary)
+  rc=$?
+
+  check 'worktree-no-link: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'worktree-no-link: message mentions spawn' \
+    '1' "$([[ ${out} == *spawn* ]] && echo 1 || echo 0)"
+}
+
+# 6. split: タスクを {timestamp}_{name}/index.md へ移し、元リストは参照行へ置換
+test_split_creates_dir_and_reference() {
+  new_env t6 myrepo
+  write_config "${base}"
   run_tasks --summary >/dev/null 2>&1 || true
+  printf '%s\n' '- [ ] First task body' >>"${base}/myrepo/index.md"
 
-  check 'worktree: .tasks => {base}/myrepo' \
-    "${base}/myrepo" "$(readlink "${repo}/.tasks")"
+  run_tasks -s >/dev/null 2>&1 || true
 
-  local md_target name_ok=no
-  md_target=$(readlink "${repo}/.tasks.md")
-  check 'worktree: .tasks.md dir => {base}/myrepo' \
-    "${base}/myrepo" "$(dirname "${md_target}")"
-  [[ $(basename "${md_target}") == *_feature-x_tasks.md ]] && name_ok=yes
-  check 'worktree: .tasks.md name matches *_feature-x_tasks.md' 'yes' "${name_ok}"
+  local idx
+  idx=$(find "${base}/myrepo" -mindepth 2 -name index.md -path '*_test-task-1/index.md' | head -1)
+  check 'split: index.md created under {timestamp}_{name}' \
+    '1' "$([[ -n ${idx} ]] && echo 1 || echo 0)"
+
+  check 'split: front matter has title' \
+    '1' "$([[ -n ${idx} ]] && grep -qx 'title: Test Title 1' "${idx}" && echo 1 || echo 0)"
+  check 'split: front matter has branch' \
+    '1' "$([[ -n ${idx} ]] && grep -qx 'branch: feature/test-1' "${idx}" && echo 1 || echo 0)"
+  check 'split: front matter done:false' \
+    '1' "$([[ -n ${idx} ]] && grep -qx 'done: false' "${idx}" && echo 1 || echo 0)"
+  check 'split: body preserved' \
+    '1' "$([[ -n ${idx} ]] && grep -qF 'First task body' "${idx}" && echo 1 || echo 0)"
+
+  check 'split: parent reference is absolute path' \
+    '1' "$(grep -qE -- '^- \[ \]\([/~].*_test-task-1/index.md\)$' "${base}/myrepo/index.md" 2>/dev/null && echo 1 || echo 0)"
+  check 'split: original task line removed from parent' \
+    '0' "$(grep -qF -- '- [ ] First task body' "${base}/myrepo/index.md" 2>/dev/null && echo 1 || echo 0)"
+}
+
+# 7. split-all: 参照行を再 split せず 2 タスクで終了 (無限ループ回帰)
+test_split_all_terminates() {
+  new_env t7 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  {
+    printf '%s\n' '- [ ] Task one'
+    printf '%s\n' '- [ ] Task two'
+  } >>"${base}/myrepo/index.md"
+
+  run_tasks -sa >/dev/null 2>&1 || true
+
+  local ref_count
+  ref_count=$(grep -cE '^- \[ \]\(' "${base}/myrepo/index.md" 2>/dev/null || echo 0)
+  check 'split-all: exactly 2 references created' '2' "${ref_count}"
+
+  local dir_count
+  dir_count=$(find "${base}/myrepo" -mindepth 2 -name index.md | wc -l)
+  check 'split-all: exactly 2 task dirs created' '2' "${dir_count}"
+}
+
+# 8. summary: front matter の title を返す
+test_summary_reads_front_matter_title() {
+  new_env t8 myrepo
+  local dir="${base}/myrepo/20260101-000000_test-task"
+  mkdir -p "${dir}"
+  cat >"${dir}/index.md" <<'EOF'
+---
+title: My Split Title
+branch: feature/foo
+name: test-task
+done: false
+parent: /nonexistent/index.md
+---
+
+- [ ] sub
+EOF
+
+  local out
+  out=$(run_tasks --summary -f "${dir}/index.md")
+  check 'summary: shows front matter title' \
+    '1' "$([[ ${out} == *"[My Split Title]"* ]] && echo 1 || echo 0)"
+}
+
+# 9. complete (front matter): done:true + title ✅️ + 親参照 [x]
+test_complete_front_matter_task() {
+  new_env t9 myrepo
+  local repo_base="${base}/myrepo"
+  local dir="${repo_base}/20260101-000000_test-task"
+  mkdir -p "${dir}"
+  printf '%s\n' "- [ ](${dir}/index.md)" >"${repo_base}/index.md"
+  cat >"${dir}/index.md" <<EOF
+---
+title: Done Me
+branch: feature/foo
+name: test-task
+done: false
+parent: ${repo_base}/index.md
+---
+
+EOF
+
+  run_tasks ok -f "${dir}/index.md" >/dev/null 2>&1 || true
+
+  check 'complete-fm: done set true' \
+    '1' "$(grep -qx 'done: true' "${dir}/index.md" && echo 1 || echo 0)"
+  check 'complete-fm: title prefixed with mark' \
+    '1' "$(grep -qE '^title: ✅️ Done Me' "${dir}/index.md" && echo 1 || echo 0)"
+  check 'complete-fm: parent reference marked [x]' \
+    '1' "$(grep -qF -- "- [x](${dir}/index.md)" "${repo_base}/index.md" && echo 1 || echo 0)"
+}
+
+# 10. complete (通常サブタスク): - [ ] => - [x]
+test_complete_normal_task() {
+  new_env t10 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  printf '%s\n' '- [ ] Plain task' >>"${base}/myrepo/index.md"
+
+  run_tasks ok >/dev/null 2>&1 || true
+
+  check 'complete-normal: marked [x]' \
+    '1' "$(grep -qF -- '- [x] Plain task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+}
+
+# 11. complete (通常): 参照行をスキップし実タスクを完了する (parse_skip_refs)
+test_complete_skips_reference() {
+  new_env t11 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  {
+    printf '%s\n' '- [ ](20260101-000000_x/index.md)'
+    printf '%s\n' '- [ ] Real task'
+  } >>"${base}/myrepo/index.md"
+
+  run_tasks ok >/dev/null 2>&1 || true
+
+  check 'complete-skip-ref: real task marked [x]' \
+    '1' "$(grep -qF -- '- [x] Real task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'complete-skip-ref: reference left untouched' \
+    '1' "$(grep -qF -- '- [ ](20260101-000000_x/index.md)' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+}
+
+# 12. clean: 完了参照行 (- [x](...)) を done へ移さず残す (回帰)
+test_clean_keeps_reference() {
+  new_env t12 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  {
+    printf '%s\n' '- [x](20260101-000000_x/index.md)'
+    printf '%s\n' '- [x] Done real task'
+  } >>"${base}/myrepo/index.md"
+
+  run_tasks -c >/dev/null 2>&1 || true
+
+  check 'clean: completed reference kept in index.md' \
+    '1' "$(grep -qF -- '- [x](20260101-000000_x/index.md)' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'clean: completed real task moved out of index.md' \
+    '0' "$(grep -qF -- '- [x] Done real task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
 }
 
 main() {
@@ -153,13 +336,22 @@ main() {
   tmproot=$(mktemp -d)
   trap 'rm -rf "${tmproot}"' EXIT
   local pass=0 fail=0
+  write_fake_meta
 
-  test_creates_links_under_config_base
+  test_creates_index_md_link
   test_dies_without_config
   test_dies_with_empty_tasks_dir
   test_dies_with_relative_tasks_dir
-  test_worktree_uses_config_base
+  test_accepts_quoted_tilde_tasks_dir
   test_skips_config_when_links_exist
+  test_worktree_without_links_dies
+  test_split_creates_dir_and_reference
+  test_split_all_terminates
+  test_summary_reads_front_matter_title
+  test_complete_front_matter_task
+  test_complete_normal_task
+  test_complete_skips_reference
+  test_clean_keeps_reference
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
