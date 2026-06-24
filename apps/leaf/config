@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+install_common() {
+  npm_install @rivolink/leaf
+}
+install_arch() {
+  def_install leaf-markdown-viewer
+}
+
+setting_common() {
+  target=${XDG_CONFIG_HOME:-~/.config}/leaf/config.toml
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/config.toml" "$target"
+}
