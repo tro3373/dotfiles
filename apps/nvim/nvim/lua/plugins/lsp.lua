@@ -22,6 +22,19 @@ return {
           require("luasnip.loaders.from_vscode").lazy_load()
         end,
       },
+      -- neosnippet: vim 時代の ~/.vim/snippets/*.snip (neosnippet 形式) を nvim でも使う。
+      -- 設定 (snippets_directory / snipmate 互換 / <C-k> 展開) は 252_neosnippet.vim を SSoT で source。
+      -- name="neosnippet" は 252 の gate g:plug.is_installed("neosnippet") に合わせる。
+      {
+        "Shougo/neosnippet.vim",
+        name = "neosnippet",
+        dependencies = { "Shougo/neosnippet-snippets" },
+        init = function()
+          _G.src("252_neosnippet.vim")
+        end,
+      },
+      -- 補完メニューに .snip トリガーを出すだけのソース。展開は neosnippet 本体 (<C-k>) が担う。
+      "notomo/cmp-neosnippet",
     },
     config = function()
       local cmp = require("cmp")
@@ -59,6 +72,7 @@ return {
         sources = cmp.config.sources({
           { name = "nvim_lsp" },
           { name = "luasnip" },
+          { name = "neosnippet" },
         }, {
           { name = "buffer" },
           { name = "path" },
