@@ -124,7 +124,7 @@ _list_root_and_worktree_directories() {
       [[ $_target_path =~ ^#.* ]] && continue
       label="($repo_root_label)"
       if [[ $_target_path =~ ^$git_worktree_dir/ ]]; then
-        label=$(tasks --summary --directory "$_target_path")
+        label=$(tasks --summary -f "${_target_path%/}/.tasks.md")
       fi
       _time=$(stat -c %y "$_target_path" | cut -d. -f1 | sed -e 's, ,_,g')
       printf "%s\t%s\t%s\n" "$_time" "$label" "$_target_path"
@@ -245,7 +245,7 @@ _rename_removed_branch() {
 _do_remove_worktree() {
   local target_path="$1"
 
-  tasks --clean --directory "${target_path}" 1>&2 || :
+  tasks --clean -f "${target_path%/}/.tasks.md" 1>&2 || :
 
   _rename_removed_branch "${target_path}"
 
