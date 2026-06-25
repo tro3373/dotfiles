@@ -33,9 +33,39 @@ function! s:CheckSubCmd()
   return 's/^\(\s*\)\(- \)\?/\1- [ ] /'
 endfunction
 
+" タイムスタンプの正規表現と生成 (Check / ToggleTimestamp で共有する SSOT)
+let s:ts_re='\[\d\{8}_\d\{6}\] '
+function! s:TsNow() abort
+  return '[' . strftime('%Y%m%d_%H%M%S') . '] '
+endfunction
+
+" 現在行に対して実行する :s コマンド列を返す
+" チェックを [ ] → [x]+ts → [x] → [ ] の順でトグルする
+function! s:CheckSubCmds()
+  let l:line=getline('.')
+
+  " [x] [ts] → [x]  (ts だけ削除、チェックは維持)
+  if l:line=~?'\[x\]' && l:line=~s:ts_re
+    return ['s/' . s:ts_re . '//']
+  endif
+  " [x] → [ ]  (アンチェック)
+  if l:line=~?'\[x\]'
+    return [s:CheckSubCmd()]
+  endif
+  " [ ] → [x] [ts]  (チェック + タイムスタンプ付与)
+  if l:line=~?'\[\s*\]'
+    return [s:CheckSubCmd(), 's/\[x\] */[x] ' . s:TsNow() . '/']
+  endif
+  " チェックボックス無し → [ ] を付与
+  return [s:CheckSubCmd()]
+endfunction
+
+" - : チェックボックスのトグル
 function! Check()
   let l:curs=winsaveview()
-  execute s:CheckSubCmd()
+  for l:cmd in s:CheckSubCmds()
+    execute l:cmd
+  endfor
   call winrestview(l:curs)
 endfunction
 " expand-region 等が張る global の _/- に上書きされないよう <buffer> で定義する
@@ -45,14 +75,14 @@ nnoremap <silent> <buffer> - :call Check()<CR>
 
 " 現在行に対して実行する :s コマンドを返す
 function! s:TimestampSubCmd()
-  let l:tsre='\[\d\{4}\d\{2}\d\{2}_\d\{2}\d\{2}\d\{2}\] '
+  let l:tsre=s:ts_re
 
   " 既にタイムスタンプがあれば削除してトグルオフ
   if getline('.')=~l:tsre
     return 's/' . l:tsre . '//'
   endif
 
-  let l:ts='[' . strftime('%Y%m%d_%H%M%S') . '] '
+  let l:ts=s:TsNow()
 
   " チェックボックスがあればその直後に挿入
   if getline('.')=~'\[.\] '
