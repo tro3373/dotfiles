@@ -226,7 +226,7 @@ gen_task_meta() {
     "${TASKS_GEN_META_CMD}"
     return
   fi
-  prp -ne 'gen-task-title-and-branch.md$' | llm -c tgpt -p groq
+  prp -ne 'gen-task-title-and-branch.md$' | llm -c tgpt -p groq -fc claude
 }
 
 split_task() {

@@ -44,7 +44,7 @@ cat_commit_msg() {
   # echo
   # echo "$_json" | jq -r '.body // empty'
   cat <"$tmp_prp" |
-    llm -c tgpt -p groq |
+    llm -c tgpt -p groq -fc claude |
     sed -e 's/\r//g' -e 's/^M//g' -e 's/^```//' -e 's/```$//' -e '/^Loaded cached credentials/d'
 }
 

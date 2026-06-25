@@ -5,6 +5,7 @@ command_name=$(basename "$0") && readonly command_name
 add_args() { args+=("$@"); }
 args=()
 cmd=
+fallback_cmd=
 provider=
 model=
 key=
@@ -21,6 +22,7 @@ $command_name - LLM command line interface.
       -h|--help     : Show this usage
       -c|--cmd      : Specify the LLM cmd (default: tgpt)
                       Available modes: gemini-cli, tgpt, claude, gemini
+      -fc|--fallback-cmd : Specify the fallback cmd used when the primary cmd fails
       -p|--provider : Specify the provider for tgpt (default: gemini)
       -m|--model    : Specify the model to use
       -k|--key      : Specify the API key for the provider
@@ -28,6 +30,7 @@ $command_name - LLM command line interface.
 EOF
 }
 initialize() {
+  set -eo pipefail
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
@@ -35,6 +38,7 @@ initialize() {
       # -e) dummy= ;;
       # -f*|--file*) file=${1#*=} ;;
       --cmd | -c) shift && cmd="$1" ;;
+      --fallback-cmd | -fc) shift && fallback_cmd="$1" ;;
       --provider | -p) shift && provider="$1" ;;
       --model | -m) shift && model="$1" ;;
       --key | -k) shift && key="$1" ;;
@@ -86,7 +90,7 @@ _claude() {
   # cat - >$tmp_org
   # command claude -p "$tmp_org の指示を実行して"
   # command claude -p "標準入力からの指示を実行して."
-  command claude --dangerously-skip-permissions -p "Execute the instructions from standard input." # --output-format json
+  command claude --model haiku --dangerously-skip-permissions -p "Execute the instructions from standard input." # --output-format json
 }
 
 _codex() {
@@ -106,24 +110,30 @@ _eliben_gemini_cli() {
   command gemini-cli --model "$model" --key "$key" prompt -
 }
 
+_dispatch() {
+  case "$1" in
+    claude) _claude ;;
+    codex) _codex ;;
+    gemini) _gemini ;;
+    gemini-cli) _eliben_gemini_cli ;;
+    *) _tgpt ;;
+  esac
+}
+
 _llm() {
-  cat - |
-    if [[ $cmd == "claude" ]]; then
-      _claude
-    elif [[ $cmd == "codex" ]]; then
-      _codex
-    elif [[ $cmd == "gemini" ]]; then
-      _gemini
-    elif [[ $cmd == "gemini-cli" ]]; then
-      _eliben_gemini_cli
-    else
-      _tgpt
-    fi
+  local input
+  input=$(cat -)
+  # Run primary in a subshell so a hard failure (e.g. hass/die on a missing
+  # binary) becomes a non-zero return that triggers the fallback cmd.
+  (_dispatch "$cmd") <<<"$input" && return 0
+  [[ -z $fallback_cmd ]] && return 1
+  elog "==> Command '${cmd:-tgpt}' failed. Fallback to '$fallback_cmd'."
+  _dispatch "$fallback_cmd" <<<"$input"
 }
 
 main() {
   initialize "$@"
-  if [[ $# -eq 0 && ! -p /dev/stdin ]]; then
+  if [[ ${#args[@]} -eq 0 && -t 0 ]]; then
     elog "==> No input data."
   fi
   fire "${args[@]}" | _llm
