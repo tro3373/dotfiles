@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # test: bin/lib/test/tasks
+# ~/.config/tasks/config.env
 
 readonly depends=(curl fzf jq tmux git_worktree)
 timestamp=$(date +%Y%m%d-%H%M%S) && readonly timestamp
@@ -119,7 +120,7 @@ current_is_worktree_dir() { [[ $git_root =~ ^.*${worktree_dir_name}/.*$ ]]; }
 get_timestamp_prefix() { date +"[%Y%m%d_%H%M%S]"; }
 # 絶対パスの先頭 $HOME を ~ に畳む / ~ を $HOME に展開する。
 # 参照や parent をユーザ名非依存の ~ 形式で保存し、利用時に展開する。
-to_tilde() { printf '%s' "${1/#$HOME/~}"; }
+to_tilde() { printf '%s' "${1/#$HOME/\~}"; }
 from_tilde() { printf '%s' "${1/#\~/$HOME}"; }
 # 参照行 `- [ ](path)` とパスの相互変換 (to_tilde/from_tilde と同様の対)。
 # from は完了状態 `- [x](path)` のパスも取り出せる。
