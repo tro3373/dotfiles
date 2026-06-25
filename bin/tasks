@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# test: bin/lib/test/tasks
 
 readonly depends=(curl fzf jq tmux git_worktree)
 timestamp=$(date +%Y%m%d-%H%M%S) && readonly timestamp
@@ -120,6 +121,10 @@ get_timestamp_prefix() { date +"[%Y%m%d_%H%M%S]"; }
 # 参照や parent をユーザ名非依存の ~ 形式で保存し、利用時に展開する。
 to_tilde() { printf '%s' "${1/#$HOME/~}"; }
 from_tilde() { printf '%s' "${1/#\~/$HOME}"; }
+# 参照行 `- [ ](path)` とパスの相互変換 (to_tilde/from_tilde と同様の対)。
+# from は完了状態 `- [x](path)` のパスも取り出せる。
+to_reference_line() { printf '%s' "- [ ]($1)"; }
+from_reference_line() { sed -E 's/^- \[[ xX]\]\((.*)\)$/\1/' <<<"$1"; }
 
 # 保存先ベースディレクトリを config から読み込む。SSOT は config の tasks_dir。
 load_tasks_config() {
@@ -274,8 +279,8 @@ split_task() {
 
 # first_line..end_line のタスクブロックを 1 行の参照リンクに置換する
 replace_task_with_reference() {
-  local ref="$1"
-  local ref_line="- [ ](${ref})"
+  local ref="$1" ref_line
+  ref_line=$(to_reference_line "$ref")
   sed -i "${first_line},${end_line}c\\
 ${ref_line}" "$target_file"
 }
@@ -486,7 +491,7 @@ spawn_task() {
 
   ref_line=$(select_reference) || die "==> No reference selected (cancelled)."
   [[ -z $ref_line ]] && die "==> No reference selected."
-  ref_path=$(echo "$ref_line" | sed -E 's/^- \[[ xX]\]\((.*)\)$/\1/')
+  ref_path=$(from_reference_line "$ref_line")
   index_md=$(from_tilde "$ref_path")
   [[ -e $index_md ]] || die "==> Reference index not found: $index_md"
 
@@ -562,43 +567,17 @@ main() {
   # NOTE: fix sed -i overwrite symlink and break link, so use realpath
   target_file=$(realpath "$target_file")
 
-  if [[ $mode == "next" ]]; then
-    cat_first_task
-    return
-  fi
-  if [[ $mode == "split" ]]; then
-    split_task
-    return
-  fi
-  if [[ $mode == "split-all" ]]; then
-    split_task_all
-    return
-  fi
-  if [[ $mode == "clean" ]]; then
-    clean_tasks
-    return
-  fi
-  if [[ ${mode} == "comment" ]]; then
-    comment_task
-    return
-  fi
-  if [[ ${mode} == "add" ]]; then
-    add_task
-    return
-  fi
-  if [[ $mode == "complete" ]]; then
-    complete_task
-    return
-  fi
-  if [[ $mode == "spawn" ]]; then
-    spawn_task
-    return
-  fi
-  if [[ $mode == "summary" ]]; then
-    summary_task
-    return
-  fi
-
-  find_tasks | v
+  case $mode in
+    next) cat_first_task ;;
+    split) split_task ;;
+    split-all) split_task_all ;;
+    clean) clean_tasks ;;
+    comment) comment_task ;;
+    add) add_task ;;
+    complete) complete_task ;;
+    spawn) spawn_task ;;
+    summary) summary_task ;;
+    *) find_tasks | v ;;
+  esac
 }
 main "$@"

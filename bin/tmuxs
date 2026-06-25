@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# test: bin/lib/test/tmuxs
 
 # preview で各 pane を末尾空行を除いた最新何行に絞るかの既定値。
 # fzf 実行時は FZF_PREVIEW_LINES から 3 pane 一望になるよう上書きする。
