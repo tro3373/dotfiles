@@ -50,7 +50,7 @@ main() {
     [[ -n $pre_message ]] && echo "$pre_message"
     cat <"$f"
   } >"$dst"
-  if [[ -p /dev/stdin ]]; then
+  if [[ ! -t 0 ]]; then
     cat <&0 >>"$dst"
   fi
 

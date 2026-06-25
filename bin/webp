@@ -56,7 +56,7 @@ fire_src() {
   if [[ ${#args[@]} -ne 0 ]]; then
     echo "${args[@]}" | tr ' ' '\n'
   fi
-  if [[ -p /dev/stdin ]]; then
+  if [[ ! -t 0 ]]; then
     cat - | tr ' ' '\n'
     # cat - | awk '{gsub(/ /, "\n"); print}'
     # xargs -n 1 echo

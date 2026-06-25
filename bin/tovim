@@ -11,7 +11,7 @@ has() { command -v ${1} >&/dev/null; }
 
 trap 'rm -f $TOVIMTMP' ERR
 
-if [ -p /dev/stdin ]; then
+if [ ! -t 0 ]; then
   in="$(cat <&0)"
   if [ -z "$in" ]; then
     exit

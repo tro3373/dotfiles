@@ -19,7 +19,7 @@ fire_stdin() {
 }
 
 fire() {
-  if [[ -p /dev/stdin ]]; then
+  if [[ ! -t 0 ]]; then
     fire_stdin
   else
     ff "$@"

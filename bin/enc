@@ -86,7 +86,7 @@ handle_dir() {
 }
 
 fire() {
-  if [[ -p /dev/stdin ]]; then
+  if [[ ! -t 0 ]]; then
     cat -
   elif [[ ${#args[@]} -ne 0 ]]; then
     echo -e "${args[@]}"

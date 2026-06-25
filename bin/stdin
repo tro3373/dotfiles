@@ -1,7 +1,7 @@
 #!/usr/bin/env -S bash -e
 
 main() {
-  test -p /dev/stdin && cat - && return 0
+  test ! -t 0 && cat - && return 0
   echo ""
 }
 main "$@"

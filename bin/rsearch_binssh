@@ -21,7 +21,7 @@ main() {
   if [[ $# -gt 0 ]]; then
     args="$*"
   fi
-  if [[ -p /dev/stdin ]]; then
+  if [[ ! -t 0 ]]; then
     args="$args$(cat -)"
   fi
   [[ -z $args ]] && echo "No remote specified." 1>&2 && exit 1

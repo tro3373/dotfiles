@@ -57,7 +57,7 @@ main() {
   initialize "$@"
   local _args="${args[@]}"
   local _stdin=
-  if [[ -p /dev/stdin ]]; then
+  if [[ ! -t 0 ]]; then
     _stdin="$(cat -)"
   fi
 

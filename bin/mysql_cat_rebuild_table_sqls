@@ -64,7 +64,7 @@ cat_rebuild_sqls() {
 main() {
   local stdin
   stdin=
-  if [[ -p /dev/stdin ]]; then
+  if [[ ! -t 0 ]]; then
     stdin="$(cat <&0)"
   fi
   if [[ -z $stdin && $# -ne 0 ]]; then

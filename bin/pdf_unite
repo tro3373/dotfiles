@@ -47,7 +47,7 @@ initialize() {
     shift
   done
   src_files="${args[*]}"
-  if [[ -p /dev/stdin ]]; then
+  if [[ ! -t 0 ]]; then
     src_files="$src_files $(cat <&0 | sort -u | while read -r line; do printf "%s " "$line"; done)"
   fi
   check

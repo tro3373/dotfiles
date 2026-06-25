@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 fire() {
-  if [[ -p /dev/stdin ]]; then
+  if [[ ! -t 0 ]]; then
     cat -
   else
     echo "$@"

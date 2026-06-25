@@ -54,7 +54,7 @@ main() {
   local u g
   u=$(id -u -n)
   g=$(id -g -n)
-  if [ -p /dev/stdin ]; then
+  if [ ! -t 0 ]; then
     while read -r f; do sub; done
   else
     for f in "${args[@]}"; do sub; done

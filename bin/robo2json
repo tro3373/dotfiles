@@ -12,7 +12,7 @@ cat_data() {
     fi
   elif [[ -e $dataf ]]; then
     cat <$dataf
-  elif [[ -p /dev/stdin ]]; then
+  elif [[ ! -t 0 ]]; then
     cat -
   else
     xsel -bo
