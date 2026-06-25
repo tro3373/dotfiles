@@ -37,7 +37,7 @@ _G.copilot_chat_setup = function()
     -- model = "claude-sonnet-4.6",
     -- model = "grok-code-fast-1",
     -- model = "claude-haiku-4-5",
-    model = "openai/gpt-oss-120b", -- not work
+    model = "openai/gpt-oss-120b",
 
     -- agent = "copilot", -- Default agent to use, see ':CopilotChatAgents' for available agents (can be specified manually in prompt via @).
     -- context = nil, -- Default context or array of contexts to use (can be specified manually in prompt via #).
