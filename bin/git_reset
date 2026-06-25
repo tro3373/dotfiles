@@ -31,6 +31,13 @@ main() {
     # rm -v "$marker"
     return
   fi
+  if [[ $1 == -v ]]; then
+    if [[ ! -e $marker ]]; then
+      die "==> No reset marker found. Cannot reset."
+    fi
+    echo "$marker" | v
+    return
+  fi
   git rev-parse HEAD >"$marker"
   git log -1 >>"$marker"
   git reset HEAD^
