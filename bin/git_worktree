@@ -7,7 +7,6 @@ readonly depends=(git fzf)
 mode=list
 branch=
 commit_hash=
-switch=0
 remove_after_merge=0
 args=()
 usage() {
@@ -25,8 +24,6 @@ Add a new git worktree for the specified branch(or Remove it).
       -m        : Merge a worktree branch into the current branch
       -mr       : Merge and then remove the worktree
       -e        : Edit config
-      -sw       : Change directory
-                    -a -sw: Switch to the newly added worktree directory
 
 EOF
 }
@@ -41,7 +38,6 @@ initialize() {
       -m) mode=merge ;;
       -mr) mode=merge && remove_after_merge=1 ;;
       -e) mode=edit_config ;;
-      -sw) switch=1 ;;
       *) add_args "$1" ;;
     esac
     shift
@@ -108,7 +104,7 @@ show_change_directory_command() {
     while read -r branch_path; do
       [[ -z $branch_path ]] && continue
       [[ $branch_path =~ ^#.* ]] && continue
-      echo cd "$branch_path"
+      echo "$branch_path"
     done
 }
 
@@ -160,13 +156,8 @@ _add_worktree() {
   ln_ignored_from_config 1>&2
   ilog "==> Added worktree for branch '$branch' at '$dst_dir'."
 
-  if [[ $switch -ne 1 ]]; then
-    # Log the directory and exit
-    echo "$dst_dir"
-    return
-  fi
-  # Change to the new worktree directory via cd command(handled by zsh)
-  echo cd "$dst_dir"
+  # Print the worktree path; the zsh wrapper cd's into it when it is a valid dir.
+  echo "$dst_dir"
 }
 
 ln_ignored_from_config() {
@@ -391,22 +382,12 @@ main() {
   fi
   local ln_config="$git_worktree_dir/config"
 
-  if [[ $mode == "add" ]]; then
-    _add_worktree
-    return
-  fi
-  if [[ $mode == "merge" ]]; then
-    _merge_worktree
-    return
-  fi
-  if [[ $mode == "remove" ]]; then
-    _remove_worktree
-    return
-  fi
-  if [[ $mode == "edit_config" ]]; then
-    _edit_config
-    return
-  fi
-  show_change_directory_command
+  case "$mode" in
+    add) _add_worktree ;;
+    merge) _merge_worktree ;;
+    remove) _remove_worktree ;;
+    edit_config) _edit_config ;;
+    *) show_change_directory_command ;;
+  esac
 }
 main "$@"

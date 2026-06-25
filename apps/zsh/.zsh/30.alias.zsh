@@ -93,19 +93,21 @@ gt() {
     git_worktree "$@"
     return
   fi
-  result=$(git_worktree "$@")
-  if [[ ! $result =~ ^cd.*$ ]]; then
-    echo -e "$result"
+  local out
+  out=$(git_worktree "$@") || return
+  [[ -z $out ]] && return
+  if [[ -d $out ]]; then
+    wlog "==> Changing directory to: $out"
+    cd -- "$out"
     return
   fi
-  wlog "==> Executing: $result"
-  eval "$result"
+  echo "$out"
 }
 modd() {
   res=$(git_select_modified_directory "$@")
   [[ -z $res ]] && return
   wlog "==> Changing directory to: $res"
-  eval "cd $res"
+  cd -- "$res"
 }
 if has git-sim; then
   alias gsm="git-sim"
