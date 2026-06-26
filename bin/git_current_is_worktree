@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+main() {
+  local common gitdir
+  common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 1
+  gitdir=$(git rev-parse --path-format=absolute --git-dir 2>/dev/null) || return 1
+  [[ $common != "$gitdir" ]] && echo true && return
+  echo false
+}
+main "$@"
