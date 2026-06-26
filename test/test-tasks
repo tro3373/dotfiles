@@ -42,6 +42,8 @@ new_env() {
   base="${envdir}/base"
   repo="${envdir}/${repo_rel}"
   meta_counter="${envdir}/meta_n"
+  wt_log="${envdir}/wt.log"
+  tmux_log="${envdir}/tmux.log"
   mkdir -p "${repo}"
   git -C "${repo}" init -q
 }
@@ -68,9 +70,12 @@ write_config_kv() {
 # repo 内で bin/tasks を実行。XDG_CONFIG_HOME と LLM 生成 fake を差し替える。
 run_tasks() {
   (cd "${repo}" &&
-    XDG_CONFIG_HOME="${xdg}" \
+    PATH="${fakebin}:${PATH}" \
+      XDG_CONFIG_HOME="${xdg}" \
       TASKS_GEN_META_CMD="${fake_meta}" \
       FAKE_META_COUNTER="${meta_counter}" \
+      FAKE_WT_LOG="${wt_log}" \
+      FAKE_TMUX_LOG="${tmux_log}" \
       "${tasks_bin}" "$@") 2>&1
 }
 
@@ -86,6 +91,48 @@ echo "${i}" >"${n_file}"
 printf '{"branch":"feature/test-%s","name":"test-task-%s","title":"Test Title %s"}\n' "${i}" "${i}" "${i}"
 FAKE
   chmod +x "${fake_meta}"
+}
+
+# worktree/tmux の fake を fakebin へ書き出し PATH 先頭に差し込む (run_tasks 参照)。
+# git_worktree -a <branch>: 実 worktree 規約と同じ <org>-worktree/<name> を mkdir し、
+# パスを echo・呼び出しを FAKE_WT_LOG へ記録する (real git worktree/tmux 非依存)。
+write_fake_bins() {
+  fakebin="${tmproot}/fakebin"
+  mkdir -p "${fakebin}"
+  cat >"${fakebin}/git_worktree" <<'FAKE'
+#!/usr/bin/env bash
+echo "$*" >>"${FAKE_WT_LOG:-/dev/null}"
+mode= ; branch=
+while [[ -n ${1:-} ]]; do
+  case "$1" in
+    -a) mode=add ;;
+    -*) ;;
+    *) [[ -z $branch ]] && branch="$1" ;;
+  esac
+  shift
+done
+[[ $mode == add ]] || exit 0
+name=${branch//\//-}
+org=$(realpath "$(dirname "$(git rev-parse --git-common-dir)")")
+wt="${org}-worktree/${name}"
+mkdir -p "$wt"
+echo "$wt"
+FAKE
+  cat >"${fakebin}/tmux" <<'FAKE'
+#!/usr/bin/env bash
+echo "$*" >>"${FAKE_TMUX_LOG:-/dev/null}"
+case "${1:-}" in
+  has-session) exit 1 ;;
+esac
+exit 0
+FAKE
+  # fake fzf: stdin 全行を選択結果として返す (ctrl-l 全件選択 + enter 相当)。
+  # Nth 未指定で fzf へ流れた multi-select 経路をテストするための差し替え。
+  cat >"${fakebin}/fzf" <<'FAKE'
+#!/usr/bin/env bash
+cat
+FAKE
+  chmod +x "${fakebin}/git_worktree" "${fakebin}/tmux" "${fakebin}/fzf"
 }
 
 # 1. config の tasks_subdir 配下 {tasks_subdir}/{repo}/index.md に link を生成する
@@ -250,7 +297,7 @@ test_split_creates_dir_and_reference() {
   run_tasks --summary >/dev/null 2>&1 || true
   printf '%s\n' '- [ ] First task body' >>"${base}/myrepo/index.md"
 
-  run_tasks -s >/dev/null 2>&1 || true
+  run_tasks -s 1 >/dev/null 2>&1 || true
 
   local idx
   idx=$(find "${base}/myrepo" -mindepth 2 -name index.md -path '*_test-task-1/index.md' | head -1)
@@ -274,8 +321,8 @@ test_split_creates_dir_and_reference() {
     '0' "$(grep -qF -- '- [ ] First task body' "${base}/myrepo/index.md" 2>/dev/null && echo 1 || echo 0)"
 }
 
-# 7. split-all: 参照行を再 split せず 2 タスクで終了 (無限ループ回帰)
-test_split_all_terminates() {
+# 7. split-all 削除: -sa はもう split しない (機能撤去の回帰)
+test_split_all_removed() {
   new_env t7 myrepo
   write_config "${base}"
   run_tasks --summary >/dev/null 2>&1 || true
@@ -286,13 +333,111 @@ test_split_all_terminates() {
 
   run_tasks -sa >/dev/null 2>&1 || true
 
-  local ref_count
-  ref_count=$(grep -cE '^- \[ \] \[[^]]*\]\(' "${base}/myrepo/index.md" 2>/dev/null || echo 0)
-  check 'split-all: exactly 2 references created' '2' "${ref_count}"
-
   local dir_count
-  dir_count=$(find "${base}/myrepo" -mindepth 2 -name index.md | wc -l)
-  check 'split-all: exactly 2 task dirs created' '2' "${dir_count}"
+  dir_count=$(find "${base}/myrepo" -mindepth 2 -name index.md 2>/dev/null | wc -l)
+  check 'split-all-removed: -sa creates no task dirs (feature gone)' \
+    '0' "${dir_count}"
+}
+
+# 7a. split: index.md 生成に続けて worktree を作成し link を張る
+test_split_creates_worktree() {
+  new_env t7a myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  printf '%s\n' '- [ ] First task body' >>"${base}/myrepo/index.md"
+
+  run_tasks -s 1 >/dev/null 2>&1 || true
+
+  local wt="${envdir}/myrepo-worktree/feature-test-1"
+  check 'split-wt: worktree dir created' \
+    '1' "$([[ -d ${wt} ]] && echo 1 || echo 0)"
+  check 'split-wt: git_worktree -a called for branch' \
+    '1' "$(grep -q -- '-a feature/test-1' "${wt_log}" 2>/dev/null && echo 1 || echo 0)"
+  check 'split-wt: worktree .tasks.md linked to split index.md' \
+    '1' "$([[ -L ${wt}/.tasks.md ]] && echo 1 || echo 0)"
+}
+
+# 7b. spawn (未split): split (index.md + worktree) してから tmux 起動
+test_spawn_splits_unsplit_then_tmux() {
+  new_env t7b myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  printf '%s\n' '- [ ] Spawn me task' >>"${base}/myrepo/index.md"
+
+  run_tasks spawn 1 >/dev/null 2>&1 || true
+
+  local idx
+  idx=$(find "${base}/myrepo" -mindepth 2 -name index.md -path '*_test-task-1/index.md' | head -1)
+  check 'spawn-unsplit: split index.md created' \
+    '1' "$([[ -n ${idx} ]] && echo 1 || echo 0)"
+  check 'spawn-unsplit: parent reference created from split' \
+    '1' "$(grep -qE -- '^- \[ \] \[[^]]*_test-task-1\]\(' "${base}/myrepo/index.md" 2>/dev/null && echo 1 || echo 0)"
+  check 'spawn-unsplit: worktree created' \
+    '1' "$([[ -d ${envdir}/myrepo-worktree/feature-test-1 ]] && echo 1 || echo 0)"
+  check 'spawn-unsplit: tmux session created' \
+    '1' "$(grep -q 'new-session' "${tmux_log}" 2>/dev/null && echo 1 || echo 0)"
+}
+
+# 7c. spawn (split済み + worktree既存): worktree 作成 skip・tmux は起動。
+# ensure_worktree は git worktree list を SSOT に既存判定するため本物の worktree を作る。
+test_spawn_skips_existing_worktree() {
+  new_env t7c myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  git -C "${repo}" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+  local repo_base="${base}/myrepo"
+  local dir="${repo_base}/20260101-000000_pre"
+  local ref='base/myrepo/20260101-000000_pre/index.md'
+  mkdir -p "${dir}"
+  printf '%s\n' "- [ ] [20260101-000000_pre](${ref})" >>"${repo_base}/index.md"
+  cat >"${dir}/index.md" <<EOF
+---
+title: Pre Split
+branch: feature/foo
+name: pre
+done: false
+parent: ${repo_base}/index.md
+---
+
+- [ ] sub
+EOF
+  # 既存 worktree を本物で用意 (git worktree list に出る => ensure_worktree が skip)
+  local wt="${envdir}/myrepo-worktree/feature-foo"
+  mkdir -p "$(dirname "${wt}")"
+  git -C "${repo}" worktree add -q -b feature/foo "${wt}" >/dev/null 2>&1
+
+  run_tasks spawn 1 >/dev/null 2>&1 || true
+
+  check 'spawn-skip: git_worktree NOT called (worktree exists)' \
+    '0' "$(grep -c -- '-a feature/foo' "${wt_log}" 2>/dev/null || echo 0)"
+  check 'spawn-skip: tmux session still created' \
+    '1' "$(grep -q 'new-session' "${tmux_log}" 2>/dev/null && echo 1 || echo 0)"
+}
+
+# 7d. split (Nth 未指定): fzf multi-select 全件選択を行番号降順で処理する。
+# fake fzf が全候補を返す = ctrl-l 全件選択相当。降順処理で body 取り違えが起きない。
+test_split_multi_select_all() {
+  new_env t7d myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  {
+    printf '%s\n' '- [ ] Alpha task body'
+    printf '%s\n' '- [ ] Bravo task body'
+  } >>"${base}/myrepo/index.md"
+
+  # Nth 未指定 => fake fzf が全候補を選択 (multi-select 全件)
+  run_tasks -s >/dev/null 2>&1 || true
+
+  local dir_count ref_count
+  dir_count=$(find "${base}/myrepo" -mindepth 2 -name index.md 2>/dev/null | wc -l)
+  ref_count=$(grep -cE '^- \[ \] \[[^]]*\]\(' "${base}/myrepo/index.md" 2>/dev/null || echo 0)
+  check 'split-multi: 全件が dir へ split' '2' "${dir_count}"
+  check 'split-multi: 全件が参照行へ置換' '2' "${ref_count}"
+  # 降順処理の正しさ: 各 body が取り違わらずそれぞれの split 先に入る
+  check 'split-multi: Alpha body がいずれかの split 先に存在' \
+    '1' "$(grep -rqlF 'Alpha task body' "${base}/myrepo"/*/index.md 2>/dev/null && echo 1 || echo 0)"
+  check 'split-multi: Bravo body がいずれかの split 先に存在' \
+    '1' "$(grep -rqlF 'Bravo task body' "${base}/myrepo"/*/index.md 2>/dev/null && echo 1 || echo 0)"
 }
 
 # 8. summary: front matter の title を返す
@@ -357,7 +502,7 @@ test_complete_normal_task() {
   run_tasks --summary >/dev/null 2>&1 || true
   printf '%s\n' '- [ ] Plain task' >>"${base}/myrepo/index.md"
 
-  run_tasks ok >/dev/null 2>&1 || true
+  run_tasks ok 1 >/dev/null 2>&1 || true
 
   check 'complete-normal: marked [x]' \
     '1' "$(grep -qF -- '- [x] Plain task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
@@ -373,7 +518,7 @@ test_complete_skips_reference() {
     printf '%s\n' '- [ ] Real task'
   } >>"${base}/myrepo/index.md"
 
-  run_tasks ok >/dev/null 2>&1 || true
+  run_tasks ok 1 >/dev/null 2>&1 || true
 
   check 'complete-skip-ref: real task marked [x]' \
     '1' "$(grep -qF -- '- [x] Real task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
@@ -564,6 +709,7 @@ main() {
   trap 'rm -rf "${tmproot}"' EXIT
   local pass=0 fail=0
   write_fake_meta
+  write_fake_bins
 
   test_creates_index_md_link
   test_dies_without_config
@@ -575,7 +721,11 @@ main() {
   test_requires_config_even_with_links
   test_worktree_self_heals_links
   test_split_creates_dir_and_reference
-  test_split_all_terminates
+  test_split_all_removed
+  test_split_creates_worktree
+  test_spawn_splits_unsplit_then_tmux
+  test_spawn_skips_existing_worktree
+  test_split_multi_select_all
   test_summary_reads_front_matter_title
   test_complete_front_matter_task
   test_complete_normal_task

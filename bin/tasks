@@ -36,19 +36,19 @@ Manage repository tasks.
       $command_name [option] [N]
     Options
       -h|--help           : Show this usage
-      -s|--split          : Split Nth task into a task directory (default 1)
-      -sa|--split-all     : Split all tasks into task directories
+      -s|--split          : Split task(s) into a task dir + worktree (fzf if no N)
       -n|--next           : Show Nth task chunk (default 1; also -n2, --next=2)
       -c|--clean          : Record completed split references to log and drop from list
-      ok|v|done|complete  : Mark Nth task chunk as completed (default 1)
+      ok|v|done|complete  : Mark task(s) as completed (fzf if no N)
       -m|--comment [type] : Add comment to Nth task (type: requirement|review|complete)
       -a|--add            : Add task from stdin (prepends "- [ ] " if missing)
       -f|--file [path]    : Specify task file to operate on (default: repo .tasks.md)
-      spawn|--spawn       : Spawn worktree + tmux + CC /task from a split reference
+      spawn|--spawn       : Spawn worktree + tmux + CC /task (split first if needed; fzf if no N)
       --summary           : Show title of tasks
     Task index [N]
-      Selects the Nth pending task (1-based, default 1) for
-      next/split/comment/complete/spawn. Give as a bare number or -N (e.g. 2, -2).
+      next/comment use the Nth pending task (1-based, default 1).
+      split/complete/spawn use N directly; omit N to pick via fzf multi-select
+      (ctrl-l: toggle-all, ctrl-g: toggle-preview). Give N as 2 or -2.
 EOF
 }
 
@@ -58,7 +58,6 @@ initialize() {
     case "$1" in
       -h | --help) usage && exit 0 ;;
       -s | --split) mode="split" ;;
-      -sa | --split-all) mode="split-all" ;;
       -n | --next)
         mode="next"
         if [[ ${2:-} =~ ^[0-9]+$ ]]; then
@@ -254,36 +253,70 @@ cat_first_task() {
   sed -n "${first_line},${end_line}p" "$target_file"
 }
 
+# 候補タスク行 (lineno:行内容) を返す。comp=1 で完了タスク (- [x])、それ以外は未完了 (- [ ])。
+# skip_refs=1 で参照行 (- [ ] [title](path)) を候補から除外する。die を持たず $() 内で安全。
+list_task_lines() {
+  local comp="$1" skip_refs="$2" key lines
+  key=$grep_key_task_exists
+  [[ $comp -eq 1 ]] && key=$grep_key_task_completed
+  lines=$(grep -nE "^$key" "$target_file" 2>/dev/null || :)
+  if [[ $skip_refs -eq 1 ]]; then
+    lines=$(printf '%s\n' "$lines" | { grep -vE "^[0-9]+:${grep_key_reference#^}" || :; })
+  fi
+  printf '%s\n' "$lines" | sed '/^$/d'
+}
+
+# 指定行をタスク先頭として first_line/end_line をセットする (グローバル)。
+# 終端 = 以降最初の `- ` 行 or 見出し行(#) の直前。無ければファイル末尾。
+set_block_range() {
+  first_line="$1"
+  second_line=$(grep -nE '^(- |#)' "$target_file" | awk -F: -v fl="$first_line" '$1 > fl {print $1; exit}')
+  [[ -n $second_line ]] || second_line=$(($(wc -l <"$target_file") + 1))
+  end_line=$((second_line - 1))
+}
+
 parse_tasks() {
   comp=$1
-  local index=${2:-1}
+  local index=${2:-1} fl
   grep_key=$grep_key_task_exists
   [[ $comp -eq 1 ]] && grep_key=$grep_key_task_completed
   if [[ ! -s $target_file ]] || ! grep -qE "^$grep_key" "$target_file"; then
     die "==> Empty tasks."
   fi
+  fl=$(list_task_lines "$comp" "$parse_skip_refs" | sed -n "${index}p" | cut -d: -f1)
+  [[ -n $fl ]] || die "==> Task index ${index} not found."
+  set_block_range "$fl"
+}
 
-  # N番目のタスク行を取得。split 時は参照行 (- [ ](...)) を候補から除外する
-  local lines
-  lines=$(grep -nE "^$grep_key" "$target_file")
-  if [[ $parse_skip_refs -eq 1 ]]; then
-    lines=$(printf '%s\n' "$lines" | { grep -vE "^[0-9]+:${grep_key_reference#^}" || :; })
+# bin/v 互換 keybind の multi-select fzf。stdin=候補(lineno:行内容)、$1=prompt。
+# 表示は行番号列を隠し、preview は当該ブロックを表示する。die を持たない。
+fzf_select() {
+  fzf --multi --reverse --height=80% \
+    --delimiter=: --with-nth=2.. \
+    --prompt="$1" \
+    --preview "sed -n '{1},+20p' \"$target_file\"" \
+    --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview'
+}
+
+# 候補(lineno:行内容)から選択行を返す。Nth 明示時は N 番目、未指定時は fzf。
+# die を持たないため $() 内で安全 (空チェックの die は呼び出し側に置く)。
+choose_lines() {
+  local candidates="$1" prompt="$2"
+  if [[ $task_index_explicit -eq 1 ]]; then
+    printf '%s\n' "$candidates" | sed -n "${task_index}p"
+    return
   fi
-  first_line=$(printf '%s\n' "$lines" | sed -n "${index}p" | cut -d: -f1)
-  if [[ -z $first_line ]]; then
-    die "==> Task index ${index} not found."
-  fi
+  printf '%s\n' "$candidates" | fzf_select "$prompt"
+}
 
-  # first_line 以降の次の `- ` 行 or 見出し行(#) を取得（タスクの終端）
-  second_line=$(grep -nE '^(- |#)' "$target_file" | awk -F: -v fl="$first_line" '$1 > fl {print $1; exit}')
-
-  # 2番目の行番号がなければファイル末尾
-  if [[ -z $second_line ]]; then
-    second_line=$(($(wc -l <"$target_file") + 1))
-  fi
-
-  # 範囲を計算（2番目の直前まで）
-  end_line=$((second_line - 1))
+# 選択行(lineno:行内容)を行番号降順で fn に行番号を渡して実行する。
+# 降順処理で、split のブロック→1行参照置換による行ずれが未処理タスクへ波及しない。
+process_selected() {
+  local selected="$1" fn="$2" sel
+  while IFS= read -r sel; do
+    [[ -n $sel ]] || continue
+    "$fn" "${sel%%:*}"
+  done < <(printf '%s\n' "$selected" | sort -t: -k1,1nr)
 }
 
 # タスク内容(stdin)から branch/name/title の JSON を生成する。
@@ -330,22 +363,33 @@ write_split_index() {
     die "==> Task path not under store_root: $task_index_md (store_root=$store_root)"
 }
 
+# 選択タスクを {timestamp}_{name}/index.md へ split し、worktree も作成する。
+# Nth 未指定なら fzf multi-select。複数選択は行番号降順で処理する。
 split_task() {
-  local tmp_file
   parse_skip_refs=1
+  local candidates selected
+  candidates=$(list_task_lines 0 1)
+  [[ -n $candidates ]] || die "==> No splittable tasks in $target_file"
+  # fzf キャンセルは非ゼロ終了。set -e で即死せず friendly die へ繋ぐため || true
+  selected=$(choose_lines "$candidates" "Select task(s) to split: ") || true
+  [[ -n $selected ]] || die "==> No task selected."
+  process_selected "$selected" split_one_task
+}
 
-  # NOTE: cat_first_task で first_line/end_line をセットしている
-  # sub processでは変数にセットされないので、ファイル出力している
+# 指定行のタスクブロックを split する (index.md 生成 + 参照行置換 + worktree 作成)。
+# timestamp は split 実行時。元リストの当該タスクは参照行へ置換 (削除しない)。
+split_one_task() {
+  local line_no="$1" tmp_file
+  set_block_range "$line_no"
   tmp_file=$(mktemp)
-  cat_first_task >"$tmp_file"
-
-  # timestamp は split 実行時。元リストの当該タスクを参照行へ置換 (削除しない)。
+  sed -n "${first_line},${end_line}p" "$target_file" >"$tmp_file"
   write_split_index "$tmp_file" "$timestamp"
   replace_task_with_reference "$task_ref"
-
   rm -f "$tmp_file"
   info "==> Task split to: $task_index_md"
   info "==> Branch: $task_branch"
+  ensure_worktree "$task_branch" "$task_index_md"
+  info "==> Worktree: $worktree_dir"
 }
 
 # first_line..end_line のタスクブロックを 1 行の参照リンク文字列に置換する (低レベル)
@@ -358,14 +402,6 @@ ${ref_line}" "$target_file"
 # split: 未完了タスクブロックを未完了参照行 (- [ ]) へ置換する
 replace_task_with_reference() {
   replace_block_with_reference_line "$(to_reference_line "$1")"
-}
-
-split_task_all() {
-  split_task
-  # まだ未 split タスクが残っていれば再帰的に処理
-  if has_unsplit_task; then
-    split_task_all
-  fi
 }
 
 # clean 用: 未 split の完了タスク (- [x] 実ブロック) を順に split する。
@@ -431,12 +467,6 @@ move_related_files() {
 
 has_tasks() {
   grep -qE "^$grep_key_task_exists" "$target_file"
-}
-
-# 参照行を除いた未完了タスクが残っているか
-has_unsplit_task() {
-  grep -nE "^$grep_key_task_exists" "$target_file" |
-    grep -qvE "^[0-9]+:${grep_key_reference#^}"
 }
 
 # 参照行を除いた完了タスク (- [x] の実ブロック) が残っているか
@@ -541,15 +571,24 @@ mark_parent_reference_done() {
   info "==> Parent reference marked done: $parent"
 }
 
+# 通常サブタスクを完了にする。Nth 未指定なら fzf multi-select。
+# 参照行は手動完了せず mark_parent_reference_done 経由でのみ [x] 化する一本道にする。
 complete_normal_task() {
-  # 参照行は手動完了せず mark_parent_reference_done 経由でのみ [x] 化する一本道にする
   parse_skip_refs=1
-  # task_index 番目のタスクを完了にする
-  parse_tasks 0 "$task_index"
-  # タスクを完了にする
-  sed -i "${first_line}s/^- \[ \]/- [x]/" "$target_file"
+  local candidates selected
+  candidates=$(list_task_lines 0 1)
+  [[ -n $candidates ]] || die "==> Empty tasks."
+  selected=$(choose_lines "$candidates" "Select task(s) to complete: ") || true
+  [[ -n $selected ]] || die "==> No task selected."
+  process_selected "$selected" complete_one_task
+}
+
+# 指定行の未完了タスクを完了 (- [ ] => - [x]) にする。行数は変わらない。
+complete_one_task() {
+  local line_no="$1"
+  sed -i "${line_no}s/^- \[ \]/- [x]/" "$target_file"
   info "==> $complete_mark Task marked as completed"
-  sed -n "${first_line}p" "$target_file"
+  sed -n "${line_no}p" "$target_file"
 }
 
 get_comment_header() {
@@ -621,51 +660,80 @@ summary_task() {
   echo "$task_dir_name$task_summary"
 }
 
-# split 済みタスク (参照行) から worktree + tmux + CC /task を起動する
-spawn_task() {
-  local ref_line ref_path index_md branch name worktree_dir worktree_name session base_dir
-
-  ref_line=$(select_reference) || die "==> No reference selected (cancelled)."
-  [[ -z $ref_line ]] && die "==> No reference selected."
-  ref_path=$(from_reference_line "$ref_line")
-  # ref_path は store_root 相対なので絶対パスへ解決する
-  index_md="$store_root/$ref_path"
-  [[ -e $index_md ]] || die "==> Reference index not found: $index_md"
-
-  branch=$(front_matter_value "$index_md" branch)
-  name=$(front_matter_value "$index_md" name)
-  [[ -n $branch ]] || die "==> No 'branch' in front matter: $index_md"
-
-  # worktree 作成 (コマンド置換は errexit を発火させるため明示 || die)
-  worktree_dir=$(git_worktree -a "$branch") ||
-    die "==> Failed to create worktree for: $branch"
-  [[ -n $worktree_dir && -e $worktree_dir ]] ||
-    die "==> Failed to create worktree for: $branch"
-  worktree_name=${branch//\//-}
-
-  # link: worktree/.tasks.md => index.md, worktree/.tasks => {tasks_subdir}/{repo}
-  base_dir=$(realpath "$git_root/.tasks")
-  [[ -e "$worktree_dir/.tasks.md" ]] || _ln "$index_md" "$worktree_dir/.tasks.md"
-  [[ -e "$worktree_dir/.tasks" ]] || _ln "$base_dir" "$worktree_dir/.tasks"
-
-  # tmux セッション作成 + CC で /task 起動
-  session="task-${worktree_name}"
-  spawn_tmux_session "$session" "$worktree_dir"
-
-  info "==> Spawned worktree: $worktree_dir"
-  info "==> tmux session: $session"
+# branch に対応する既存 worktree の絶対パスを返す (無ければ空)。
+# パス命名規約を自前で持たず git を SSOT にする (git_worktree との二重定義回避)。
+existing_worktree_for() {
+  local branch="$1"
+  git -C "$git_root" worktree list --porcelain 2>/dev/null |
+    awk -v b="refs/heads/$branch" '
+      /^worktree /{wt=substr($0, 10)}
+      /^branch /{if ($2 == b) {print wt; exit}}' || :
 }
 
-# 参照行を選ぶ。index 明示時は N 番目、未指定時は fzf
-select_reference() {
-  local refs
-  refs=$(grep -E "$grep_key_reference" "$target_file" || :)
-  [[ -z $refs ]] && die "==> No task references found in $target_file"
-  if [[ $task_index_explicit -eq 1 ]]; then
-    printf '%s\n' "$refs" | sed -n "${task_index}p"
-    return
+# branch の worktree を保証する。既存なら作成を skip し、無ければ git_worktree で作成。
+# worktree 内 .tasks.md => index_md / .tasks => base の link も張る (冪等)。
+# split / spawn 共用。結果の worktree 絶対パスをグローバル worktree_dir にセットする。
+ensure_worktree() {
+  local branch="$1" index_md="$2" wt base_dir
+  wt=$(existing_worktree_for "$branch")
+  if [[ -n $wt ]]; then
+    info "==> Worktree already exists, skip creation: $wt"
   fi
-  printf '%s\n' "$refs" | fzf --reverse --height=40% --prompt='Select task to spawn: '
+  if [[ -z $wt ]]; then
+    wt=$(git_worktree -a "$branch") ||
+      die "==> Failed to create worktree for: $branch"
+    [[ -n $wt && -e $wt ]] ||
+      die "==> Failed to create worktree for: $branch"
+  fi
+  base_dir=$(realpath "$git_root/.tasks")
+  # dangling symlink でも -L で検出し _ln の二重作成失敗を防ぐ
+  [[ -e "$wt/.tasks.md" || -L "$wt/.tasks.md" ]] || _ln "$index_md" "$wt/.tasks.md"
+  [[ -e "$wt/.tasks" || -L "$wt/.tasks" ]] || _ln "$base_dir" "$wt/.tasks"
+  worktree_dir="$wt"
+}
+
+# split 済み参照行・未 split タスクから worktree + tmux + CC /task を起動する
+spawn_task() {
+  local candidates selected
+  # 未 split 含む全 pending タスクが対象 (skip_refs=0)
+  candidates=$(list_task_lines 0 0)
+  [[ -n $candidates ]] || die "==> No tasks to spawn in $target_file"
+  selected=$(choose_lines "$candidates" "Select task(s) to spawn: ") || true
+  [[ -n $selected ]] || die "==> No task selected."
+  process_selected "$selected" spawn_one
+}
+
+# 指定行の pending タスクを spawn する。
+# 参照行(split 済み): index.md を解決し worktree を保証してから tmux 起動。
+# 未 split タスク: split (index.md + worktree) してから tmux 起動。
+spawn_one() {
+  local line_no="$1" line is_ref ref_path index_md branch worktree_name session
+  line=$(sed -n "${line_no}p" "$target_file")
+  is_ref=0
+  if printf '%s\n' "$line" | grep -qE "$grep_key_reference"; then
+    is_ref=1
+  fi
+
+  if [[ $is_ref -eq 0 ]]; then
+    split_one_task "$line_no"
+    branch="$task_branch"
+  fi
+  if [[ $is_ref -eq 1 ]]; then
+    ref_path=$(from_reference_line "$line")
+    # ref_path は store_root 相対なので絶対パスへ解決する
+    index_md="$store_root/$ref_path"
+    [[ -e $index_md ]] || die "==> Reference index not found: $index_md"
+    branch=$(front_matter_value "$index_md" branch)
+    [[ -n $branch ]] || die "==> No 'branch' in front matter: $index_md"
+    ensure_worktree "$branch" "$index_md"
+  fi
+
+  # tmux セッション作成 + CC で /task 起動 (worktree_dir は ensure_worktree がセット)
+  worktree_name=${branch//\//-}
+  session="task-${worktree_name}"
+  spawn_tmux_session "$session" "$worktree_dir"
+  info "==> Spawned worktree: $worktree_dir"
+  info "==> tmux session: $session"
 }
 
 spawn_tmux_session() {
@@ -710,7 +778,6 @@ main() {
   case $mode in
     next) cat_first_task ;;
     split) split_task ;;
-    split-all) split_task_all ;;
     clean) clean_tasks ;;
     comment) comment_task ;;
     add) add_task ;;
