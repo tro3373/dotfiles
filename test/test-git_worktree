@@ -8,11 +8,10 @@
 #       org root を stdout に出す (zsh wrapper gt が cd し直すための救済)。
 #       現在地でない worktree 削除時・org root から削除時は stdout 空。
 #
-#   bin/lib/test/git_worktree   # 全テスト実行
+#   test/git_worktree   # 全テスト実行
 
-_test_name=$(basename "${BASH_SOURCE[0]}")
-script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-gwt_bin=$(cd "${script_dir}/../.." && pwd)/${_test_name}
+script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
+gwt_bin=$(cd "${script_dir}/../bin" && pwd)/git_worktree
 
 # shellcheck disable=SC1090
 source "$gwt_bin"
