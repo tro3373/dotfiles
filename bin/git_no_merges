@@ -53,19 +53,36 @@ detect_base_branch() {
   # _branch=$(suggested_base_branch)
   read -r _branch < <(suggested_base_branch)
   if [[ -z $_branch ]]; then
-    error "==> No main or master branch found in remote."
+    error "==> Could not detect base branch (develop/main/master). Pass one explicitly: $command_name <base>"
   fi
   echo "$_branch"
 }
 
 suggested_base_branch() {
-  local grep_key='origin/develop'
-  [[ $target_branch == main ]] && grep_key='origin/(main|master)'
-  git branch -r |
-    grep -v 'origin/HEAD' |
-    grep origin |
-    grep -E "$grep_key" |
-    head -1
+  # On main/master itself, compare against its own remote
+  if [[ $target_branch == main || $target_branch == master ]]; then
+    first_existing_ref origin/main origin/master main master
+    return
+  fi
+  # Feature branch: prefer develop, then the remote default, then main/master
+  first_existing_ref \
+    origin/develop \
+    "$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)" \
+    origin/main origin/master \
+    develop main master
+}
+
+# Echo the first ref that resolves, in priority order; return 1 if none
+first_existing_ref() {
+  local ref
+  for ref in "$@"; do
+    [[ -z $ref ]] && continue
+    git rev-parse --verify --quiet "$ref" >/dev/null && {
+      echo "$ref"
+      return 0
+    }
+  done
+  return 1
 }
 
 set_base_and_target_branches() {
