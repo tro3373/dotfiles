@@ -3,9 +3,9 @@
 # ~/.config/tasks/config.env
 
 readonly depends=(curl fzf jq tmux git_worktree)
-timestamp=$(date +%Y%m%d-%H%M%S) && readonly timestamp
+readonly timestamp_fmt="+%Y%m%d-%H%M%S"
+timestamp=$(date $timestamp_fmt) && readonly timestamp
 command_name=$(basename "$0") && readonly command_name
-worktree_dir_name="-worktree" && readonly worktree_dir_name
 grep_key_task_exists='- \[ \]' && readonly grep_key_task_exists
 grep_key_task_completed='- \[[xX]\]' && readonly grep_key_task_completed
 # 参照行 (split 済みタスクへのリンク): `- [ ](path/to/index.md)` 形式
@@ -116,7 +116,14 @@ log() { _log white "$*"; }
 info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 die() { _log red "$*" && exit 1; }
-current_is_worktree_dir() { [[ $git_root =~ ^.*${worktree_dir_name}/.*$ ]]; }
+# linked worktree では git-common-dir(共有 .git) と git-dir(worktree 個別) が食い違う。
+# パス命名規約に依存しない判定 (git_worktree の is_invoked_from_worktree と同方式)。
+current_is_worktree_dir() {
+  local common gitdir
+  common=$(git -C "$git_root" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 1
+  gitdir=$(git -C "$git_root" rev-parse --path-format=absolute --git-dir 2>/dev/null) || return 1
+  [[ $common != "$gitdir" ]]
+}
 get_timestamp_prefix() { date +"[%Y%m%d_%H%M%S]"; }
 # 絶対パスの先頭 $HOME を ~ に畳む / ~ を $HOME に展開する。
 # 参照や parent をユーザ名非依存の ~ 形式で保存し、利用時に展開する。
@@ -126,6 +133,75 @@ from_tilde() { printf '%s' "${1/#\~/$HOME}"; }
 # from は完了状態 `- [x](path)` のパスも取り出せる。
 to_reference_line() { printf '%s' "- [ ]($1)"; }
 from_reference_line() { sed -E 's/^- \[[ xX]\]\((.*)\)$/\1/' <<<"$1"; }
+
+# YAML front matter を出力 (title, branch, name, parent)。done は常に false。
+# body は呼び出し側で追記する。front matter スキーマの SSOT。
+emit_front_matter() {
+  local title="$1" branch="$2" name="$3" parent="$4"
+  printf '%s\n' '---'
+  printf 'title: %s\n' "$title"
+  printf 'branch: %s\n' "$branch"
+  printf 'name: %s\n' "$name"
+  printf 'done: false\n'
+  printf 'parent: %s\n' "$parent"
+  printf '%s\n' '---'
+  printf '\n'
+}
+
+# .tasks.md(file) と .tasks(dir) のリンクが無ければ生成。
+# not worktree: {tasks_dir}/{repo}/index.md を生成し .tasks.md => index.md
+# worktree    : 親リポと共有 base を使い worktree 専用 .tasks.md を自己修復
+initialize_links_if_needed() {
+  dst_tasks_md="$git_root/.tasks.md"
+  dst_tasks_dir="$git_root/.tasks"
+  [[ -e $dst_tasks_md && -e $dst_tasks_dir ]] && return
+
+  load_tasks_config
+  if current_is_worktree_dir; then
+    initialize_worktree_links
+    return
+  fi
+  initialize_normal_links
+}
+
+initialize_normal_links() {
+  info "==> Initialize tasks files.."
+  repo_name=$(basename "$git_root")
+  tasks_dir="$tasks_base_dir/$repo_name"
+  tasks_md="$tasks_dir/index.md"
+  if [[ ! -e $dst_tasks_dir ]]; then
+    mkdir -p "$tasks_dir/done"
+    _ln "$tasks_dir" "$dst_tasks_dir"
+  fi
+  if [[ ! -e $dst_tasks_md ]]; then
+    touch "$tasks_md"
+    _ln "$tasks_md" "$dst_tasks_md"
+  fi
+}
+
+# worktree のリンクを自己修復する。親リポを git-common-dir から逆引きし
+# {tasks_dir}/{repo} を親と共有する base として使う。worktree のブランチは
+# 確定済みなので LLM 推論なしで split と同型の front matter を決定的に生成する。
+initialize_worktree_links() {
+  info "==> Initialize worktree tasks files.."
+  local org_root repo_name base_dir branch name wt_ts wt_md wt_dir
+  org_root=$(dirname "$(git -C "$git_root" rev-parse --path-format=absolute --git-common-dir)")
+  repo_name=$(basename "$org_root")
+  base_dir="$tasks_base_dir/$repo_name"
+  mkdir -p "$base_dir/done"
+
+  branch=$(git -C "$git_root" rev-parse --abbrev-ref HEAD)
+  [[ -z $branch || $branch == "HEAD" ]] && branch=$(basename "$git_root")
+  name=${branch//\//-}
+  wt_ts=$(date -r "$git_root" $timestamp_fmt)
+  wt_dir="$base_dir/${wt_ts}_${name}"
+  mkdir -p "$wt_dir"
+  wt_md="$wt_dir/index.md"
+  [[ -e $wt_md ]] ||
+    emit_front_matter "$branch" "$branch" "$name" "$(to_tilde "$org_root/.tasks.md")" >"$wt_md"
+  [[ -e $dst_tasks_dir ]] || _ln "$base_dir" "$dst_tasks_dir"
+  [[ -e $dst_tasks_md ]] || _ln "$wt_md" "$dst_tasks_md"
+}
 
 # 保存先ベースディレクトリを config から読み込む。SSOT は config の tasks_dir。
 load_tasks_config() {
@@ -141,33 +217,6 @@ load_tasks_config() {
   [[ $tasks_dir == /* ]] ||
     die "==> 'tasks_dir' must be an absolute path: $tasks_dir"
   tasks_base_dir=$tasks_dir
-}
-
-# .tasks.md(file) と .tasks(dir) のリンクが無ければ生成。
-# not worktree: {tasks_dir}/{repo}/index.md を生成し .tasks.md => index.md
-# worktree    : link は split/spawn が作る。未生成なら案内して die
-initialize_links_if_needed() {
-  dst_tasks_md="$git_root/.tasks.md"
-  dst_tasks_dir="$git_root/.tasks"
-  [[ -e $dst_tasks_md && -e $dst_tasks_dir ]] && return
-
-  if current_is_worktree_dir; then
-    die "==> Worktree links missing. Run '$command_name spawn' from the parent repo to set up this worktree."
-  fi
-
-  load_tasks_config
-  info "==> Initialize tasks files.."
-  repo_name=$(basename "$git_root")
-  tasks_dir="$tasks_base_dir/$repo_name"
-  tasks_md="$tasks_dir/index.md"
-  if [[ ! -e $dst_tasks_dir ]]; then
-    mkdir -p "$tasks_dir/done"
-    _ln "$tasks_dir" "$dst_tasks_dir"
-  fi
-  if [[ ! -e $dst_tasks_md ]]; then
-    touch "$tasks_md"
-    _ln "$tasks_md" "$dst_tasks_md"
-  fi
 }
 
 _ln() {
@@ -258,14 +307,7 @@ split_task() {
 
   # YAML front matter + タスク内容
   {
-    printf '%s\n' '---'
-    printf 'title: %s\n' "$title"
-    printf 'branch: %s\n' "$branch"
-    printf 'name: %s\n' "$name"
-    printf 'done: false\n'
-    printf 'parent: %s\n' "$parent_md"
-    printf '%s\n' '---'
-    printf '\n'
+    emit_front_matter "$title" "$branch" "$name" "$parent_md"
     cat "$tmp_file"
   } >"$task_index_md"
 

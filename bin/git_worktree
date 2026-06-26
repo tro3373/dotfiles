@@ -90,7 +90,7 @@ _fzf_worktrees() {
     --reverse \
     --height=100% \
     --bind 'ctrl-l:toggle-all' \
-    --preview='echo {} | awk "{print \$NF \"/.tasks.md\"}" |xargs bat --color=always' \
+    --preview='p=$(echo {} | awk "{print \$NF}")/.tasks.md; [ -e "$p" ] && bat --color=always "$p" || echo "(no tasks file)"' \
     --preview-window=down:70% \
     "$@"
 }
@@ -120,7 +120,11 @@ _list_root_and_worktree_directories() {
       [[ $_target_path =~ ^#.* ]] && continue
       label="($repo_root_label)"
       if [[ $_target_path =~ ^$git_worktree_dir/ ]]; then
-        label=$(tasks --summary -f "${_target_path%/}/.tasks.md")
+        # 一覧は read-only に保つ: リンク未生成 worktree で tasks を起動して
+        # 自己修復(ファイル生成)させない。実体があるときだけ summary を引く。
+        label='(no tasks)'
+        [[ -e "${_target_path%/}/.tasks.md" ]] &&
+          label=$(tasks --summary -f "${_target_path%/}/.tasks.md" 2>/dev/null || echo '(no tasks)')
       fi
       _time=$(stat -c %y "$_target_path" | cut -d. -f1 | sed -e 's, ,_,g')
       printf "%s\t%s\t%s\n" "$_time" "$label" "$_target_path"

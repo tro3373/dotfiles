@@ -7,7 +7,7 @@
 # 検証対象:
 #   * link 先解決: not-worktree => {tasks_dir}/{repo}/index.md (.tasks.md => index.md)
 #   * config 無し/空/相対 => die、既存 link は config 無しでも動作
-#   * worktree で link 未生成 => 案内付き die
+#   * worktree で link 未生成 => 親リポ共有 base へ自己修復 (front matter 生成)
 #   * split: {timestamp}_{name}/index.md(front matter) 生成、元リストは参照行へ置換
 #   * split-all: 参照行を再 split せず終了 (無限ループ回帰)
 #   * summary: front matter title 表示
@@ -167,18 +167,37 @@ test_skips_config_when_links_exist() {
     '1' "$([[ ${out} == *myrepo* ]] && echo 1 || echo 0)"
 }
 
-# 5. worktree で link 未生成なら案内付き die
-test_worktree_without_links_dies() {
-  new_env t5 myrepo-worktree/feature-x
+# 5. worktree で link 未生成なら親リポから自己修復し front matter 付き .tasks.md を生成
+test_worktree_self_heals_links() {
+  new_env t5 myrepo
   write_config "${base}"
+  # 親リポを初期化 (.tasks/.tasks.md 生成) し、worktree add 用に 1 コミット作る。
+  # .tasks/.tasks.md は untracked のまま放置 = worktree には引き継がれない。
+  run_tasks --summary >/dev/null 2>&1 || true
+  git -C "${repo}" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+
+  # 本物の linked worktree を作成 (パス命名は規約と無関係でよい)
+  local wt="${envdir}/myrepo-worktree/feature-x"
+  mkdir -p "$(dirname "${wt}")"
+  git -C "${repo}" worktree add -q -b feature-x "${wt}" >/dev/null 2>&1
 
   local out rc
-  out=$(run_tasks --summary)
+  out=$(cd "${wt}" &&
+    XDG_CONFIG_HOME="${xdg}" TASKS_GEN_META_CMD="${fake_meta}" \
+      FAKE_META_COUNTER="${meta_counter}" "${tasks_bin}" --summary)
   rc=$?
 
-  check 'worktree-no-link: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
-  check 'worktree-no-link: message mentions spawn' \
-    '1' "$([[ ${out} == *spawn* ]] && echo 1 || echo 0)"
+  check 'worktree-heal: exit zero (no die)' '0' "${rc}"
+  check 'worktree-heal: .tasks => {base}/myrepo (shared with parent)' \
+    "${base}/myrepo" "$(readlink "${wt}/.tasks")"
+  local md_target
+  md_target=$(readlink "${wt}/.tasks.md")
+  check 'worktree-heal: .tasks.md => {base}/myrepo/{timestamp}_feature-x/index.md' \
+    '1' "$([[ ${md_target} == "${base}/myrepo/"*"_feature-x/index.md" ]] && echo 1 || echo 0)"
+  check 'worktree-heal: front matter branch is worktree branch' \
+    '1' "$(grep -qx 'branch: feature-x' "${md_target}" 2>/dev/null && echo 1 || echo 0)"
+  check 'worktree-heal: summary shows branch as title' \
+    '1' "$([[ ${out} == *"[feature-x]"* ]] && echo 1 || echo 0)"
 }
 
 # 6. split: タスクを {timestamp}_{name}/index.md へ移し、元リストは参照行へ置換
@@ -344,7 +363,7 @@ main() {
   test_dies_with_relative_tasks_dir
   test_accepts_quoted_tilde_tasks_dir
   test_skips_config_when_links_exist
-  test_worktree_without_links_dies
+  test_worktree_self_heals_links
   test_split_creates_dir_and_reference
   test_split_all_terminates
   test_summary_reads_front_matter_title
