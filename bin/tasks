@@ -533,7 +533,10 @@ mark_parent_reference_done() {
   [[ $ref != /* ]] ||
     die "==> Task path not under store_root: $target_file (store_root=$store_root)"
   lineno=$(grep -nF -- "(${ref})" "$parent" | head -1 | cut -d: -f1)
-  [[ -n $lineno ]] || return 0
+  [[ -n $lineno ]] || {
+    warn "==> No parent reference exists in $parent"
+    return 0
+  }
   sed -i "${lineno}s/- \[ \]/- [x]/" "$parent"
   info "==> Parent reference marked done: $parent"
 }
