@@ -214,7 +214,7 @@ initialize_worktree_links() {
   mkdir -p "$wt_dir"
   wt_md="$wt_dir/index.md"
   [[ -e $wt_md ]] ||
-    emit_front_matter "$branch" "$branch" "$name" "$(to_tilde "$org_root/.tasks.md")" >"$wt_md"
+    emit_front_matter "$branch" "$branch" "$name" "$(to_tilde "$(realpath "$org_root/.tasks.md")")" >"$wt_md"
   [[ -e $dst_tasks_dir ]] || _ln "$base_dir" "$dst_tasks_dir"
   [[ -e $dst_tasks_md ]] || _ln "$wt_md" "$dst_tasks_md"
 }
