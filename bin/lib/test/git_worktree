@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+
+# git_worktree のユニットテスト (実 git 使用・NW/fzf 不要)。
+# 末尾の `main "$@"` を除いて source し、関数を直接呼ぶ。
+#
+# 検証対象:
+#   * _do_remove_worktree: 現在地(initial_toplevel)の worktree を削除したときだけ
+#       org root を stdout に出す (zsh wrapper gt が cd し直すための救済)。
+#       現在地でない worktree 削除時・org root から削除時は stdout 空。
+#
+#   bin/lib/test/git_worktree   # 全テスト実行
+
+_test_name=$(basename "${BASH_SOURCE[0]}")
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+gwt_bin=$(cd "${script_dir}/../.." && pwd)/${_test_name}
+
+# shellcheck disable=SC1090
+source "$gwt_bin"
+
+# tasks --clean の副作用を避けるため no-op で差し替える
+tasks() { return 0; }
+
+# desc / expected / actual を比較し、呼び出し元 main の pass・fail カウンタを更新する。
+check() {
+  local desc="$1" expected="$2" actual="$3"
+  if [[ ${expected} != "${actual}" ]]; then
+    fail=$((fail + 1))
+    printf 'FAIL - %s\n  expected: %q\n  actual:   %q\n' "${desc}" "${expected}" "${actual}"
+    return
+  fi
+  pass=$((pass + 1))
+  printf 'ok   - %s\n' "${desc}"
+}
+
+# 隔離 org repo と org-worktree/ を作る。グローバル org/org_wt/git_org_root_dir を設定。
+new_repo() {
+  local sub="$1"
+  org="${tmproot}/${sub}/org"
+  org_wt="${tmproot}/${sub}/org-worktree"
+  mkdir -p "${org}"
+  git -C "${org}" init -q
+  git -C "${org}" config user.email t@t
+  git -C "${org}" config user.name t
+  echo init >"${org}/f"
+  git -C "${org}" add -A
+  git -C "${org}" commit -qm init
+  git_org_root_dir=$(realpath "${org}")
+}
+
+# org-worktree/<name> に新規ブランチの worktree を追加し、その realpath を返す。
+add_wt() {
+  local name="$1"
+  git -C "${org}" worktree add -q -b "${name}" "${org_wt}/${name}" >/dev/null 2>&1
+  realpath "${org_wt}/${name}"
+}
+
+# 現在地 worktree を削除 => org root を stdout に出す (gt の cd 救済用)
+test_remove_current_emits_org_root() {
+  new_repo current
+  local wt
+  wt=$(add_wt feat-A)
+  initial_toplevel="${wt}"
+  local out
+  out=$(cd "${org}" && _do_remove_worktree "${wt}" 2>/dev/null)
+  check 'remove-current: org root を stdout 出力' "${git_org_root_dir}" "${out}"
+  check 'remove-current: worktree dir 削除' '0' "$([[ -e ${wt} ]] && echo 1 || echo 0)"
+}
+
+# org root から削除 (= not worktree) => stdout 空
+test_remove_from_root_emits_nothing() {
+  new_repo fromroot
+  local wt
+  wt=$(add_wt feat-B)
+  initial_toplevel="${git_org_root_dir}"
+  local out
+  out=$(cd "${org}" && _do_remove_worktree "${wt}" 2>/dev/null)
+  check 'remove-from-root: stdout 空' '' "${out}"
+  check 'remove-from-root: worktree dir 削除' '0' "$([[ -e ${wt} ]] && echo 1 || echo 0)"
+}
+
+# 現在地でない別 worktree を削除 => stdout 空・現在地は残存
+test_remove_other_worktree_emits_nothing() {
+  new_repo other
+  local wt_c wt_d
+  wt_c=$(add_wt feat-C)
+  wt_d=$(add_wt feat-D)
+  # shellcheck disable=SC2034  # source した _do_remove_worktree が参照する
+  initial_toplevel="${wt_c}"
+  local out
+  out=$(cd "${org}" && _do_remove_worktree "${wt_d}" 2>/dev/null)
+  check 'remove-other: stdout 空 (現在地でない)' '' "${out}"
+  check 'remove-other: 対象 worktree 削除' '0' "$([[ -e ${wt_d} ]] && echo 1 || echo 0)"
+  check 'remove-other: 現在地 worktree 残存' '1' "$([[ -e ${wt_c} ]] && echo 1 || echo 0)"
+}
+
+main() {
+  set -uo pipefail
+  tmproot=$(mktemp -d)
+  trap 'rm -rf "${tmproot}"' EXIT
+  local pass=0 fail=0
+
+  test_remove_current_emits_org_root
+  test_remove_from_root_emits_nothing
+  test_remove_other_worktree_emits_nothing
+
+  printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
+  [[ ${fail} -eq 0 ]]
+}
+
+main "$@"
