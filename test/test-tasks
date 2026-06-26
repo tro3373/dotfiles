@@ -44,6 +44,7 @@ new_env() {
   meta_counter="${envdir}/meta_n"
   wt_log="${envdir}/wt.log"
   tmux_log="${envdir}/tmux.log"
+  fzf_log="${envdir}/fzf.log"
   mkdir -p "${repo}"
   git -C "${repo}" init -q
 }
@@ -76,6 +77,7 @@ run_tasks() {
       FAKE_META_COUNTER="${meta_counter}" \
       FAKE_WT_LOG="${wt_log}" \
       FAKE_TMUX_LOG="${tmux_log}" \
+      FAKE_FZF_LOG="${fzf_log}" \
       "${tasks_bin}" "$@") 2>&1
 }
 
@@ -127,9 +129,10 @@ esac
 exit 0
 FAKE
   # fake fzf: stdin 全行を選択結果として返す (ctrl-l 全件選択 + enter 相当)。
-  # Nth 未指定で fzf へ流れた multi-select 経路をテストするための差し替え。
+  # 呼び出しを FAKE_FZF_LOG へ記録し、--all/Nth が fzf を経由しないことを検証可能にする。
   cat >"${fakebin}/fzf" <<'FAKE'
 #!/usr/bin/env bash
+echo "called" >>"${FAKE_FZF_LOG:-/dev/null}"
 cat
 FAKE
   chmod +x "${fakebin}/git_worktree" "${fakebin}/tmux" "${fakebin}/fzf"
@@ -679,11 +682,14 @@ EOF
 
   run_wt() {
     (cd "${wt}" &&
-      XDG_CONFIG_HOME="${xdg}" TASKS_GEN_META_CMD="${fake_meta}" \
-        FAKE_META_COUNTER="${meta_counter}" "${tasks_bin}" "$@") >/dev/null 2>&1
+      PATH="${fakebin}:${PATH}" \
+        XDG_CONFIG_HOME="${xdg}" TASKS_GEN_META_CMD="${fake_meta}" \
+        FAKE_META_COUNTER="${meta_counter}" FAKE_FZF_LOG="${fzf_log}" \
+        "${tasks_bin}" "$@") >/dev/null 2>&1
   }
 
-  run_wt -c || true
+  # git_worktree の worktree 削除は `tasks --clean --all` で全件クリーンする
+  run_wt -c --all || true
 
   check 'clean-wt: 参照行を index.md に残す (削除しない)' \
     '1' "$(grep -qE -- '^- \[x\] \[[^]]*_test-task-1\]\(' "${wt_md}" && echo 1 || echo 0)"
@@ -694,13 +700,80 @@ EOF
   check 'clean-wt: 参照を log へ転記' \
     '1' "$(grep -qE -- '_test-task-1\]' "${log}" 2>/dev/null && echo 1 || echo 0)"
 
-  run_wt -c || true
+  run_wt -c --all || true
   check 'clean-wt: 再実行で log 重複なし (1 件)' \
     '1' "$(grep -cE -- '_test-task-[0-9]+\]' "${log}" 2>/dev/null || true)"
   check 'clean-wt: 再実行で split dir 増えず (再 split しない)' \
     '1' "$(find "${base}/myrepo" -maxdepth 1 -type d -name '*_test-task-*' | wc -l)"
   check 'clean-wt: 再実行後も参照行残存' \
     '1' "$(grep -qE -- '^- \[x\] \[[^]]*_test-task-1\]\(' "${wt_md}" && echo 1 || echo 0)"
+}
+
+# 17. clean --all: 完了タスクを全件クリーン (fzf 非経由・非対話で安全)
+test_clean_all_flag() {
+  new_env t17 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  {
+    printf '%s\n' '- [x] [20260101-000000_done1](base/myrepo/20260101-000000_done1/index.md)'
+    printf '%s\n' '- [x] [20260102-000000_done2](base/myrepo/20260102-000000_done2/index.md)'
+  } >>"${base}/myrepo/index.md"
+
+  run_tasks -c --all >/dev/null 2>&1 || true
+
+  local y ym log
+  y=$(date +%Y) && ym=$(date +%Y-%m)
+  log="${envdir}/logs/${y}/${ym}-01-log.md"
+  check 'clean-all: 完了参照を全件 log へ転記' \
+    '2' "$(grep -cE '_done[12]\]' "${log}" 2>/dev/null || true)"
+  check 'clean-all: 完了参照を index.md から削除' \
+    '0' "$(grep -cE '_done[12]\]' "${base}/myrepo/index.md" 2>/dev/null || true)"
+  check 'clean-all: fzf を経由しない (非対話)' \
+    '0' "$([[ -s ${fzf_log} ]] && echo 1 || echo 0)"
+}
+
+# 18. clean N: Nth 完了タスクのみクリーンし他は残す
+test_clean_select_nth() {
+  new_env t18 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  {
+    printf '%s\n' '- [x] [20260101-000000_done1](base/myrepo/20260101-000000_done1/index.md)'
+    printf '%s\n' '- [x] [20260102-000000_done2](base/myrepo/20260102-000000_done2/index.md)'
+  } >>"${base}/myrepo/index.md"
+
+  run_tasks -c 1 >/dev/null 2>&1 || true
+
+  local y ym log
+  y=$(date +%Y) && ym=$(date +%Y-%m)
+  log="${envdir}/logs/${y}/${ym}-01-log.md"
+  check 'clean-nth: 1件目 done1 を log へ転記' \
+    '1' "$(grep -qF -- '_done1]' "${log}" 2>/dev/null && echo 1 || echo 0)"
+  check 'clean-nth: 1件目 done1 を index.md から削除' \
+    '0' "$(grep -qF -- '_done1]' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'clean-nth: 2件目 done2 は index.md に残す' \
+    '1' "$(grep -qF -- '_done2]' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+}
+
+# 19. split --all: 全 pending タスクを fzf 非経由で split する (--all の汎用性)
+test_split_all_flag() {
+  new_env t19 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  {
+    printf '%s\n' '- [ ] Task one'
+    printf '%s\n' '- [ ] Task two'
+  } >>"${base}/myrepo/index.md"
+
+  run_tasks -s --all >/dev/null 2>&1 || true
+
+  local dir_count ref_count
+  dir_count=$(find "${base}/myrepo" -mindepth 2 -name index.md 2>/dev/null | wc -l)
+  ref_count=$(grep -cE '^- \[ \] \[[^]]*\]\(' "${base}/myrepo/index.md" 2>/dev/null || echo 0)
+  check 'split-all-flag: 全 pending を dir へ split' '2' "${dir_count}"
+  check 'split-all-flag: 全 pending を参照行へ置換' '2' "${ref_count}"
+  check 'split-all-flag: fzf を経由しない' \
+    '0' "$([[ -s ${fzf_log} ]] && echo 1 || echo 0)"
 }
 
 main() {
@@ -735,6 +808,9 @@ main() {
   test_clean_timestamp_fallback_to_now
   test_clean_skips_pending_tasks
   test_clean_worktree_keeps_reference
+  test_clean_all_flag
+  test_clean_select_nth
+  test_split_all_flag
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

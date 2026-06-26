@@ -20,7 +20,11 @@ comment_type=
 task_file=
 task_index=
 task_index_explicit=0
+# --all: Nth 選択可能コマンド (split/complete/spawn/clean) で全候補を選択する
+select_all=0
 parse_skip_refs=0
+# clean が log 転記先を clean_one_task と共有するためのランタイム値
+clean_log_path=
 # config (load_tasks_config が設定): store_root=絶対, tasks_subdir=相対, log_fmt=相対フォーマット
 store_root=
 tasks_subdir=
@@ -38,17 +42,19 @@ Manage repository tasks.
       -h|--help           : Show this usage
       -s|--split          : Split task(s) into a task dir + worktree (fzf if no N)
       -n|--next           : Show Nth task chunk (default 1; also -n2, --next=2)
-      -c|--clean          : Record completed split references to log and drop from list
+      -c|--clean          : Record completed task(s) to log and drop them (fzf if no N)
       ok|v|done|complete  : Mark task(s) as completed (fzf if no N)
       -m|--comment [type] : Add comment to Nth task (type: requirement|review|complete)
       -a|--add            : Add task from stdin (prepends "- [ ] " if missing)
       -f|--file [path]    : Specify task file to operate on (default: repo .tasks.md)
       spawn|--spawn       : Spawn worktree + tmux + CC /task (split first if needed; fzf if no N)
+      --all               : Select all candidates for split/complete/spawn/clean
       --summary           : Show title of tasks
     Task index [N]
       next/comment use the Nth pending task (1-based, default 1).
-      split/complete/spawn use N directly; omit N to pick via fzf multi-select
-      (ctrl-l: toggle-all, ctrl-g: toggle-preview). Give N as 2 or -2.
+      split/complete/spawn/clean use N directly; omit N to pick via fzf
+      multi-select (ctrl-l: toggle-all, ctrl-g: toggle-preview); --all selects
+      all without fzf. Give N as 2 or -2.
 EOF
 }
 
@@ -75,6 +81,7 @@ initialize() {
         [[ $task_index =~ ^[1-9][0-9]*$ ]] || die "==> Invalid option: $1"
         ;;
       -c | --clean) mode="clean" ;;
+      --all) select_all=1 ;;
       -m | --comment)
         if [[ -z ${2:-} ]]; then
           die "==> -m|--comment requires a type argument: requirement|review|complete"
@@ -298,10 +305,14 @@ fzf_select() {
     --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview'
 }
 
-# 候補(lineno:行内容)から選択行を返す。Nth 明示時は N 番目、未指定時は fzf。
-# die を持たないため $() 内で安全 (空チェックの die は呼び出し側に置く)。
+# 候補(lineno:行内容)から選択行を返す。--all 時は全件、Nth 明示時は N 番目、
+# どちらも無ければ fzf。die を持たないため $() 内で安全 (空チェック die は呼び出し側)。
 choose_lines() {
   local candidates="$1" prompt="$2"
+  if [[ $select_all -eq 1 ]]; then
+    printf '%s\n' "$candidates"
+    return
+  fi
   if [[ $task_index_explicit -eq 1 ]]; then
     printf '%s\n' "$candidates" | sed -n "${task_index}p"
     return
@@ -404,20 +415,12 @@ replace_task_with_reference() {
   replace_block_with_reference_line "$(to_reference_line "$1")"
 }
 
-# clean 用: 未 split の完了タスク (- [x] 実ブロック) を順に split する。
-# 各ブロックを {ts}_{name}/index.md (done:true) へ移し、関連ファイルを移動し、
-# 元リストは完了参照行 (- [x] [name](path)) へ置換する。
-split_completed_unsplit_tasks() {
-  while has_unsplit_completed_task; do
-    split_completed_task
-  done
-}
-
-split_completed_task() {
-  local tmp_file ts ref_line src_dir
-
-  parse_skip_refs=1
-  parse_tasks 1 1
+# clean 用: 指定行の未 split 完了タスク (- [x] 実ブロック) を split する。
+# ブロックを {ts}_{name}/index.md (done:true) へ移し、関連ファイルを移動し、
+# 元リストは first_line に完了参照行 (- [x] [name](path)) を残す。
+split_completed_one() {
+  local line_no="$1" tmp_file ts ref_line src_dir
+  set_block_range "$line_no"
   tmp_file=$(mktemp)
   sed -n "${first_line},${end_line}p" "$target_file" >"$tmp_file"
 
@@ -469,12 +472,6 @@ has_tasks() {
   grep -qE "^$grep_key_task_exists" "$target_file"
 }
 
-# 参照行を除いた完了タスク (- [x] の実ブロック) が残っているか
-has_unsplit_completed_task() {
-  grep -nE "^$grep_key_task_completed" "$target_file" |
-    grep -qvE "^[0-9]+:${grep_key_reference#^}"
-}
-
 has_front_matter() {
   head -1 "$target_file" | grep -qx -- '---'
 }
@@ -490,37 +487,46 @@ front_matter_value() {
   ' "$file"
 }
 
-# 完了済み参照行 (- [x] [title](path)) を log_fmt へ転記し .tasks.md から削除する。
-# done ディレクトリは使わない。タスクdir自体は split 済みのため移動しない。
-# log_fmt は store_root を起点に解決する。
+# 選択した完了タスク (- [x]) を log_fmt へ転記し .tasks.md から削除する。
+# 候補 = 完了参照行 + 未 split 完了タスクブロック。Nth 未指定なら fzf multi-select、
+# --all で全件。done ディレクトリは使わない。log_fmt は store_root を起点に解決する。
 clean_tasks() {
-  # 未 split の完了タスクを先に split し、完了参照行へ変換する
-  split_completed_unsplit_tasks
-
-  if ! grep -qE "$grep_key_reference_done" "$target_file"; then
-    info "==> No completed task references to clean."
+  local candidates selected
+  candidates=$(list_task_lines 1 0)
+  if [[ -z $candidates ]]; then
+    info "==> No completed tasks to clean."
     return 0
   fi
-  local log_path
-  log_path="$store_root/$(expand_log_fmt "$log_fmt")"
-  mkdir -p "$(dirname "$log_path")"
-  append_new_references_to_log "$log_path"
-  info "==> Recorded completed task references to $log_path"
-  # worktree では参照行を .tasks.md に残す (log 記載のみ)。normal は削除する。
+  selected=$(choose_lines "$candidates" "Select completed task(s) to clean: ") || true
+  [[ -n $selected ]] || die "==> No task selected."
+  clean_log_path="$store_root/$(expand_log_fmt "$log_fmt")"
+  mkdir -p "$(dirname "$clean_log_path")"
+  process_selected "$selected" clean_one_task
+  info "==> Recorded completed task references to $clean_log_path"
+}
+
+# 指定行の完了タスクを clean する。未 split 完了ブロックなら先に split し、
+# 完了参照行を log へ転記する。worktree は参照行を残し normal は削除する。
+clean_one_task() {
+  local line_no="$1" line ref_line
+  line=$(sed -n "${line_no}p" "$target_file")
+  if ! printf '%s\n' "$line" | grep -qE "$grep_key_reference_done"; then
+    split_completed_one "$line_no"
+  fi
+  ref_line=$(sed -n "${line_no}p" "$target_file")
+  append_reference_to_log "$clean_log_path" "$ref_line"
   if ! current_is_worktree_dir; then
-    sed -i -E "/${grep_key_reference_done}/d" "$target_file"
+    sed -i "${line_no}d" "$target_file"
   fi
 }
 
-# 完了参照行を log へ転記する。既に log にある行は重複追記しない (再実行冪等)。
-append_new_references_to_log() {
-  local log_path="$1" ref
-  while IFS= read -r ref; do
-    if grep -qxF -- "$ref" "$log_path" 2>/dev/null; then
-      continue
-    fi
-    printf '%s\n' "$ref" >>"$log_path"
-  done < <(grep -E "$grep_key_reference_done" "$target_file")
+# 完了参照行を log へ転記する。既に log にあれば追記しない (再実行冪等)。
+append_reference_to_log() {
+  local log_path="$1" ref="$2"
+  if grep -qxF -- "$ref" "$log_path" 2>/dev/null; then
+    return 0
+  fi
+  printf '%s\n' "$ref" >>"$log_path"
 }
 
 complete_task() {

@@ -247,7 +247,7 @@ _do_remove_worktree() {
     removing_current=1
   fi
 
-  tasks --clean -f "${target_path%/}/.tasks.md" 1>&2 || :
+  tasks --clean --all -f "${target_path%/}/.tasks.md" 1>&2 || :
 
   _rename_removed_branch "${target_path}"
 
