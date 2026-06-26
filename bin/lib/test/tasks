@@ -422,6 +422,143 @@ test_clean_records_reference_to_log() {
   check 'clean: 再実行で index.md 不変' "${before}" "$(cat "${base}/myrepo/index.md")"
 }
 
+# 13. clean(normal): 未split 完了タスクを split し、関連ファイル移動・log 転記・参照削除
+test_clean_splits_unsplit_completed_task() {
+  new_env t13 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  # index- 由来の関連ファイルは移動。本文が言及するだけの非 stem 同名ファイルは残す。
+  printf '%s\n' 'note body content' >"${base}/myrepo/index-note-abc.html"
+  printf '%s\n' 'unrelated' >"${base}/myrepo/README.md"
+  cat >>"${base}/myrepo/index.md" <<'EOF'
+- [x] Completed big task
+  - [20260620_101010] 🎭 要件
+  - [20260624_194043] 🎉 完了
+    - 📓 実装ノート: index-note-abc.html
+    - 参考: README.md
+    - did the thing
+EOF
+
+  run_tasks -c >/dev/null 2>&1 || true
+
+  local dir idx
+  dir="${base}/myrepo/20260624-194043_test-task-1"
+  idx="${dir}/index.md"
+  check 'clean-split: dir は最新 [ts] 20260624-194043 を使う' \
+    '1' "$([[ -f ${idx} ]] && echo 1 || echo 0)"
+  check 'clean-split: front matter done:true' \
+    '1' "$([[ -f ${idx} ]] && grep -qx 'done: true' "${idx}" && echo 1 || echo 0)"
+  check 'clean-split: title に ✅️ 付与' \
+    '1' "$([[ -f ${idx} ]] && grep -qE '^title: ✅️ ' "${idx}" && echo 1 || echo 0)"
+  check 'clean-split: body 保持' \
+    '1' "$([[ -f ${idx} ]] && grep -qF 'did the thing' "${idx}" && echo 1 || echo 0)"
+  check 'clean-split: index 由来の関連ファイルを split 先へ移動' \
+    '1' "$([[ -f ${dir}/index-note-abc.html ]] && echo 1 || echo 0)"
+  check 'clean-split: 関連ファイルを元 dir から除去' \
+    '0' "$([[ -f ${base}/myrepo/index-note-abc.html ]] && echo 1 || echo 0)"
+  check 'clean-split: 本文言及のみの非 stem 同名ファイルは移動しない' \
+    '1' "$([[ -f ${base}/myrepo/README.md ]] && echo 1 || echo 0)"
+
+  local y ym log
+  y=$(date +%Y) && ym=$(date +%Y-%m)
+  log="${base}/myrepo/logs/${y}/${ym}-01-log.md"
+  check 'clean-split: 参照を log へ転記' \
+    '1' "$(grep -qE -- '_test-task-1\]' "${log}" 2>/dev/null && echo 1 || echo 0)"
+  check 'clean-split: 完了ブロックを index.md から除去' \
+    '0' "$(grep -qF -- 'Completed big task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'clean-split: normal は参照行も index.md から削除' \
+    '0' "$(grep -qE -- '_test-task-1\]\(' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+}
+
+# 14. clean: タスク内に [ts] 無ければ clean 実行時 timestamp を使う
+test_clean_timestamp_fallback_to_now() {
+  new_env t14 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  cat >>"${base}/myrepo/index.md" <<'EOF'
+- [x] No timestamp task
+  - just done, no bracket ts
+EOF
+
+  run_tasks -c >/dev/null 2>&1 || true
+
+  local today dir
+  today=$(date +%Y%m%d)
+  dir=$(find "${base}/myrepo" -maxdepth 1 -type d -name "${today}-*_test-task-1" | head -1)
+  check 'clean-fallback: dir は clean 実行時 timestamp (今日)' \
+    '1' "$([[ -n ${dir} ]] && echo 1 || echo 0)"
+}
+
+# 15. clean: 未完了 - [ ] タスクは split 対象外で残す
+test_clean_skips_pending_tasks() {
+  new_env t15 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  cat >>"${base}/myrepo/index.md" <<'EOF'
+- [ ] Pending plain task
+- [x] Completed to split
+  - [20260624_194043] 🎉 完了
+EOF
+
+  run_tasks -c >/dev/null 2>&1 || true
+
+  check 'clean-skip: 未完了タスクは残す (split しない)' \
+    '1' "$(grep -qF -- '- [ ] Pending plain task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'clean-skip: 完了タスクは split 済み (ブロック消滅)' \
+    '0' "$(grep -qF -- 'Completed to split' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+}
+
+# 16. clean(worktree): 完了タスクを split・log 転記するが参照行は削除しない (再実行で重複なし)
+test_clean_worktree_keeps_reference() {
+  new_env t16 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  git -C "${repo}" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+
+  local wt="${envdir}/myrepo-worktree/feature-x"
+  mkdir -p "$(dirname "${wt}")"
+  git -C "${repo}" worktree add -q -b feature-x "${wt}" >/dev/null 2>&1
+
+  # worktree の link 自己修復で index.md を生成
+  (cd "${wt}" &&
+    XDG_CONFIG_HOME="${xdg}" TASKS_GEN_META_CMD="${fake_meta}" \
+      FAKE_META_COUNTER="${meta_counter}" "${tasks_bin}" --summary) >/dev/null 2>&1 || true
+
+  local wt_md
+  wt_md=$(readlink "${wt}/.tasks.md")
+  cat >>"${wt_md}" <<'EOF'
+
+- [x] Worktree done task
+  - [20260624_194043] 🎉 完了
+    - did it
+EOF
+
+  run_wt() {
+    (cd "${wt}" &&
+      XDG_CONFIG_HOME="${xdg}" TASKS_GEN_META_CMD="${fake_meta}" \
+        FAKE_META_COUNTER="${meta_counter}" "${tasks_bin}" "$@") >/dev/null 2>&1
+  }
+
+  run_wt -c || true
+
+  check 'clean-wt: 参照行を index.md に残す (削除しない)' \
+    '1' "$(grep -qE -- '^- \[x\] \[[^]]*_test-task-1\]\(' "${wt_md}" && echo 1 || echo 0)"
+
+  local y ym log
+  y=$(date +%Y) && ym=$(date +%Y-%m)
+  log="${base}/myrepo/logs/${y}/${ym}-01-log.md"
+  check 'clean-wt: 参照を log へ転記' \
+    '1' "$(grep -qE -- '_test-task-1\]' "${log}" 2>/dev/null && echo 1 || echo 0)"
+
+  run_wt -c || true
+  check 'clean-wt: 再実行で log 重複なし (1 件)' \
+    '1' "$(grep -cE -- '_test-task-[0-9]+\]' "${log}" 2>/dev/null || true)"
+  check 'clean-wt: 再実行で split dir 増えず (再 split しない)' \
+    '1' "$(find "${base}/myrepo" -maxdepth 1 -type d -name '*_test-task-*' | wc -l)"
+  check 'clean-wt: 再実行後も参照行残存' \
+    '1' "$(grep -qE -- '^- \[x\] \[[^]]*_test-task-1\]\(' "${wt_md}" && echo 1 || echo 0)"
+}
+
 main() {
   set -uo pipefail
   tmproot=$(mktemp -d)
@@ -445,6 +582,10 @@ main() {
   test_complete_normal_task
   test_complete_skips_reference
   test_clean_records_reference_to_log
+  test_clean_splits_unsplit_completed_task
+  test_clean_timestamp_fallback_to_now
+  test_clean_skips_pending_tasks
+  test_clean_worktree_keeps_reference
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

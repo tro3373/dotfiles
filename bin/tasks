@@ -12,6 +12,8 @@ grep_key_task_completed='- \[[xX]\]' && readonly grep_key_task_completed
 grep_key_reference='^- \[[ xX]\] \[[^]]*\]\(' && readonly grep_key_reference
 # 完了済み参照行のみ (clean 対象): `- [x] [title](path)`
 grep_key_reference_done='^- \[[xX]\] \[[^]]*\]\(' && readonly grep_key_reference_done
+# 完了マーク (title 接頭辞 / 完了ログ)。complete と split-completed で共用。
+readonly complete_mark="✅️"
 args=()
 mode=list
 comment_type=
@@ -294,56 +296,68 @@ gen_task_meta() {
   prp -ne 'gen-task-title-and-branch.md$' | llm -c tgpt -p groq -fc claude
 }
 
-split_task() {
-  local tmp_file json_result branch name title
-  local base_dir task_dir task_index_md parent_md ref
-
-  parse_skip_refs=1
-
-  # NOTE: cat_first_task で first_line/end_line をセットしている
-  # sub processでは変数にセットされないので、ファイル出力している
-  tmp_file=$(mktemp)
-  cat_first_task >"$tmp_file"
+# tmp_file(タスク本文) と ts から split 先 index.md を構築する共通処理。
+# meta 生成・検証・dir 作成・front matter 書き出し・ref 算出を 1 箇所に集約する。
+# 出力はグローバル: task_branch / task_index_md / task_ref (store_root 相対)。
+# done マーク・関連ファイル移動・参照行のチェック状態は呼び出し側の責務。
+write_split_index() {
+  local tmp_file="$1" ts="$2" json_result name title base_dir task_dir parent_md
   json_result=$(gen_task_meta <"$tmp_file")
-
-  branch=$(echo "$json_result" | jq -r '.branch')
+  task_branch=$(echo "$json_result" | jq -r '.branch')
   name=$(echo "$json_result" | jq -r '.name')
   title=$(echo "$json_result" | jq -r '.title')
-  if [[ -z $branch || -z $name || -z $title || $branch == null ]]; then
+  if [[ -z $task_branch || -z $name || -z $title || $task_branch == null ]]; then
     die "==> Invalid task meta JSON: $json_result"
   fi
 
-  # タスクディレクトリ: {tasks_subdir}/{repo}/{timestamp}_{name}/index.md
+  # タスクディレクトリ: {tasks_subdir}/{repo}/{ts}_{name}/index.md
   # .tasks は {tasks_subdir}/{repo} を指す symlink
   base_dir=$(realpath "$git_root/.tasks")
-  task_dir="$base_dir/${timestamp}_${name}"
+  task_dir="$base_dir/${ts}_${name}"
   mkdir -p "$task_dir"
   task_index_md="$task_dir/index.md"
   parent_md=$(to_tilde "$(realpath "$git_root/.tasks.md")")
 
   # YAML front matter + タスク内容
   {
-    emit_front_matter "$title" "$branch" "$name" "$parent_md"
+    emit_front_matter "$title" "$task_branch" "$name" "$parent_md"
     cat "$tmp_file"
   } >"$task_index_md"
 
-  # 元リストの当該タスクを参照行へ置換 (削除しない)。ref は store_root 相対パス。
-  ref=${task_index_md#"$store_root"/}
-  [[ $ref != /* ]] ||
+  # ref は store_root 相対パス
+  task_ref=${task_index_md#"$store_root"/}
+  [[ $task_ref != /* ]] ||
     die "==> Task path not under store_root: $task_index_md (store_root=$store_root)"
-  replace_task_with_reference "$ref"
+}
+
+split_task() {
+  local tmp_file
+  parse_skip_refs=1
+
+  # NOTE: cat_first_task で first_line/end_line をセットしている
+  # sub processでは変数にセットされないので、ファイル出力している
+  tmp_file=$(mktemp)
+  cat_first_task >"$tmp_file"
+
+  # timestamp は split 実行時。元リストの当該タスクを参照行へ置換 (削除しない)。
+  write_split_index "$tmp_file" "$timestamp"
+  replace_task_with_reference "$task_ref"
 
   rm -f "$tmp_file"
   info "==> Task split to: $task_index_md"
-  info "==> Branch: $branch"
+  info "==> Branch: $task_branch"
 }
 
-# first_line..end_line のタスクブロックを 1 行の参照リンクに置換する
-replace_task_with_reference() {
-  local ref="$1" ref_line
-  ref_line=$(to_reference_line "$ref")
+# first_line..end_line のタスクブロックを 1 行の参照リンク文字列に置換する (低レベル)
+replace_block_with_reference_line() {
+  local ref_line="$1"
   sed -i "${first_line},${end_line}c\\
 ${ref_line}" "$target_file"
+}
+
+# split: 未完了タスクブロックを未完了参照行 (- [ ]) へ置換する
+replace_task_with_reference() {
+  replace_block_with_reference_line "$(to_reference_line "$1")"
 }
 
 split_task_all() {
@@ -354,6 +368,67 @@ split_task_all() {
   fi
 }
 
+# clean 用: 未 split の完了タスク (- [x] 実ブロック) を順に split する。
+# 各ブロックを {ts}_{name}/index.md (done:true) へ移し、関連ファイルを移動し、
+# 元リストは完了参照行 (- [x] [name](path)) へ置換する。
+split_completed_unsplit_tasks() {
+  while has_unsplit_completed_task; do
+    split_completed_task
+  done
+}
+
+split_completed_task() {
+  local tmp_file ts ref_line src_dir
+
+  parse_skip_refs=1
+  parse_tasks 1 1
+  tmp_file=$(mktemp)
+  sed -n "${first_line},${end_line}p" "$target_file" >"$tmp_file"
+
+  # dir の timestamp はブロック内最新 [YYYYMMDD_HHMMSS]。無ければ clean 実行時。
+  ts=$(extract_latest_ts "$tmp_file")
+  [[ -n $ts ]] || ts=$timestamp
+
+  write_split_index "$tmp_file" "$ts"
+  mark_front_matter_done "$task_index_md"
+
+  # ブロック内に記載された関連ファイル (index.md と同一 dir に実在) を split 先へ移動
+  src_dir=$(dirname "$target_file")
+  move_related_files "$tmp_file" "$src_dir" "$(dirname "$task_index_md")"
+
+  # 完了タスクなので参照行は完了状態 (- [x]) で生成する
+  ref_line=$(to_reference_line "$task_ref")
+  ref_line="- [x]${ref_line#"- [ ]"}"
+  replace_block_with_reference_line "$ref_line"
+
+  rm -f "$tmp_file"
+  info "==> Completed task split to: $task_index_md"
+}
+
+# ブロック内の [YYYYMMDD_HHMMSS] (完了/要件問わず) の最新を YYYYMMDD-HHMMSS で返す。
+# 該当無しは空文字 (呼び出し側で clean 実行時 timestamp へフォールバック)。
+extract_latest_ts() {
+  local file="$1"
+  grep -oE '\[[0-9]{8}_[0-9]{6}\]' "$file" 2>/dev/null |
+    tr -d '[]' | sort | tail -1 | tr '_' '-' || :
+}
+
+# ブロック内に書かれたファイル名のうち、index ファイル由来 (stem 接頭辞) で
+# src_dir に実在するものだけを dst_dir へ移動する。抽出は決定的トークンマッチ
+# (LLM 非使用)。本文が偶然言及した無関係な同名ファイルの巻き込みを防ぐ。
+move_related_files() {
+  local block_file="$1" src_dir="$2" dst_dir="$3" f index_name stem
+  index_name=$(basename "$target_file")
+  stem=${index_name%.*}
+  while IFS= read -r f; do
+    [[ $f == "$index_name" ]] && continue
+    [[ $f == "$stem"* ]] || continue
+    [[ -f "$src_dir/$f" ]] || continue
+    mv "$src_dir/$f" "$dst_dir/"
+    info "==> Moved related file: $f"
+  done < <(grep -oE '[A-Za-z0-9._-]+\.[A-Za-z0-9]+' "$block_file" 2>/dev/null | sort -u)
+}
+
 has_tasks() {
   grep -qE "^$grep_key_task_exists" "$target_file"
 }
@@ -361,6 +436,12 @@ has_tasks() {
 # 参照行を除いた未完了タスクが残っているか
 has_unsplit_task() {
   grep -nE "^$grep_key_task_exists" "$target_file" |
+    grep -qvE "^[0-9]+:${grep_key_reference#^}"
+}
+
+# 参照行を除いた完了タスク (- [x] の実ブロック) が残っているか
+has_unsplit_completed_task() {
+  grep -nE "^$grep_key_task_completed" "$target_file" |
     grep -qvE "^[0-9]+:${grep_key_reference#^}"
 }
 
@@ -383,6 +464,9 @@ front_matter_value() {
 # done ディレクトリは使わない。タスクdir自体は split 済みのため移動しない。
 # log_fmt は .tasks (= repo の保存先ベース) を起点に解決する。
 clean_tasks() {
+  # 未 split の完了タスクを先に split し、完了参照行へ変換する
+  split_completed_unsplit_tasks
+
   if ! grep -qE "$grep_key_reference_done" "$target_file"; then
     info "==> No completed task references to clean."
     return 0
@@ -392,13 +476,26 @@ clean_tasks() {
     die "==> No .tasks base for clean: $git_root/.tasks"
   log_path="$base/$(expand_log_fmt "$log_fmt")"
   mkdir -p "$(dirname "$log_path")"
-  grep -E "$grep_key_reference_done" "$target_file" >>"$log_path"
-  sed -i -E "/${grep_key_reference_done}/d" "$target_file"
+  append_new_references_to_log "$log_path"
   info "==> Recorded completed task references to $log_path"
+  # worktree では参照行を .tasks.md に残す (log 記載のみ)。normal は削除する。
+  if ! current_is_worktree_dir; then
+    sed -i -E "/${grep_key_reference_done}/d" "$target_file"
+  fi
+}
+
+# 完了参照行を log へ転記する。既に log にある行は重複追記しない (再実行冪等)。
+append_new_references_to_log() {
+  local log_path="$1" ref
+  while IFS= read -r ref; do
+    if grep -qxF -- "$ref" "$log_path" 2>/dev/null; then
+      continue
+    fi
+    printf '%s\n' "$ref" >>"$log_path"
+  done < <(grep -E "$grep_key_reference_done" "$target_file")
 }
 
 complete_task() {
-  local complete_mark="✅️"
   # front matter 持ち index.md は body の未完了サブタスクを先に消化し、
   # 残り 0 になった時点で title 全体を完了扱いにする (旧 complete_title_task 同等)
   if has_front_matter && ! has_tasks; then
@@ -408,17 +505,22 @@ complete_task() {
   complete_normal_task
 }
 
+# front matter 持ち index.md を完了状態へ (done:true + title に ✅️)。冪等。
+# complete と split-completed が対象ファイルを変えて共用するため引数で受ける。
+mark_front_matter_done() {
+  local file="$1"
+  sed -i 's/^done: *false/done: true/' "$file"
+  grep -qE "^title: *${complete_mark}" "$file" ||
+    sed -i "s/^title: */&${complete_mark} /" "$file"
+}
+
 # split で生成した index.md (front matter 持ち) の完了処理
 complete_front_matter_task() {
   if grep -qE '^done: *true' "$target_file"; then
     warn "==> Task already marked as completed."
     return 0
   fi
-  sed -i 's/^done: *false/done: true/' "$target_file"
-  # title 先頭に ✅️ (未付与時のみ)
-  if ! grep -qE "^title: *${complete_mark}" "$target_file"; then
-    sed -i "s/^title: */&${complete_mark} /" "$target_file"
-  fi
+  mark_front_matter_done "$target_file"
   info "==> ${complete_mark} Task title marked as completed"
   grep -E '^title:' "$target_file" | head -1
   mark_parent_reference_done
