@@ -79,7 +79,7 @@ vim.opt.viminfo:append("n~/.vim/_nviminfo") -- ~/.vim/_viminfo を viminfo フ�
 vim.opt.backup = true
 vim.opt.backupdir = vim.fn.stdpath("data") .. "/backup"
 vim.opt.swapfile = true
-vim.opt.directory = vim.fn.stdpath("data") .. "/backup"
+vim.opt.directory = vim.fn.stdpath("data") .. "/backup//"
 vim.opt.undodir = vim.fn.stdpath("data") .. "/undo"
 vim.opt.undofile = true
 
