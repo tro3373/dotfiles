@@ -1396,7 +1396,7 @@ endfunction
 
 " token (空白区切りの 1 語) をファイルパスと行番号に解決する
 " 戻り値: [resolved_path, lnum]。解決できなければ ['', 0]
-function! s:resolve_token_as_path(token) abort
+function! s:resolve_token_as_path(token, bases) abort
   " Markdown link `[text](path)` の括弧内 path を優先的に拾う
   let l:cand = a:token
   let l:md = matchstr(a:token, '\v\(\zs[^)]+\ze\)')
@@ -1410,32 +1410,73 @@ function! s:resolve_token_as_path(token) abort
     let l:lnum = str2nr(matchstr(l:cand, '\v(\d+)$'))
     let l:cand = substitute(l:cand, '\v(:\+?|:|#L)\d+$', '', '')
   endif
-  return [s:resolve_path(l:cand), l:lnum]
+  return [s:resolve_path(l:cand, a:bases), l:lnum]
+endfunction
+
+" 指定ディレクトリの git root を返す (非 git / 失敗時は '')
+function! s:git_root_of(dir) abort
+  if empty(a:dir)
+    return ''
+  endif
+  let l:out = system('git -C ' . shellescape(a:dir) . ' rev-parse --show-toplevel')
+  return v:shell_error == 0 ? substitute(l:out, '\n\+$', '', '') : ''
+endfunction
+
+" 空でなく未登録のディレクトリだけ追加
+function! s:add_base(bases, dir) abort
+  if !empty(a:dir) && index(a:bases, a:dir) < 0
+    call add(a:bases, a:dir)
+  endif
+endfunction
+
+" 現在ファイルから相対パス探索のベースディレクトリ一覧を構築する
+" (token 非依存なので OpenUrlOrFilePathOnCursor で 1 回だけ呼ぶ)
+"   1. 見かけのファイルのディレクトリとその git root
+"   2. symlink を辿った実体のディレクトリとその git root (別 repo 参照対応)
+function! s:search_bases() abort
+  let l:bases = []
+  let l:file = expand('%:p')
+  if empty(l:file)
+    return l:bases
+  endif
+  let l:dir = fnamemodify(l:file, ':h')
+  call s:add_base(l:bases, l:dir)
+  call s:add_base(l:bases, s:git_root_of(l:dir))
+  let l:real = resolve(l:file)
+  if l:real !=# l:file
+    let l:rdir = fnamemodify(l:real, ':h')
+    call s:add_base(l:bases, l:rdir)
+    call s:add_base(l:bases, s:git_root_of(l:rdir))
+  endif
+  return l:bases
 endfunction
 
 " path の実体を解決。見つからなければ '' を返す
-function! s:resolve_path(path) abort
+" a:bases は s:search_bases() が作る相対パス探索のベースディレクトリ一覧
+function! s:resolve_path(path, bases) abort
   if empty(a:path)
     return ''
   endif
+  " ~ はホーム展開してから判定
   if a:path =~# '^\~'
     let l:p = expand(a:path)
     return (filereadable(l:p) || isdirectory(l:p)) ? l:p : ''
   endif
-  if a:path =~# '^/'
-    return (filereadable(a:path) || isdirectory(a:path)) ? a:path : ''
-  endif
+  " cwd 相対も絶対パスもこの 1 回で判定できる
   if filereadable(a:path) || isdirectory(a:path)
     return a:path
   endif
-  let l:base = expand('%:p:h')
-  if empty(l:base)
+  " 絶対パスは相対フォールバックに流さず打ち切り
+  if a:path =~# '^/'
     return ''
   endif
-  let l:resolved = l:base . '/' . a:path
-  if filereadable(l:resolved) || isdirectory(l:resolved)
-    return l:resolved
-  endif
+  " 相対パスはベースディレクトリ群を順に探索 (最初に当たったものを返す)
+  for l:base in a:bases
+    let l:resolved = l:base . '/' . a:path
+    if filereadable(l:resolved) || isdirectory(l:resolved)
+      return l:resolved
+    endif
+  endfor
   return ''
 endfunction
 
@@ -1458,7 +1499,7 @@ function! s:collect_urls(line) abort
   return l:urls
 endfunction
 
-function! s:collect_paths(line) abort
+function! s:collect_paths(line, bases) abort
   let l:paths = []
   " 1. Markdownリンク [text](path) の () 内を行全体から抽出 (空白を含むパス対応)
   "    () で境界が一意に決まるので token split より先に拾う
@@ -1468,7 +1509,7 @@ function! s:collect_paths(line) abort
     if l:s == -1
       break
     endif
-    let [l:path, l:lnum] = s:resolve_token_as_path(l:m)
+    let [l:path, l:lnum] = s:resolve_token_as_path(l:m, a:bases)
     if !empty(l:path)
       call add(l:paths, [l:path, l:lnum])
     endif
@@ -1477,7 +1518,7 @@ function! s:collect_paths(line) abort
   " 2. Markdownリンクを除去した残りを空白区切り token として走査 (bare パス)
   let l:rest = substitute(a:line, '\v\[[^\]]*\]\([^)]+\)', ' ', 'g')
   for l:token in split(l:rest, '\s\+')
-    let [l:path, l:lnum] = s:resolve_token_as_path(l:token)
+    let [l:path, l:lnum] = s:resolve_token_as_path(l:token, a:bases)
     if !empty(l:path)
       call add(l:paths, [l:path, l:lnum])
     endif
@@ -1486,7 +1527,8 @@ function! s:collect_paths(line) abort
 endfunction
 
 function! OpenUrlOrFilePathOnCursor() range abort
-  " tabedit でカレントバッファが変わるので、対象行は先に集める
+  " tabedit でカレントバッファが変わるので、対象行と探索ベースは先に集める
+  let l:bases = s:search_bases()
   let l:lines = getline(a:firstline, a:lastline)
   let l:urls = []
   let l:paths = []
@@ -1499,7 +1541,7 @@ function! OpenUrlOrFilePathOnCursor() range abort
       continue
     endif
     " URL が無い行だけ token を走査してファイルパス判定
-    call extend(l:paths, s:collect_paths(l:line))
+    call extend(l:paths, s:collect_paths(l:line, l:bases))
   endfor
   if empty(l:urls) && empty(l:paths)
     echo "No URL or file path found."
