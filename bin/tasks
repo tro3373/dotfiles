@@ -462,7 +462,7 @@ front_matter_value() {
 
 # 完了済み参照行 (- [x] [title](path)) を log_fmt へ転記し .tasks.md から削除する。
 # done ディレクトリは使わない。タスクdir自体は split 済みのため移動しない。
-# log_fmt は .tasks (= repo の保存先ベース) を起点に解決する。
+# log_fmt は store_root を起点に解決する。
 clean_tasks() {
   # 未 split の完了タスクを先に split し、完了参照行へ変換する
   split_completed_unsplit_tasks
@@ -471,10 +471,8 @@ clean_tasks() {
     info "==> No completed task references to clean."
     return 0
   fi
-  local base log_path
-  base=$(realpath "$git_root/.tasks" 2>/dev/null) ||
-    die "==> No .tasks base for clean: $git_root/.tasks"
-  log_path="$base/$(expand_log_fmt "$log_fmt")"
+  local log_path
+  log_path="$store_root/$(expand_log_fmt "$log_fmt")"
   mkdir -p "$(dirname "$log_path")"
   append_new_references_to_log "$log_path"
   info "==> Recorded completed task references to $log_path"

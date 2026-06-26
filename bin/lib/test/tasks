@@ -397,10 +397,10 @@ test_clean_records_reference_to_log() {
 
   run_tasks -c >/dev/null 2>&1 || true
 
-  # log_fmt = .tasks 起点 logs/%Y/%Y-%m-01-log.md。.tasks => base/myrepo
+  # log_fmt = store_root 起点 logs/%Y/%Y-%m-01-log.md。store_root => envdir
   local y ym log
   y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${base}/myrepo/logs/${y}/${ym}-01-log.md"
+  log="${envdir}/logs/${y}/${ym}-01-log.md"
 
   check 'clean: 完了参照を全件 log へ転記' \
     '2' "$(grep -cE '_done[12]\]' "${log}" 2>/dev/null || true)"
@@ -461,7 +461,7 @@ EOF
 
   local y ym log
   y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${base}/myrepo/logs/${y}/${ym}-01-log.md"
+  log="${envdir}/logs/${y}/${ym}-01-log.md"
   check 'clean-split: 参照を log へ転記' \
     '1' "$(grep -qE -- '_test-task-1\]' "${log}" 2>/dev/null && echo 1 || echo 0)"
   check 'clean-split: 完了ブロックを index.md から除去' \
@@ -546,7 +546,7 @@ EOF
 
   local y ym log
   y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${base}/myrepo/logs/${y}/${ym}-01-log.md"
+  log="${envdir}/logs/${y}/${ym}-01-log.md"
   check 'clean-wt: 参照を log へ転記' \
     '1' "$(grep -qE -- '_test-task-1\]' "${log}" 2>/dev/null && echo 1 || echo 0)"
 
