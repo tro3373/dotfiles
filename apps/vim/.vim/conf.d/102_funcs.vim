@@ -1499,6 +1499,14 @@ function! s:collect_urls(line) abort
   return l:urls
 endfunction
 
+" token を解決し、ファイルパスなら paths に [path, lnum] を追加する
+function! s:add_resolved_path(paths, token, bases) abort
+  let [l:path, l:lnum] = s:resolve_token_as_path(a:token, a:bases)
+  if !empty(l:path)
+    call add(a:paths, [l:path, l:lnum])
+  endif
+endfunction
+
 function! s:collect_paths(line, bases) abort
   let l:paths = []
   " 1. Markdownリンク [text](path) の () 内を行全体から抽出 (空白を含むパス対応)
@@ -1509,19 +1517,13 @@ function! s:collect_paths(line, bases) abort
     if l:s == -1
       break
     endif
-    let [l:path, l:lnum] = s:resolve_token_as_path(l:m, a:bases)
-    if !empty(l:path)
-      call add(l:paths, [l:path, l:lnum])
-    endif
+    call s:add_resolved_path(l:paths, l:m, a:bases)
     let l:start = l:e
   endwhile
   " 2. Markdownリンクを除去した残りを空白区切り token として走査 (bare パス)
   let l:rest = substitute(a:line, '\v\[[^\]]*\]\([^)]+\)', ' ', 'g')
   for l:token in split(l:rest, '\s\+')
-    let [l:path, l:lnum] = s:resolve_token_as_path(l:token, a:bases)
-    if !empty(l:path)
-      call add(l:paths, [l:path, l:lnum])
-    endif
+    call s:add_resolved_path(l:paths, l:token, a:bases)
   endfor
   return l:paths
 endfunction
