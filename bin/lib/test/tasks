@@ -5,14 +5,16 @@
 # split は TASKS_GEN_META_CMD で LLM 生成を fake に差し替え、worktree/tmux に依存しない。
 #
 # 検証対象:
-#   * link 先解決: not-worktree => {tasks_dir}/{repo}/index.md (.tasks.md => index.md)
-#   * config 無し/空/相対 => die、既存 link は config 無しでも動作
+#   * link 先解決: not-worktree => {store_root}/{tasks_subdir}/{repo}/index.md
+#   * config 無し/store_root 未設定/相対/~ => die・展開、既存 link は config 無しでも動作
 #   * worktree で link 未生成 => 親リポ共有 base へ自己修復 (front matter 生成)
-#   * split: {timestamp}_{name}/index.md(front matter) 生成、元リストは参照行へ置換
+#   * split: {timestamp}_{name}/index.md(front matter) 生成、元リストは新形式参照行へ置換
+#       参照行 = - [ ] [dir名](store_root 相対 path)
 #   * split-all: 参照行を再 split せず終了 (無限ループ回帰)
 #   * summary: front matter title 表示
 #   * complete: front matter done:true + title ✅️ + 親参照 [x]
 #   * complete: 通常サブタスク - [ ] => - [x]
+#   * clean: 完了参照行を log_fmt へ転記し .tasks.md から削除 (done 廃止)
 #
 #   bin/lib/test/tasks   # 全テスト実行
 
@@ -45,10 +47,23 @@ new_env() {
   git -C "${repo}" init -q
 }
 
-# config.env に tasks_dir を書き出す。
+# config.env を新スキーマで書き出す。
+# 引数: tasks_base (= store_root/tasks_subdir となる絶対パス。省略時 ${base})。
+# store_root=dirname / tasks_subdir=basename へ分解し、tasks_store_dir が tasks_base に一致する。
 write_config() {
+  local tasks_base="${1:-${base}}"
+  write_config_kv "$(dirname "${tasks_base}")" "$(basename "${tasks_base}")" \
+    'logs/%Y/%Y-%m-01-log.md'
+}
+
+# config.env に store_root/tasks_subdir/log_fmt を verbatim で書き出す (検証用)。
+write_config_kv() {
   mkdir -p "${xdg}/tasks"
-  printf 'tasks_dir=%s\n' "$1" >"${xdg}/tasks/config.env"
+  {
+    printf 'store_root=%s\n' "$1"
+    printf 'tasks_subdir=%s\n' "$2"
+    printf "log_fmt='%s'\n" "$3"
+  } >"${xdg}/tasks/config.env"
 }
 
 # repo 内で bin/tasks を実行。XDG_CONFIG_HOME と LLM 生成 fake を差し替える。
@@ -74,7 +89,7 @@ FAKE
   chmod +x "${fake_meta}"
 }
 
-# 1. config の tasks_dir 配下 {tasks_dir}/{repo}/index.md に link を生成する
+# 1. config の tasks_subdir 配下 {tasks_subdir}/{repo}/index.md に link を生成する
 test_creates_index_md_link() {
   new_env t1 myrepo
   write_config "${base}"
@@ -105,40 +120,68 @@ test_dies_without_config() {
     '1' "$([[ ! -e ${repo}/.tasks.md ]] && echo 1 || echo 0)"
 }
 
-# 3. tasks_dir が空なら die する
-test_dies_with_empty_tasks_dir() {
+# 3. store_root が未設定なら die する
+test_dies_without_store_root() {
   new_env t3 myrepo
-  write_config ''
+  write_config_kv '' 'tasks' 'logs/x.md'
 
   local out rc
   out=$(run_tasks --summary)
   rc=$?
 
-  check 'empty-dir: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
-  check 'empty-dir: message says "is not set"' \
+  check 'no-store_root: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'no-store_root: message says "is not set"' \
     '1' "$([[ ${out} == *"is not set"* ]] && echo 1 || echo 0)"
 }
 
-# 3b. 相対パスの tasks_dir は絶対パスでないとして die する
-test_dies_with_relative_tasks_dir() {
-  new_env t3b myrepo
-  write_config 'relative/base'
+# 3a2. tasks_subdir が未設定なら die する
+test_dies_without_tasks_subdir() {
+  new_env t3a2 myrepo
+  write_config_kv "${base}" '' 'logs/x.md'
 
   local out rc
   out=$(run_tasks --summary)
   rc=$?
 
-  check 'relative-dir: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
-  check 'relative-dir: message says "absolute path"' \
+  check 'no-tasks_subdir: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'no-tasks_subdir: message says "is not set"' \
+    '1' "$([[ ${out} == *"is not set"* ]] && echo 1 || echo 0)"
+}
+
+# 3a3. log_fmt が未設定なら die する
+test_dies_without_log_fmt() {
+  new_env t3a3 myrepo
+  write_config_kv "$(dirname "${base}")" "$(basename "${base}")" ''
+
+  local out rc
+  out=$(run_tasks --summary)
+  rc=$?
+
+  check 'no-log_fmt: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'no-log_fmt: message says "is not set"' \
+    '1' "$([[ ${out} == *"is not set"* ]] && echo 1 || echo 0)"
+}
+
+# 3b. 相対パスの store_root は絶対パスでないとして die する
+test_dies_with_relative_store_root() {
+  new_env t3b myrepo
+  write_config_kv 'relative/root' 'tasks' 'logs/x.md'
+
+  local out rc
+  out=$(run_tasks --summary)
+  rc=$?
+
+  check 'relative-root: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'relative-root: message says "absolute path"' \
     '1' "$([[ ${out} == *"absolute path"* ]] && echo 1 || echo 0)"
 }
 
-# 3c. クォート付きリテラル ~ の tasks_dir は $HOME 展開され受理される
-test_accepts_quoted_tilde_tasks_dir() {
+# 3c. クォート付きリテラル ~ の store_root は $HOME 展開され受理される
+test_accepts_quoted_tilde_store_root() {
   new_env t3c myrepo
   local fake_home="${envdir}/home"
   mkdir -p "${fake_home}"
-  write_config '"~/ttasks"'
+  write_config_kv '"~/troot"' 'tasks' 'logs/x.md'
 
   local rc
   (cd "${repo}" &&
@@ -147,13 +190,13 @@ test_accepts_quoted_tilde_tasks_dir() {
       "${tasks_bin}" --summary) >/dev/null 2>&1
   rc=$?
 
-  check 'tilde-dir: exit zero (~ expanded, accepted)' '0' "${rc}"
-  check 'tilde-dir: .tasks => {fake_home}/ttasks/myrepo' \
-    "${fake_home}/ttasks/myrepo" "$(readlink "${repo}/.tasks")"
+  check 'tilde-root: exit zero (~ expanded, accepted)' '0' "${rc}"
+  check 'tilde-root: .tasks => {fake_home}/troot/tasks/myrepo' \
+    "${fake_home}/troot/tasks/myrepo" "$(readlink "${repo}/.tasks")"
 }
 
-# 4. link 既生成の repo は config 無しでも die せず動作する (早期 return)
-test_skips_config_when_links_exist() {
+# 4. config は全モード必須 (main で必ず load)。link 既生成でも config 無しは die する
+test_requires_config_even_with_links() {
   new_env t4 myrepo
   mkdir -p "${repo}/.tasks"
   : >"${repo}/.tasks.md"
@@ -162,9 +205,10 @@ test_skips_config_when_links_exist() {
   out=$(run_tasks --summary)
   rc=$?
 
-  check 'existing-links: exit zero without config' '0' "${rc}"
-  check 'existing-links: summary prints repo name' \
-    '1' "$([[ ${out} == *myrepo* ]] && echo 1 || echo 0)"
+  check 'mandatory-config: exit non-zero without config' \
+    '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'mandatory-config: message points to config path' \
+    '1' "$([[ ${out} == *config.env* ]] && echo 1 || echo 0)"
 }
 
 # 5. worktree で link 未生成なら親リポから自己修復し front matter 付き .tasks.md を生成
@@ -223,8 +267,10 @@ test_split_creates_dir_and_reference() {
   check 'split: body preserved' \
     '1' "$([[ -n ${idx} ]] && grep -qF 'First task body' "${idx}" && echo 1 || echo 0)"
 
-  check 'split: parent reference is absolute path' \
-    '1' "$(grep -qE -- '^- \[ \]\([/~].*_test-task-1/index.md\)$' "${base}/myrepo/index.md" 2>/dev/null && echo 1 || echo 0)"
+  # 新形式参照行: - [ ] [dir名](store_root 相対 path)。base=${envdir}/base, store_root=${envdir}
+  # => path は base/myrepo/{ts}_test-task-1/index.md
+  check 'split: parent reference is new format (title + store_root-relative path)' \
+    '1' "$(grep -qE -- '^- \[ \] \[[^]]*_test-task-1\]\(base/myrepo/[^)]*_test-task-1/index.md\)$' "${base}/myrepo/index.md" 2>/dev/null && echo 1 || echo 0)"
   check 'split: original task line removed from parent' \
     '0' "$(grep -qF -- '- [ ] First task body' "${base}/myrepo/index.md" 2>/dev/null && echo 1 || echo 0)"
 }
@@ -242,7 +288,7 @@ test_split_all_terminates() {
   run_tasks -sa >/dev/null 2>&1 || true
 
   local ref_count
-  ref_count=$(grep -cE '^- \[ \]\(' "${base}/myrepo/index.md" 2>/dev/null || echo 0)
+  ref_count=$(grep -cE '^- \[ \] \[[^]]*\]\(' "${base}/myrepo/index.md" 2>/dev/null || echo 0)
   check 'split-all: exactly 2 references created' '2' "${ref_count}"
 
   local dir_count
@@ -253,6 +299,7 @@ test_split_all_terminates() {
 # 8. summary: front matter の title を返す
 test_summary_reads_front_matter_title() {
   new_env t8 myrepo
+  write_config "${base}"
   local dir="${base}/myrepo/20260101-000000_test-task"
   mkdir -p "${dir}"
   cat >"${dir}/index.md" <<'EOF'
@@ -276,10 +323,13 @@ EOF
 # 9. complete (front matter): done:true + title ✅️ + 親参照 [x]
 test_complete_front_matter_task() {
   new_env t9 myrepo
+  write_config "${base}"
   local repo_base="${base}/myrepo"
   local dir="${repo_base}/20260101-000000_test-task"
+  # store_root=${envdir}, base=${envdir}/base => ref は base/myrepo/... の相対パス
+  local ref='base/myrepo/20260101-000000_test-task/index.md'
   mkdir -p "${dir}"
-  printf '%s\n' "- [ ](${dir}/index.md)" >"${repo_base}/index.md"
+  printf '%s\n' "- [ ] [20260101-000000_test-task](${ref})" >"${repo_base}/index.md"
   cat >"${dir}/index.md" <<EOF
 ---
 title: Done Me
@@ -298,7 +348,7 @@ EOF
   check 'complete-fm: title prefixed with mark' \
     '1' "$(grep -qE '^title: ✅️ Done Me' "${dir}/index.md" && echo 1 || echo 0)"
   check 'complete-fm: parent reference marked [x]' \
-    '1' "$(grep -qF -- "- [x](${dir}/index.md)" "${repo_base}/index.md" && echo 1 || echo 0)"
+    '1' "$(grep -qF -- "- [x] [20260101-000000_test-task](${ref})" "${repo_base}/index.md" && echo 1 || echo 0)"
 }
 
 # 10. complete (通常サブタスク): - [ ] => - [x]
@@ -320,7 +370,7 @@ test_complete_skips_reference() {
   write_config "${base}"
   run_tasks --summary >/dev/null 2>&1 || true
   {
-    printf '%s\n' '- [ ](20260101-000000_x/index.md)'
+    printf '%s\n' '- [ ] [20260101-000000_x](20260101-000000_x/index.md)'
     printf '%s\n' '- [ ] Real task'
   } >>"${base}/myrepo/index.md"
 
@@ -329,25 +379,47 @@ test_complete_skips_reference() {
   check 'complete-skip-ref: real task marked [x]' \
     '1' "$(grep -qF -- '- [x] Real task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
   check 'complete-skip-ref: reference left untouched' \
-    '1' "$(grep -qF -- '- [ ](20260101-000000_x/index.md)' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+    '1' "$(grep -qF -- '- [ ] [20260101-000000_x](20260101-000000_x/index.md)' "${base}/myrepo/index.md" && echo 1 || echo 0)"
 }
 
-# 12. clean: 完了参照行 (- [x](...)) を done へ移さず残す (回帰)
-test_clean_keeps_reference() {
+# 12. clean: 完了参照行を log_fmt へ転記し index.md から削除。未完了/通常は残し done は作らない
+test_clean_records_reference_to_log() {
   new_env t12 myrepo
   write_config "${base}"
   run_tasks --summary >/dev/null 2>&1 || true
+  # 完了2件・未完了参照・通常タスクを1ケースに混在 (一括転記+スキップを同時検証)
   {
-    printf '%s\n' '- [x](20260101-000000_x/index.md)'
-    printf '%s\n' '- [x] Done real task'
+    printf '%s\n' '- [ ] 通常の未完了タスク'
+    printf '%s\n' '- [x] [20260101-000000_done1](base/myrepo/20260101-000000_done1/index.md)'
+    printf '%s\n' '- [ ] [20260102-000000_pending](base/myrepo/20260102-000000_pending/index.md)'
+    printf '%s\n' '- [x] [20260103-000000_done2](base/myrepo/20260103-000000_done2/index.md)'
   } >>"${base}/myrepo/index.md"
 
   run_tasks -c >/dev/null 2>&1 || true
 
-  check 'clean: completed reference kept in index.md' \
-    '1' "$(grep -qF -- '- [x](20260101-000000_x/index.md)' "${base}/myrepo/index.md" && echo 1 || echo 0)"
-  check 'clean: completed real task moved out of index.md' \
-    '0' "$(grep -qF -- '- [x] Done real task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  # log_fmt = .tasks 起点 logs/%Y/%Y-%m-01-log.md。.tasks => base/myrepo
+  local y ym log
+  y=$(date +%Y) && ym=$(date +%Y-%m)
+  log="${base}/myrepo/logs/${y}/${ym}-01-log.md"
+
+  check 'clean: 完了参照を全件 log へ転記' \
+    '2' "$(grep -cE '_done[12]\]' "${log}" 2>/dev/null || true)"
+  check 'clean: 転記済み完了参照を index.md から削除' \
+    '0' "$(grep -cE '_done[12]\]' "${base}/myrepo/index.md" 2>/dev/null || true)"
+  check 'clean: 未完了参照は index.md に残す' \
+    '1' "$(grep -qF -- '20260102-000000_pending' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'clean: 通常タスクは index.md に残す' \
+    '1' "$(grep -qF -- '通常の未完了タスク' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'clean: done ディレクトリを作らない' \
+    '0' "$([[ -d "${base}/myrepo/done" ]] && echo 1 || echo 0)"
+
+  # 再実行: 完了参照が無いので no-op (log 重複追記しない・index.md 不変)
+  local before
+  before=$(cat "${base}/myrepo/index.md")
+  run_tasks -c >/dev/null 2>&1 || true
+  check 'clean: 再実行は log を増やさない (no-op)' \
+    '2' "$(grep -cE '_done[12]\]' "${log}" 2>/dev/null || true)"
+  check 'clean: 再実行で index.md 不変' "${before}" "$(cat "${base}/myrepo/index.md")"
 }
 
 main() {
@@ -359,10 +431,12 @@ main() {
 
   test_creates_index_md_link
   test_dies_without_config
-  test_dies_with_empty_tasks_dir
-  test_dies_with_relative_tasks_dir
-  test_accepts_quoted_tilde_tasks_dir
-  test_skips_config_when_links_exist
+  test_dies_without_store_root
+  test_dies_without_tasks_subdir
+  test_dies_without_log_fmt
+  test_dies_with_relative_store_root
+  test_accepts_quoted_tilde_store_root
+  test_requires_config_even_with_links
   test_worktree_self_heals_links
   test_split_creates_dir_and_reference
   test_split_all_terminates
@@ -370,7 +444,7 @@ main() {
   test_complete_front_matter_task
   test_complete_normal_task
   test_complete_skips_reference
-  test_clean_keeps_reference
+  test_clean_records_reference_to_log
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

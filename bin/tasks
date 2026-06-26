@@ -8,8 +8,10 @@ timestamp=$(date $timestamp_fmt) && readonly timestamp
 command_name=$(basename "$0") && readonly command_name
 grep_key_task_exists='- \[ \]' && readonly grep_key_task_exists
 grep_key_task_completed='- \[[xX]\]' && readonly grep_key_task_completed
-# 参照行 (split 済みタスクへのリンク): `- [ ](path/to/index.md)` 形式
-grep_key_reference='^- \[[ xX]\]\(' && readonly grep_key_reference
+# 参照行 (split 済みタスクへのリンク): `- [ ] [title](store_root相対path)` 形式
+grep_key_reference='^- \[[ xX]\] \[[^]]*\]\(' && readonly grep_key_reference
+# 完了済み参照行のみ (clean 対象): `- [x] [title](path)`
+grep_key_reference_done='^- \[[xX]\] \[[^]]*\]\(' && readonly grep_key_reference_done
 args=()
 mode=list
 comment_type=
@@ -17,7 +19,11 @@ task_file=
 task_index=
 task_index_explicit=0
 parse_skip_refs=0
-tasks_base_dir=
+# config (load_tasks_config が設定): store_root=絶対, tasks_subdir=相対, log_fmt=相対フォーマット
+store_root=
+tasks_subdir=
+log_fmt=
+tasks_store_dir=
 
 usage() {
   cat <<EOF
@@ -31,7 +37,7 @@ Manage repository tasks.
       -s|--split          : Split Nth task into a task directory (default 1)
       -sa|--split-all     : Split all tasks into task directories
       -n|--next           : Show Nth task chunk (default 1; also -n2, --next=2)
-      -c|--clean          : Move completed tasks to .tasks/done/done.md
+      -c|--clean          : Record completed split references to log and drop from list
       ok|v|done|complete  : Mark Nth task chunk as completed (default 1)
       -m|--comment [type] : Add comment to Nth task (type: requirement|review|complete)
       -a|--add            : Add task from stdin (prepends "- [ ] " if missing)
@@ -129,10 +135,18 @@ get_timestamp_prefix() { date +"[%Y%m%d_%H%M%S]"; }
 # 参照や parent をユーザ名非依存の ~ 形式で保存し、利用時に展開する。
 to_tilde() { printf '%s' "${1/#$HOME/\~}"; }
 from_tilde() { printf '%s' "${1/#\~/$HOME}"; }
-# 参照行 `- [ ](path)` とパスの相互変換 (to_tilde/from_tilde と同様の対)。
-# from は完了状態 `- [x](path)` のパスも取り出せる。
-to_reference_line() { printf '%s' "- [ ]($1)"; }
-from_reference_line() { sed -E 's/^- \[[ xX]\]\((.*)\)$/\1/' <<<"$1"; }
+# 参照行 `- [ ] [title](path)` とパスの相互変換 (to_tilde/from_tilde と同様の対)。
+# title は path のタスクディレクトリ名 (basename of dirname) を SSOT として導出。
+# from は完了状態 `- [x] [title](path)` のパスも取り出せる。
+to_reference_line() {
+  local path="$1" title
+  title=$(basename "$(dirname "$path")")
+  printf '%s' "- [ ] [$title]($path)"
+}
+from_reference_line() { sed -E 's/^- \[[ xX]\] \[[^]]*\]\((.*)\)$/\1/' <<<"$1"; }
+
+# log_fmt の strftime 指定子 (%Y, %Y-%m 等) を date で実値化する。
+expand_log_fmt() { date +"$1"; }
 
 # YAML front matter を出力 (title, branch, name, parent)。done は常に false。
 # body は呼び出し側で追記する。front matter スキーマの SSOT。
@@ -149,14 +163,13 @@ emit_front_matter() {
 }
 
 # .tasks.md(file) と .tasks(dir) のリンクが無ければ生成。
-# not worktree: {tasks_dir}/{repo}/index.md を生成し .tasks.md => index.md
+# not worktree: {tasks_subdir}/{repo}/index.md を生成し .tasks.md => index.md
 # worktree    : 親リポと共有 base を使い worktree 専用 .tasks.md を自己修復
 initialize_links_if_needed() {
   dst_tasks_md="$git_root/.tasks.md"
   dst_tasks_dir="$git_root/.tasks"
   [[ -e $dst_tasks_md && -e $dst_tasks_dir ]] && return
 
-  load_tasks_config
   if current_is_worktree_dir; then
     initialize_worktree_links
     return
@@ -166,29 +179,30 @@ initialize_links_if_needed() {
 
 initialize_normal_links() {
   info "==> Initialize tasks files.."
+  local repo_name repo_tasks_dir repo_tasks_md
   repo_name=$(basename "$git_root")
-  tasks_dir="$tasks_base_dir/$repo_name"
-  tasks_md="$tasks_dir/index.md"
+  repo_tasks_dir="$tasks_store_dir/$repo_name"
+  repo_tasks_md="$repo_tasks_dir/index.md"
   if [[ ! -e $dst_tasks_dir ]]; then
-    mkdir -p "$tasks_dir/done"
-    _ln "$tasks_dir" "$dst_tasks_dir"
+    mkdir -p "$repo_tasks_dir"
+    _ln "$repo_tasks_dir" "$dst_tasks_dir"
   fi
   if [[ ! -e $dst_tasks_md ]]; then
-    touch "$tasks_md"
-    _ln "$tasks_md" "$dst_tasks_md"
+    touch "$repo_tasks_md"
+    _ln "$repo_tasks_md" "$dst_tasks_md"
   fi
 }
 
 # worktree のリンクを自己修復する。親リポを git-common-dir から逆引きし
-# {tasks_dir}/{repo} を親と共有する base として使う。worktree のブランチは
+# {tasks_subdir}/{repo} を親と共有する base として使う。worktree のブランチは
 # 確定済みなので LLM 推論なしで split と同型の front matter を決定的に生成する。
 initialize_worktree_links() {
   info "==> Initialize worktree tasks files.."
   local org_root repo_name base_dir branch name wt_ts wt_md wt_dir
   org_root=$(dirname "$(git -C "$git_root" rev-parse --path-format=absolute --git-common-dir)")
   repo_name=$(basename "$org_root")
-  base_dir="$tasks_base_dir/$repo_name"
-  mkdir -p "$base_dir/done"
+  base_dir="$tasks_store_dir/$repo_name"
+  mkdir -p "$base_dir"
 
   branch=$(git -C "$git_root" rev-parse --abbrev-ref HEAD)
   [[ -z $branch || $branch == "HEAD" ]] && branch=$(basename "$git_root")
@@ -203,20 +217,24 @@ initialize_worktree_links() {
   [[ -e $dst_tasks_md ]] || _ln "$wt_md" "$dst_tasks_md"
 }
 
-# 保存先ベースディレクトリを config から読み込む。SSOT は config の tasks_dir。
+# config から store_root/tasks_subdir/log_fmt を読み込む。SSOT は config。
+# tasks_store_dir = store_root/tasks_subdir。main から全モード共通で1回だけ呼ぶ。
+# log_fmt は strftime 指定子を含むパスフォーマット (ex: log_fmt=logs/%Y/%Y-%m-01-log.md)。
 load_tasks_config() {
   local config_file="${XDG_CONFIG_HOME:-$HOME/.config}/tasks/config.env"
   [[ -f $config_file ]] ||
-    die "==> No config: $config_file => Create it with 'tasks_dir=/path/to/base'"
+    die "==> No config: $config_file => Define store_root, tasks_subdir, log_fmt"
   # shellcheck source=/dev/null
   source "$config_file" ||
     die "==> Failed to load config (syntax error?): $config_file"
-  [[ -n ${tasks_dir:-} ]] ||
-    die "==> 'tasks_dir' is not set in $config_file"
-  tasks_dir=$(from_tilde "$tasks_dir")
-  [[ $tasks_dir == /* ]] ||
-    die "==> 'tasks_dir' must be an absolute path: $tasks_dir"
-  tasks_base_dir=$tasks_dir
+  [[ -n ${store_root:-} ]] || die "==> 'store_root' is not set in $config_file"
+  [[ -n ${tasks_subdir:-} ]] || die "==> 'tasks_subdir' is not set in $config_file"
+  [[ -n ${log_fmt:-} ]] || die "==> 'log_fmt' is not set in $config_file"
+  store_root=$(from_tilde "$store_root")
+  [[ $store_root == /* ]] ||
+    die "==> 'store_root' must be an absolute path: $store_root"
+  store_root=$(realpath -m "$store_root")
+  tasks_store_dir="$store_root/$tasks_subdir"
 }
 
 _ln() {
@@ -226,9 +244,7 @@ _ln() {
 
 find_tasks() {
   echo .tasks.md
-  for d in .tasks ".tasks/done"; do
-    find "$d"/ -maxdepth 1 -mindepth 1 -type f -name '*.md' 2>/dev/null | sort -nr || :
-  done
+  find .tasks/ -maxdepth 1 -mindepth 1 -type f -name '*.md' 2>/dev/null | sort -nr || :
 }
 
 cat_first_task() {
@@ -297,8 +313,8 @@ split_task() {
     die "==> Invalid task meta JSON: $json_result"
   fi
 
-  # タスクディレクトリ: {tasks_dir}/{repo}/{timestamp}_{name}/index.md
-  # .tasks は {tasks_dir}/{repo} を指す symlink
+  # タスクディレクトリ: {tasks_subdir}/{repo}/{timestamp}_{name}/index.md
+  # .tasks は {tasks_subdir}/{repo} を指す symlink
   base_dir=$(realpath "$git_root/.tasks")
   task_dir="$base_dir/${timestamp}_${name}"
   mkdir -p "$task_dir"
@@ -311,8 +327,10 @@ split_task() {
     cat "$tmp_file"
   } >"$task_index_md"
 
-  # 元リストの当該タスクを参照行へ置換 (削除しない)
-  ref=$(to_tilde "$task_index_md")
+  # 元リストの当該タスクを参照行へ置換 (削除しない)。ref は store_root 相対パス。
+  ref=${task_index_md#"$store_root"/}
+  [[ $ref != /* ]] ||
+    die "==> Task path not under store_root: $task_index_md (store_root=$store_root)"
   replace_task_with_reference "$ref"
 
   rm -f "$tmp_file"
@@ -346,12 +364,6 @@ has_unsplit_task() {
     grep -qvE "^[0-9]+:${grep_key_reference#^}"
 }
 
-has_completed_tasks() {
-  # 完了参照行 (- [x](...)) は clean 対象から除外する (参照は残す設計)
-  grep -nE "^$grep_key_task_completed" "$target_file" |
-    grep -qvE "^[0-9]+:${grep_key_reference#^}"
-}
-
 has_front_matter() {
   head -1 "$target_file" | grep -qx -- '---'
 }
@@ -367,46 +379,22 @@ front_matter_value() {
   ' "$file"
 }
 
+# 完了済み参照行 (- [x] [title](path)) を log_fmt へ転記し .tasks.md から削除する。
+# done ディレクトリは使わない。タスクdir自体は split 済みのため移動しない。
+# log_fmt は .tasks (= repo の保存先ベース) を起点に解決する。
 clean_tasks() {
-  trap 'info "==> Task cleaned"' EXIT
-  if current_is_worktree_dir; then
-    clean_worktree_tasks
-    return
+  if ! grep -qE "$grep_key_reference_done" "$target_file"; then
+    info "==> No completed task references to clean."
+    return 0
   fi
-  clean_normal_tasks
-}
-
-clean_worktree_tasks() {
-  real_task_file=$(realpath "$git_root/.tasks.md")
-  real_done_dir=$(realpath "$git_root/.tasks/done")
-  if [[ ! -e $real_task_file ]] || [[ ! -e $real_done_dir ]]; then
-    die "==> Invalid state. real_task_file=$real_task_file, real_done_dir=$real_done_dir"
-  fi
-  info "==> Moving $real_task_file to $real_done_dir/"
-  mv -v "$real_task_file" "$real_done_dir/"
-  worktree_name=$(basename "$git_root")
-  find "$git_root/.tasks/" -maxdepth 1 -mindepth 1 -type f -name "*_${worktree_name}_*.md" -exec mv -v {} "$git_root/.tasks/done/" \;
-}
-
-clean_normal_tasks() {
-  # 参照行 (- [x](...)) を完了タスク抽出から除外する
-  parse_skip_refs=1
-  has_completed_tasks || return 0
-  ymd=$(date +%Y%m%d)
-  local done_file="$git_root/.tasks/done/${ymd}_done.md"
-  echo "## $timestamp" | tee -a "$done_file"
-  clean_normal_tasks_recursive
-}
-
-clean_normal_tasks_recursive() {
-  parse_tasks 1
-  sed -n "${first_line},${end_line}p" "$target_file" |
-    tee -a "$done_file"
-  # 元ファイルから削除
-  sed -i "${first_line},${end_line}d" "$target_file"
-  # まだタスクが残っていれば再帰的に処理
-  has_completed_tasks || return 0
-  clean_normal_tasks_recursive
+  local base log_path
+  base=$(realpath "$git_root/.tasks" 2>/dev/null) ||
+    die "==> No .tasks base for clean: $git_root/.tasks"
+  log_path="$base/$(expand_log_fmt "$log_fmt")"
+  mkdir -p "$(dirname "$log_path")"
+  grep -E "$grep_key_reference_done" "$target_file" >>"$log_path"
+  sed -i -E "/${grep_key_reference_done}/d" "$target_file"
+  info "==> Recorded completed task references to $log_path"
 }
 
 complete_task() {
@@ -436,12 +424,14 @@ complete_front_matter_task() {
   mark_parent_reference_done
 }
 
-# 親 index.md の当該参照行 (- [ ](.../index.md)) を [x] 化する
+# 親 index.md の当該参照行 (- [ ] [title](.../index.md)) を [x] 化する
 mark_parent_reference_done() {
   local parent ref lineno
   parent=$(from_tilde "$(front_matter_value "$target_file" parent)")
   [[ -n $parent && -e $parent ]] || return 0
-  ref=$(to_tilde "$target_file")
+  ref=${target_file#"$store_root"/}
+  [[ $ref != /* ]] ||
+    die "==> Task path not under store_root: $target_file (store_root=$store_root)"
   lineno=$(grep -nF -- "(${ref})" "$parent" | head -1 | cut -d: -f1)
   [[ -n $lineno ]] || return 0
   sed -i "${lineno}s/- \[ \]/- [x]/" "$parent"
@@ -535,7 +525,8 @@ spawn_task() {
   ref_line=$(select_reference) || die "==> No reference selected (cancelled)."
   [[ -z $ref_line ]] && die "==> No reference selected."
   ref_path=$(from_reference_line "$ref_line")
-  index_md=$(from_tilde "$ref_path")
+  # ref_path は store_root 相対なので絶対パスへ解決する
+  index_md="$store_root/$ref_path"
   [[ -e $index_md ]] || die "==> Reference index not found: $index_md"
 
   branch=$(front_matter_value "$index_md" branch)
@@ -549,7 +540,7 @@ spawn_task() {
     die "==> Failed to create worktree for: $branch"
   worktree_name=${branch//\//-}
 
-  # link: worktree/.tasks.md => index.md, worktree/.tasks => {tasks_dir}/{repo}
+  # link: worktree/.tasks.md => index.md, worktree/.tasks => {tasks_subdir}/{repo}
   base_dir=$(realpath "$git_root/.tasks")
   [[ -e "$worktree_dir/.tasks.md" ]] || _ln "$index_md" "$worktree_dir/.tasks.md"
   [[ -e "$worktree_dir/.tasks" ]] || _ln "$base_dir" "$worktree_dir/.tasks"
@@ -601,6 +592,9 @@ main() {
 
   resolve_target
   cd "$git_root" || exit 1
+
+  # config は全モード共通の前提。ここで1回だけ読み込み fail-fast 検証する。
+  load_tasks_config
 
   # .tasks.md(ファイル) と .tasks(ディレクトリ) のリンクが無ければ生成（遅延初期化）
   if [[ $(basename "$target_file") == ".tasks.md" ]]; then
