@@ -24,10 +24,23 @@ main() {
     return
   fi
 
+  local retry=2
+  local fails=()
   for pkg in $packages; do
     ilog "=> Installing updated packages: $pkg"
-    npm -g install "$pkg"
+    local n=0
+    while ((n < retry)); do
+      n=$((n + 1))
+      npm -g install "$pkg" && break
+      if ((n >= retry)); then
+        wlog "=> Failed to install $pkg after $retry attempts, skipping.."
+        fails+=("$pkg")
+        break
+      fi
+      wlog "=> Retry installing $pkg ($n/$retry).."
+    done
   done
-  ilog "=> Updating Node Done!"
+  [[ ${#fails[@]} -eq 0 ]] && ilog "=> Updating Node Done!" && return
+  wlog "=> Failed to install the following packages: ${fails[*]}"
 }
 main "$@"
