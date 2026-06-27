@@ -240,22 +240,29 @@ _rename_removed_branch() {
 _do_remove_worktree() {
   local target_path="$1"
 
-  tasks --clean -f "${target_path%/}/.tasks.md" 1>&2 || :
+  # 削除前に「呼び出し時の現在地そのもの」かを判定しておく (削除後は realpath 不可)。
+  local removing_current=0
+  if is_invoked_from_worktree &&
+    [[ "$(realpath "${target_path%/}")" == "$initial_toplevel" ]]; then
+    removing_current=1
+  fi
+
+  tasks --clean --all -f "${target_path%/}/.tasks.md" 1>&2 || :
 
   _rename_removed_branch "${target_path}"
 
   ilog "==> Removing worktree path: '${target_path}'.."
-  if git worktree remove "${target_path}"; then
-    return 0
+  if ! git worktree remove "${target_path}" && [[ -e ${target_path} ]]; then
+    wlog "==> Worktree path '${target_path}' still exists. Force remove? (Cancel: Ctrl+C)"
+    read -r _
+    sudo rm -rfv "${target_path}"
   fi
 
-  if [[ ! -e ${target_path} ]]; then
-    return 0
+  # 現在地の worktree を消した場合のみ org root を stdout に出す。zsh wrapper(gt) が
+  # これを受けて削除済み dir から org root へ cd し直し、シェルの宙ぶらりんを防ぐ。
+  if [[ $removing_current -eq 1 && ! -e ${target_path} ]]; then
+    echo "$git_org_root_dir"
   fi
-
-  wlog "==> Worktree path '${target_path}' still exists. Force remove? (Cancel: Ctrl+C)"
-  read -r _
-  sudo rm -rfv "${target_path}"
 }
 
 _merge_worktree() {
@@ -394,4 +401,7 @@ main() {
     *) show_change_directory_command ;;
   esac
 }
-main "$@"
+# main "$@"
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
+fi

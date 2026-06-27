@@ -10,10 +10,14 @@
 # 偽 tmux の状態 (@tmuxs_* option 等) は FAKE_STATE_DIR 配下に永続化し、
 # hook の複数回起動 (別プロセス) 間でも tmux server のように状態を共有する。
 #
-#   bin/lib/test/tmuxs   # 全テスト実行 (実 tmux 不要)
+#   test/tmuxs   # 全テスト実行 (実 tmux 不要)
 
 # tmpdir 配下に偽 tmux を生成し、$PATH 先頭に差し込む。
 # FAKE_TMUX_LOG / FAKE_STATE_DIR を偽 tmux が参照できるよう export する。
+#
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+tmuxs_bin=$(cd "${script_dir}/../bin" && pwd)/tmuxs
+
 setup_fake_tmux() {
   fakebin="${tmpdir}/bin"
   mkdir -p "${fakebin}"
@@ -70,12 +74,12 @@ check() {
 run_kill() {
   local target="$1"
   : >"${FAKE_TMUX_LOG}"
-  PATH="${fakebin}:${PATH}" "${tmuxs}" __kill "${target}"
+  PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __kill "${target}"
 }
 
 # イベントエントリ (`tmuxs <state>`) を fakebin 経由で別プロセス起動する。
 run_hook() {
-  PATH="${fakebin}:${PATH}" "${tmuxs}" "$@"
+  PATH="${fakebin}:${PATH}" "${tmuxs_bin}" "$@"
 }
 
 # 各 hook テスト前の共通リセット。マーカー・偽 tmux 状態・ログ・pane env を初期化する。
@@ -134,7 +138,7 @@ test_list_pads_and_marks_attached() {
   export FAKE_PANES=$'0\t%1\n0\t%2\n13\t%3\n4\t%4\n4\t%5\n4\t%6'
 
   local out
-  out=$(PATH="${fakebin}:${PATH}" "${tmuxs}" __list)
+  out=$(PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __list)
 
   check 'list 出力: 左寄せ + Nwin Mpane + attach の * (色なし)' \
     $'0   3w2p\n13  1w1p *\n4   3w3p' "${out}"
@@ -148,7 +152,7 @@ test_preview_stacks_panes() {
 
   # ANSI(青背景含む)と横幅パディングの末尾空白を除去してテキストだけ検証する。
   local out
-  out=$(PATH="${fakebin}:${PATH}" "${tmuxs}" __preview '4' |
+  out=$(PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __preview '4' |
     sed -e $'s/\033\\[[0-9;]*m//g' -e 's/[[:space:]]*$//')
   check '__preview: 全 pane をヘッダ付きで縦積み (active pane に *)' \
     $'4: win=zsh / 1.1 claude [/] *\nSCREENDUMP\n\n4: win=zsh / 1.2 zsh [/]\nSCREENDUMP\n\n4: win=bash / 2.1 bash [/] *\nSCREENDUMP' \
@@ -163,7 +167,7 @@ test_cleanup_removes_dead_markers() {
   printf 'waiting' >"${TMUXS_MARKER_DIR}/%99"
   export FAKE_PANES=$'%1\n%2'
 
-  PATH="${fakebin}:${PATH}" "${tmuxs}" __cleanup
+  PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __cleanup
 
   local remain
   remain=$(cd "${TMUXS_MARKER_DIR}" && printf '%s ' * | sort)
@@ -184,7 +188,7 @@ test_list_state_color_and_sort() {
   printf 'idle' >"${TMUXS_MARKER_DIR}/%5"
 
   local raw stripped
-  raw=$(PATH="${fakebin}:${PATH}" "${tmuxs}" __list)
+  raw=$(PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __list)
   stripped=$(printf '%s' "${raw}" | sed -e $'s/\033\\[[0-9;]*m//g')
 
   check 'list: waiting(B) を上位へ並べ替え + 状態集約 (C=running)' \
@@ -205,7 +209,7 @@ test_preview_state_band() {
   printf 'waiting' >"${TMUXS_MARKER_DIR}/%0"
 
   local raw
-  raw=$(PATH="${fakebin}:${PATH}" "${tmuxs}" __preview '4')
+  raw=$(PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __preview '4')
 
   check '__preview: waiting pane(%0) のヘッダ帯に waiting 色' yes \
     "$(printf '%s' "${raw}" | grep -q '48;2;229;175;30' && echo yes || echo no)"
@@ -223,7 +227,7 @@ test_switch_focuses_waiting_pane() {
   printf 'waiting' >"${TMUXS_MARKER_DIR}/%3"
 
   : >"${FAKE_TMUX_LOG}"
-  PATH="${fakebin}:${PATH}" "${tmuxs}" __switch 'A'
+  PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __switch 'A'
 
   local got
   got=$(grep -E '^(switch-client|select-window|select-pane)' "${FAKE_TMUX_LOG}")
@@ -240,7 +244,7 @@ test_switch_no_waiting_keeps_active() {
   printf 'idle' >"${TMUXS_MARKER_DIR}/%2"
 
   : >"${FAKE_TMUX_LOG}"
-  PATH="${fakebin}:${PATH}" "${tmuxs}" __switch 'A'
+  PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __switch 'A'
 
   local got
   got=$(grep -E '^(switch-client|select-window|select-pane)' "${FAKE_TMUX_LOG}")
@@ -345,13 +349,7 @@ main() {
   # 各テストを最後まで実行して集計するため、あえて -e は付けない。
   set -uo pipefail
 
-  local tmuxs tmpdir
-  tmuxs=$(realpath "$(dirname "${BASH_SOURCE[0]}")/../../tmuxs")
-  [[ -x ${tmuxs} ]] || {
-    printf 'error: tmuxs が見つからない: %s\n' "${tmuxs}" >&2
-    exit 1
-  }
-
+  local tmpdir
   tmpdir=$(mktemp -d)
   # shellcheck disable=SC2064 # local 変数を EXIT 時に確実に消すため定義時に展開する
   trap "rm -rf '${tmpdir}'" EXIT

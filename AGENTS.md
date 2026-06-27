@@ -1,1 +1,1 @@
-- bin/{command_name} の shell script のテストを書くときは bin/lib/test/{command_name} に配置する
+- bin/{command_name} の shell script のテストを書くときは test/test-{command_name} に配置する
