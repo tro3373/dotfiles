@@ -2,10 +2,12 @@
 # test: bin/lib/test/tasks
 # ~/.config/tasks/config.env
 
-readonly depends=(curl fzf jq tmux git_worktree)
+readonly depends=(curl fzf jq tmux git_worktree bat)
 readonly timestamp_fmt="+%Y%m%d-%H%M%S"
 timestamp=$(date $timestamp_fmt) && readonly timestamp
 command_name=$(basename "$0") && readonly command_name
+# fzf preview から自分自身を再呼び出しするための絶対パス (symlink 解決済み)
+self_path=$(realpath "$0") && readonly self_path
 grep_key_task_exists='- \[ \]' && readonly grep_key_task_exists
 grep_key_task_completed='- \[[xX]\]' && readonly grep_key_task_completed
 # 参照行 (split 済みタスクへのリンク): `- [ ] [title](store_root相対path)` 形式
@@ -98,6 +100,11 @@ initialize() {
       ok | v | done | complete) mode="complete" ;;
       spawn | --spawn) mode="spawn" ;;
       --summary) mode="summary" ;;
+      --preview-line)
+        # fzf preview 専用 (内部用)。指定行のタスクブロック/参照先を表示する。
+        mode="preview"
+        shift && task_index=$1
+        ;;
       -[0-9]*)
         task_index=${1#-}
         [[ $task_index =~ ^[1-9][0-9]*$ ]] || die "==> Invalid option: $1"
@@ -295,13 +302,40 @@ parse_tasks() {
   set_block_range "$fl"
 }
 
+# stdin を markdown としてシンタックスハイライト表示する (fzf preview 用)。
+# $1 = ヘッダに出すファイル名ラベル (stdin パイプだと既定の STDIN が無意味なため)。
+_bat_md() {
+  bat --language=md --color=always --style=full --paging=never --file-name="$1"
+}
+
+# fzf preview 用: 指定行のタスクを表示する。参照行 (- [ ] [title](path)) なら
+# 参照先 index.md の中身を、実ブロックなら set_block_range で求めた当該ブロック
+# (次の `- `/`#` 直前まで) を表示する。固定行数でなくブロック境界に従う。
+preview_line() {
+  local line_no="$1" line ref_path index_md
+  line=$(sed -n "${line_no}p" "$target_file")
+  if printf '%s\n' "$line" | grep -qE "$grep_key_reference"; then
+    ref_path=$(from_reference_line "$line")
+    index_md="$store_root/$ref_path"
+    if [[ -e $index_md ]]; then
+      _bat_md "$ref_path" <"$index_md"
+      return
+    fi
+    printf '%s\n' "$line" | _bat_md "$ref_path"
+    return
+  fi
+  set_block_range "$line_no"
+  sed -n "${first_line},${end_line}p" "$target_file" | _bat_md "$(basename "$target_file")"
+}
+
 # bin/v 互換 keybind の multi-select fzf。stdin=候補(lineno:行内容)、$1=prompt。
-# 表示は行番号列を隠し、preview は当該ブロックを表示する。die を持たない。
+# 表示は行番号列を隠し、preview は当該ブロック (参照行は参照先 index.md) を表示する。
+# preview は自分自身を --preview-line で再呼び出しし、ブロック境界解決を共有する。
 fzf_select() {
   fzf --multi --reverse --height=80% \
     --delimiter=: --with-nth=2.. \
     --prompt="$1" \
-    --preview "sed -n '{1},+20p' \"$target_file\"" \
+    --preview "'$self_path' -f '$target_file' --preview-line {1}" \
     --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview'
 }
 
@@ -488,11 +522,16 @@ front_matter_value() {
 }
 
 # 選択した完了タスク (- [x]) を log_fmt へ転記し .tasks.md から削除する。
-# 候補 = 完了参照行 + 未 split 完了タスクブロック。Nth 未指定なら fzf multi-select、
-# --all で全件。done ディレクトリは使わない。log_fmt は store_root を起点に解決する。
+# 候補 = 完了参照行 + 未 split 完了タスクブロック。ただし worktree では完了参照行を
+# 候補から除外する (worktree は参照行を削除せず log 転記も冪等なので実質 no-op)。
+# Nth 未指定なら fzf multi-select、--all で全件。done ディレクトリは使わない。
+# log_fmt は store_root を起点に解決する。
 clean_tasks() {
-  local candidates selected
-  candidates=$(list_task_lines 1 0)
+  local candidates selected skip_refs=0
+  if current_is_worktree_dir; then
+    skip_refs=1
+  fi
+  candidates=$(list_task_lines 1 "$skip_refs")
   if [[ -z $candidates ]]; then
     info "==> No completed tasks to clean."
     return 0
@@ -774,7 +813,8 @@ main() {
   load_tasks_config
 
   # .tasks.md(ファイル) と .tasks(ディレクトリ) のリンクが無ければ生成（遅延初期化）
-  if [[ $(basename "$target_file") == ".tasks.md" ]]; then
+  # preview は親 fzf からの読み取り専用再呼び出しなので link 初期化は不要 (skip)。
+  if [[ $mode != preview && $(basename "$target_file") == ".tasks.md" ]]; then
     initialize_links_if_needed
   fi
   [[ -e $target_file ]] || die "==> Task file not found: $target_file"
@@ -790,6 +830,7 @@ main() {
     complete) complete_task ;;
     spawn) spawn_task ;;
     summary) summary_task ;;
+    preview) preview_line "$task_index" ;;
     *) find_tasks | v ;;
   esac
 }

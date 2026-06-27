@@ -135,7 +135,12 @@ FAKE
 echo "called" >>"${FAKE_FZF_LOG:-/dev/null}"
 cat
 FAKE
-  chmod +x "${fakebin}/git_worktree" "${fakebin}/tmux" "${fakebin}/fzf"
+  # fake bat: 色/装飾を無視し stdin を素通し (preview のブロック境界/参照解決を検証)。
+  cat >"${fakebin}/bat" <<'FAKE'
+#!/usr/bin/env bash
+cat
+FAKE
+  chmod +x "${fakebin}/git_worktree" "${fakebin}/tmux" "${fakebin}/fzf" "${fakebin}/bat"
 }
 
 # 1. config の tasks_subdir 配下 {tasks_subdir}/{repo}/index.md に link を生成する
@@ -776,6 +781,71 @@ test_split_all_flag() {
     '0' "$([[ -s ${fzf_log} ]] && echo 1 || echo 0)"
 }
 
+# 20. clean(worktree): 完了参照行は候補外。log 転記せず index.md にも残す
+# worktree では参照行を削除できず log 転記も冪等で実質 no-op のため候補から除外する。
+test_clean_worktree_excludes_done_reference() {
+  new_env t20 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  git -C "${repo}" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+
+  local wt="${envdir}/myrepo-worktree/feature-y"
+  mkdir -p "$(dirname "${wt}")"
+  git -C "${repo}" worktree add -q -b feature-y "${wt}" >/dev/null 2>&1
+
+  (cd "${wt}" &&
+    XDG_CONFIG_HOME="${xdg}" TASKS_GEN_META_CMD="${fake_meta}" \
+      FAKE_META_COUNTER="${meta_counter}" "${tasks_bin}" --summary) >/dev/null 2>&1 || true
+
+  local wt_md
+  wt_md=$(readlink "${wt}/.tasks.md")
+  # 既に split 済みの完了参照行を直接投入 (worktree では候補外になるべき)
+  printf '%s\n' \
+    '- [x] [20260101-000000_prior](base/myrepo/20260101-000000_prior/index.md)' >>"${wt_md}"
+
+  (cd "${wt}" &&
+    PATH="${fakebin}:${PATH}" \
+      XDG_CONFIG_HOME="${xdg}" TASKS_GEN_META_CMD="${fake_meta}" \
+      FAKE_META_COUNTER="${meta_counter}" FAKE_FZF_LOG="${fzf_log}" \
+      "${tasks_bin}" -c --all) >/dev/null 2>&1 || true
+
+  local y ym log
+  y=$(date +%Y) && ym=$(date +%Y-%m)
+  log="${envdir}/logs/${y}/${ym}-01-log.md"
+  check 'clean-wt-excl: 完了参照行は log へ転記しない' \
+    '0' "$([[ -f ${log} ]] && grep -qF -- '_prior]' "${log}" && echo 1 || echo 0)"
+  check 'clean-wt-excl: 完了参照行は index.md に残る' \
+    '1' "$(grep -qF -- '20260101-000000_prior' "${wt_md}" && echo 1 || echo 0)"
+}
+
+# 21. preview: 実ブロックはブロック境界まで、参照行は参照先 index.md を表示
+test_preview_line_block_and_ref() {
+  new_env t21 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  mkdir -p "${base}/myrepo/refdir"
+  printf '%s\n' 'REF INDEX CONTENT' 'second line' >"${base}/myrepo/refdir/index.md"
+  cat >>"${base}/myrepo/index.md" <<'EOF'
+- [ ] plain pending
+- [x] done block line1
+  - sub detail
+- [ ] [reftitle](base/myrepo/refdir/index.md)
+EOF
+
+  local idx="${base}/myrepo/index.md"
+  check 'preview: 単一行ブロックは1行のみ' \
+    '- [ ] plain pending' \
+    "$(run_tasks -f "${idx}" --preview-line 1)"
+  check 'preview: 実ブロックはブロック境界まで表示' \
+    '- [x] done block line1
+  - sub detail' \
+    "$(run_tasks -f "${idx}" --preview-line 2)"
+  check 'preview: 参照行は参照先 index.md を表示' \
+    'REF INDEX CONTENT
+second line' \
+    "$(run_tasks -f "${idx}" --preview-line 4)"
+}
+
 main() {
   set -uo pipefail
   tmproot=$(mktemp -d)
@@ -811,6 +881,8 @@ main() {
   test_clean_all_flag
   test_clean_select_nth
   test_split_all_flag
+  test_clean_worktree_excludes_done_reference
+  test_preview_line_block_and_ref
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
