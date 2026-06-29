@@ -3,6 +3,8 @@
 # ====================================
 # main viewの左端にコミットIDを表示する
 set main-view = id date:local=yes author commit-title:graph=yes,refs=yes
+# 全てのブランチとタグのグラフ構造を main ビューに常時表示する
+set main-options = --all
 # set main-view-date-local = true
 # 画面を垂直方向に分割する
 set vertical-split = yes
