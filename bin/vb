@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 main() {
-  cd "$DOTPATH/bin" || exit 1
-  v "$@"
+  v "$DOTPATH/bin"
 }
 main "$@"
