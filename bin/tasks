@@ -49,7 +49,7 @@ Manage repository tasks.
       -m|--comment [type] : Add comment to Nth task (type: requirement|review|complete)
       -a|--add            : Add task from stdin (prepends "- [ ] " if missing)
       -f|--file [path]    : Specify task file to operate on (default: repo .tasks.md)
-      spawn|--spawn       : Spawn worktree + tmux + CC /task (split first if needed; fzf if no N)
+      -sp|--spawn         : Spawn worktree + tmux + CC /task (split first if needed; fzf if no N)
       --all               : Select all candidates for split/complete/spawn/clean
       --summary           : Show title of tasks
     Task index [N]
@@ -98,7 +98,7 @@ initialize() {
         shift && task_file=$1
         ;;
       ok | v | done | complete) mode="complete" ;;
-      spawn | --spawn) mode="spawn" ;;
+      -sp | --spawn) mode="spawn" ;;
       --summary) mode="summary" ;;
       --preview-line)
         # fzf preview 専用 (内部用)。指定行のタスクブロック/参照先を表示する。

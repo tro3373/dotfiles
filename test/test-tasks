@@ -377,7 +377,7 @@ test_spawn_splits_unsplit_then_tmux() {
   run_tasks --summary >/dev/null 2>&1 || true
   printf '%s\n' '- [ ] Spawn me task' >>"${base}/myrepo/index.md"
 
-  run_tasks spawn 1 >/dev/null 2>&1 || true
+  run_tasks --spawn 1 >/dev/null 2>&1 || true
 
   local idx
   idx=$(find "${base}/myrepo" -mindepth 2 -name index.md -path '*_test-task-1/index.md' | head -1)
@@ -419,7 +419,7 @@ EOF
   mkdir -p "$(dirname "${wt}")"
   git -C "${repo}" worktree add -q -b feature/foo "${wt}" >/dev/null 2>&1
 
-  run_tasks spawn 1 >/dev/null 2>&1 || true
+  run_tasks --spawn 1 >/dev/null 2>&1 || true
 
   check 'spawn-skip: git_worktree NOT called (worktree exists)' \
     '0' "$(grep -c -- '-a feature/foo' "${wt_log}" 2>/dev/null || echo 0)"
