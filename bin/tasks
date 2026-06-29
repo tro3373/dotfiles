@@ -113,6 +113,7 @@ initialize() {
         [[ $1 =~ ^[1-9][0-9]*$ ]] || die "==> Invalid index: $1"
         task_index=$1
         ;;
+      -*) die "==> Invalid option: $1" ;;
       *) add_args "$1" ;;
     esac
     shift

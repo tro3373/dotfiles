@@ -339,10 +339,15 @@ test_split_all_removed() {
     printf '%s\n' '- [ ] Task two'
   } >>"${base}/myrepo/index.md"
 
-  run_tasks -sa >/dev/null 2>&1 || true
+  # -sa は廃止 (後継は -s --all)。未知オプションとして parse 時に die する。
+  # 終了コードを検証し、対話モードへ落ちてハングする回帰を防ぐ。
+  local rc=0
+  run_tasks -sa >/dev/null 2>&1 || rc=$?
 
   local dir_count
   dir_count=$(find "${base}/myrepo" -mindepth 2 -name index.md 2>/dev/null | wc -l)
+  check 'split-all-removed: -sa is rejected as invalid option' \
+    '1' "${rc}"
   check 'split-all-removed: -sa creates no task dirs (feature gone)' \
     '0' "${dir_count}"
 }
