@@ -138,14 +138,13 @@ return {
           vim.keymap.set("n", "<F2>", vim.lsp.buf.rename, opts)
           vim.keymap.set("n", "<F1>", vim.lsp.buf.code_action, opts)
           -- vim.diagnostic.jump へ移行 (goto_prev/next は 0.13、opts.float は 0.14 で廃止)。
-          -- 旧 goto_* の float=true 既定を on_jump で踏襲し、カーソル位置に診断 float を出す。
+          -- ジャンプと同時に診断を loclist へ一覧表示する。setloclist は :lopen で
+          -- loclist 窓へフォーカスを移すため、ジャンプ元の窓へ戻す。
           local function diag_jump(count)
-            vim.diagnostic.jump({
-              count = count,
-              on_jump = function(_, bufnr)
-                vim.diagnostic.open_float({ bufnr = bufnr, scope = "cursor", focus = false })
-              end,
-            })
+            local win = vim.api.nvim_get_current_win()
+            vim.diagnostic.jump({ count = count })
+            vim.diagnostic.setloclist({ open = true })
+            vim.api.nvim_set_current_win(win)
           end
           vim.keymap.set("n", "<C-p>", function()
             diag_jump(-1)
@@ -153,6 +152,10 @@ return {
           vim.keymap.set("n", "<C-n>", function()
             diag_jump(1)
           end, opts)
+          -- 診断を一覧表示。<leader>dl はカレントバッファを location list、
+          -- <leader>dq は全バッファを quickfix に集約する。
+          vim.keymap.set("n", "<leader>dl", vim.diagnostic.setloclist, opts)
+          vim.keymap.set("n", "<leader>dq", vim.diagnostic.setqflist, opts)
         end,
       })
 
