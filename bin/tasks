@@ -174,6 +174,10 @@ resolve_reference_path() {
 # log_fmt の strftime 指定子 (%Y, %Y-%m 等) を date で実値化する。
 expand_log_fmt() { date +"$1"; }
 
+# 完了参照行を転記する日付別ログの絶対パスを返す。store_root 起点で log_fmt を実値化する。
+# clean と complete (mark_parent_reference_done) で共用する SSOT。
+current_log_path() { printf '%s\n' "$store_root/$(expand_log_fmt "$log_fmt")"; }
+
 # YAML front matter を出力 (title, branch, name, parent)。done は常に false。
 # body は呼び出し側で追記する。front matter スキーマの SSOT。
 emit_front_matter() {
@@ -533,25 +537,20 @@ front_matter_value() {
   ' "$file"
 }
 
-# 選択した完了タスク (- [x]) を log_fmt へ転記する (参照行は削除せず残す)。
-# 候補 = 完了参照行 + 未 split 完了タスクブロック。worktree のみ完了参照行を候補から
-# 除外する: worktree は削除せず --all で繰り返し呼ばれるため、転記済み参照が毎回
-# no-op 候補として溜まるのを避ける。normal は complete 由来の未転記参照を拾うため残す。
-# Nth 未指定なら fzf multi-select、--all で全件。done ディレクトリは使わない。
-# log_fmt は store_root を起点に解決する。
+# 選択した未 split 完了インラインタスク (- [x]) を split して log_fmt へ転記する。
+# 候補は未 split 完了タスクのみ (完了参照行は除外): split 済みタスクの完了は complete
+# 時に mark_parent_reference_done が log 転記するため clean では扱わない。参照行は残す。
+# Nth 未指定なら fzf multi-select、--all で全件。log_fmt は store_root を起点に解決する。
 clean_tasks() {
-  local candidates selected skip_refs=0
-  if current_is_worktree_dir; then
-    skip_refs=1
-  fi
-  candidates=$(list_task_lines 1 "$skip_refs")
+  local candidates selected
+  candidates=$(list_task_lines 1 1)
   if [[ -z $candidates ]]; then
     info "==> No completed tasks to clean."
     return 0
   fi
   selected=$(choose_lines "$candidates" "Select completed task(s) to clean: ") || true
   [[ -n $selected ]] || die "==> No task selected."
-  clean_log_path="$store_root/$(expand_log_fmt "$log_fmt")"
+  clean_log_path=$(current_log_path)
   mkdir -p "$(dirname "$clean_log_path")"
   process_selected "$selected" clean_one_task
   info "==> Recorded completed task references to $clean_log_path"
@@ -609,11 +608,12 @@ complete_front_matter_task() {
   mark_parent_reference_done
 }
 
-# 親 index.md の当該参照行 (- [ ] [title](path)) を [x] 化する。
+# 親 index.md の当該参照行 (- [ ] [title](path)) を [x] 化し、日付別ログへ転記する。
 # 参照行のパス表記は複数系統 (store_root 相対 index.md / worktree .tasks.md の ~ パス) が
 # 混在しうるため、リテラル一致でなく解決後の絶対実パスで $target_file と突き合わせる。
+# split タスク完了の記録は clean を介さずここで残す (transfer は冪等)。
 mark_parent_reference_done() {
-  local parent lineno line line_path
+  local parent lineno line line_path log_path
   parent=$(from_tilde "$(front_matter_value "$target_file" parent)")
   [[ -n $parent && -e $parent ]] || return 0
   lineno=
@@ -630,6 +630,9 @@ mark_parent_reference_done() {
   }
   sed -i "${lineno}s/- \[ \]/- [x]/" "$parent"
   info "==> Parent reference marked done: $parent"
+  log_path=$(current_log_path)
+  mkdir -p "$(dirname "$log_path")"
+  append_reference_to_log "$log_path" "$(sed -n "${lineno}p" "$parent")"
 }
 
 # 通常サブタスクを完了にする。Nth 未指定なら fzf multi-select。
