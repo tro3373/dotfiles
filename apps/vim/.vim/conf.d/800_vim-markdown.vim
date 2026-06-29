@@ -21,6 +21,9 @@ function! s:MarkdownHighlight()
   execute 'highlight htmlH1 guifg=' . p.h1.gui . ' ctermfg=' . p.h1.cterm
   execute 'highlight htmlH2 guifg=' . p.h2.gui . ' ctermfg=' . p.h2.cterm
   execute 'highlight htmlH3 guifg=' . p.h3.gui . ' ctermfg=' . p.h3.cterm
+  execute 'highlight htmlH4 guifg=' . p.h4.gui . ' ctermfg=' . p.h4.cterm
+  execute 'highlight htmlH5 guifg=' . p.h5.gui . ' ctermfg=' . p.h5.cterm
+  execute 'highlight htmlH6 guifg=' . p.h6.gui . ' ctermfg=' . p.h6.cterm
   execute 'highlight mkdHeading guifg=' . p.h2.gui . ' ctermfg=' . p.h2.cterm
 endfunction
 autocmd FileType markdown call s:MarkdownHighlight()
