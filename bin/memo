@@ -28,6 +28,7 @@ fire_logs() {
   {
     find_log_files job
     find_log_files prv
+    find_log_files logs
   } |
     while read -r f; do
       [[ -z $f ]] && continue
