@@ -14,7 +14,7 @@
 #   * summary: front matter title 表示
 #   * complete: front matter done:true + title ✅️ + 親参照 [x]
 #   * complete: 通常サブタスク - [ ] => - [x]
-#   * clean: 完了参照行を log_fmt へ転記し .tasks.md から削除 (done 廃止)
+#   * clean: 完了参照行を log_fmt へ転記 (削除せず残す。done 廃止)
 #
 #   test/tasks   # 全テスト実行
 
@@ -572,7 +572,7 @@ test_complete_skips_reference() {
     '1' "$(grep -qF -- '- [ ] [20260101-000000_x](20260101-000000_x/index.md)' "${base}/myrepo/index.md" && echo 1 || echo 0)"
 }
 
-# 12. clean: 完了参照行を log_fmt へ転記し index.md から削除。未完了/通常は残し done は作らない
+# 12. clean: 完了参照行を log_fmt へ転記。完了/未完了/通常すべて index.md に残し done は作らない
 test_clean_records_reference_to_log() {
   new_env t12 myrepo
   write_config "${base}"
@@ -594,8 +594,8 @@ test_clean_records_reference_to_log() {
 
   check 'clean: 完了参照を全件 log へ転記' \
     '2' "$(grep -cE '_done[12]\]' "${log}" 2>/dev/null || true)"
-  check 'clean: 転記済み完了参照を index.md から削除' \
-    '0' "$(grep -cE '_done[12]\]' "${base}/myrepo/index.md" 2>/dev/null || true)"
+  check 'clean: 転記済み完了参照も index.md に残す' \
+    '2' "$(grep -cE '_done[12]\]' "${base}/myrepo/index.md" 2>/dev/null || true)"
   check 'clean: 未完了参照は index.md に残す' \
     '1' "$(grep -qF -- '20260102-000000_pending' "${base}/myrepo/index.md" && echo 1 || echo 0)"
   check 'clean: 通常タスクは index.md に残す' \
@@ -603,7 +603,7 @@ test_clean_records_reference_to_log() {
   check 'clean: done ディレクトリを作らない' \
     '0' "$([[ -d "${base}/myrepo/done" ]] && echo 1 || echo 0)"
 
-  # 再実行: 完了参照が無いので no-op (log 重複追記しない・index.md 不変)
+  # 再実行: 完了参照は残るが log 冪等で no-op (log 重複追記しない・index.md 不変)
   local before
   before=$(cat "${base}/myrepo/index.md")
   run_tasks -c >/dev/null 2>&1 || true
@@ -612,7 +612,7 @@ test_clean_records_reference_to_log() {
   check 'clean: 再実行で index.md 不変' "${before}" "$(cat "${base}/myrepo/index.md")"
 }
 
-# 13. clean(normal): 未split 完了タスクを split し、関連ファイル移動・log 転記・参照削除
+# 13. clean(normal): 未split 完了タスクを split し、関連ファイル移動・log 転記・参照保持
 test_clean_splits_unsplit_completed_task() {
   new_env t13 myrepo
   write_config "${base}"
@@ -656,8 +656,8 @@ EOF
     '1' "$(grep -qE -- '_test-task-1\]' "${log}" 2>/dev/null && echo 1 || echo 0)"
   check 'clean-split: 完了ブロックを index.md から除去' \
     '0' "$(grep -qF -- 'Completed big task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
-  check 'clean-split: normal は参照行も index.md から削除' \
-    '0' "$(grep -qE -- '_test-task-1\]\(' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'clean-split: normal も参照行を index.md に残す' \
+    '1' "$(grep -qE -- '_test-task-1\]\(' "${base}/myrepo/index.md" && echo 1 || echo 0)"
 }
 
 # 14. clean: タスク内に [ts] 無ければ clean 実行時 timestamp を使う
@@ -769,13 +769,13 @@ test_clean_all_flag() {
   log="${envdir}/logs/${y}/${ym}-01-log.md"
   check 'clean-all: 完了参照を全件 log へ転記' \
     '2' "$(grep -cE '_done[12]\]' "${log}" 2>/dev/null || true)"
-  check 'clean-all: 完了参照を index.md から削除' \
-    '0' "$(grep -cE '_done[12]\]' "${base}/myrepo/index.md" 2>/dev/null || true)"
+  check 'clean-all: 完了参照も index.md に残す' \
+    '2' "$(grep -cE '_done[12]\]' "${base}/myrepo/index.md" 2>/dev/null || true)"
   check 'clean-all: fzf を経由しない (非対話)' \
     '0' "$([[ -s ${fzf_log} ]] && echo 1 || echo 0)"
 }
 
-# 18. clean N: Nth 完了タスクのみクリーンし他は残す
+# 18. clean N: Nth 完了タスクのみ log 転記し他は転記しない (削除しないので index.md には全件残る)
 test_clean_select_nth() {
   new_env t18 myrepo
   write_config "${base}"
@@ -792,9 +792,11 @@ test_clean_select_nth() {
   log="${envdir}/logs/${y}/${ym}-01-log.md"
   check 'clean-nth: 1件目 done1 を log へ転記' \
     '1' "$(grep -qF -- '_done1]' "${log}" 2>/dev/null && echo 1 || echo 0)"
-  check 'clean-nth: 1件目 done1 を index.md から削除' \
-    '0' "$(grep -qF -- '_done1]' "${base}/myrepo/index.md" && echo 1 || echo 0)"
-  check 'clean-nth: 2件目 done2 は index.md に残す' \
+  check 'clean-nth: 2件目 done2 は log へ転記しない (Nth のみ)' \
+    '0' "$([[ -f ${log} ]] && grep -qF -- '_done2]' "${log}" && echo 1 || echo 0)"
+  check 'clean-nth: done1 は index.md に残す (削除しない)' \
+    '1' "$(grep -qF -- '_done1]' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'clean-nth: done2 も index.md に残す' \
     '1' "$(grep -qF -- '_done2]' "${base}/myrepo/index.md" && echo 1 || echo 0)"
 }
 
