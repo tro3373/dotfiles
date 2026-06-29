@@ -48,6 +48,17 @@ initialize() {
   done
 }
 
+has() { command -v "${1}" >&/dev/null; }
+hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test ! -t 0 && cat -) ${@:2}" | _ink "$1"; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+
 fire() {
   if [[ ! -t 0 ]]; then
     cat -
@@ -127,14 +138,14 @@ _llm() {
   # binary) becomes a non-zero return that triggers the fallback cmd.
   (_dispatch "$cmd") <<<"$input" && return 0
   [[ -z $fallback_cmd ]] && return 1
-  elog "==> Command '${cmd:-tgpt}' failed. Fallback to '$fallback_cmd'."
+  warn "==> Command '${cmd:-tgpt}' failed. Fallback to '$fallback_cmd'."
   _dispatch "$fallback_cmd" <<<"$input"
 }
 
 main() {
   initialize "$@"
   if [[ ${#args[@]} -eq 0 && -t 0 ]]; then
-    elog "==> No input data."
+    die "==> No input data."
   fi
   fire "${args[@]}" | _llm
 }
