@@ -533,9 +533,10 @@ front_matter_value() {
   ' "$file"
 }
 
-# 選択した完了タスク (- [x]) を log_fmt へ転記し .tasks.md から削除する。
-# 候補 = 完了参照行 + 未 split 完了タスクブロック。ただし worktree では完了参照行を
-# 候補から除外する (worktree は参照行を削除せず log 転記も冪等なので実質 no-op)。
+# 選択した完了タスク (- [x]) を log_fmt へ転記する (参照行は削除せず残す)。
+# 候補 = 完了参照行 + 未 split 完了タスクブロック。worktree のみ完了参照行を候補から
+# 除外する: worktree は削除せず --all で繰り返し呼ばれるため、転記済み参照が毎回
+# no-op 候補として溜まるのを避ける。normal は complete 由来の未転記参照を拾うため残す。
 # Nth 未指定なら fzf multi-select、--all で全件。done ディレクトリは使わない。
 # log_fmt は store_root を起点に解決する。
 clean_tasks() {
@@ -557,7 +558,7 @@ clean_tasks() {
 }
 
 # 指定行の完了タスクを clean する。未 split 完了ブロックなら先に split し、
-# 完了参照行を log へ転記する。worktree は参照行を残し normal は削除する。
+# 完了参照行を log へ転記する。参照行は削除せず残す (normal/worktree 共通)。
 clean_one_task() {
   local line_no="$1" line ref_line
   line=$(sed -n "${line_no}p" "$target_file")
@@ -566,9 +567,6 @@ clean_one_task() {
   fi
   ref_line=$(sed -n "${line_no}p" "$target_file")
   append_reference_to_log "$clean_log_path" "$ref_line"
-  if ! current_is_worktree_dir; then
-    sed -i "${line_no}d" "$target_file"
-  fi
 }
 
 # 完了参照行を log へ転記する。既に log にあれば追記しない (再実行冪等)。
