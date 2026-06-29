@@ -160,6 +160,16 @@ to_reference_line() {
 }
 from_reference_line() { sed -E 's/^- \[[ xX]\] \[[^]]*\]\((.*)\)$/\1/' <<<"$1"; }
 
+# 参照行のパス (store_root 相対 / ~ / 絶対) を絶対実パスへ解決する。
+# ~ 展開と store_root 相対補完を施し symlink も解決する (worktree .tasks.md 表記対応)。
+# 解決できなければ非ゼロを返す (呼び出し側で該当行を skip)。
+resolve_reference_path() {
+  local p
+  p=$(from_tilde "$1")
+  [[ $p == /* ]] || p="$store_root/$p"
+  realpath "$p" 2>/dev/null
+}
+
 # log_fmt の strftime 指定子 (%Y, %Y-%m 等) を date で実値化する。
 expand_log_fmt() { date +"$1"; }
 
@@ -453,6 +463,7 @@ replace_task_with_reference() {
 # ブロックを {ts}_{name}/index.md (done:true) へ移し、関連ファイルを移動し、
 # 元リストは first_line に完了参照行 (- [x] [name](path)) を残す。
 split_completed_one() {
+  info "==> Splitting LineNo: $line_no.."
   local line_no="$1" tmp_file ts ref_line src_dir
   set_block_range "$line_no"
   tmp_file=$(mktemp)
@@ -599,15 +610,21 @@ complete_front_matter_task() {
   mark_parent_reference_done
 }
 
-# 親 index.md の当該参照行 (- [ ] [title](.../index.md)) を [x] 化する
+# 親 index.md の当該参照行 (- [ ] [title](path)) を [x] 化する。
+# 参照行のパス表記は複数系統 (store_root 相対 index.md / worktree .tasks.md の ~ パス) が
+# 混在しうるため、リテラル一致でなく解決後の絶対実パスで $target_file と突き合わせる。
 mark_parent_reference_done() {
-  local parent ref lineno
+  local parent lineno line line_path
   parent=$(from_tilde "$(front_matter_value "$target_file" parent)")
   [[ -n $parent && -e $parent ]] || return 0
-  ref=${target_file#"$store_root"/}
-  [[ $ref != /* ]] ||
-    die "==> Task path not under store_root: $target_file (store_root=$store_root)"
-  lineno=$(grep -nF -- "(${ref})" "$parent" | head -1 | cut -d: -f1)
+  lineno=
+  while IFS= read -r line; do
+    line_path=$(resolve_reference_path "$(from_reference_line "${line#*:}")") || continue
+    if [[ $line_path == "$target_file" ]]; then
+      lineno=${line%%:*}
+      break
+    fi
+  done < <(grep -nE "$grep_key_reference" "$parent" 2>/dev/null || :)
   [[ -n $lineno ]] || {
     warn "==> No parent reference exists in $parent"
     return 0

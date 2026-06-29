@@ -503,6 +503,39 @@ EOF
     '1' "$(grep -qF -- "- [x] [20260101-000000_test-task](${ref})" "${repo_base}/index.md" && echo 1 || echo 0)"
 }
 
+# 9b. complete (front matter): 参照行が worktree .tasks.md symlink 表記 (store_root 相対の
+# index.md パスでない) でも、解決後の実パス一致で [x] 化する回帰防止。
+test_complete_front_matter_task_worktree_ref() {
+  new_env t9b myrepo
+  write_config "${base}"
+  local repo_base="${base}/myrepo"
+  local dir="${repo_base}/20260101-000000_wt-task"
+  mkdir -p "${dir}"
+  cat >"${dir}/index.md" <<EOF
+---
+title: WT Ref
+branch: feature/foo
+name: wt-task
+done: false
+parent: ${repo_base}/index.md
+---
+
+EOF
+  # worktree の .tasks.md symlink を本物で用意し、参照行はその symlink を指す。
+  # store_root 相対 index.md パスとは別表記だが realpath は同一ファイルへ解決される。
+  local wt="${envdir}/myrepo-worktree/feature-foo"
+  mkdir -p "${wt}"
+  ln -s "${dir}/index.md" "${wt}/.tasks.md"
+  printf '%s\n' "- [ ] [feature-foo](${wt}/.tasks.md)" >"${repo_base}/index.md"
+
+  run_tasks ok -f "${dir}/index.md" >/dev/null 2>&1 || true
+
+  check 'complete-fm-wtref: done set true' \
+    '1' "$(grep -qx 'done: true' "${dir}/index.md" && echo 1 || echo 0)"
+  check 'complete-fm-wtref: worktree-symlink reference marked [x]' \
+    '1' "$(grep -qF -- "- [x] [feature-foo](${wt}/.tasks.md)" "${repo_base}/index.md" && echo 1 || echo 0)"
+}
+
 # 10. complete (通常サブタスク): - [ ] => - [x]
 test_complete_normal_task() {
   new_env t10 myrepo
@@ -871,6 +904,7 @@ main() {
   test_split_multi_select_all
   test_summary_reads_front_matter_title
   test_complete_front_matter_task
+  test_complete_front_matter_task_worktree_ref
   test_complete_normal_task
   test_complete_skips_reference
   test_clean_records_reference_to_log
