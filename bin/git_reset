@@ -10,6 +10,98 @@ log() { _log white "$*"; }
 info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 die() { _log red "$*" && exit 1; }
+# stack の段数 (非空行数) を返す。空・未作成なら 0。
+stack_depth() { [[ -s $marker ]] && grep -c '.' "$marker" || echo 0; }
+# stack を先頭から keep 行だけ残す (それより下=新しい undo を捨てる)。keep=0 で空。
+truncate_stack() {
+  local keep="$1" tmp
+  tmp="$(mktemp "${marker}.XXXXXX")" # marker と同一 dir => mv が atomic rename
+  head -n "$keep" "$marker" >"$tmp" && mv "$tmp" "$marker"
+}
+# fzf 行を生成。stack を file 行順 (line1=最新 undo コミット) で上から並べ、最後に
+# 現在 HEAD 行 (最下) を出す。git log 風に「新しいコミットが上・現在地が下」。
+# 各行: <lineno>\t<hash>\t<表示 '短縮hash  相対日時  件名'>。HEAD 行の lineno は
+# センチネル 'HEAD' (選択時 no-op 判定に使う)。
+build_rows() {
+  local n i hash cur
+  n=$(grep -c '.' "$marker")
+  for ((i = 1; i <= n; i++)); do
+    hash=$(sed -n "${i}p" "$marker")
+    printf '%s\t%s\t%s\n' \
+      "$i" "$hash" \
+      "$(git log -1 --format='%h  %cr  %s' "$hash" 2>/dev/null || echo "$hash  (missing)")"
+  done
+  cur=$(git rev-parse HEAD)
+  printf 'HEAD\t%s\t*  HEAD  %s\n' "$cur" "$(git log -1 --format='%h  %cr  %s' "$cur")"
+}
+# 選択した stack 行 (lineno) のコミット hash へ reset し、そこまで pop する。
+# force=1 で divergence を無視。lineno より下 (新しい undo) は一緒に redo され消える。
+restore_to() {
+  local lineno="$1" hash="$2" force="$3"
+  # 旧形式 (pre-stack) marker や壊れた行を踏むと git reset が失敗して詰まるので、
+  # 先に実在コミットか検証する。
+  if ! git rev-parse --verify --quiet "${hash}^{commit}" >/dev/null 2>&1; then
+    die "==> Invalid stack entry: $hash. Stack file: $marker (remove it to reset)."
+  fi
+  # divergence: 現 HEAD が選択先の祖先 (= 前進 redo) なら安全。祖先でなければ巻き戻し
+  # 後に新履歴ができており、reset は今の branch 上のコミットを捨ててしまう。
+  # 判定は repo 単位 (branch 非考慮): marker は repo ごとに 1 本のため。
+  if [[ $force -ne 1 ]] && ! git merge-base --is-ancestor HEAD "$hash"; then
+    warn "==> Divergence detected: HEAD is not an ancestor of $hash."
+    warn "    Restoring would drop the commits currently on the branch."
+    warn "    To force restore, re-run with -f (or manually: git reset $hash)"
+    die "==> Aborted. stack left intact."
+  fi
+  git reset "$hash"
+  truncate_stack "$((lineno - 1))"
+  info "==> Restored: git reset $hash"
+  info "    Stack depth: $(stack_depth)"
+}
+# stack から redo 先を選んで restore する (grr / -r)。target 指定で非対話、無指定で fzf。
+cmd_restore() {
+  local force="$1" target="${2:-}" lineno hash rows sel
+  [[ ! -s $marker ]] && die "==> No reset stack found. Cannot restore."
+
+  # target 明示 (非対話・スクリプト用): その hash の stack 行を解決して restore。
+  if [[ -n $target ]]; then
+    lineno=$(grep -nxF "$target" "$marker" | tail -n1 | cut -d: -f1)
+    [[ -z $lineno ]] && die "==> Not in the stack: $target"
+    restore_to "$lineno" "$target" "$force"
+    return
+  fi
+
+  # 無指定: fzf で stack + 現在 HEAD を見せて選ばせる。中断時は何もしない。
+  # 行は先に確定して here-string で渡す (fzf が即 exit しても producer の SIGPIPE で
+  # pipefail が誤発火しないように)。
+  rows=$(build_rows)
+  sel=$(fzf --ansi --reverse --height=80% --disabled \
+    --delimiter=$'\t' --with-nth=3.. \
+    --prompt='redo to> ' \
+    --header='newest commit on top / * = current HEAD -- Enter: restore here  C-y: copy hash' \
+    --preview 'git show --stat --color=always {2}' \
+    --bind 'ctrl-y:execute-silent(printf %s {2} | clip)+abort' <<<"$rows") || return 0
+  [[ -z $sel ]] && return 0
+  lineno=$(cut -f1 <<<"$sel")
+  hash=$(cut -f2 <<<"$sel")
+  # HEAD 行を選んだら何もしない (既に現在地)。
+  [[ $lineno == HEAD ]] && {
+    info "==> Already at HEAD ($hash). Nothing to do."
+    return 0
+  }
+  restore_to "$lineno" "$hash" "$force"
+}
+# 現在 HEAD を stack へ積み HEAD^ へ reset する (gre / 引数なし)。
+cmd_push() {
+  # root commit では HEAD^ が無い。先に検証して phantom stack エントリを防ぐ。
+  if ! git rev-parse --verify --quiet 'HEAD^' >/dev/null 2>&1; then
+    die "==> Cannot reset: HEAD has no parent (root commit)."
+  fi
+  git rev-parse HEAD >>"$marker"
+  git reset HEAD^
+  warn "==> Executed: git reset HEAD^"
+  warn "    Pushed: $(tail -n1 "$marker")"
+  warn "    Stack depth: $(stack_depth)"
+}
 main() {
   set -eo pipefail
   git_root=$(git rev-parse --show-toplevel 2>/dev/null || :)
@@ -18,31 +110,26 @@ main() {
   repo_dir_name=${repo_dir_name//\//-}
   config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/$command_name"
   [[ ! -d $config_dir ]] && mkdir -p "$config_dir"
+  # stack: 1 行 1 ハッシュ。末尾が top (gre=append/push, grr=fzf で選んで redo/pop)。
   marker="$config_dir/$repo_dir_name"
-  if [[ $1 == -r ]]; then
-    if [[ ! -e $marker ]]; then
-      die "==> No reset marker found. Cannot reset."
-    fi
-    hash="$(head -1 "$marker")"
-    git reset "$hash"
-    info "==> Restored: git reset $hash"
-    info "    Marker: $marker"
-    info "    Hash: $(cat <"$marker")"
-    # rm -v "$marker"
-    return
-  fi
-  if [[ $1 == -v ]]; then
-    if [[ ! -e $marker ]]; then
-      die "==> No reset marker found. Cannot reset."
-    fi
-    echo "$marker" | v
-    return
-  fi
-  git rev-parse HEAD >"$marker"
-  git log -1 >>"$marker"
-  git reset HEAD^
-  warn "==> Executed: git reset HEAD^"
-  warn "    Marker: $marker"
-  warn "    Hash: $(cat <"$marker")"
+
+  # フラグはどの位置でもよい。非フラグ引数は restore 先 hash (任意・無指定で fzf)。
+  local mode=push force=0 target='' arg
+  for arg in "$@"; do
+    case "$arg" in
+      -r) mode=restore ;;
+      -f) force=1 ;;
+      -*) die "==> Unknown option: $arg" ;;
+      *) target="$arg" ;;
+    esac
+  done
+
+  case "$mode" in
+    restore) cmd_restore "$force" "$target" ;;
+    push)
+      [[ -n $target ]] && die "==> Unexpected argument: $target"
+      cmd_push
+      ;;
+  esac
 }
 main "$@"

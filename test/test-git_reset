@@ -1,0 +1,306 @@
+#!/usr/bin/env bash
+
+# bin/git_reset のユニットテスト (実 git 使用・viewer 不要)。
+# 隔離した実 git リポジトリと一時 XDG_CONFIG_HOME を用意し、git_reset を
+# サブプロセス実行して HEAD と marker(stack) の状態を検証する。
+#
+# 検証対象 (grr の fzf 選択は非対話形 `git_reset -r <hash>` 経由でテストする。
+# fzf UI 自体は TTY 必須のため単体テスト対象外):
+#   * gre (push)    : 現在 HEAD を stack へ積み HEAD^ へ reset。複数 push できる。
+#   * grr (-r <hash>): 選んだ stack エントリへ reset し、そこまで pop。任意段へ一気に
+#                      redo できる (多段)。N 回 push → 段階的/一気の redo で完全復元。
+#   * divergence    : gre 後に新コミットを作った状態で grr すると、現 HEAD が選択先の
+#                      祖先でない (merge-base) ため警告して中断 (HEAD/stack 不変)。-f で強制。
+#
+#   test/test-git_reset   # 全テスト実行
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+gr_bin=$(cd "${script_dir}/../bin" && pwd)/git_reset
+
+# desc / expected / actual を比較し、main の pass・fail カウンタを更新する。
+check() {
+  local desc="$1" expected="$2" actual="$3"
+  if [[ ${expected} != "${actual}" ]]; then
+    fail=$((fail + 1))
+    printf 'FAIL - %s\n  expected: %q\n  actual:   %q\n' "${desc}" "${expected}" "${actual}"
+    return
+  fi
+  pass=$((pass + 1))
+  printf 'ok   - %s\n' "${desc}"
+}
+
+# 隔離 repo (commit A B C D) と一時 XDG_CONFIG_HOME を作る。グローバル repo/xdg を設定。
+new_repo() {
+  repo="${tmproot}/repo"
+  xdg="${tmproot}/config"
+  rm -rf "${repo}" "${xdg}"
+  mkdir -p "${repo}" "${xdg}"
+  git -C "${repo}" init -q
+  git -C "${repo}" config user.email t@t
+  git -C "${repo}" config user.name t
+  local c
+  for c in A B C D; do
+    echo "${c}" >"${repo}/f"
+    git -C "${repo}" add -A
+    git -C "${repo}" commit -qm "commit ${c}"
+  done
+}
+
+# 偽 fzf を PATH 先頭に置く。stdin の行から env FAKE_FZF_PICK に一致する第1フィールド
+# (lineno or 'HEAD') の行を 1 つ echo する。未設定/不一致なら中断扱い (exit 1)。
+# --preview / --bind 等の引数は無視。実 fzf (TTY 必須) なしで対話パスを検証する。
+setup_fake_fzf() {
+  fakebin="${tmproot}/fakebin"
+  mkdir -p "${fakebin}"
+  cat >"${fakebin}/fzf" <<'FAKE'
+#!/usr/bin/env bash
+rows=$(cat)
+[[ -n ${FAKE_FZF_ROWS:-} ]] && printf '%s\n' "$rows" >"$FAKE_FZF_ROWS"
+pick=${FAKE_FZF_PICK:-}
+[[ -z $pick ]] && exit 1
+while IFS=$'\t' read -r f1 rest; do
+  [[ $f1 == "$pick" ]] && { printf '%s\t%s\n' "$f1" "$rest"; exit 0; }
+done <<<"$rows"
+exit 1
+FAKE
+  chmod +x "${fakebin}/fzf"
+}
+
+# git_reset を repo 内・XDG 差し替え・偽 fzf を PATH 先頭にしてサブプロセス実行する。
+gr() { (cd "${repo}" && PATH="${fakebin}:${PATH}" XDG_CONFIG_HOME="${xdg}" "${gr_bin}" "$@"); }
+
+subj() { git -C "${repo}" log -1 --format=%s; } # HEAD のコミット件名
+head_hash() { git -C "${repo}" rev-parse HEAD; }
+rev() { git -C "${repo}" rev-parse "$1"; } # 任意 revision の hash
+commit() { echo "$1" >"${repo}/f" && git -C "${repo}" add -A && git -C "${repo}" commit -qm "commit $1"; }
+
+marker_file() {
+  local m
+  for m in "${xdg}/git_reset"/*; do
+    [[ -e ${m} ]] && {
+      echo "${m}"
+      return
+    }
+  done
+  echo ""
+}
+stack_size() {
+  local m
+  m=$(marker_file)
+  [[ -n ${m} && -s ${m} ]] && grep -c '.' "${m}" || echo 0
+}
+stack_top() {
+  local m
+  m=$(marker_file)
+  [[ -n ${m} && -s ${m} ]] && tail -n1 "${m}" || echo ""
+}
+
+# gre 1回: HEAD が1つ前へ。元 HEAD が stack に1件積まれる。
+test_gre_once_pushes_and_moves_back() {
+  new_repo
+  local before
+  before=$(head_hash)
+  gr >/dev/null 2>&1
+  check 'gre once: HEAD が1つ前(C)へ' 'commit C' "$(subj)"
+  check 'gre once: stack 1件' '1' "$(stack_size)"
+  check 'gre once: stack top = 元HEAD(D)' "${before}" "$(stack_top)"
+}
+
+# gre 複数回: stack が上書きされず積み上がる。
+test_gre_multiple_stacks() {
+  new_repo
+  gr >/dev/null 2>&1 # push D -> HEAD=C
+  gr >/dev/null 2>&1 # push C -> HEAD=B
+  check 'gre x2: HEAD=B' 'commit B' "$(subj)"
+  check 'gre x2: stack 2件 (上書きされない)' '2' "$(stack_size)"
+}
+
+# grr 1回 (top を選択): その stack エントリへ reset し pop。
+test_grr_pops_and_restores() {
+  new_repo
+  local hd
+  hd=$(head_hash)    # D
+  gr >/dev/null 2>&1 # HEAD=C, stack=[D]
+  gr -r "${hd}" >/dev/null 2>&1
+  check 'grr once: HEAD=D へ復元' 'commit D' "$(subj)"
+  check 'grr once: stack 空' '0' "$(stack_size)"
+}
+
+# 多段 redo: gre x3 で深く undo した状態から、任意段 (最古) を選んで一気に redo。
+test_multilevel_redo() {
+  new_repo
+  local hd
+  hd=$(head_hash) # D
+  gr >/dev/null 2>&1
+  gr >/dev/null 2>&1
+  gr >/dev/null 2>&1 # push D,C,B -> HEAD=A, stack=[D,C,B]
+  check 'multilevel: gre x3 で HEAD=A' 'commit A' "$(subj)"
+  gr -r "${hd}" >/dev/null 2>&1 # 一気に D まで redo
+  check 'multilevel: 任意段選択で HEAD=D' 'commit D' "$(subj)"
+  check 'multilevel: stack 全 pop (空)' '0' "$(stack_size)"
+}
+
+# 段階 redo: B -> C -> D と1段ずつ選んで戻すと stack も1段ずつ減る。
+test_stepwise_redo() {
+  new_repo
+  local hb hc hd
+  hd=$(rev HEAD)
+  hc=$(rev 'HEAD~1')
+  hb=$(rev 'HEAD~2')
+  gr >/dev/null 2>&1
+  gr >/dev/null 2>&1
+  gr >/dev/null 2>&1 # stack=[D,C,B], HEAD=A
+  gr -r "${hb}" >/dev/null 2>&1
+  check 'stepwise: B へ' 'commit B' "$(subj)"
+  check 'stepwise: stack 2 (=[D,C])' '2' "$(stack_size)"
+  gr -r "${hc}" >/dev/null 2>&1
+  check 'stepwise: C へ' 'commit C' "$(subj)"
+  check 'stepwise: stack 1 (=[D])' '1' "$(stack_size)"
+  gr -r "${hd}" >/dev/null 2>&1
+  check 'stepwise: D へ' 'commit D' "$(subj)"
+  check 'stepwise: stack 0' '0' "$(stack_size)"
+}
+
+# grr で stack 空ならエラー終了 (空チェックが先に走る)。
+test_grr_empty_errors() {
+  new_repo
+  local rc
+  gr -r "$(head_hash)" >/dev/null 2>&1
+  rc=$?
+  check 'grr empty: 非0終了' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+}
+
+# divergence: gre 後に新コミットを作って grr -> 警告して中断、HEAD/stack 不変。
+test_divergence_warns_and_aborts() {
+  new_repo
+  local hd
+  hd=$(head_hash)    # D
+  gr >/dev/null 2>&1 # push D -> HEAD=C
+  commit E           # HEAD=E; E は D の祖先でない => divergence
+  local head_before rc
+  head_before=$(head_hash)
+  gr -r "${hd}" >/dev/null 2>&1
+  rc=$?
+  check 'divergence: 非0終了' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'divergence: HEAD 不変' "${head_before}" "$(head_hash)"
+  check 'divergence: stack 不変(1件)' '1' "$(stack_size)"
+}
+
+# grr -f: divergence でも強制 reset して pop。
+test_grr_force_overrides_divergence() {
+  new_repo
+  local hd
+  hd=$(head_hash)
+  gr >/dev/null 2>&1 # push D -> HEAD=C
+  commit E           # HEAD=E
+  gr -r -f "${hd}" >/dev/null 2>&1
+  check 'grr -f: HEAD=D へ強制復元' 'commit D' "$(subj)"
+  check 'grr -f: stack 空' '0' "$(stack_size)"
+}
+
+# フラグ位置非依存: -f -r <hash> の順 (force が先) でも強制 restore できる。
+test_flag_order_independent() {
+  new_repo
+  local hd
+  hd=$(head_hash)
+  gr >/dev/null 2>&1 # push D -> HEAD=C
+  commit E           # HEAD=E (divergence)
+  gr -f -r "${hd}" >/dev/null 2>&1
+  check 'flag order: -f -r <hash> でも強制復元 (HEAD=D)' 'commit D' "$(subj)"
+  check 'flag order: stack 空' '0' "$(stack_size)"
+}
+
+# root commit (親なし) で gre すると phantom stack を作らず非0終了。
+test_root_commit_push_guarded() {
+  repo="${tmproot}/rootrepo"
+  xdg="${tmproot}/rootcfg"
+  rm -rf "${repo}" "${xdg}"
+  mkdir -p "${repo}" "${xdg}"
+  git -C "${repo}" init -q
+  git -C "${repo}" config user.email t@t
+  git -C "${repo}" config user.name t
+  commit A # 単一コミット (root)
+  local rc
+  gr >/dev/null 2>&1
+  rc=$?
+  check 'root commit: gre 非0終了' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'root commit: phantom stack なし(0件)' '0' "$(stack_size)"
+}
+
+# 無効/壊れた stack エントリ (旧形式 marker の残骸など) を選んでも fail-safe:
+# 実在しないコミットは reset せず非0終了し、stack も壊さない。
+test_invalid_entry_fails_safe() {
+  new_repo
+  gr >/dev/null 2>&1 # marker 作成 (stack=[D]), HEAD=C
+  local mfile before rc
+  mfile=$(marker_file)
+  printf '%s\n' 'not-a-commit' >>"${mfile}" # stack=[D, not-a-commit]
+  before=$(stack_size)
+  gr -r 'not-a-commit' >/dev/null 2>&1
+  rc=$?
+  check 'invalid entry: grr 非0終了 (fail-safe)' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'invalid entry: stack 破壊されない' "${before}" "$(stack_size)"
+}
+
+# fzf 経由 (偽 fzf で top=lineno1 を選択): build_rows + 選択パース + restore を通す。
+test_fzf_select_restores() {
+  new_repo
+  gr >/dev/null 2>&1 # stack=[D], HEAD=C; top の lineno=1
+  FAKE_FZF_PICK=1 gr -r >/dev/null 2>&1
+  check 'fzf select: HEAD=D へ復元' 'commit D' "$(subj)"
+  check 'fzf select: stack 空' '0' "$(stack_size)"
+}
+
+# fzf 一覧の並び順: 最新コミットが最上行、現在 HEAD が最下行 (git log 風)。
+test_fzf_order_newest_on_top() {
+  new_repo
+  local hd rowsfile
+  hd=$(head_hash) # D = 最新コミット (最初に undo される = stack line1)
+  gr >/dev/null 2>&1
+  gr >/dev/null 2>&1 # stack=[D,C], HEAD=B
+  rowsfile="${tmproot}/rows.txt"
+  FAKE_FZF_PICK=HEAD FAKE_FZF_ROWS="${rowsfile}" gr -r >/dev/null 2>&1
+  check 'order: 1行目 = 最新コミット D が上' "${hd}" "$(sed -n '1p' "${rowsfile}" | cut -f2)"
+  check 'order: 最終行 = 現在 HEAD' 'HEAD' "$(tail -n1 "${rowsfile}" | cut -f1)"
+}
+
+# fzf で HEAD 行を選ぶと no-op (終了0・HEAD/stack 不変)。
+test_fzf_select_head_is_noop() {
+  new_repo
+  gr >/dev/null 2>&1 # stack=[D], HEAD=C
+  local hc rc
+  hc=$(head_hash)
+  FAKE_FZF_PICK=HEAD gr -r >/dev/null 2>&1
+  rc=$?
+  check 'fzf HEAD 選択: 終了0 (no-op)' '0' "$([[ ${rc} -eq 0 ]] && echo 0 || echo 1)"
+  check 'fzf HEAD 選択: HEAD 不変' "${hc}" "$(head_hash)"
+  check 'fzf HEAD 選択: stack 不変(1件)' '1' "$(stack_size)"
+}
+
+main() {
+  set -uo pipefail
+  tmproot=$(mktemp -d)
+  trap 'rm -rf "${tmproot}"' EXIT
+  setup_fake_fzf
+  local pass=0 fail=0
+
+  test_gre_once_pushes_and_moves_back
+  test_gre_multiple_stacks
+  test_grr_pops_and_restores
+  test_multilevel_redo
+  test_stepwise_redo
+  test_fzf_select_restores
+  test_fzf_order_newest_on_top
+  test_fzf_select_head_is_noop
+  test_grr_empty_errors
+  test_divergence_warns_and_aborts
+  test_grr_force_overrides_divergence
+  test_flag_order_independent
+  test_root_commit_push_guarded
+  test_invalid_entry_fails_safe
+
+  printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
+  [[ ${fail} -eq 0 ]]
+}
+
+main "$@"
