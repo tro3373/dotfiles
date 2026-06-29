@@ -322,7 +322,7 @@ test_band_set_then_cleared() {
   run_hook waiting
   check 'waiting(band ON): @tmuxs_band=1 を設定' '1' "$(opt @tmuxs_band)"
   check 'waiting(band ON): status-style を黄色帯へ直接上書き' \
-    'bg=#4B607F,fg=#000000' "$(opt status-style)"
+    'bg=#E5AF1E,fg=#000000' "$(opt status-style)"
 
   run_hook running
   check 'running(waiting 解消): @tmuxs_band を unset' \
@@ -338,7 +338,7 @@ test_band_empty_style_restore() {
 
   run_hook waiting
   check 'band/empty: status-style を黄色帯へ' \
-    'bg=#4B607F,fg=#000000' "$(opt status-style)"
+    'bg=#E5AF1E,fg=#000000' "$(opt status-style)"
 
   run_hook running
   check 'band/empty 解消: 空 style へ復元 (黄色が残らない)' \

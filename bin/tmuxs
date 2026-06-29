@@ -134,8 +134,8 @@ list_sessions() {
 # (旧 ~/.mo/.../tmux-pane-state.sh の二重定義を解消)。
 # best-effort のため tmux 呼び出し失敗で Claude を止めないよう常に 0 で抜ける。
 
-# readonly waiting_color='#E5AF1E'
-readonly waiting_color='#4B607F'
+readonly waiting_color='#E5AF1E'
+# readonly waiting_color='#4B607F'
 
 # 黄色帯モード。1=ON: waiting 時に status bar 全体を黄色帯で強調 (tmux.conf の
 # @tmuxs_band 条件配色と連動し文字は暗色に切替わる)。0=OFF: status-left の
