@@ -118,6 +118,7 @@ main() {
   for arg in "$@"; do
     case "$arg" in
       -r) mode=restore ;;
+      -v) mode=viewmarker ;;
       -f) force=1 ;;
       -*) die "==> Unknown option: $arg" ;;
       *) target="$arg" ;;
@@ -126,6 +127,7 @@ main() {
 
   case "$mode" in
     restore) cmd_restore "$force" "$target" ;;
+    viewmarker) echo "$marker" | v ;;
     push)
       [[ -n $target ]] && die "==> Unexpected argument: $target"
       cmd_push
