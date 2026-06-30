@@ -571,8 +571,7 @@ command! OneLine call OneLine()
 " 改行付与
 function! OneLineReverse() abort
   let dst = input("Input char to replace LF: ")
-  call SilentFExec(':%s/'.dst.'/
-/g')
+  call SilentFExec(':%s/'.dst.'//g')
 endfun
 command! OneLineReverse call OneLineReverse()
 command! MultiLine call OneLineReverse()
@@ -661,12 +660,15 @@ function! DeleteUnSelected() abort
 endfun
 command! DeleteUnSelected call DeleteUnSelected()
 
-command! DeleteSelectedLineInvert call DeleteSelectedLineInvert()
 " 検索結果の存在する行を削除
 function! DeleteSelectedLine() abort
   " call SilentFExec(':%g//d')
+  " NOTE: @/ は vim の正規表現になる(以下など)ので、grepとは一致しないことに注意
+  " \v:  very magic: no need escape area e.g. /\v(foo|bar)
+  " \zs: zoom start: e.g. /foo\zsbar => match `bar` after `foo`
+  " \ze: zoom end  : e.g. /foo\zebar => match `foo` before `bar`
   let search = @/
-  call ReplaceAllWithSystemCmdResult("grep -v '".search."'")
+  call ReplaceAllWithSystemCmdResult('grep -v -- '.shellescape(search))
 endfun
 command! DeleteSelectedLine call DeleteSelectedLine()
 " 検索結果の存在しない行を削除
@@ -674,17 +676,20 @@ function! DeleteSelectedLineInvert() abort
   " call SilentFExec(':%v//d')
   " let search = histget('/', -1)
   let search = @/
-  call ReplaceAllWithSystemCmdResult("grep '".search."'")
+  call ReplaceAllWithSystemCmdResult('grep -- '.shellescape(search))
 endfun
 command! DeleteSelectedLineInvert call DeleteSelectedLineInvert()
+
 function! TrimSelectedLine() abort
   call SilentFExec(':%s/^.*'.histget('/',-1).'.*//g')
 endfun
 command! TrimSelectedLine call TrimSelectedLine()
+
 function! TrimSelectedLineInvert() abort
   call SilentFExec(':%s/^\%(.*'.histget('/',-1).'.*\)\@!.*//g')
 endfun
 command! TrimSelectedLineInvert call TrimSelectedLineInvert()
+
 " 指定文字より後ろを削除
 function! DeleteAfter(...) abort
   if a:0 >= 1
