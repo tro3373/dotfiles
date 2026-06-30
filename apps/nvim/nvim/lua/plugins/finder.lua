@@ -13,15 +13,31 @@ return {
     end,
   },
 
-  -- シンプルファイラ (作者 fork)
+  -- シンプルファイラ (作者 fork) -- oil.nvim へ移行のため無効化 (戻す場合はコメント解除)
+  -- {
+  --   "tro3373/vaffle.vim",
+  --   -- BufEnter で netrw を乗っ取りディレクトリ buffer を vaffle 化するため、
+  --   -- cmd 遅延ロードだと autocmd 未登録で「ディレクトリを開いても出ない」状態になる。
+  --   -- eager ロードして起動時に plugin/vaffle.vim の BufEnter autocmd を登録する。
+  --   lazy = false,
+  --   config = function()
+  --     _G.src("210_vaffle.vim")
+  --   end,
+  -- },
+
+  -- ファイラ (oil.nvim) + git 装飾 (oil-git.nvim)。vaffle の後継。
+  -- 設定本体は conf.d/212_oil.vim → 212_oil.lua (SSoT)。
   {
-    "tro3373/vaffle.vim",
-    -- BufEnter で netrw を乗っ取りディレクトリ buffer を vaffle 化するため、
-    -- cmd 遅延ロードだと autocmd 未登録で「ディレクトリを開いても出ない」状態になる。
-    -- eager ロードして起動時に plugin/vaffle.vim の BufEnter autocmd を登録する。
+    "stevearc/oil.nvim",
+    -- oil は netrw を乗っ取りディレクトリ buffer を oil 化する。vaffle と同様に
+    -- 起動時 autocmd 登録が要るため eager ロードする。
     lazy = false,
+    dependencies = {
+      "nvim-tree/nvim-web-devicons",
+      "malewicz1337/oil-git.nvim",
+    },
     config = function()
-      _G.src("210_vaffle.vim")
+      _G.src("212_oil.vim")
     end,
   },
 
