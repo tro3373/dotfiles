@@ -336,36 +336,12 @@ function cd_dir() {
   zle -R -c # refresh
 }
 function cd_src_root() {
-  supported fzf || return
-  supported ghq || return
-  preview_cmd="ls -laF {}"
-  has onefetch && preview_cmd="onefetch --no-art {}"
-  # LBUFFER: 現在のカーソル位置よりも左のバッファ
-  # RBUFFER: 現在のカーソル位置を含む右のバッファ
-  local src=$(
-    find_repos |
-      fzf --tac --query "$LBUFFER" --preview "$preview_cmd"
-  )
-  if [[ -n $src && -n $TMUX ]]; then
-    local name=$(basename "$src" | tr '.' '_')
-    if tmux list-sessions -F '#S' | grep -Fqx -- "$name"; then
-      # 同名セッションが既にある: そのセッションへ移動し、新規 window でディレクトリを開く
-      tmux new-window -t "$name" -c "$src"
-      tmux switch-client -t "$name"
-      zle -R -c
-      return
-    fi
-    if [[ ! $(tmux display-message -p '#S') =~ ^[0-9]+$ ]]; then
-      # セッション名が命名済み: name で新規セッションを作成して switch
-      tmux new-session -d -s "$name" -c "$src"
-      tmux switch-client -t "$name"
-      zle -R -c
-      return
-    fi
-    # セッション名が数字(tmux デフォルト): 現在セッションを name にリネームしてそのまま cd
-    tmux rename-session "$name"
-  fi
-  cd_dir "$src"
+  # 選択 + tmux セッション移動の本体は bin/cd-src-root に集約 (SSOT)。
+  # tmux 外 / 現セッションが数字名のときだけパスが返るので cd する。
+  # LBUFFER (カーソル左のバッファ) を fzf の初期クエリとして渡す。
+  local src=$(cd-src-root "$LBUFFER")
+  [[ -n $src ]] && cd_dir "$src"
+  zle -R -c
 }
 zle -N cd_src_root
 bindkey '^]' cd_src_root

@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# fzf でリポジトリ(ghq/src)を選び、その tmux セッションへ移動する共有エントリ。
+# セッションが無ければ作成する。ロジックを 1 箇所に集約する (SSOT)。
+#   - zsh widget cd_src_root (bind ^]) : `cd-src-root "$LBUFFER"`
+#   - tmux popup        (bind M-])     : `cd-src-root --popup`
+#
+# Usage: cd-src-root [--popup] [query]
+#   --popup : popup 起動時。数字名セッションでも rename+cd ではなく
+#             新規セッションを作って switch する (popup は cd 先を持てないため)。
+#   query   : fzf の初期クエリ (widget は $LBUFFER を渡す)。
+#
+# stdout: 呼び出し元が cd すべき場合のみ、選択したパスを 1 行出力する。
+#   tmux 外 / widget かつ現セッションが数字名 のときだけ出力する。
+#   tmux 内で switch 済みの場合は何も出力しない。
+
+main() {
+  set -euo pipefail
+  command -v fzf >/dev/null 2>&1 || return 0
+  command -v ghq >/dev/null 2>&1 || return 0
+
+  local popup=0
+  [[ ${1:-} == --popup ]] && {
+    popup=1
+    shift
+  }
+  local query=${1:-}
+
+  local preview_cmd='ls -laF {}'
+  command -v onefetch >/dev/null 2>&1 && preview_cmd='onefetch --no-art {}'
+
+  local src
+  src=$(find_repos | fzf --tac --query "$query" --preview "$preview_cmd") || return 0
+  [[ -n $src ]] || return 0
+
+  if [[ -n ${TMUX:-} ]]; then
+    local name
+    name=$(basename "$src" | tr '.' '_')
+
+    if tmux list-sessions -F '#S' | grep -Fqx -- "$name"; then
+      # 同名セッションあり: 新規 window を開いて switch
+      tmux new-window -t "$name" -c "$src"
+      tmux switch-client -t "$name"
+      return 0
+    fi
+
+    if ((popup)) || [[ ! $(tmux display-message -p '#S') =~ ^[0-9]+$ ]]; then
+      # popup、または現セッションが命名済み: 別セッションを作って switch
+      tmux new-session -d -s "$name" -c "$src"
+      tmux switch-client -t "$name"
+      return 0
+    fi
+
+    # widget かつ現セッションが数字名(tmux デフォルト): 現セッションを採用して cd
+    tmux rename-session "$name"
+  fi
+
+  printf '%s\n' "$src"
+}
+
+main "$@"
