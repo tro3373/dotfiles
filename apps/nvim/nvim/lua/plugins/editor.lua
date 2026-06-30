@@ -80,7 +80,7 @@ return {
   },
 
   -- 整形 (Align / easy-align)
-  { "vim-scripts/Align", cmd = "Align" },
+  { "vim-scripts/Align", event = "VeryLazy" },
   {
     "junegunn/vim-easy-align",
     event = "VeryLazy",
