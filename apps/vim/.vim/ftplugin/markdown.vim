@@ -141,6 +141,6 @@ endfunction
 " normal のみ上書き(101_mapping.vim のグローバル append を markdown で置換)。
 " insert/cmdline の <F3-F6> タイムスタンプ挿入・visual/op-pending は従来どおり残す。
 " nnoremap <silent> <buffer> <F3> :call MarkdownHeaderTag('## ', '%Y-%m-%d (%a)')<CR>
-nnoremap <silent> <buffer> <F4> :call MarkdownHeaderTag('### ', '%Y%m%d_%H%M%S')<CR>
-nnoremap <silent> <buffer> <F5> :call MarkdownHeaderTag('### ', '%Y-%m-%dT%H:%M:%S%z')<CR>
+" nnoremap <silent> <buffer> <F4> :call MarkdownHeaderTag('### ', '%Y%m%d_%H%M%S')<CR>
+" nnoremap <silent> <buffer> <F5> :call MarkdownHeaderTag('### ', '%Y-%m-%dT%H:%M:%S%z')<CR>
 
