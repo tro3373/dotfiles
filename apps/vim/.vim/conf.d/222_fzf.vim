@@ -157,10 +157,27 @@ function! s:history_cwd_first() abort
         \ }), 0)) })
 endfunction
 
-" st: 新規タブで MRU(最近使ったファイル)を開く。
+" st: bin/memo の vim 版(s:fire_memo)を開く。
 " 旧 ctrlp 環境(vim)では 220_ctrlp.vim.vim の `st`(CtrlPMRU)を温存し、
-" ctrlp を廃止した環境(nvim)でのみ cwd 優先 History へ再割当する。
+" ctrlp を廃止した環境(nvim)でのみ再割当する。
+" cwd 優先 History(history_cwd_first)は st から外し <Leader>p に残す。
 if !g:plug.is_installed('ctrlp.vim')
-  nnoremap <silent> st :<C-u>tabnew<CR>:call <SID>history_cwd_first()<CR>
+  " nnoremap <silent> st :<C-u>tabnew<CR>:call <SID>history_cwd_first()<CR>
+  nnoremap <silent> st :<C-u>silent call <SID>fire_memo()<CR>
   nnoremap <silent> <Leader>p :<C-u>silent call <SID>history_cwd_first()<CR>
 endif
+
+" bin/memo の vim 版。収集ロジック(.memo + job/prv 最新ログ)は bin/memo へ SSOT 化し、
+" `memo --list` の出力を fzf の source にする。'dir' を git root にすることで、
+"   1. memo --list が git root で実行され .memo の git root 相対パスが正しく出る
+"   2. 選択された相対パスも common_sink が w:fzf_pushd.dir(=git root)基準で開く
+" 選択(複数可)した各ファイルを個別タブで開く(s:open_in_tab)。
+function! s:fire_memo() abort
+  call s:open_in_tab({ -> fzf#run(fzf#wrap('fire-memo',
+        \ fzf#vim#with_preview({
+        \   'source':  'memo --list',
+        \   'dir':     GetGitRoot(),
+        \   'options': ['-m', '--prompt', 'Memo> ', '--info=inline'],
+        \ }), 0)) })
+endfunction
+command! Memo call s:fire_memo()

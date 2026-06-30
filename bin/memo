@@ -64,6 +64,11 @@ fire() {
 }
 
 main() {
+  # --list: エディタ(v)を起動せず収集結果のみ出力する(vim 等の外部フロントエンド用)。
+  if [[ ${1:-} == --list || ${1:-} == -l ]]; then
+    fire
+    return 0
+  fi
   fire | v "$@"
 }
 main "$@"
