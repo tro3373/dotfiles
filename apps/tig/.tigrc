@@ -265,6 +265,7 @@ set wrap-lines = yes
 #
 ## Color Settings
 color default white default
+color main-head black blue bold
 #color cursor default magenta
 #color date cyan default
 #color delimiter cyan default
