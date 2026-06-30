@@ -568,9 +568,27 @@ clean_one_task() {
   append_reference_to_log "$clean_log_path" "$ref_line"
 }
 
-# 完了参照行を log へ転記する。既に log にあれば追記しない (再実行冪等)。
+# ref (完了参照行) の split timestamp (YYYYMMDD-HHMMSS) から日付見出し
+# '## %Y-%m-%d (%a)' を生成する。timestamp 無し (worktree symlink 参照等) は実行日。
+# log をタスク日付別にグルーピングするための SSOT。
+reference_date_header() {
+  local ref="$1" ts ymd
+  ts=$(grep -oE '[0-9]{8}[-_][0-9]{6}' <<<"$ref" | head -1 || :)
+  ymd=${ts:0:8}
+  if [[ -n $ymd ]]; then
+    date -d "$ymd" +'## %Y-%m-%d (%a)' 2>/dev/null && return
+  fi
+  date +'## %Y-%m-%d (%a)'
+}
+
+# 完了参照行を log へ転記する。ref の日付見出しが無ければ先に追加し、その配下へ ref を
+# 追記する。見出し・ref とも既存なら追記しない (再実行冪等)。
 append_reference_to_log() {
-  local log_path="$1" ref="$2"
+  local log_path="$1" ref="$2" header
+  header=$(reference_date_header "$ref")
+  if ! grep -qxF -- "$header" "$log_path" 2>/dev/null; then
+    printf '%s\n' "$header" >>"$log_path"
+  fi
   if grep -qxF -- "$ref" "$log_path" 2>/dev/null; then
     return 0
   fi

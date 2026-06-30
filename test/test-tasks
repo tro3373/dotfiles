@@ -863,6 +863,57 @@ test_clean_worktree_excludes_done_reference() {
     '1' "$(grep -qF -- '20260101-000000_prior' "${wt_md}" && echo 1 || echo 0)"
 }
 
+# 22. log 転記: ref の timestamp から日付見出し (## YYYY-MM-DD (曜)) を生成し見出し配下へ
+# 記録する。同日付の参照を複数転記しても見出しは重複しない (冪等)。
+test_log_writes_dated_header() {
+  new_env t22 myrepo
+  write_config "${base}"
+  local repo_base="${base}/myrepo"
+  local dir1="${repo_base}/20260101-000000_one"
+  local dir2="${repo_base}/20260101-235959_two"
+  local ref1='base/myrepo/20260101-000000_one/index.md'
+  local ref2='base/myrepo/20260101-235959_two/index.md'
+  mkdir -p "${dir1}" "${dir2}"
+  {
+    printf '%s\n' "- [ ] [20260101-000000_one](${ref1})"
+    printf '%s\n' "- [ ] [20260101-235959_two](${ref2})"
+  } >"${repo_base}/index.md"
+  cat >"${dir1}/index.md" <<EOF
+---
+title: One
+branch: feature/one
+name: one
+done: false
+parent: ${repo_base}/index.md
+---
+
+EOF
+  cat >"${dir2}/index.md" <<EOF
+---
+title: Two
+branch: feature/two
+name: two
+done: false
+parent: ${repo_base}/index.md
+---
+
+EOF
+
+  run_tasks ok -f "${dir1}/index.md" >/dev/null 2>&1 || true
+  run_tasks ok -f "${dir2}/index.md" >/dev/null 2>&1 || true
+
+  local y ym log header
+  y=$(date +%Y) && ym=$(date +%Y-%m)
+  log="${envdir}/logs/${y}/${ym}-01-log.md"
+  header=$(date -d 20260101 +'## %Y-%m-%d (%a)')
+  check 'log-header: ref timestamp から日付見出しを生成' \
+    '1' "$(grep -qxF -- "${header}" "${log}" 2>/dev/null && echo 1 || echo 0)"
+  check 'log-header: 同日付の見出しは重複しない (1 件)' \
+    '1' "$(grep -cxF -- "${header}" "${log}" 2>/dev/null || true)"
+  check 'log-header: 両参照を見出し配下へ記録' \
+    '2' "$(grep -cE -- '_(one|two)\]\(' "${log}" 2>/dev/null || true)"
+}
+
 # 21. preview: 実ブロックはブロック境界まで、参照行は参照先 index.md を表示
 test_preview_line_block_and_ref() {
   new_env t21 myrepo
@@ -928,6 +979,7 @@ main() {
   test_clean_select_nth
   test_split_all_flag
   test_clean_worktree_excludes_done_reference
+  test_log_writes_dated_header
   test_preview_line_block_and_ref
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
