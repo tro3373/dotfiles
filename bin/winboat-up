@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+target_dir=$HOME/.winboat && readonly target_dir
+has() { command -v "${1}" >&/dev/null; }
+hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test ! -t 0 && cat -) ${@:2}" | _ink "$1"; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+main() {
+  set -eo pipefail
+  has winboat
+  cd "$target_dir" && docker compose up
+}
+main "$@"
