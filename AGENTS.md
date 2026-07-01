@@ -1,1 +1,2 @@
 - bin/{command_name} の shell script のテストを書くときは test/test-{command_name} に配置する
+- vim/nvim の話は apps/nvim/nvim がベース apps/vim は古い版. 新版は lua 版.

@@ -1572,3 +1572,7 @@ nnoremap <silent> gf :call OpenUrlOrFilePathOnCursor()<CR>
 xnoremap <silent> <Leader>j :call OpenUrlOrFilePathOnCursor()<CR>
 xnoremap <silent> gf :call OpenUrlOrFilePathOnCursor()<CR>
 
+function! LspInfo() abort
+  checkhealth vim.lsp
+endfunction
+command! LspInfo call LspInfo()

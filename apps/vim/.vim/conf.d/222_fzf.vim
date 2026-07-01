@@ -162,8 +162,8 @@ endfunction
 " ctrlp を廃止した環境(nvim)でのみ再割当する。
 " cwd 優先 History(history_cwd_first)は st から外し <Leader>p に残す。
 if !g:plug.is_installed('ctrlp.vim')
-  " nnoremap <silent> st :<C-u>tabnew<CR>:call <SID>history_cwd_first()<CR>
-  nnoremap <silent> st :<C-u>silent call <SID>fire_memo()<CR>
+  nnoremap <silent> st :<C-u>tabnew<CR>:call <SID>history_cwd_first()<CR>
+  " nnoremap <silent> st :<C-u>tabnew<CR>:<C-u>silent call <SID>fire_memo()<CR>
   nnoremap <silent> <Leader>p :<C-u>silent call <SID>history_cwd_first()<CR>
 endif
 
