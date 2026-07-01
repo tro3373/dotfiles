@@ -59,3 +59,17 @@ require("oil").setup({
 })
 
 require("oil-git").setup({})
+
+-- sd: 共有 101_mapping.vim の `:e {dir}` は oil の directory-buffer hijack +
+-- async rename で稀に "Invalid buffer id" クラッシュを起こすため、oil 環境では
+-- :Oil 直起動で上書きする。101_mapping.vim は pm(本 config)より後に source
+-- されるため、VimEnter で遅延登録して上書きを勝たせる。
+vim.api.nvim_create_autocmd("VimEnter", {
+  once = true,
+  callback = function()
+    vim.keymap.set("n", "sd", function()
+      local dir = vim.fn.expand("%") == "" and "." or vim.fn.expand("%:h")
+      vim.cmd.Oil({ args = { dir } })
+    end, { desc = "Open parent dir in oil" })
+  end,
+})
