@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Create or list Jira sub-task(s) for a parent issue.
+# Create or open Jira sub-task(s) for a parent issue.
 #
 # The config file is selected per-project from JIRA_PROJECT:
 #   ${XDG_CONFIG_HOME:-~/.config}/.jira/.config.<JIRA_PROJECT>.yml
@@ -11,7 +11,7 @@
 # projects in particular), and `jira issue create` decides the sub-task parent
 # from the per-project issue type cache, not from the server.
 #
-# List (default):
+# Open (default): pick an issue with fzf, then view it as markdown in nvim.
 #   jira-issue
 # Create (stdin):
 #   cat task.md | jira-issue add
@@ -22,6 +22,8 @@
 #
 # Required environment variables:
 #   JIRA_PROJECT      - Jira project key (also selects the config file)
+#
+# Required for `add` (optional filters for the default open view):
 #   JIRA_ISSUE_TYPE   - Sub-task issue type name for THIS project
 #   JIRA_ISSUE_PARENT - Parent task key
 #
@@ -40,6 +42,11 @@ require_env() {
 
 validate_env() {
   require_env JIRA_PROJECT
+}
+
+validate_add_env() {
+  # Sub-task creation needs an explicit type and parent; the open view treats
+  # both as optional filters.
   require_env JIRA_ISSUE_TYPE
   require_env JIRA_ISSUE_PARENT
 }
@@ -137,24 +144,45 @@ process_tasks() {
   emit_task
 }
 
-issue_list() {
-  jira issue list \
-    -p "${JIRA_PROJECT}" \
-    -t "${JIRA_ISSUE_TYPE}" \
-    -P "${JIRA_ISSUE_PARENT}"
+list_issues_plain() {
+  # Tab-delimited list for fzf. TYPE/PARENT are optional filters, so only pass
+  # them when set (lets listing work without a fixed type/parent).
+  local args=(-p "${JIRA_PROJECT}")
+  [[ -n ${JIRA_ISSUE_TYPE:-} ]] && args+=(-t "${JIRA_ISSUE_TYPE}")
+  [[ -n ${JIRA_ISSUE_PARENT:-} ]] && args+=(-P "${JIRA_ISSUE_PARENT}")
+  jira issue list "${args[@]}" \
+    --plain --no-headers --columns KEY,SUMMARY,STATUS,ASSIGNEE
+}
+
+issue_select_open() {
+  # Pick an issue with fzf (KEY is the first tab field), then render it as
+  # markdown in nvim. JIRA_CONFIG_FILE is exported, so the preview/view
+  # subprocesses inherit the per-project config.
+  local line key
+  line=$(
+    list_issues_plain |
+      fzf --delimiter '\t' \
+        --preview 'jira issue view {1} --plain' \
+        --preview-window 'right,60%,wrap' \
+        --select-1 --exit-0
+  ) || return 0
+  [[ -z ${line} ]] && return 0
+  key=${line%%$'\t'*}
+  jira issue view "${key}" --plain | nvim -c 'setf markdown' -
 }
 
 main() {
   set -euo pipefail
   validate_env
   resolve_config
-  local assignee="${JIRA_ASSIGNEE:-}"
-  [[ -z ${assignee} ]] && assignee='$$'
   if [[ ${1:-} == "add" ]]; then
+    validate_add_env
+    local assignee="${JIRA_ASSIGNEE:-}"
+    [[ -z ${assignee} ]] && assignee='$$'
     validate_stdin
     process_tasks
     return
   fi
-  issue_list
+  issue_select_open
 }
 main "$@"
