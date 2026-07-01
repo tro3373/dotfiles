@@ -4,9 +4,13 @@ return {
   -- GitHub Copilot
   {
     "github/copilot.vim",
-    event = "InsertEnter",
+    -- InsertEnter だと初回 insert 時に language-server のコールドスタート
+    -- (~1.5s) が走り最初の提案が遅れる。VeryLazy で起動後アイドル中にロードし、
+    -- copilot#Init でサーバを先に温めておくことで初回の待ちを消す。
+    event = "VeryLazy",
     config = function()
       _G.src("950_copilot.vim")
+      vim.fn["copilot#Init"]()
     end,
   },
 
