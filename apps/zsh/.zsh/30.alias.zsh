@@ -73,6 +73,7 @@ alias su="su -l"
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'
+alias tree='tree --charset ascii'
 alias pod='nocorrect pod'
 alias where="command -v"
 alias diff="diff -Nru"
