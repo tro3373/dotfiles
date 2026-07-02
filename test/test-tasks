@@ -507,10 +507,10 @@ EOF
   check 'complete-fm: parent reference marked [x]' \
     '1' "$(grep -qF -- "- [x] [20260101-000000_test-task](${ref})" "${repo_base}/index.md" && echo 1 || echo 0)"
 
-  local y ym log
-  y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${envdir}/logs/${y}/${ym}-01-log.md"
-  check 'complete-fm: 完了参照を log へ転記' \
+  # 内容日付 (参照行 ts = 2026-01) の log へ転記する (実行日でなく)
+  local log
+  log="${envdir}/logs/2026/2026-01-01-log.md"
+  check 'complete-fm: 完了参照を内容日付 (2026-01) の log へ転記' \
     '1' "$(grep -qF -- "- [x] [20260101-000000_test-task](${ref})" "${log}" 2>/dev/null && echo 1 || echo 0)"
 }
 
@@ -652,10 +652,10 @@ EOF
   check 'clean-split: 本文言及のみの非 stem 同名ファイルは移動しない' \
     '1' "$([[ -f ${base}/myrepo/README.md ]] && echo 1 || echo 0)"
 
-  local y ym log
-  y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${envdir}/logs/${y}/${ym}-01-log.md"
-  check 'clean-split: 参照を log へ転記' \
+  # 内容日付 (ブロック内最新 ts = 2026-06-24) の log へ転記する (実行日でなく)
+  local log
+  log="${envdir}/logs/2026/2026-06-01-log.md"
+  check 'clean-split: 参照を内容日付 (2026-06) の log へ転記' \
     '1' "$(grep -qE -- '_test-task-1\]' "${log}" 2>/dev/null && echo 1 || echo 0)"
   check 'clean-split: 完了ブロックを index.md から除去' \
     '0' "$(grep -qF -- 'Completed big task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
@@ -680,6 +680,30 @@ EOF
   dir=$(find "${base}/myrepo" -maxdepth 1 -type d -name "${today}-*_test-task-1" | head -1)
   check 'clean-fallback: dir は clean 実行時 timestamp (今日)' \
     '1' "$([[ -n ${dir} ]] && echo 1 || echo 0)"
+}
+
+# 14b. clean: 内容日付が判定できない (ブロックに [ts] 無し) 場合は警告し実行日の log へ転記
+test_clean_warns_when_entry_date_unknown() {
+  new_env t14b myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  cat >>"${base}/myrepo/index.md" <<'EOF'
+- [x] No timestamp task
+  - just done, no bracket ts
+EOF
+
+  # run_tasks は stdout/stderr を 2>&1 で束ねて返す
+  local out
+  out=$(run_tasks -c --all)
+
+  check 'clean-unknown: 内容日付不明で警告を出す' \
+    '1' "$([[ ${out} == *"Cannot determine entry date"* ]] && echo 1 || echo 0)"
+
+  # 内容日付不明時は実行日 (今日) の log へフォールバックして転記する
+  local today_log
+  today_log="${envdir}/logs/$(date +%Y)/$(date +%Y-%m)-01-log.md"
+  check 'clean-unknown: 実行日の log へフォールバック転記' \
+    '1' "$(grep -qE -- '_test-task-1\]' "${today_log}" 2>/dev/null && echo 1 || echo 0)"
 }
 
 # 15. clean: 未完了 - [ ] タスクは split 対象外で残す
@@ -740,10 +764,10 @@ EOF
   check 'clean-wt: 参照行を index.md に残す (削除しない)' \
     '1' "$(grep -qE -- '^- \[x\] \[[^]]*_test-task-1\]\(' "${wt_md}" && echo 1 || echo 0)"
 
-  local y ym log
-  y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${envdir}/logs/${y}/${ym}-01-log.md"
-  check 'clean-wt: 参照を log へ転記' \
+  # 内容日付 (ブロック内 ts = 2026-06-24) の log へ転記する
+  local log
+  log="${envdir}/logs/2026/2026-06-01-log.md"
+  check 'clean-wt: 参照を内容日付 (2026-06) の log へ転記' \
     '1' "$(grep -qE -- '_test-task-1\]' "${log}" 2>/dev/null && echo 1 || echo 0)"
 
   run_wt -c --all || true
@@ -760,22 +784,31 @@ test_clean_all_flag() {
   new_env t17 myrepo
   write_config "${base}"
   run_tasks --summary >/dev/null 2>&1 || true
+  # 内容日付は別の月にして log ファイルの振り分けを検証する (log_fmt は %Y-%m-01 = 月単位)
   cat >>"${base}/myrepo/index.md" <<'EOF'
 - [x] Done one
   - [20260101_000000] 🎉 完了
 - [x] Done two
-  - [20260102_000000] 🎉 完了
+  - [20260315_000000] 🎉 完了
 EOF
 
   run_tasks -c --all >/dev/null 2>&1 || true
 
-  local y ym log dir_count
-  y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${envdir}/logs/${y}/${ym}-01-log.md"
+  # 内容日付が異なる2件はそれぞれの日付の log ファイルへ振り分けられる
+  local log1 log2 today_log dir_count
+  log1="${envdir}/logs/2026/2026-01-01-log.md"
+  log2="${envdir}/logs/2026/2026-03-01-log.md"
+  today_log="${envdir}/logs/$(date +%Y)/$(date +%Y-%m)-01-log.md"
   dir_count=$(find "${base}/myrepo" -maxdepth 1 -type d -name '*_test-task-*' | wc -l)
   check 'clean-all: 完了2件を split (dir 2)' '2' "${dir_count}"
-  check 'clean-all: 完了2件を log へ転記' \
-    '2' "$(grep -cE -- '_test-task-[0-9]+\]' "${log}" 2>/dev/null || true)"
+  check 'clean-all: 2026-01 の完了は 2026-01 log へ' \
+    '1' "$(grep -qE -- '20260101-000000_test-task' "${log1}" 2>/dev/null && echo 1 || echo 0)"
+  check 'clean-all: 2026-03 の完了は 2026-03 log へ' \
+    '1' "$(grep -qE -- '20260315-000000_test-task' "${log2}" 2>/dev/null && echo 1 || echo 0)"
+  check 'clean-all: 2026-01 log に 2026-03 分は混ざらない' \
+    '0' "$(grep -qE -- '20260315' "${log1}" 2>/dev/null && echo 1 || echo 0)"
+  check 'clean-all: 実行日 (今日) の log には転記しない' \
+    '0' "$([[ -f ${today_log} ]] && grep -qE -- '_test-task-[0-9]+\]' "${today_log}" && echo 1 || echo 0)"
   check 'clean-all: fzf を経由しない (非対話)' \
     '0' "$([[ -s ${fzf_log} ]] && echo 1 || echo 0)"
 }
@@ -794,10 +827,10 @@ EOF
 
   run_tasks -c 1 >/dev/null 2>&1 || true
 
-  local y ym log
-  y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${envdir}/logs/${y}/${ym}-01-log.md"
-  check 'clean-nth: 1件のみ log へ転記 (Nth のみ)' \
+  # Nth=1 = "Done one" (内容日付 2026-01) のみ、その日付の log へ転記
+  local log
+  log="${envdir}/logs/2026/2026-01-01-log.md"
+  check 'clean-nth: 1件のみ内容日付 (2026-01) の log へ転記 (Nth のみ)' \
     '1' "$(grep -cE -- '_test-task-[0-9]+\]' "${log}" 2>/dev/null || true)"
   check 'clean-nth: 1件目は split 済み (ブロック消滅)' \
     '0' "$(grep -qF -- '- [x] Done one' "${base}/myrepo/index.md" && echo 1 || echo 0)"
@@ -902,9 +935,9 @@ EOF
   run_tasks ok -f "${dir1}/index.md" >/dev/null 2>&1 || true
   run_tasks ok -f "${dir2}/index.md" >/dev/null 2>&1 || true
 
-  local y ym log header
-  y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${envdir}/logs/${y}/${ym}-01-log.md"
+  # 完了参照の内容日付 (2026-01) の log ファイルへ、その日付見出しで記録する
+  local log header
+  log="${envdir}/logs/2026/2026-01-01-log.md"
   header=$(date -d 20260101 +'## %Y-%m-%d (%a)')
   check 'log-header: ref timestamp から日付見出しを生成' \
     '1' "$(grep -qxF -- "${header}" "${log}" 2>/dev/null && echo 1 || echo 0)"
@@ -973,6 +1006,7 @@ main() {
   test_clean_excludes_done_reference
   test_clean_splits_unsplit_completed_task
   test_clean_timestamp_fallback_to_now
+  test_clean_warns_when_entry_date_unknown
   test_clean_skips_pending_tasks
   test_clean_worktree_keeps_reference
   test_clean_all_flag
