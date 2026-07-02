@@ -211,6 +211,18 @@ return {
         },
       })
 
+      -- Copilot LSP (sidekick.nvim の NES 用) は sidekick 無効化に伴い一旦停止。
+      -- sidekick を戻すときにここも復活させること (copilot.vim 同梱 language-server を
+      -- node 起動し cmd 上書き / 認証は ~/.config/github-copilot 共有)。
+      --[[
+      local copilot_ls = vim.fn.stdpath("data")
+        .. "/lazy/copilot.vim/copilot-language-server/dist/language-server.js"
+      if (vim.uv or vim.loop).fs_stat(copilot_ls) then
+        vim.lsp.config("copilot", { cmd = { "node", copilot_ls, "--stdio" } })
+        vim.lsp.enable("copilot")
+      end
+      --]]
+
       -- mason 導入済みサーバを自動 enable (settings 登録後に実行する)
       require("mason-lspconfig").setup({ automatic_enable = true })
 

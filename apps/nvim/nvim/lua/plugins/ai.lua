@@ -25,6 +25,111 @@ return {
     end,
   },
 
+  -- 再有効化する場合: 下の --[[ ... --]] を外す + lsp.lua の copilot LSP(NES 用) も戻す +
+  -- CopilotChat の <C-l> と競合しないようキーを調整すること。
+  --[[
+  -- sidekick.nvim: AI CLI 統合 (Claude Code を nvim terminal で起動) + Copilot NES。
+  -- 注意: CLI の応答は claude の terminal ウィンドウに表示される (CopilotChat のような
+  --       整形済みチャットバッファではなく素の CLI 画面)。sidekick は CLI のラッパー。
+  {
+    "folke/sidekick.nvim",
+    -- NES の autocmd (TextChanged 等) を編集中に効かせるため VeryLazy でロードする。
+    event = "VeryLazy",
+    opts = {
+      -- Copilot Next Edit Suggestions (複数行リファクタ提案を diff 表示)。
+      -- 使用する copilot LSP client の enable は lsp.lua 側で行う。
+      nes = { enabled = true },
+      cli = {
+        -- claude は nvim ネイティブの terminal ウィンドウ(既定=右split)で開く。
+        -- mux.enabled=true にすると tmux 常駐へ切替 (nvim 再起動後もセッション維持できるが、
+        -- terminal 内 tmux で操作しづらいため既定は buffer モード=false)。
+        mux = {
+          backend = "tmux",
+          enabled = false,
+        },
+        win = {
+          keys = {
+            -- claude ウィンドウから <C-h> でエディタへ戻る (隠さず blur)。
+            blur_ctrl_h = { "<C-h>", "blur", mode = "nt" },
+          },
+        },
+      },
+    },
+    keys = {
+      -- NES: normal で <Tab> = 次の提案へジャンプ / 適用。提案が無ければ通常の <Tab>。
+      {
+        "<Tab>",
+        function()
+          if not require("sidekick").nes_jump_or_apply() then
+            return "<Tab>"
+          end
+        end,
+        expr = true,
+        desc = "Sidekick: NES jump/apply",
+      },
+      -- <C-l> = Claude Code をトグル起動 (旧 CopilotChat の <C-l> を置換)
+      {
+        "<C-l>",
+        function()
+          require("sidekick.cli").toggle({ name = "claude", focus = true })
+        end,
+        mode = { "n", "x", "t" },
+        desc = "Sidekick: toggle Claude",
+      },
+      -- <C-.> = これなに (カーソル/選択箇所を Claude に説明させる)
+      {
+        "<C-.>",
+        function()
+          require("sidekick.cli").send({ msg = "これは何か日本語で簡潔に説明して: {this}", submit = true })
+        end,
+        mode = { "n", "x" },
+        desc = "Sidekick: explain this",
+      },
+      -- <C-,> = この英語を訳す
+      {
+        "<C-,>",
+        function()
+          require("sidekick.cli").send({ msg = "この英語を自然な日本語に訳して: {this}", submit = true })
+        end,
+        mode = { "n", "x" },
+        desc = "Sidekick: translate EN->JA",
+      },
+      -- <leader>a 系 (a = AI)
+      {
+        "<leader>aa",
+        function()
+          require("sidekick.cli").toggle()
+        end,
+        mode = { "n", "x" },
+        desc = "Sidekick: toggle CLI",
+      },
+      {
+        "<leader>as",
+        function()
+          require("sidekick.cli").send({ msg = "{selection}", submit = true })
+        end,
+        mode = { "x" },
+        desc = "Sidekick: send selection",
+      },
+      {
+        "<leader>ap",
+        function()
+          require("sidekick.cli").prompt()
+        end,
+        mode = { "n", "x" },
+        desc = "Sidekick: prompt picker",
+      },
+      {
+        "<leader>at",
+        function()
+          require("sidekick.cli").select()
+        end,
+        desc = "Sidekick: select CLI tool",
+      },
+    },
+  },
+  --]]
+
   -- Claude Code は無効化 (コメントアウト)。
   -- 理由: <leader>cc が commentary の <leader>c の prefix になり timeoutlen 待ちで
   -- コメントトグルが遅くなる。vim 側も claude-code は無効のため挙動を揃える。
