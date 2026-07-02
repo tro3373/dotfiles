@@ -312,7 +312,13 @@ aumg({
     if #md_wins > 0 then
       vim.cmd("rshada!")
       for _, win in ipairs(md_wins) do
-        vim.fn.win_execute(win, 'normal! g`"')
+        -- shada の '" マークが今のバッファ行数を超えていると g`" が E19 を投げるため、
+        -- マークが範囲内のときだけカーソルを復元する。
+        local buf = vim.api.nvim_win_get_buf(win)
+        local mark_row = vim.api.nvim_buf_get_mark(buf, '"')[1]
+        if mark_row > 0 and mark_row <= vim.api.nvim_buf_line_count(buf) then
+          vim.fn.win_execute(win, 'normal! g`"')
+        end
       end
     end
   end,
