@@ -4,6 +4,6 @@ main() {
   # npx -y ccusage@latest "$@"
   # npx -y @ccusage/codex@latest "$@"
   bunx ccusage@latest "$@"
-  bunx @ccusage/codex@latest "$@"
+  bunx ccusage@latest codex "$@"
 }
 main "$@"
