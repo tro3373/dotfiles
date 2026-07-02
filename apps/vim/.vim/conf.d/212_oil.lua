@@ -60,6 +60,16 @@ require("oil").setup({
 
 require("oil-git").setup({})
 
+-- 保存確認ダイアログ (oil_preview は確認専用 filetype) で <CR> も [Y]es 扱いに。
+-- confirm はローカルクロージャで直接呼べないため、プラグインが張る y→confirm へ
+-- <CR> を remap で乗せる (y に加えて Enter で確定)。
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "oil_preview",
+  callback = function(args)
+    vim.keymap.set("n", "<CR>", "y", { buffer = args.buf, remap = true, nowait = true })
+  end,
+})
+
 -- sd: 共有 101_mapping.vim の `:e {dir}` は oil の directory-buffer hijack +
 -- async rename で稀に "Invalid buffer id" クラッシュを起こすため、oil 環境では
 -- :Oil 直起動で上書きする。101_mapping.vim は pm(本 config)より後に source
