@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 # test: bin/lib/test/tmuxs
 
+# ---- pane 状態の書込側 (Claude hook 統合) --------------------------------
+# settings.json が pane 内で `tmuxs waiting|running|idle|remove` を呼ぶ。
+# waiting が 1 つでも発生したら status bar の待ち表示 (@tmuxs_waiting) に ⏳N を
+# 点灯し、全 pane の waiting が解消したら消す。読取側と marker_dir() を共有する
+# (旧 ~/.mo/.../tmux-pane-state.sh の二重定義を解消)。
+# best-effort のため tmux 呼び出し失敗で Claude を止めないよう常に 0 で抜ける。
+readonly waiting_color='#E5AF1E'
+# readonly waiting_color='#4B607F'
+# 黄色帯モード。1=ON: waiting 時に status bar 全体を黄色帯で強調 (tmux.conf の
+# @tmuxs_band 条件配色と連動し文字は暗色に切替わる)。0=OFF: status-left の
+# ⏳N インジケータのみ。
+readonly band_enabled=1
+
 # preview で各 pane を末尾空行を除いた最新何行に絞るかの既定値。
 # fzf 実行時は FZF_PREVIEW_LINES から 3 pane 一望になるよう上書きする。
 readonly preview_pane_lines=10
@@ -126,21 +139,6 @@ list_sessions() {
       "$width" "$name" "$nwin" "${pcount[$name]:-0}" "$marker"
   done
 }
-
-# ---- pane 状態の書込側 (Claude hook 統合) --------------------------------
-# settings.json が pane 内で `tmuxs waiting|running|idle|remove` を呼ぶ。
-# waiting が 1 つでも発生したら status bar の待ち表示 (@tmuxs_waiting) に ⏳N を
-# 点灯し、全 pane の waiting が解消したら消す。読取側と marker_dir() を共有する
-# (旧 ~/.mo/.../tmux-pane-state.sh の二重定義を解消)。
-# best-effort のため tmux 呼び出し失敗で Claude を止めないよう常に 0 で抜ける。
-
-readonly waiting_color='#E5AF1E'
-# readonly waiting_color='#4B607F'
-
-# 黄色帯モード。1=ON: waiting 時に status bar 全体を黄色帯で強調 (tmux.conf の
-# @tmuxs_band 条件配色と連動し文字は暗色に切替わる)。0=OFF: status-left の
-# ⏳N インジケータのみ。
-readonly band_enabled=1
 
 # 現存する pane のうち waiting マーカーを持つ数を数える。
 # 死んだ pane のマーカーは無視する (誤って waiting 扱いしない)。
