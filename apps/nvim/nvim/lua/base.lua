@@ -159,10 +159,11 @@ vim.opt.fileencoding = "utf-8"
 vim.opt.fileencodings = "ucs-bom,utf-8,iso-2022-jp,cp932,euc-jp,default,latin"
 
 vim.opt.fileformats = "unix,dos,mac" -- 新規、読み込み時の改行設定(複数で自動判定)
-vim.opt.ambiwidth = "double" -- Unicodeで行末が変になる問題を解決
--- -- 旧 .vimrc では double(Unicodeで行末が変になる問題対策)だったが、
--- -- nvim 起動ロゴ等の曖昧幅グリフが double で崩れるため single へ変更
--- vim.opt.ambiwidth = "single"
+-- vim.opt.ambiwidth = "double" -- Unicodeで行末が変になる問題を解決
+-- 旧 .vimrc では double(Unicodeで行末が変になる問題対策)だったが、
+-- wezterm/tmux は曖昧幅を半角(1セル)で扱うため single に統一
+-- (Osaka-Mono 側は make-halfwidth-ambiguous.py で曖昧幅記号を半角グリフ化済み)
+vim.opt.ambiwidth = "single"
 
 -- バッファ自動再読込
 -- 元のファイルの変更を Vim が検知し、かつバッファが変更されていなかった場合に自動再読込
