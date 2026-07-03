@@ -89,16 +89,8 @@ return {
     end,
   },
 
-  -- 現在ファイルを実行して quickfix 表示
-  {
-    "thinca/vim-quickrun",
-    dependencies = { "osyo-manga/shabadou.vim" },
-    cmd = "QuickRun",
-    config = function()
-      _G.src("308_vim-quickrun.vim")
-    end,
-  },
-  { "osyo-manga/shabadou.vim", lazy = true },
+  -- 現在バッファの実行は lua/run.lua (vim.system + scratch vsplit) に移設。
+  -- vim-quickrun は vimproc 依存で nvim 非同期に不向きなため nvim では不採用。
 
   -- 長いコマンド名の自動展開
   { "thinca/vim-ambicmd", event = "CmdlineEnter" },

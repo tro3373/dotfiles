@@ -15,3 +15,5 @@ require("pm") -- lazy.nvim ブートストラップ + プラグイン spec
 _G.src("101_mapping.vim") -- 汎用キーマップ
 _G.src("102_funcs.vim") -- utility コマンド/関数群
 _G.src("999_custom.vim") -- 追加ハイライト等
+
+require("run") -- 現在バッファ実行 → 右 vsplit 表示 (vim-quickrun の nvim 代替)
