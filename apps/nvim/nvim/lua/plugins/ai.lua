@@ -25,9 +25,8 @@ return {
     end,
   },
 
-  -- 再有効化する場合: 下の --[[ ... --]] を外す + lsp.lua の copilot LSP(NES 用) も戻す +
-  -- CopilotChat の <C-l> と競合しないようキーを調整すること。
-  --[[
+  -- NES を使うには lsp.lua の copilot LSP(NES 用) も enable すること。
+  -- Claude トグルは <C-'> に割当 (CopilotChat の <C-l> と分離)。
   -- sidekick.nvim: AI CLI 統合 (Claude Code を nvim terminal で起動) + Copilot NES。
   -- 注意: CLI の応答は claude の terminal ウィンドウに表示される (CopilotChat のような
   --       整形済みチャットバッファではなく素の CLI 画面)。sidekick は CLI のラッパー。
@@ -47,10 +46,16 @@ return {
           backend = "tmux",
           enabled = false,
         },
+        -- tmux の全ペインを走査して外部 claude (別ターミナルの Claude Code 等) を
+        -- external セッションとして拾う挙動を無効化。切らないと <C-'> 起動時に
+        -- 「どの claude に繋ぐか」の session picker が出る (is_proc の消費は tmux backend のみ)。
+        tools = {
+          claude = { is_proc = false },
+        },
         win = {
           keys = {
-            -- claude ウィンドウから <C-h> でエディタへ戻る (隠さず blur)。
-            blur_ctrl_h = { "<C-h>", "blur", mode = "nt" },
+            -- claude ウィンドウから <C-h> でエディタへ戻る (隠さず blur)。無効化中。
+            -- blur_ctrl_h = { "<C-h>", "blur", mode = "nt" },
           },
         },
       },
@@ -67,9 +72,9 @@ return {
         expr = true,
         desc = "Sidekick: NES jump/apply",
       },
-      -- <C-l> = Claude Code をトグル起動 (旧 CopilotChat の <C-l> を置換)
+      -- <C-'> = Claude Code をトグル起動 (CopilotChat の <C-l> とは分離)
       {
-        "<C-l>",
+        "<C-'>",
         function()
           require("sidekick.cli").toggle({ name = "claude", focus = true })
         end,
@@ -80,7 +85,7 @@ return {
       {
         "<C-.>",
         function()
-          require("sidekick.cli").send({ msg = "これは何か日本語で簡潔に説明して: {this}", submit = true })
+          require("sidekick.cli").send({ name = "claude", msg = "これは何か日本語で簡潔に説明して: {this}", submit = true })
         end,
         mode = { "n", "x" },
         desc = "Sidekick: explain this",
@@ -89,7 +94,7 @@ return {
       {
         "<C-,>",
         function()
-          require("sidekick.cli").send({ msg = "この英語を自然な日本語に訳して: {this}", submit = true })
+          require("sidekick.cli").send({ name = "claude", msg = "この英語を自然な日本語に訳して: {this}", submit = true })
         end,
         mode = { "n", "x" },
         desc = "Sidekick: translate EN->JA",
@@ -106,7 +111,7 @@ return {
       {
         "<leader>as",
         function()
-          require("sidekick.cli").send({ msg = "{selection}", submit = true })
+          require("sidekick.cli").send({ name = "claude", msg = "{selection}", submit = true })
         end,
         mode = { "x" },
         desc = "Sidekick: send selection",
@@ -128,7 +133,6 @@ return {
       },
     },
   },
-  --]]
 
   -- Claude Code は無効化 (コメントアウト)。
   -- 理由: <leader>cc が commentary の <leader>c の prefix になり timeoutlen 待ちで

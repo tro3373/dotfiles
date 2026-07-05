@@ -16,6 +16,9 @@ return {
           vim.cmd("unlet! g:terminal_ansi_colors")
           vim.cmd("hi Search ctermfg=238 ctermbg=109 guifg=#646D75 guibg=#87afaf")
           vim.cmd("hi SpecialKey cterm=NONE ctermfg=cyan guifg=cyan")
+          -- apprentice は NormalFloat 未定義で nvim 既定 (ほぼ黒 NvimDarkGrey1 #07080d) になる。
+          -- Normal (#262626) に揃えてフロート/CLI ウィンドウ(sidekick claude 等)の真っ黒を解消。
+          vim.cmd("hi! link NormalFloat Normal")
         end,
       })
       vim.cmd("colorscheme apprentice")
