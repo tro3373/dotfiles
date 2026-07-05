@@ -49,6 +49,37 @@ return {
     end,
   },
 
+  -- jj/jk でモード離脱 (タイプ遅延なし)。旧 conf.d/101_mapping.vim の inoremap は
+  -- has('nvim') ガードで無効化済みで、こちらに委譲 (better-escape は nvim 専用)
+  {
+    "max397574/better-escape.nvim",
+    event = "VeryLazy",
+    config = function()
+      require("better_escape").setup({
+        default_mappings = false, -- c/v/s のデフォルトは使わず i/t だけ明示
+        mappings = {
+          i = {
+            j = { j = "<Esc>", k = "<Esc>" },
+            -- <space><tab> で luasnip を expand/jump
+            [" "] = {
+              ["<tab>"] = function()
+                -- 副作用回避のため遅延実行
+                vim.defer_fn(function()
+                  vim.o.ul = vim.o.ul -- undo ポイント設定
+                  require("luasnip").expand_or_jump()
+                end, 1)
+              end,
+            },
+          },
+          -- terminal は <Esc> でなく <C-\><C-n> で terminal-normal へ抜ける
+          t = {
+            j = { j = [[<C-\><C-n>]], k = [[<C-\><C-n>]] },
+          },
+        },
+      })
+    end,
+  },
+
   -- v で選択範囲を段階拡張
   {
     "terryma/vim-expand-region",

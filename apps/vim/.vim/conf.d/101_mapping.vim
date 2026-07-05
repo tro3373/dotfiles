@@ -9,12 +9,14 @@ nnoremap gk k
 noremap <Down> gj
 noremap <Up> gk
 
-" insertモードから抜ける
-inoremap <silent> jj <ESC>
-" inoremap <silent> <C-j> j
-inoremap <silent> kk <ESC>
-inoremap <silent> jk <ESC>
-" inoremap <silent> <C-k> k
+" insertモードから抜ける (nvim では better-escape.nvim が担当するため vim のみ)
+if !has('nvim')
+  inoremap <silent> jj <ESC>
+  " inoremap <silent> <C-j> j
+  inoremap <silent> kk <ESC>
+  inoremap <silent> jk <ESC>
+  " inoremap <silent> <C-k> k
+endif
 " 挿入モードでのカーソル移動
 " inoremap <C-j> <Down>
 " inoremap <C-k> <Up>
