@@ -338,12 +338,14 @@ if vim.fn.exists("##TermOpen") then
     cb = "startinsert",
   })
   -- terminal JOBの終了ステータスが成功であれば、バッファを閉じる
+  -- exit status は event 引数でなく v:event.status に入る (削除中は -1)。
+  -- 既に消えた buffer への bdelete は E516 になるため valid を確認して閉じる。
   aug({
     events = "TermClose",
     group = aug_term,
     cb = function(event)
-      if not event.status then
-        vim.api.nvim_command("bdelete! " .. vim.fn.expand("<abuf>"))
+      if vim.v.event.status == 0 and vim.api.nvim_buf_is_valid(event.buf) then
+        vim.api.nvim_buf_delete(event.buf, { force = true })
       end
     end,
   })
