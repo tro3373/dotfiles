@@ -39,6 +39,21 @@ return {
     config = function()
       local cmp = require("cmp")
       local luasnip = require("luasnip")
+      local function accept_copilot()
+        local ok, suggestion = pcall(vim.fn["copilot#GetDisplayedSuggestion"])
+        if not ok or type(suggestion) ~= "table" or suggestion.text == "" then
+          return false
+        end
+
+        local keys
+        ok, keys = pcall(vim.fn["copilot#Accept"], "")
+        if not ok or keys == "" then
+          return false
+        end
+        vim.api.nvim_feedkeys(keys, "n", true)
+        return true
+      end
+
       cmp.setup({
         snippet = {
           expand = function(args)
@@ -48,7 +63,9 @@ return {
         completion = { completeopt = "menu,menuone,noinsert,noselect" },
         mapping = cmp.mapping.preset.insert({
           ["<Tab>"] = cmp.mapping(function(fallback)
-            if cmp.visible() then
+            if accept_copilot() then
+              return
+            elseif cmp.visible() then
               cmp.select_next_item()
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
