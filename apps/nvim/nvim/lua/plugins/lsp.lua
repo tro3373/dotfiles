@@ -35,10 +35,13 @@ return {
       },
       -- 補完メニューに .snip トリガーを出すだけのソース。展開は neosnippet 本体 (<C-k>) が担う。
       "notomo/cmp-neosnippet",
+      -- 補完候補に kind アイコンを付与 (Nerd Font 前提。devicons と同じ字形環境)。
+      "onsails/lspkind.nvim",
     },
     config = function()
       local cmp = require("cmp")
       local luasnip = require("luasnip")
+      local lspkind = require("lspkind")
       local function accept_copilot()
         local ok, suggestion = pcall(vim.fn["copilot#GetDisplayedSuggestion"])
         if not ok or type(suggestion) ~= "table" or suggestion.text == "" then
@@ -61,6 +64,35 @@ return {
           end,
         },
         completion = { completeopt = "menu,menuone,noinsert,noselect" },
+        -- 補完メニュー窓とドキュメント(プレビュー)窓の両方に rounded 枠を付けて視認性を上げる。
+        -- scrollbar=false 必須: bordered() は scrollbar 既定 true で、cmp が sbar/thumb を別
+        -- フローティング窓として開く。特に docs 窓 (既定はスクロールバー無し) で残留窓の原因になる。
+        window = {
+          completion = cmp.config.window.bordered({ border = "rounded", scrollbar = false }),
+          documentation = cmp.config.window.bordered({ border = "rounded", scrollbar = false }),
+        },
+        -- 候補行の見た目: [kind アイコン] [候補名] [ソース名ラベル] の順で表示
+        formatting = {
+          fields = { "kind", "abbr", "menu" },
+          format = lspkind.cmp_format({
+            -- source 由来のラベルを menu 列に出す ([LSP] 等)
+            menu = {
+              nvim_lsp = "[LSP]",
+              luasnip = "[Snippet]",
+              neosnippet = "[Snippet]",
+              buffer = "[Buffer]",
+              path = "[Path]",
+            },
+            -- cmp_format 自体は kind をアイコン化しないため、before で kind 名 -> アイコンに置換する
+            before = function(_, item)
+              local sym = lspkind.symbolic(item.kind)
+              if sym ~= "" then
+                item.kind = sym
+              end
+              return item
+            end,
+          }),
+        },
         mapping = cmp.mapping.preset.insert({
           ["<Tab>"] = cmp.mapping(function(fallback)
             if accept_copilot() then
