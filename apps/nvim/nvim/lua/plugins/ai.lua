@@ -91,7 +91,11 @@ return {
       {
         "<C-.>",
         function()
-          require("sidekick.cli").send({ name = "claude", msg = "これは何か日本語で簡潔に説明して: {this}", submit = true })
+          require("sidekick.cli").send({
+            name = "claude",
+            msg = "これは何か日本語で簡潔に説明して: {this}",
+            submit = true,
+          })
         end,
         mode = { "n", "x" },
         desc = "Sidekick: explain this",
@@ -100,7 +104,11 @@ return {
       {
         "<C-,>",
         function()
-          require("sidekick.cli").send({ name = "claude", msg = "この英語を自然な日本語に訳して: {this}", submit = true })
+          require("sidekick.cli").send({
+            name = "claude",
+            msg = "この英語を自然な日本語に訳して: {this}",
+            submit = true,
+          })
         end,
         mode = { "n", "x" },
         desc = "Sidekick: translate EN->JA",
