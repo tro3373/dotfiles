@@ -72,14 +72,20 @@ return {
         expr = true,
         desc = "Sidekick: NES jump/apply",
       },
-      -- <C-'> = Claude Code をトグル起動 (CopilotChat の <C-l> とは分離)
+      -- <C-'> = Claude Code をトグル起動 (CopilotChat の <C-l> とは分離)。
+      -- visual 選択中は選択をコンテキストとして貼って起動 (未送信)。
       {
         "<C-'>",
         function()
+          local m = vim.fn.mode()
+          if m == "v" or m == "V" or m == "\22" then -- \22 = <C-v> blockwise
+            require("sidekick.cli").send({ name = "claude", msg = "{selection}", submit = false, focus = true })
+            return
+          end
           require("sidekick.cli").toggle({ name = "claude", focus = true })
         end,
         mode = { "n", "x", "t" },
-        desc = "Sidekick: toggle Claude",
+        desc = "Sidekick: toggle Claude (paste selection when visual)",
       },
       -- <C-.> = これなに (カーソル/選択箇所を Claude に説明させる)
       {
