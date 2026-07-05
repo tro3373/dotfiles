@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+install_common() {
+  add_dependency_args nix
+  if has home-manager; then
+    return
+  fi
+  # First run only: bootstrap via `nix run`.
+  #   - NIX_CONFIG enables flakes for this command and its child nix processes (single-user installer has it off).
+  #   - --impure lets the flake read $USER/$HOME so no username is hard-coded in the repo.
+  #   - after this switch, programs.home-manager.enable installs the `home-manager` binary,
+  #     and nix.settings writes ~/.config/nix/nix.conf so later runs need neither NIX_CONFIG nor nix run:
+  #       home-manager switch --impure -b bak --flake ${DOT_PATH}/apps/home-manager#default
+  exe "NIX_CONFIG='experimental-features = nix-command flakes' nix run github:nix-community/home-manager -- switch --impure -b bak --flake ${DOT_PATH}/apps/home-manager#default"
+}
+
+setting_common() {
+  # Shorthand for re-applying the config after editing home.nix: run `hms`.
+  cat <<'EOF' | tee_to_works_zsh 'alias hms='
+alias hms='home-manager switch --impure -b bak --flake ~/.dot/apps/home-manager#default'
+EOF
+}
