@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 
 install_common() {
-  exe export NIX_INSTALLER_NO_MODIFY_PROFILE=1 # Prevents the installer from modifying shell profiles
-  exe 'curl -L https://nixos.org/nix/install | sh'
+  if has nix; then
+    return
+  fi
+  # Official Nix installer, single-user (--no-daemon).
+  #   - Determinate's installer is multi-user only, so we stay on the official one to keep single-user.
+  #   - single-user uninstall is simple: rm -rf /nix + ~/.nix-* (no daemon/nixbld/systemd to clean up).
+  #   - NIX_INSTALLER_NO_MODIFY_PROFILE=1: don't touch shell profiles; PATH is wired in apps/zsh/.zsh/90.additional.zsh
+  #   - --proto/--tlsv1.2/-sSf: harden the download over the previous `curl -L | sh`
+  exe export NIX_INSTALLER_NO_MODIFY_PROFILE=1
+  exe 'curl --proto "=https" --tlsv1.2 -sSf -L https://nixos.org/nix/install | sh -s -- --no-daemon'
 }
