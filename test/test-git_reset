@@ -64,6 +64,15 @@ done <<<"$rows"
 exit 1
 FAKE
   chmod +x "${fakebin}/fzf"
+  # 偽 trash: -c の掃除を検証するため、引数のファイルを FAKE_TRASH_DIR へ退避する
+  # (実 trash 非依存)。
+  cat >"${fakebin}/trash" <<'FAKETRASH'
+#!/usr/bin/env bash
+dest="${FAKE_TRASH_DIR:-/tmp/faketrash}"
+mkdir -p "$dest"
+for f in "$@"; do mv "$f" "$dest/" 2>/dev/null || true; done
+FAKETRASH
+  chmod +x "${fakebin}/trash"
 }
 
 # git_reset を repo 内・XDG 差し替え・偽 fzf を PATH 先頭にしてサブプロセス実行する。
@@ -74,19 +83,20 @@ head_hash() { git -C "${repo}" rev-parse HEAD; }
 rev() { git -C "${repo}" rev-parse "$1"; } # 任意 revision の hash
 commit() { echo "$1" >"${repo}/f" && git -C "${repo}" add -A && git -C "${repo}" commit -qm "commit $1"; }
 
+# stack は repo_dir/branch の nested-dir に置かれるので leaf file を find で拾う。
+# 単一 branch のテストでは 1 ファイルなので先頭を返せば十分。
 marker_file() {
-  local m
-  for m in "${xdg}/git_reset"/*; do
-    [[ -e ${m} ]] && {
-      echo "${m}"
-      return
-    }
-  done
-  echo ""
+  find "${xdg}/git_reset" -type f 2>/dev/null | head -n1
 }
 stack_size() {
   local m
   m=$(marker_file)
+  [[ -n ${m} && -s ${m} ]] && grep -c '.' "${m}" || echo 0
+}
+# 指定 branch ($1, '/' 可) の stack 行数。ファイル無し/空なら 0。
+stack_size_for() {
+  local m
+  m=$(find "${xdg}/git_reset" -type f -path "*/$1" 2>/dev/null | head -n1)
   [[ -n ${m} && -s ${m} ]] && grep -c '.' "${m}" || echo 0
 }
 stack_top() {
@@ -277,6 +287,48 @@ test_fzf_select_head_is_noop() {
   check 'fzf HEAD 選択: stack 不変(1件)' '1' "$(stack_size)"
 }
 
+# prune-on-gre: gre 後に分岐コミットを作り再度 gre すると、死んだ redo (旧 top) は
+# 破棄され、stack は積み上がらず分岐後 HEAD のみになる (肥大化防止)。
+test_prune_on_divergent_gre() {
+  new_repo
+  gr >/dev/null 2>&1 # push D -> HEAD=C, stack=[D]
+  commit E           # HEAD=E (D の兄弟=分岐), stack 上の D は dead
+  local he
+  he=$(head_hash)    # E
+  gr >/dev/null 2>&1 # prune で D 破棄 -> push E -> HEAD=C, stack=[E]
+  check 'prune: 分岐後 gre で stack 積み上がらず1件' '1' "$(stack_size)"
+  check 'prune: top = 分岐後HEAD(E) のみ' "${he}" "$(stack_top)"
+}
+
+# branch-keyed: branch ごとに stack ファイルが分かれ、switch しても混ざらない。
+# feature/x で '/' 入り branch 名が nested-dir になることも確認する。
+test_branch_keyed_separate_stacks() {
+  new_repo
+  local defbr
+  defbr=$(git -C "${repo}" symbolic-ref --short HEAD)
+  gr >/dev/null 2>&1 # push on defbr; stack(defbr)=1, HEAD=C
+  check 'branch-key: defbr stack 1件' '1' "$(stack_size_for "${defbr}")"
+  git -C "${repo}" checkout -q -b feature/x # at C
+  check 'branch-key: 新branchは空stack' '0' "$(stack_size_for feature/x)"
+  gr >/dev/null 2>&1 # push on feature/x
+  check 'branch-key: feature/x stack 1件' '1' "$(stack_size_for feature/x)"
+  check 'branch-key: defbr stack 保持1件 (混ざらない)' '1' "$(stack_size_for "${defbr}")"
+}
+
+# -c: 死んだ branch の stack を fzf --multi で選んで trash。現存 branch は候補外。
+test_clean_removes_dead_branch_stack() {
+  new_repo
+  local defbr
+  defbr=$(git -C "${repo}" symbolic-ref --short HEAD)
+  git -C "${repo}" checkout -q -b feature/x
+  gr >/dev/null 2>&1                       # feature/x に stack 作成 (gre の mixed reset で working tree が dirty)
+  git -C "${repo}" checkout -qf "${defbr}" # -f: dirty tree を捨てて defbr へ戻る
+  git -C "${repo}" branch -qD feature/x    # feature/x を消す -> stack 孤児化
+  check 'clean: 掃除前 feature/x stack 1件' '1' "$(stack_size_for feature/x)"
+  FAKE_TRASH_DIR="${tmproot}/trashed" FAKE_FZF_PICK='feature/x' gr -c >/dev/null 2>&1
+  check 'clean: feature/x stack 掃除された(0件)' '0' "$(stack_size_for feature/x)"
+}
+
 main() {
   set -uo pipefail
   tmproot=$(mktemp -d)
@@ -298,6 +350,9 @@ main() {
   test_flag_order_independent
   test_root_commit_push_guarded
   test_invalid_entry_fails_safe
+  test_prune_on_divergent_gre
+  test_branch_keyed_separate_stacks
+  test_clean_removes_dead_branch_stack
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

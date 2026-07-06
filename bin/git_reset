@@ -96,11 +96,55 @@ cmd_push() {
   if ! git rev-parse --verify --quiet 'HEAD^' >/dev/null 2>&1; then
     die "==> Cannot reset: HEAD has no parent (root commit)."
   fi
+  mkdir -p "$(dirname "$marker")"
+  # prune: 現 HEAD が stack top の祖先でなければ、分岐して新規コミットした (or top が
+  # GC 済) => 旧 redo チェーンは全部 dead。push 前に捨てて stack の肥大化を防ぐ。
+  if [[ -s $marker ]]; then
+    local top
+    top=$(tail -n1 "$marker")
+    if ! git merge-base --is-ancestor HEAD "$top" 2>/dev/null; then
+      : >"$marker"
+      warn "==> Stale redo stack cleared (HEAD diverged from top)."
+    fi
+  fi
   git rev-parse HEAD >>"$marker"
   git reset HEAD^
   warn "==> Executed: git reset HEAD^"
   warn "    Pushed: $(tail -n1 "$marker")"
   warn "    Stack depth: $(stack_depth)"
+}
+# 死んだ branch の stack marker を fzf で選んで trash する (-c)。marker の相対パス =
+# branch 名。現存 branch (refs/heads) に無いものだけ候補に出す (現ブランチの生きた
+# stack は掃除対象外)。prune-on-gre で内容は無害化済みだが、ファイルの片付け用。
+cmd_clean() {
+  hass fzf trash
+  [[ ! -d $repo_stack_dir ]] && {
+    info "==> No stacks for this repo. Nothing to clean."
+    return 0
+  }
+  local rows='' f rel cnt sel
+  while IFS= read -r f; do
+    rel=${f#"$repo_stack_dir"/}
+    git show-ref --verify --quiet "refs/heads/$rel" && continue # 生きてる branch は残す
+    cnt=$(grep -c '.' "$f" 2>/dev/null || echo 0)
+    rows+="$rel"$'\t'"$f"$'\t'"$cnt entries  $rel"$'\n'
+  done < <(find "$repo_stack_dir" -type f)
+  [[ -z $rows ]] && {
+    info "==> No orphan stacks to clean."
+    return 0
+  }
+  # SC2016: preview は fzf 側で {2}/$h を展開させるため単一引用で正しい。
+  # shellcheck disable=SC2016
+  sel=$(printf '%s' "$rows" | fzf --ansi --reverse --height=80% --multi \
+    --delimiter=$'\t' --with-nth=3.. \
+    --prompt='trash orphan stack> ' \
+    --header='dead-branch stacks -- Tab: mark  Enter: trash selected' \
+    --preview 'while read -r h; do git log -1 --format="%h  %cr  %s" "$h" 2>/dev/null || echo "$h  (missing)"; done <{2}') || return 0
+  [[ -z $sel ]] && return 0
+  while IFS=$'\t' read -r rel f _; do
+    [[ -z $f ]] && continue
+    trash "$f" && info "==> Trashed orphan stack: $rel"
+  done <<<"$sel"
 }
 main() {
   set -eo pipefail
@@ -108,16 +152,21 @@ main() {
   [[ -z $git_root ]] && die "==> Not git repository"
   repo_dir_name=${git_root/\//}
   repo_dir_name=${repo_dir_name//\//-}
+  # stack は branch 単位で分ける。detached HEAD は短縮 hash をキーにする。branch 名の
+  # '/' (feature/x) はそのままサブディレクトリにする (sanitize せず bijective)。
+  branch=$(git symbolic-ref -q --short HEAD || echo "DETACHED-$(git rev-parse --short HEAD)")
   config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/$command_name"
-  [[ ! -d $config_dir ]] && mkdir -p "$config_dir"
+  # repo_stack_dir: この repo の全 branch stack を束ねる dir (-c の掃除対象範囲)。
+  repo_stack_dir="$config_dir/$repo_dir_name"
   # stack: 1 行 1 ハッシュ。末尾が top (gre=append/push, grr=fzf で選んで redo/pop)。
-  marker="$config_dir/$repo_dir_name"
+  marker="$repo_stack_dir/$branch"
 
   # フラグはどの位置でもよい。非フラグ引数は restore 先 hash (任意・無指定で fzf)。
   local mode=push force=0 target='' arg
   for arg in "$@"; do
     case "$arg" in
       -r) mode=restore ;;
+      -c) mode=clean ;;
       -v) mode=viewmarker ;;
       -f) force=1 ;;
       -*) die "==> Unknown option: $arg" ;;
@@ -127,6 +176,7 @@ main() {
 
   case "$mode" in
     restore) cmd_restore "$force" "$target" ;;
+    clean) cmd_clean ;;
     viewmarker) echo "$marker" | v ;;
     push)
       [[ -n $target ]] && die "==> Unexpected argument: $target"
