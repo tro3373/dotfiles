@@ -11,8 +11,12 @@
 # projects in particular), and `jira issue create` decides the sub-task parent
 # from the per-project issue type cache, not from the server.
 #
-# Open (default): pick an issue with fzf, then view it as markdown in nvim.
+# Open (default): pick an issue with fzf, convert it to task-list markdown,
+# then view it in nvim.
 #   jira-issue
+# To tasks: same pick + convert, but append the result to .tasks.md via
+# `tasks -a` instead of opening nvim.
+#   jira-issue -t
 # Create (stdin):
 #   cat task.md | jira-issue add
 #     - [ ] タスク名
@@ -154,10 +158,59 @@ list_issues_plain() {
     --plain --no-headers --columns KEY,SUMMARY,STATUS,ASSIGNEE
 }
 
+issue_to_tasks() {
+  # Convert `jira issue view --plain` output into markdown task-list format:
+  #   # Title                 -> - [ ] Title
+  #   • item                  -> - item   (4-space nesting -> 2-space nesting)
+  #   other body lines        -> - <line> (bulletized, one level under title)
+  # Everything up to the "Description" separator is dropped (the title is
+  # captured beforehand). Blank lines, empty bullets and ANSI escapes are
+  # stripped, and the whole body is nested one level under the title.
+  local title="" desc_seen=0 line content indent lead margin=-1
+  local title_re='^[[:space:]]*# +(.*)$'
+  local desc_re='^[[:space:]]*-+.*Description.*-+[[:space:]]*$'
+  local bullet_re='^( *)• +(.*)$'
+  local empty_bullet_re='^[[:space:]]*•[[:space:]]*$'
+  local -a body=()
+  # Pass 1: strip ANSI up front, capture the title, and collect the body lines
+  # after the Description separator (tracking their smallest leading margin).
+  while IFS='' read -r line || [[ -n ${line} ]]; do
+    line="${line%"${line##*[![:space:]]}"}" # trim trailing whitespace
+    if [[ ${desc_seen} -eq 0 ]]; then
+      [[ ${line} =~ ${title_re} ]] && title="${BASH_REMATCH[1]}"
+      [[ ${line} =~ ${desc_re} ]] && desc_seen=1
+      continue
+    fi
+    [[ -z ${line} ]] && continue                    # blank line
+    [[ ${line} =~ ${empty_bullet_re} ]] && continue # empty bullet
+    lead=${line%%[![:space:]]*}                     # leading whitespace run
+    ((margin < 0 || ${#lead} < margin)) && margin=${#lead}
+    body+=("${line}")
+  done < <(sed -E $'s/\x1b\\[[0-9;?]*[a-zA-Z]//g')
+  ((margin < 0)) && margin=0
+
+  [[ -n ${title} ]] && printf -- '- [ ] %s\n' "${title}"
+  # Pass 2: dedent jira's common left margin so bullet nesting is measured from
+  # column 0, then bulletize each line and nest it one level under the title.
+  for line in ${body[@]+"${body[@]}"}; do
+    line=${line:margin}
+    if [[ ${line} =~ ${bullet_re} ]]; then
+      indent=${#BASH_REMATCH[1]}
+      content=${BASH_REMATCH[2]}
+      printf '  %*s- %s\n' $((indent / 2)) '' "${content}" # halve indent, nest
+      continue
+    fi
+    content=${line#"${line%%[![:space:]]*}"} # strip leading whitespace
+    printf '  - %s\n' "${content}"           # bulletize non-bullet line
+  done
+}
+
 issue_select_open() {
-  # Pick an issue with fzf (KEY is the first tab field), then render it as
-  # markdown in nvim. JIRA_CONFIG_FILE is exported, so the preview/view
+  # Pick an issue with fzf (KEY is the first tab field), convert it to task
+  # list markdown, then open it in nvim (default) or append it to .tasks.md
+  # (to-tasks mode). JIRA_CONFIG_FILE is exported, so the preview/view
   # subprocesses inherit the per-project config.
+  local mode="${1:-open}"
   local line key
   line=$(
     list_issues_plain |
@@ -168,7 +221,10 @@ issue_select_open() {
   ) || return 0
   [[ -z ${line} ]] && return 0
   key=${line%%$'\t'*}
-  jira issue view "${key}" --plain | nvim -c 'setf markdown' -
+  # Same pick + convert; only the sink differs (append vs open in nvim).
+  local -a sink=(nvim -c 'setf markdown' -)
+  [[ ${mode} == to-tasks ]] && sink=(tasks -a)
+  jira issue view "${key}" --plain | issue_to_tasks | "${sink[@]}"
 }
 
 main() {
@@ -181,6 +237,10 @@ main() {
     [[ -z ${assignee} ]] && assignee='$$'
     validate_stdin
     process_tasks
+    return
+  fi
+  if [[ ${1:-} == "-t" || ${1:-} == "--to-tasks" ]]; then
+    issue_select_open to-tasks
     return
   fi
   issue_select_open
