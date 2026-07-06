@@ -620,15 +620,17 @@ test_clean_splits_unsplit_completed_task() {
   new_env t13 myrepo
   write_config "${base}"
   run_tasks --summary >/dev/null 2>&1 || true
-  # index- 由来の関連ファイルは移動。本文が言及するだけの非 stem 同名ファイルは残す。
-  printf '%s\n' 'note body content' >"${base}/myrepo/index-note-abc.html"
-  printf '%s\n' 'unrelated' >"${base}/myrepo/README.md"
+  # 本文が言及し src_dir に実在する関連ファイル (実命名規約 {TS}-...) は split 先へ移動。
+  # 本文が言及しない src_dir の loose file は移動しない (dir 全掃きしない保証)。
+  printf '%s\n' 'notes' >"${base}/myrepo/20260624-194043-big-task-implementation-notes.html"
+  printf '%s\n' 'review' >"${base}/myrepo/20260624-194043-review-result.md"
+  printf '%s\n' 'sibling' >"${base}/myrepo/other-task-note.md"
   cat >>"${base}/myrepo/index.md" <<'EOF'
 - [x] Completed big task
   - [20260620_101010] 🎭 要件
+    - 📓 実装ノート: 20260624-194043-big-task-implementation-notes.html
+    - 📋 レビュー結果: 20260624-194043-review-result.md
   - [20260624_194043] 🎉 完了
-    - 📓 実装ノート: index-note-abc.html
-    - 参考: README.md
     - did the thing
 EOF
 
@@ -645,12 +647,14 @@ EOF
     '1' "$([[ -f ${idx} ]] && grep -qE '^title: ✅️ ' "${idx}" && echo 1 || echo 0)"
   check 'clean-split: body 保持' \
     '1' "$([[ -f ${idx} ]] && grep -qF 'did the thing' "${idx}" && echo 1 || echo 0)"
-  check 'clean-split: index 由来の関連ファイルを split 先へ移動' \
-    '1' "$([[ -f ${dir}/index-note-abc.html ]] && echo 1 || echo 0)"
-  check 'clean-split: 関連ファイルを元 dir から除去' \
-    '0' "$([[ -f ${base}/myrepo/index-note-abc.html ]] && echo 1 || echo 0)"
-  check 'clean-split: 本文言及のみの非 stem 同名ファイルは移動しない' \
-    '1' "$([[ -f ${base}/myrepo/README.md ]] && echo 1 || echo 0)"
+  check 'clean-split: 実装ノート HTML を split 先へ移動' \
+    '1' "$([[ -f ${dir}/20260624-194043-big-task-implementation-notes.html ]] && echo 1 || echo 0)"
+  check 'clean-split: レビュー結果 md を split 先へ移動' \
+    '1' "$([[ -f ${dir}/20260624-194043-review-result.md ]] && echo 1 || echo 0)"
+  check 'clean-split: 移動した関連ファイルを元 dir から除去' \
+    '0' "$([[ -f ${base}/myrepo/20260624-194043-big-task-implementation-notes.html ]] && echo 1 || echo 0)"
+  check 'clean-split: 本文が言及しない loose file は移動しない' \
+    '1' "$([[ -f ${base}/myrepo/other-task-note.md ]] && echo 1 || echo 0)"
 
   # 内容日付 (ブロック内最新 ts = 2026-06-24) の log へ転記する (実行日でなく)
   local log

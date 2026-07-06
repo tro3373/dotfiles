@@ -504,16 +504,16 @@ extract_latest_ts() {
     tr -d '[]' | sort | tail -1 | tr '_' '-' || :
 }
 
-# ブロック内に書かれたファイル名のうち、index ファイル由来 (stem 接頭辞) で
-# src_dir に実在するものだけを dst_dir へ移動する。抽出は決定的トークンマッチ
-# (LLM 非使用)。本文が偶然言及した無関係な同名ファイルの巻き込みを防ぐ。
+# ブロックに書かれたファイル名のうち src_dir に実在するものだけを dst_dir へ移動する。
+# 抽出は決定的トークンマッチ (LLM 非使用)。src_dir (mo 配下の実 dir) は task 専用の
+# metadata dir なので loose file は task 成果物のみ。repo 内の言及ファイル (README 等) は
+# src_dir に無いので実在チェックで除外される。成果物の命名規約 ({TS}-...) には依存しない。
+# index.md 自体は親リストなので常に除外する (実在するため巻き込み防止: load-bearing)。
 move_related_files() {
-  local block_file="$1" src_dir="$2" dst_dir="$3" f index_name stem
+  local block_file="$1" src_dir="$2" dst_dir="$3" f index_name
   index_name=$(basename "$target_file")
-  stem=${index_name%.*}
   while IFS= read -r f; do
     [[ $f == "$index_name" ]] && continue
-    [[ $f == "$stem"* ]] || continue
     [[ -f "$src_dir/$f" ]] || continue
     mv "$src_dir/$f" "$dst_dir/"
     info "==> Moved related file: $f"
