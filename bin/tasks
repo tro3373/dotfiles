@@ -556,12 +556,21 @@ clean_tasks() {
   info "==> Recorded completed task references to date-based logs under $store_root"
 }
 
-# 指定行の完了タスクを clean する。未 split 完了ブロックなら先に split し、
-# 完了参照行を log へ転記する。参照行は削除せず残す (normal/worktree 共通)。
+# 指定行の完了タスクを clean する。複数行の未 split 完了ブロックは先に split し、
+# 完了参照行を log へ転記する (参照行は残す / normal/worktree 共通)。
+# 1 行のみ (本文なし) のタスクは split せず生の行を log へ転記し、リストから削除する。
 clean_one_task() {
   local line_no="$1" line ref_line log_path
   line=$(sed -n "${line_no}p" "$target_file")
   if ! printf '%s\n' "$line" | grep -qE "$grep_key_reference_done"; then
+    set_block_range "$line_no"
+    if [[ $first_line -eq $end_line ]]; then
+      log_path=$(reference_log_path "$line")
+      append_reference_to_log "$log_path" "$line"
+      sed -i "${first_line},${end_line}d" "$target_file"
+      info "==> Recorded to $log_path (single-line, removed from list)"
+      return
+    fi
     split_completed_one "$line_no"
   fi
   ref_line=$(sed -n "${line_no}p" "$target_file")
