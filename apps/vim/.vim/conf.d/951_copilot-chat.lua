@@ -32,7 +32,7 @@ _G.copilot_chat_setup = function()
     -- system_prompt = "COPILOT_INSTRUCTIONS", -- System prompt to use (can be specified manually in prompt via /).
     system_prompt = [[
       あなたは優秀なプログラマーで、Github上の広範な情報やベストプラクティスにも精通しています。
-      質問には日本語で、分かりやすく、具体的に答えてください。
+      応答は常に日本語で、分かりやすく、具体的に答えてください。
     ]],
 
     -- model = "gpt-4.1", -- Default model to use, see ':CopilotChatModels' for available models (can be specified manually in prompt via $).
