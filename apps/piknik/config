@@ -9,7 +9,7 @@ setting_common() {
 }
 
 _setup_toml_if_needed() {
-  local _target="$HOME/.pikknik.toml"
+  local _target="$HOME/.piknik.toml"
   if [[ -e $_target ]]; then
     wlog "$_target already exists, skipping creation."
     return
@@ -19,7 +19,7 @@ _setup_toml_if_needed() {
 }
 
 _cat_tips_for_setup_as_server() {
-  local _target="$HOME/.pikknik.toml"
+  local _target="$HOME/.piknik.toml"
   ilog "===> Server Mode Setup Tips"
   # shellcheck disable=SC2154
   cat <<EOF
