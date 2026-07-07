@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+# UniClipboard: privacy-first cross-device clipboard sync (GUI + `uniclip` CLI)
+# https://github.com/UniClipboard/UniClipboard
+
+# Consider the app set up only when both the GUI and the `uniclip` CLI exist,
+# so a GUI-only machine still reaches the CLI install (default is_installed
+# would treat the GUI alone as "installed" and skip the whole app).
+is_installed() {
+  if is_mac; then
+    has_cask uniclipboard && has uniclip
+    return
+  fi
+  has uniclipboard && has uniclip
+}
+
+install_common() { not_supported; }
+install_wsl() { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+
+install_arch() {
+  def_install uniclipboard-bin # GUI (installs `uniclipboard` + `uniclipd`)
+  _install_cli_arch            # `uniclip` CLI (not bundled in the desktop package)
+}
+
+install_mac() {
+  # GUI lives in homebrew-cask; the `uniclip` CLI formula lives only in the
+  # UniClipboard/tap, so it must be tap-qualified (a bare `uniclipboard`
+  # resolves to the same-named GUI cask instead of the CLI formula).
+  has_cask uniclipboard || exe brew install --cask uniclipboard
+  has uniclip || exe brew install UniClipboard/tap/uniclipboard
+}
+
+# The `uniclip` CLI ships as a standalone linux-musl tarball in Releases,
+# separate from the .deb/AUR desktop package. Fetch the latest and drop the
+# binary into /usr/local/bin.
+_install_cli_arch() {
+  has uniclip && return
+  local _tag _arch _url
+  _tag=$(github_latest_release_tag UniClipboard/UniClipboard 2>/dev/null) || _tag=""
+  if [[ -z $_tag ]]; then
+    log "==> skip uniclip CLI: cannot resolve latest release tag"
+    return
+  fi
+  _arch=$(uname -m) # x86_64 / aarch64
+  _url="https://github.com/UniClipboard/UniClipboard/releases/download/${_tag}/uniclipboard-cli-${_tag#v}-${_arch}-unknown-linux-musl.tar.gz"
+  cd_work
+  dl "$_url" "uniclip-cli-${_tag}.tar.gz"
+  exe "tar xzf uniclip-cli-${_tag}.tar.gz uniclip"
+  exe sudo install -m 755 uniclip /usr/local/bin/uniclip
+}
+
+setting_common() { no_settings; }
