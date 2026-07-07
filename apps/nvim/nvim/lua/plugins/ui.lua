@@ -182,14 +182,14 @@ return {
   -- 集中執筆モード
   { "junegunn/goyo.vim", cmd = "Goyo" },
 
-  -- カーソル移動アニメ (smear-cursor.nvim, neovim 専用)
-  {
-    "sphamba/smear-cursor.nvim",
-    event = "VeryLazy",
-    config = function()
-      _G.src("205_smear-cursor.vim")
-    end,
-  },
+  -- -- カーソル移動アニメ (smear-cursor.nvim, neovim 専用)
+  -- {
+  --   "sphamba/smear-cursor.nvim",
+  --   event = "VeryLazy",
+  --   config = function()
+  --     _G.src("205_smear-cursor.vim")
+  --   end,
+  -- },
 
   -- LSP 進捗等の通知 UI
   { "j-hui/fidget.nvim", event = "LspAttach", opts = {} },
