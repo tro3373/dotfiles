@@ -1,0 +1,67 @@
+# ghostty config
+# Docs: https://ghostty.org/docs/config
+# 一覧は `ghostty +show-config --default --docs` / テーマは `ghostty +list-themes`
+# apps/wezterm/wezterm/wezterm.lua の設定を移植したもの
+
+# --- Color Scheme ---------------------------------------------------------
+# wezterm: color_scheme = "Railscasts (base16)"
+# theme = Zenbones Dark
+# theme = Zenwritten Dark
+# theme = Mellifluous
+# theme = Gruber Darker
+# theme = N0Tch2K
+# theme = Melange Dark
+# theme = Chalk
+# theme = traffic
+# theme = One Dark Two
+# theme = Iceberg Dark
+# theme = Tomorrow Night
+# theme = Vague
+# theme = Cursor Dark
+# theme = Ghostty Default Style Dark
+# theme = Smyck
+# theme = Soft Server
+# theme = Kanagawa Dragon
+# theme = Teerb
+# theme = Material Darker
+# theme = Hybrid
+# theme = Nord Wave
+# themes = Apprentice
+theme = Railscasts
+
+# --- Font -----------------------------------------------------------------
+# wezterm: font = Osaka-Mono (mac系フォント。archでは未導入なら既定にフォールバック)
+font-family = Osaka-Mono
+# wezterm: font_size = mac ? 18 : 15 (ghosttyはOS分岐不可なので15固定。macは18推奨)
+font-size = 15
+
+# --- Window ---------------------------------------------------------------
+# wezterm: window_background_opacity = 1
+background-opacity = 1
+# wezterm: initial_cols = 80 / initial_rows = 20 (単位はセル)
+window-width = 80
+window-height = 20
+# wezterm: hide_tab_bar_if_only_one_tab = true (auto = 2タブ以上のときだけ表示。既定値)
+window-show-tab-bar = auto
+
+# --- Cursor Animation -----------------------------------------------------
+# nvim の smear-cursor.nvim と同系統のカーソル残像を Ghostty 全体に薄くかける。
+# nvim 内では両方の効果が重なるので、強すぎる場合はこの2行をコメントアウトする。
+custom-shader = shaders/cursor_smear.glsl
+custom-shader-animation = true
+
+# --- Keybindings ----------------------------------------------------------
+# wezterm: Alt v でクリップボードから貼り付け
+keybind = alt+v=paste_from_clipboard
+# wezterm: Ctrl+Shift f で全画面トグル
+keybind = ctrl+shift+f=toggle_fullscreen
+# wezterm: Shift Enter で改行送信 (Claudeコンソールでの改行用)
+keybind = shift+enter=text:\n
+
+# --- 移植しなかった項目 (ghosttyに相当optionが無い / 既定で足りる) --------
+# - tab_bar_at_bottom            : GTKのタブ位置optionは無し
+# - warn_about_missing_glyphs    : 相当なし
+# - audible_bell = SystemBeep    : 相当なし (既定挙動)
+# - 右クリック貼り付け           : mouse bindingは未対応
+# - ¥キー / CMD系 mac固有keybind : ghostty既定で概ね充足
+# - hyperlink_rules              : ghosttyは既定でURL検出 (カスタムrule非対応)

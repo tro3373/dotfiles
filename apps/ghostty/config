@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+install_common() { not_supported; }
+install_wsl() { not_supported; }
+install_arch() {
+  def_install ghostty
+}
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() {
+  exe brew install --cask ghostty
+}
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+
+setting_common() {
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/ghostty" "${HOME}/.config/ghostty"
+}
