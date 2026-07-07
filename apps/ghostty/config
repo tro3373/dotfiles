@@ -16,4 +16,8 @@ install_redhat() { not_supported; }
 setting_common() {
   # shellcheck disable=SC2154
   make_lnk_with_bkup "$app_dir/ghostty" "${HOME}/.config/ghostty"
+  _additional_config="$app_dir/ghostty/config-$DETECT_OS"
+  if [[ -e $_additional_config ]]; then
+    make_lnk_with_bkup "$_additional_config" "${HOME}/.config/ghostty/config-os"
+  fi
 }

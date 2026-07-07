@@ -1,0 +1,3 @@
+# ghostty config: mac 専用オーバーライド (base config を後勝ちで上書き)
+# setup が config-os → このファイルへ symlink する。
+font-size = 18

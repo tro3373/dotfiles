@@ -32,7 +32,8 @@ theme = Railscasts
 # --- Font -----------------------------------------------------------------
 # wezterm: font = Osaka-Mono (mac系フォント。archでは未導入なら既定にフォールバック)
 font-family = Osaka-Mono
-# wezterm: font_size = mac ? 18 : 15 (ghosttyはOS分岐不可なので15固定。macは18推奨)
+# wezterm: font_size = mac ? 18 : 15。base=18(mac既定)、arch(linux)は末尾の
+# config-file = ?config-os → config-linux で 15 に上書きする (setup がOS別にsymlink)
 font-size = 15
 
 # --- Window ---------------------------------------------------------------
@@ -79,3 +80,10 @@ keybind = shift+enter=text:\n
 # - 右クリック貼り付け           : mouse bindingは未対応
 # - ¥キー / CMD系 mac固有keybind : ghostty既定で概ね充足
 # - hyperlink_rules              : ghosttyは既定でURL検出 (カスタムrule非対応)
+
+# --- OS別オーバーライド ----------------------------------------------------
+# ghosttyは設定内でOS分岐不可なので、setup(apps/ghostty/config)がOSごとに
+# config-os を config-mac / config-linux へ symlink する。? 付きなので未リンク
+# 時は無視。base設定を後勝ちで上書きする (font-size等のOS差分をここに置く)。
+# config-os は git管理外 (.gitignore)。
+config-file = ?config-os
