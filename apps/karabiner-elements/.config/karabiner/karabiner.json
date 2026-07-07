@@ -11,7 +11,8 @@
                                     {
                                         "bundle_identifiers": [
                                             "^com\\.googlecode\\.iterm2",
-                                            "^com\\.github\\.wez\\.wezterm"
+                                            "^com\\.github\\.wez\\.wezterm",
+                                            "^com\\.mitchellh\\.ghostty"
                                         ],
                                         "type": "frontmost_application_unless"
                                     }
@@ -44,7 +45,8 @@
                                     {
                                         "bundle_identifiers": [
                                             "^com\\.googlecode\\.iterm2",
-                                            "^com\\.github\\.wez\\.wezterm"
+                                            "^com\\.github\\.wez\\.wezterm",
+                                            "^com\\.mitchellh\\.ghostty"
                                         ],
                                         "type": "frontmost_application_unless"
                                     }
@@ -344,7 +346,7 @@
                         ]
                     },
                     {
-                        "description": "left_shift を 2 回連打したら WezTerm を起動する",
+                        "description": "left_shift を 2 回連打したら Ghostty を起動する",
                         "manipulators": [
                             {
                                 "conditions": [
@@ -355,7 +357,7 @@
                                     }
                                 ],
                                 "from": { "key_code": "left_shift" },
-                                "to": [{ "shell_command": "open -a WezTerm.app" }],
+                                "to": [{ "shell_command": "open -a Ghostty.app" }],
                                 "type": "basic"
                             },
                             {
