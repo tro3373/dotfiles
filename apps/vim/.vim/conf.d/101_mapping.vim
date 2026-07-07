@@ -222,7 +222,8 @@ endfunction
 nmap <Leader>9 :call OpenSnippetFile()<CR>
 nmap <Leader>8 :Doc<CR>
 nmap <Leader>7 :tabe $HOME/.vim/plugged<CR>
-nmap <Leader>6 :tabe $HOME/.vim/backup<CR>
+" <Bar>: '|' の意味。Ex コマンド行でのコマンド区切りとして使われる
+nmap <Leader>6 :tabe $HOME/.vim/backup<Bar>tabe $HOME/.local/share/nvim/backup<CR>
 nmap <Leader>h :h <C-R><C-W><CR>
 
 " エンコーディングutf-8を指定して開き直す
