@@ -65,6 +65,12 @@ gtk-titlebar-hide-when-maximized = true
 custom-shader = shaders/cursor_smear.glsl
 custom-shader-animation = true
 
+# --- Keyboard / Input -----------------------------------------------------
+# macOS で Option を Alt/Meta (ESC プレフィックス) として送る。
+# これが無いと tmux の M-* バインド (M-s=tmuxs, M-f, M-n, M-h/l 等) が届かない。
+# 既定 (false) は Option を合成文字入力 (ß 等) に使う挙動。wezterm 相当にする為 true。
+macos-option-as-alt = true
+
 # --- Keybindings ----------------------------------------------------------
 # wezterm: Alt v でクリップボードから貼り付け
 keybind = alt+v=paste_from_clipboard
