@@ -44,6 +44,20 @@ window-height = 20
 # wezterm: hide_tab_bar_if_only_one_tab = true (auto = 2タブ以上のときだけ表示。既定値)
 window-show-tab-bar = auto
 
+# --- Titlebar (GTK/GNOME ヘッダーバー) -------------------------------------
+# GNOME 上部のヘッダーバー(ウィンドウ操作/メニュー/split ボタン)が太い場合の対処。
+# 用途別の選択肢。使いたい行の # を外す。1 は 2・3 と排他(1 でバー自体が消えるため
+# 2・3 は無効になる)。バー高さそのものの数値指定は GTK 側に無いため、細くするなら
+# 2(タブ統合)か、~/.config/gtk-4.0/gtk.css で headerbar の min-height を削る。
+# 1) バーを完全に消す。閉じる/メニュー/split ボタンも消える。
+#    ウィンドウ移動は Super+ドラッグ、タブ操作は keybind か tab overview で行う。
+# gtk-titlebar = false
+# 2) タイトル行とタブ行を 1 段に統合して縦を詰める。ボタン類は残る。
+#    タイトル部分でのドラッグ移動は不可になる。
+# gtk-titlebar-style = tabs
+# 3) 最大化時のみバーを隠す。非最大化時は通常表示。
+gtk-titlebar-hide-when-maximized = true
+
 # --- Cursor Animation -----------------------------------------------------
 # nvim の smear-cursor.nvim と同系統のカーソル残像を Ghostty 全体に薄くかける。
 # nvim 内では両方の効果が重なるので、強すぎる場合はこの2行をコメントアウトする。
