@@ -23,6 +23,7 @@ cat_prompt() {
   # prp -ne gen-git-commit-message-output-format.md$
   echo "Output only 'Commit Message' only."
   git_diff_ignored --minimal --cached | prp -ne gen-git-commit-message.md$
+  # git_diff_ignored --minimal --cached | prp -ne gen-git-commit-message-mitchellh.md$
 }
 
 cat_commit_msg() {
