@@ -83,9 +83,7 @@ return {
       local function tab_is_ro(tab)
         local buflist = vim.fn.tabpagebuflist(tab.tabnr)
         local buf = buflist[vim.fn.tabpagewinnr(tab.tabnr)]
-        return buf ~= nil
-          and vim.bo[buf].buftype == ""
-          and (vim.bo[buf].readonly or vim.bo[buf].modifiable == false)
+        return buf ~= nil and vim.bo[buf].buftype == "" and (vim.bo[buf].readonly or vim.bo[buf].modifiable == false)
       end
       -- tabline は fmt 内で hl を埋め込むため名前付き hl を用意 (colorscheme で消えるので再適用)
       -- RO タブは番号ごと赤背景にする (前景は白で可読性確保)
