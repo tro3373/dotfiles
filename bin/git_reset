@@ -110,8 +110,21 @@ cmd_push() {
   git rev-parse HEAD >>"$marker"
   git reset HEAD^
   warn "==> Executed: git reset HEAD^"
-  warn "    Pushed: $(tail -n1 "$marker")"
   warn "    Stack depth: $(stack_depth)"
+  warn "    Pushed (oldest first, newest last):"
+  local h top body bl
+  top=$(tail -n1 "$marker") # marker 末尾 = 今 reset したコミット
+  while IFS= read -r h; do
+    [[ -z $h ]] && continue
+    warn "      $(git log -1 --format='%h  %cr  %s' "$h" 2>/dev/null || echo "$h  (missing)")"
+  done <"$marker"
+  # 末尾コミット (今 reset した分) だけ body も含め全文を、直前の subject 行に続けて出す。
+  body=$(git log -1 --format='%b' "$top" 2>/dev/null)
+  if [[ -n $body ]]; then
+    while IFS= read -r bl; do
+      warn "        $bl"
+    done <<<"$body"
+  fi
 }
 # 死んだ branch の stack marker を fzf で選んで trash する (-c)。marker の相対パス =
 # branch 名。現存 branch (refs/heads) に無いものだけ候補に出す (現ブランチの生きた
