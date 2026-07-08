@@ -25,6 +25,8 @@ task_index_explicit=0
 # --all: Nth 選択可能コマンド (split/complete/spawn/clean) で全候補を選択する
 select_all=0
 parse_skip_refs=0
+# spawn 対象 agent (-sp=claude / -spc=codex)。tmux 起動コマンドの分岐に使う。
+spawn_agent=claude
 # config (load_tasks_config が設定): store_root=絶対, tasks_subdir=相対, log_fmt=相対フォーマット
 store_root=
 tasks_subdir=
@@ -48,6 +50,7 @@ Manage repository tasks.
       -a|--add            : Add task from stdin (prepends "- [ ] " if missing)
       -f|--file [path]    : Specify task file to operate on (default: repo .tasks.md)
       -sp|--spawn         : Spawn worktree + tmux + CC /task (split first if needed; fzf if no N)
+      -spc|--spawn-codex  : Spawn like --spawn but launch Codex (\$task) instead of Claude
       --all               : Select all candidates for split/complete/spawn/clean
       --summary           : Show title of tasks
     Task index [N]
@@ -97,6 +100,7 @@ initialize() {
         ;;
       ok | v | done | complete) mode="complete" ;;
       -sp | --spawn) mode="spawn" ;;
+      -spc | --spawn-codex) mode="spawn" && spawn_agent="codex" ;;
       --summary) mode="summary" ;;
       --preview-line)
         # fzf preview 専用 (内部用)。指定行のタスクブロック/参照先を表示する。
@@ -844,7 +848,7 @@ spawn_one() {
     ensure_worktree "$branch" "$index_md"
   fi
 
-  # tmux セッション作成 + CC で /task 起動 (worktree_dir は ensure_worktree がセット)
+  # tmux セッション作成 + agent (claude/codex) で task 起動 (worktree_dir は ensure_worktree がセット)
   # repo 名は worktree でも親リポを指すよう git-common-dir から逆引きする
   repo_name=$(basename "$(dirname "$(git -C "$git_root" rev-parse --path-format=absolute --git-common-dir)")")
   worktree_name=${branch//\//-}
@@ -858,13 +862,19 @@ spawn_one() {
 }
 
 spawn_tmux_session() {
-  local session="$1" dir="$2"
+  local session="$1" dir="$2" cmd
   if tmux has-session -t "$session" 2>/dev/null; then
     warn "==> tmux session already exists: $session"
     return 0
   fi
+  # claude は skill を '/task'、codex は '$task' で起動する (codex の skill 参照は '$' prefix)。
+  # codex はシングルクォートで囲み、対話シェルによる $task 展開を防ぐ (literal を codex へ渡す)。
+  case "$spawn_agent" in
+    codex) cmd="codex '\$task'" ;;
+    *) cmd='claude "/task"' ;;
+  esac
   tmux new-session -d -s "$session" -c "$dir"
-  tmux send-keys -t "$session" 'claude "/task"' Enter
+  tmux send-keys -t "$session" "$cmd" Enter
 }
 
 resolve_target() {
