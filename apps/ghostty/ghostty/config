@@ -12,7 +12,6 @@
 # theme = N0Tch2K
 # theme = Melange Dark
 # theme = Chalk
-# theme = traffic
 # theme = One Dark Two
 # theme = Iceberg Dark
 # theme = Tomorrow Night
@@ -26,7 +25,8 @@
 # theme = Material Darker
 # theme = Hybrid
 # theme = Nord Wave
-# themes = Apprentice
+# theme = Apprentice
+# theme = traffic
 theme = Railscasts
 
 # --- Font -----------------------------------------------------------------
@@ -78,6 +78,56 @@ keybind = alt+v=paste_from_clipboard
 keybind = ctrl+shift+f=toggle_fullscreen
 # wezterm: Shift Enter で改行送信 (Claudeコンソールでの改行用)
 keybind = shift+enter=text:\n
+
+# --- Cmd(super)系の誤爆を無効化 (wezterm相当に寄せる) ----------------------
+# ghostty は Cmd+英字を自前 GUI アクションに多数割り当てていて、tmux 主体の
+# 運用だと「端末で入力してるのに勝手に動く」誤爆になる。以下を潰す。
+# (右コメント = 潰した元の ghostty デフォルト動作)
+# 残すもの: Cmd+C/V(コピペ), Q(終了), N/T/W(窓/タブ), =/-/0(フォント),
+#           ,(設定), F/E/G(検索), Cmd+←/→(行頭/行末), split 管理系。
+# ghostty は行末インラインコメント非対応 (# 以降も値に含まれ unbind が黙って無効化される)。
+# コメントは必ず各キーの直上の行に置く。
+# scroll_to_selection : 選択位置へスクロール
+keybind = super+j=unbind
+# write_screen_file:paste : 画面をtempファイルに書き出しパスを貼付 (screen.txt 挿入の犯人)
+keybind = super+shift+j=unbind
+# write_screen_file:copy : 同上、パスをクリップボードへコピー
+keybind = super+ctrl+shift+j=unbind
+# write_screen_file:open : 同上、書き出したファイルを開く
+keybind = super+alt+shift+j=unbind
+# clear_screen : 画面クリア(スクロールバックごと)
+keybind = super+k=unbind
+# Not work
+# keybind = super+l=unbind
+# keybind = super+h=unbind
+# select_all : 画面全体を選択
+keybind = super+a=unbind
+# undo : 直前の操作(タブ/split 閉じ等)を元に戻す
+keybind = super+z=unbind
+# redo : undo のやり直し
+keybind = super+shift+z=unbind
+# undo : (Cmd+Shift+T も undo に割当てられている)
+keybind = super+shift+t=unbind
+# toggle_command_palette : コマンドパレット開閉
+keybind = super+shift+p=unbind
+# inspector:toggle : デバッグ用インスペクタ開閉
+keybind = super+alt+i=unbind
+# scroll_to_top : スクロールバック最上部へ
+keybind = super+home=unbind
+# scroll_to_bottom : 最下部(現在行)へ
+keybind = super+end=unbind
+# scroll_page_up : 1画面分上へスクロール
+keybind = super+page_up=unbind
+# scroll_page_down : 1画面分下へスクロール
+keybind = super+page_down=unbind
+# jump_to_prompt:-1 : 前のシェルプロンプトへジャンプ
+keybind = super+arrow_up=unbind
+# jump_to_prompt:1 : 次のシェルプロンプトへジャンプ
+keybind = super+arrow_down=unbind
+# jump_to_prompt:-1 : 前のプロンプトへ (Shift版)
+keybind = super+shift+arrow_up=unbind
+# jump_to_prompt:1 : 次のプロンプトへ (Shift版)
+keybind = super+shift+arrow_down=unbind
 
 # --- 移植しなかった項目 (ghosttyに相当optionが無い / 既定で足りる) --------
 # - tab_bar_at_bottom            : GTKのタブ位置optionは無し
