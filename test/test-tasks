@@ -427,6 +427,37 @@ EOF
     '1' "$(grep -q 'new-session' "${tmux_log}" 2>/dev/null && echo 1 || echo 0)"
 }
 
+# 7e. spawn (既定=claude): tmux へ `claude "/task"` を送信する (後方互換の固定)
+test_spawn_default_sends_claude_command() {
+  new_env t7e myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  printf '%s\n' '- [ ] Claude spawn task' >>"${base}/myrepo/index.md"
+
+  run_tasks --spawn 1 >/dev/null 2>&1 || true
+
+  check 'spawn-default: send-keys launches claude "/task"' \
+    '1' "$(grep -qF 'claude "/task"' "${tmux_log}" 2>/dev/null && echo 1 || echo 0)"
+}
+
+# 7f. spawn-codex: -spc は spawn として解釈され tmux へ `codex '$task'` を送信する。
+# シングルクォートで対話シェルの $task 展開を防ぎ codex に literal を渡す (skill 起動構文)。
+test_spawn_codex_sends_codex_command() {
+  new_env t7f myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  printf '%s\n' '- [ ] Codex spawn task' >>"${base}/myrepo/index.md"
+
+  run_tasks --spawn-codex 1 >/dev/null 2>&1 || true
+
+  check 'spawn-codex: tmux session created' \
+    '1' "$(grep -q 'new-session' "${tmux_log}" 2>/dev/null && echo 1 || echo 0)"
+  check "spawn-codex: send-keys launches codex '\$task'" \
+    '1' "$(grep -qF "codex '\$task'" "${tmux_log}" 2>/dev/null && echo 1 || echo 0)"
+  check 'spawn-codex: does not launch claude' \
+    '0' "$(grep -qF 'claude "/task"' "${tmux_log}" 2>/dev/null && echo 1 || echo 0)"
+}
+
 # 7d. split (Nth 未指定): fzf multi-select 全件選択を行番号降順で処理する。
 # fake fzf が全候補を返す = ctrl-l 全件選択相当。降順処理で body 取り違えが起きない。
 test_split_multi_select_all() {
@@ -1022,6 +1053,8 @@ main() {
   test_split_creates_worktree
   test_spawn_splits_unsplit_then_tmux
   test_spawn_skips_existing_worktree
+  test_spawn_default_sends_claude_command
+  test_spawn_codex_sends_codex_command
   test_split_multi_select_all
   test_summary_reads_front_matter_title
   test_complete_front_matter_task
