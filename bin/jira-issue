@@ -36,6 +36,32 @@
 #                       Defaults to "$$" (current logged-in user).
 #   JIRA_CONFIG_FILE  - Override the per-project config path.
 
+command_name=$(basename "$0") && readonly command_name
+has() { command -v "${1}" >&/dev/null; }
+hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test ! -t 0 && cat -) ${@:2}" | _ink "$1"; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+
+usage() {
+  cat <<EOF
+
+$command_name [-t|--to-tasks] [-a|--add]
+
+  Open (default): pick an issue with fzf, convert it to task-list markdown,
+  Options:
+    -t, --to-tasks  Append the selected issue to .tasks.md instead of opening it in nvim
+    -a, --add       Create sub-task(s) from stdin (task-list markdown)
+    -h, --help      Show this help message and exit
+
+EOF
+}
+
 require_env() {
   local name=$1
   if [[ -z ${!name:-} ]]; then
@@ -229,9 +255,13 @@ issue_select_open() {
 
 main() {
   set -euo pipefail
+  if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
+    usage
+    return 0
+  fi
   validate_env
   resolve_config
-  if [[ ${1:-} == "add" ]]; then
+  if [[ ${1:-} == "-a" || ${1:-} == "--add" ]]; then
     validate_add_env
     local assignee="${JIRA_ASSIGNEE:-}"
     [[ -z ${assignee} ]] && assignee='$$'
