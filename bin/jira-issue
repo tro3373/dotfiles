@@ -192,14 +192,25 @@ issue_to_tasks() {
   # Everything up to the "Description" separator is dropped (the title is
   # captured beforehand). Blank lines, empty bullets and ANSI escapes are
   # stripped, and the whole body is nested one level under the title.
-  local title="" desc_seen=0 line content indent lead margin=-1
+  # jira renders through glamour, which hard-wraps at 120 columns; wrapped
+  # continuation lines are joined back so a split URL stays a single URL
+  # instead of turning its tail into its own bullet (see unwrap notes below).
+  local title="" desc_seen=0 line content indent lead margin=-1 joinable=0 last
   local title_re='^[[:space:]]*# +(.*)$'
   local desc_re='^[[:space:]]*-+.*Description.*-+[[:space:]]*$'
   local bullet_re='^( *)• +(.*)$'
+  local any_bullet_re='^[[:space:]]*•'
   local empty_bullet_re='^[[:space:]]*•[[:space:]]*$'
+  # glamour wraps at " ,.;-+|": a breakpoint char stays at the end of the line
+  # it broke, while a wrap on whitespace swallows that one space. The two are
+  # indistinguishable afterwards, so prose that wraps right after ",.;-+|"
+  # loses that space ("a. B" -> "a.B"); intact URLs are worth that much.
+  local breakpoint_re='[,.;+|-]$'
   local -a body=()
   # Pass 1: strip ANSI up front, capture the title, and collect the body lines
   # after the Description separator (tracking their smallest leading margin).
+  # glamour folds source newlines inside a block into spaces, so any non-blank
+  # line that follows another one without starting a bullet is a wrap remnant.
   while IFS='' read -r line || [[ -n ${line} ]]; do
     line="${line%"${line##*[![:space:]]}"}" # trim trailing whitespace
     if [[ ${desc_seen} -eq 0 ]]; then
@@ -207,11 +218,25 @@ issue_to_tasks() {
       [[ ${line} =~ ${desc_re} ]] && desc_seen=1
       continue
     fi
-    [[ -z ${line} ]] && continue                    # blank line
-    [[ ${line} =~ ${empty_bullet_re} ]] && continue # empty bullet
-    lead=${line%%[![:space:]]*}                     # leading whitespace run
+    [[ -z ${line} ]] && { # blank line: ends the wrapped block
+      joinable=0
+      continue
+    }
+    [[ ${line} =~ ${empty_bullet_re} ]] && { # empty bullet: ditto
+      joinable=0
+      continue
+    }
+    if ((joinable)) && [[ ! ${line} =~ ${any_bullet_re} ]]; then
+      content=${line#"${line%%[![:space:]]*}"} # strip leading whitespace
+      last=${body[-1]}
+      [[ ${last} =~ ${breakpoint_re} ]] || last+=" " # restore swallowed space
+      body[-1]="${last}${content}"
+      continue
+    fi
+    lead=${line%%[![:space:]]*} # leading whitespace run
     ((margin < 0 || ${#lead} < margin)) && margin=${#lead}
     body+=("${line}")
+    joinable=1
   done < <(sed -E $'s/\x1b\\[[0-9;?]*[a-zA-Z]//g')
   ((margin < 0)) && margin=0
 
@@ -275,4 +300,6 @@ main() {
   fi
   issue_select_open
 }
-main "$@"
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
+fi

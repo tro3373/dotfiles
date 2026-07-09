@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+
+# bin/jira-issue の issue_to_tasks ユニットテスト (実 jira / fzf 不要)。
+#
+# jira は glamour 経由で描画するため `jira issue view --plain` の出力は 120 桁で
+# 折り返される。折り返しは " ,.;-+|" で起き、ブレークポイント文字は折れた行の
+# 末尾に残り、空白で折れた場合はその空白 1 個が消える。
+# 各テストはこの折り返し済み出力を模した fixture を stdin から流し込む。
+#
+#   test/test-jira-issue   # 全テスト実行
+
+set -uo pipefail
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+jira_issue_bin=$(cd "${script_dir}/../bin" && pwd)/jira-issue
+
+# main を起動させずに issue_to_tasks だけを取り込む (bin/jira-issue の source ガード)。
+# shellcheck source-path=SCRIPTDIR source=../bin/jira-issue
+source "${jira_issue_bin}"
+
+# desc / expected / actual を比較し、呼び出し元 main の pass・fail カウンタを更新する。
+check() {
+  local desc="$1" expected="$2" actual="$3"
+  if [[ ${expected} != "${actual}" ]]; then
+    fail=$((fail + 1))
+    printf 'FAIL - %s\n  expected: %q\n  actual:   %q\n' "${desc}" "${expected}" "${actual}"
+    return
+  fi
+  pass=$((pass + 1))
+  printf 'ok   - %s\n' "${desc}"
+}
+
+# jira の plain 出力ヘッダ (タイトル + Description 区切り) を body の前に足して変換する。
+convert() {
+  {
+    printf '\n  # T\n\n'
+    printf '  ------------------------ Description ------------------------\n\n'
+    cat
+  } | issue_to_tasks
+}
+
+# 1. ブレークポイント文字 (. と -) で折れた URL が 1 本に戻る
+test_url_split_on_breakpoints_is_rejoined() {
+  local actual
+  actual=$(
+    convert <<'EOF'
+  • figama
+      • 📍 https://www.figma.
+      com/design/nu5pgf7Ui8kIE5e3IQp0D1/LINEUI_251023?node-id=40001930-
+      1726&t=AETsDwd2KXWoG4er-0
+EOF
+  )
+  check 'ブレークポイント折り返しの URL が空白なしで連結される' \
+    "$(printf -- '- [ ] T\n  - figama\n    - 📍 https://www.figma.com/design/nu5pgf7Ui8kIE5e3IQp0D1/LINEUI_251023?node-id=40001930-1726&t=AETsDwd2KXWoG4er-0')" \
+    "${actual}"
+}
+
+# 2. 空白で折れた行は半角スペース 1 個を補って連結する (glamour が空白を 1 個落とす)
+test_space_wrap_is_rejoined_with_one_space() {
+  local actual
+  actual=$(
+    convert <<'EOF'
+  • alpha bravo
+  charlie delta
+EOF
+  )
+  check '空白折り返しはスペース 1 個で連結される' \
+    "$(printf -- '- [ ] T\n  - alpha bravo charlie delta')" "${actual}"
+}
+
+# 3. 空行はブロック境界。連結せず独立したバレットになる
+test_blank_line_breaks_the_join() {
+  local actual
+  actual=$(
+    convert <<'EOF'
+  • alpha
+
+  bravo
+EOF
+  )
+  check '空行を挟むと連結されない' \
+    "$(printf -- '- [ ] T\n  - alpha\n  - bravo')" "${actual}"
+}
+
+# 4. • 始まりの行は連結せず新しいバレットになる
+test_bullet_line_starts_a_new_item() {
+  local actual
+  actual=$(
+    convert <<'EOF'
+  • alpha
+  • bravo
+EOF
+  )
+  check '• 始まりの行は新しいバレットになる' \
+    "$(printf -- '- [ ] T\n  - alpha\n  - bravo')" "${actual}"
+}
+
+# 5. 空バレットは出力されず、後続行の連結先にもならない
+test_empty_bullet_is_dropped_and_breaks_the_join() {
+  local actual
+  actual=$(
+    convert <<'EOF'
+  • alpha
+  •
+  bravo
+EOF
+  )
+  check '空バレットは出力されず境界になる' \
+    "$(printf -- '- [ ] T\n  - alpha\n  - bravo')" "${actual}"
+}
+
+# 6. バレット以外の行 (フッタ等) の折り返しも連結される
+test_non_bullet_line_is_rejoined() {
+  local actual
+  actual=$(
+    convert <<'EOF'
+  View this issue on Jira: https://zemmov.atlassian.net/browse/LINE-
+  146
+EOF
+  )
+  check 'バレット以外の行も折り返しが連結される' \
+    "$(printf -- '- [ ] T\n  - View this issue on Jira: https://zemmov.atlassian.net/browse/LINE-146')" \
+    "${actual}"
+}
+
+# 7. Description より前の行は捨て、タイトルだけを task 行にする (既存挙動の保護)
+test_pre_description_lines_are_dropped() {
+  local actual
+  actual=$(printf '\n  ⭐ タスク  🚧 To Do\n\n  # T\n\n  ⏱️  Thu\n\n  --------- Description ---------\n\n  • alpha\n' | issue_to_tasks)
+  check 'Description 前のヘッダ行は捨てられる' \
+    "$(printf -- '- [ ] T\n  - alpha')" "${actual}"
+}
+
+# 8. 既知の制約: 句読点直後で折れた散文はスペースを 1 個失う。
+#    出力からは「空白折り返し」と「ブレークポイント折り返し」を区別できないため、
+#    URL を壊さないほうを優先した結果。挙動を固定して退行に気付けるようにする。
+test_prose_wrapped_after_punctuation_loses_the_space() {
+  local actual
+  actual=$(
+    convert <<'EOF'
+  • End of the first sentence.
+  Next sentence keeps going.
+EOF
+  )
+  check '句読点終端で折れた散文はスペースを失う (既知の制約)' \
+    "$(printf -- '- [ ] T\n  - End of the first sentence.Next sentence keeps going.')" "${actual}"
+}
+
+# 9. ANSI エスケープは除去される (既存挙動の保護)
+test_ansi_escapes_are_stripped() {
+  local actual
+  actual=$(printf '  • \x1b[1malpha\x1b[0m\n' | convert)
+  check 'ANSI エスケープが除去される' \
+    "$(printf -- '- [ ] T\n  - alpha')" "${actual}"
+}
+
+main() {
+  local pass=0 fail=0
+
+  test_url_split_on_breakpoints_is_rejoined
+  test_space_wrap_is_rejoined_with_one_space
+  test_blank_line_breaks_the_join
+  test_bullet_line_starts_a_new_item
+  test_empty_bullet_is_dropped_and_breaks_the_join
+  test_non_bullet_line_is_rejoined
+  test_pre_description_lines_are_dropped
+  test_prose_wrapped_after_punctuation_loses_the_space
+  test_ansi_escapes_are_stripped
+
+  printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
+  [[ ${fail} -eq 0 ]]
+}
+
+main "$@"
