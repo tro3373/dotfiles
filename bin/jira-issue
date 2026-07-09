@@ -11,12 +11,13 @@
 # projects in particular), and `jira issue create` decides the sub-task parent
 # from the per-project issue type cache, not from the server.
 #
-# Open (default): pick an issue with fzf, convert it to task-list markdown,
-# then view it in nvim.
+# Open (default): pick issue(s) with fzf, convert them to task-list markdown,
+# then view them in nvim, one tab per issue.
 #   jira-issue
 # To tasks: same pick + convert, but append the result to .tasks.md via
 # `tasks -a` instead of opening nvim.
 #   jira-issue -t
+# Both modes pick several issues with TAB; each issue becomes its own tab/task.
 # Create (stdin):
 #   cat task.md | jira-issue add
 #     - [ ] タスク名
@@ -53,9 +54,11 @@ usage() {
 
 $command_name [-t|--to-tasks] [-a|--add]
 
-  Open (default): pick an issue with fzf, convert it to task-list markdown,
+  Open (default): pick issue(s) with fzf, convert them to task-list markdown,
+  then view them in nvim, one tab per issue. TAB toggles a pick.
   Options:
-    -t, --to-tasks  Append the selected issue to .tasks.md instead of opening it in nvim
+    -t, --to-tasks  Append the selected issue(s) to .tasks.md instead of opening
+                    them in nvim
     -a, --add       Create sub-task(s) from stdin (task-list markdown)
     -h, --help      Show this help message and exit
 
@@ -256,26 +259,54 @@ issue_to_tasks() {
   done
 }
 
+append_to_tasks() {
+  # `tasks -a` turns one call into one task, so each issue is appended on its own.
+  local key
+  for key in "$@"; do
+    jira issue view "${key}" --plain | issue_to_tasks | tasks -a
+  done
+}
+
+open_in_nvim() {
+  # nvim fills a single buffer from stdin, so several issues need real files:
+  # one <KEY>.md per pick, opened as tabs. The files are scratch (the previous
+  # stdin buffer was unnamed too), so drop them once nvim exits.
+  local tmpdir key status=0
+  local -a files=()
+  tmpdir=$(mktemp -d)
+  for key in "$@"; do
+    jira issue view "${key}" --plain | issue_to_tasks >"${tmpdir}/${key}.md"
+    files+=("${tmpdir}/${key}.md")
+  done
+  # Hold nvim's status so `set -e` cannot skip the cleanup on :cq or a crash.
+  nvim -p "${files[@]}" || status=$?
+  rm -rf "${tmpdir}"
+  return "${status}"
+}
+
 issue_select_open() {
-  # Pick an issue with fzf (KEY is the first tab field), convert it to task
-  # list markdown, then open it in nvim (default) or append it to .tasks.md
-  # (to-tasks mode). JIRA_CONFIG_FILE is exported, so the preview/view
-  # subprocesses inherit the per-project config.
+  # Pick issue(s) with fzf (KEY is the first tab field, TAB toggles a pick),
+  # convert each to task list markdown, then open them in nvim (default) or
+  # append them to .tasks.md (to-tasks mode). JIRA_CONFIG_FILE is exported, so
+  # the preview/view subprocesses inherit the per-project config.
   local mode="${1:-open}"
-  local line key
-  line=$(
+  local lines
+  lines=$(
     list_issues_plain |
-      fzf --delimiter '\t' \
+      fzf --multi --delimiter '\t' \
         --preview 'jira issue view {1} --plain' \
         --preview-window 'right,60%,wrap' \
         --select-1 --exit-0
   ) || return 0
-  [[ -z ${line} ]] && return 0
-  key=${line%%$'\t'*}
+  [[ -z ${lines} ]] && return 0
+  local -a keys=()
+  mapfile -t keys < <(cut -f1 <<<"${lines}")
   # Same pick + convert; only the sink differs (append vs open in nvim).
-  local -a sink=(nvim -c 'setf markdown' -)
-  [[ ${mode} == to-tasks ]] && sink=(tasks -a)
-  jira issue view "${key}" --plain | issue_to_tasks | "${sink[@]}"
+  if [[ ${mode} == to-tasks ]]; then
+    append_to_tasks "${keys[@]}"
+    return 0
+  fi
+  open_in_nvim "${keys[@]}"
 }
 
 main() {
