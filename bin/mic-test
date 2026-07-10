@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+main() {
+  arecord -f cd -r 16000 -c 1 | aplay -f cd -r 16000 -c 1
+}
+main "$@"
