@@ -29,7 +29,7 @@ load_update_arg_apps() {
   # cargo order bug?
   # shellcheck disable=SC2034
   read -r -a args < <(
-    echo "$(default_apps) xclip snap fcitx5-mozc hackgen udev-gothic gnome-font-viewer code font wezterm kdeconnect qimgv"
+    echo "$(default_apps) xclip snap fcitx5-mozc hackgen udev-gothic gnome-font-viewer code font wezterm ghostty kdeconnect qimgv"
   )
 }
 
@@ -155,52 +155,27 @@ _setup_custom_shortcut() {
   # MEMO
   #   @see [command line - How to set custom keyboard shortcuts from terminal? - Ask Ubuntu](https://askubuntu.com/questions/597395/how-to-set-custom-keyboard-shortcuts-from-terminal)
 
-  # gsettings list-recursively org.gnome.settings-daemon.plugins.media-keys |grep custom-keybindings
+  # 登録済みのカスタムキーバインドは `gset key ls` で確認できる
+  # custom<N> の採番は gset が自動で行うため name だけ指定すればよい
 
-  # gsettings_add_custom_keybind 1 "Paste into Terminal" "<Primary><Shift>Insert" "xdotool key --clearmodifiers ctrl+shift+v"
-  # gsettings_add_custom_keybind 1 "Paste into Terminal" "<Shift>Insert" "xsel -bo" # Not work
-  # gsettings_add_custom_keybind 2 "Open Terminal" "<Primary><Alt>t" "gnome-terminal"
-  gsettings_add_custom_keybind 2 "Open Terminal" "<Primary><Alt>t" "wezterm"
-  gsettings_add_custom_keybind 3 "Open Downloads" "<Super>e" "nautilus Downloads"
-  # gsettings_add_custom_keybind 4 "Paste option v" "<Alt>v" "xsel -bo" # Not work?
+  # gset_ key add "Paste into Terminal" "<Primary><Shift>Insert" "xdotool key --clearmodifiers ctrl+shift+v"
+  # gset_ key add "Paste into Terminal" "<Shift>Insert" "xsel -bo" # Not work
+  # gset_ key add "Open Terminal" "<Primary><Alt>t" "gnome-terminal"
+  # gset_ key add "Open Terminal" "<Primary><Alt>t" "wezterm"
+  gset_ key add "Open Terminal" "<Primary><Alt>t" "ghostty"
+  gset_ key add "Open Downloads" "<Super>e" "nautilus Downloads"
+  # gset_ key add "Paste option v" "<Alt>v" "xsel -bo" # Not work?
 
   # List current keybindings
-  # gsettings list-recursively org.gnome.desktop.wm.keybindings
+  # gset ls org.gnome.desktop.wm.keybindings
   # [MYN - 2021/01/12 14:52 / gnome-shell で Alt-tab で group ベースの window switch (swith-application)をしない](https://myn.meganecco.org/1610430720.html)
-  gsettings_if_needed org.gnome.desktop.wm.keybindings maximize "\"['<Super>Up']\""             # Window最大化
-  gsettings_if_needed org.gnome.desktop.wm.keybindings switch-applications "\"['<Super>Tab']\"" # アプリ切り替え
-  gsettings_if_needed org.gnome.desktop.wm.keybindings switch-windows "\"['<Alt>Tab']\""        # ウィンドウ切り替え
+  gsettings_if_needed org.gnome.desktop.wm.keybindings maximize "['<Super>Up']"             # Window最大化
+  gsettings_if_needed org.gnome.desktop.wm.keybindings switch-applications "['<Super>Tab']" # アプリ切り替え
+  gsettings_if_needed org.gnome.desktop.wm.keybindings switch-windows "['<Alt>Tab']"        # ウィンドウ切り替え
   # gsettings_if_needed org.gnome.desktop.wm.keybindings paste "['<Alt>v']" # Not work?
 
   # Change screenshot keybind
-  gsettings_if_needed org.gnome.shell.keybindings show-screenshot-ui "\"['Print', '<Super><Shift>S']\""
-}
-
-gsettings_add_custom_keybind() {
-  id=$1
-  name=$2
-  binding=$3
-  cmd=$4
-  # gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/']"
-  # gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name 'suspend'
-  # gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding '<Super>s'
-  # gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command 'systemctl suspend'
-  scheme_1=org.gnome.settings-daemon.plugins.media-keys
-  key="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom$id/"
-  name_ck="custom-keybindings"
-  keys="$(get_keys)"
-  gsettings_if_needed "$scheme_1" "$name_ck" "\"[$keys]\""
-  scheme_2="$scheme_1.custom-keybinding:$key"
-  gsettings_if_needed "$scheme_2" name "\"$name\""
-  gsettings_if_needed "$scheme_2" binding "\"$binding\""
-  gsettings_if_needed "$scheme_2" command "\"$cmd\""
-}
-
-get_keys() {
-  {
-    echo "$key"
-    gsettings get "$scheme_1" "$name_ck" | tr "'" '\n' | grep org
-  } | sort -u | sed -e "s,^,',g" -e "s,$,',g" | tr '\n' ',' | sed -e 's/,$//g'
+  gsettings_if_needed org.gnome.shell.keybindings show-screenshot-ui "['Print', '<Super><Shift>S']"
 }
 
 _setup_x11_instead_wayland() {
@@ -211,7 +186,7 @@ _setup_x11_instead_wayland() {
 }
 
 _setup_improve_monitor_scale() {
-  gsettings_if_needed org.gnome.mutter experimental-features "\"['scale-monitor-framebuffer']\""
+  gsettings_if_needed org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
 }
 
 _install_apps() {

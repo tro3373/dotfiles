@@ -1,0 +1,237 @@
+#!/usr/bin/env bash
+
+# GNOME の gsettings を扱いやすくするラッパ。
+#   * set は現在値と同じならスキップする(冪等)
+#   * カスタムキーバインドは name を主キーとし custom<N> の採番を自動化する
+
+command_name=$(basename "$0") && readonly command_name
+readonly depends=(gsettings)
+media_keys_schema=org.gnome.settings-daemon.plugins.media-keys && readonly media_keys_schema
+custom_schema="$media_keys_schema.custom-keybinding" && readonly custom_schema
+custom_keys_name=custom-keybindings && readonly custom_keys_name
+custom_path_prefix=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom && readonly custom_path_prefix
+dry_run=0
+args=()
+
+usage() {
+  cat <<EOF
+
+Get/Set GNOME settings via gsettings.
+
+  Usage:
+      $command_name [option] <command> [args..]
+    Options
+      -h|--help    : Show this usage
+      -n|--dry-run : Print commands instead of applying them
+    Commands
+      get <schema[:path]> <key>          : Print the current value
+      set <schema[:path]> <key> <value>  : Set the value if it differs
+      ls  [schema]                       : List schemas, or keys and values of a schema
+      key ls                             : List custom keybindings
+      key add <name> <binding> <command> : Add or update a custom keybinding by name
+      key rm <name>                      : Remove a custom keybinding by name
+    Examples
+      $command_name ls | grep media-keys
+      $command_name ls org.gnome.desktop.wm.keybindings
+      $command_name get org.gnome.desktop.peripherals.keyboard delay
+      $command_name set org.gnome.desktop.wm.keybindings maximize "['<Super>Up']"
+      $command_name key add "Open Terminal" "<Primary><Alt>t" wezterm
+      $command_name key rm "Open Terminal"
+
+EOF
+}
+log() { echo "$*" >&2; }
+die() {
+  log "==> $*"
+  usage >&2
+  exit 1
+}
+has() { command -v "${1}" >&/dev/null; }
+is_dry() { [[ $dry_run -eq 1 ]]; }
+
+initialize() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -n | --dry-run) dry_run=1 && shift ;;
+      *) break ;;
+    esac
+  done
+  args=("$@")
+  check
+  set -euo pipefail
+}
+check() {
+  for dep in "${depends[@]}"; do
+    has "$dep" || die "No $dep command exist."
+  done
+  [[ ${#args[@]} -eq 0 ]] && die "Specify a command."
+  return 0
+}
+
+# gsettings get の出力と set したい値を比較可能な形へ揃える。
+#   uint32 20      => 20
+#   @as []         => []
+#   ['a', 'b']     => ['a','b']
+#   'Open Terminal' => Open Terminal
+normalize() {
+  local _v=$1
+  _v=$(sed -E 's/^(@[a-z]+|u?int(16|32|64)|byte|double) //' <<<"$_v")
+  # リスト表記は要素の区切り空白を畳む
+  [[ $_v == "["*"]" ]] && printf '%s' "${_v//, /,}" && return 0
+  # 文字列値は外側のシングルクォートを外す
+  [[ $_v == "'"*"'" ]] && printf '%s' "${_v:1:-1}" && return 0
+  printf '%s' "$_v"
+}
+
+set_if_needed() {
+  local _schema=$1 _key=$2 _val=$3
+  local _cur
+  _cur=$(gsettings get "$_schema" "$_key" 2>/dev/null) || _cur=
+  if [[ $(normalize "$_cur") == "$(normalize "$_val")" ]]; then
+    log "==> Skip(no change): $_schema $_key $_val"
+    return 0
+  fi
+  if is_dry; then
+    echo "gsettings set $_schema $_key $_val"
+    return 0
+  fi
+  log "==> Set: $_schema $_key $_val"
+  gsettings set "$_schema" "$_key" "$_val"
+}
+
+# custom-keybindings に登録済みの dconf path を 1 行ずつ出力する。
+custom_paths() {
+  gsettings get "$media_keys_schema" "$custom_keys_name" |
+    tr "'" '\n' | grep '^/org/' || true
+}
+
+custom_get() {
+  local _path=$1 _key=$2
+  normalize "$(gsettings get "$custom_schema:$_path" "$_key")"
+}
+
+# 標準入力の各行を GVariant の文字列配列表記へ変換する。空なら "@as []"
+to_gvariant_list() {
+  local _line _joined=
+  while read -r _line; do
+    [[ -z $_line ]] && continue
+    _joined="${_joined:+$_joined,}'$_line'"
+  done
+  [[ -z $_joined ]] && printf '@as []' && return 0
+  printf "[%s]" "$_joined"
+}
+
+find_path_by_name() {
+  local _name=$1 _path
+  while read -r _path; do
+    [[ -z $_path ]] && continue
+    if [[ $(custom_get "$_path" name) == "$_name" ]]; then
+      printf '%s' "$_path"
+      return 0
+    fi
+  done < <(custom_paths)
+  return 1
+}
+
+next_free_path() {
+  local _paths _i=0 _path
+  _paths=$(custom_paths)
+  while :; do
+    _path="$custom_path_prefix$_i/"
+    if ! grep -qxF "$_path" <<<"$_paths"; then
+      printf '%s' "$_path"
+      return 0
+    fi
+    _i=$((_i + 1))
+  done
+}
+
+cmd_get() {
+  [[ $# -eq 2 ]] || die "get requires <schema[:path]> <key>"
+  gsettings get "$1" "$2"
+}
+
+cmd_set() {
+  [[ $# -eq 3 ]] || die "set requires <schema[:path]> <key> <value>"
+  set_if_needed "$1" "$2" "$3"
+}
+
+cmd_ls() {
+  [[ $# -eq 0 ]] && gsettings list-schemas | sort && return 0
+  gsettings list-recursively "$1"
+}
+
+key_ls() {
+  local _path
+  while read -r _path; do
+    [[ -z $_path ]] && continue
+    printf '%s\t%s\t%s\t%s\n' \
+      "$(basename "$_path")" \
+      "$(custom_get "$_path" name)" \
+      "$(custom_get "$_path" binding)" \
+      "$(custom_get "$_path" command)"
+  done < <(custom_paths)
+}
+
+key_add() {
+  [[ $# -eq 3 ]] || die "key add requires <name> <binding> <command>"
+  local _name=$1 _binding=$2 _cmd=$3
+  local _path
+  _path=$(find_path_by_name "$_name") || _path=$(next_free_path)
+
+  set_if_needed "$custom_schema:$_path" name "$_name"
+  set_if_needed "$custom_schema:$_path" binding "$_binding"
+  set_if_needed "$custom_schema:$_path" command "$_cmd"
+
+  local _paths
+  _paths=$(custom_paths)
+  grep -qxF "$_path" <<<"$_paths" && return 0
+  set_if_needed "$media_keys_schema" "$custom_keys_name" \
+    "$(printf '%s\n%s\n' "$_paths" "$_path" | to_gvariant_list)"
+}
+
+key_rm() {
+  [[ $# -eq 1 ]] || die "key rm requires <name>"
+  local _name=$1
+  local _path
+  if ! _path=$(find_path_by_name "$_name"); then
+    log "==> Skip(not found): $_name"
+    return 0
+  fi
+
+  # 最後の 1 件を消すと grep -v が空になり 1 を返すため潰しておく
+  set_if_needed "$media_keys_schema" "$custom_keys_name" \
+    "$({ custom_paths | grep -vxF "$_path" || true; } | to_gvariant_list)"
+  if is_dry; then
+    echo "gsettings reset-recursively $custom_schema:$_path"
+    return 0
+  fi
+  log "==> Reset: $custom_schema:$_path"
+  gsettings reset-recursively "$custom_schema:$_path"
+}
+
+cmd_key() {
+  [[ $# -eq 0 ]] && die "key requires a sub command."
+  local _sub=$1
+  shift
+  case "$_sub" in
+    ls) key_ls ;;
+    add) key_add "$@" ;;
+    rm) key_rm "$@" ;;
+    *) die "Unknown key sub command: $_sub" ;;
+  esac
+}
+
+main() {
+  initialize "$@"
+  local _cmd=${args[0]}
+  case "$_cmd" in
+    get) cmd_get "${args[@]:1}" ;;
+    set) cmd_set "${args[@]:1}" ;;
+    ls) cmd_ls "${args[@]:1}" ;;
+    key) cmd_key "${args[@]:1}" ;;
+    *) die "Unknown command: $_cmd" ;;
+  esac
+}
+main "$@"

@@ -549,20 +549,16 @@ npm_install() {
   exe popd
 }
 
+# bin/gset を dry_run 設定を反映して実行する。
+# exe(eval) を経由しないので値のクォートをエスケープしなくてよい。
+gset_() {
+  local _opts=()
+  is_dry && _opts+=(-n)
+  gset "${_opts[@]}" "$@"
+}
+
 gsettings_if_needed() {
-  local _scheme=$1
-  local _path=$2
-  local _val=$3
-  if [[ -z $_val ]]; then
-    _val=$_path
-    _path=
-  fi
-  local _current=
-  _current=$(gsettings get "$_scheme" "$_path")
-  if [[ $_current == "$_val" ]]; then
-    return
-  fi
-  exe gsettings set "$_scheme" "$_path" "$_val"
+  gset_ set "$@"
 }
 
 is_empty_dir() {
@@ -770,9 +766,10 @@ show_dummy_warn_if_needed() {
 init_export_path_if_possible() {
   local _script_dir
   _script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
-  if has git && git rev-parse --show-toplevel >&/dev/null; then
-    local _git_root
-    _git_root=$(cd "$_script_dir" && git rev-parse --show-toplevel)
+  # カレントではなく funcs 自身の位置で git repo 判定する(.dot 外から起動されても PATH を通す)
+  local _git_root
+  _git_root=$(cd "$_script_dir" && git rev-parse --show-toplevel 2>/dev/null) || _git_root=
+  if [[ -n $_git_root ]]; then
     local _com_script_dir=$_git_root/bin
     if [[ -e $_com_script_dir ]]; then
       if ! echo ":$PATH:" | grep ":$_com_script_dir:" >&/dev/null; then
