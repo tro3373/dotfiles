@@ -49,7 +49,7 @@ return {
     end,
   },
 
-  -- jj/jk でモード離脱 (タイプ遅延なし)。旧 conf.d/101_mapping.vim の inoremap は
+  -- jk でモード離脱 (タイプ遅延なし)。旧 conf.d/101_mapping.vim の inoremap は
   -- has('nvim') ガードで無効化済みで、こちらに委譲 (better-escape は nvim 専用)
   {
     "max397574/better-escape.nvim",
@@ -59,7 +59,7 @@ return {
         default_mappings = false, -- c/v/s のデフォルトは使わず i/t だけ明示
         mappings = {
           i = {
-            j = { j = "<Esc>", k = "<Esc>" },
+            j = { k = "<Esc>" },
             -- <space><tab> で luasnip を expand/jump
             [" "] = {
               ["<tab>"] = function()
@@ -73,7 +73,7 @@ return {
           },
           -- terminal は <Esc> でなく <C-\><C-n> で terminal-normal へ抜ける
           t = {
-            j = { j = [[<C-\><C-n>]], k = [[<C-\><C-n>]] },
+            j = { k = [[<C-\><C-n>]] },
           },
         },
       })

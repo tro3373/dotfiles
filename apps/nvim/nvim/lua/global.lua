@@ -30,9 +30,6 @@ end
 vim.print = _G.dd
 
 -- map functions
--- local map = vim.api.nvim_set_keymap
--- local opts = { noremap = true, silent = true }
--- map('i', 'jj', '<ESC>', opts)
 _G["map"] = function(mode, lhs, rhs, opt)
   vim.keymap.set(mode, lhs, rhs, opt or { silent = true })
 end
