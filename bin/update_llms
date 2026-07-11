@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+cmds=(
+  'claude upgrade'
+)
+
+has() { command -v "${1}" >&/dev/null; }
+hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test ! -t 0 && cat -) ${@:2}" | _ink "$1"; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+
+kick() {
+  cmd="$(echo "$update_cmd" | awk '{print $1}')"
+  has "$cmd" || {
+    warn "==> No $cmd command exist, skip update."
+    return 0
+  }
+  info "=> Updating $cmd .."
+  $update_cmd
+  info "=> Updating $cmd Done!"
+}
+
+main() {
+  set -eo pipefail
+  for update_cmd in "${cmds[@]}"; do
+    kick
+  done
+}
+main "$@"

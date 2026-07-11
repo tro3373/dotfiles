@@ -120,13 +120,6 @@ clean_go_cache() {
   $dummy go clean -cache -modcache
 }
 
-update_claude() {
-  has claude || return
-  ilog "=> Updating claude code.."
-  $dummy claude update
-  ilog "=> Updating claude code Done!"
-}
-
 main() {
   initialize "$@"
   set -e
@@ -142,9 +135,9 @@ main() {
   if os wsl; then
     update_scoop
   fi
-  update_claude
   $dummy update_go_bins
   $dummy update_node_bins
+  $dummy update_llms
   ilog "Done!"
 }
 main "$@"
