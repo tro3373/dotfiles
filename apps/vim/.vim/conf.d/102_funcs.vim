@@ -1533,12 +1533,68 @@ function! s:collect_paths(line, bases) abort
   return l:paths
 endfunction
 
+" 行中の `ADR-<番号>` 参照を集める (大小無視)。戻り値: 番号 (数値) のリスト
+"   実データに `ADR-007` と `ADR-0007` が混在するため番号は数値化して返す
+"   Markdownリンク [text](path) は path 側 (s:collect_paths) で解決されるため
+"   除去してから走査し、リンク内 ADR とパスの二重オープンを防ぐ
+function! s:collect_adrs(line) abort
+  let l:nums = []
+  let l:rest = substitute(a:line, '\v\[[^\]]*\]\([^)]+\)', ' ', 'g')
+  let l:start = 0
+  while 1
+    let [l:m, l:s, l:e] = matchstrpos(l:rest, '\c\<ADR-\zs\d\+', l:start)
+    if l:s == -1
+      break
+    endif
+    call add(l:nums, str2nr(l:m))
+    let l:start = l:e
+  endwhile
+  return l:nums
+endfunction
+
+" ADR 番号を開く対象に解決する。戻り値: ['file'|'dir'|'error', path]
+"   a:bases は s:search_bases() の探索ベース (先頭から docs/adr を持つ repo を採用)
+"   1. {repo_root}/docs/adr/NNNN-*.md を番号の数値一致で探索
+"   2. 無ければ index (0000-index.md / index.md)
+"   3. 無ければ docs/adr ディレクトリ
+"   4. docs/adr 自体が無ければ error
+function! s:resolve_adr(num, bases) abort
+  let l:adr_dir = ''
+  for l:base in a:bases
+    let l:d = l:base . '/docs/adr'
+    if isdirectory(l:d)
+      let l:adr_dir = l:d
+      break
+    endif
+  endfor
+  if empty(l:adr_dir)
+    return ['error', '']
+  endif
+  " 1. 専用ファイル NNNN-*.md (先頭数字を数値化して一致判定)
+  for l:f in glob(l:adr_dir . '/*.md', 0, 1)
+    let l:lead = matchstr(fnamemodify(l:f, ':t'), '^\d\+')
+    if !empty(l:lead) && str2nr(l:lead) == a:num
+      return ['file', l:f]
+    endif
+  endfor
+  " 2. index (mo は 0000-index.md、/adr skill 規約は index.md。両対応)
+  for l:idx in ['0000-index.md', 'index.md']
+    let l:p = l:adr_dir . '/' . l:idx
+    if filereadable(l:p)
+      return ['file', l:p]
+    endif
+  endfor
+  " 3. docs/adr ディレクトリ
+  return ['dir', l:adr_dir]
+endfunction
+
 function! OpenUrlOrFilePathOnCursor() range abort
   " tabedit でカレントバッファが変わるので、対象行と探索ベースは先に集める
   let l:bases = s:search_bases()
   let l:lines = getline(a:firstline, a:lastline)
   let l:urls = []
   let l:paths = []
+  let l:adrs = []
   for l:line in l:lines
     " URL を優先。行内に複数あっても全 URL を拾う
     " (Markdownリンクの url も同パターンで `)` 手前まで拾える)
@@ -1547,10 +1603,11 @@ function! OpenUrlOrFilePathOnCursor() range abort
       call extend(l:urls, l:line_urls)
       continue
     endif
-    " URL が無い行だけ token を走査してファイルパス判定
+    " URL が無い行だけ token を走査してファイルパス / ADR 参照判定
     call extend(l:paths, s:collect_paths(l:line, l:bases))
+    call extend(l:adrs, s:collect_adrs(l:line))
   endfor
-  if empty(l:urls) && empty(l:paths)
+  if empty(l:urls) && empty(l:paths) && empty(l:adrs)
     echo "No URL or file path found."
     return
   endif
@@ -1566,6 +1623,24 @@ function! OpenUrlOrFilePathOnCursor() range abort
       execute l:lnum
     endif
   endfor
+  " ADR 参照は {repo_root}/docs/adr 配下へ解決してタブで開く (同一番号は 1 回)
+  if !empty(l:adrs)
+    let l:seen = []
+    for l:num in l:adrs
+      if index(l:seen, l:num) >= 0
+        continue
+      endif
+      call add(l:seen, l:num)
+      let [l:kind, l:target] = s:resolve_adr(l:num, l:bases)
+      if l:kind ==# 'error'
+        echohl ErrorMsg
+        echomsg printf('ADR-%d: docs/adr directory not found.', l:num)
+        echohl None
+      else
+        execute 'tabedit ' . fnameescape(l:target)
+      endif
+    endfor
+  endif
 endfunction
 nnoremap <silent> <Leader>j :call OpenUrlOrFilePathOnCursor()<CR>
 nnoremap <silent> gf :call OpenUrlOrFilePathOnCursor()<CR>
