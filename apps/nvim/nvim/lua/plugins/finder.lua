@@ -41,6 +41,19 @@ return {
     end,
   },
 
+  -- ファイラ (yazi.nvim)。oil と併用: バッファ編集は oil (sd) / プレビュー・探索は yazi (sy)。
+  -- setup 設定は conf.d/213_yazi.vim → 213_yazi.lua。キーは lazy 遅延読み込みの
+  -- トリガを兼ねるため spec 側 (keys) に置く。
+  {
+    "mikavilpas/yazi.nvim",
+    keys = {
+      { "sy", "<cmd>Yazi<cr>", desc = "Open yazi at current file" },
+    },
+    config = function()
+      _G.src("213_yazi.vim")
+    end,
+  },
+
   -- vim から tig
   {
     "iberianpig/tig-explorer.vim",

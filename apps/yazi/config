@@ -7,3 +7,9 @@ install_arch() {
 install_mac() {
   def_install yazi ffmpeg sevenzip jq poppler fd ripgrep fzf zoxide resvg imagemagick font-symbols-only-nerd-font
 }
+setting_common() {
+  # keymap.toml の削除キーが bin/trash => gomi を使う
+  add_dependency_args gomi
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/yazi" "${HOME}/.config/yazi"
+}

@@ -1,0 +1,8 @@
+# yazi キーバインド (既定に prepend して上書き)
+
+[mgr]
+prepend_keymap = [
+  # T: .dot の trash (gomi => git root の .trash) へ移動。oil.nvim の T と同じキー・同じ捨て先。
+  # 既定の d/D (確認あり => OS のゴミ箱) は温存する。
+  { on = "T", run = 'shell -- trash "$@"', desc = "trash (gomi) へ移動" },
+]

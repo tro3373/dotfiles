@@ -1,0 +1,9 @@
+# yazi 本体設定 (SSoT: apps/yazi/yazi => ~/.config/yazi)
+# opener は既定の $EDITOR (10.init.zsh で nvim) をそのまま使う
+
+[mgr]
+# 3 カラムの幅比 (親 | カレント | プレビュー)。プレビュー不要なら [1, 4, 0]
+ratio = [1, 4, 3]
+show_hidden = true
+sort_by = "natural"
+linemode = "size"

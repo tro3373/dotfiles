@@ -18,10 +18,11 @@ case "${OSTYPE}" in
     alias git='nocorrect git'                     # Ubuntuで_gitと誤解されるため
     alias sudo='sudo -E '                         # E: 環境変数のリセット無効(sudo vim で個人設定反映など)
     if [[ -e /etc/arch-release ]]; then
+      # y は yazi (末尾の y 関数) に譲ったため AUR ヘルパは yy
       if has yay; then
-        alias y=yay
+        alias yy=yay
       elif has yaourt; then
-        alias y=yaourt
+        alias yy=yaourt
       fi
       if has powerpill; then
         alias p='sudo powerpill'
@@ -387,6 +388,19 @@ rm_cache() {
 
 fpath() {
   echo "${fpath[@]}" | tr ' ' '\n'
+}
+
+# yazi を起動し、終了時のカレントディレクトリをシェルに引き継ぐ (yazi 公式 wrapper)
+y() {
+  supported yazi || return
+  local tmp
+  tmp=$(mktemp -t "yazi-cwd.XXXXXX") || return
+  yazi "$@" --cwd-file="$tmp"
+  local cwd
+  IFS= read -r -d '' cwd <"$tmp"
+  [[ -n $cwd && $cwd != "$PWD" ]] && builtin cd -- "$cwd"
+  # mktemp の一時ファイルなので trash ではなく rm (毎回ゴミ箱に溜めない)
+  rm -f -- "$tmp"
 }
 
 # insert-date() {
