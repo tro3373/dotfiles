@@ -41,7 +41,7 @@ fire_logs() {
 }
 
 fire_memos() {
-  git_root="$(realpath "$(get_git_root)" 2>/dev/null || :)"
+  git_root="$(realpath "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")" 2>/dev/null || :)"
   [[ -z $git_root ]] && return 0
   memo="$git_root/.memo"
   if [[ ! -L $memo ]]; then
