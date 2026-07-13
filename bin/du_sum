@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+
+# du の軽量ラッパ。ディスクを食っている塊をざっくり眺める用。
+#   * サイズは human readable(K/M/G)、全階層を混ぜたサイズ降順で出す
+#     (親と子が同じサイズで並ぶことがある)
+#   * 階層は -0..-9 で指定する(既定は -1 = 指定ディレクトリの直下)
+#   * ディレクトリだけでなくファイルも一覧に出す
+#   * gdu があれば使う(並列走査で du の約 4 倍速い)。無ければ du にフォールバック
+#   * 常に sudo で走らせる。root 所有のディレクトリ(docker 配下など)を読み飛ばすと
+#     集計が静かに狂うため。特に gdu は権限エラーを黙って 0 バイト扱いにする
+#     (実測: /mnt/data は sudo 無しで 483G、有りで 666G。docker の 183G が消えていた)
+
+command_name=$(basename "$0") && readonly command_name
+readonly depends=(sort numfmt awk)
+depth=1
+one_fs=0 # -x: 別ファイルシステム(マウントポイント)配下は辿らない
+paths=()
+scanner= # gdu または du の絶対パス。sudo の secure_path 外にあっても引けるように解決しておく
+runner=()
+
+usage() {
+  cat <<EOF
+
+Summarize disk usage under a directory, sorted by size(desc).
+
+  Usage:
+      $command_name [option] [path..]
+    Options
+      -h|--help : Show this usage
+      -0..-9    : Depth to summarize (default: 1)
+      -x        : Do not cross file system boundaries (mount points)
+    Examples
+      $command_name /mnt/data       # Entries directly under /mnt/data
+      $command_name -2 /mnt/data    # Summarize 2 levels down
+      $command_name -x -3 /mnt/data # 3 levels, staying on one file system
+      $command_name -0 /mnt/data/*  # Total size of each entry
+
+EOF
+}
+log() { echo "$*" >&2; }
+die() {
+  log "==> $*"
+  usage >&2
+  exit 1
+}
+has() { command -v "${1}" >&/dev/null; }
+is_gdu() { [[ $(basename "$scanner") == gdu ]]; }
+
+initialize() {
+  # オプションとパスの順序は問わない
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -[0-9]) depth="${1#-}" ;;
+      -x) one_fs=1 ;;
+      -*) die "Unknown option: $1" ;;
+      *) paths+=("$1") ;;
+    esac
+    shift
+  done
+  [[ ${#paths[@]} -eq 0 ]] && paths=(.)
+  scanner=$(command -v gdu || command -v du)
+  [[ $EUID -ne 0 ]] && runner=(sudo)
+  check
+  set -euo pipefail
+}
+check() {
+  for dep in "${depends[@]}"; do
+    has "$dep" || die "No $dep command exist."
+  done
+  [[ -n $scanner ]] || die "No gdu nor du command exist."
+  # scanner の exit code は権限エラーで潰すので、パスミスはここで落とす
+  for path in "${paths[@]}"; do
+    [[ -e $path ]] || die "No such file or directory: $path"
+  done
+  return 0
+}
+
+# 1 行 "<bytes> <path>" で出力する。gdu も du も raw bytes に揃えて後段で整形する
+scan() {
+  local _path=$1
+  local _opts=()
+  if is_gdu; then
+    # gdu で depth 0(合計のみ)を出すのに -s も --depth 0 も使えない:
+    #   -s        : 並列集計がレースしていて実行の度に違う合計を返す(実測で 571M〜1031M と揺れた)
+    #   --depth 0 : du の -d 0 と違い「深さ制限なし」の意味になり、パスが basename 表示になる
+    #               別モードに落ちる
+    # --depth 1 以上は du と一致する値で安定するので、合計だけ欲しいときも --depth 1 で走らせて
+    # 先頭行(走査対象そのものの合計)を取る
+    # -n: 非対話, -p: 進捗なし, -c: 色なし, --no-prefix: raw bytes
+    _opts=(-n -p -c --no-prefix --depth "$((depth > 0 ? depth : 1))")
+    [[ $one_fs -eq 1 ]] && _opts+=(-x)
+    # head だと gdu が SIGPIPE で落ちるので awk で全行読み切る
+    [[ $depth -eq 0 ]] && {
+      "${runner[@]}" "$scanner" "${_opts[@]}" "$_path" | awk 'NR==1'
+      return
+    }
+    "${runner[@]}" "$scanner" "${_opts[@]}" "$_path"
+    return
+  fi
+  # -a: ファイルも出す(gdu に挙動を揃える), --block-size=1: raw bytes
+  _opts=(-a --block-size=1 -d "$depth")
+  [[ $one_fs -eq 1 ]] && _opts+=(-x)
+  # du は読めないディレクトリがあると exit 1 になるが、読めた分は出力されるので握る
+  "${runner[@]}" "$scanner" "${_opts[@]}" -- "$_path" || true
+}
+
+main() {
+  initialize "$@"
+  local _path
+  for _path in "${paths[@]}"; do
+    scan "$_path"
+  done | sort -n | numfmt --to=iec --field=1 --padding=6
+}
+main "$@"
