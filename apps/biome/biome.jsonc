@@ -66,6 +66,7 @@
       "GmailApp",
       "SpreadsheetApp",
       "PropertiesService",
+      "ScriptApp",
       "Session",
       "Utilities",
       "Logger",
