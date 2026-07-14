@@ -49,17 +49,20 @@ return {
     end,
   },
 
-  -- jk でモード離脱 (タイプ遅延なし)。旧 conf.d/101_mapping.vim の inoremap は
-  -- has('nvim') ガードで無効化済みで、こちらに委譲 (better-escape は nvim 専用)
+  -- モード離脱は jk をやめて <C-[> に統一 (base.lua の terminal keymap 参照)。
+  -- 理由: terminal モードの jk は yazi/lazygit/zsh vi-mode の j/k 移動と衝突し、
+  --       先行の j が TUI へ送られた上で terminal-normal へ抜ける誤爆になっていた。
+  -- 旧 conf.d/101_mapping.vim の inoremap は has('nvim') ガードで無効化済み。
+  -- 現状の役割は luasnip の <space><tab> のみ (better-escape は nvim 専用)
   {
     "max397574/better-escape.nvim",
     event = "VeryLazy",
     config = function()
       require("better_escape").setup({
-        default_mappings = false, -- c/v/s のデフォルトは使わず i/t だけ明示
+        default_mappings = false, -- c/v/s のデフォルトは使わず i だけ明示
         mappings = {
           i = {
-            j = { k = "<Esc>" },
+            -- j = { k = "<Esc>" }, -- <C-[> に統一のため廃止
             -- <space><tab> で luasnip を expand/jump
             [" "] = {
               ["<tab>"] = function()
@@ -71,10 +74,11 @@ return {
               end,
             },
           },
-          -- terminal は <Esc> でなく <C-\><C-n> で terminal-normal へ抜ける
-          t = {
-            j = { k = [[<C-\><C-n>]] },
-          },
+          -- t の jk も廃止 (base.lua の <C-[> へ)。以下は旧設定:
+          --   -- terminal は <Esc> でなく <C-\><C-n> で terminal-normal へ抜ける
+          --   t = {
+          --     j = { k = [[<C-\><C-n>]] },
+          --   },
         },
       })
     end,
