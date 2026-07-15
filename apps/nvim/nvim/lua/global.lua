@@ -105,14 +105,6 @@ _G.aug = function(args)
   -- _create_au(events, group, false, cb, pat)
   _create_au({ events = args.events, group = args.group, make_group = false, cb = args.cb, pat = args.pat })
 end
-_G.au_ft_map = function(pat, ft)
-  local function cb()
-    vim.opt_local.ft = ft
-  end
-  -- _create_au({ "BufNewFile", "BufRead" }, nil, false, cb, pat)
-  _create_au({ events = { "BufNewFile", "BufRead" }, group = nil, make_group = false, cb = cb, pat = pat })
-end
-
 -- Call Script
 -- alias to vim's objects
 -- g = vim.g

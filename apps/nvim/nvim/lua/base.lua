@@ -248,24 +248,6 @@ au({
   end,
 })
 
--- ファイルタイプ別の設定
-au_ft_map("*.js", "javascript")
-au_ft_map("*.ejs", "html")
--- au_ft_map('*.vue', 'html')
-au_ft_map("*.py", "python")
-au_ft_map("*.rb", "ruby")
-au_ft_map("*.erb", "ruby")
-au_ft_map("Gemfile", "ruby")
-au_ft_map("*.coffee", "coffee")
-au_ft_map("*.ts", "typescript")
-au_ft_map("*.md", "markdown")
-au_ft_map("*.jade", "markdown")
-au_ft_map("*.gyp", "json")
-au_ft_map("*.cson", "json")
-au_ft_map("*.yml", "yaml")
-au_ft_map("*.yaml", "yaml")
-au_ft_map("Jenkinsfile", "groovy")
-
 -- Disable the concealing in some file formats
 -- The default conceallevel is 3 in LazyVim
 au({

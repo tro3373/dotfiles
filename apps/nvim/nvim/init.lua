@@ -9,6 +9,7 @@
 require("global") -- ヘルパ関数 (_G.map/au/aug 等) + プラットフォーム判定
 require("compat") -- vimscript 互換 shim (g:is_* / g:plug / _G.src / leader)
 require("base") -- オプション・autocmd (100_base.vim の lua ネイティブ版)
+require("filetypes") -- 拡張子 => filetype の上書き (.gs = GAS を javascript 扱い)
 require("pm") -- lazy.nvim ブートストラップ + プラグイン spec
 
 -- 汎用 vimscript を SSoT で source (プラグイン非依存)
