@@ -48,6 +48,15 @@ return {
     "mikavilpas/yazi.nvim",
     keys = {
       { "sy", "<cmd>Yazi<cr>", desc = "Open yazi at current file" },
+      -- sY: nvim 外 (tmux 新規窓) で yazi を開く。:terminal を挟まないため
+      -- 画像プレビューが Ghostty へ素通しで表示される (関数は 213_yazi.lua)。
+      {
+        "sY",
+        function()
+          _G.yazi_open_in_tmux()
+        end,
+        desc = "Open yazi in a new tmux window (画像プレビュー可)",
+      },
     },
     config = function()
       _G.src("213_yazi.vim")

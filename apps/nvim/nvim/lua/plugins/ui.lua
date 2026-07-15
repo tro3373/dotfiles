@@ -193,4 +193,17 @@ return {
 
   -- LSP 進捗等の通知 UI
   { "j-hui/fidget.nvim", event = "LspAttach", opts = {} },
+
+  -- 画像レンダリング (image.nvim)。nvim 自身が Kitty graphics protocol で画像を描画する。
+  -- yazi の :terminal 内プレビューは nvim が画像エスケープを外側端末へ通さず表示できないが、
+  -- これは nvim 直描画なので Ghostty へ素通しできる。oil で画像ファイルを開く / markdown
+  -- インライン画像に使う。設定は conf.d/214_image.lua。ImageMagick CLI のみ依存 (luarock 不要)。
+  {
+    "3rd/image.nvim",
+    event = "VeryLazy",
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+    config = function()
+      _G.src("214_image.vim")
+    end,
+  },
 }
