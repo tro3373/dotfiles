@@ -346,6 +346,17 @@ aumg({
   end,
 })
 
+-- terminal-normal へ抜けるキー。insert の <C-[> (= 組み込みの Esc 相当) と揃えた。
+-- <Esc> 自体はマップしない: yazi/lazygit/claude 等の TUI や zsh vi-mode へそのまま届ける必要がある。
+-- 端末上で <C-[> と <Esc> は同一バイト (0x1b)。tmux の extended-keys (CSI-u) が効いている場合のみ
+-- 別キーとして受け取れる (apps/tmux/.tmux.conf)。効かない環境でマップすると単発 <Esc> まで
+-- 食って TUI へ届かなくなるため、tmux 内に限定する。
+-- tmux 外での脱出キーは <C-q> (conf.d/101_mapping.vim の tnoremap) と組み込みの <C-\><C-n>。
+-- tmux 内では <C-[> を nvim が消費するため、TUI へ Esc を送るときは <Esc> を打つこと。
+if vim.env.TMUX then
+  vim.keymap.set("t", "<C-[>", [[<C-\><C-n>]], { desc = "Exit terminal mode" })
+end
+
 if vim.fn.exists("##TermOpen") then
   -- tig から開く vim? にTermOpenイベントがないため
   -- エラーが発生するので有効な場合のみ
