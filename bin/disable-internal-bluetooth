@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+
+# 内蔵 Bluetooth (Intel AX210, USB 8087:0032) を udev で無効化し、
+# USB ドングルに一本化する。btusb blacklist だと内蔵・ドングル両方
+# 殺してしまう為、内蔵デバイスのみ authorized=0 にする方式。
+
+command_name=$(basename "$0")
+readonly vid=8087
+readonly pid=0032
+readonly rule=/etc/udev/rules.d/81-bluetooth-internal-disable.rules
+
+has() { command -v "${1}" >&/dev/null; }
+hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test ! -t 0 && cat -) ${@:2}" | _ink "$1"; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+
+usage() {
+  cat <<EOF
+
+Disable / enable internal Bluetooth (Intel AX210 $vid:$pid) via udev.
+
+  Usage:
+      $command_name [enable|disable]
+    Args
+      (none)|disable : 内蔵 BT を無効化 (default)
+      enable         : 無効化を解除して内蔵 BT を復帰
+      -h|--help      : Show this usage
+
+EOF
+}
+
+check() {
+  hass udevadm
+}
+
+# 内蔵 BT の USB sysfs パスを idVendor/idProduct 両方一致で特定する
+find_usb_path() {
+  local f dir
+  for f in /sys/bus/usb/devices/*/idVendor; do
+    dir=$(dirname "$f")
+    [[ $(cat "$f" 2>/dev/null) == "$vid" ]] || continue
+    [[ $(cat "$dir/idProduct" 2>/dev/null) == "$pid" ]] || continue
+    echo "$dir"
+    return 0
+  done
+  return 1
+}
+
+# 現在接続中の内蔵 BT に即時反映する (reboot 無しで効かせる為)
+apply_authorized() {
+  local value=$1 path
+  path=$(find_usb_path) || {
+    log "=> 内蔵 BT($vid:$pid) の USB パスが見つかりません (認識済で反映済かも)。"
+    return 0
+  }
+  log "=> $path/authorized = $value に設定します。"
+  echo "$value" | sudo tee "$path/authorized" >/dev/null
+}
+
+reload() {
+  log "=> udev ルールを再読込して trigger します。"
+  sudo udevadm control --reload-rules && sudo udevadm trigger
+}
+
+verify() {
+  has bluetoothctl || return
+  log "=> bluetoothctl list (ドングルのみ残るのが正)"
+  bluetoothctl list
+}
+
+# udev ルールが無ければ作成する
+create_rule() {
+  [[ -e $rule ]] && {
+    info "=> 既に無効化済み: $rule"
+    return
+  }
+  log "=> udev ルールを作成します: $rule"
+  echo "SUBSYSTEM==\"usb\", ATTR{idVendor}==\"$vid\", ATTR{idProduct}==\"$pid\", ATTR{authorized}=\"0\"" |
+    sudo tee "$rule" >/dev/null
+}
+
+# udev ルールが有れば削除して再読込する
+remove_rule() {
+  [[ -e $rule ]] || {
+    info "=> udev ルールは有りません (既に有効化済み)。"
+    return
+  }
+  log "=> udev ルールを削除します: $rule"
+  sudo rm "$rule"
+  reload
+}
+
+disable() {
+  create_rule
+  reload
+  apply_authorized 0
+  verify
+  log "=> 完了。ペアリングはドングル側で再設定が必要です。"
+}
+
+enable() {
+  remove_rule
+  apply_authorized 1
+  verify
+  log "=> 完了。恒久反映には再起動を推奨します。"
+}
+
+main() {
+  case ${1:-disable} in
+    -h | --help)
+      usage
+      ;;
+    enable)
+      check
+      enable
+      ;;
+    disable)
+      check
+      disable
+      ;;
+    *)
+      usage
+      die "Unknown arg: $1"
+      ;;
+  esac
+}
+main "$@"
