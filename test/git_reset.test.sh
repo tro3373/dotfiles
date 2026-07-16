@@ -12,7 +12,7 @@
 #   * divergence    : gre 後に新コミットを作った状態で grr すると、現 HEAD が選択先の
 #                      祖先でない (merge-base) ため警告して中断 (HEAD/stack 不変)。-f で強制。
 #
-#   test/test-git_reset   # 全テスト実行
+#   test/git_reset.test.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 gr_bin=$(cd "${script_dir}/../bin" && pwd)/git_reset

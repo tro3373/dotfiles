@@ -14,7 +14,7 @@
 #   * error        : docs/adr 自体が無い            => 新規タブ無し (ERROR)
 #   * 番号正規化   : ADR-7 / ADR-007 も 0007-*.md にマッチ
 #
-#   test/test-nvim-adr-open   # 全テスト実行
+#   test/nvim-adr-open.test.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 funcs=$(cd "${script_dir}/../apps/vim/.vim/conf.d" && pwd)/102_funcs.vim
