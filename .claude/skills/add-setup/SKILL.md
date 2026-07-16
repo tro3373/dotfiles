@@ -42,7 +42,7 @@ bin/setup -e {name}    # -e/--exec で実際に実行
 | `install_common` | 全OS共通のインストール。まずこれを書く |
 | `install_arch` / `install_mac` / `install_ubuntu` / `install_wsl` / `install_msys` / `install_cygwin` / `install_redhat` | OS別に挙動を変えたいときだけ上書き |
 | `setting_common` / `setting_{os}` | インストール後の設定（configファイル配置など） |
-| `is_installed` | スキップ判定（default: `has_or_local_package "$app"`） |
+| `is_installed` | スキップ判定（default: `has_or_local_package "$app"`）。**install名 ≠ 実行コマンド名なら上書き**（後述） |
 
 非対応を明示するとき: `install_common() { not_supported; }` / `setting_common() { no_settings; }`
 
@@ -54,6 +54,31 @@ bin/setup -e {name}    # -e/--exec で実際に実行
 - setting: `setting_{os}` を試し、未定義なら `setting_common` を呼ぶ
 
 つまり **arch/mac だけ `install_*` を書き、共通の設定配置は `setting_common` に置く**のが定番（`setting_arch` を書かなくても `setting_common` が走る）。
+
+### `is_installed`（スキップ判定）— install名 ≠ 実行コマンド名 に注意
+
+`bin/setup` は **ディレクトリ名 = app名 = 実行コマンド名** を暗黙の前提にしている。
+default の `is_installed` は `has_or_local_package "$app"`、つまり **app名を実行コマンドとみなして** 導入済みかを判定する。
+
+インストールするパッケージ名と実行コマンド名がズレる app は、default では判定を外す。
+その場合は config で `is_installed` を上書きし、実行コマンド名で判定する:
+
+```bash
+# apps/hunkdiff/config — install=hunkdiff / 実行コマンド=hunk のケース
+install_common() { npm_install hunkdiff; }
+is_installed()   { has hunk; }
+```
+
+- 実行コマンド名 = ディレクトリ名 のとき（例: `apps/hunk` で実行コマンドも `hunk`）は default のままでよい。上書き不要。
+- 実行コマンドを持たない GUI アプリ等はパスの存在で判定する（例: `is_installed() { [[ -e /Applications/Foo.app ]]; }`）。
+
+既存の上書き例:
+
+| app（=ディレクトリ名） | 実行コマンド | is_installed |
+|---|---|---|
+| `aria2` | `aria2c` | `is_installed() { has aria2c; }` |
+| `fcitx5-mozc` | `fcitx5` | `is_installed() { has fcitx5; }` |
+| `postgres` | `psql` | `is_installed() { has psql; }` |
 
 ## べき等化の定番
 
@@ -108,3 +133,4 @@ config 内で `$app_dir`（= `apps/{name}`）を参照するときは shellcheck
 1. **`main()` は書かない** — config はライブラリ。hook の main 警告は無視する。
 2. **`~/.works.zsh` を消さない・直接汚さない** — マシン固有のローカル設定（PATH追加・秘密・completion）が入る `chmod 700` のファイル。多数の app config がここに追記する。PATH や env を永続化したいときは `add_path` / `tee_to_works_zsh` でここに足す。
 3. **shell profile を直接いじらない** — PATH は `apps/zsh/.zsh/` 側で管理する（例: nix は `NIX_INSTALLER_NO_MODIFY_PROFILE=1` でインストーラに profile を触らせず、`90.additional.zsh` で `~/.nix-profile/etc/profile.d/nix.sh` を source して通す）。
+4. **ディレクトリ名 = 実行コマンド名 を暗黙前提にしている** — 違うなら `is_installed` を上書きしないと導入済み判定を外す（「定義する関数」の `is_installed` 節を参照）。
