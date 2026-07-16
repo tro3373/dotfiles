@@ -263,6 +263,15 @@ au({
   events = "FileType",
   pat = { "markdown" },
   cb = function()
+    -- conceallevel: conceal 指定 (treesitter の #set! conceal) された記号の見え方。
+    --   0: 隠さず全部そのまま表示 (記号も見える)
+    --   1: conceal 対象を代替1文字(cchar)に置換。cchar 未定義/空文字なら消える
+    --   2: conceal 対象を非表示 (cchar があればそれだけ表示)
+    --   3: 常に非表示 (cchar があっても表示しない)
+    -- markdown(treesitter)の conceal は空文字指定なので level>=1 で記号が消える:
+    --   **bold** => bold, `code` => code, [txt](url) => txt, ![alt](url) => alt
+    --   隠れるのは ** ` ! [] () と URL。リンクテキスト/alt(上例の txt,alt)は残る。
+    -- ここは 0 = 編集しやすさ優先で記号を常時表示 (下の理由も参照)。
     vim.opt_local.conceallevel = 0
     vim.opt_local.concealcursor = ""
     -- cindent は `## heading` を C プリプロセッサ行 (#...) とみなし、次行をその直前コード
