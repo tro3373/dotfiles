@@ -17,7 +17,7 @@
 #
 # 対象外: .gs バッファへの ts_ls attach (lazy/mason 起動が必要なため実機手動確認)
 #
-#   test/test-nvim-gs-filetype   # 全テスト実行
+#   test/nvim-gs-filetype.test.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 ftconf=$(cd "${script_dir}/../apps/nvim/nvim/lua" && pwd)/filetypes.lua

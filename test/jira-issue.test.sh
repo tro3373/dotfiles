@@ -9,7 +9,7 @@
 # issue_to_tasks のテストはこの折り返し済み出力を模した fixture を stdin から流し込む。
 # issue_select_open のテストは fzf/jira/tasks/nvim を関数でスタブして検証する。
 #
-#   test/test-jira-issue   # 全テスト実行
+#   test/jira-issue.test.sh   # 全テスト実行
 
 set -uo pipefail
 
