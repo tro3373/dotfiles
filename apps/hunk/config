@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+install_common() {
+  npm_install hunkdiff
+}
+
+install_mac() {
+  def_install hunk
+}
