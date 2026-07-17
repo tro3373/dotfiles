@@ -3,8 +3,8 @@
 " nvim-treesitter の @markup group の両方が参照する。
 let g:md_palette = {
   \ 'h1':   {'gui': '#a3be8c', 'cterm': 144},
-  \ 'h2':   {'gui': '#81a1c1', 'cterm': 109},
-  \ 'h3':   {'gui': '#d08770', 'cterm': 173},
+  \ 'h2':   {'gui': '#d08770', 'cterm': 173},
+  \ 'h3':   {'gui': '#81a1c1', 'cterm': 109},
   \ 'h4':   {'gui': '#b48ead', 'cterm': 139},
   \ 'h5':   {'gui': '#ebcb8b', 'cterm': 222},
   \ 'h6':   {'gui': '#8fbcbb', 'cterm': 108},
