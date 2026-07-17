@@ -20,6 +20,16 @@ let $FZF_DEFAULT_OPTS="--ansi --preview-window 'right:50%' --preview 'bat --colo
 " ウィンドウサイズ変更したい場合
 let g:fzf_layout = { 'window': { 'width': 1.0, 'height': 1.0, 'yoffset': 0.5, 'xoffset': 0.5, 'border': 'sharp' } }
 
+" fzf の terminal buffer に限り <Esc> を fzf(既定の esc:abort)へ素通しする。
+" nvim は map テーブル上で <C-[> を <Esc> と同一キーに正規化するため、
+" nvim/lua/base.lua の t-mode <C-[> マップが <Esc> まで食い、fzf を閉じる前に
+" terminal-normal へ抜けてしまう。buffer-local マップは global より優先されるので
+" ここで打ち消す(fzf.vim が terminal buffer に setf fzf する)。
+augroup fzf_esc_abort
+  autocmd!
+  autocmd FileType fzf tnoremap <buffer> <Esc> <Esc>
+augroup END
+
 " ----------------------------------------------------------------------------
 " fzf で選択した項目を新しいタブで開くための共通ヘルパー
 " ----------------------------------------------------------------------------
