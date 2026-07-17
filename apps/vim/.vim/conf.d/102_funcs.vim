@@ -1137,7 +1137,7 @@ command! ReplaceTsvNewlines call ReplaceTsvNewlines()
 
 function! DisableLinting() abort
   ALEDisable
-  LspStopServer
+  " LspStopServer => Not Such command Exist
   let g:ale_enabled = 0
   let g:lsp_diagnostics_enabled = 0
   let g:lsp_diagnostics_echo_cursor = 0
