@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# tdf: terminal PDF viewer (https://github.com/itsjunetime/tdf).
+# crates.io の tdf は無関係な別クレートなので upstream git から入れる。
+# ビルドに libfontconfig と clang(bindgen) が必要。
+install_common() {
+  if is_arch; then
+    def_install fontconfig clang
+  fi
+  if ! has cargo; then
+    add_dependency_args cargo
+    return
+  fi
+  exe cargo install --git https://github.com/itsjunetime/tdf.git --locked
+}
