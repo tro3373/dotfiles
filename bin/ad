@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+# ad: Android 画面を端末(Kitty Graphics)に出す roidy ラッパー。
+#   ad            redroid(Docker) backend を起動し roidy で描画。
+#                 Ctrl+C / roidy 終了で redroid も停止する session 型。
+#   ad start <pkg>  redroid backend で <pkg> を単体起動。
+#   ad -d [args]  --device: redroid を使わず既存 adb 接続(実機)へ直行。
+#
+# redroid の /data (=$AD_DATA) はコンテナと別に永続するのでログインは残る。
+
+readonly image=redroid/redroid:16.0.0-latest # Android 16
+readonly name=redroid
+readonly host=localhost
+readonly port=5555
+readonly serial="$host:$port"
+readonly data="${AD_DATA:-$HOME/.local/share/ad/redroid}"
+
+has() { command -v "${1}" >&/dev/null; }
+hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test ! -t 0 && cat -) ${@:2}" | _ink "$1"; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+
+wait_boot() {
+  adb -s "$serial" wait-for-device
+  until [[ "$(adb -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]]; do
+    sleep 1
+  done
+}
+
+run_redroid() {
+  hass docker adb # redroid 専用の依存
+  mkdir -p "$data"
+  docker rm -f "$name" >/dev/null 2>&1 || true # 前回 session の残骸を掃除
+  docker run -d --rm --privileged --name "$name" \
+    -v "$data:/data" -p "$port:5555" "$image" \
+    androidboot.redroid_width=720 \
+    androidboot.redroid_height=1280 \
+    androidboot.redroid_dpi=320
+
+  # --rm + trap で「Ctrl+C=session落ち」を実現。stop すれば --rm がコンテナを消す
+  trap 'exit 130' INT TERM
+  trap 'echo "stopping redroid..." >&2; docker stop "$name" >/dev/null 2>&1 || true' EXIT
+
+  adb connect "$serial" >/dev/null
+  docker logs -f "$name" & # boot 中はログを流す
+  local logs_pid=$!
+  wait_boot
+  kill "$logs_pid" 2>/dev/null || true # roidy が画面を掴む前にログを止める
+
+  roidy --host "$host" --port "$port" "$@" # exec しない: 戻ったら EXIT trap で停止
+}
+
+main() {
+  set -euo pipefail
+  hass roidy adb docker ffmpeg
+
+  if [[ ${1:-} == -d || ${1:-} == --device ]]; then
+    shift
+    exec roidy "$@" # 実機: 既存 adb 接続へ。--host/--port は任意で渡す
+  fi
+
+  run_redroid "$@"
+}
+
+main "$@"
