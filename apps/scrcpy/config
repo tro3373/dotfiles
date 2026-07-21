@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+install_arch() {
+  def_install scrcpy
+}
+install_mac() {
+  def_install scrcpy
+}
