@@ -186,21 +186,7 @@ return {
           vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
           vim.keymap.set("n", "<F2>", vim.lsp.buf.rename, opts)
           vim.keymap.set("n", "<F1>", vim.lsp.buf.code_action, opts)
-          -- vim.diagnostic.jump へ移行 (goto_prev/next は 0.13、opts.float は 0.14 で廃止)。
-          -- ジャンプと同時に診断を loclist へ一覧表示する。setloclist は :lopen で
-          -- loclist 窓へフォーカスを移すため、ジャンプ元の窓へ戻す。
-          local function diag_jump(count)
-            local win = vim.api.nvim_get_current_win()
-            vim.diagnostic.jump({ count = count })
-            vim.diagnostic.setloclist({ open = true })
-            vim.api.nvim_set_current_win(win)
-          end
-          vim.keymap.set("n", "<C-p>", function()
-            diag_jump(-1)
-          end, opts)
-          vim.keymap.set("n", "<C-n>", function()
-            diag_jump(1)
-          end, opts)
+          -- <C-n>/<C-p> (診断ジャンプ / quickfix 移動の振り分け) は base.lua に集約。
           -- 診断を一覧表示。<leader>dl はカレントバッファを location list、
           -- <leader>dq は全バッファを quickfix に集約する。
           vim.keymap.set("n", "<leader>dl", vim.diagnostic.setloclist, opts)
@@ -236,7 +222,12 @@ return {
             schemaStore = { enable = true },
             schemas = {
               ["https://json.schemastore.org/github-workflow.json"] = ".github/workflows/*.{yml,yaml}",
-              ["file:///home/archuser/.config/yaml-schema-disable.json"] = { "**/tasks/*.yml", "**/tasks/*.yaml", "**/handlers/*.yml", "**/handlers/*.yaml" },
+              ["file:///home/archuser/.config/yaml-schema-disable.json"] = {
+                "**/tasks/*.yml",
+                "**/tasks/*.yaml",
+                "**/handlers/*.yml",
+                "**/handlers/*.yaml",
+              },
             },
             customTags = {
               "!Ref",
@@ -262,8 +253,7 @@ return {
 
       -- Copilot LSP (sidekick.nvim の NES 用)。copilot.vim 同梱 language-server を
       -- node 起動し cmd 上書き / 認証は ~/.config/github-copilot 共有。
-      local copilot_ls = vim.fn.stdpath("data")
-        .. "/lazy/copilot.vim/copilot-language-server/dist/language-server.js"
+      local copilot_ls = vim.fn.stdpath("data") .. "/lazy/copilot.vim/copilot-language-server/dist/language-server.js"
       if (vim.uv or vim.loop).fs_stat(copilot_ls) then
         vim.lsp.config("copilot", { cmd = { "node", copilot_ls, "--stdio" } })
         vim.lsp.enable("copilot")

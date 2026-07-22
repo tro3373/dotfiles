@@ -141,6 +141,30 @@ aumg({
     end, { buffer = ev.buf, silent = true })
   end,
 })
+-- <C-n>/<C-p>: quickfix ウィンドウが開いていれば次/前の候補へ移動 (端で wrap)、
+-- 開いていなければ LSP 診断の次/前へジャンプ (診断は loclist にも一覧表示)。
+-- Copilot 等が全バッファに attach するため「LSP 有無」では分岐できず、quickfix 窓の
+-- 開閉で振り分ける。診断ジャンプもここに集約し lsp.lua 側には buffer-local を持たせない。
+local function diag_jump(count)
+  local win = vim.api.nvim_get_current_win()
+  vim.diagnostic.jump({ count = count })
+  vim.diagnostic.setloclist({ open = true }) -- setloclist は loclist 窓へ移るため
+  vim.api.nvim_set_current_win(win) -- ジャンプ元の窓へ戻す
+end
+local function cn_cp(qf_cmd, qf_wrap, diag_count)
+  if vim.fn.getqflist({ winid = 0 }).winid == 0 then -- quickfix 窓が閉じている
+    return diag_jump(diag_count)
+  end
+  if not pcall(vim.cmd, qf_cmd) then
+    pcall(vim.cmd, qf_wrap) -- 末尾/先頭では反対端へ回り込む
+  end
+end
+vim.keymap.set("n", "<C-n>", function()
+  cn_cp("cnext", "cfirst", 1)
+end, { silent = true, desc = "Quickfix 窓が開いてれば次候補 / それ以外は診断次へ" })
+vim.keymap.set("n", "<C-p>", function()
+  cn_cp("cprevious", "clast", -1)
+end, { silent = true, desc = "Quickfix 窓が開いてれば前候補 / それ以外は診断前へ" })
 vim.opt.diffopt:append("vertical") -- デフォルトのdiffspritは縦分割指定
 vim.opt.mouse = "a" -- ターミナル時でもマウスを使えるようにする
 -- vim.opt.guioptions:append("a")
