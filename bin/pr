@@ -53,6 +53,7 @@ initialize() {
 }
 
 find_target_branch_with_fetch() {
+  [[ -n $PR_TARGET_BRANCH ]] && echo "$PR_TARGET_BRANCH" && return
   branches=(develop main)
   if [[ $current_branch =~ ^(main|master)$ ]]; then
     elog "==> Current branch is $current_branch. Please checkout to other branch."
