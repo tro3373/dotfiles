@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+# herdr: ターミナル常駐の AI コーディングエージェント multiplexer
+# https://herdr.dev/ja/docs/install/ / https://github.com/ogulcancelik/herdr
+install_common() { not_supported; }
+install_wsl() { not_supported; }
+install_arch() {
+  def_install herdr-bin
+}
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() {
+  def_install herdr
+}
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+setting_common() { no_settings; }
