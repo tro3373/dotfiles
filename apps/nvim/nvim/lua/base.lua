@@ -155,9 +155,12 @@ local function cn_cp(qf_cmd, qf_wrap, diag_count)
   if vim.fn.getqflist({ winid = 0 }).winid == 0 then -- quickfix 窓が閉じている
     return diag_jump(diag_count)
   end
+  local sb = vim.o.switchbuf
+  vim.o.switchbuf = "usetab,newtab" -- 既存タブがあればそこへ、無ければ新タブで開く (<CR> と同じ)
   if not pcall(vim.cmd, qf_cmd) then
     pcall(vim.cmd, qf_wrap) -- 末尾/先頭では反対端へ回り込む
   end
+  vim.o.switchbuf = sb
 end
 vim.keymap.set("n", "<C-n>", function()
   cn_cp("cnext", "cfirst", 1)
