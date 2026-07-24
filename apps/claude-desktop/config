@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+# Claude Desktop: Anthropic 公式デスクトップアプリ
+# https://code.claude.com/docs/en/desktop-linux
+# Arch: AUR の claude-desktop(公式 .deb を再パッケージ)
+# Ubuntu: Anthropic 公式 apt リポジトリ
+# Mac: 公式 cask(Claude.app)
+is_installed() {
+  if is_mac; then
+    [[ -e /Applications/Claude.app ]]
+    return
+  fi
+  has_or_local_package claude-desktop
+}
+install_common() { not_supported; }
+install_wsl() { not_supported; }
+install_arch() {
+  def_install claude-desktop
+}
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() {
+  exe brew install --cask claude
+}
+install_ubuntu() {
+  local key=/usr/share/keyrings/claude-desktop-archive-keyring.asc
+  def_install curl
+  exe sudo curl -fsSLo "$key" https://downloads.claude.ai/claude-desktop/key.asc
+  echo "deb [arch=amd64,arm64 signed-by=$key] https://downloads.claude.ai/claude-desktop/apt/stable stable main" |
+    sudo_tee /etc/apt/sources.list.d/claude-desktop.list
+  exe sudo apt update
+  def_install claude-desktop
+}
+install_redhat() { not_supported; }
+setting_common() { no_settings; }
