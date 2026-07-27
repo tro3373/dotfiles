@@ -92,7 +92,8 @@ _tgpt() {
     [[ -z $model ]] && model=openai/gpt-oss-120b
     [[ -z $key ]] && key=$GROQ_API_KEY
   fi
-  command tgpt --quiet --provider "$provider" --model "$model" --key "$key"
+  # command tgpt --quiet --provider "$provider" --model "$model" --key "$key"
+  command tgpt -w --provider "$provider" --model "$model" --key "$key"
 }
 
 _claude() {
