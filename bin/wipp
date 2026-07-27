@@ -1,12 +1,10 @@
 #!/usr/bin/env -S bash -e
 
 main() {
-  local changes msg="$*"
-  [[ -z $msg ]] && msg="update $(date +"%Y-%m-%d %H:%M:%S")"
+  local changes
   changes=$(git status -s | wc -l)
   if [[ $changes -ne 0 ]]; then
-    git add -A
-    git commit -m "$msg"
+    wip "$@"
   fi
   git push
 }
