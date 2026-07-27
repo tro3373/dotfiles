@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# https://github.com/simoarpe/ziggity
+# A fast, keyboard driven terminal UI for Git, written in Zig.
+install_common() {
+  dl_gh_release simoarpe/ziggity latest "*-$(uname -m)-linux-musl.tar.gz"
+  exe 'tar -xzf ziggity-*-linux-musl.tar.gz'
+  exe 'sudo install -m 755 ziggity /usr/local/bin/ziggity'
+}
+install_wsl() { install_common; }
+install_arch() {
+  def_install ziggity-bin
+}
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() {
+  exe brew install simoarpe/ziggity/ziggity
+}
+install_ubuntu() { install_common; }
+install_redhat() { install_common; }
+setting_common() { no_settings; }
+#add_dependency_args
+#is_installed
+#install_via_os_default
+#def_install
+#is_debug
+#is_dry
+#log
+#dlog
+#not_supported
+#no_settings
+#make_link_dot2home
+#make_lnk_with_bkup
+#cd_work
+#make_work_if_needed
+#dl
+#dl_unzip
+#dl_untar
+#github
+#github_user_local
+#sudo_tee
