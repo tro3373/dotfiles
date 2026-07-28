@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+# wad: Waydroid(LXC) の Android 画面を出すラッパー。
+#   wad               full UI を1枚のウィンドウで表示。
+#   wad <pkg>         アプリを単体ウィンドウで起動 (pkg は wad list で確認)。
+#   wad list          インストール済みアプリ一覧。
+#   wad install <apk> APK を導入。
+#   wad init          初回セットアップ。イメージを落として展開する (sudo, 数百MB)。
+#   wad cert          Play にログインする為の android_id 登録手順を出す。
+#   wad stop          session を停止。
+#
+# ad(redroid+scrcpy) との違い:
+#   - ホスト GPU へ直接描画するので H264 の encode/decode 往復が無い。
+#     redroid は software encoder しか持たず、そこが 26fps の天井になっていた。
+#   - session は窓を閉じても残る。起動が重いので明示的に wad stop するまで生かす。
+
+readonly unit=waydroid-container.service
+readonly system_type="${WAD_SYSTEM_TYPE:-GAPPS}" # VANILLA | FOSS | GAPPS
+
+has() { command -v "${1}" >&/dev/null; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+
+# container は systemd 側。session と違い root が要るので waydroid 自身は起こせない
+container_up() {
+  if systemctl is-active --quiet "$unit"; then
+    return
+  fi
+  info "==> starting $unit..."
+  sudo systemctl start "$unit"
+}
+
+# GAPPS イメージは android_id を Google に登録しないと Play にログインできない
+show_cert() {
+  local id
+  id=$(sudo waydroid shell -- sh -c \
+    "sqlite3 /data/data/*/*/gservices.db 'select value from main where name = \"android_id\";'")
+  log "android_id: $id"
+  log "==> register it at https://www.google.com/android/uncertified"
+  log "==> wait a few minutes, then: wad stop"
+}
+
+main() {
+  set -euo pipefail
+  has waydroid || die "==> No waydroid command exist. sudo pacman -S waydroid && wad init"
+
+  case ${1:-} in
+    init)
+      shift
+      info "==> waydroid init -s $system_type ..."
+      sudo waydroid init -s "$system_type" "$@"
+      return
+      ;;
+    stop)
+      waydroid session stop
+      return
+      ;;
+    cert)
+      container_up
+      show_cert
+      return
+      ;;
+    list | install)
+      container_up
+      waydroid app "$@" # app list / app install <apk>
+      return
+      ;;
+  esac
+
+  container_up
+  # show-full-ui / app launch は session が落ちていれば自前で起こす
+  if [[ -n ${1:-} ]]; then
+    waydroid app launch "$@"
+    return
+  fi
+  waydroid show-full-ui
+}
+
+main "$@"

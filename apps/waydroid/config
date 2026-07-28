@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# waydroid: LXC で Android を動かす。ホスト GPU へ直接描画するので、
+# redroid(bin/ad) のような H264 encode/decode の往復が無い。
+# 画面表示・アプリ起動は bin/wad 経由。
+
+install_common() { not_supported; }
+install_wsl() { not_supported; }
+install_arch() {
+  install_via_os_default
+}
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+setting_common() { no_settings; }
+setting_arch() {
+  # 常駐させる。wad が起動の度に sudo systemctl start しなくて済む
+  exe sudo systemctl enable --now waydroid-container.service
+  init_waydroid_images
+  tips_waydroid
+}
+
+# system type を二重管理しないよう、イメージ導入は bin/wad init に寄せる
+init_waydroid_images() {
+  if [[ -e /var/lib/waydroid/waydroid.cfg ]]; then
+    log "===> waydroid images are already initialized"
+    return
+  fi
+  exe wad init
+}
+
+tips_waydroid() {
+  cat <<'EOF' | inki
+- GAPPS イメージは android_id を Google に登録するまで Play にログインできない
+  - `wad cert` で android_id と登録先 URL が出る
+  - 登録して数分待ってから `wad stop` で session を入れ直す
+- Wayland セッションと kernel の binder が要る
+  - `zgrep CONFIG_ANDROID_BINDER_IPC /proc/config.gz` が `=y` なら追加作業は不要
+  - `=m` や未設定なら binder_linux-dkms を入れる
+EOF
+}
