@@ -24,6 +24,9 @@ Add a new git worktree for the specified branch(or Remove it).
       -m        : Merge a worktree branch into the current branch
       -mr       : Merge and then remove the worktree
       -e        : Edit config
+    Notes
+      For -l/-m/-mr/-r, <branch_name> filters the worktree list
+      and a single match is selected without opening the list.
 
 EOF
 }
@@ -84,14 +87,35 @@ get_worktree_branch_name() {
 }
 
 _fzf_worktrees() {
+  # 位置引数でブランチ名を渡されたら絞り込みクエリにする。worktree の
+  # ディレクトリ名はスラッシュをハイフンに潰してあるので、一覧の行に
+  # 当てるにはクエリ側も同じ形へ寄せる必要がある。
+  # --select-1 を引数ありのときだけにするのは安全のため。無条件だと
+  # 候補が 1 件しかない状態で `gt -r` を打っただけで一覧を出さずに
+  # 削除まで走ってしまう。
+  # --select-1 と組む以上、クエリは曖昧一致させてはいけない。既定の
+  # fuzzy + 行全体照合のままだと、存在しないブランチ名を渡したときに
+  # 無関係な worktree 1 件へ確定し、一覧を出さないまま merge/remove が
+  # 走る (例: `gt -mr fix/gt` が feature-slack-... を消す)。
+  #   --exact       : 部分文字列一致に固定 (飛び石の subsequence を殺す)
+  #   --no-extended : ブランチ名中の ! ^ $ | を演算子扱いさせない
+  #   --nth=-1      : 照合対象を最終フィールド(= worktree パス)だけに絞る
+  #                   (.tasks.md サマリの文字列で当たるのを防ぐ)
+  local filter_args=()
+  [[ -n $branch ]] && filter_args=(
+    --query "$(get_worktree_branch_name)" --select-1
+    --exact --no-extended --nth=-1
+  )
+  # NOTE: --exit-0 は付けない。一致 0 件で黙って終わるとブランチ名の
+  # 打ち間違いに気づけない。空の一覧を出してその場で打ち直させる。
   # shellcheck disable=SC2016
   fzf \
-    --exit-0 \
     --reverse \
     --height=100% \
     --bind 'ctrl-l:toggle-all' \
     --preview='p=$(echo {} | awk "{print \$NF}")/.tasks.md; [ -e "$p" ] && bat --color=always "$p" || echo "(no tasks file)"' \
     --preview-window=down:70% \
+    "${filter_args[@]}" \
     "$@"
 }
 
