@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
-# ad: Android 画面を端末(Kitty Graphics)に出す roidy ラッパー。
-#   ad            redroid(Docker) backend を起動し roidy で描画。
-#                 Ctrl+C / roidy 終了で redroid も停止する session 型。
+# ad: Android 画面を出す scrcpy/roidy ラッパー。
+#   ad            redroid(Docker) backend を起動し scrcpy(GUI窓)で描画。
+#                 Ctrl+C / viewer 終了で redroid も停止する session 型。
 #   ad start <pkg>  redroid backend で <pkg> を単体起動。
+#   ad -g [args]  --gui: scrcpy で描画(既定なので明示用)。
+#   ad -t [args]  --term: 端末に Kitty Graphics で描画(roidy cast)。tmux/SSH 用だが
+#                 PNG+base64 で 1frame 192KB を tty に流すので GUI より大幅に遅い。
 #   ad -d [args]  --device: redroid を使わず既存 adb 接続(実機)へ直行。
 #
 # redroid の /data (=$AD_DATA) はコンテナと別に永続するのでログインは残る。
@@ -14,6 +17,8 @@ readonly host=localhost
 readonly port=5555
 readonly serial="$host:$port"
 readonly data="${AD_DATA:-$HOME/.local/share/ad/redroid}"
+readonly scrcpy_server=/data/local/tmp/scrcpy-server.jar
+term=
 
 has() { command -v "${1}" >&/dev/null; }
 hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
@@ -34,13 +39,53 @@ wait_boot() {
   done
 }
 
+# viewer を起動。既定は scrcpy(H264 を GPU に直接描画)、--term は roidy cast
+# (scrcpy-server の H264 を ffmpeg でデコード -> Kitty Graphics で端末に描画)。
+#   $1: 接続先 serial。空なら viewer 既定の接続先(実機用)。
+view() {
+  local -a adb_target=() roidy_target=() scrcpy_opts=()
+  if [[ -n $1 ]]; then
+    adb_target=(-s "$1")
+    roidy_target=(--host "$host" --port "$port")
+    # redroid に opus encoder が無く(aac/flac のみ)、audio demuxer が落ちると session ごと死ぬ
+    scrcpy_opts=(--no-audio)
+  fi
+  shift
+  if [[ ${1:-} == start ]]; then
+    shift # roidy cast は <app> を位置引数で直に取るので start は剥がす
+  fi
+
+  if [[ -z $term ]]; then
+    # scrcpy は <app> を位置引数で取らない。exact package 名なので、
+    # 前方一致で選ばせたいときは呼び出し側で '?kindle' のように prefix を付ける
+    local -a app=()
+    if [[ -n ${1:-} && ${1:-} != -* ]]; then
+      app=(--start-app="$1")
+      shift
+    fi
+    info "==> starting scrcpy..."
+    scrcpy "${adb_target[@]}" "${scrcpy_opts[@]}" "${app[@]}" "$@" # scrcpy は毎回自前の server を push するので掃除不要
+    return
+  fi
+
+  # roidy cast は device 上の既存 jar をそのまま再利用する (自前 version と一致する保証がない)。
+  # /data は永続するので scrcpy が残した別 version が居座り、version mismatch で落ちる
+  adb "${adb_target[@]}" shell rm -f "$scrcpy_server" >/dev/null 2>&1 || true
+  info "==> starting roidy cast..."
+  roidy cast "${roidy_target[@]}" "$@"
+}
+
 run_redroid() {
   hass docker adb # redroid 専用の依存
   mkdir -p "$data"
   docker rm -f "$name" >/dev/null 2>&1 || true # 前回 session の残骸を掃除
   info "==> starting redroid..."
+  # gpu_mode=host: /dev/dri でホスト GPU 描画。既定の guest はソフトレンダリングで fps 上限 15
   docker run -d --rm --privileged --name "$name" \
-    -v "$data:/data" -p "$port:5555" "$image" \
+    -v "$data:/data" -v /dev/dri:/dev/dri -p "$port:5555" "$image" \
+    androidboot.redroid_gpu_mode=host \
+    androidboot.redroid_fps=30 \
+    androidboot.use_memfd=true \
     androidboot.redroid_width=720 \
     androidboot.redroid_height=1280 \
     androidboot.redroid_dpi=320
@@ -54,19 +99,34 @@ run_redroid() {
   docker logs -f "$name" & # boot 中はログを流す
   local logs_pid=$!
   wait_boot
-  kill "$logs_pid" 2>/dev/null || true # roidy が画面を掴む前にログを止める
+  kill "$logs_pid" 2>/dev/null || true # viewer が画面を掴む前にログを止める
 
-  info "==> starting roidy..."
-  roidy --host "$host" --port "$port" "$@" # exec しない: 戻ったら EXIT trap で停止
+  view "$serial" "$@" # exec しない: 戻ったら EXIT trap で停止
 }
 
 main() {
   set -euo pipefail
-  hass roidy adb docker ffmpeg
 
-  if [[ ${1:-} == -d || ${1:-} == --device ]]; then
+  local device=
+  while :; do
+    case ${1:-} in
+      -t | --term) term=1 ;;
+      -g | --gui) term= ;;
+      -d | --device) device=1 ;;
+      *) break ;;
+    esac
     shift
-    exec roidy "$@" # 実機: 既存 adb 接続へ。--host/--port は任意で渡す
+  done
+
+  local -a deps=(adb docker scrcpy) # scrcpy は単体で完結。roidy/ffmpeg は要らない
+  if [[ -n $term ]]; then
+    deps=(adb docker roidy ffmpeg)
+  fi
+  hass "${deps[@]}"
+
+  if [[ -n $device ]]; then
+    view "" "$@" # 実機: 既存 adb 接続へ。--host/--port は任意で渡す
+    return
   fi
 
   run_redroid "$@"
