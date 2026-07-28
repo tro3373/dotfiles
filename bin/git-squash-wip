@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+
+# Unwind the run of `wip:` commits sitting at HEAD into the index, so the
+# caller can record them as one commit. Committing is deliberately left to
+# the caller: the commit message convention lives there, not here.
+
+command_name=$(basename "$0") && readonly command_name
+head_wip=0
+local_wip=0
+base=""
+
+usage() {
+  cat <<EOF
+
+Unwind the run of wip: commits at HEAD into the index.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help : Show this usage
+
+  Takes no arguments and creates no commit. On success HEAD moves back to
+  the commit below the wip: run and every wip: change sits staged, ready
+  for a single commit. Aborts unless the range about to be rewritten holds
+  nothing but unpushed wip: commits and the index has no staged changes.
+
+EOF
+}
+
+initialize() {
+  while true; do
+    [[ $# -eq 0 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      *) error "==> Error: unexpected argument: $1. This command takes no arguments and creates no commit." ;;
+    esac
+    shift
+  done
+  set -euo pipefail
+}
+
+info() { echo "$*" >&2; }
+error() {
+  echo "$*" >&2
+  exit 1
+}
+
+verify_repo() {
+  if ! git rev-parse --git-dir >/dev/null 2>&1; then
+    error "==> Error: not a git repository."
+  fi
+}
+
+# Length of the uninterrupted wip: run starting at HEAD (first-parent only).
+count_head_wip() {
+  while git rev-parse --verify --quiet "HEAD~${head_wip}^{commit}" >/dev/null; do
+    [[ $(git log -1 --format=%s "HEAD~${head_wip}") == wip:* ]] || break
+    head_wip=$((head_wip + 1))
+  done
+}
+
+# Diagnostic only: wip: commits not reachable from any remote. Never used as
+# a safety check, since it walks every parent while HEAD~N walks first parents.
+count_local_wip() {
+  local subjects
+  subjects=$(git log --format=%s HEAD --not --remotes)
+  local_wip=$(printf '%s\n' "${subjects}" | grep -c '^wip:' || true)
+}
+
+verify_wip_run() {
+  if [[ ${head_wip} -gt 0 ]]; then
+    return
+  fi
+
+  count_local_wip
+  if [[ ${local_wip} -eq 0 ]]; then
+    info "==> No wip: commits found. Nothing to squash."
+    exit 0
+  fi
+  error "==> Error: ${local_wip} unpushed wip: commit(s) exist but a non-wip commit sits on top of the run. Move it off the tip first."
+}
+
+# Inspect the exact range reset --soft is about to discard. Counting the head
+# run alone would miss commits reachable only through a merge's second parent.
+verify_squash_range() {
+  base="HEAD~${head_wip}"
+  if ! git rev-parse --verify --quiet "${base}^{commit}" >/dev/null; then
+    error "==> Error: every commit in this repository is a wip: commit. Cannot squash without a base commit."
+  fi
+
+  local total unpushed non_wip
+  total=$(git rev-list --count "${base}..HEAD")
+  unpushed=$(git rev-list --count "${base}..HEAD" --not --remotes)
+  if [[ ${total} -ne ${unpushed} ]]; then
+    error "==> Error: ${base}..HEAD contains published commits. Refusing to rewrite them."
+  fi
+
+  non_wip=$(git log --format=%s "${base}..HEAD" | grep -cv '^wip:' || true)
+  if [[ ${non_wip} -gt 0 ]]; then
+    error "==> Error: ${base}..HEAD contains ${non_wip} non-wip commit(s), reachable through a merge. Squash them manually."
+  fi
+
+  # Nothing would end up staged, and the caller's commit step would then look
+  # at unrelated changes instead.
+  if git diff --quiet "${base}" HEAD; then
+    error "==> Error: the wip: commits cancel out to no net change. Drop them with: git reset --hard ${base}"
+  fi
+}
+
+# Only the index matters: reset --soft leaves it alone, so anything already
+# staged would be recorded together with the wip: changes.
+verify_clean_index() {
+  if ! git diff --cached --quiet; then
+    error "==> Error: staged changes would be swept into the squash. Commit or unstage them first."
+  fi
+}
+
+unwind() {
+  local original_head
+  original_head=$(git rev-parse HEAD)
+
+  git reset --soft "${base}"
+  info "==> Unwound ${head_wip} wip: commits into the index. Commit them now to finish the squash."
+  info "==> Pre-squash HEAD was ${original_head} (undo with: git reset --soft ${original_head})"
+}
+
+main() {
+  initialize "$@"
+
+  verify_repo
+  count_head_wip
+  verify_wip_run
+  verify_squash_range
+  verify_clean_index
+  unwind
+}
+main "$@"
