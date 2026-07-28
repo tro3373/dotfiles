@@ -118,9 +118,11 @@ main() {
     shift
   done
 
-  local -a deps=(adb docker scrcpy) # scrcpy は単体で完結。roidy/ffmpeg は要らない
+  # viewer 側の依存だけ見る。docker は redroid 専用なので run_redroid が自分で確認する
+  # (-d の実機モードで docker を要求しないため)。
+  local -a deps=(adb scrcpy) # scrcpy は単体で完結。roidy/ffmpeg は要らない
   if [[ -n $term ]]; then
-    deps=(adb docker roidy ffmpeg)
+    deps=(adb roidy ffmpeg)
   fi
   hass "${deps[@]}"
 
