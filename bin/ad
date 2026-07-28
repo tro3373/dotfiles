@@ -118,13 +118,9 @@ main() {
     shift
   done
 
-  # viewer 側の依存だけ見る。docker は redroid 専用なので run_redroid が自分で確認する
-  # (-d の実機モードで docker を要求しないため)。
-  local -a deps=(adb scrcpy) # scrcpy は単体で完結。roidy/ffmpeg は要らない
-  if [[ -n $term ]]; then
-    deps=(adb roidy ffmpeg)
-  fi
-  hass "${deps[@]}"
+  hass adb docker
+  [[ -n $term ]] && hass roidy ffmpeg # --term: roidy cast が H264 を ffmpeg でデコードする
+  [[ -z $term ]] && hass scrcpy       # 既定(GUI): scrcpy は単体で完結。roidy/ffmpeg は要らない
 
   if [[ -n $device ]]; then
     view "" "$@" # 実機: 既存 adb 接続へ。--host/--port は任意で渡す
