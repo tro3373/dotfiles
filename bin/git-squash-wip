@@ -6,8 +6,14 @@
 
 command_name=$(basename "$0") && readonly command_name
 head_wip=0
-local_wip=0
 base=""
+
+has() { command -v "${1}" >&/dev/null; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+info() { _log cyan "$*"; }
+error() { _log red "$*" && exit 1; }
 
 usage() {
   cat <<EOF
@@ -28,21 +34,12 @@ EOF
 }
 
 initialize() {
-  while true; do
-    [[ $# -eq 0 ]] && break
-    case "$1" in
-      -h | --help) usage && exit 0 ;;
-      *) error "==> Error: unexpected argument: $1. This command takes no arguments and creates no commit." ;;
-    esac
-    shift
-  done
+  case "${1:-}" in
+    '') ;;
+    -h | --help) usage && exit 0 ;;
+    *) error "==> Error: unexpected argument: $1. This command takes no arguments and creates no commit." ;;
+  esac
   set -euo pipefail
-}
-
-info() { echo "$*" >&2; }
-error() {
-  echo "$*" >&2
-  exit 1
 }
 
 verify_repo() {
@@ -53,18 +50,11 @@ verify_repo() {
 
 # Length of the uninterrupted wip: run starting at HEAD (first-parent only).
 count_head_wip() {
-  while git rev-parse --verify --quiet "HEAD~${head_wip}^{commit}" >/dev/null; do
-    [[ $(git log -1 --format=%s "HEAD~${head_wip}") == wip:* ]] || break
+  local subject
+  while IFS= read -r subject; do
+    [[ ${subject} == wip:* ]] || break
     head_wip=$((head_wip + 1))
-  done
-}
-
-# Diagnostic only: wip: commits not reachable from any remote. Never used as
-# a safety check, since it walks every parent while HEAD~N walks first parents.
-count_local_wip() {
-  local subjects
-  subjects=$(git log --format=%s HEAD --not --remotes)
-  local_wip=$(printf '%s\n' "${subjects}" | grep -c '^wip:' || true)
+  done < <(git log --first-parent --format=%s HEAD)
 }
 
 verify_wip_run() {
@@ -72,7 +62,10 @@ verify_wip_run() {
     return
   fi
 
-  count_local_wip
+  # Diagnostic only: wip: commits not reachable from any remote. Never used as
+  # a safety check, since it walks every parent while HEAD~N walks first parents.
+  local local_wip
+  local_wip=$(git log --format=%s HEAD --not --remotes | grep -c '^wip:' || true)
   if [[ ${local_wip} -eq 0 ]]; then
     info "==> No wip: commits found. Nothing to squash."
     exit 0
@@ -83,7 +76,6 @@ verify_wip_run() {
 # Inspect the exact range reset --soft is about to discard. Counting the head
 # run alone would miss commits reachable only through a merge's second parent.
 verify_squash_range() {
-  base="HEAD~${head_wip}"
   if ! git rev-parse --verify --quiet "${base}^{commit}" >/dev/null; then
     error "==> Error: every commit in this repository is a wip: commit. Cannot squash without a base commit."
   fi
@@ -130,6 +122,7 @@ main() {
   verify_repo
   count_head_wip
   verify_wip_run
+  base="HEAD~${head_wip}" # 以降は読み取り専用。verify/unwind の呼び出し順に依存させない
   verify_squash_range
   verify_clean_index
   unwind
