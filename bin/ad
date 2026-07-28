@@ -8,7 +8,7 @@
 #
 # redroid の /data (=$AD_DATA) はコンテナと別に永続するのでログインは残る。
 
-readonly image=redroid/redroid:16.0.0-latest # Android 16
+readonly image=redroid/redroid:15.0.0-latest # Android 15: 16 は host kernel の ashmem 非対応で boot しない
 readonly name=redroid
 readonly host=localhost
 readonly port=5555
@@ -27,6 +27,7 @@ warn() { _log yellow "$*"; }
 die() { _log red "$*" && exit 1; }
 
 wait_boot() {
+  info "==> waiting for redroid boot..."
   adb -s "$serial" wait-for-device
   until [[ "$(adb -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]]; do
     sleep 1
@@ -37,6 +38,7 @@ run_redroid() {
   hass docker adb # redroid 専用の依存
   mkdir -p "$data"
   docker rm -f "$name" >/dev/null 2>&1 || true # 前回 session の残骸を掃除
+  info "==> starting redroid..."
   docker run -d --rm --privileged --name "$name" \
     -v "$data:/data" -p "$port:5555" "$image" \
     androidboot.redroid_width=720 \
@@ -47,12 +49,14 @@ run_redroid() {
   trap 'exit 130' INT TERM
   trap 'echo "stopping redroid..." >&2; docker stop "$name" >/dev/null 2>&1 || true' EXIT
 
+  info "==> waiting for redroid adb..."
   adb connect "$serial" >/dev/null
   docker logs -f "$name" & # boot 中はログを流す
   local logs_pid=$!
   wait_boot
   kill "$logs_pid" 2>/dev/null || true # roidy が画面を掴む前にログを止める
 
+  info "==> starting roidy..."
   roidy --host "$host" --port "$port" "$@" # exec しない: 戻ったら EXIT trap で停止
 }
 
