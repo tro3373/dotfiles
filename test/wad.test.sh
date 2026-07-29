@@ -2,14 +2,20 @@
 
 # bin/wad のユニットテスト (sudo/systemctl/iptables/waydroid を fake に差し替え)。
 #
-# 検証対象は allow_forward。Docker が filter FORWARD を policy DROP にすると
-# waydroid 側の nft (inet lxc) が accept しても後段で落ちて Android が無通信になる。
-# DOCKER-USER へ accept を挿すのがその回避で、ここで担保したいのは:
+# 検証対象は 2 つ。
+#
+# allow_forward: Docker が filter FORWARD を policy DROP にすると waydroid 側の
+# nft (inet lxc) が accept しても後段で落ちて Android が無通信になる。DOCKER-USER
+# へ accept を挿すのがその回避で、ここで担保したいのは:
 #   * container が既に active でも挿す: unit は enabled で再起動後は自動起動済み。
 #     一方 iptables の rule は再起動で消えるので、起動処理を skip した経路でも
 #     通らないと「再起動したら無通信」が直らない (回帰テスト)。
 #   * 冪等: 既に rule があれば挿さない。wad は毎回呼ばれるので重複が積み上がる。
 #   * Docker 未使用なら何もしない: DOCKER-USER chain が無い環境で失敗しない。
+#
+# size: waydroid の prop get/set は session 停止中でもエラーを表示するだけで
+# exit 0 を返す。設定できていないのに成功したように見えるのが一番まずいので、
+# session 停止中は prop を触らず落ちることを担保する。
 #
 #   test/wad.test.sh   # 全テスト実行
 
@@ -75,6 +81,14 @@ import sys
 args = sys.argv[1:]
 with open(os.environ["LOG"], "a") as f:
     f.write("|".join(args) + "\n")
+
+if args[:1] == ["status"]:
+    print("Session:\t" + os.environ.get("FAKE_SESSION", "RUNNING"))
+    print("Container:\tRUNNING")
+elif args[:2] == ["prop", "get"]:
+    value = os.environ.get("FAKE_" + args[2].split(".")[-1].upper(), "")
+    if value:
+        print(value)
 EOS
 
   chmod +x "${fakebin}"/sudo "${fakebin}"/systemctl "${fakebin}"/iptables "${fake_waydroid}"
@@ -89,10 +103,12 @@ run_wad() {
 }
 
 # ${LOG} から $1 に一致した行数を数える。$1 は BRE なので `|` は区切り文字の
-# ままリテラル扱いになる。
+# ままリテラル扱いになり、末尾の値が空であることを `|$` で表現できる。
 count_log() {
   grep -c -- "$1" "${LOG}" || true
 }
+
+# --- allow_forward ---------------------------------------------------------
 
 # 1. 既に active でも DOCKER-USER へ挿す (再起動後に効かせる為の回帰テスト)。
 #    cert は container_up を通る最短経路。
@@ -136,6 +152,67 @@ test_starts_container_then_inserts() {
   check '起動後も accept を 2 方向挿す' '2' "$(count_log 'iptables -I')"
 }
 
+# --- size ------------------------------------------------------------------
+
+# 5. phone preset は Pixel 10 Pro の縦横比 (484x1080) を prop に書く。
+test_size_phone_preset() {
+  export FAKE_SESSION=RUNNING
+  run_wad size phone
+
+  check 'phone は width=484' '1' "$(count_log 'prop|set|persist.waydroid.width|484')"
+  check 'phone は height=1080' '1' "$(count_log 'prop|set|persist.waydroid.height|1080')"
+}
+
+# 6. tablet preset は両辺を空にする。空 = 既定 (ディスプレイ依存) 復帰。
+#    空文字を渡せていないと既定に戻らないので、値が空であることまで見る。
+test_size_tablet_clears_props() {
+  export FAKE_SESSION=RUNNING
+  run_wad size tablet
+
+  check 'tablet は width を空にする' '1' "$(count_log 'prop|set|persist.waydroid.width|$')"
+  check 'tablet は height を空にする' '1' "$(count_log 'prop|set|persist.waydroid.height|$')"
+}
+
+# 7. preset 名でなく <w>x<h> を直接渡せる。
+test_size_accepts_explicit_geometry() {
+  export FAKE_SESSION=RUNNING
+  run_wad size 720x1606
+
+  check '任意指定の width' '1' "$(count_log 'prop|set|persist.waydroid.width|720')"
+  check '任意指定の height' '1' "$(count_log 'prop|set|persist.waydroid.height|1606')"
+}
+
+# 8. 不正な指定は prop を触らずエラー終了する。
+test_size_rejects_invalid_spec() {
+  export FAKE_SESSION=RUNNING
+  run_wad size 480
+  local rc=$?
+
+  check '不正指定は非ゼロ終了' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check '不正指定では prop set しない' '0' "$(count_log 'prop|set')"
+}
+
+# 9. session 停止中は prop を触らず落ちる。waydroid の prop set は停止中でも
+#    exit 0 を返す為、ここを通すと「設定したのに反映されない」を黙って作る。
+test_size_fails_loud_when_session_stopped() {
+  export FAKE_SESSION=STOPPED
+  run_wad size phone
+  local rc=$?
+
+  check 'session 停止中は非ゼロ終了' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'session 停止中は prop set しない' '0' "$(count_log 'prop|set')"
+}
+
+# 10. 引数なしは現在値を読むだけで書き換えない。
+test_size_without_arg_only_reads() {
+  export FAKE_SESSION=RUNNING FAKE_WIDTH=484 FAKE_HEIGHT=1080
+  run_wad size
+
+  check '現在値は prop get で読む' '2' "$(count_log 'prop|get')"
+  check '読むだけで prop set しない' '0' "$(count_log 'prop|set')"
+  unset FAKE_WIDTH FAKE_HEIGHT
+}
+
 main() {
   tmproot=$(mktemp -d)
   trap 'rm -rf "${tmproot}"' EXIT
@@ -147,6 +224,12 @@ main() {
   test_idempotent_when_rule_exists
   test_noop_without_docker
   test_starts_container_then_inserts
+  test_size_phone_preset
+  test_size_tablet_clears_props
+  test_size_accepts_explicit_geometry
+  test_size_rejects_invalid_spec
+  test_size_fails_loud_when_session_stopped
+  test_size_without_arg_only_reads
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

@@ -7,6 +7,10 @@
 #   wad install <apk> APK を導入。
 #   wad init          初回セットアップ。イメージを落として展開する (sudo, 数百MB)。
 #   wad cert          Play に弾かれた時の android_id 登録手順を出す。
+#   wad size          full UI の解像度を表示。
+#   wad size phone    484x1080 (Pixel 10 Pro と同じ縦横比) にする。
+#   wad size tablet   既定 (ディスプレイ依存の横長) に戻す。
+#   wad size <w>x<h>  任意の解像度にする。
 #   wad stop          session を停止。
 #   wad help          この使い方を表示 (-h/--help も可)。
 #
@@ -18,6 +22,12 @@
 readonly unit=waydroid-container.service
 readonly bridge=waydroid0
 readonly system_type="${WAD_SYSTEM_TYPE:-GAPPS}" # VANILLA | FOSS | GAPPS
+
+# full UI の解像度は persist.waydroid.{width,height} が決める。両方空だと既定の
+# ディスプレイ依存 (= 横長タブレット表示) に戻る。phone は Pixel 10 Pro の縦横比
+# 2.23:1 を保ったまま 1080px の縦に収めた値で、1920x1080 の横モニタに収まる。
+# tablet の "x" は「両辺とも空」を表し、既定復帰と同じ経路で処理する
+declare -rA sizes=([phone]=484x1080 [tablet]=x)
 
 # waydroid の shebang は env python3 で、asdf 等の shim を先に拾うと
 # system 側にしか無い dbus/gbinder を見失う。system python を明示して呼ぶ。
@@ -73,6 +83,27 @@ show_cert() {
   log "==> wait a few minutes, then: wad stop"
 }
 
+# 解像度の表示/変更。prop get/set は session 停止中でもエラーを表示するだけで
+# exit 0 を返す為、黙って失敗しないよう先に session を確認する
+size() {
+  wd status | grep -q '^Session:[[:space:]]*RUNNING$' ||
+    die "==> session is stopped. start it first: wad"
+
+  local spec w h
+  if [[ -z ${1:-} ]]; then
+    w=$(wd prop get persist.waydroid.width)
+    h=$(wd prop get persist.waydroid.height)
+    log "size: ${w:-auto}x${h:-auto} (presets: ${!sizes[*]})"
+    return
+  fi
+
+  spec=${sizes[$1]:-$1}
+  [[ $spec =~ ^([0-9]*)x([0-9]*)$ ]] || die "==> Invalid size: $1 (<w>x<h> | ${!sizes[*]})"
+  wd prop set persist.waydroid.width "${BASH_REMATCH[1]}"
+  wd prop set persist.waydroid.height "${BASH_REMATCH[2]}"
+  info "==> size=$1. restart the session to apply: wad stop && wad"
+}
+
 main() {
   set -euo pipefail
   # help は waydroid 未導入でも読めないと意味が無いので存在確認より先
@@ -97,6 +128,11 @@ main() {
     cert)
       container_up
       show_cert
+      return
+      ;;
+    size)
+      shift
+      size "${1:-}"
       return
       ;;
     list | install)
