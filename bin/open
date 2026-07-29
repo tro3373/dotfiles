@@ -20,7 +20,7 @@ open_remote_if_detected() {
   [[ -z $REMOTE_FORWARD_REVERSE_PORT ]] && die "==> No REMOTE_FORWARD_REVERSE_PORT env var found, cannot open remotely."
   [[ ${#files[@]} -eq 0 && ${#urls[@]} -eq 0 ]] && die "==> No urls or files to open remotely."
   if [[ ${#files[@]} -gt 0 ]]; then
-    scp "${files[@]}" $r:$rroot/ &>/dev/null || {
+    scp -r "${files[@]}" $r:$rroot/ &>/dev/null || {
       die "==> Failed to send files to remote"
     }
   fi
@@ -32,7 +32,7 @@ main() {
   local urls=() files=() rfiles=()
   for arg in "$@"; do
     is_url "$arg" && urls+=("$arg") && continue
-    [[ -f $arg ]] && {
+    [[ -e $arg ]] && {
       files+=("$arg")
       rfiles+=("$rroot/$(basename "$arg")")
     }
@@ -59,8 +59,8 @@ main() {
       ;;
   esac
 
+  local mds=() imgs=() htmls=() xlsx=() docx=() others=()
   for f in "${files[@]}"; do
-    local mds=() imgs=() htmls=() xlsx=() docx=() others=()
     case "${f}" in
       *.md) mds+=("${f}") ;;
       *.html) htmls+=("${f}") ;;
