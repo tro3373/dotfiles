@@ -8,6 +8,7 @@
 #   wad init          初回セットアップ。イメージを落として展開する (sudo, 数百MB)。
 #   wad cert          Play にログインする為の android_id 登録手順を出す。
 #   wad stop          session を停止。
+#   wad help          この使い方を表示 (-h/--help も可)。
 #
 # ad(redroid+scrcpy) との違い:
 #   - ホスト GPU へ直接描画するので H264 の encode/decode 往復が無い。
@@ -16,6 +17,15 @@
 
 readonly unit=waydroid-container.service
 readonly system_type="${WAD_SYSTEM_TYPE:-GAPPS}" # VANILLA | FOSS | GAPPS
+
+# waydroid の shebang は env python3 で、asdf 等の shim を先に拾うと
+# system 側にしか無い dbus/gbinder を見失う。system python を明示して呼ぶ。
+readonly waydroid_bin=/usr/bin/waydroid
+wd() { /usr/bin/python3 "$waydroid_bin" "$@"; }
+sudo_wd() { sudo /usr/bin/python3 "$waydroid_bin" "$@"; }
+
+# help は先頭の usage コメントを唯一の情報源として出す。二重管理しない
+usage() { sed -n '/^# wad:/,/^#$/ s/^# \?//p' "${BASH_SOURCE[0]}"; }
 
 has() { command -v "${1}" >&/dev/null; }
 _ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
@@ -38,7 +48,7 @@ container_up() {
 # GAPPS イメージは android_id を Google に登録しないと Play にログインできない
 show_cert() {
   local id
-  id=$(sudo waydroid shell -- sh -c \
+  id=$(sudo_wd shell -- sh -c \
     "sqlite3 /data/data/*/*/gservices.db 'select value from main where name = \"android_id\";'")
   log "android_id: $id"
   log "==> register it at https://www.google.com/android/uncertified"
@@ -47,17 +57,23 @@ show_cert() {
 
 main() {
   set -euo pipefail
-  has waydroid || die "==> No waydroid command exist. sudo pacman -S waydroid && wad init"
+  # help は waydroid 未導入でも読めないと意味が無いので存在確認より先
+  if [[ ${1:-} =~ ^(help|-h|--help)$ ]]; then
+    usage
+    return
+  fi
+
+  [[ -x $waydroid_bin ]] || die "==> No waydroid command exist. sudo pacman -S waydroid && wad init"
 
   case ${1:-} in
     init)
       shift
       info "==> waydroid init -s $system_type ..."
-      sudo waydroid init -s "$system_type" "$@"
+      sudo_wd init -s "$system_type" "$@"
       return
       ;;
     stop)
-      waydroid session stop
+      wd session stop
       return
       ;;
     cert)
@@ -67,7 +83,7 @@ main() {
       ;;
     list | install)
       container_up
-      waydroid app "$@" # app list / app install <apk>
+      wd app "$@" # app list / app install <apk>
       return
       ;;
   esac
@@ -75,10 +91,10 @@ main() {
   container_up
   # show-full-ui / app launch は session が落ちていれば自前で起こす
   if [[ -n ${1:-} ]]; then
-    waydroid app launch "$@"
+    wd app launch "$@"
     return
   fi
-  waydroid show-full-ui
+  wd show-full-ui
 }
 
 main "$@"
