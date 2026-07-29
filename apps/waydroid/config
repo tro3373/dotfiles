@@ -19,6 +19,7 @@ setting_arch() {
   # 常駐させる。wad が起動の度に sudo systemctl start しなくて済む
   exe sudo systemctl enable --now waydroid-container.service
   init_waydroid_images
+  install_libndk
   tips_waydroid
 }
 
@@ -31,6 +32,22 @@ init_waydroid_images() {
   exe wad init
 }
 
+# x86_64 イメージには ARM 用の .so しか持たないアプリ (Kindle 等) が入らない。
+# libndk_translation を overlay へ被せると abilist に arm64-v8a が足されて入るようになる。
+# Intel 製の libhoudini は AMD CPU で動かないのでこちらを使う。書き込み先は overlay
+# だけなので system イメージと ~/.local/share/waydroid/data は触らない
+install_libndk() {
+  if [[ -e /var/lib/waydroid/overlay/system/lib64/arm64 ]]; then
+    log "===> libndk_translation is already installed"
+    return
+  fi
+  github https://github.com/casualsnek/waydroid_script
+  # asdf の shim を掴むと sudo 越しに venv の python を見失う。system python で作る
+  exe /usr/bin/python3 -m venv venv
+  exe venv/bin/pip install -qr requirements.txt
+  exe sudo venv/bin/python3 main.py install libndk
+}
+
 tips_waydroid() {
   cat <<'EOF' | inki
 - GAPPS イメージは Play Protect 未認証。Play へのログインを弾かれることがある
@@ -40,5 +57,10 @@ tips_waydroid() {
 - Wayland セッションと kernel の binder が要る
   - `zgrep CONFIG_ANDROID_BINDER_IPC /proc/config.gz` が `=y` なら追加作業は不要
   - `=m` や未設定なら binder_linux-dkms を入れる
+- libndk を入れた直後は ARM アプリがまだ Play から入らない
+  - abilist は container 起動時に読まれる。`sudo systemctl restart waydroid-container.service`
+  - Play の対応判定は Google のサーバ側にある端末プロファイルを見ている。
+    abilist を変えただけでは古いまま残るので `sudo waydroid shell -- pm clear com.android.vending`
+  - 戻すときは waydroid_script で `sudo venv/bin/python3 main.py uninstall libndk`
 EOF
 }
