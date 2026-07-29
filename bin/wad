@@ -16,11 +16,12 @@
 #   - session は窓を閉じても残る。起動が重いので明示的に wad stop するまで生かす。
 
 readonly unit=waydroid-container.service
+readonly bridge=waydroid0
 readonly system_type="${WAD_SYSTEM_TYPE:-GAPPS}" # VANILLA | FOSS | GAPPS
 
 # waydroid の shebang は env python3 で、asdf 等の shim を先に拾うと
 # system 側にしか無い dbus/gbinder を見失う。system python を明示して呼ぶ。
-readonly waydroid_bin=/usr/bin/waydroid
+readonly waydroid_bin="${WAD_WAYDROID_BIN:-/usr/bin/waydroid}"
 wd() { /usr/bin/python3 "$waydroid_bin" "$@"; }
 sudo_wd() { sudo /usr/bin/python3 "$waydroid_bin" "$@"; }
 
@@ -36,13 +37,29 @@ info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 die() { _log red "$*" && exit 1; }
 
+# Docker は filter FORWARD を policy DROP にする。waydroid の nft (inet lxc) 側が
+# accept しても、同じ hook の後段に居る Docker の chain で落ちて転送が死ぬ。
+# nftables では base chain の accept は「そのチェーンの終了」でしかなく、他の base
+# chain の評価を飛ばさない為。DOCKER-USER は Docker が公式に用意したユーザ用フックで
+# Docker 自身の rule より先に評価される。Docker 未使用なら chain ごと無いので何もしない
+allow_forward() {
+  sudo iptables -S DOCKER-USER >&/dev/null || return 0
+  local d
+  for d in -i -o; do
+    sudo iptables -C DOCKER-USER "$d" "$bridge" -j ACCEPT 2>/dev/null ||
+      sudo iptables -I DOCKER-USER "$d" "$bridge" -j ACCEPT
+  done
+}
+
 # container は systemd 側。session と違い root が要るので waydroid 自身は起こせない
 container_up() {
-  if systemctl is-active --quiet "$unit"; then
-    return
+  if ! systemctl is-active --quiet "$unit"; then
+    info "==> starting $unit..."
+    sudo systemctl start "$unit"
   fi
-  info "==> starting $unit..."
-  sudo systemctl start "$unit"
+  # unit は enabled なので再起動後は既に active。だが iptables の rule は再起動で
+  # 消えている。起動を跨いで直す為に active/inactive に依らず毎回通す
+  allow_forward
 }
 
 # GAPPS イメージは Play Protect 未認証。Play へのログインを弾かれた時は
