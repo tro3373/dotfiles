@@ -64,10 +64,11 @@ if has exa; then
   }
   alias ls="my_ls"
 fi
-alias l="ls -lhF"
-alias ll="ls -lahF"
+# eza の -F/--classify は値を取るオプションのため、末尾に置くと後続のパスを食う
+alias l="ls -lh --classify=auto"
+alias ll="ls -lah --classify=auto"
 alias la="ls -a"
-alias lf="ls -F"
+alias lf="ls --classify=auto"
 alias du="du -h"
 alias df="df -h"
 alias su="su -l"
