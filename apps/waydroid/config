@@ -33,7 +33,8 @@ init_waydroid_images() {
 
 tips_waydroid() {
   cat <<'EOF' | inki
-- GAPPS イメージは android_id を Google に登録するまで Play にログインできない
+- GAPPS イメージは Play Protect 未認証。Play へのログインを弾かれることがある
+  - 未登録でも通ることはあるので、弾かれてから対処すればいい
   - `wad cert` で android_id と登録先 URL が出る
   - 登録して数分待ってから `wad stop` で session を入れ直す
 - Wayland セッションと kernel の binder が要る

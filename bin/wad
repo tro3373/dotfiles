@@ -6,7 +6,7 @@
 #   wad list          インストール済みアプリ一覧。
 #   wad install <apk> APK を導入。
 #   wad init          初回セットアップ。イメージを落として展開する (sudo, 数百MB)。
-#   wad cert          Play にログインする為の android_id 登録手順を出す。
+#   wad cert          Play に弾かれた時の android_id 登録手順を出す。
 #   wad stop          session を停止。
 #   wad help          この使い方を表示 (-h/--help も可)。
 #
@@ -45,7 +45,8 @@ container_up() {
   sudo systemctl start "$unit"
 }
 
-# GAPPS イメージは android_id を Google に登録しないと Play にログインできない
+# GAPPS イメージは Play Protect 未認証。Play へのログインを弾かれた時は
+# android_id を Google に登録して例外扱いにしてもらう (未登録でも通ることはある)
 show_cert() {
   local id
   id=$(sudo_wd shell -- sh -c \
