@@ -1,0 +1,222 @@
+#!/usr/bin/env bash
+
+# kshot: Waydroid の Kindle で開いている本を、今のページから最後まで screenshot して
+# 1冊分の PNG連番 / PDF / zip にまとめる。
+#   kshot <name>      撮影 -> トリム -> PNG連番 + PDF + zip を出力。
+#   kshot -o <dir>    出力先の親 (既定 ~/kshot)。
+#   kshot -n <max>    撮る上限ページ数 (既定 2000)。暴走止め。
+#   kshot -w <sec>    ページ送り後の描画待ち (既定 0.8)。重い本は伸ばす。
+#   kshot -k <n>      同じ画面が n 回続いたら終端とみなす (既定 2)。
+#   kshot -p <way>    ページ送りの打ち方: swipe | tap (既定 swipe)。
+#   kshot -R          右開き (縦書きの日本語書籍) 用にページ送りの向きを反転。
+#   kshot -r          撮影済みの raw/ を使って後処理だけやり直す。
+#   kshot help        この使い方を表示 (-h/--help も可)。
+#
+# 開始位置は人間が合わせること。Kindle の「移動」メニューは本の種類で UI が変わり、
+# 自動操作すると壊れる。先に本を開いて1ページ目を出してから起動する。
+#
+# 向きを間違えると 1 ページ目から動かず、終端判定が即座に効いて数ページの本が
+# 出来上がる。そうなったら -R を足す (または外す) だけで良い。
+#
+# 終端の判定:
+#   Kindle は最終ページでページ送りしても画面が変わらない。直前ページとの差分が
+#   閾値未満なら「進んでいない」とみなし、k 回続いた時点で止めて末尾の重複を捨てる。
+#   比較は上下 5% を落とした本文領域だけで行う。上はステータスバーの時計が毎分
+#   変わり、下はナビゲーションバーが動くので、全画面で比べると永久に差が出続ける。
+
+readonly pkg=com.amazon.kindle
+readonly port=5555
+# AE は channel 単位で差分を数える。ページ送りアニメの残りカスを「変化」と誤認
+# しない程度に緩めた閾値。本文領域のピクセル数に対する割合の分母
+readonly diff_denom=1000
+
+outdir=${KSHOT_OUT:-$HOME/kshot}
+max=2000
+wait_sec=0.8
+stop_after=2
+method=swipe
+rtl=
+redo=
+
+# help は先頭の usage コメントを唯一の情報源として出す。二重管理しない
+usage() { sed -n '/^# kshot:/,/^$/ s/^# \?//p' "${BASH_SOURCE[0]}"; }
+
+has() { command -v "${1}" >&/dev/null; }
+hass() { for _a in "$@"; do has "$_a" || die "==> No $_a command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+
+adb_() { adb -s "$serial" "$@"; }
+
+# Waydroid の Android は起動時に /vendor/etc/hwdata/amdgpu.ids が無いと騒ぐ。
+# exec-out はその stderr も同じ stream に流すので PNG の頭に混ざって画像が壊れる。
+# shell の中で捨てるのが唯一効く
+shot() { adb_ exec-out "screencap -p 2>/dev/null" >"$1"; }
+
+resolve_serial() {
+  if [[ -n ${KSHOT_SERIAL:-} ]]; then
+    echo "$KSHOT_SERIAL"
+    return
+  fi
+  local ip
+  ip=$(/usr/bin/python3 /usr/bin/waydroid status 2>/dev/null |
+    awk '/^IP address:/{print $3}')
+  [[ -n $ip ]] || die "==> waydroid session is not running. start it first: wad"
+  echo "$ip:$port"
+}
+
+screen_size() {
+  adb_ shell wm size | tr -d '\r' | awk -F'[: x]+' '/Physical size/{print $3, $4}'
+}
+
+# tap は画面端を突くので座標次第でツールバーが開く。swipe は読書画面なら必ず
+# ページ送りになるので既定にしている
+turn() {
+  local from=$((w * 4 / 5)) to=$((w / 5)) tap_x=$((w * 19 / 20))
+  # 縦書きの日本語書籍は右開きで、送りの向きが英語書籍と逆になる
+  if [[ -n $rtl ]]; then
+    from=$((w / 5)) to=$((w * 4 / 5)) tap_x=$((w / 20))
+  fi
+  if [[ $method == tap ]]; then
+    adb_ shell input tap "$tap_x" $((h / 2))
+    return
+  fi
+  adb_ shell input swipe "$from" $((h / 2)) "$to" $((h / 2)) 100
+}
+
+same_page() {
+  local n
+  n=$(magick compare -metric AE \
+    \( "$1" -crop "$cmp_crop" +repage \) \
+    \( "$2" -crop "$cmp_crop" +repage \) null: 2>&1 |
+    awk '{print $1; exit}') || true
+  # 数値以外が返るのは compare 自体の失敗。黙って「同一」に倒すと途中で
+  # 打ち切られて欠けた本が出来るので落とす
+  [[ $n =~ ^[0-9.e+-]+$ ]] || die "==> magick compare failed: $n"
+  awk -v n="$n" -v t="$cmp_thresh" 'BEGIN { exit !(n + 0 < t) }'
+}
+
+capture() {
+  local raw=$1 i=1 same=0 prev='' cur
+  mkdir -p "$raw"
+  info "==> capturing (max=$max, turn=$method${rtl:+ rtl})..."
+  while ((i <= max)); do
+    cur=$(printf '%s/page_%04d.png' "$raw" "$i")
+    shot "$cur"
+    printf '\rpage %d' "$i" >&2
+    same=$((same + 1))
+    if [[ -z $prev ]] || ! same_page "$prev" "$cur"; then
+      same=0
+    fi
+    if ((same >= stop_after)); then
+      # 止まったと分かった時点で、末尾の同一ページは本文ではないので捨てる
+      for ((j = 0; j < same; j++)); do
+        rm -f "$(printf '%s/page_%04d.png' "$raw" $((i - j)))"
+      done
+      i=$((i - same))
+      break
+    fi
+    prev=$cur
+    turn
+    sleep "$wait_sec"
+    i=$((i + 1))
+  done
+  printf '\n' >&2
+  ((i <= max)) || warn "==> hit -n $max without reaching the end. raise it if the book is longer"
+  # i は終端で抜けた時だけ本文の枚数と一致する (上限で抜けると max+1)。撮れた本の
+  # 厚みは報告を間違えると気付けないので、残ったファイルを数えて出す
+  log "==> captured $(find "$raw" -name '*.png' | wc -l) pages"
+}
+
+# ページ毎に trim すると寸法がばらついて PDF や zip がガタつく。全ページの
+# bounding box の和を1回だけ求め、全ページを同じ矩形で切る
+union_bbox() {
+  magick identify -format '%@\n' "$@" | awk -F'[x+]' '
+    NR == 1 { x1 = $3; y1 = $4; x2 = $3 + $1; y2 = $4 + $2; next }
+    {
+      if ($3 < x1) x1 = $3
+      if ($4 < y1) y1 = $4
+      if ($3 + $1 > x2) x2 = $3 + $1
+      if ($4 + $2 > y2) y2 = $4 + $2
+    }
+    END { printf "%dx%d+%d+%d", x2 - x1, y2 - y1, x1, y1 }'
+}
+
+main() {
+  set -euo pipefail
+  if [[ ${1:-} =~ ^(help|-h|--help)$ ]]; then
+    usage
+    return
+  fi
+
+  local opt
+  while getopts ':o:n:w:k:p:Rr' opt; do
+    case $opt in
+      o) outdir=$OPTARG ;;
+      n) max=$OPTARG ;;
+      w) wait_sec=$OPTARG ;;
+      k) stop_after=$OPTARG ;;
+      p) method=$OPTARG ;;
+      R) rtl=1 ;;
+      r) redo=1 ;;
+      *) die "==> Invalid option: -$OPTARG" ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+
+  local name=${1:-}
+  [[ -n $name ]] || die "==> Usage: kshot [-o dir] [-n max] [-w sec] [-k n] [-p way] [-R] [-r] <name>"
+  [[ $name != */* ]] || die "==> Invalid name: $name (no slash)"
+  # 撮り始めてから落ちると数十分が無駄になるので、打ち方の検査は先に済ませる
+  [[ $method =~ ^(swipe|tap)$ ]] || die "==> Invalid -p: $method (swipe | tap)"
+
+  hass adb magick img2pdf zip
+  local dir="$outdir/$name" raw png bbox
+  raw="$dir/raw"
+  png="$dir/png"
+
+  if [[ -z $redo ]]; then
+    local serial w h cmp_crop cmp_thresh
+    serial=$(resolve_serial)
+    adb_ get-state >&/dev/null ||
+      die "==> adb cannot reach $serial. enable USB debugging in Android and accept the prompt"
+    adb_ shell dumpsys activity activities 2>/dev/null | grep -q "topResumedActivity.*$pkg" ||
+      die "==> $pkg is not in the foreground. open the book at its first page, then rerun"
+    read -r w h < <(screen_size)
+    [[ -n ${h:-} ]] || die "==> failed to read screen size"
+    # 上下 5% ずつを比較から外す。ステータスバーの時計とナビゲーションバーが
+    # 本文と無関係に変わる為
+    cmp_crop=$(printf '%dx%d+0+%d' "$w" $((h - h / 10)) $((h / 20)))
+    cmp_thresh=$((w * (h - h / 10) / diff_denom))
+
+    [[ ! -d $raw ]] || die "==> $raw already exists. remove it or use -r to redo postprocess"
+    capture "$raw"
+  fi
+
+  [[ -d $raw ]] || die "==> No $raw. capture first (drop -r)"
+  shopt -s nullglob
+  local raws=("$raw"/*.png)
+  ((${#raws[@]} > 0)) || die "==> No pages in $raw"
+
+  info "==> trimming ${#raws[@]} pages..."
+  bbox=$(union_bbox "${raws[@]}")
+  log "==> crop: $bbox"
+  rm -rf "$png"
+  mkdir -p "$png"
+  # screencap の PNG は全面不透明の alpha を持つ。残すと img2pdf が soft mask を
+  # 別に作って PDF が膨らむだけなので落とす
+  magick mogrify -path "$png" -crop "$bbox" +repage -alpha off "${raws[@]}"
+
+  info "==> building pdf/zip..."
+  img2pdf --output "$dir/$name.pdf" "$png"/*.png
+  rm -f "$dir/$name.zip"
+  zip -qj "$dir/$name.zip" "$png"/*.png
+  log "==> done: $dir/$name.pdf, $dir/$name.zip"
+}
+
+main "$@"
