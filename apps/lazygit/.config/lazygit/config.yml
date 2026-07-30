@@ -1,0 +1,12 @@
+keybinding:
+  universal:
+    # h/l を pane 移動ではなく Enter/Esc 相当にする
+    # pane 移動は 矢印/<tab>/数字 で行う
+    prevBlock-alt: <disabled>
+    nextBlock-alt: <disabled>
+    return:
+      - <esc>
+      - h
+    goInto:
+      - <enter>
+      - l
