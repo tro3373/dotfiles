@@ -9,6 +9,7 @@
 #   wad cert          Play に弾かれた時の android_id 登録手順を出す。
 #   wad size          full UI の解像度を表示。
 #   wad size phone    484x1080 (Pixel 10 Pro と同じ縦横比) にする。
+#   wad size book     764x1080 (紙の判型と同じ 1:√2) にする。kshot の PDF 用。
 #   wad size tablet   既定 (ディスプレイ依存の横長) に戻す。
 #   wad size <w>x<h>  任意の解像度にする。
 #   wad stop          session を停止。
@@ -26,8 +27,10 @@ readonly system_type="${WAD_SYSTEM_TYPE:-GAPPS}" # VANILLA | FOSS | GAPPS
 # full UI の解像度は persist.waydroid.{width,height} が決める。両方空だと既定の
 # ディスプレイ依存 (= 横長タブレット表示) に戻る。phone は Pixel 10 Pro の縦横比
 # 2.23:1 を保ったまま 1080px の縦に収めた値で、1920x1080 の横モニタに収まる。
+# book は紙の判型に合わせた 1:√2。A/B判・文庫・コミックは全てこの比なので 1 個で足りる。
+# kshot は画面をそのまま切り出す為、画面の縦横比がそのまま PDF のページ比になる。
 # tablet の "x" は「両辺とも空」を表し、既定復帰と同じ経路で処理する
-declare -rA sizes=([phone]=484x1080 [tablet]=x)
+declare -rA sizes=([phone]=484x1080 [book]=764x1080 [tablet]=x)
 
 # waydroid の shebang は env python3 で、asdf 等の shim を先に拾うと
 # system 側にしか無い dbus/gbinder を見失う。system python を明示して呼ぶ。

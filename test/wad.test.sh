@@ -213,6 +213,18 @@ test_size_without_arg_only_reads() {
   unset FAKE_WIDTH FAKE_HEIGHT
 }
 
+# 11. book preset は紙の判型 (1:√2) を prop に書く。値そのものより比が本質で、
+#     ここが崩れると kshot の PDF が紙と違う縦横比のページになる。
+test_size_book_preset() {
+  export FAKE_SESSION=RUNNING
+  run_wad size book
+
+  check 'book は width=764' '1' "$(count_log 'prop|set|persist.waydroid.width|764')"
+  check 'book は height=1080' '1' "$(count_log 'prop|set|persist.waydroid.height|1080')"
+  check 'book の縦横比は 1:√2 (誤差 1% 未満)' '1' \
+    "$(awk 'BEGIN { print (((1080 / 764) / sqrt(2)) - 1 < 0.01) ? 1 : 0 }')"
+}
+
 main() {
   tmproot=$(mktemp -d)
   trap 'rm -rf "${tmproot}"' EXIT
@@ -230,6 +242,7 @@ main() {
   test_size_rejects_invalid_spec
   test_size_fails_loud_when_session_stopped
   test_size_without_arg_only_reads
+  test_size_book_preset
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
