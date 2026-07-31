@@ -32,7 +32,7 @@ main() {
   src=$(find_repos | fzf --tac --query "$query" --preview "$preview_cmd") || return 0
   [[ -n $src ]] || return 0
 
-  if [[ -n ${TMUX:-} ]]; then
+  if ((popup)) && [[ -n ${TMUX:-} ]]; then
     local name
     name=$(basename "$src" | tr '.' '_')
 
@@ -43,8 +43,8 @@ main() {
       return 0
     fi
 
-    if ((popup)) || [[ ! $(tmux display-message -p '#S') =~ ^[0-9]+$ ]]; then
-      # popup、または現セッションが命名済み: 別セッションを作って switch
+    if [[ ! $(tmux display-message -p '#S') =~ ^[0-9]+$ ]]; then
+      # 現セッションが命名済み: 別セッションを作って switch
       tmux new-session -d -s "$name" -c "$src"
       tmux switch-client -t "$name"
       return 0
