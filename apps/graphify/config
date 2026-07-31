@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+install_common() {
+  if ! has uv; then
+    add_dependency_args uv
+    return
+  fi
+  # PyPI package is 'graphifyy'(double y), CLI command is 'graphify'
+  exe uv tool install graphifyy
+}
+
+setting_common() {
+  # register the /graphify skill (~/.claude/skills is a symlink to ~/.mo/claude/skills)
+  local skill_dir="$HOME/.claude/skills/graphify"
+  if [[ -e $skill_dir ]]; then
+    log "==> Already registered: $skill_dir"
+    return
+  fi
+  exe graphify install
+}
