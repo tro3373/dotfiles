@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+main() {
+  set -eo pipefail
+  # -a: absolute path
+  # -H: search hidden files
+  # -I: Do not respect .(git|fd)ignore files
+  fd -H -I -a |
+    fzf -select-1 --ansi --preview 'bat --color=always --style=numbers --line-range :500 {}' |
+    clip
+}
+main "$@"
