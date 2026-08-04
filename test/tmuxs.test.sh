@@ -28,6 +28,62 @@ setup_fake_tmux() {
   chmod +x "${fakebin}/tmux"
 }
 
+# テスト用 git。グローバル設定を無効化してあるので identity を毎回渡す。
+tgit() {
+  git -c user.email=t@example.com -c user.name=t "$@"
+}
+
+# list のリポジトリ判定は実物の git に問い合わせるので、tmpdir 配下に本物の
+# リポジトリ・worktree・git 管理外ディレクトリを用意する。
+# 開発者の git 環境に左右されないよう、探索の上限とグローバル設定の無効化は
+# main が済ませてある (TMPDIR が git 管理下でも管理外ディレクトリが親を拾わない)。
+# サブシェル関数 + set -e にして、途中で失敗したら非ゼロで抜ける。
+setup_test_repos() (
+  set -e
+  mkdir -p "${repos}" "${tmpdir}/plain"
+  local r
+  for r in alpha beta; do
+    tgit init -q -b main "${repos}/${r}"
+    tgit -C "${repos}/${r}" commit -q --allow-empty -m init
+  done
+  # bin/git_worktree と同じ '<repo>-worktree/<branch>' 配置。
+  tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/br1" -b br1
+  # common dir が '<repo>/.git' にならない 2 配置。
+  #   submodule => '<super>/.git/modules/sub' / bare => '<repo>.git'
+  tgit init -q -b main "${repos}/super"
+  tgit -C "${repos}/super" commit -q --allow-empty -m init
+  tgit -C "${repos}/super" -c protocol.file.allow=always \
+    submodule add -q ../alpha sub
+  tgit init -q --bare "${repos}/bare.git"
+)
+
+# ANSI エスケープだけを落とす (タブ区切りは残す)。
+strip_ansi() {
+  sed -e $'s/\033\\[[0-9;]*m//g'
+}
+
+# __list の生出力。色そのものを検証するテストはこちらを使う。
+run_list() {
+  PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __list
+}
+
+# __list の生出力から ANSI エスケープを落としたもの。
+list_plain() {
+  run_list | strip_ansi
+}
+
+# マーカーを全消しする。list 系テストの前処理 (reset は hook 系専用)。
+clear_markers() {
+  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+}
+
+# list 用 FAKE_PANES を組む。引数は (session pane_id path) の 3 つ組の繰り返し。
+# 二重引用符の中では \t が展開されないため printf で組む。
+set_fake_panes() {
+  FAKE_PANES=$(printf '%s\t%s\t%s\n' "$@")
+  export FAKE_PANES
+}
+
 # 偽 tmux 本体を書き出す。mutating 呼び出しはログ/状態へ記録し、query は env で答える。
 write_fake_tmux() {
   cat >"${fakebin}/tmux" <<'FAKE'
@@ -84,7 +140,7 @@ run_hook() {
 
 # 各 hook テスト前の共通リセット。マーカー・偽 tmux 状態・ログ・pane env を初期化する。
 reset() {
-  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  clear_markers
   rm -f "${FAKE_STATE_DIR}"/* 2>/dev/null || true
   # tmux.conf 相当: 通常 status-style を seed (band_on がこれを退避し band_off で復元)。
   printf 'bg=colour234,fg=blue,default' >"${FAKE_STATE_DIR}/status-style"
@@ -130,18 +186,21 @@ test_kill_only_session() {
 }
 
 # 4. list は session を列挙し、名前幅で左寄せ、Nwin/Mpane、attach 中のみ "*"。
-#    マーカー無し時は色を付けない。
-#    (FAKE_SESSIONS: name nwin attached(1 or 空) / FAKE_PANES: session pane_id)
+#    マーカー無し時は色を付けない。行頭は fzf 用の隠しフィールド (素のセッション名)。
+#    (FAKE_SESSIONS: name nwin attached(1 or 空) / FAKE_PANES: session pane_id path)
 test_list_pads_and_marks_attached() {
-  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  clear_markers
   export FAKE_SESSIONS=$'0\t3\t\n13\t1\t1\n4\t3\t'
-  export FAKE_PANES=$'0\t%1\n0\t%2\n13\t%3\n4\t%4\n4\t%5\n4\t%6'
-
-  local out
-  out=$(PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __list)
+  set_fake_panes \
+    0 '%1' "${repos}/alpha" \
+    0 '%2' "${repos}/alpha" \
+    13 '%3' "${repos}/alpha" \
+    4 '%4' "${repos}/alpha" \
+    4 '%5' "${repos}/alpha" \
+    4 '%6' "${repos}/alpha"
 
   check 'list 出力: 左寄せ + Nwin Mpane + attach の * (色なし)' \
-    $'0   3w2p\n13  1w1p *\n4   3w3p' "${out}"
+    $'\talpha\n0\t  0   3w2p\n13\t  13  1w1p *\n4\t  4   3w3p' "$(list_plain)"
 }
 
 # 5. __preview は session の全 window×pane をヘッダ付きで縦積みキャプチャする
@@ -153,7 +212,7 @@ test_preview_stacks_panes() {
   # ANSI(青背景含む)と横幅パディングの末尾空白を除去してテキストだけ検証する。
   local out
   out=$(PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __preview '4' |
-    sed -e $'s/\033\\[[0-9;]*m//g' -e 's/[[:space:]]*$//')
+    strip_ansi | sed -e 's/[[:space:]]*$//')
   check '__preview: 全 pane をヘッダ付きで縦積み (active pane に *)' \
     $'4: win=zsh / 1.1 claude [/] *\nSCREENDUMP\n\n4: win=zsh / 1.2 zsh [/]\nSCREENDUMP\n\n4: win=bash / 2.1 bash [/] *\nSCREENDUMP' \
     "${out}"
@@ -161,7 +220,7 @@ test_preview_stacks_panes() {
 
 # 6. cleanup は現存しない pane_id のマーカーのみ削除する。
 test_cleanup_removes_dead_markers() {
-  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  clear_markers
   printf 'idle' >"${TMUXS_MARKER_DIR}/%1"
   printf 'running' >"${TMUXS_MARKER_DIR}/%2"
   printf 'waiting' >"${TMUXS_MARKER_DIR}/%99"
@@ -179,20 +238,25 @@ test_cleanup_removes_dead_markers() {
 #    C は running(%3) と idle(%4) を持つが優先度で running に集約される。
 #    D は idle のみ。A はマーカー無し(色なし)。
 test_list_state_color_and_sort() {
-  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  clear_markers
   export FAKE_SESSIONS=$'A\t1\t\nB\t1\t\nC\t1\t\nD\t1\t'
-  export FAKE_PANES=$'A\t%1\nB\t%2\nC\t%3\nC\t%4\nD\t%5'
+  set_fake_panes \
+    A '%1' "${repos}/alpha" \
+    B '%2' "${repos}/alpha" \
+    C '%3' "${repos}/alpha" \
+    C '%4' "${repos}/alpha" \
+    D '%5' "${repos}/alpha"
   printf 'waiting' >"${TMUXS_MARKER_DIR}/%2"
   printf 'running' >"${TMUXS_MARKER_DIR}/%3"
   printf 'idle' >"${TMUXS_MARKER_DIR}/%4"
   printf 'idle' >"${TMUXS_MARKER_DIR}/%5"
 
   local raw stripped
-  raw=$(PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __list)
-  stripped=$(printf '%s' "${raw}" | sed -e $'s/\033\\[[0-9;]*m//g')
+  raw=$(run_list)
+  stripped=$(printf '%s' "${raw}" | strip_ansi)
 
   check 'list: waiting(B) を上位へ並べ替え + 状態集約 (C=running)' \
-    $'B  1w1p\nA  1w1p\nC  1w2p\nD  1w1p' "${stripped}"
+    $'\talpha\nB\t  B  1w1p\nA\t  A  1w1p\nC\t  C  1w2p\nD\t  D  1w1p' "${stripped}"
   check 'list: B 行に waiting 背景色 (#E5AF1E)' yes \
     "$(printf '%s' "${raw}" | grep -q '48;2;229;175;30' && echo yes || echo no)"
   check 'list: C 行に running 背景色 (#799478)' yes \
@@ -203,7 +267,7 @@ test_list_state_color_and_sort() {
 
 # 8. __preview はマーカー保持 pane のヘッダ帯を状態色に塗る。
 test_preview_state_band() {
-  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  clear_markers
   export FAKE_PANES=$'1\t1\t1\tzsh\tclaude\t%0\n1\t2\t1\tbash\tbash\t%15' \
     FAKE_CAPTURE='SCREENDUMP'
   printf 'waiting' >"${TMUXS_MARKER_DIR}/%0"
@@ -221,7 +285,7 @@ test_preview_state_band() {
 #    running(%2) は無視し waiting(%3) へ attach (switch-client => select-window => select-pane)。
 #    (FAKE_PANES タブ区切り: window_index pane_id)
 test_switch_focuses_waiting_pane() {
-  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  clear_markers
   export FAKE_PANES=$'1\t%1\n1\t%2\n2\t%3'
   printf 'running' >"${TMUXS_MARKER_DIR}/%2"
   printf 'waiting' >"${TMUXS_MARKER_DIR}/%3"
@@ -238,7 +302,7 @@ test_switch_focuses_waiting_pane() {
 # 10. waiting が無ければ (running/idle のみでも) focus を動かさず switch-client のみ。
 #     tmux の last-active pane を維持する。
 test_switch_no_waiting_keeps_active() {
-  rm -f "${TMUXS_MARKER_DIR}"/* 2>/dev/null || true
+  clear_markers
   export FAKE_PANES=$'1\t%1\n2\t%2'
   printf 'running' >"${TMUXS_MARKER_DIR}/%1"
   printf 'idle' >"${TMUXS_MARKER_DIR}/%2"
@@ -252,11 +316,166 @@ test_switch_no_waiting_keeps_active() {
     'switch-client -t A' "${got}"
 }
 
+# 11. list はセッションをリポジトリ単位でグループ化する。
+#     worktree (alpha-worktree/br1) は親 alpha へ畳み、git 管理外は末尾の
+#     (no repo) へ集約する。グループはセッション数の多い順。
+test_list_groups_by_repository() {
+  clear_markers
+  export FAKE_SESSIONS=$'awt\t1\t\nsolo\t1\t\nbeta\t2\t\nalpha\t1\t1'
+  set_fake_panes \
+    awt '%1' "${repos}/alpha-worktree/br1" \
+    solo '%2' "${tmpdir}/plain" \
+    beta '%3' "${repos}/beta" \
+    beta '%4' "${repos}/beta" \
+    alpha '%5' "${repos}/alpha"
+
+  check 'list: repo 見出しでグループ化 (worktree は親へ / 管理外は末尾)' \
+    $'\talpha\nawt\t  awt    1w1p\nalpha\t  alpha  1w1p *\n\tbeta\nbeta\t  beta   2w2p\n\t(no repo)\nsolo\t  solo   1w1p' \
+    "$(list_plain)"
+}
+
+# 12. waiting を含むグループを最上位へ上げ、グループ内でも waiting を先頭にする。
+#     セッション数は同数 (各 2) なので、waiting が無ければ名前順で alpha が先。
+test_list_waiting_group_first() {
+  clear_markers
+  export FAKE_SESSIONS=$'alpha\t1\t\nawt\t1\t\nbeta\t1\t\nbeta2\t1\t'
+  set_fake_panes \
+    alpha '%1' "${repos}/alpha" \
+    awt '%2' "${repos}/alpha-worktree/br1" \
+    beta '%3' "${repos}/beta" \
+    beta2 '%4' "${repos}/beta"
+  printf 'waiting' >"${TMUXS_MARKER_DIR}/%4"
+
+  local raw
+  raw=$(run_list)
+
+  check 'list: waiting を含む beta 群を最上位へ (群内も waiting 先頭)' \
+    $'\tbeta\nbeta2\t  beta2  1w1p\nbeta\t  beta   1w1p\n\talpha\nalpha\t  alpha  1w1p\nawt\t  awt    1w1p' \
+    "$(printf '%s' "${raw}" | strip_ansi)"
+  check 'list: 見出し行には状態色を付けない (waiting 色はセッション行のみ 1 箇所)' \
+    1 "$(printf '%s\n' "${raw}" | grep -c '48;2;229;175;30')"
+}
+
+# 13. list 幅 (TMUXS_LIST_COLS) を超えるセッション名を切り詰め、Nw Mp * を右端へ収める。
+#     幅 20 => インデント 2 + 名前 12 + 区切り 2 + '1w1p' 4。
+test_list_truncates_to_width() {
+  clear_markers
+  export FAKE_SESSIONS=$'verylongsessionname\t1\t\nab\t1\t'
+  set_fake_panes \
+    verylongsessionname '%1' "${repos}/alpha" \
+    ab '%2' "${repos}/alpha"
+
+  local out
+  out=$(TMUXS_LIST_COLS=20 list_plain)
+  check 'list: 幅超過のセッション名を切り詰め Nw Mp を右端へ収める' \
+    $'\talpha\nverylongsessionname\t  verylongse..  1w1p\nab\t  ab            1w1p' \
+    "${out}"
+  check 'list: 整形後の行が list 幅 (20) に収まる' 20 \
+    "$(printf '%s\n' "${out}" | tail -n1 | cut -f2- | awk '{print length($0)}')"
+}
+
+# 14. (no repo) はセッション数が最多でも末尾に来る。
+#     管理外 3 件 vs alpha 1 件。件数だけで並べると管理外が先頭へ浮く。
+test_list_no_repo_group_last() {
+  clear_markers
+  export FAKE_SESSIONS=$'a\t1\t\nb\t1\t\nc\t1\t\nz\t1\t'
+  set_fake_panes \
+    a '%1' "${tmpdir}/plain" \
+    b '%2' "${tmpdir}/plain" \
+    c '%3' "${tmpdir}/plain" \
+    z '%4' "${repos}/alpha"
+
+  check 'list: (no repo) は最多件数でも末尾' \
+    $'\talpha\nz\t  z  1w1p\n\t(no repo)\na\t  a  1w1p\nb\t  b  1w1p\nc\t  c  1w1p' \
+    "$(list_plain)"
+}
+
+# 15. common dir が '<repo>/.git' でない配置でもリポジトリ名を取り違えない。
+#     1 段上るのは末尾が .git のときだけ。submodule は modules、
+#     bare は親ディレクトリ名になってしまう。
+test_list_repo_name_edge_layouts() {
+  clear_markers
+  export FAKE_SESSIONS=$'sm\t1\t\nbr\t1\t'
+  set_fake_panes \
+    sm '%1' "${repos}/super/sub" \
+    br '%2' "${repos}/bare.git"
+
+  check 'list: submodule は sub / bare は bare (modules・親ディレクトリ名にしない)' \
+    $'\tbare\nbr\t  br  1w1p\n\tsub\nsm\t  sm  1w1p' \
+    "$(list_plain)"
+}
+
+# 16. 全角を含むセッション名でも表示幅で桁を揃える (bash の ${#s} は文字数のため)。
+#     '実施してみる' は 6 文字だが表示幅 12。
+test_list_aligns_fullwidth_name() {
+  clear_markers
+  export FAKE_SESSIONS=$'ab\t1\t\n実施してみる\t1\t'
+  set_fake_panes \
+    ab '%1' "${repos}/alpha" \
+    実施してみる '%2' "${repos}/alpha"
+
+  check 'list: 全角セッション名を表示幅 12 で数えて桁を揃える' \
+    $'\talpha\nab\t  ab            1w1p\n実施してみる\t  実施してみる  1w1p' \
+    "$(list_plain)"
+}
+
+# 17. 全角名の切り詰め。幅 19 => 名前列 11。'実施してみるテスト' は表示幅 18 なので
+#     表示幅 8 まで詰めて '..' を足し、半角 1 個ぶんの余りを空白で埋める。
+#     切り詰めを文字数で数えると桁が 1 ずれるため、要件 8 と 9 の交差を固定する。
+test_list_truncates_fullwidth_name() {
+  clear_markers
+  export FAKE_SESSIONS=$'実施してみるテスト\t1\t\nab\t1\t'
+  set_fake_panes \
+    実施してみるテスト '%1' "${repos}/alpha" \
+    ab '%2' "${repos}/alpha"
+
+  check 'list: 全角名を表示幅で切り詰め、余り 1 桁を空白で埋める' \
+    $'\talpha\n実施してみるテスト\t  実施して..   1w1p\nab\t  ab           1w1p' \
+    "$(TMUXS_LIST_COLS=19 list_plain)"
+}
+
+# 18. list 幅が極端に狭くても名前列は min_name_cols (8) より下げない。
+#     幅 10 だと計算上は 2 桁になるが 8 でクランプし、行は幅を超える。
+test_list_clamps_min_name_width() {
+  clear_markers
+  export FAKE_SESSIONS=$'verylongname\t1\t'
+  set_fake_panes verylongname '%1' "${repos}/alpha"
+
+  check 'list: 極小幅でも名前列を 8 桁で止める' \
+    $'\talpha\nverylongname\t  verylo..  1w1p' \
+    "$(TMUXS_LIST_COLS=10 list_plain)"
+}
+
+# 19. セッション内の pane がリポジトリ違いのパスを持つ場合、列挙順で最初の
+#     pane のパスで群を決める (最後の pane を採ると beta 群になる)。
+test_list_uses_first_pane_path() {
+  clear_markers
+  export FAKE_SESSIONS=$'mix\t1\t'
+  set_fake_panes \
+    mix '%1' "${repos}/alpha" \
+    mix '%2' "${repos}/beta"
+
+  check 'list: 群の判定は最初の pane の作業パス' \
+    $'\talpha\nmix\t  mix  1w2p' "$(list_plain)"
+}
+
+# 20. セッションが 1 つも無い場合は空出力で正常終了する。
+test_list_empty() {
+  clear_markers
+  export FAKE_SESSIONS='' FAKE_PANES=''
+
+  local out rc
+  out=$(list_plain)
+  rc=$?
+  check 'list: セッション 0 件なら空出力' '' "${out}"
+  check 'list: セッション 0 件でも exit 0' 0 "${rc}"
+}
+
 # ============================================================================
 # イベント/フック系 (tmuxs waiting|running|idle|remove)
 # ============================================================================
 
-# 11. tmux 外 (TMUX_PANE 未設定) では何もしない (no-op)。
+# 15. tmux 外 (TMUX_PANE 未設定) では何もしない (no-op)。
 test_no_op_outside_tmux() {
   reset
   unset TMUX_PANE
@@ -264,7 +483,7 @@ test_no_op_outside_tmux() {
   check 'tmux 外: マーカーを書かない' '__NONE__' "$(marker_content '%5')"
 }
 
-# 12. 各状態でマーカー内容が正しく書かれる。
+# 16. 各状態でマーカー内容が正しく書かれる。
 test_marker_states() {
   reset
   run_hook running
@@ -275,7 +494,7 @@ test_marker_states() {
   check 'waiting: マーカー内容 waiting' 'waiting' "$(marker_content '%5')"
 }
 
-# 13. remove はマーカーを削除する。
+# 17. remove はマーカーを削除する。
 test_remove_deletes_marker() {
   reset
   run_hook idle
@@ -283,7 +502,7 @@ test_remove_deletes_marker() {
   check 'remove: マーカー削除' '__NONE__' "$(marker_content '%5')"
 }
 
-# 14. waiting -> running の遷移で待ち表示枠を点灯後に消灯する。
+# 18. waiting -> running の遷移で待ち表示枠を点灯後に消灯する。
 test_indicator_set_then_cleared() {
   reset
 
@@ -296,7 +515,7 @@ test_indicator_set_then_cleared() {
     '__NONE__' "$(opt @tmuxs_waiting)"
 }
 
-# 15. waiting 非関与の遷移 (running) では待ち表示枠に触れない (tmux IPC 抑制)。
+# 19. waiting 非関与の遷移 (running) では待ち表示枠に触れない (tmux IPC 抑制)。
 test_indicator_untouched_without_waiting() {
   reset
   run_hook running
@@ -304,7 +523,7 @@ test_indicator_untouched_without_waiting() {
     '' "$(grep '@tmuxs_waiting' "${FAKE_TMUX_LOG}" || true)"
 }
 
-# 16. 複数 pane が waiting なら件数 N を点灯する。
+# 20. 複数 pane が waiting なら件数 N を点灯する。
 test_indicator_counts_multiple() {
   reset
   export FAKE_PANES=$'%5\n%6'
@@ -314,7 +533,7 @@ test_indicator_counts_multiple() {
     "$(opt @tmuxs_waiting | grep -q '⏳2' && echo yes || echo no)"
 }
 
-# 17. 黄色帯モード ON (band_enabled=1): waiting で @tmuxs_band=1 + status-style を黄色帯へ
+# 21. 黄色帯モード ON (band_enabled=1): waiting で @tmuxs_band=1 + status-style を黄色帯へ
 #     直接上書きし、解消で @tmuxs_band unset + 通常 status-style へ復元する。
 test_band_set_then_cleared() {
   reset
@@ -331,7 +550,7 @@ test_band_set_then_cleared() {
     'bg=colour234,fg=blue,default' "$(opt status-style)"
 }
 
-# 18. 退避元 status-style が空文字でも band ON->OFF で黄色が残らない (番兵で判定)。
+# 22. 退避元 status-style が空文字でも band ON->OFF で黄色が残らない (番兵で判定)。
 test_band_empty_style_restore() {
   reset
   : >"${FAKE_STATE_DIR}/status-style" # 空 style 環境を再現
@@ -358,8 +577,18 @@ main() {
   export TMUXS_MARKER_DIR="${tmpdir}/markers"
   mkdir -p "${TMUXS_MARKER_DIR}"
 
+  # git 探索が tmpdir より上へ出ないようにし、開発者のグローバル/システム設定
+  # (commit.gpgsign, core.hooksPath, init.templateDir 等) も切り離す。
+  export GIT_CEILING_DIRECTORIES="${tmpdir}"
+  export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+
   local fakebin
+  local repos="${tmpdir}/repos"
   setup_fake_tmux
+  setup_test_repos || {
+    printf '==> Error: setup_test_repos に失敗した\n' >&2
+    exit 1
+  }
 
   local pass=0 fail=0
 
@@ -375,6 +604,16 @@ main() {
   test_preview_state_band
   test_switch_focuses_waiting_pane
   test_switch_no_waiting_keeps_active
+  test_list_groups_by_repository
+  test_list_waiting_group_first
+  test_list_truncates_to_width
+  test_list_no_repo_group_last
+  test_list_repo_name_edge_layouts
+  test_list_aligns_fullwidth_name
+  test_list_truncates_fullwidth_name
+  test_list_clamps_min_name_width
+  test_list_uses_first_pane_path
+  test_list_empty
 
   # イベント/フック系 (各テストは reset で TMUX='fake' / TMUX_PANE='%5' を export)。
   test_no_op_outside_tmux

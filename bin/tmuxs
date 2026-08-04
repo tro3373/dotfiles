@@ -18,6 +18,21 @@ readonly band_enabled=1
 # fzf 実行時は FZF_PREVIEW_LINES から 3 pane 一望になるよう上書きする。
 readonly preview_pane_lines=10
 
+# ---- list のレイアウト定数 -----------------------------------------------
+# fzf の preview が占める割合 (%)。残りが list 側の桁数になる。
+# popup は端末の 90% (169 桁) なので、80% だと list が 33 桁しか残らず
+# セッション名が切り詰められる。60% なら 65 桁前後を確保できる。
+readonly preview_ratio=60
+# fzf がリスト左端に常時確保するポインタ + マーカー列。
+readonly fzf_gutter_cols=2
+# セッション行のインデントと、名前列と右列 (Nw Mp) の間隔。
+readonly list_indent=2
+readonly list_gap=2
+# 名前列をこれ以上は削らない下限。
+readonly min_name_cols=8
+# git 管理外のパスのセッションをまとめる見出し。
+readonly no_repo_label='(no repo)'
+
 # pane 状態マーカーの保存先。書込側 (hook イベント handle_event) と読取側
 # (fzf list/preview) が本ファイル内でこの 1 関数を共有する (SSOT)。
 # テストは TMUXS_MARKER_DIR で一時ディレクトリに上書きする。
@@ -26,23 +41,28 @@ marker_dir() {
   printf '%s' "${TMUXS_MARKER_DIR:-${XDG_RUNTIME_DIR:-/tmp}/tmuxs}"
 }
 
+# 状態 -> SGR の 2 関数は行 / pane ごとに呼ばれる。コマンド置換で受けると
+# その都度 fork するので nameref で返す (表示幅ユーティリティと同じ理由)。
+
 # 状態名 -> リスト行用 ANSI SGR (背景色 + 前景色)。マーカー無し(none)は非ゼロ復帰。
 state_sgr() {
-  case $1 in
-    waiting) printf '48;2;229;175;30;38;2;0;0;0' ;;
-    running) printf '48;2;121;148;120;38;2;255;255;255' ;;
-    idle) printf '48;2;78;78;78;38;2;255;255;255' ;;
+  local -n _ss_out=$1
+  case $2 in
+    waiting) _ss_out='48;2;229;175;30;38;2;0;0;0' ;;
+    running) _ss_out='48;2;121;148;120;38;2;255;255;255' ;;
+    idle) _ss_out='48;2;78;78;78;38;2;255;255;255' ;;
     *) return 1 ;;
   esac
 }
 
 # 状態名 -> preview ヘッダ帯用 SGR (太字込み)。マーカー無しは従来の青背景。
 band_sgr() {
-  case $1 in
-    waiting) printf '1;38;2;0;0;0;48;2;229;175;30' ;;
-    running) printf '1;38;2;255;255;255;48;2;121;148;120' ;;
-    idle) printf '1;38;2;255;255;255;48;2;78;78;78' ;;
-    *) printf '1;30;44' ;;
+  local -n _bs_out=$1
+  case $2 in
+    waiting) _bs_out='1;38;2;0;0;0;48;2;229;175;30' ;;
+    running) _bs_out='1;38;2;255;255;255;48;2;121;148;120' ;;
+    idle) _bs_out='1;38;2;255;255;255;48;2;78;78;78' ;;
+    *) _bs_out='1;30;44' ;;
   esac
 }
 
@@ -70,21 +90,138 @@ cleanup_markers() {
   done
 }
 
-# 全セッションを 1 行ずつ列挙する。
-# 1 列目 = "<session_name>" (preview / kill / switch のターゲット)。
-# 最長セッション名に幅を合わせて左寄せパディングし、現在 attach 中のセッションには行末に "*" を付ける。
-list_sessions() {
+# ---- 表示幅ユーティリティ ------------------------------------------------
+# bash の ${#s} と printf の %-*s は文字数で数えるため、全角を含むセッション名では
+# 桁が揃わない。表示幅 (端末カラム数) で数え直す。
+# 戻り値をコマンド置換で返すと 1 文字ごとに fork するので nameref で返す。
+
+# コードポイントが全角 (表示 2 桁) かを判定する。CJK・かな・ハングル・全角記号が対象。
+is_wide_cp() {
+  local cp=$1
+  ((cp >= 0x1100 && cp <= 0x115F)) && return 0
+  ((cp >= 0x2E80 && cp <= 0xA4CF)) && return 0
+  ((cp >= 0xAC00 && cp <= 0xD7A3)) && return 0
+  ((cp >= 0xF900 && cp <= 0xFAFF)) && return 0
+  ((cp >= 0xFE30 && cp <= 0xFE6F)) && return 0
+  ((cp >= 0xFF00 && cp <= 0xFF60)) && return 0
+  ((cp >= 0xFFE0 && cp <= 0xFFE6)) && return 0
+  ((cp >= 0x20000))
+}
+
+# 文字列の表示幅を nameref 引数へ返す。
+# ASCII のみなら文字数がそのまま表示幅 (ほぼ全てのセッション名がこの経路)。
+disp_width() {
+  local -n _dw_out=$1
+  local s=$2 i c cp add n=0
+  if [[ $s != *[![:ascii:]]* ]]; then
+    _dw_out=${#s}
+    return 0
+  fi
+  for ((i = 0; i < ${#s}; i++)); do
+    c=${s:i:1}
+    printf -v cp '%d' "'$c"
+    add=1
+    is_wide_cp "$cp" && add=2
+    n=$((n + add))
+  done
+  _dw_out=$n
+}
+
+# 表示幅を width ちょうどに整える。超える分は切り詰めて末尾を '..' にし、
+# 足りない分は右を空白で埋める。切り詰めと桁揃えは常に対で必要なので 1 関数にする
+# (分けると同じ文字列を 2 度走査することになる)。
+fit_disp() {
+  local -n _fd_out=$1
+  local s=$2 width=$3 w
+  disp_width w "$s"
+  if ((w > width)); then
+    local i c cp add n=0 out=''
+    for ((i = 0; i < ${#s}; i++)); do
+      c=${s:i:1}
+      printf -v cp '%d' "'$c"
+      add=1
+      is_wide_cp "$cp" && add=2
+      ((n + add > width - 2)) && break
+      out+=$c
+      n=$((n + add))
+    done
+    s="${out}.."
+    w=$((n + 2))
+  fi
+  local fill=$((width - w))
+  ((fill < 0)) && fill=0
+  printf -v _fd_out '%s%*s' "$s" "$fill" ''
+}
+
+# ---- list 本体 -----------------------------------------------------------
+
+# 外から来た値を算術評価へ渡す前に数値化する。非数値は fallback。
+# set -u 下では $((abc)) が unbound variable で落ち、算術式は
+# コマンド置換も評価するため、環境変数は必ずここを通してから使う。
+num_or() {
+  local -n _no_out=$1
+  _no_out=$3
+  [[ $2 =~ ^[0-9]+$ ]] || return 0
+  _no_out=$2
+}
+
+# 実行系 bind を transform で包み、見出し行 ({1} が空) では
+# アクション列そのものを組み立てない = 完全な no-op にする。
+# 移動側の transform を擦り抜けてカーソルが見出しに乗っても誤爆しない
+# (マウスクリック・ホイールは移動 bind の対象外なので、この層が最終防衛線)。
+guard_empty() {
+  printf 'transform:if [ -n {1} ]; then echo "%s"; fi' "$1"
+}
+
+# fzf の list 側に使える桁数。端末幅から preview 分と fzf のポインタ列を除く。
+# tty が無い場合 (パイプ実行・テスト) は 0 を返し、切り詰めなしで整形させる。
+list_cols() {
+  local size cols
+  size=$(stty size 2>/dev/null) || size=''
+  num_or cols "${size#* }" 0
+  ((cols > 0)) || {
+    printf '0'
+    return 0
+  }
+  printf '%s' $((cols * (100 - preview_ratio) / 100 - fzf_gutter_cols))
+}
+
+# pane の作業パスから所属リポジトリ名を求める。git 管理外なら空文字。
+# --git-common-dir は worktree でも親リポジトリの .git を指すため、
+# worktree のセッションが親リポジトリのグループへ畳まれる。
+# git 呼び出しは path 単位で呼び出し元の rcache へメモ化する。
+repo_of_path() {
+  local -n _rp_out=$1
+  local path=$2 common
+  _rp_out=''
+  [[ -n $path ]] || return 0
+  if [[ -z ${rcache[$path]+set} ]]; then
+    common=$(git -C "$path" rev-parse --path-format=absolute \
+      --git-common-dir 2>/dev/null) || common=''
+    common=${common%/}
+    # 通常 repo / worktree は '<repo>/.git' なので 1 段上る。
+    # submodule は '<super>/.git/modules/<sub>'、bare は '<repo>.git' で
+    # 末尾が .git ではないため上ってはならない (それぞれ modules / 親ディレクトリ名になる)。
+    [[ ${common##*/} == .git ]] && common=${common%/*}
+    common=${common##*/}
+    rcache[$path]=${common%.git}
+  fi
+  _rp_out=${rcache[$path]}
+}
+
+# 全 pane を一度に列挙し、セッション単位の pane 数・代表状態・作業パスを集める
+# (セッション単位の pane 総数 format は tmux に無い)。
+# 状態の優先度: waiting(3) > running(2) > idle(1) > マーカー無し(0)。
+# 作業パスは列挙順で最初の pane のものを採る。#{session_path} は tmux 3.7b では
+# 別セッションのパスを返すことがあり、グループ判定に使えない。
+collect_session_stats() {
   local dir
   dir=$(marker_dir)
-
-  # セッション単位の pane 総数 format は無いので、全 pane を一度に列挙して集計する。
-  # 同時にマーカーから代表状態の優先度ランクを集める。
-  # 優先度: waiting(3) > running(2) > idle(1) > マーカー無し(0)。
-  local -A pcount=() prank=()
-  local s pid st r
-  while IFS=$'\t' read -r s pid; do
+  local s pid ppath st r
+  while IFS=$'\t' read -r s pid ppath; do
     [[ -n $s ]] || continue
     pcount[$s]=$((${pcount[$s]:-0} + 1))
+    [[ -n ${spath[$s]:-} ]] || spath[$s]=$ppath
     st=''
     [[ -f $dir/$pid ]] && st=$(<"$dir/$pid")
     case $st in
@@ -94,50 +231,125 @@ list_sessions() {
       *) r=0 ;;
     esac
     ((r > ${prank[$s]:-0})) && prank[$s]=$r
-  done < <(tmux list-panes -a -F '#{session_name}'$'\t''#{pane_id}')
+  done < <(tmux list-panes -a \
+    -F '#{session_name}'$'\t''#{pane_id}'$'\t''#{pane_current_path}')
+  return 0
+}
 
-  # 全行を一旦読み、最長セッション名から幅を決めてから整形する。
-  local -a rows=()
-  local name nwin attached width=0
+# セッション一覧を tmux の列挙順で読み、右列 (Nw Mp と attach の *) を組み立てつつ
+# リポジトリ名のグループへ振り分ける。pane 数・状態・作業パスは
+# collect_session_stats が先に埋めてある。
+# 群内は waiting のセッションを先頭へ寄せ、残りは tmux の列挙順を保つ。
+collect_sessions() {
+  local name nwin attached mark repo
   while IFS=$'\t' read -r name nwin attached; do
-    ((${#name} > width)) && width=${#name}
-    rows+=("$name"$'\t'"$nwin"$'\t'"$attached")
+    [[ -n $name ]] || continue
+    mark=''
+    [[ -n $attached ]] && mark=' *'
+    sright[$name]="${nwin}w${pcount[$name]:-0}p${mark}"
+    repo_of_path repo "${spath[$name]:-}"
+    [[ -n $repo ]] || repo=$no_repo_label
+    gcount[$repo]=$((${gcount[$repo]:-0} + 1))
+    if ((${prank[$name]:-0} == 3)); then
+      waiters[$repo]+="${name}"$'\n'
+      continue
+    fi
+    others[$repo]+="${name}"$'\n'
   done < <(tmux list-sessions \
     -F $'#{session_name}\t#{session_windows}\t#{?session_attached,1,}')
+  return 0
+}
 
-  # 入力待ち(waiting=rank3)を含む session を上位へ。
-  # waiting 群・非 waiting 群はそれぞれ元の列挙順を保つ。
-  local -a ordered=() rest=()
-  local row
-  for row in "${rows[@]}"; do
-    name=${row%%$'\t'*}
-    if ((${prank[$name]:-0} == 3)); then
-      ordered+=("$row")
-      continue
-    fi
-    rest+=("$row")
+# グループの表示順を決める。waiting を含む群を最上位、git 管理外の群は末尾、
+# 残りはセッション数の多い順で、同数はリポジトリ名の昇順。
+# nkey (管理外か) はセッション数より優先する。後ろに置くと同数時のタイブレークに
+# しかならず、管理外のセッションが多いときに git リポジトリ群より上へ浮く。
+# ordered の各要素はソートキー付きで、末尾フィールドがリポジトリ名。
+sort_groups() {
+  local repo line wkey nkey
+  local -a lines=()
+  for repo in "${!gcount[@]}"; do
+    wkey=1
+    [[ -n ${waiters[$repo]:-} ]] && wkey=0
+    nkey=0
+    [[ $repo == "$no_repo_label" ]] && nkey=1
+    printf -v line '%d\t%d\t%d\t%s' "$wkey" "${gcount[$repo]}" "$nkey" "$repo"
+    lines+=("$line")
   done
-  ((${#rest[@]})) && ordered+=("${rest[@]}")
+  ((${#lines[@]})) || return 0
+  mapfile -t ordered < <(printf '%s\n' "${lines[@]}" |
+    LC_ALL=C sort -t$'\t' -k1,1n -k3,3n -k2,2nr -k4,4)
+}
 
-  local marker sname sgr
-  for row in "${ordered[@]}"; do
-    IFS=$'\t' read -r name nwin attached <<<"$row"
-    marker=''
-    [[ -n $attached ]] && marker=' *'
-    case ${prank[$name]:-0} in
-      3) sname=waiting ;;
-      2) sname=running ;;
-      1) sname=idle ;;
-      *) sname='' ;;
-    esac
-    if sgr=$(state_sgr "$sname"); then
-      printf '\033[%sm%-*s  %sw%sp%s\033[0m\n' \
-        "$sgr" "$width" "$name" "$nwin" "${pcount[$name]:-0}" "$marker"
-      continue
-    fi
-    printf '%-*s  %sw%sp%s\n' \
-      "$width" "$name" "$nwin" "${pcount[$name]:-0}" "$marker"
+# 名前列と右列の幅を決める。list 幅が分かる場合は Nw Mp * が右端へ収まるよう
+# 名前列を削る (最長名へ合わせるだけだと右列が画面外へ溢れる)。
+calc_columns() {
+  local name w rightw=0
+  for name in "${!sright[@]}"; do
+    disp_width w "$name"
+    ((w > namew)) && namew=$w
+    disp_width w "${sright[$name]}"
+    ((w > rightw)) && rightw=$w
   done
+  local cols
+  num_or cols "${TMUXS_LIST_COLS:-0}" 0
+  ((cols > 0)) || return 0
+  local avail=$((cols - list_indent - list_gap - rightw))
+  ((avail < min_name_cols)) && avail=$min_name_cols
+  ((namew > avail)) && namew=$avail
+  return 0
+}
+
+# セッション行を 1 行出力する。1 列目は fzf 用の隠しフィールド (素のセッション名)。
+# 状態色は行全体を囲む前後の SGR として持ち、書式そのものは 1 本に保つ。
+print_session_row() {
+  local name=$1 shown sname sgr pre='' post=''
+  fit_disp shown "$name" "$namew"
+  case ${prank[$name]:-0} in
+    3) sname=waiting ;;
+    2) sname=running ;;
+    1) sname=idle ;;
+    *) sname='' ;;
+  esac
+  if state_sgr sgr "$sname"; then
+    printf -v pre '\033[%sm' "$sgr"
+    post=$'\033[0m'
+  fi
+  printf '%s\t%s%*s%s%*s%s%s\n' "$name" "$pre" \
+    "$list_indent" '' "$shown" "$list_gap" '' "${sright[$name]}" "$post"
+}
+
+# 見出し行 + 配下セッション行を順に出力する。
+# 見出し行は 1 列目 (fzf の {1}) を空にしてある。この「空 = 見出し」だけが
+# fzf 側との契約で、キーボード移動は transform で見出しを飛ばし、
+# 実行系 bind は guard_empty で空ターゲットなら何も組み立てない。
+print_groups() {
+  local entry repo name
+  for entry in "${ordered[@]}"; do
+    repo=${entry##*$'\t'}
+    printf '\t\033[1m%s\033[0m\n' "$repo"
+    while IFS= read -r name; do
+      [[ -n $name ]] || continue
+      print_session_row "$name"
+    done <<<"${waiters[$repo]:-}${others[$repo]:-}"
+  done
+  return 0
+}
+
+# 全セッションをリポジトリ単位でグループ化して 1 行ずつ列挙する。
+# 各行は "<hidden>\t<表示>" のタブ区切り。fzf は --with-nth=2 で表示側だけを見せ、
+# {1} で素のセッション名 (preview / kill / switch のターゲット) を取る。
+list_sessions() {
+  local -A pcount=() prank=() spath=() rcache=() \
+  gcount=() waiters=() others=() sright=()
+  local -a ordered=()
+  local namew=0
+
+  collect_session_stats
+  collect_sessions
+  sort_groups
+  calc_columns
+  print_groups
 }
 
 # 現存する pane のうち waiting マーカーを持つ数を数える。
@@ -315,7 +527,8 @@ main() {
       # target ("<session>:<window_index>") が属するセッションを安全に kill する。
       # 対象が現在 client のセッションなら、別セッションへ switch してから kill し、
       # 端末が detach されないようにする。
-      local target=$1
+      local target=${1:-}
+      [[ -n $target ]] || exit 0
       local session=${target%:*}
       local current
       current=$(tmux display-message -p '#{session_name}')
@@ -343,7 +556,8 @@ main() {
       # 選択セッションへ switch する。waiting pane があればそこへ focus を移して
       # attach し、無ければ focus を動かさず last-active pane を維持する。
       # 複数 waiting があれば列挙順 (window->pane index) で最初を採用。
-      local target=$1 session mdir
+      local target=${1:-} session mdir
+      [[ -n $target ]] || exit 0
       session=${target%:*}
       mdir=$(marker_dir)
 
@@ -368,7 +582,8 @@ main() {
       # ヘッダは tmux のタブ選択色(青背景・黒太字)で横幅いっぱいに塗る (各 window の active pane に *)。
       # 末尾空行を除いた最新 cap 行に各 pane を絞る。1 画面に最大 3 pane を収めるが、
       # pane 数が 3 未満ならその数で割り、少ない pane のときに高さを余らせない。
-      local target=$1 session cols cap divisor mdir
+      local target=${1:-} session cols cap divisor mdir
+      [[ -n $target ]] || exit 0
       session=${target%:*}
       cols=${FZF_PREVIEW_COLUMNS:-80}
       mdir=$(marker_dir)
@@ -380,8 +595,10 @@ main() {
       divisor=${#panes[@]}
       ((divisor > 3)) && divisor=3
       ((divisor < 1)) && divisor=1
+      local plines
+      num_or plines "${FZF_PREVIEW_LINES:-}" 0
       cap=$preview_pane_lines
-      [[ -n ${FZF_PREVIEW_LINES:-} ]] && cap=$((FZF_PREVIEW_LINES / divisor - 2))
+      ((plines > 0)) && cap=$((plines / divisor - 2))
       ((cap < 3)) && cap=3
 
       local line active widx pidx wname cmd pid path dir mark st band
@@ -393,7 +610,7 @@ main() {
         [[ -z $dir ]] && dir=/
         st=''
         [[ -f $mdir/$pid ]] && st=$(<"$mdir/$pid")
-        band=$(band_sgr "$st")
+        band_sgr band "$st"
         printf '\033[%sm%-*s\033[0m\n' "$band" "$cols" \
           "$session: win=$wname / $widx.$pidx $cmd [$dir]$mark"
         tmux capture-pane -ep -t "$pid" 2>/dev/null |
@@ -414,7 +631,8 @@ main() {
       # fzf 実行中はカーソル非表示なので明示再表示し、前回プロンプトの残骸を
       # 消すため画面をクリアする。read -e で readline 行編集 (inputrc が vi なら
       # vi バインド)、-i で現在名をプリフィルする。
-      local target=$1
+      local target=${1:-}
+      [[ -n $target ]] || exit 0
       local session=${target%:*}
       local new
       printf '\033[2J\033[3J\033[H\033[?25h'
@@ -425,17 +643,42 @@ main() {
       local self
       self=$(realpath "$0")
       cleanup_markers
+      # 整形に使う list 幅を子プロセスへ渡す。reload で __list を再実行するときも
+      # 同じ幅で揃える必要がある (FZF_COLUMNS は start 時点では 0 で当てにならない)。
+      TMUXS_LIST_COLS=$(list_cols)
+      export TMUXS_LIST_COLS
+      # --with-nth=2 で表示は 2 列目 (インデント済みの見出し / セッション行) だけにし、
+      # {1} には素のセッション名が入る。見出し行は {1} が空。
+      # 移動キーは全て transform で包み、見出しに乗ったらもう一歩進めて
+      # カーソルをセッション行にしか置かない (先頭が見出しの場合は load で送る)。
+      # 先頭行まで戻ったときだけ ({n} が 0) 進む向きへ折り返す。
+      # 1 つでも掛け忘れると見出しに乗れてしまうので、判定は 2 つの文字列に閉じ込め、
+      # 移動キーの一覧を回して bind を生成する。
+      local skip_fwd='transform:[ -n {1} ] || echo down'
+      local skip_back='transform:[ -n {1} ] || if [ {n} -eq 0 ]; then echo down; else echo up; fi'
+      local -a bind_args=(--bind "load:${skip_fwd}")
+      local key
+      for key in j down ctrl-n ctrl-j; do
+        bind_args+=(--bind "${key}:down+${skip_fwd}")
+      done
+      for key in k up ctrl-p ctrl-k; do
+        bind_args+=(--bind "${key}:up+${skip_back}")
+      done
+      bind_args+=(--bind "page-down:page-down+${skip_fwd}")
+      bind_args+=(--bind "page-up:page-up+${skip_back}")
+
       list_sessions |
         fzf --reverse --no-input --ansi \
+          --delimiter=$'\t' --with-nth=2 \
           --preview "$self __preview {1}" \
-          --preview-window right:80% \
+          --preview-window "right:${preview_ratio}%" \
+          "${bind_args[@]}" \
           --bind 'q:abort' \
-          --bind 'j:down,k:up' \
           --bind 'J:preview-down,K:preview-up' \
-          --bind "enter:execute($self __switch {1})+accept" \
           --bind "n:execute($self __new)+accept" \
-          --bind "r:execute($self __rename {1})+reload($self __list)" \
-          --bind "x:execute-silent($self __kill {1})+reload($self __list)"
+          --bind "enter:$(guard_empty "execute($self __switch {1})+accept")" \
+          --bind "r:$(guard_empty "execute($self __rename {1})+reload($self __list)")" \
+          --bind "x:$(guard_empty "execute-silent($self __kill {1})+reload($self __list)")"
       ;;
   esac
 }
