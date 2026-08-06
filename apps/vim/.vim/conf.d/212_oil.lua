@@ -72,14 +72,16 @@ vim.api.nvim_create_autocmd("FileType", {
 
 -- sd: 共有 101_mapping.vim の `:e {dir}` は oil の directory-buffer hijack +
 -- async rename で稀に "Invalid buffer id" クラッシュを起こすため、oil 環境では
--- :Oil 直起動で上書きする。101_mapping.vim は pm(本 config)より後に source
+-- oil.open() で上書きする。101_mapping.vim は pm(本 config)より後に source
 -- されるため、VimEnter で遅延登録して上書きを勝たせる。
+-- ※ :Oil は count=true 付き定義なので `:Oil 20260805-102817_foo` の先頭数字列が
+--   count として食われる (=空一覧)。ex コマンドを経由せず API を直接呼ぶこと。
 vim.api.nvim_create_autocmd("VimEnter", {
   once = true,
   callback = function()
     vim.keymap.set("n", "sd", function()
-      local dir = vim.fn.expand("%") == "" and "." or vim.fn.expand("%:h")
-      vim.cmd.Oil({ args = { dir } })
+      local dir = vim.fn.expand("%") == "" and vim.fn.getcwd() or vim.fn.expand("%:p:h")
+      require("oil").open(dir)
     end, { desc = "Open parent dir in oil" })
   end,
 })
