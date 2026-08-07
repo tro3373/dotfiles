@@ -765,7 +765,7 @@ add_task() {
   if [[ -s ${target_file} ]] && [[ -n $(tail -c1 "${target_file}") ]]; then
     printf '\n' >>"${target_file}"
   fi
-  printf '%s\n' "${input_content}" >>"${target_file}"
+  printf '%s\n\n' "${input_content}" >>"${target_file}"
 
   info "==> Task added"
 }
