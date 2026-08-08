@@ -80,7 +80,7 @@ confirm_delete() {
 delete_one() {
   echo "==> Deleting ${id} ${rest}" | ink yellow
   # -y: パイプ経由だと nlm が端末を持たず確認できずに中止するため必須
-  nlm -y notebook delete "${id}" </dev/null || echo "==> Error: Failed to delete ${id}" >&2
+  nlm notebook delete -y "${id}" </dev/null || echo "==> Error: Failed to delete ${id}" >&2
 }
 
 delete_notebooks() {
