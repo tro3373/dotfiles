@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+has() { command -v "${1}" >&/dev/null; }
+hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+
+to_project_dir_name() {
+  # Claude Code は project path の英数字以外を - に置換してディレクトリ名にする
+  echo "${1//[^a-zA-Z0-9]/-}"
+}
+
+main() {
+  set -eo pipefail
+  hass v
+  local git_root memory_file
+  git_root=$(get_git_root) || die "==> Not a git repository"
+  memory_file="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects/$(to_project_dir_name "$git_root")/memory/MEMORY.md"
+  [[ ! -e $memory_file ]] && die "==> No memory file exist: $memory_file"
+  echo "$memory_file" | v
+}
+main "$@"
