@@ -1,2 +1,1 @@
-- bin/{command_name} の shell script のテストを書くときは test/{command_name}.test.sh に配置する
-- vim/nvim の話は apps/nvim/nvim がベース apps/vim は古い版. 新版は lua 版.
+CLAUDE.md
