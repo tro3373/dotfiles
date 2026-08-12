@@ -31,8 +31,7 @@ _G.copilot_chat_setup = function()
 
     -- system_prompt = "COPILOT_INSTRUCTIONS", -- System prompt to use (can be specified manually in prompt via /).
     system_prompt = [[
-      あなたは優秀なプログラマーで、Github上の広範な情報やベストプラクティスにも精通しています。
-      応答は常に日本語で、分かりやすく、具体的に答えてください。
+      分かりやすく具体的に、必ず日本語で応答してください。
     ]],
 
     -- model = "gpt-4.1", -- Default model to use, see ':CopilotChatModels' for available models (can be specified manually in prompt via $).
@@ -40,7 +39,13 @@ _G.copilot_chat_setup = function()
     -- model = "claude-sonnet-4.6",
     -- model = "grok-code-fast-1",
     -- model = "claude-haiku-4-5",
-    -- model = "openai/gpt-oss-120b",
+    -- プラグイン既定は gpt-5-mini。reasoning 系で体感が重いので Groq の最速モデルに寄せる。
+    -- 重くしたい時はプロンプト内 $ で都度切替:
+    --   $openai/gpt-oss-20b (推論が要る時) / $claude-sonnet-4-6 / $gpt-5.5
+    -- model = "llama-3.1-8b-instant",
+    -- model = "llama-3.3-70b-versatile",
+    -- model = "openai/gpt-oss-20b",
+    model = "openai/gpt-oss-120b",
 
     -- agent = "copilot", -- Default agent to use, see ':CopilotChatAgents' for available agents (can be specified manually in prompt via @).
     -- context = nil, -- Default context or array of contexts to use (can be specified manually in prompt via #).
@@ -175,6 +180,13 @@ _G.copilot_chat_setup = function()
       -- ※ xAI の "Grok" とは別物。
       -- キー未設定なら認証に失敗してモデル一覧に出ないだけ(pcall で握られる)で害はない。
       -- モデル id は入れ替わりが早いので、出ない/増やしたい時は console.groq.com/docs/models で確認。
+      --
+      -- token 数は Groq の TPM(tokens per minute)制限に合わせて絞ること。Groq は
+      -- 「prompt_tokens + max_tokens」を TPM に合算して数えるので、max_output_tokens を
+      -- 大きく取るだけで実際の送信量と無関係に 413 rate_limit_exceeded になる。
+      -- (32000 を宣言していた頃は prompt が 1000 token でも常に 33k 要求扱いで全弾 413)
+      -- 無料枠(service tier: on_demand)の TPM: llama-8b=6000 / llama-70b=12000 / gpt-oss=8000。
+      -- x-ratelimit-limit-tokens レスポンスヘッダで現在値を確認できる。
       groq = {
         get_url = function()
           return "https://api.groq.com/openai/v1/chat/completions"
@@ -194,8 +206,8 @@ _G.copilot_chat_setup = function()
               id = "llama-3.1-8b-instant", -- 最安・最速。翻訳/構文解析ならこれで十分
               name = "Llama 3.1 8B Instant (Groq)",
               tokenizer = "o200k_base",
-              max_input_tokens = 120000,
-              max_output_tokens = 32000,
+              max_input_tokens = 2500, -- TPM 6000: input 2500 + output 3000 で収める
+              max_output_tokens = 3000,
               streaming = true,
               tools = true,
             },
@@ -203,8 +215,17 @@ _G.copilot_chat_setup = function()
               id = "llama-3.3-70b-versatile", -- 汎用・高品質
               name = "Llama 3.3 70B Versatile (Groq)",
               tokenizer = "o200k_base",
-              max_input_tokens = 120000,
-              max_output_tokens = 32000,
+              max_input_tokens = 6000, -- TPM 12000
+              max_output_tokens = 5000,
+              streaming = true,
+              tools = true,
+            },
+            {
+              id = "openai/gpt-oss-20b", -- 速度と賢さのバランス。120b より軽い
+              name = "GPT-OSS 20B (Groq)",
+              tokenizer = "o200k_base",
+              max_input_tokens = 3500, -- TPM 8000
+              max_output_tokens = 4000,
               streaming = true,
               tools = true,
             },
@@ -212,8 +233,8 @@ _G.copilot_chat_setup = function()
               id = "openai/gpt-oss-120b", -- 推論強め(OpenAI のオープンモデル)
               name = "GPT-OSS 120B (Groq)",
               tokenizer = "o200k_base",
-              max_input_tokens = 120000,
-              max_output_tokens = 32000,
+              max_input_tokens = 3500, -- TPM 8000
+              max_output_tokens = 4000,
               streaming = true,
               tools = true,
             },
