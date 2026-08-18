@@ -33,12 +33,13 @@ check() {
 }
 
 # jira の plain 出力ヘッダ (タイトル + Description 区切り) を body の前に足して変換する。
+# 引数はそのまま issue_to_tasks に渡す (KEY 前置のテスト用)。
 convert() {
   {
     printf '\n  # T\n\n'
     printf '  ------------------------ Description ------------------------\n\n'
     cat
-  } | issue_to_tasks
+  } | issue_to_tasks "$@"
 }
 
 # 1. ブレークポイント文字 (. と -) で折れた URL が 1 本に戻る
@@ -156,6 +157,30 @@ test_ansi_escapes_are_stripped() {
     "$(printf -- '- [ ] T\n  - alpha')" "${actual}"
 }
 
+# 10. KEY を渡すとタイトル先頭に [KEY] が付く
+test_key_is_prefixed_to_title() {
+  local actual
+  actual=$(
+    convert IDNAME-123 <<'EOF'
+  • alpha
+EOF
+  )
+  check 'KEY 引数がタイトル先頭に [KEY] として付く' \
+    "$(printf -- '- [ ] [IDNAME-123] T\n  - alpha')" "${actual}"
+}
+
+# 11. KEY 引数なしなら前置しない (issue_to_tasks 単体利用時の既存挙動の保護)
+test_no_key_leaves_title_untouched() {
+  local actual
+  actual=$(
+    convert <<'EOF'
+  • alpha
+EOF
+  )
+  check 'KEY なしならタイトルは前置されない' \
+    "$(printf -- '- [ ] T\n  - alpha')" "${actual}"
+}
+
 # --- issue_select_open 用スタブ ------------------------------------------
 # 実コマンドを呼ばず、fzf の引数と sink (tasks/nvim) への入力を ${stub_log} に
 # 記録する。stub_log / fzf_selection は各テスト関数の local を動的スコープで参照。
@@ -196,19 +221,19 @@ fzf_line() { grep '^fzf ' "${stub_log}"; }
 nvim_tmpdir() { sed -n 's/^tmpdir //p' "${stub_log}"; }
 sink_log() { grep -v -e '^fzf ' -e '^tmpdir ' "${stub_log}"; }
 
-# 10. to-tasks は複数選択でき、issue ごとに tasks -a が呼ばれる
+# 12. to-tasks は複数選択でき、issue ごとに tasks -a が呼ばれる
 test_to_tasks_appends_each_selected_issue() {
   local stub_log fzf_selection
   stub_log=$(mktemp)
   fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
   issue_select_open to-tasks
   check '複数選択した issue が 1 件ずつ tasks -a に渡る' \
-    "$(printf 'tasks -a\n| - [ ] title of K-1\n|   - body of K-1\ntasks -a\n| - [ ] title of K-2\n|   - body of K-2')" \
+    "$(printf 'tasks -a\n| - [ ] [K-1] title of K-1\n|   - body of K-1\ntasks -a\n| - [ ] [K-2] title of K-2\n|   - body of K-2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
 
-# 11. どちらのモードでも fzf は multi-select で起動する
+# 13. どちらのモードでも fzf は multi-select で起動する
 test_both_modes_enable_fzf_multi_select() {
   local stub_log fzf_selection actual=no
   stub_log=$(mktemp)
@@ -225,31 +250,31 @@ test_both_modes_enable_fzf_multi_select() {
   rm -f "${stub_log}"
 }
 
-# 12. to-tasks で 1 件選択なら 1 件だけ追加される (既存挙動の保護)
+# 14. to-tasks で 1 件選択なら 1 件だけ追加される (既存挙動の保護)
 test_to_tasks_with_single_pick_appends_one_task() {
   local stub_log fzf_selection
   stub_log=$(mktemp)
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-tasks
   check '1 件選択なら tasks -a は 1 回だけ' \
-    "$(printf 'tasks -a\n| - [ ] title of K-1\n|   - body of K-1')" \
+    "$(printf 'tasks -a\n| - [ ] [K-1] title of K-1\n|   - body of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
 
-# 13. open は選択した issue ごとに <KEY>.md を作り、nvim のタブとして開く
+# 15. open は選択した issue ごとに <KEY>.md を作り、nvim のタブとして開く
 test_open_mode_opens_one_tab_per_issue() {
   local stub_log fzf_selection
   stub_log=$(mktemp)
   fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
   issue_select_open
   check 'open は issue ごとの <KEY>.md を nvim -p でタブに開く' \
-    "$(printf 'nvim -p\n# K-1.md\n| - [ ] title of K-1\n|   - body of K-1\n# K-2.md\n| - [ ] title of K-2\n|   - body of K-2')" \
+    "$(printf 'nvim -p\n# K-1.md\n| - [ ] [K-1] title of K-1\n|   - body of K-1\n# K-2.md\n| - [ ] [K-2] title of K-2\n|   - body of K-2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
 
-# 14. nvim 終了後に一時ファイルは残らない (名無しバッファ時代のスクラッチ性を維持)
+# 16. nvim 終了後に一時ファイルは残らない (名無しバッファ時代のスクラッチ性を維持)
 test_open_mode_removes_tmpdir_after_nvim_exits() {
   local stub_log fzf_selection actual=exists
   stub_log=$(mktemp)
@@ -260,7 +285,7 @@ test_open_mode_removes_tmpdir_after_nvim_exits() {
   rm -f "${stub_log}"
 }
 
-# 15. nvim が異常終了しても一時ファイルは消し、終了コードは握り潰さない
+# 17. nvim が異常終了しても一時ファイルは消し、終了コードは握り潰さない
 test_open_mode_cleans_up_when_nvim_fails() {
   local stub_log fzf_selection actual=exists rc=0
   local nvim_rc=1 # :cq やクラッシュ相当
@@ -279,7 +304,7 @@ test_open_mode_cleans_up_when_nvim_fails() {
   rm -f "${stub_log}"
 }
 
-# 16. fzf を中断したら sink は呼ばれない (既存挙動の保護)
+# 18. fzf を中断したら sink は呼ばれない (既存挙動の保護)
 test_cancelled_selection_calls_no_sink() {
   local stub_log fzf_selection=""
   stub_log=$(mktemp)
@@ -304,6 +329,8 @@ main() {
   test_pre_description_lines_are_dropped
   test_prose_wrapped_after_punctuation_loses_the_space
   test_ansi_escapes_are_stripped
+  test_key_is_prefixed_to_title
+  test_no_key_leaves_title_untouched
   test_to_tasks_appends_each_selected_issue
   test_both_modes_enable_fzf_multi_select
   test_to_tasks_with_single_pick_appends_one_task

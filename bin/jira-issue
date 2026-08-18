@@ -189,7 +189,7 @@ list_issues_plain() {
 
 issue_to_tasks() {
   # Convert `jira issue view --plain` output into markdown task-list format:
-  #   # Title                 -> - [ ] Title
+  #   # Title                 -> - [ ] [KEY] Title  (KEY = $1, omitted if unset)
   #   • item                  -> - item   (4-space nesting -> 2-space nesting)
   #   other body lines        -> - <line> (bulletized, one level under title)
   # Everything up to the "Description" separator is dropped (the title is
@@ -198,6 +198,7 @@ issue_to_tasks() {
   # jira renders through glamour, which hard-wraps at 120 columns; wrapped
   # continuation lines are joined back so a split URL stays a single URL
   # instead of turning its tail into its own bullet (see unwrap notes below).
+  local key="${1:-}"
   local title="" desc_seen=0 line content indent lead margin=-1 joinable=0 last
   local title_re='^[[:space:]]*# +(.*)$'
   local desc_re='^[[:space:]]*-+.*Description.*-+[[:space:]]*$'
@@ -243,6 +244,7 @@ issue_to_tasks() {
   done < <(sed -E $'s/\x1b\\[[0-9;?]*[a-zA-Z]//g')
   ((margin < 0)) && margin=0
 
+  [[ -n ${key} ]] && title="[${key}] ${title}"
   [[ -n ${title} ]] && printf -- '- [ ] %s\n' "${title}"
   # Pass 2: dedent jira's common left margin so bullet nesting is measured from
   # column 0, then bulletize each line and nest it one level under the title.
@@ -263,7 +265,7 @@ append_to_tasks() {
   # `tasks -a` turns one call into one task, so each issue is appended on its own.
   local key
   for key in "$@"; do
-    jira issue view "${key}" --plain | issue_to_tasks | tasks -a
+    jira issue view "${key}" --plain | issue_to_tasks "${key}" | tasks -a
   done
 }
 
@@ -275,7 +277,7 @@ open_in_nvim() {
   local -a files=()
   tmpdir=$(mktemp -d)
   for key in "$@"; do
-    jira issue view "${key}" --plain | issue_to_tasks >"${tmpdir}/${key}.md"
+    jira issue view "${key}" --plain | issue_to_tasks "${key}" >"${tmpdir}/${key}.md"
     files+=("${tmpdir}/${key}.md")
   done
   # Hold nvim's status so `set -e` cannot skip the cleanup on :cq or a crash.
