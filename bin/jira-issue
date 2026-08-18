@@ -17,7 +17,13 @@
 # To tasks: same pick + convert, but append the result to .tasks.md via
 # `tasks -a` instead of opening nvim.
 #   jira-issue -t
-# Both modes pick several issues with TAB; each issue becomes its own tab/task.
+# To GitHub: same pick + convert, but create one GitHub issue per pick,
+# titled "[KEY] SUMMARY" with the converted markdown as its body. An issue
+# whose title already carries that [KEY] is skipped, so re-picking the same
+# issue never creates a duplicate. Creation only; closing stays manual.
+#   jira-issue -g [-R owner/repo]
+# These modes pick several issues with TAB; each pick becomes its own
+# tab / task / GitHub issue.
 # Create (stdin):
 #   cat task.md | jira-issue add
 #     - [ ] タスク名
@@ -38,6 +44,14 @@
 #   JIRA_CONFIG_FILE  - Override the per-project config path.
 
 command_name=$(basename "$0") && readonly command_name
+# Task-list markdown line ("- [ ] Title"). This script both writes the format
+# (issue_to_tasks) and reads it back (process_tasks, create_gh_issues), so the
+# pattern lives in one place instead of once per parser.
+readonly task_re='^- \[[x ]\] (.*)$'
+# repo args for every gh call of -g|--to-gh: set once by set_gh_repo_args, read
+# by gh_issue_exists / create_gh_issues. Empty means "let gh resolve the repo
+# from the current directory's git remote".
+gh_repo_args=()
 has() { command -v "${1}" >&/dev/null; }
 hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
 _ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
@@ -52,13 +66,18 @@ die() { _log red "$*" && exit 1; }
 usage() {
   cat <<EOF
 
-$command_name [-t|--to-tasks] [-a|--add]
+$command_name [-t|--to-tasks] [-g|--to-gh [-R owner/repo]] [-a|--add]
 
   Open (default): pick issue(s) with fzf, convert them to task-list markdown,
   then view them in nvim, one tab per issue. TAB toggles a pick.
   Options:
     -t, --to-tasks  Append the selected issue(s) to .tasks.md instead of opening
                     them in nvim
+    -g, --to-gh     Create a GitHub issue per selected issue instead of
+                    opening them in nvim. The title carries a [KEY] prefix;
+                    an issue whose title already has that [KEY] is skipped
+    -R, --repo      Target repo (owner/repo) for -g. Defaults to the repo gh
+                    resolves from the current directory's git remote
     -a, --add       Create sub-task(s) from stdin (task-list markdown)
     -h, --help      Show this help message and exit
 
@@ -160,7 +179,6 @@ emit_task() {
 }
 
 process_tasks() {
-  local task_re='^- \[[x ]\] (.*)$'
   local line=""
   local summary=""
   local body=""
@@ -286,11 +304,71 @@ open_in_nvim() {
   return "${status}"
 }
 
+set_gh_repo_args() {
+  # -R owner/repo (--repo) だけを受ける。未指定なら空のままにして、gh に
+  # カレントディレクトリの git remote から repo を解決させる。
+  # 綴り違いを黙って読み飛ばすと、意図しない repo に issue を作ってしまうので
+  # 知らない引数は落とす。
+  gh_repo_args=()
+  [[ -n ${1:-} ]] || return 0
+  if [[ ${1} != "-R" && ${1} != "--repo" ]]; then
+    die "==> Error: Unknown option: ${1}"
+  fi
+  if [[ -z ${2:-} ]]; then
+    die "==> Error: ${1} requires owner/repo"
+  fi
+  gh_repo_args=(-R "$2")
+}
+
+gh_issue_exists() {
+  # GitHub の検索はタイトルの記号を落とすため "[KEY]" は "KEY 番号" のフレーズ
+  # 検索になり、無関係な issue にも当たる。引いたタイトルを [KEY] 前置で絞り直す
+  # ([K-1] と [K-10] の取り違えも閉じる)。
+  # 検索の失敗 (認証切れ・rate limit・repo 解決失敗) を「存在しない」と取り違える
+  # と二重作成になるので、パイプに畳まず gh の終了コードを見る。
+  local key=$1 titles
+  if ! titles=$(gh issue list "${gh_repo_args[@]}" \
+    --search "\"[${key}]\" in:title" --state all --limit 100 \
+    --json title --jq '.[].title'); then
+    die "==> Error: Failed to search GitHub issues for [${key}]"
+  fi
+  grep -q "^\[${key}\]" <<<"${titles}"
+}
+
+create_gh_issues() {
+  # 突合キーは GH issue タイトルの [KEY] prefix。マッピングファイルを持たない
+  # 代わりに毎回検索し、同じ issue を選び直しても二重作成しない。
+  # 作成のみで close はしない (状態同期は範囲外)。
+  local key markdown title
+  echo "==> Target repo: ${gh_repo_args[1]:-git remote of ${PWD}}" >&2
+  for key in "$@"; do
+    if gh_issue_exists "${key}"; then
+      echo "==> Skip (already exists): [${key}]" >&2
+      continue
+    fi
+    markdown=$(jira issue view "${key}" --plain | issue_to_tasks "${key}")
+    # 1 行目が "- [ ] [KEY] SUMMARY"。ここから題名を取れば view は 1 回で済む。
+    if [[ ! ${markdown%%$'\n'*} =~ ${task_re} ]]; then
+      die "==> Error: No title line in the converted issue: ${key}"
+    fi
+    title=${BASH_REMATCH[1]}
+    # SUMMARY が空だと "[KEY]" だけの issue ができ、以後その KEY は既存扱いで
+    # 永久にスキップされる。作る前に落とす。
+    if [[ ! ${title#"[${key}]"} =~ [^[:space:]] ]]; then
+      die "==> Error: No summary for ${key}"
+    fi
+    echo "==> Creating: ${title}" >&2
+    gh issue create "${gh_repo_args[@]}" \
+      --title "${title}" --body "${markdown}"
+  done
+}
+
 issue_select_open() {
   # Pick issue(s) with fzf (KEY is the first tab field, TAB toggles a pick),
-  # convert each to task list markdown, then open them in nvim (default) or
-  # append them to .tasks.md (to-tasks mode). JIRA_CONFIG_FILE is exported, so
-  # the preview/view subprocesses inherit the per-project config.
+  # convert each to task list markdown, then hand it to the sink the mode
+  # picks: nvim (default), .tasks.md (to-tasks) or GitHub (to-gh).
+  # JIRA_CONFIG_FILE is exported, so the preview/view subprocesses inherit
+  # the per-project config.
   local mode="${1:-open}"
   local lines
   lines=$(
@@ -303,9 +381,13 @@ issue_select_open() {
   [[ -z ${lines} ]] && return 0
   local -a keys=()
   mapfile -t keys < <(cut -f1 <<<"${lines}")
-  # Same pick + convert; only the sink differs (append vs open in nvim).
+  # Same pick + convert; only the sink differs.
   if [[ ${mode} == to-tasks ]]; then
     append_to_tasks "${keys[@]}"
+    return 0
+  fi
+  if [[ ${mode} == to-gh ]]; then
+    create_gh_issues "${keys[@]}"
     return 0
   fi
   open_in_nvim "${keys[@]}"
@@ -329,6 +411,12 @@ main() {
   fi
   if [[ ${1:-} == "-t" || ${1:-} == "--to-tasks" ]]; then
     issue_select_open to-tasks
+    return
+  fi
+  if [[ ${1:-} == "-g" || ${1:-} == "--to-gh" ]]; then
+    shift
+    set_gh_repo_args "$@"
+    issue_select_open to-gh
     return
   fi
   issue_select_open

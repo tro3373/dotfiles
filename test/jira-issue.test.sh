@@ -7,7 +7,7 @@
 # 折り返される。折り返しは " ,.;-+|" で起き、ブレークポイント文字は折れた行の
 # 末尾に残り、空白で折れた場合はその空白 1 個が消える。
 # issue_to_tasks のテストはこの折り返し済み出力を模した fixture を stdin から流し込む。
-# issue_select_open のテストは fzf/jira/tasks/nvim を関数でスタブして検証する。
+# issue_select_open のテストは fzf/jira/tasks/nvim/gh を関数でスタブして検証する。
 #
 #   test/jira-issue.test.sh   # 全テスト実行
 
@@ -182,7 +182,7 @@ EOF
 }
 
 # --- issue_select_open 用スタブ ------------------------------------------
-# 実コマンドを呼ばず、fzf の引数と sink (tasks/nvim) への入力を ${stub_log} に
+# 実コマンドを呼ばず、fzf の引数と sink (tasks/nvim/gh) への入力を ${stub_log} に
 # 記録する。stub_log / fzf_selection は各テスト関数の local を動的スコープで参照。
 
 # 候補一覧。fzf は ${fzf_selection} をそのまま選択結果として返す (空なら中断)。
@@ -195,7 +195,7 @@ fzf() {
 }
 
 # `jira issue view <KEY> --plain` の plain 出力を模す ($3 = KEY)
-jira() { printf '\n  # title of %s\n\n  ---- Description ----\n\n  • body of %s\n' "$3" "$3"; }
+jira() { printf '\n  # %s\n\n  ---- Description ----\n\n  • body of %s\n' "${jira_title-title of $3}" "$3"; }
 
 # tasks は呼び出し引数と stdin を記録する (stdin は "| " 前置)
 tasks() {
@@ -217,9 +217,32 @@ nvim() {
   return "${nvim_rc:-0}"
 }
 
+# gh は `issue list` の検索結果として ${gh_existing_titles} を返し、`issue create` の
+# title/body を記録する。--body は複数行なので引数行から外し、本文は "| " 前置で残す。
+gh() {
+  local title="" issue_body=""
+  local -a shown=()
+  while (($#)); do
+    case "$1" in
+      --title) title="$2" && shift ;;
+      --body) issue_body="$2" && shift ;;
+      *) shown+=("$1") ;;
+    esac
+    shift
+  done
+  printf 'gh %s\n' "${shown[*]}" >>"${stub_log}"
+  if [[ ${shown[1]} == list ]]; then
+    [[ -n ${gh_existing_titles:-} ]] && printf '%s\n' "${gh_existing_titles}"
+    return "${gh_list_rc:-0}"
+  fi
+  printf 'gh-title %s\n' "${title}" >>"${stub_log}"
+  printf '%s\n' "${issue_body}" | sed 's/^/| /' >>"${stub_log}"
+}
+
 fzf_line() { grep '^fzf ' "${stub_log}"; }
 nvim_tmpdir() { sed -n 's/^tmpdir //p' "${stub_log}"; }
-sink_log() { grep -v -e '^fzf ' -e '^tmpdir ' "${stub_log}"; }
+sink_log() { grep -v -e '^fzf ' -e '^tmpdir ' -e '^gh ' "${stub_log}"; }
+gh_lines() { grep '^gh ' "${stub_log}"; }
 
 # 12. to-tasks は複数選択でき、issue ごとに tasks -a が呼ばれる
 test_to_tasks_appends_each_selected_issue() {
@@ -314,6 +337,132 @@ test_cancelled_selection_calls_no_sink() {
   : >"${stub_log}"
   issue_select_open
   check '選択なしなら nvim は呼ばれない' '' "$(sink_log)"
+
+  : >"${stub_log}"
+  issue_select_open to-gh
+  check '選択なしなら gh は呼ばれない' '' "$(gh_lines)"
+  rm -f "${stub_log}"
+}
+
+# 19. to-gh は選択した issue ごとに GH issue を作る (title = [KEY] SUMMARY, body = 変換結果)
+test_to_gh_creates_one_issue_per_selection() {
+  local stub_log fzf_selection
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
+  issue_select_open to-gh
+  check '選択した issue ごとに [KEY] 付きの GH issue が作られる' \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\ngh-title [K-2] title of K-2\n| - [ ] [K-2] title of K-2\n|   - body of K-2')" \
+    "$(sink_log)"
+  rm -f "${stub_log}"
+}
+
+# 20. 同じ KEY の GH issue が既にあれば作らない (再選択しても二重作成しない)
+test_to_gh_skips_existing_issue() {
+  local stub_log fzf_selection
+  local gh_existing_titles='[K-1] title of K-1'
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  issue_select_open to-gh
+  check '既存の [KEY] issue があれば作成しない' '' "$(sink_log)"
+  rm -f "${stub_log}"
+}
+
+# 21. GitHub の検索は記号を落とすため無関係な issue にも当たる。
+#     タイトルに [KEY] を含まないヒットはスキップ理由にしない
+test_to_gh_creates_when_hit_lacks_key_prefix() {
+  local stub_log fzf_selection
+  local gh_existing_titles='Fix K 1 handling'
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  issue_select_open to-gh
+  check '[KEY] を含まない検索ヒットでは作成をスキップしない' \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1')" \
+    "$(sink_log)"
+  rm -f "${stub_log}"
+}
+
+# 22. -R owner/repo は検索と作成の双方に渡る (片方だけだと別 repo を見て二重作成する)
+test_to_gh_passes_repo_override_to_both_calls() {
+  local stub_log fzf_selection
+  local -a gh_repo_args=()
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  set_gh_repo_args -R owner/repo
+  issue_select_open to-gh
+  check '-R owner/repo が gh の list / create 双方に渡る' \
+    "$(printf 'list\ncreate')" \
+    "$(gh_lines | grep -F -- '-R owner/repo' | awk '{print $3}')"
+  rm -f "${stub_log}"
+}
+
+# 23. -R 未指定なら repo 引数を渡さない (gh が cwd の git remote から解決する)
+test_gh_repo_args_are_empty_without_override() {
+  local -a gh_repo_args=(-R stale/repo)
+  set_gh_repo_args
+  check '-R 未指定なら gh に repo 引数を渡さない' '' "${gh_repo_args[*]}"
+  set_gh_repo_args --repo owner/repo
+  check '--repo も -R として gh に渡る' '-R owner/repo' "${gh_repo_args[*]}"
+}
+
+# 24. 検索の失敗を「存在しない」と取り違えない (取り違えると既存 issue を作り直す)
+test_to_gh_stops_when_the_search_fails() {
+  local stub_log fzf_selection rc=0
+  local gh_list_rc=1
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  (issue_select_open to-gh) >/dev/null 2>&1
+  rc=$?
+  check '検索に失敗したら issue を作らない' '' "$(sink_log)"
+  check '検索に失敗したら異常終了する' 1 "${rc}"
+  rm -f "${stub_log}"
+}
+
+# 25. [KEY] がタイトル途中にあるだけの issue は既存扱いにしない
+#     (参照タイトルに引きずられると、作るべき issue を黙って作らなくなる)
+test_to_gh_matches_the_key_only_as_a_title_prefix() {
+  local stub_log fzf_selection
+  local gh_existing_titles='Follow-up for [K-1] migration'
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  issue_select_open to-gh
+  check '[KEY] がタイトル先頭でないヒットは既存扱いにしない' \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1')" \
+    "$(sink_log)"
+  rm -f "${stub_log}"
+}
+
+# 26. 重複判定のクエリを固定する。--state all が落ちると close 済みの issue を
+#     毎回作り直し、in:title が落ちると本文ヒットで作成をスキップする
+test_to_gh_pins_the_duplicate_search_query() {
+  local stub_log fzf_selection
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  issue_select_open to-gh
+  check '重複判定は close 済みも含めてタイトルの "[KEY]" を検索する' \
+    'gh issue list --search "[K-1]" in:title --state all --limit 100 --json title --jq .[].title' \
+    "$(gh_lines | grep -- ' list ')"
+  rm -f "${stub_log}"
+}
+
+# 27. -g の後ろの知らない引数は黙って捨てない (-R の綴り違いで別 repo に作る事故)
+test_unknown_option_is_rejected() {
+  local rc=0
+  (set_gh_repo_args -Rowner/repo) >/dev/null 2>&1
+  rc=$?
+  check '知らない引数は黙って無視せず落ちる' 1 "${rc}"
+}
+
+# 28. SUMMARY が空なら作らない。"[KEY]" だけの issue を作ると、以後その KEY は
+#     既存扱いになり本来の issue が二度と作られない
+test_to_gh_rejects_an_issue_without_summary() {
+  local stub_log fzf_selection rc=0
+  local jira_title=""
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  (issue_select_open to-gh) >/dev/null 2>&1
+  rc=$?
+  check 'SUMMARY が空なら [KEY] だけの issue を作らない' '' "$(sink_log)"
+  check 'SUMMARY が空なら異常終了する' 1 "${rc}"
   rm -f "${stub_log}"
 }
 
@@ -338,6 +487,16 @@ main() {
   test_open_mode_removes_tmpdir_after_nvim_exits
   test_open_mode_cleans_up_when_nvim_fails
   test_cancelled_selection_calls_no_sink
+  test_to_gh_creates_one_issue_per_selection
+  test_to_gh_skips_existing_issue
+  test_to_gh_creates_when_hit_lacks_key_prefix
+  test_to_gh_passes_repo_override_to_both_calls
+  test_gh_repo_args_are_empty_without_override
+  test_to_gh_stops_when_the_search_fails
+  test_to_gh_matches_the_key_only_as_a_title_prefix
+  test_to_gh_pins_the_duplicate_search_query
+  test_unknown_option_is_rejected
+  test_to_gh_rejects_an_issue_without_summary
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
