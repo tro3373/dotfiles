@@ -20,7 +20,8 @@
 # To GitHub: same pick + convert, but create one GitHub issue per pick,
 # titled "[KEY] SUMMARY" with the converted markdown as its body. An issue
 # whose title already carries that [KEY] is skipped, so re-picking the same
-# issue never creates a duplicate. Creation only; closing stays manual.
+# issue never creates a duplicate. The created URL is linked back to the Jira
+# issue as a web link. Creation only; closing stays manual.
 #   jira-issue -g [-R owner/repo]
 # These modes pick several issues with TAB; each pick becomes its own
 # tab / task / GitHub issue.
@@ -74,8 +75,9 @@ $command_name [-t|--to-tasks] [-g|--to-gh [-R owner/repo]] [-a|--add]
     -t, --to-tasks  Append the selected issue(s) to .tasks.md instead of opening
                     them in nvim
     -g, --to-gh     Create a GitHub issue per selected issue instead of
-                    opening them in nvim. The title carries a [KEY] prefix;
-                    an issue whose title already has that [KEY] is skipped
+                    opening them in nvim, then link its URL back to the Jira
+                    issue. The title carries a [KEY] prefix; an issue whose
+                    title already has that [KEY] is skipped
     -R, --repo      Target repo (owner/repo) for -g. Defaults to the repo gh
                     resolves from the current directory's git remote
     -a, --add       Create sub-task(s) from stdin (task-list markdown)
@@ -335,11 +337,36 @@ gh_issue_exists() {
   grep -q "^\[${key}\]" <<<"${titles}"
 }
 
+link_gh_issue_to_jira() {
+  # 作成した GH issue を Jira 側からも辿れるようにする。Web Link は Jira の
+  # リンク欄に出るので、コメント欄を埋めない。
+  # ここで失敗したまま進むと、次の -g は「GH issue が既にある」でスキップして
+  # しまい、リンクが永久に付かない。手で貼れるよう URL を出して止める。
+  if ! jira issue link remote "${key}" "${url}" "${title}"; then
+    die "==> Error: Created ${url} but could not link it to ${key}; add the link by hand"
+  fi
+}
+
+create_gh_issue() {
+  # gh は作成した issue の URL を stdout に出す。行の並びに依存しないよう
+  # https:// で始まる行だけを拾う。
+  local out
+  if ! out=$(gh issue create "${gh_repo_args[@]}" \
+    --title "${title}" --body "${markdown}"); then
+    die "==> Error: Failed to create a GitHub issue for ${key}"
+  fi
+  url=$(grep -m1 '^https://' <<<"${out}") || url=""
+  if [[ -z ${url} ]]; then
+    die "==> Error: Created an issue for ${key} but found no URL in: ${out}"
+  fi
+  echo "==> Created: ${url}" >&2
+}
+
 create_gh_issues() {
   # 突合キーは GH issue タイトルの [KEY] prefix。マッピングファイルを持たない
   # 代わりに毎回検索し、同じ issue を選び直しても二重作成しない。
-  # 作成のみで close はしない (状態同期は範囲外)。
-  local key markdown title
+  # 作成と Jira への貼り返しのみ。close はしない (状態同期は範囲外)。
+  local key markdown title url
   echo "==> Target repo: ${gh_repo_args[1]:-git remote of ${PWD}}" >&2
   for key in "$@"; do
     if gh_issue_exists "${key}"; then
@@ -358,8 +385,8 @@ create_gh_issues() {
       die "==> Error: No summary for ${key}"
     fi
     echo "==> Creating: ${title}" >&2
-    gh issue create "${gh_repo_args[@]}" \
-      --title "${title}" --body "${markdown}"
+    create_gh_issue
+    link_gh_issue_to_jira
   done
 }
 

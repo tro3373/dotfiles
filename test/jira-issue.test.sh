@@ -194,8 +194,16 @@ fzf() {
   printf '%s\n' "${fzf_selection}"
 }
 
-# `jira issue view <KEY> --plain` の plain 出力を模す ($3 = KEY)
-jira() { printf '\n  # %s\n\n  ---- Description ----\n\n  • body of %s\n' "${jira_title-title of $3}" "$3"; }
+# `jira issue view <KEY> --plain` の plain 出力を模し ($3 = KEY)、
+# `jira issue link remote ...` は呼び出し引数を記録する。
+# ${jira_title} でタイトルを、${jira_link_rc} でリンク登録の成否を差し替える。
+jira() {
+  if [[ $2 == link ]]; then
+    printf 'jira %s\n' "$*" >>"${stub_log}"
+    return "${jira_link_rc:-0}"
+  fi
+  printf '\n  # %s\n\n  ---- Description ----\n\n  • body of %s\n' "${jira_title-title of $3}" "$3"
+}
 
 # tasks は呼び出し引数と stdin を記録する (stdin は "| " 前置)
 tasks() {
@@ -237,6 +245,11 @@ gh() {
   fi
   printf 'gh-title %s\n' "${title}" >>"${stub_log}"
   printf '%s\n' "${issue_body}" | sed 's/^/| /' >>"${stub_log}"
+  # 作成した issue の URL を返す。KEY 由来にして issue ごとに別 URL にする。
+  # ${gh_create_out} で URL を含まない出力に差し替えられる。
+  local key=${title%%]*}
+  key=${key#"["}
+  printf '%s\n' "${gh_create_out-https://github.com/o/r/issues/${key}}"
 }
 
 fzf_line() { grep '^fzf ' "${stub_log}"; }
@@ -351,7 +364,7 @@ test_to_gh_creates_one_issue_per_selection() {
   fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
   issue_select_open to-gh
   check '選択した issue ごとに [KEY] 付きの GH issue が作られる' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\ngh-title [K-2] title of K-2\n| - [ ] [K-2] title of K-2\n|   - body of K-2')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/K-1 [K-1] title of K-1\ngh-title [K-2] title of K-2\n| - [ ] [K-2] title of K-2\n|   - body of K-2\njira issue link remote K-2 https://github.com/o/r/issues/K-2 [K-2] title of K-2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -376,7 +389,7 @@ test_to_gh_creates_when_hit_lacks_key_prefix() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '[KEY] を含まない検索ヒットでは作成をスキップしない' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/K-1 [K-1] title of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -426,7 +439,7 @@ test_to_gh_matches_the_key_only_as_a_title_prefix() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '[KEY] がタイトル先頭でないヒットは既存扱いにしない' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/K-1 [K-1] title of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -466,6 +479,59 @@ test_to_gh_rejects_an_issue_without_summary() {
   rm -f "${stub_log}"
 }
 
+# 29. 作成した GH issue の URL を Jira 側の Web Link として張り返す
+test_to_gh_links_the_created_url_back_to_jira() {
+  local stub_log fzf_selection
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  issue_select_open to-gh
+  check '作成した issue の URL が Jira の Web Link として登録される' \
+    'jira issue link remote K-1 https://github.com/o/r/issues/K-1 [K-1] title of K-1' \
+    "$(grep '^jira ' "${stub_log}")"
+  rm -f "${stub_log}"
+}
+
+# 30. gh の出力から URL を取れなければ止める。issue は既に出来ているので、
+#     黙って進むと Jira 側だけ空のまま次の KEY へ行ってしまう
+test_to_gh_stops_when_the_created_url_is_missing() {
+  local stub_log fzf_selection rc=0
+  local gh_create_out=""
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  (issue_select_open to-gh) >/dev/null 2>&1
+  rc=$?
+  check 'URL を取れなければ Web Link を張らない' 0 "$(grep -c '^jira ' "${stub_log}")"
+  check 'URL を取れなければ異常終了する' 1 "${rc}"
+  rm -f "${stub_log}"
+}
+
+# 31. Web Link の登録に失敗したら止める。次回の -g は「GH issue が既にある」で
+#     スキップするため、黙って進むとリンクが永久に付かない
+test_to_gh_stops_when_the_jira_link_fails() {
+  local stub_log fzf_selection rc=0 out=""
+  local jira_link_rc=1
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
+  out=$( (issue_select_open to-gh) 2>&1)
+  rc=$?
+  check 'Web Link の登録に失敗したら異常終了する' 1 "${rc}"
+  check '失敗した KEY で止まり、次の issue を作らない' 1 "$(grep -c '^gh-title ' "${stub_log}")"
+  check '手で貼れるように URL を出す' yes \
+    "$([[ ${out} == *https://github.com/o/r/issues/K-1* ]] && echo yes || echo no)"
+  rm -f "${stub_log}"
+}
+
+# 32. 既存でスキップした KEY には Web Link を張らない (作成していないので URL が無い)
+test_to_gh_does_not_link_a_skipped_issue() {
+  local stub_log fzf_selection
+  local gh_existing_titles='[K-1] title of K-1'
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  issue_select_open to-gh
+  check 'スキップした KEY には Web Link を張らない' 0 "$(grep -c '^jira ' "${stub_log}")"
+  rm -f "${stub_log}"
+}
+
 main() {
   local pass=0 fail=0
 
@@ -497,6 +563,10 @@ main() {
   test_to_gh_pins_the_duplicate_search_query
   test_unknown_option_is_rejected
   test_to_gh_rejects_an_issue_without_summary
+  test_to_gh_links_the_created_url_back_to_jira
+  test_to_gh_stops_when_the_created_url_is_missing
+  test_to_gh_stops_when_the_jira_link_fails
+  test_to_gh_does_not_link_a_skipped_issue
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
