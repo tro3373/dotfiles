@@ -17,7 +17,7 @@ readonly _core_apps_additional=(
   # apps for go
   gup goimports gosec staticcheck golangci-lint govulncheck
   # apps for node
-  ncu claude gemini
+  ncu claude gemini codex
   # apps for py
   ruff uv
   # apps for lua
@@ -28,6 +28,8 @@ readonly _core_apps_additional=(
   tfsec tflint
   # apps for docker
   hadolint dockerfmt
+  # apps for tmux
+  lazy-tmux
 )
 readonly _core_apps_additional_arch=(
   yay
