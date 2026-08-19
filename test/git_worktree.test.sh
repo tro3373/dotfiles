@@ -102,6 +102,51 @@ test_remove_other_worktree_emits_nothing() {
   check 'remove-other: 現在地 worktree 残存' '1' "$([[ -e ${wt_c} ]] && echo 1 || echo 0)"
 }
 
+# untracked ファイルが残っていても --force で消し切り、sudo へ落ちない。
+# (force 無しの git worktree remove は untracked 1 件で必ず fatal になる)
+test_remove_untracked_does_not_need_sudo() {
+  new_repo untracked
+  local wt
+  wt=$(add_wt feat-F)
+  mkdir -p "${wt}/build"
+  echo garbage >"${wt}/build/out.o"
+  # shellcheck disable=SC2034  # source した _do_remove_worktree が参照する
+  initial_toplevel="${git_org_root_dir}"
+  local sudo_called=0
+  (
+    _force_remove_leftover() { echo CALLED >"${tmproot}/untracked.called"; }
+    cd "${org}" && _do_remove_worktree "${wt}"
+  ) >/dev/null 2>&1
+  [[ -e "${tmproot}/untracked.called" ]] && sudo_called=1
+  check 'untracked: sudo フォールバックへ落ちない' '0' "${sudo_called}"
+  check 'untracked: worktree dir 削除' '0' "$([[ -e ${wt} ]] && echo 1 || echo 0)"
+}
+
+# git が実体を消せず外から片付けたケースでも、admin metadata を残さない。
+# 残すと removed/<branch> が "used by worktree" で git branch -d できなくなる。
+test_remove_leftover_leaves_no_stale_entry() {
+  new_repo leftover
+  local wt
+  wt=$(add_wt feat-G)
+  # root 所有ディレクトリの代わりに「消せないディレクトリ」を作る
+  # (親ディレクトリの w を落とすと配下の entry を削除できない = git の削除が失敗する)
+  mkdir -p "${wt}/data/sub"
+  echo x >"${wt}/data/sub/f"
+  chmod 500 "${wt}/data"
+  # shellcheck disable=SC2034  # source した _do_remove_worktree が参照する
+  initial_toplevel="${git_org_root_dir}"
+  (
+    # sudo rm 相当。確認プロンプトを挟まず権限を戻して消す
+    _force_remove_leftover() { chmod -R u+w "$1" && rm -rf "$1"; }
+    cd "${org}" && _do_remove_worktree "${wt}"
+  ) >/dev/null 2>&1
+  check 'leftover: worktree dir 削除' '0' "$([[ -e ${wt} ]] && echo 1 || echo 0)"
+  check 'leftover: prunable entry が残らない' '0' \
+    "$(git -C "${org}" worktree list | grep -c prunable || true)"
+  check 'leftover: removed/<branch> を削除できる' '0' \
+    "$(git -C "${org}" branch -d removed/feat-G >/dev/null 2>&1 && echo 0 || echo 1)"
+}
+
 # branch を設定して _fzf_worktrees を呼び、fzf へ渡った引数列を返す。
 # fzf は引数記録スタブに差し替える (stdin の一覧は捨て、受け取った引数を 1 行 1 個で
 # 返す)。スタブも branch 代入もサブシェル body に閉じるので他テストへ漏れない。
@@ -199,6 +244,8 @@ main() {
   test_remove_current_emits_org_root
   test_remove_from_root_emits_nothing
   test_remove_other_worktree_emits_nothing
+  test_remove_untracked_does_not_need_sudo
+  test_remove_leftover_leaves_no_stale_entry
   test_fzf_args_with_branch
   test_fzf_args_without_branch
   test_org_root_outside_repo_fails

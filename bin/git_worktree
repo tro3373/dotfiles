@@ -275,6 +275,28 @@ _rename_removed_branch() {
     wlog "==> Failed to rename branch '${cur}' -> '${renamed}'. Continuing removal."
 }
 
+_force_remove_leftover() {
+  # git が消しきれなかった実体を sudo で片付ける。docker が掘った root:root の
+  # ディレクトリ等がここに来る。何を消すのか分からないまま Enter を押させたくないので、
+  # sudo が要る理由 (自分の所有でないパス) を先に列挙してから確認する。
+  local target_path="$1"
+  local foreign foreign_total
+  # -user は数値 uid も取る。読めない配下で find 自身が Permission denied を吐くため 2>/dev/null。
+  foreign=$(find "${target_path}" ! -user "$(id -u)" -printf '%u:%g %p\n' 2>/dev/null) || true
+  if [[ -n $foreign ]]; then
+    foreign_total=$(wc -l <<<"$foreign")
+    wlog "==> Not owned by $(id -un) (${foreign_total} paths, sudo required):"
+    head -n 20 <<<"$foreign" 1>&2
+    if [[ ${foreign_total} -gt 20 ]]; then
+      wlog "==> ... and $((foreign_total - 20)) more."
+    fi
+  fi
+  wlog "==> Worktree path '${target_path}' still exists. Force remove with sudo? (Cancel: Ctrl+C)"
+  # 非対話 (EOF) で無確認 sudo へ進ませない。read の失敗を握り潰さず明示的に落とす。
+  read -r _ || elog "==> No confirmation input. Aborting removal of '${target_path}'."
+  sudo rm -rfv "${target_path}"
+}
+
 _do_remove_worktree() {
   local target_path="$1"
 
@@ -288,11 +310,24 @@ _do_remove_worktree() {
   _rename_removed_branch "${target_path}"
 
   ilog "==> Removing worktree path: '${target_path}'.."
-  if ! git worktree remove "${target_path}" && [[ -e ${target_path} ]]; then
-    wlog "==> Worktree path '${target_path}' still exists. Force remove? (Cancel: Ctrl+C)"
-    read -r _
-    sudo rm -rfv "${target_path}"
-  fi
+  # untracked/ignored が 1 つでも残っていれば force 無しは必ず fatal になるので、
+  # 通常 => --force の順で試す。ここで --force を挟まないと、ビルド成果物が
+  # 残っているだけの普通の worktree でも毎回 sudo プロンプトへ落ちる。
+  # NOTE: --force は実体の削除に失敗しても admin metadata (.git/worktrees/<name>)
+  # は先に消す。ディレクトリだけ残り得るので後始末は下で必ず通す。
+  git worktree remove "${target_path}" 2>/dev/null ||
+    git worktree remove --force "${target_path}" ||
+    true
+
+  [[ -e ${target_path} ]] && _force_remove_leftover "${target_path}"
+
+  # 保険。実体だけ外から消して .git/worktrees/<name> が残ると、git worktree list に
+  # prunable が居座り、_rename_removed_branch が付けた removed/<branch> が
+  # "used by worktree" で git branch -d できなくなる。実測では --force は削除に
+  # 失敗しても metadata を先に消すのでここは通常 no-op。
+  # NOTE: locked worktree は remove も prune も拒否するので、その場合は
+  # `git worktree unlock` してから消し直す (意図したロックを勝手に壊さない)。
+  git worktree prune
 
   # 現在地の worktree を消した場合のみ org root を stdout に出す。zsh wrapper(gt) が
   # これを受けて削除済み dir から org root へ cd し直し、シェルの宙ぶらりんを防ぐ。
