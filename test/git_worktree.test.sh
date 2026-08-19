@@ -11,6 +11,13 @@
 #   * _fzf_worktrees: 位置引数のブランチ名を fzf の絞り込みクエリへ変換する。
 #       引数ありのときだけ --query/--select-1 を足す (list/merge/remove 共通)。
 #
+#   * get_org_git_root: git 管理外では cwd を repo root と誤認せず失敗する
+#       (誤認すると main が <cwd>-worktree の空 dir を掘る)。worktree の
+#       サブディレクトリからでも親リポの root を返す。
+#
+#   * create_default_ln_config: ignored ファイルが 1 件も無いリポでも
+#       grep の非ゼロ終了で落ちず、空 config を書く。
+#
 #   test/git_worktree   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
@@ -142,6 +149,47 @@ test_fzf_args_without_branch() {
   check 'no-branch: 呼び出し側の --multi が届く' '1' "$(has_arg "${args}" --multi)"
 }
 
+# git 管理外で get_org_git_root => 失敗し、cwd を repo root として返さない。
+# elog スタブは return だけ (exit しない)。本体が自前で exit することを検証する。
+test_org_root_outside_repo_fails() {
+  local outside="${tmproot}/outside/dir"
+  mkdir -p "${outside}"
+  local out status=0
+  out=$(
+    elog() { return 1; }
+    cd "${outside}" && get_org_git_root
+  ) || status=1
+  check 'outside-repo: get_org_git_root が失敗する' '1' "${status}"
+  check 'outside-repo: cwd を repo root として返さない' '' "${out}"
+}
+
+# worktree のサブディレクトリからでも親リポの root を返す (掘り下げ回帰)
+test_org_root_from_worktree_subdir() {
+  new_repo orgroot
+  local wt
+  wt=$(add_wt feat-E)
+  mkdir -p "${wt}/deep/sub"
+  local out
+  out=$(cd "${wt}/deep/sub" && get_org_git_root)
+  check 'worktree-subdir: 親リポの root を返す' "${git_org_root_dir}" "${out}"
+}
+
+# ignored ファイルが 1 件も無いリポでも create_default_ln_config が落ちない。
+# 本番と同じ set -eo pipefail 下で呼ぶ (grep の非ゼロ終了が致命になる条件)。
+test_default_ln_config_without_ignored() {
+  new_repo noignored
+  local config="${tmproot}/noignored/config" status=0
+  (
+    set -eo pipefail
+    cd "${org}" || exit 1
+    # shellcheck disable=SC2034  # source した create_default_ln_config が参照する
+    ln_config="${config}"
+    create_default_ln_config
+  ) || status=1
+  check 'no-ignored: create_default_ln_config が成功する' '0' "${status}"
+  check 'no-ignored: 空の config を書く' '0' "$(wc -l <"${config}" | tr -d ' ')"
+}
+
 main() {
   set -uo pipefail
   tmproot=$(mktemp -d)
@@ -153,6 +201,9 @@ main() {
   test_remove_other_worktree_emits_nothing
   test_fzf_args_with_branch
   test_fzf_args_without_branch
+  test_org_root_outside_repo_fails
+  test_org_root_from_worktree_subdir
+  test_default_ln_config_without_ignored
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

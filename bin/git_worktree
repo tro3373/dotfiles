@@ -76,9 +76,21 @@ get_org_git_root() {
   # NOTE: git rev-parse --git-common-dir: Get the common git directory path
   #   - this show               .git if in original repo root directory
   #   - this show            ../.git if in original repo sub-directory
-  #   - this show /path/to/repo/.git if in worktree
-  #   - this show            ../.git if in worktree sub-directory
-  realpath "$(dirname "$(git rev-parse --git-common-dir)")"
+  #   - this show /path/to/repo/.git if in worktree (sub-directory でも絶対パス)
+  local common
+  # git 管理外では非ゼロ終了 + 空出力。set -e で即死せず下のメッセージへ繋ぐため || true
+  common=$(git rev-parse --git-common-dir 2>/dev/null) || true
+  # NOTE: 空のまま進むと dirname "" => "." => realpath で cwd を repo root と誤認し、
+  # <cwd>-worktree という無関係な空ディレクトリを掘る (main の mkdir -p)。ここで止める。
+  # elog の出力は stdout なので、$() で捕まる本関数では stderr へ寄せる。
+  # elog 任せ (外部コマンドの exit 1) にせず自前で exit するのは、`|| elog` の形だと
+  # bash が errexit を効かせず後続へ進むため。$() 内の exit は subshell を落とし、
+  # 呼び出し元の代入が非ゼロになって set -e でスクリプトごと止まる。
+  if [[ -z $common ]]; then
+    elog "==> Not inside a git repository: $PWD" 1>&2
+    exit 1
+  fi
+  realpath "$(dirname "$common")"
 }
 
 get_worktree_branch_name() {
@@ -233,10 +245,12 @@ _ln() {
 }
 
 create_default_ln_config() {
+  # NOTE: ignored が 1 件も無い / 全て除外パターンに当たると grep が 1 で終わる。
+  # set -eo pipefail 下ではそこで worktree 追加ごと落ちるので、空 config を許容する。
   git status --ignored --porcelain 2>/dev/null |
     grep '^!!' |
     grep -Ev '(\.tasks(\.md|/|$)|\.trash|node_modules|.next|tsconfig.tsbuildinfo|.data|-data)' |
-    cut -c4- >"$ln_config"
+    cut -c4- >"$ln_config" || :
   # fzf \
   #   --prompt="Select ignored files/directories to link in new worktree: " \
   #   --bind 'ctrl-l:toggle-all' \
