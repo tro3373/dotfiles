@@ -5,13 +5,13 @@
 #   - tmux popup        (bind M-])     : `cd-src-root --popup`
 #
 # Usage: cd-src-root [--popup] [query]
-#   --popup : popup 起動時。数字名セッションでも rename+cd ではなく
-#             新規セッションを作って switch する (popup は cd 先を持てないため)。
+#   --popup : popup 起動時。popup の stdout は捨てられる (呼び出し元が cd できない)
+#             ため、cd は tmux 側の操作 (switch-client / send-keys) で完結させる。
 #   query   : fzf の初期クエリ (widget は $LBUFFER を渡す)。
 #
 # stdout: 呼び出し元が cd すべき場合のみ、選択したパスを 1 行出力する。
-#   tmux 外 / widget かつ現セッションが数字名 のときだけ出力する。
-#   tmux 内で switch 済みの場合は何も出力しない。
+#   widget 起動 (と tmux 外) のときだけ出力する。
+#   popup 起動時は tmux 側で完結するので何も出力しない。
 
 main() {
   set -euo pipefail
@@ -50,8 +50,13 @@ main() {
       return 0
     fi
 
-    # widget かつ現セッションが数字名(tmux デフォルト): 現セッションを採用して cd
+    # 現セッションが数字名(tmux デフォルト = 名前未設定): 現セッションを採用して cd。
+    # popup の stdout は誰も読まないので、cd は現ペインへ送り込む。
+    local pane
+    pane=$(tmux display-message -p '#{pane_id}') # popup 内の $TMUX_PANE は popup 自身を指すので使わない
     tmux rename-session "$name"
+    tmux send-keys -t "$pane" "cd $(printf '%q' "$src")" C-m
+    return 0
   fi
 
   printf '%s\n' "$src"
