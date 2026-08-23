@@ -48,11 +48,46 @@ function _G.get_oil_winbar()
   end
 end
 
+-- <CR>: nvim では読めない形式 (PDF/Office/動画/音声) は bin/open へ委譲する。
+-- 画像は image.nvim が nvim 内に直描画するので対象外 (214_image.lua)。
+-- md/html も nvim で編集したいので対象外。単発で外部に出したいときは既定の gx を使う。
+local open_external_ext = {
+  pdf = true,
+  xlsx = true,
+  xls = true,
+  docx = true,
+  doc = true,
+  pptx = true,
+  ppt = true,
+  mp4 = true,
+  mov = true,
+  mkv = true,
+  avi = true,
+  webm = true,
+  mp3 = true,
+  m4a = true,
+  flac = true,
+  wav = true,
+}
+
+local function select_or_open_external()
+  local oil = require("oil")
+  local entry, dir = oil.get_cursor_entry(), oil.get_current_dir()
+  local ext = entry and entry.type ~= "directory" and entry.name:match("%.([^.]+)$")
+  if not (dir and ext and open_external_ext[ext:lower()]) then
+    require("oil.actions").select.callback()
+    return
+  end
+  -- bin/open が拡張子ごとの起動先を持つ (SSoT)。nvim 側は投げるだけ。
+  vim.system({ "open", dir .. entry.name }, { detach = true })
+end
+
 require("oil").setup({
   delete_to_trash = true, -- native 削除も上記 monkeypatch 経由で gomi へ
   view_options = { show_hidden = true },
   win_options = { winbar = "%!v:lua.get_oil_winbar()" },
   keymaps = {
+    ["<CR>"] = { desc = "Open (PDF/Office/動画は bin/open)", callback = select_or_open_external, mode = "n" },
     ["T"] = { desc = "Trash (自前 trash)", callback = trash_cursor_entry, mode = "n" },
     ["D"] = { desc = "Trash (自前 trash)", callback = trash_cursor_entry, mode = "n" },
   },
