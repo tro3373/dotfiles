@@ -2,6 +2,6 @@
 
 main() {
   set -eo pipefail
-  uvx markitdown "$@"
+  uvx --from 'markitdown[all]' markitdown "$@"
 }
 main "$@"
