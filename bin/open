@@ -43,6 +43,7 @@ main() {
   [[ ${#files[@]} -eq 0 ]] && return
 
   _ostype=${OSTYPE}
+  _open_dir=
   os wsl && _ostype=wsl
   os orb && _ostype=orb
   _open=$(type -a open | grep -v "$0" | head -1 | cut -d' ' -f3)
@@ -53,14 +54,17 @@ main() {
     orb*) _open=/opt/orbstack-guest/bin/open ;;
     linux*)
       _open=xdg-open
-      if has nautilus; then
-        _open=nautilus
-      fi
+      # ファイルは xdg-open (mime の既定アプリ) 固定。nautilus にファイルを渡しても
+      # 親ディレクトリが開くだけでビューアが起動しないため、ディレクトリ限定で使う。
+      has nautilus && _open_dir=nautilus
       ;;
   esac
 
-  local mds=() imgs=() htmls=() xlsx=() docx=() others=()
+  : "${_open_dir:=$_open}"
+
+  local mds=() imgs=() htmls=() xlsx=() docx=() dirs=() others=()
   for f in "${files[@]}"; do
+    [[ -d $f ]] && dirs+=("${f}") && continue
     case "${f}" in
       *.md) mds+=("${f}") ;;
       *.html) htmls+=("${f}") ;;
@@ -75,6 +79,7 @@ main() {
   [[ ${#htmls[@]} -ne 0 ]] && chrome "${htmls[@]}" &>/dev/null &
   [[ ${#xlsx[@]} -ne 0 ]] && xleak "${xlsx[@]}" &>/dev/null &
   [[ ${#docx[@]} -ne 0 ]] && doxx "${docx[@]}" &>/dev/null &
+  [[ ${#dirs[@]} -ne 0 ]] && $_open_dir "${dirs[@]}" &>/dev/null &
   [[ ${#others[@]} -ne 0 ]] && $_open "${others[@]}" &>/dev/null &
 }
 main "$@"
