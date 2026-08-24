@@ -209,6 +209,7 @@ jira() {
 tasks() {
   printf 'tasks %s\n' "$*" >>"${stub_log}"
   sed 's/^/| /' >>"${stub_log}"
+  return "${tasks_rc:-0}"
 }
 
 # nvim は開いたファイルの置き場と、タブごとのファイル名・中身を記録する。
@@ -228,12 +229,15 @@ nvim() {
 # gh は `issue list` の検索結果として ${gh_existing_titles} を返し、`issue create` の
 # title/body を記録する。--body は複数行なので引数行から外し、本文は "| " 前置で残す。
 gh() {
-  local title="" issue_body=""
+  local title="" issue_body="" repo=""
   local -a shown=()
   while (($#)); do
     case "$1" in
       --title) title="$2" && shift ;;
       --body) issue_body="$2" && shift ;;
+      # repo は受け取った argv から取る。jira-issue 側の gh_repo_args を覗くと
+      # 「変数に入ったか」しか見なくなり、gh へ渡し忘れても緑のまま通る。
+      -R | --repo) repo="$2" && shown+=("$1" "$2") && shift ;;
       *) shown+=("$1") ;;
     esac
     shift
@@ -245,17 +249,21 @@ gh() {
   fi
   printf 'gh-title %s\n' "${title}" >>"${stub_log}"
   printf '%s\n' "${issue_body}" | sed 's/^/| /' >>"${stub_log}"
-  # 作成した issue の URL を返す。KEY 由来にして issue ごとに別 URL にする。
-  # ${gh_create_out} で URL を含まない出力に差し替えられる。
+  # 作成した issue の URL を返す。KEY 末尾の数字を issue 番号に流用して issue ごとに
+  # 別 URL にし、repo は -R の指定を反映する (tracker の owner/repo が cwd ではなく
+  # 作成先から来ることを検証するため)。
+  # ${gh_create_out} で URL を含まない / 想定外の形の出力に差し替えられる。
   local key=${title%%]*}
   key=${key#"["}
-  printf '%s\n' "${gh_create_out-https://github.com/o/r/issues/${key}}"
+  printf '%s\n' "${gh_create_out-https://github.com/${repo:-o/r}/issues/${key##*-}}"
 }
 
 fzf_line() { grep '^fzf ' "${stub_log}"; }
 nvim_tmpdir() { sed -n 's/^tmpdir //p' "${stub_log}"; }
 sink_log() { grep -v -e '^fzf ' -e '^tmpdir ' -e '^gh ' "${stub_log}"; }
 gh_lines() { grep '^gh ' "${stub_log}"; }
+tasks_lines() { grep '^tasks ' "${stub_log}"; }
+tracker_lines() { sed -n 's/^| //p' "${stub_log}" | grep -- '- tracker:'; }
 
 # 12. to-tasks は複数選択でき、issue ごとに tasks -a が呼ばれる
 test_to_tasks_appends_each_selected_issue() {
@@ -264,7 +272,7 @@ test_to_tasks_appends_each_selected_issue() {
   fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
   issue_select_open to-tasks
   check '複数選択した issue が 1 件ずつ tasks -a に渡る' \
-    "$(printf 'tasks -a\n| - [ ] [K-1] title of K-1\n|   - body of K-1\ntasks -a\n| - [ ] [K-2] title of K-2\n|   - body of K-2')" \
+    "$(printf 'tasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: jira=K-1\n|   - body of K-1\ntasks -a\n| - [ ] [K-2] title of K-2\n|   - tracker: jira=K-2\n|   - body of K-2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -293,7 +301,7 @@ test_to_tasks_with_single_pick_appends_one_task() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-tasks
   check '1 件選択なら tasks -a は 1 回だけ' \
-    "$(printf 'tasks -a\n| - [ ] [K-1] title of K-1\n|   - body of K-1')" \
+    "$(printf 'tasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: jira=K-1\n|   - body of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -364,7 +372,7 @@ test_to_gh_creates_one_issue_per_selection() {
   fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
   issue_select_open to-gh
   check '選択した issue ごとに [KEY] 付きの GH issue が作られる' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/K-1 [K-1] title of K-1\ngh-title [K-2] title of K-2\n| - [ ] [K-2] title of K-2\n|   - body of K-2\njira issue link remote K-2 https://github.com/o/r/issues/K-2 [K-2] title of K-2')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   - body of K-1\ngh-title [K-2] title of K-2\n| - [ ] [K-2] title of K-2\n|   - body of K-2\njira issue link remote K-2 https://github.com/o/r/issues/2 [K-2] title of K-2\ntasks -a\n| - [ ] [K-2] title of K-2\n|   - tracker: gh=o/r#2 jira=K-2\n|   - body of K-2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -377,6 +385,7 @@ test_to_gh_skips_existing_issue() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '既存の [KEY] issue があれば作成しない' '' "$(sink_log)"
+  check '既存の [KEY] issue があればタスクも積まない' '' "$(tasks_lines)"
   rm -f "${stub_log}"
 }
 
@@ -389,7 +398,7 @@ test_to_gh_creates_when_hit_lacks_key_prefix() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '[KEY] を含まない検索ヒットでは作成をスキップしない' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/K-1 [K-1] title of K-1')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   - body of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -439,7 +448,7 @@ test_to_gh_matches_the_key_only_as_a_title_prefix() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '[KEY] がタイトル先頭でないヒットは既存扱いにしない' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/K-1 [K-1] title of K-1')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   - body of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -486,7 +495,7 @@ test_to_gh_links_the_created_url_back_to_jira() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '作成した issue の URL が Jira の Web Link として登録される' \
-    'jira issue link remote K-1 https://github.com/o/r/issues/K-1 [K-1] title of K-1' \
+    'jira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1' \
     "$(grep '^jira ' "${stub_log}")"
   rm -f "${stub_log}"
 }
@@ -517,7 +526,7 @@ test_to_gh_stops_when_the_jira_link_fails() {
   check 'Web Link の登録に失敗したら異常終了する' 1 "${rc}"
   check '失敗した KEY で止まり、次の issue を作らない' 1 "$(grep -c '^gh-title ' "${stub_log}")"
   check '手で貼れるように URL を出す' yes \
-    "$([[ ${out} == *https://github.com/o/r/issues/K-1* ]] && echo yes || echo no)"
+    "$([[ ${out} == *https://github.com/o/r/issues/1* ]] && echo yes || echo no)"
   rm -f "${stub_log}"
 }
 
@@ -529,6 +538,95 @@ test_to_gh_does_not_link_a_skipped_issue() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check 'スキップした KEY には Web Link を張らない' 0 "$(grep -c '^jira ' "${stub_log}")"
+  rm -f "${stub_log}"
+}
+
+# 33. to-gh が積むタスクの tracker は作成した issue の URL から組む。
+#     `gh=` を書く経路はここだけなので、番号がずれると /task が別 issue に投稿する
+test_to_gh_tracker_points_at_the_created_issue() {
+  local stub_log fzf_selection
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  issue_select_open to-gh
+  check '積んだタスクの tracker が作成した issue と Jira の KEY を指す' \
+    '  - tracker: gh=o/r#1 jira=K-1' \
+    "$(tracker_lines)"
+  rm -f "${stub_log}"
+}
+
+# 34. tracker の owner/repo は作成先 repo。-R で別 repo に作ったときに cwd の repo を
+#     書くと、/task が存在しない issue へ投稿しに行く
+test_to_gh_tracker_uses_the_created_repo() {
+  local stub_log fzf_selection
+  local -a gh_repo_args=()
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  set_gh_repo_args -R owner/repo
+  issue_select_open to-gh
+  check '-R 指定時の tracker は作成先 repo を指す' \
+    '  - tracker: gh=owner/repo#1 jira=K-1' \
+    "$(tracker_lines)"
+  rm -f "${stub_log}"
+}
+
+# 35. 想定外の形の URL からは tracker を組まない。当て推量で番号を作ると
+#     /task が無関係な issue にコメントする
+test_to_gh_stops_when_the_url_shape_is_unexpected() {
+  local stub_log fzf_selection rc=0
+  local gh_create_out=https://example.com/nope
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  (issue_select_open to-gh) >/dev/null 2>&1
+  rc=$?
+  check '想定外の URL 形式ならタスクを積まない' '' "$(tasks_lines)"
+  check '想定外の URL 形式なら異常終了する' 1 "${rc}"
+  rm -f "${stub_log}"
+}
+
+# 36. tracker は .tasks.md の目印。GitHub issue 本文には入れない
+#     (本文へ入れると issue が自分自身を指す行を持つ)
+test_to_gh_body_has_no_tracker_line() {
+  local stub_log fzf_selection
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  issue_select_open to-gh
+  check 'GitHub issue 本文には tracker 行を入れない' 0 \
+    "$(sed -n '/^gh-title /,/^jira /p' "${stub_log}" | grep -c -- '- tracker:')"
+  rm -f "${stub_log}"
+}
+
+# 37. タスク追記が落ちても Web Link は残る。逆順だと issue だけ出来て link も
+#     タスクも付かず、次の -g は「既に issue がある」でスキップして復旧できない。
+#     production と同じ errexit 下で確かめる (テスト既定の set -uo pipefail では
+#     この経路の止まり方が変わる)
+test_to_gh_links_before_appending_the_task() {
+  local stub_log fzf_selection rc=0
+  local tasks_rc=1
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  (
+    set -euo pipefail
+    issue_select_open to-gh
+  ) >/dev/null 2>&1
+  rc=$?
+  check 'タスク追記が落ちても Web Link は張られている' \
+    'jira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1' \
+    "$(grep '^jira ' "${stub_log}")"
+  check 'タスク追記が落ちたら異常終了する' 1 "${rc}"
+  rm -f "${stub_log}"
+}
+
+# 38. tracker の `gh=owner/repo#NN` は host を持たず /task は github.com へ投稿する。
+#     GHE の URL から組むと黙って別の issue を指すので、組まずに落とす
+test_to_gh_rejects_a_non_github_host() {
+  local stub_log fzf_selection rc=0
+  local gh_create_out=https://ghe.example.com/o/r/issues/1
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  (issue_select_open to-gh) >/dev/null 2>&1
+  rc=$?
+  check 'github.com 以外の host ではタスクを積まない' '' "$(tasks_lines)"
+  check 'github.com 以外の host なら異常終了する' 1 "${rc}"
   rm -f "${stub_log}"
 }
 
@@ -567,6 +665,12 @@ main() {
   test_to_gh_stops_when_the_created_url_is_missing
   test_to_gh_stops_when_the_jira_link_fails
   test_to_gh_does_not_link_a_skipped_issue
+  test_to_gh_tracker_points_at_the_created_issue
+  test_to_gh_tracker_uses_the_created_repo
+  test_to_gh_stops_when_the_url_shape_is_unexpected
+  test_to_gh_body_has_no_tracker_line
+  test_to_gh_links_before_appending_the_task
+  test_to_gh_rejects_a_non_github_host
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

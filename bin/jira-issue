@@ -18,11 +18,15 @@
 # `tasks -a` instead of opening nvim.
 #   jira-issue -t
 # To GitHub: same pick + convert, but create one GitHub issue per pick,
-# titled "[KEY] SUMMARY" with the converted markdown as its body. An issue
-# whose title already carries that [KEY] is skipped, so re-picking the same
-# issue never creates a duplicate. The created URL is linked back to the Jira
-# issue as a web link. Creation only; closing stays manual.
+# titled "[KEY] SUMMARY" with the converted markdown as its body. The created
+# URL is linked back to the Jira issue as a web link, then the same markdown is
+# appended to .tasks.md. An issue whose title already carries that [KEY] is
+# skipped (and so is its task), so re-picking the same issue never creates a
+# duplicate. Creation only; closing stays manual.
 #   jira-issue -g [-R owner/repo]
+# Both modes mark the appended task with a `tracker:` line so /task can read
+# and comment on the issue(s) it came from; -g records the GitHub issue it
+# just created alongside the Jira key.
 # These modes pick several issues with TAB; each pick becomes its own
 # tab / task / GitHub issue.
 # Create (stdin):
@@ -75,9 +79,10 @@ $command_name [-t|--to-tasks] [-g|--to-gh [-R owner/repo]] [-a|--add]
     -t, --to-tasks  Append the selected issue(s) to .tasks.md instead of opening
                     them in nvim
     -g, --to-gh     Create a GitHub issue per selected issue instead of
-                    opening them in nvim, then link its URL back to the Jira
-                    issue. The title carries a [KEY] prefix; an issue whose
-                    title already has that [KEY] is skipped
+                    opening them in nvim, link its URL back to the Jira issue,
+                    then append it to the .tasks.md of the current directory.
+                    The title carries a [KEY] prefix; an issue whose title
+                    already has that [KEY] is skipped
     -R, --repo      Target repo (owner/repo) for -g. Defaults to the repo gh
                     resolves from the current directory's git remote
     -a, --add       Create sub-task(s) from stdin (task-list markdown)
@@ -207,6 +212,22 @@ list_issues_plain() {
     --plain --no-headers --columns KEY,SUMMARY,STATUS,ASSIGNEE
 }
 
+insert_tracker() {
+  # Put the `tracker:` marker (~/.claude/skills/task/references/tracker.md) right
+  # under the title line of a converted issue. /task reads that marker to know
+  # which issues a task belongs to, so whoever appends the task has to write it;
+  # a task without one never triggers the issue integration at all.
+  # Only the title line can match: issue_to_tasks indents every body line by two
+  # spaces, so nothing below it starts with "- [ ]".
+  local tracker=$1 line
+  while IFS='' read -r line || [[ -n ${line} ]]; do
+    printf '%s\n' "${line}"
+    if [[ ${line} =~ ${task_re} ]]; then
+      printf '  - tracker: %s\n' "${tracker}"
+    fi
+  done
+}
+
 issue_to_tasks() {
   # Convert `jira issue view --plain` output into markdown task-list format:
   #   # Title                 -> - [ ] [KEY] Title  (KEY = $1, omitted if unset)
@@ -285,7 +306,8 @@ append_to_tasks() {
   # `tasks -a` turns one call into one task, so each issue is appended on its own.
   local key
   for key in "$@"; do
-    jira issue view "${key}" --plain | issue_to_tasks "${key}" | tasks -a
+    jira issue view "${key}" --plain | issue_to_tasks "${key}" |
+      insert_tracker "jira=${key}" | tasks -a
   done
 }
 
@@ -362,6 +384,25 @@ create_gh_issue() {
   echo "==> Created: ${url}" >&2
 }
 
+add_gh_task() {
+  # 作成した issue を cwd の .tasks.md にも積む。3 手順の最後に置く: tasks は
+  # git worktree と .tasks.md を要求するのに対し -R は「その repo に居なくてよい」
+  # ための引数なので、ここが一番落ちやすい。先に link を済ませておけば、落ちても
+  # 失うのはタスク 1 件だけで、手で足せる。
+  # tracker の owner/repo と番号は作成した URL だけから取る。-R で別 repo に作る
+  # ことがあるので、cwd の repo を前提にすると /task が無い issue へ投稿しに行く。
+  # host も github.com に限る: tracker の `gh=owner/repo#NN` は host を持たず、
+  # /task は github.com へ投稿するため、GHE の URL は黙って別の issue を指す。
+  local url_re='^https://github\.com/([^/]+/[^/]+)/issues/([0-9]+)'
+  if [[ ! ${url} =~ ${url_re} ]]; then
+    die "==> Error: Cannot build a tracker from ${url}; add the task by hand"
+  fi
+  local tracker="gh=${BASH_REMATCH[1]}#${BASH_REMATCH[2]} jira=${key}"
+  if ! printf '%s\n' "${markdown}" | insert_tracker "${tracker}" | tasks -a; then
+    die "==> Error: Created and linked ${url} but could not append its task; add it by hand with: ${tracker}"
+  fi
+}
+
 create_gh_issues() {
   # 突合キーは GH issue タイトルの [KEY] prefix。マッピングファイルを持たない
   # 代わりに毎回検索し、同じ issue を選び直しても二重作成しない。
@@ -387,6 +428,7 @@ create_gh_issues() {
     echo "==> Creating: ${title}" >&2
     create_gh_issue
     link_gh_issue_to_jira
+    add_gh_task
   done
 }
 
