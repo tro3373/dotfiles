@@ -7,11 +7,21 @@
 # Usage: cd-src-root [--popup] [query]
 #   --popup : popup 起動時。popup の stdout は捨てられる (呼び出し元が cd できない)
 #             ため、cd は tmux 側の操作 (switch-client / send-keys) で完結させる。
+#             この起動でだけ fzf を複数選択可 (Tab) にする。選んだ数だけセッションを
+#             作るのが自然な操作だから。widget 起動は cd 先が 1 つなので単一選択。
 #   query   : fzf の初期クエリ (widget は $LBUFFER を渡す)。
 #
 # stdout: 呼び出し元が cd すべき場合のみ、選択したパスを 1 行出力する。
 #   widget 起動 (と tmux 外) のときだけ出力する。
 #   popup 起動時は tmux 側で完結するので何も出力しない。
+
+session_exists() {
+  tmux has-session -t "=$1" 2>/dev/null # "=" は完全一致 (前方一致でヒットさせない)
+}
+
+session_name() {
+  basename "$1" | tr '.' '_'
+}
 
 main() {
   set -euo pipefail
@@ -28,15 +38,31 @@ main() {
   local preview_cmd='ls -laF {}'
   command -v onefetch >/dev/null 2>&1 && preview_cmd='onefetch --no-art {}'
 
-  local src
-  src=$(find_repos | fzf --tac --query "$query" --preview "$preview_cmd") || return 0
-  [[ -n $src ]] || return 0
+  local -a fzf_opts=(--tac --query "$query" --preview "$preview_cmd")
+  ((popup)) && fzf_opts+=(--multi)
+
+  local -a srcs=()
+  mapfile -t srcs < <(find_repos | fzf "${fzf_opts[@]}") # fzf 中断時は空になるだけ
+  ((${#srcs[@]})) || return 0
 
   if ((popup)) && [[ -n ${TMUX:-} ]]; then
-    local name
-    name=$(basename "$src" | tr '.' '_')
+    local src name switch_to=""
+    if ((${#srcs[@]} > 1)); then
+      # 複数選択: 選んだ分だけセッションを用意して 1 件目へ switch。
+      # 現セッション採用の特例 (下記) は単一選択のときだけ適用する。
+      for src in "${srcs[@]}"; do
+        name=$(session_name "$src")
+        [[ -n $switch_to ]] || switch_to=$name
+        session_exists "$name" || tmux new-session -d -s "$name" -c "$src"
+      done
+      tmux switch-client -t "$switch_to"
+      return 0
+    fi
 
-    if tmux list-sessions -F '#S' | grep -Fqx -- "$name"; then
+    src=${srcs[0]}
+    name=$(session_name "$src")
+
+    if session_exists "$name"; then
       # 同名セッションあり: 新規 window を開いて switch
       tmux new-window -t "$name" -c "$src"
       tmux switch-client -t "$name"
@@ -59,7 +85,7 @@ main() {
     return 0
   fi
 
-  printf '%s\n' "$src"
+  printf '%s\n' "${srcs[0]}"
 }
 
 main "$@"
