@@ -41,8 +41,12 @@ fire_logs() {
 }
 
 fire_memos() {
-  git_root="$(realpath "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")" 2>/dev/null || :)"
-  [[ -z $git_root ]] && return 0
+  # git 側の終了コードで判定する。realpath に 2>/dev/null|| : を付けても
+  # git の失敗は拾えず (dirname "" が "." を返し realpath が cwd を返す)、
+  # リポジトリ外で cwd に .memo を張ってしまう。
+  local common_dir
+  common_dir="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || return 0
+  git_root="$(realpath "$(dirname "$common_dir")")"
   memo="$git_root/.memo"
   if [[ ! -L $memo ]]; then
     if [[ -e $memo ]]; then
