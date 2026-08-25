@@ -56,7 +56,7 @@ vim.opt.list = true
 vim.opt.listchars = { tab = "▸ ", trail = "_", extends = " " }
 
 vim.opt.number = true -- 行番号を表示する
-vim.opt.relativenumber = true -- 相対行番号を表示する
+vim.opt.relativenumber = false -- 相対行番号を表示しない
 vim.opt.ruler = true -- ルーラを表示
 vim.opt.colorcolumn = "80,120" -- 80,120 に縦 Line
 vim.opt.signcolumn = "yes" -- サイン列を常時表示 (gutter の出し入れ再描画漏れ防止)
