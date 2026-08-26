@@ -162,7 +162,6 @@
 ### 4.6 100_base.vim から未移植の軽微機能
 
 - `base.lua` は `100_base.vim` のオプション・主要 autocmd を移植済みだが、以下は未移植
-  - `DisableLintInThisRepository` コマンド
   - `HighlightMixedIndent` (make の混在インデント警告)
   - `RemoveAutoCommentAfterURL`, `highlight_notes` augroup
 - 必要なら個別に lua 移植 or 該当部のみ source

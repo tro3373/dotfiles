@@ -469,8 +469,22 @@ else
   set_yank_post_in_remote()
 end
 
+-- local rc の置き場は git root 基準 (vim 側 100_base.vim の GetGitRoot() と揃える)。
+-- getcwd() 基準だとサブディレクトリで nvim を起動した際に別ファイルを見に行ってしまう。
+local function get_git_root()
+  local root = vim.fs.root(0, ".git")
+  if not root then
+    return vim.fn.getcwd()
+  end
+  return root
+end
 local function get_local_rc_path()
-  return vim.fn.getenv("HOME") .. "/.ldot/vim/additional" .. vim.fn.getcwd() .. "/local.vimrc"
+  return vim.fn.getenv("HOME") .. "/.mo/vim/additional" .. get_git_root() .. "/local.vimrc"
+end
+local function open_local_rc_tab()
+  local rc = get_local_rc_path()
+  vim.fn.mkdir(vim.fn.fnamemodify(rc, ":h"), "p")
+  vim.cmd("tabe " .. vim.fn.fnameescape(rc))
 end
 local function load_local_rc()
   local rc = get_local_rc_path()
@@ -485,14 +499,22 @@ aumg({
   cb = load_local_rc,
 })
 
-local function openLocalRc()
+-- ファイルが無くても新規作成できるよう、必ず親ディレクトリを掘ってから開く
+vim.api.nvim_create_user_command("OpenLocalRc", open_local_rc_tab, {})
+
+-- local.vimrc は vimscript として source されるため、追記する行も vimscript で書く。
+-- ALE (lint) と nvim 組み込み診断 (LSP) の両方を落とす。
+local function disable_lint_in_this_repository()
   local rc = get_local_rc_path()
-  if vim.fn.filereadable(rc) == 0 then
-    return
-  end
-  vim.cmd("tabe " .. rc)
+  vim.fn.mkdir(vim.fn.fnamemodify(rc, ":h"), "p")
+  vim.fn.writefile({
+    "let g:ale_enabled = 0",
+    "lua vim.diagnostic.enable(false)",
+  }, rc, "a")
+  vim.notify("==> Added ignore lint settings!! " .. rc)
+  open_local_rc_tab()
 end
-vim.api.nvim_create_user_command("OpenLocalRc", openLocalRc, {})
+vim.api.nvim_create_user_command("DisableLintInThisRepository", disable_lint_in_this_repository, {})
 
 -- "==============================================================================
 -- " SQL auto uppercase
