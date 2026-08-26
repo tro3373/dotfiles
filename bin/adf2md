@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+
+# Convert an ADF (Atlassian Document Format) node to markdown.
+#
+#   jira issue view KEY --raw | jq -c .fields.description | adf2md
+#
+# stdin  : one ADF node as JSON (usually a "doc" node; any node works)
+# stdout : markdown
+#
+# Why this exists: `jira issue view --plain` renders through glamour, which
+# hard-wraps at 120 columns, flattens code fences into indented text (losing the
+# language) and drops the comment boundaries. The raw API response keeps all of
+# it, so converting the JSON ourselves is lossless where the rendered text is
+# not.
+#
+# Node coverage is driven by what the target Jira actually emits (measured with
+# `jq '.. | .type? // empty' | sort | uniq -c`): text (+ code/link/strong/em/
+# strike marks), paragraph, listItem, hardBreak, doc, blockquote, mention,
+# bulletList, orderedList, codeBlock, heading, inlineCard. table / media / rule
+# / panel / emoji are handled too because their fallback would be silent
+# garbling rather than an obvious gap. Anything else falls back to rendering its
+# children, so an unknown node loses its wrapper but never its text.
+
+set -euo pipefail
+
+command_name=$(basename "$0") && readonly command_name
+has() { command -v "${1}" >&/dev/null; }
+die() {
+  echo "$*" >&2
+  exit 1
+}
+
+usage() {
+  cat <<EOF
+
+$command_name < adf.json
+
+  Convert an ADF node (JSON, on stdin) to markdown on stdout.
+  Reads one JSON value; a JSON null produces no output.
+
+  Options:
+    -h, --help  Show this help message and exit
+
+EOF
+}
+
+# The whole command is this filter, so it lives here rather than in a data file.
+#
+# Two mutually exclusive layers:
+#   inline: runs of text inside one block. Marks wrap the text; `link` is
+#           applied last so it stays outside `code`/`strong` and the URL does
+#           not end up inside a backtick pair.
+#   block:  everything that owns its own lines. Each block returns a string with
+#           no trailing newline; the caller joins blocks with a blank line, so
+#           nesting never has to guess how many newlines the child left behind.
+read -r -d '' adf_filter <<'JQ' || true
+def istr($n): if $n <= 0 then "" else ($n * " ") end;
+
+# Put $marker on the first line of $body and indent the rest to the marker's
+# width, so nested lists and code fences stay inside the list item.
+def withmarker($marker; $body):
+  (($marker | length) + 1) as $w
+  | ($body | split("\n")) as $lines
+  | ([$marker + " " + ($lines[0] // "")]
+     + ($lines[1:] | map(if . == "" then . else istr($w) + . end)))
+    | join("\n");
+
+def quoted($body): $body | split("\n") | map("> " + .) | join("\n");
+
+# Join sibling blocks with one blank line, dropping the ones that rendered to
+# nothing. Jira is full of empty paragraphs (every stray Enter makes one) and
+# each would otherwise add two blank lines of its own.
+def joinblocks: map(select(. != "")) | join("\n\n");
+
+# Join a list item's rendered children. A nested list follows its parent item
+# directly; a blank line there turns the whole list loose and markdown renderers
+# start wrapping every item in <p>.
+def joinparts:
+  reduce (map(select(.s != ""))[]) as $c ("";
+    if . == "" then $c.s
+    elif ($c.t == "bulletList" or $c.t == "orderedList") then . + "\n" + $c.s
+    else . + "\n\n" + $c.s
+    end);
+
+def mention:
+  (.attrs.text // .attrs.displayName // .attrs.id // "") | tostring
+  | if startswith("@") then . else "@" + . end;
+
+def inline:
+  . as $n
+  | .type as $t
+  | if $t == "text" then
+      # Sort so `link` is the outermost wrapper regardless of ADF mark order;
+      # otherwise the URL can end up inside a backtick pair.
+      ((.marks // []) | sort_by(if .type == "link" then 1 else 0 end)) as $marks
+      | reduce $marks[] as $m (.text // "";
+          if $m.type == "code" then "`" + . + "`"
+          elif $m.type == "strong" then "**" + . + "**"
+          elif $m.type == "em" then "_" + . + "_"
+          elif $m.type == "strike" then "~~" + . + "~~"
+          elif $m.type == "link" then "[" + . + "](" + ($m.attrs.href // "") + ")"
+          else . end)
+    # Two trailing spaces is the markdown hard break; a bare newline would be
+    # re-joined into the previous line by every renderer.
+    elif $t == "hardBreak" then "  \n"
+    elif $t == "mention" then ($n | mention)
+    elif $t == "emoji" then (.attrs.text // .attrs.shortName // "")
+    elif $t == "inlineCard" then ("<" + (.attrs.url // .attrs.data.url // "") + ">")
+    elif $t == "status" then (.attrs.text // "")
+    elif $t == "date" then ((.attrs.timestamp // "") | tostring)
+    else ((.content // []) | map(inline) | join(""))
+    end;
+
+def inlines: (.content // []) | map(inline) | join("");
+
+# Every block returns a string with no trailing newline; callers join blocks
+# with a blank line, so nesting never has to guess what the child left behind.
+def block:
+  .type as $t
+  | if $t == "paragraph" then inlines
+    elif $t == "heading" then
+      (("#" * ([(.attrs.level // 1), 1] | max)) + " " + inlines)
+    elif $t == "codeBlock" then
+      "```" + (.attrs.language // "") + "\n"
+      + ((.content // []) | map(.text // "") | join("")) + "\n```"
+    elif $t == "rule" then "---"
+    elif $t == "blockquote" or $t == "panel" then
+      quoted((.content // []) | map(block) | joinblocks)
+    elif $t == "bulletList" then
+      ((.content // [])
+       | map(withmarker("-";
+             ((.content // []) | map({t: .type, s: block}) | joinparts)))
+       | join("\n"))
+    elif $t == "orderedList" then
+      ((.content // []) | to_entries
+       | map(withmarker((((.key + 1) | tostring) + ".");
+             ((.value.content // []) | map({t: .type, s: block}) | joinparts)))
+       | join("\n"))
+    elif $t == "mediaGroup" or $t == "mediaSingle" or $t == "media" then
+      "[attachment]"
+    elif $t == "table" then
+      ((.content // []) | to_entries
+       | map((.value.content // []) as $cells
+             | ("| " + ($cells | map(inlines) | join(" | ")) + " |")
+             + (if .key == 0
+                then "\n|" + (($cells | length) * " --- |")
+                else "" end))
+       | join("\n"))
+    else ((.content // []) | map(block) | joinblocks)
+    end;
+
+if . == null then "" else block end
+JQ
+readonly adf_filter
+
+main() {
+  if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
+    usage
+    return 0
+  fi
+  has jq || die "==> No jq command exist."
+  jq -r "${adf_filter}"
+}
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
+fi

@@ -11,6 +11,11 @@
 # projects in particular), and `jira issue create` decides the sub-task parent
 # from the per-project issue type cache, not from the server.
 #
+# Every mode converts the issue body AND all of its comments. The conversion
+# goes through the raw Jira API JSON (`--raw`) and bin/adf2md, so headings,
+# nested lists and fenced code blocks survive; comments land one per block under
+# a `- Comments` heading, oldest first.
+#
 # Open (default): pick issue(s) with fzf, convert them to task-list markdown,
 # then view them in nvim, one tab per issue.
 #   jira-issue
@@ -57,6 +62,9 @@ readonly task_re='^- \[[x ]\] (.*)$'
 # by gh_issue_exists / create_gh_issues. Empty means "let gh resolve the repo
 # from the current directory's git remote".
 gh_repo_args=()
+# ADF (Jira の本文 JSON) -> markdown の変換器。PATH ではなく隣を見る: この
+# スクリプトを source するテストや、PATH を通していない環境でも同じものを使う。
+adf2md_bin=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/adf2md && readonly adf2md_bin
 has() { command -v "${1}" >&/dev/null; }
 hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
 _ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
@@ -202,6 +210,14 @@ process_tasks() {
   emit_task
 }
 
+view_issue() {
+  # --plain ではなく --raw。--plain は glamour を通るので 120 桁で折り返され、
+  # code fence は言語ごとインデントに潰れ、コメントの境界も日付の見た目でしか
+  # 追えなくなる。raw の JSON はそれを全部保ったままで、変換は bin/adf2md 側の
+  # 決定的な処理になる。
+  jira issue view "$1" --raw
+}
+
 list_issues_plain() {
   # Tab-delimited list for fzf. TYPE/PARENT are optional filters, so only pass
   # them when set (lets listing work without a fixed type/parent).
@@ -228,85 +244,92 @@ insert_tracker() {
   done
 }
 
-issue_to_tasks() {
-  # Convert `jira issue view --plain` output into markdown task-list format:
-  #   # Title                 -> - [ ] [KEY] Title  (KEY = $1, omitted if unset)
-  #   • item                  -> - item   (4-space nesting -> 2-space nesting)
-  #   other body lines        -> - <line> (bulletized, one level under title)
-  # Everything up to the "Description" separator is dropped (the title is
-  # captured beforehand). Blank lines, empty bullets and ANSI escapes are
-  # stripped, and the whole body is nested one level under the title.
-  # jira renders through glamour, which hard-wraps at 120 columns; wrapped
-  # continuation lines are joined back so a split URL stays a single URL
-  # instead of turning its tail into its own bullet (see unwrap notes below).
-  local key="${1:-}"
-  local title="" desc_seen=0 line content indent lead margin=-1 joinable=0 last
-  local title_re='^[[:space:]]*# +(.*)$'
-  local desc_re='^[[:space:]]*-+.*Description.*-+[[:space:]]*$'
-  local bullet_re='^( *)• +(.*)$'
-  local any_bullet_re='^[[:space:]]*•'
-  local empty_bullet_re='^[[:space:]]*•[[:space:]]*$'
-  # glamour wraps at " ,.;-+|": a breakpoint char stays at the end of the line
-  # it broke, while a wrap on whitespace swallows that one space. The two are
-  # indistinguishable afterwards, so prose that wraps right after ",.;-+|"
-  # loses that space ("a. B" -> "a.B"); intact URLs are worth that much.
-  local breakpoint_re='[,.;+|-]$'
-  local -a body=()
-  # Pass 1: strip ANSI up front, capture the title, and collect the body lines
-  # after the Description separator (tracking their smallest leading margin).
-  # glamour folds source newlines inside a block into spaces, so any non-blank
-  # line that follows another one without starting a bullet is a wrap remnant.
-  while IFS='' read -r line || [[ -n ${line} ]]; do
-    line="${line%"${line##*[![:space:]]}"}" # trim trailing whitespace
-    if [[ ${desc_seen} -eq 0 ]]; then
-      [[ ${line} =~ ${title_re} ]] && title="${BASH_REMATCH[1]}"
-      [[ ${line} =~ ${desc_re} ]] && desc_seen=1
-      continue
-    fi
-    [[ -z ${line} ]] && { # blank line: ends the wrapped block
-      joinable=0
-      continue
-    }
-    [[ ${line} =~ ${empty_bullet_re} ]] && { # empty bullet: ditto
-      joinable=0
-      continue
-    }
-    if ((joinable)) && [[ ! ${line} =~ ${any_bullet_re} ]]; then
-      content=${line#"${line%%[![:space:]]*}"} # strip leading whitespace
-      last=${body[-1]}
-      [[ ${last} =~ ${breakpoint_re} ]] || last+=" " # restore swallowed space
-      body[-1]="${last}${content}"
-      continue
-    fi
-    lead=${line%%[![:space:]]*} # leading whitespace run
-    ((margin < 0 || ${#lead} < margin)) && margin=${#lead}
-    body+=("${line}")
-    joinable=1
-  done < <(sed -E $'s/\x1b\\[[0-9;?]*[a-zA-Z]//g')
-  ((margin < 0)) && margin=0
+# jira の日時 ("2021-11-24T09:00:00.000+0000") をローカルの分精度に落とす。
+# 秒とミリ秒はタスクの本文で追う情報ではないし、桁が揃わないと読みにくい。
+format_datetime() {
+  date -d "$1" '+%Y-%m-%d %H:%M' 2>/dev/null || printf '%s' "$1"
+}
 
-  [[ -n ${key} ]] && title="[${key}] ${title}"
-  [[ -n ${title} ]] && printf -- '- [ ] %s\n' "${title}"
-  # Pass 2: dedent jira's common left margin so bullet nesting is measured from
-  # column 0, then bulletize each line and nest it one level under the title.
-  for line in ${body[@]+"${body[@]}"}; do
-    line=${line:margin}
-    if [[ ${line} =~ ${bullet_re} ]]; then
-      indent=${#BASH_REMATCH[1]}
-      content=${BASH_REMATCH[2]}
-      printf '  %*s- %s\n' $((indent / 2)) '' "${content}" # halve indent, nest
+indent_lines() {
+  # stdin の各行を $1 個の空白で字下げし、行末の空白と空行を落とす。タスク 1 件が
+  # 画面に収まることのほうが、markdown の段落区切りや hardBreak の行末 2 スペース
+  # より効く。空白だけの行は行末を落とした時点で空行になり、まとめて消える。
+  # 例外はフェンスの中身だけ: そこの空行と行末空白はコードの一部で、消すと中身が
+  # 変わる (区切りの ``` 行自体は本文ではないので落とす)。
+  local pad=$1 line in_fence=0 is_fence
+  local fence_re='^[[:space:]]*```'
+  while IFS='' read -r line || [[ -n ${line} ]]; do
+    is_fence=0
+    [[ ${line} =~ ${fence_re} ]] && {
+      is_fence=1
+      in_fence=$((1 - in_fence))
+    }
+    ((in_fence == 0 || is_fence)) && line="${line%"${line##*[![:space:]]}"}"
+    if [[ -z ${line} ]]; then
+      ((in_fence)) || continue
+      printf '\n'
       continue
     fi
-    content=${line#"${line%%[![:space:]]*}"} # strip leading whitespace
-    printf '  - %s\n' "${content}"           # bulletize non-bullet line
+    printf '%*s%s\n' "${pad}" '' "${line}"
   done
+}
+
+issue_to_tasks() {
+  # Convert the raw `jira issue view --raw` JSON into markdown task-list format:
+  #
+  #   - [ ] [KEY] Summary
+  #     <description as markdown>
+  #     - Comments
+  #       - Author • 2021-11-24 09:00
+  #         <comment body as markdown>
+  #     - View this issue on Jira: <url>
+  #
+  # The body comes from bin/adf2md, so headings, nested lists and fenced code
+  # blocks (language included) survive. Everything below the title is indented
+  # by two spaces, which is what keeps the whole issue one task: bin/tasks ends
+  # a task block at the next line starting with "- " or "#" in column 0.
+  local raw key summary desc self browse total shown i comment author created
+  raw=$(cat)
+  key=$(jq -r '.key // ""' <<<"${raw}")
+  summary=$(jq -r '.fields.summary // ""' <<<"${raw}")
+  printf -- '- [ ] [%s] %s\n' "${key}" "${summary}"
+
+  desc=$(jq -c '.fields.description' <<<"${raw}" | "${adf2md_bin}")
+  [[ -n ${desc} ]] && printf '%s\n' "${desc}" | indent_lines 2
+
+  # jira は comments を作成順 (古い順) で返すので、そのまま辿れば時系列になる。
+  shown=$(jq -r '.fields.comment.comments | length' <<<"${raw}")
+  total=$(jq -r '.fields.comment.total // 0' <<<"${raw}")
+  # --raw は --comments を見ない (raw path は filter を通さない) ので、件数を絞る
+  # 手段が無い代わりに欠けたことにも気付けない。数が合わなければ黙って捨てない。
+  if ((total > shown)); then
+    warn "==> ${key}: got ${shown} of ${total} comments; the rest are not in this task"
+  fi
+  if ((shown > 0)); then
+    printf '  - Comments\n'
+    for ((i = 0; i < shown; i++)); do
+      comment=$(jq -c --argjson i "${i}" '.fields.comment.comments[$i]' <<<"${raw}")
+      author=$(jq -r '.author.displayName // .author.name // "(unknown)"' <<<"${comment}")
+      created=$(format_datetime "$(jq -r '.created // ""' <<<"${comment}")")
+      printf '    - %s • %s\n' "${author}" "${created}"
+      jq -c '.body' <<<"${comment}" | "${adf2md_bin}" | indent_lines 6
+    done
+  fi
+
+  # jira issue view の footer と同じ導線を残す。server は config ではなく .self
+  # から取る: -R 越しでも、config を読めないテストでも同じ URL になる。
+  self=$(jq -r '.self // ""' <<<"${raw}")
+  browse=${self%%/rest/*}
+  if [[ -n ${browse} && ${browse} != "${self}" && -n ${key} ]]; then
+    printf '  - View this issue on Jira: %s/browse/%s\n' "${browse}" "${key}"
+  fi
 }
 
 append_to_tasks() {
   # `tasks -a` turns one call into one task, so each issue is appended on its own.
   local key
   for key in "$@"; do
-    jira issue view "${key}" --plain | issue_to_tasks "${key}" |
+    view_issue "${key}" | issue_to_tasks |
       insert_tracker "jira=${key}" | tasks -a
   done
 }
@@ -319,7 +342,7 @@ open_in_nvim() {
   local -a files=()
   tmpdir=$(mktemp -d)
   for key in "$@"; do
-    jira issue view "${key}" --plain | issue_to_tasks "${key}" >"${tmpdir}/${key}.md"
+    view_issue "${key}" | issue_to_tasks >"${tmpdir}/${key}.md"
     files+=("${tmpdir}/${key}.md")
   done
   # Hold nvim's status so `set -e` cannot skip the cleanup on :cq or a crash.
@@ -414,7 +437,7 @@ create_gh_issues() {
       echo "==> Skip (already exists): [${key}]" >&2
       continue
     fi
-    markdown=$(jira issue view "${key}" --plain | issue_to_tasks "${key}")
+    markdown=$(view_issue "${key}" | issue_to_tasks)
     # 1 行目が "- [ ] [KEY] SUMMARY"。ここから題名を取れば view は 1 回で済む。
     if [[ ! ${markdown%%$'\n'*} =~ ${task_re} ]]; then
       die "==> Error: No title line in the converted issue: ${key}"
@@ -468,6 +491,7 @@ main() {
     usage
     return 0
   fi
+  hass jira jq
   validate_env
   resolve_config
   if [[ ${1:-} == "-a" || ${1:-} == "--add" ]]; then

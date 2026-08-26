@@ -3,10 +3,10 @@
 # bin/jira-issue の issue_to_tasks / issue_select_open ユニットテスト
 # (実 jira / fzf 不要)。
 #
-# jira は glamour 経由で描画するため `jira issue view --plain` の出力は 120 桁で
-# 折り返される。折り返しは " ,.;-+|" で起き、ブレークポイント文字は折れた行の
-# 末尾に残り、空白で折れた場合はその空白 1 個が消える。
-# issue_to_tasks のテストはこの折り返し済み出力を模した fixture を stdin から流し込む。
+# issue_to_tasks は `jira issue view --raw` の JSON (Jira REST v3) を受け取るので、
+# fixture も raw の形で組む (raw_issue ヘルパ)。本文の ADF -> markdown 変換自体は
+# bin/adf2md の担当なので、ここでは「組み立て」だけを見る: タイトル行、字下げ、
+# コメントの並びと区切り、footer、件数の欠け。
 # issue_select_open のテストは fzf/jira/tasks/nvim/gh を関数でスタブして検証する。
 #
 #   test/jira-issue.test.sh   # 全テスト実行
@@ -32,153 +32,164 @@ check() {
   printf 'ok   - %s\n' "${desc}"
 }
 
-# jira の plain 出力ヘッダ (タイトル + Description 区切り) を body の前に足して変換する。
-# 引数はそのまま issue_to_tasks に渡す (KEY 前置のテスト用)。
-convert() {
-  {
-    printf '\n  # T\n\n'
-    printf '  ------------------------ Description ------------------------\n\n'
-    cat
-  } | issue_to_tasks "$@"
+# 最小の raw issue JSON を組み立てて issue_to_tasks に流す。
+# $1 = description の ADF (省略時 null), $2 = comments 配列 (既定 []),
+# $3 = comment.total (既定は $2 の件数)。key / summary / self は呼び出し元の
+# local を動的スコープで差し替える。
+raw_issue() {
+  local desc="${1:-null}" comments="${2:-[]}" total="${3:-}"
+  [[ -n ${total} ]] || total=$(jq -n --argjson c "${comments}" '$c | length')
+  jq -nc \
+    --arg key "${key-K-1}" \
+    --arg summary "${summary-Summary}" \
+    --arg self "${self-}" \
+    --argjson desc "${desc}" \
+    --argjson comments "${comments}" \
+    --argjson total "${total}" \
+    '{key: $key, self: $self,
+      fields: {summary: $summary, description: $desc,
+               comment: {total: $total, comments: $comments}}}'
 }
 
-# 1. ブレークポイント文字 (. と -) で折れた URL が 1 本に戻る
-test_url_split_on_breakpoints_is_rejoined() {
+# text 1 個だけの段落を持つ ADF doc。
+doc_text() { jq -nc --arg t "$1" '{type:"doc",content:[{type:"paragraph",content:[{type:"text",text:$t}]}]}'; }
+
+# 1 件のコメント JSON。
+comment_of() {
+  jq -nc --arg who "$1" --arg at "$2" --argjson body "$3" \
+    '{author:{displayName:$who}, created:$at, body:$body}'
+}
+
+# 1. タイトル行は `- [ ] [KEY] Summary`
+test_title_line() {
+  local key="LINE-329" summary="LINE UI の刷新" actual
+  actual=$(raw_issue | issue_to_tasks)
+  check 'タイトルが [KEY] 付きの task 行になる' '- [ ] [LINE-329] LINE UI の刷新' "${actual}"
+}
+
+# 2. description は markdown のまま 2 スペース字下げされる (見出し・箇条書きが残る)
+test_description_is_verbatim_markdown() {
+  local actual desc
+  desc=$(jq -nc '{type:"doc",content:[
+    {type:"heading",attrs:{level:2},content:[{type:"text",text:"背景"}]},
+    {type:"bulletList",content:[
+      {type:"listItem",content:[{type:"paragraph",content:[{type:"text",text:"alpha"}]}]}]}]}')
+  actual=$(raw_issue "${desc}" | issue_to_tasks)
+  check 'description が markdown のまま 2 スペース下がる' \
+    "$(printf -- '- [ ] [K-1] Summary\n  ## 背景\n  - alpha')" "${actual}"
+}
+
+# 3. description が null でも落ちず、本文行も出さない
+test_null_description() {
   local actual
-  actual=$(
-    convert <<'EOF'
-  • figama
-      • 📍 https://www.figma.
-      com/design/nu5pgf7Ui8kIE5e3IQp0D1/LINEUI_251023?node-id=40001930-
-      1726&t=AETsDwd2KXWoG4er-0
-EOF
-  )
-  check 'ブレークポイント折り返しの URL が空白なしで連結される' \
-    "$(printf -- '- [ ] T\n  - figama\n    - 📍 https://www.figma.com/design/nu5pgf7Ui8kIE5e3IQp0D1/LINEUI_251023?node-id=40001930-1726&t=AETsDwd2KXWoG4er-0')" \
+  actual=$(raw_issue | issue_to_tasks)
+  check 'description が null なら本文行なし' '- [ ] [K-1] Summary' "${actual}"
+}
+
+# 4. コメントは古い順に 1 件 1 ブロックで並ぶ (API の配列順をそのまま使う)
+test_comments_are_one_block_each_in_order() {
+  local actual comments
+  comments=$(jq -nc --argjson a "$(comment_of 'Person B' '2021-11-23T09:00:00.000+0900' "$(doc_text 'first')")" \
+    --argjson b "$(comment_of 'Person C' '2021-11-24T18:30:00.000+0900' "$(doc_text 'second')")" '[$a,$b]')
+  actual=$(TZ=Asia/Tokyo raw_issue null "${comments}" | TZ=Asia/Tokyo issue_to_tasks)
+  check 'コメントが古い順に 1 件 1 ブロックで並ぶ' \
+    "$(printf -- '- [ ] [K-1] Summary\n  - Comments\n    - Person B • 2021-11-23 09:00\n      first\n    - Person C • 2021-11-24 18:30\n      second')" \
     "${actual}"
 }
 
-# 2. 空白で折れた行は半角スペース 1 個を補って連結する (glamour が空白を 1 個落とす)
-test_space_wrap_is_rejoined_with_one_space() {
-  local actual
-  actual=$(
-    convert <<'EOF'
-  • alpha bravo
-  charlie delta
-EOF
-  )
-  check '空白折り返しはスペース 1 個で連結される' \
-    "$(printf -- '- [ ] T\n  - alpha bravo charlie delta')" "${actual}"
-}
-
-# 3. 空行はブロック境界。連結せず独立したバレットになる
-test_blank_line_breaks_the_join() {
-  local actual
-  actual=$(
-    convert <<'EOF'
-  • alpha
-
-  bravo
-EOF
-  )
-  check '空行を挟むと連結されない' \
-    "$(printf -- '- [ ] T\n  - alpha\n  - bravo')" "${actual}"
-}
-
-# 4. • 始まりの行は連結せず新しいバレットになる
-test_bullet_line_starts_a_new_item() {
-  local actual
-  actual=$(
-    convert <<'EOF'
-  • alpha
-  • bravo
-EOF
-  )
-  check '• 始まりの行は新しいバレットになる' \
-    "$(printf -- '- [ ] T\n  - alpha\n  - bravo')" "${actual}"
-}
-
-# 5. 空バレットは出力されず、後続行の連結先にもならない
-test_empty_bullet_is_dropped_and_breaks_the_join() {
-  local actual
-  actual=$(
-    convert <<'EOF'
-  • alpha
-  •
-  bravo
-EOF
-  )
-  check '空バレットは出力されず境界になる' \
-    "$(printf -- '- [ ] T\n  - alpha\n  - bravo')" "${actual}"
-}
-
-# 6. バレット以外の行 (フッタ等) の折り返しも連結される
-test_non_bullet_line_is_rejoined() {
-  local actual
-  actual=$(
-    convert <<'EOF'
-  View this issue on Jira: https://zemmov.atlassian.net/browse/LINE-
-  146
-EOF
-  )
-  check 'バレット以外の行も折り返しが連結される' \
-    "$(printf -- '- [ ] T\n  - View this issue on Jira: https://zemmov.atlassian.net/browse/LINE-146')" \
+# 5. コメント本文の code fence が言語ごと残る (--plain では失われていた回帰)
+test_comment_code_fence_survives() {
+  local actual comments body
+  body=$(jq -nc '{type:"doc",content:[
+    {type:"codeBlock",attrs:{language:"markdown"},content:[{type:"text",text:"- あるいは、こういった変換とか"}]}]}')
+  comments=$(jq -nc --argjson a "$(comment_of 'Person A' '2021-11-23T09:00:00.000+0900' "${body}")" '[$a]')
+  actual=$(TZ=Asia/Tokyo raw_issue null "${comments}" | TZ=Asia/Tokyo issue_to_tasks)
+  # 期待値にフェンスのバッククォートがそのまま入る。
+  # shellcheck disable=SC2016
+  check 'コメントの code fence が言語ごと残る' \
+    "$(printf -- '- [ ] [K-1] Summary\n  - Comments\n    - Person A • 2021-11-23 09:00\n      ```markdown\n      - あるいは、こういった変換とか\n      ```')" \
     "${actual}"
 }
 
-# 7. Description より前の行は捨て、タイトルだけを task 行にする (既存挙動の保護)
-test_pre_description_lines_are_dropped() {
+# 6. コメントが無ければ Comments 見出しを出さない
+test_no_comments_no_heading() {
   local actual
-  actual=$(printf '\n  ⭐ タスク  🚧 To Do\n\n  # T\n\n  ⏱️  Thu\n\n  --------- Description ---------\n\n  • alpha\n' | issue_to_tasks)
-  check 'Description 前のヘッダ行は捨てられる' \
-    "$(printf -- '- [ ] T\n  - alpha')" "${actual}"
+  actual=$(raw_issue "$(doc_text 'body')" | issue_to_tasks)
+  check 'コメント 0 件なら Comments 見出しを出さない' \
+    "$(printf -- '- [ ] [K-1] Summary\n  body')" "${actual}"
 }
 
-# 8. 既知の制約: 句読点直後で折れた散文はスペースを 1 個失う。
-#    出力からは「空白折り返し」と「ブレークポイント折り返し」を区別できないため、
-#    URL を壊さないほうを優先した結果。挙動を固定して退行に気付けるようにする。
-test_prose_wrapped_after_punctuation_loses_the_space() {
-  local actual
-  actual=$(
-    convert <<'EOF'
-  • End of the first sentence.
-  Next sentence keeps going.
-EOF
-  )
-  check '句読点終端で折れた散文はスペースを失う (既知の制約)' \
-    "$(printf -- '- [ ] T\n  - End of the first sentence.Next sentence keeps going.')" "${actual}"
+# 7. footer の URL は .self から組む (config を読まないので -R 越しでも同じ)
+test_footer_url_comes_from_self() {
+  local self="https://e.atlassian.net/rest/api/3/issue/10529" actual
+  actual=$(raw_issue | issue_to_tasks)
+  check 'footer の URL が .self から組まれる' \
+    "$(printf -- '- [ ] [K-1] Summary\n  - View this issue on Jira: https://e.atlassian.net/browse/K-1')" \
+    "${actual}"
 }
 
-# 9. ANSI エスケープは除去される (既存挙動の保護)
-test_ansi_escapes_are_stripped() {
+# 8. .self が無ければ footer は出ない (壊れた URL を書かない)
+test_no_self_no_footer() {
   local actual
-  actual=$(printf '  • \x1b[1malpha\x1b[0m\n' | convert)
-  check 'ANSI エスケープが除去される' \
-    "$(printf -- '- [ ] T\n  - alpha')" "${actual}"
+  actual=$(raw_issue | issue_to_tasks)
+  check '.self が無ければ footer を出さない' '- [ ] [K-1] Summary' "${actual}"
 }
 
-# 10. KEY を渡すとタイトル先頭に [KEY] が付く
-test_key_is_prefixed_to_title() {
-  local actual
-  actual=$(
-    convert IDNAME-123 <<'EOF'
-  • alpha
-EOF
-  )
-  check 'KEY 引数がタイトル先頭に [KEY] として付く' \
-    "$(printf -- '- [ ] [IDNAME-123] T\n  - alpha')" "${actual}"
+# 9. total より返却件数が少なければ警告する (--raw は件数を絞れないので黙って捨てない)
+test_warns_when_comments_are_truncated() {
+  local comments err
+  comments=$(jq -nc --argjson a "$(comment_of 'Person A' '2021-11-23T09:00:00.000+0900' "$(doc_text 'x')")" '[$a]')
+  err=$(raw_issue null "${comments}" 6 | issue_to_tasks 2>&1 >/dev/null)
+  if [[ ${err} == *"got 1 of 6 comments"* ]]; then
+    pass=$((pass + 1))
+    printf 'ok   - %s\n' 'コメントが欠けていれば警告する'
+    return
+  fi
+  fail=$((fail + 1))
+  printf 'FAIL - %s\n  stderr: %q\n' 'コメントが欠けていれば警告する' "${err}"
 }
 
-# 11. KEY 引数なしなら前置しない (issue_to_tasks 単体利用時の既存挙動の保護)
-test_no_key_leaves_title_untouched() {
-  local actual
-  actual=$(
-    convert <<'EOF'
-  • alpha
-EOF
-  )
-  check 'KEY なしならタイトルは前置されない' \
-    "$(printf -- '- [ ] T\n  - alpha')" "${actual}"
+# 10. タイトル以外のどの行も列 0 から始まらない。bin/tasks は列 0 の "- " / "#" で
+#     タスクブロックを切るので、ここが崩れると 1 issue が複数タスクに割れる。
+test_body_never_starts_at_column_zero() {
+  local actual bad comments desc
+  desc=$(jq -nc '{type:"doc",content:[
+    {type:"heading",attrs:{level:1},content:[{type:"text",text:"H"}]},
+    {type:"bulletList",content:[
+      {type:"listItem",content:[{type:"paragraph",content:[{type:"text",text:"alpha"}]}]}]}]}')
+  comments=$(jq -nc --argjson a "$(comment_of 'Person A' '2021-11-23T09:00:00.000+0900' "$(doc_text 'x')")" '[$a]')
+  actual=$(raw_issue "${desc}" "${comments}" | issue_to_tasks)
+  bad=$(printf '%s\n' "${actual}" | tail -n +2 | grep -cE '^(- |#)' || true)
+  check '2 行目以降が列 0 の "- " / "#" で始まらない' '0' "${bad}"
+}
+
+# 11. 本文の空行は落とすが、フェンスの中だけは残す (コードの一部なので消せない)
+test_blank_lines_are_dropped_except_inside_fences() {
+  local actual desc
+  desc=$(jq -nc '{type:"doc",content:[
+    {type:"paragraph",content:[{type:"text",text:"one"}]},
+    {type:"paragraph"},
+    {type:"paragraph",content:[{type:"text",text:"two"}]},
+    {type:"codeBlock",attrs:{language:"go"},content:[{type:"text",text:"a := 1\n\nb := 2"}]}]}')
+  actual=$(raw_issue "${desc}" | issue_to_tasks)
+  # shellcheck disable=SC2016
+  check '空行はフェンス内だけ残る' \
+    "$(printf -- '- [ ] [K-1] Summary\n  one\n  two\n  ```go\n  a := 1\n\n  b := 2\n  ```')" \
+    "${actual}"
+}
+
+# 12. 行末の空白は落とす。hardBreak の行末 2 スペースも、空白だけの行も残さない。
+#     フェンスの中身だけは手を付けない (コードの一部)。
+test_trailing_whitespace_is_trimmed_except_inside_fences() {
+  local actual desc
+  desc=$(jq -nc '{type:"doc",content:[
+    {type:"paragraph",content:[{type:"text",text:"a"},{type:"hardBreak"},{type:"text",text:"b"}]},
+    {type:"codeBlock",attrs:{language:"go"},content:[{type:"text",text:"x := 1  \n\ty := 2"}]}]}')
+  actual=$(raw_issue "${desc}" | issue_to_tasks)
+  # shellcheck disable=SC2016
+  check '行末空白は落ちるがフェンス内は残る' \
+    "$(printf -- '- [ ] [K-1] Summary\n  a\n  b\n  ```go\n  x := 1  \n  \ty := 2\n  ```')" \
+    "${actual}"
 }
 
 # --- issue_select_open 用スタブ ------------------------------------------
@@ -194,15 +205,22 @@ fzf() {
   printf '%s\n' "${fzf_selection}"
 }
 
-# `jira issue view <KEY> --plain` の plain 出力を模し ($3 = KEY)、
+# `jira issue view <KEY> --raw` の JSON を模し ($3 = KEY)、
 # `jira issue link remote ...` は呼び出し引数を記録する。
 # ${jira_title} でタイトルを、${jira_link_rc} でリンク登録の成否を差し替える。
+# self は空にする: footer は組み立て側のテスト (test_footer_url_comes_from_self)
+# の担当で、sink 側の期待値に毎回 1 行足す意味がない。
 jira() {
   if [[ $2 == link ]]; then
     printf 'jira %s\n' "$*" >>"${stub_log}"
     return "${jira_link_rc:-0}"
   fi
-  printf '\n  # %s\n\n  ---- Description ----\n\n  • body of %s\n' "${jira_title-title of $3}" "$3"
+  jq -nc --arg key "$3" --arg summary "${jira_title-title of $3}" \
+    '{key: $key, self: "",
+      fields: {summary: $summary,
+               description: {type:"doc",content:[{type:"paragraph",
+                 content:[{type:"text",text:("body of " + $key)}]}]},
+               comment: {total: 0, comments: []}}}'
 }
 
 # tasks は呼び出し引数と stdin を記録する (stdin は "| " 前置)
@@ -272,7 +290,7 @@ test_to_tasks_appends_each_selected_issue() {
   fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
   issue_select_open to-tasks
   check '複数選択した issue が 1 件ずつ tasks -a に渡る' \
-    "$(printf 'tasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: jira=K-1\n|   - body of K-1\ntasks -a\n| - [ ] [K-2] title of K-2\n|   - tracker: jira=K-2\n|   - body of K-2')" \
+    "$(printf 'tasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: jira=K-1\n|   body of K-1\ntasks -a\n| - [ ] [K-2] title of K-2\n|   - tracker: jira=K-2\n|   body of K-2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -301,7 +319,7 @@ test_to_tasks_with_single_pick_appends_one_task() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-tasks
   check '1 件選択なら tasks -a は 1 回だけ' \
-    "$(printf 'tasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: jira=K-1\n|   - body of K-1')" \
+    "$(printf 'tasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: jira=K-1\n|   body of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -313,7 +331,7 @@ test_open_mode_opens_one_tab_per_issue() {
   fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
   issue_select_open
   check 'open は issue ごとの <KEY>.md を nvim -p でタブに開く' \
-    "$(printf 'nvim -p\n# K-1.md\n| - [ ] [K-1] title of K-1\n|   - body of K-1\n# K-2.md\n| - [ ] [K-2] title of K-2\n|   - body of K-2')" \
+    "$(printf 'nvim -p\n# K-1.md\n| - [ ] [K-1] title of K-1\n|   body of K-1\n# K-2.md\n| - [ ] [K-2] title of K-2\n|   body of K-2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -372,7 +390,7 @@ test_to_gh_creates_one_issue_per_selection() {
   fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
   issue_select_open to-gh
   check '選択した issue ごとに [KEY] 付きの GH issue が作られる' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   - body of K-1\ngh-title [K-2] title of K-2\n| - [ ] [K-2] title of K-2\n|   - body of K-2\njira issue link remote K-2 https://github.com/o/r/issues/2 [K-2] title of K-2\ntasks -a\n| - [ ] [K-2] title of K-2\n|   - tracker: gh=o/r#2 jira=K-2\n|   - body of K-2')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   body of K-1\ngh-title [K-2] title of K-2\n| - [ ] [K-2] title of K-2\n|   body of K-2\njira issue link remote K-2 https://github.com/o/r/issues/2 [K-2] title of K-2\ntasks -a\n| - [ ] [K-2] title of K-2\n|   - tracker: gh=o/r#2 jira=K-2\n|   body of K-2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -398,7 +416,7 @@ test_to_gh_creates_when_hit_lacks_key_prefix() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '[KEY] を含まない検索ヒットでは作成をスキップしない' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   - body of K-1')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   body of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -448,7 +466,7 @@ test_to_gh_matches_the_key_only_as_a_title_prefix() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '[KEY] がタイトル先頭でないヒットは既存扱いにしない' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   - body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   - body of K-1')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks -a\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   body of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -633,17 +651,18 @@ test_to_gh_rejects_a_non_github_host() {
 main() {
   local pass=0 fail=0
 
-  test_url_split_on_breakpoints_is_rejoined
-  test_space_wrap_is_rejoined_with_one_space
-  test_blank_line_breaks_the_join
-  test_bullet_line_starts_a_new_item
-  test_empty_bullet_is_dropped_and_breaks_the_join
-  test_non_bullet_line_is_rejoined
-  test_pre_description_lines_are_dropped
-  test_prose_wrapped_after_punctuation_loses_the_space
-  test_ansi_escapes_are_stripped
-  test_key_is_prefixed_to_title
-  test_no_key_leaves_title_untouched
+  test_title_line
+  test_description_is_verbatim_markdown
+  test_null_description
+  test_comments_are_one_block_each_in_order
+  test_comment_code_fence_survives
+  test_no_comments_no_heading
+  test_footer_url_comes_from_self
+  test_no_self_no_footer
+  test_warns_when_comments_are_truncated
+  test_body_never_starts_at_column_zero
+  test_blank_lines_are_dropped_except_inside_fences
+  test_trailing_whitespace_is_trimmed_except_inside_fences
   test_to_tasks_appends_each_selected_issue
   test_both_modes_enable_fzf_multi_select
   test_to_tasks_with_single_pick_appends_one_task
