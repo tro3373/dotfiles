@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# tmux セッション名の生成規則 (SSOT)。bin/tasks と bin/cd-src-root が source する。
+#
+# ディレクトリ 1 つから名前を決める。同じディレクトリなら、どの入口から起動しても
+# 同じ名前になる (= 1 つの worktree に 2 セッションできない) ことが目的。
+#   - 通常のリポジトリ : <ディレクトリ名>
+#   - worktree         : <repo>-<ブランチ名>
+#   - git 管理外       : <ディレクトリ名>
+#
+# worktree は bin/git_worktree が '<repo>-worktree/<branch>' に置く (git_worktree の
+# worktree_dir_suffix)。親ディレクトリ名の '-worktree' を落とせば repo 名、自分の
+# ディレクトリ名がそのままブランチ名 ('/' は '-' 済み) になる。git に問い合わせずに
+# 決まるので、候補一覧 (数百件) に対して回しても速い。
+#
+# tmux のセッション名は '.' や ':' を含められないので、英数 '_' '-' 以外を '-' に
+# 置換し、先頭の '-' を落とす。
+tmux_session_name() {
+  local dir=${1%/} name parent
+  name=${dir##*/}
+  parent=${dir%/*}
+  parent=${parent##*/}
+  [[ $parent == *-worktree ]] && name="${parent%-worktree}-${name}"
+  name=${name//[^A-Za-z0-9_-]/-}
+  printf '%s\n' "${name#-}"
+}

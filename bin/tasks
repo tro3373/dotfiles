@@ -3,6 +3,9 @@
 # ~/.config/tasks/config.env
 
 readonly depends=(curl fzf jq tmux git_worktree bat)
+script_dir=$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd) && readonly script_dir
+# shellcheck disable=SC1091
+source "${script_dir}/lib/tmux_session_name"
 readonly timestamp_fmt="+%Y%m%d-%H%M%S"
 timestamp=$(date $timestamp_fmt) && readonly timestamp
 command_name=$(basename "$0") && readonly command_name
@@ -827,7 +830,7 @@ spawn_task() {
 # 参照行(split 済み): index.md を解決し worktree を保証してから tmux 起動。
 # 未 split タスク: split (index.md + worktree) してから tmux 起動。
 spawn_one() {
-  local line_no="$1" line is_ref ref_path index_md branch worktree_name session repo_name
+  local line_no="$1" line is_ref ref_path index_md branch session
   line=$(sed -n "${line_no}p" "$target_file")
   is_ref=0
   if printf '%s\n' "$line" | grep -qE "$grep_key_reference"; then
@@ -849,13 +852,9 @@ spawn_one() {
   fi
 
   # tmux セッション作成 + agent (claude/codex) で task 起動 (worktree_dir は ensure_worktree がセット)
-  # repo 名は worktree でも親リポを指すよう git-common-dir から逆引きする
-  repo_name=$(basename "$(dirname "$(git -C "$git_root" rev-parse --path-format=absolute --git-common-dir)")")
-  worktree_name=${branch//\//-}
-  # tmux のセッション名は '.'/':' を含められないので英数_-以外を - に置換 (先頭 - は除去)
-  session="${repo_name}-${worktree_name}"
-  session=${session//[^A-Za-z0-9_-]/-}
-  session=${session#-}
+  # 命名規則は bin/cd-src-root と共有する (SSOT)。別々だと同じ worktree に
+  # 名前違いのセッションが 2 つできる。
+  session=$(tmux_session_name "$worktree_dir")
   spawn_tmux_session "$session" "$worktree_dir"
   info "==> Spawned worktree: $worktree_dir"
   info "==> tmux session: $session"

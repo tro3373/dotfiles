@@ -10,6 +10,7 @@
 #             ため、cd は tmux 側の操作 (switch-client / send-keys) で完結させる。
 #             この起動でだけ fzf を複数選択可 (Tab) にする。選んだ数だけセッションを
 #             作るのが自然な操作だから。widget 起動は cd 先が 1 つなので単一選択。
+#             また、この起動でだけ既存セッションの repo を候補から落とす (下記)。
 #   --preview : fzf の preview 用の内部サブコマンド。人間が直接叩く用ではない。
 #   query   : fzf の初期クエリ (widget は $LBUFFER を渡す)。
 #
@@ -17,12 +18,14 @@
 #   widget 起動 (と tmux 外) のときだけ出力する。
 #   popup 起動時は tmux 側で完結するので何も出力しない。
 
+script_dir=$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd) && readonly script_dir
+# セッション名の規則は bin/tasks と共有する (SSOT)。別々だと同じ worktree に
+# 名前違いのセッションが 2 つできる。
+# shellcheck disable=SC1091
+source "${script_dir}/lib/tmux_session_name"
+
 session_exists() {
   tmux has-session -t "=$1" 2>/dev/null # "=" は完全一致 (前方一致でヒットさせない)
-}
-
-session_name() {
-  basename "$1" | tr '.' '_'
 }
 
 # fzf の preview 本体。preview コマンドを fzf の文字列に埋め込むと quoting が
@@ -40,6 +43,23 @@ preview() {
   local -a viewer=(cat)
   command -v bat >/dev/null 2>&1 && viewer=(bat --color=always --style=plain --paging=never)
   "${viewer[@]}" "$tasks_file"
+}
+
+# 既に tmux セッションがある repo を候補 (stdin) から落とす。
+# popup はセッションを「用意する」入口なので、用意済みのものは出さない。
+# drop=0 (widget 起動 / tmux 外) は素通しする。widget は cd するだけで、
+# セッションの有無と関係が無いから。
+drop_active_sessions() {
+  local drop=$1 dir name
+  local -A active=()
+  ((drop)) || { cat; return 0; }
+  while IFS= read -r name; do
+    active[$name]=1
+  done < <(tmux list-sessions -F '#S' 2>/dev/null)
+  while IFS= read -r dir; do
+    name=$(tmux_session_name "$dir")
+    [[ -n ${active[$name]:-} ]] || printf '%s\n' "$dir"
+  done
 }
 
 # 現セッションが数字名 (tmux デフォルト = 名前未設定) なら、新規セッションを作らず
@@ -69,7 +89,7 @@ prepare_session() {
 switch_to_sessions() {
   local src name switch_to="" adopt=1
   for src in "$@"; do
-    name=$(session_name "$src")
+    name=$(tmux_session_name "$src")
     prepare_session "$name" "$src" "$adopt"
     adopt=0
     [[ -n $switch_to ]] || switch_to=$name
@@ -104,11 +124,16 @@ main() {
   local -a fzf_opts=(--tac --query "$query" --preview "$(printf '%q' "$self") --preview {}")
   ((popup)) && fzf_opts+=(--multi)
 
+  # tmux 側で完結する起動 (= popup かつ tmux 内) のときだけ候補を絞る。
+  local in_tmux=0
+  ((popup)) && [[ -n ${TMUX:-} ]] && in_tmux=1
+
   local -a srcs=()
-  mapfile -t srcs < <(find_repos | fzf "${fzf_opts[@]}") # fzf 中断時は空になるだけ
+  # fzf 中断時は空になるだけ
+  mapfile -t srcs < <(find_repos | drop_active_sessions "$in_tmux" | fzf "${fzf_opts[@]}")
   ((${#srcs[@]})) || return 0
 
-  if ((popup)) && [[ -n ${TMUX:-} ]]; then
+  if ((in_tmux)); then
     switch_to_sessions "${srcs[@]}"
     return 0
   fi
