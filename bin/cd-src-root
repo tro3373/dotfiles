@@ -5,10 +5,12 @@
 #   - tmux popup        (bind M-])     : `cd-src-root --popup`
 #
 # Usage: cd-src-root [--popup] [query]
+#        cd-src-root --preview <dir>
 #   --popup : popup 起動時。popup の stdout は捨てられる (呼び出し元が cd できない)
 #             ため、cd は tmux 側の操作 (switch-client / send-keys) で完結させる。
 #             この起動でだけ fzf を複数選択可 (Tab) にする。選んだ数だけセッションを
 #             作るのが自然な操作だから。widget 起動は cd 先が 1 つなので単一選択。
+#   --preview : fzf の preview 用の内部サブコマンド。人間が直接叩く用ではない。
 #   query   : fzf の初期クエリ (widget は $LBUFFER を渡す)。
 #
 # stdout: 呼び出し元が cd すべき場合のみ、選択したパスを 1 行出力する。
@@ -23,10 +25,70 @@ session_name() {
   basename "$1" | tr '.' '_'
 }
 
+# fzf の preview 本体。preview コマンドを fzf の文字列に埋め込むと quoting が
+# 破綻するので、自分自身を --preview で呼び直して bash のまま書く。
+preview() {
+  local dir=${1:-}
+  [[ -d $dir ]] || return 0
+
+  # onefetch 不在 (127) も 非 git repo での失敗も、まとめて ls へ倒す。
+  onefetch --no-art "$dir" 2>/dev/null || ls -laF "$dir"
+
+  local tasks_file=$dir/.tasks.md
+  [[ -e $tasks_file ]] || return 0 # link 切れ (-e は symlink 先を見る) なら出さない
+  printf '\n--- .tasks.md ---\n'
+  local -a viewer=(cat)
+  command -v bat >/dev/null 2>&1 && viewer=(bat --color=always --style=plain --paging=never)
+  "${viewer[@]}" "$tasks_file"
+}
+
+# 現セッションが数字名 (tmux デフォルト = 名前未設定) なら、新規セッションを作らず
+# 現セッションを rename して cd する。命名済みなら何もせず 1 を返す。
+adopt_current_session() {
+  local name=$1 src=$2
+  [[ $(tmux display-message -p '#S') =~ ^[0-9]+$ ]] || return 1
+  local pane
+  pane=$(tmux display-message -p '#{pane_id}') # popup 内の $TMUX_PANE は popup 自身を指すので使わない
+  tmux rename-session "$name"
+  # popup の stdout は誰も読まないので、cd は現ペインへ送り込む
+  tmux send-keys -t "$pane" "cd $(printf '%q' "$src")" C-m
+}
+
+# セッションを 1 つ用意する。基本は「あれば使う / 無ければ作る」。
+# adopt=1 のときだけ、作る代わりに現セッションを充てられるか試す。
+prepare_session() {
+  local name=$1 src=$2 adopt=$3
+  session_exists "$name" && return 0
+  ((adopt)) && adopt_current_session "$name" "$src" && return 0
+  tmux new-session -d -s "$name" -c "$src"
+}
+
+# 選んだ分だけセッションを用意して 1 件目へ switch する。単一選択も
+# 「1 件だけの複数選択」として同じ経路を通す (挙動を分けない)。
+# 乗っ取れる現セッションは 1 つしか無いので、adopt は 1 件目にだけ効かせる。
+switch_to_sessions() {
+  local src name switch_to="" adopt=1
+  for src in "$@"; do
+    name=$(session_name "$src")
+    prepare_session "$name" "$src" "$adopt"
+    adopt=0
+    [[ -n $switch_to ]] || switch_to=$name
+  done
+  tmux switch-client -t "$switch_to" # 乗っ取り時は現セッション宛なので no-op
+}
+
 main() {
   set -euo pipefail
+
+  if [[ ${1:-} == --preview ]]; then
+    preview "${2:-}"
+    return 0
+  fi
+
+  # 候補の生成は find_repos に委ねている (ghq が無くても ~/src を拾って動く)。
+  # 依存として見るのは fzf と find_repos の 2 つだけ。
   command -v fzf >/dev/null 2>&1 || return 0
-  command -v ghq >/dev/null 2>&1 || return 0
+  command -v find_repos >/dev/null 2>&1 || return 0
 
   local popup=0
   [[ ${1:-} == --popup ]] && {
@@ -35,10 +97,11 @@ main() {
   }
   local query=${1:-}
 
-  local preview_cmd='ls -laF {}'
-  command -v onefetch >/dev/null 2>&1 && preview_cmd='onefetch --no-art {}'
+  # preview は自分自身に委譲する。PATH 経由起動でも絶対パスへ寄せておく。
+  local self=${BASH_SOURCE[0]}
+  [[ $self == /* ]] || self=$(command -v -- "$self" 2>/dev/null || echo "$self")
 
-  local -a fzf_opts=(--tac --query "$query" --preview "$preview_cmd")
+  local -a fzf_opts=(--tac --query "$query" --preview "$(printf '%q' "$self") --preview {}")
   ((popup)) && fzf_opts+=(--multi)
 
   local -a srcs=()
@@ -46,42 +109,7 @@ main() {
   ((${#srcs[@]})) || return 0
 
   if ((popup)) && [[ -n ${TMUX:-} ]]; then
-    local src name switch_to=""
-    if ((${#srcs[@]} > 1)); then
-      # 複数選択: 選んだ分だけセッションを用意して 1 件目へ switch。
-      # 現セッション採用の特例 (下記) は単一選択のときだけ適用する。
-      for src in "${srcs[@]}"; do
-        name=$(session_name "$src")
-        [[ -n $switch_to ]] || switch_to=$name
-        session_exists "$name" || tmux new-session -d -s "$name" -c "$src"
-      done
-      tmux switch-client -t "$switch_to"
-      return 0
-    fi
-
-    src=${srcs[0]}
-    name=$(session_name "$src")
-
-    if session_exists "$name"; then
-      # 同名セッションあり: 新規 window を開いて switch
-      tmux new-window -t "$name" -c "$src"
-      tmux switch-client -t "$name"
-      return 0
-    fi
-
-    if [[ ! $(tmux display-message -p '#S') =~ ^[0-9]+$ ]]; then
-      # 現セッションが命名済み: 別セッションを作って switch
-      tmux new-session -d -s "$name" -c "$src"
-      tmux switch-client -t "$name"
-      return 0
-    fi
-
-    # 現セッションが数字名(tmux デフォルト = 名前未設定): 現セッションを採用して cd。
-    # popup の stdout は誰も読まないので、cd は現ペインへ送り込む。
-    local pane
-    pane=$(tmux display-message -p '#{pane_id}') # popup 内の $TMUX_PANE は popup 自身を指すので使わない
-    tmux rename-session "$name"
-    tmux send-keys -t "$pane" "cd $(printf '%q' "$src")" C-m
+    switch_to_sessions "${srcs[@]}"
     return 0
   fi
 
