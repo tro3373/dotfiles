@@ -1,0 +1,278 @@
+#!/usr/bin/env bash
+# test: test/lazy-tmux-wake-all.test.sh
+#
+# 保存済み lazy-tmux セッションを一括復元する。復元の前に「復元する価値の無い
+# snapshot」を forget して捨てる。捨てる条件は 2 つ:
+#   1. 名前が数字だけ  … tmux が自動採番した素のセッション
+#   2. git 管理下の pane が 1 つも無い
+#
+# なぜ捨てる必要があるか:
+#   lazy-tmux daemon は全セッションを無条件に保存し (実体は ticker + SaveAll)、
+#   kill したセッションの snapshot を消す仕組みを持たない。
+#   一方 tmux は `new-session -c <存在しないパス>` をエラーにせず、呼び出し元の
+#   cwd ($HOME) でセッションを作る。この 2 つが噛み合うと
+#     worktree 削除 => 次回起動で $HOME のセッションとして復活
+#       => daemon が current_path=$HOME で上書き保存 => 元のパスが永久に失われる
+#   という劣化ループになり、消したはずのセッションが毎回全部生き返る。
+#   復元前に捨てることでループの起点を塞ぐ。
+#
+#   数字だけの名前は、bootstrap がクライアントを別セッションへ移した後に取り残される
+#   空セッション (tmux 起動時に tmux 自身が作る) が daemon に保存されたもの。
+#
+# 既に起きているセッションは対象外 (生きている snapshot を消さない為)。
+#
+# --bootstrap (tmux.conf の起動時 run-shell 専用):
+#   復元後に bootstrap でクライアントを最後に使っていたセッションへ移し、
+#   取り残された素のセッションを kill する。
+#   クライアントを待つのは、config 読み込み時点ではまだ attach しておらず
+#   bootstrap の switch-client が "no current client" で失敗する為。
+#
+# --save (tmux.conf の prefix+C-s 用):
+#   復元ではなく保存を行う。起きていないセッションの snapshot を全部 forget してから
+#   `lazy-tmux save --all` する。素の save --all は「今動いているセッション」しか
+#   上書きしない為、kill 済みのセッションの snapshot が消えずに残り続ける。
+#   先に掃除することで、保存済みの一覧を「今動いているセッション」と一致させる。
+#
+#   lazy-tmux-wake-all             復元 + 不要な snapshot の削除
+#   lazy-tmux-wake-all -n          実行せず、やる予定だけ出す
+#   lazy-tmux-wake-all --bootstrap 上記 + クライアント移動 + 素のセッション掃除
+#   lazy-tmux-wake-all --save      古い snapshot を掃除してから全セッションを保存
+
+readonly prog=${0##*/}
+
+# --bootstrap でクライアントの attach を待つ上限 (0.1 秒 x 50 = 5 秒)。
+# テストは待ち時間を潰す為に LAZY_TMUX_WAKE_CLIENT_TICKS で上書きする。
+readonly client_wait_ticks=${LAZY_TMUX_WAKE_CLIENT_TICKS:-50}
+readonly client_wait_interval=0.1
+
+usage() {
+  cat <<USAGE
+Usage: ${prog} [-n|--dry-run] [--bootstrap | --save]
+
+保存済みセッションを復元する。名前が数字だけ、または git 管理下の pane が 1 つも
+無い snapshot は復元せず forget する。
+
+  -n, --dry-run   lazy-tmux / tmux を変更せず、実行予定のコマンドを出力する
+      --bootstrap 復元後にクライアントを last セッションへ移し、取り残された
+                  素のセッションを kill する (tmux 起動時の run-shell 専用)
+      --save      復元ではなく保存。起きていないセッションの snapshot を全部
+                  forget してから全セッションを保存する
+  -h, --help      このヘルプ
+USAGE
+}
+
+# lazy-tmux の実効 data_dir。~/.local/share/lazy-tmux を決め打ちすると
+# config の data_dir と二重管理になるので lazy-tmux 自身に解決させる。
+data_dir() {
+  lazy-tmux config show |
+    sed -n 's/^data_dir[[:space:]]*=[[:space:]]*"\(.*\)"$/\1/p'
+}
+
+# tmux が自動採番した名前 (0, 25, ...) か。
+is_auto_named() {
+  [[ $1 =~ ^[0-9]+$ ]]
+}
+
+# snapshot の pane の作業ディレクトリが 1 つでも git 管理下なら 0。
+# 存在しないディレクトリは git 管理外にもなる為、worktree 削除の判定も兼ねる。
+# pane が複数ある場合、1 つでも生きていれば復元する価値がある。
+# 読めない / 存在しない snapshot はパスが 0 件になり非ゼロで返る (復元できない
+# snapshot を index に残しても list と picker にゴミが出るだけなので捨ててよい)。
+has_git_path() {
+  local p
+  while IFS= read -r p; do
+    [[ -n $p ]] || continue
+    if git -C "$p" rev-parse --git-dir >/dev/null 2>&1; then
+      return 0
+    fi
+  done < <(jq -r '.windows[]?.panes[]?.current_path // empty' "$1" 2>/dev/null)
+  return 1
+}
+
+# snapshot を捨てる理由を nameref で返す。復元する価値があるなら空文字。
+forget_reason() {
+  local -n _fr_out=$1
+  _fr_out=''
+  if is_auto_named "$2"; then
+    _fr_out='tmux auto-named session'
+    return 0
+  fi
+  if ! has_git_path "$3"; then
+    _fr_out='no git-managed path'
+  fi
+}
+
+# tmux 起動時の run-shell は config 読み込み中に走る為、この時点ではまだクライアントが
+# attach しておらず bootstrap の switch-client が "no current client" で失敗する。
+# attach を待ってから bootstrap する。クライアントが来なければ非ゼロ。
+wait_for_client() {
+  local i
+  for ((i = 0; i < client_wait_ticks; i++)); do
+    if [[ -n $(tmux list-clients -F '#{client_name}' 2>/dev/null) ]]; then
+      return 0
+    fi
+    sleep "${client_wait_interval}"
+  done
+  return 1
+}
+
+# tmux 起動時に tmux 自身が作り、bootstrap でクライアントが去った後に取り残された
+# 素のセッションか。作業中のセッションを誤って消さない為、全条件を課す:
+#   名前が数字だけ / 未 attach / window 1 / pane 1 / pane がシェル
+is_leftover_session() {
+  local s=$1 attached
+  local -a panes
+  is_auto_named "$s" || return 1
+  # display-message -t にセッションを渡すと session/window/pane 系の format が
+  # 揃って空文字になる (tmux 3.7c で確認) 為、list-sessions / list-panes から取る。
+  attached=$(tmux list-sessions -f "#{==:#{session_name},${s}}" \
+    -F '#{session_attached}' 2>/dev/null)
+  [[ ${attached} == 0 ]] || return 1
+  # -s はセッション内の全 window の pane を列挙する。1 行なら 1 window 1 pane。
+  mapfile -t panes < <(tmux list-panes -s -t "=${s}" -F '#{pane_current_command}' 2>/dev/null)
+  ((${#panes[@]} == 1)) || return 1
+  case ${panes[0]} in
+    zsh | bash | sh | fish) return 0 ;;
+  esac
+  return 1
+}
+
+# dry-run なら実行せずコマンドを表示するだけ。
+run() {
+  local dry=$1
+  shift
+  if ((dry)); then
+    printf 'DRY %s\n' "$*"
+    return 0
+  fi
+  "$@"
+}
+
+# クライアントを last セッションへ移し、取り残された素のセッションを掃除する。
+# tmux 起動時の run-shell 専用 (--bootstrap)。
+run_bootstrap() {
+  local dry=$1 s
+  if ! wait_for_client; then
+    printf '%s: no client attached; skip bootstrap\n' "$prog" >&2
+    return 0
+  fi
+  if ! run "$dry" lazy-tmux bootstrap --session last; then
+    printf '%s: bootstrap failed\n' "$prog" >&2
+    return 0
+  fi
+  while IFS= read -r s; do
+    [[ -n $s ]] || continue
+    # kill 後に最低 1 セッション残ることを確かめる (最後の 1 つを消すとサーバが死ぬ)。
+    (($(tmux list-sessions -F x 2>/dev/null | wc -l) > 1)) || break
+    is_leftover_session "$s" || continue
+    printf '%s: kill leftover session %s\n' "$prog" "$s"
+    run "$dry" tmux kill-session -t "=${s}" || true
+    run "$dry" lazy-tmux forget --session "$s" || true
+  done < <(tmux list-sessions -F '#{session_name}' 2>/dev/null)
+}
+
+# 保存済み snapshot を 1 件ずつ「復元」か「forget」に振り分ける。
+run_wake() {
+  local dry=$1
+
+  # jq が無いまま進むと全 snapshot が「パス 0 件」と判定され全件 forget される。
+  if ! command -v jq >/dev/null 2>&1; then
+    printf '%s: jq not found\n' "$prog" >&2
+    return 1
+  fi
+
+  local dir
+  dir=$(data_dir)
+  if [[ -z $dir ]]; then
+    printf '%s: cannot resolve data_dir from lazy-tmux config show\n' "$prog" >&2
+    return 1
+  fi
+
+  local s snap reason
+  while IFS=$'\t' read -r s _; do
+    [[ -n $s ]] || continue
+    if tmux has-session -t "=${s}" 2>/dev/null; then
+      continue
+    fi
+    snap="${dir}/sessions/${s}.json"
+    forget_reason reason "$s" "$snap"
+    if [[ -z $reason ]]; then
+      if ! run "$dry" lazy-tmux wakeup --session "$s"; then
+        printf '%s: wakeup failed: %s\n' "$prog" "$s" >&2
+      fi
+      continue
+    fi
+    printf '%s: forget %s (%s)\n' "$prog" "$s" "$reason"
+    if ! run "$dry" lazy-tmux forget --session "$s"; then
+      printf '%s: forget failed: %s\n' "$prog" "$s" >&2
+    fi
+  done < <(lazy-tmux list)
+}
+
+# 起きていないセッションの snapshot を全部捨ててから全セッションを保存する。
+# 起きているセッションの snapshot は save --all がそのまま上書きする為、先に消さない
+# (消すと save が失敗した時に生きているセッションの snapshot まで失う)。
+run_save() {
+  local dry=$1 s forgot=0
+  while IFS=$'\t' read -r s _; do
+    [[ -n $s ]] || continue
+    if tmux has-session -t "=${s}" 2>/dev/null; then
+      continue
+    fi
+    printf '%s: forget %s (not running)\n' "$prog" "$s"
+    if ! run "$dry" lazy-tmux forget --session "$s"; then
+      printf '%s: forget failed: %s\n' "$prog" "$s" >&2
+      continue
+    fi
+    forgot=$((forgot + 1))
+  done < <(lazy-tmux list)
+
+  if ! run "$dry" lazy-tmux save --all; then
+    printf '%s: save --all failed\n' "$prog" >&2
+    run "$dry" tmux display-message "lazy-tmux: save failed (see /tmp/lazy-tmux.log)"
+    return 1
+  fi
+  # 押した本人へ結果を返す。run-shell -b は stdout をどこにも出さない為。
+  run "$dry" tmux display-message \
+    "lazy-tmux: saved all sessions (forgot ${forgot} stale)"
+}
+
+main() {
+  set -euo pipefail
+
+  local dry=0 boot=0 save=0
+  while (($#)); do
+    case $1 in
+      -n | --dry-run) dry=1 ;;
+      --bootstrap) boot=1 ;;
+      --save) save=1 ;;
+      -h | --help)
+        usage
+        return 0
+        ;;
+      *)
+        usage >&2
+        return 2
+        ;;
+    esac
+    shift
+  done
+
+  if ((save && boot)); then
+    printf '%s: --save and --bootstrap are exclusive\n' "$prog" >&2
+    return 2
+  fi
+
+  if ((save)); then
+    run_save "$dry"
+    return
+  fi
+
+  run_wake "$dry"
+
+  if ((boot)); then
+    run_bootstrap "$dry"
+  fi
+}
+
+main "$@"
