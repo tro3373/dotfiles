@@ -90,15 +90,109 @@ cmd_restore() {
   }
   restore_to "$lineno" "$hash" "$force"
 }
-# 現在 HEAD から count 個を stack へ積み HEAD~count へ reset する (gre / gre N)。
-# 1 個ずつ積むので、後から grr で任意の 1 段だけ redo できる。
-cmd_push() {
+# reset 先のベース候補を fzf 行として組み立てる。候補は「各ブランチと HEAD の
+# merge-base」= そのブランチから見た分岐点。git はブランチの派生元を記録しないので、
+# 分岐点を計算で出すしかない (reflog の Created from は local 限定・期限切れするため
+# 当てにしない)。
+#   * refs/remotes/*/HEAD は短縮名が 'origin' になり origin/main 等と同じ分岐点で
+#     重複するので除外する
+#   * 件数 0 (= 分岐点が HEAD と同じ) は reset 先にならないので落とす
+#   * 同じ分岐点に落ちるブランチは 1 行へまとめる (reset 先も件数も同一のため)。
+#     名前は全部並べる: どのブランチ由来かが選ぶときの手掛かりになる
+# 件数は --first-parent 基準。HEAD~N と同じ数え方なので stack の段数 (= grr で戻せる
+# 回数) と一致する。merge を含んで総数と食い違うときだけ総数を併記する。総数の方が
+# 「未コミットに戻る変更量」に近いが、段数と取り違えると grr の回数が合わなくなる。
+# 各行: <分岐点 hash>\t<表示>
+build_base_rows() {
+  local cur full short base fp all disp bnames
+  cur=$(git symbolic-ref -q --short HEAD || echo '')
+  git for-each-ref --format='%(refname)%09%(refname:short)' refs/heads refs/remotes |
+    while IFS=$'\t' read -r full short; do
+      [[ $full == */HEAD ]] && continue
+      [[ -z $short || $short == "$cur" || $short == removed/* ]] && continue
+      base=$(git merge-base HEAD "$short" 2>/dev/null) || continue
+      fp=$(git rev-list --count --first-parent "$base"..HEAD)
+      [[ $fp -eq 0 ]] && continue
+      all=$(git rev-list --count "$base"..HEAD)
+      printf '%s\t%s\t%s\t%s\n' "$fp" "$all" "$base" "$short"
+    done |
+    sort -t$'\t' -k1,1n -k3,3 |
+    awk -F'\t' '
+      {
+        if ($3 in names) { names[$3] = names[$3] ", " $4; next }
+        names[$3] = $4; fp[$3] = $1; all[$3] = $2; ord[++c] = $3
+      }
+      END {
+        for (i = 1; i <= c; i++) {
+          k = ord[i]
+          d = fp[k] " commit(s)"
+          if (all[k] != fp[k]) d = d " (" all[k] " w/ merges)"
+          if (length(d) > w) w = length(d)
+          disp[i] = d
+        }
+        for (i = 1; i <= c; i++) {
+          pad = ""
+          for (j = length(disp[i]); j < w; j++) pad = pad " "
+          printf "%s\t%s%s\t%s\n", ord[i], disp[i], pad, names[ord[i]]
+        }
+      }
+    ' |
+    while IFS=$'\t' read -r base disp bnames; do
+      # git log は 1 行 1 プロセスなので、候補が集約で確定した後にだけ引く。
+      printf '%s\t%s  %s  %s\n' "$base" "$disp" "$bnames" "$(git log -1 --format='%h  %cr  %s' "$base")"
+    done
+}
+# 引数なし gre: reset 先のベースを fzf で選び、その hash を stdout に出す。
+# 既定 layout は画面下から描くので、入力の 1 行目 (= 一番近い分岐点) がプロンプト直上
+# = カーソル初期位置に来る。grr の --reverse とは意図的に逆。build_base_rows が既に
+# 件数昇順で出しているので --tac は付けない (付けると上下が逆になる)。
+# 中断時は空を返す。候補ゼロは fzf を開かず案内して終了する。
+cmd_pick_base() {
+  hass fzf
+  local rows sel
+  rows=$(build_base_rows)
+  [[ -z $rows ]] &&
+    die "==> No base branch candidates. Use '$command_name N' to undo N commit(s)."
+  # SC2016: preview/bind は fzf 側で {1} を展開させるため単一引用で正しい。
+  # shellcheck disable=SC2016
+  sel=$(fzf --ansi --height=80% \
+    --delimiter=$'\t' --with-nth=2.. \
+    --prompt='reset to> ' \
+    --header='nearest base at the bottom -- Enter: reset here  C-y: copy hash' \
+    --preview 'git log --oneline --first-parent {1}..HEAD' \
+    --bind 'ctrl-y:execute-silent(printf %s {1} | clip)+abort' <<<"$rows") || return 0
+  [[ -z $sel ]] && return 0
+  # 分岐点まで戻すと巻き戻す幅が大きい。作業ツリーが dirty だと既存の未コミット変更が
+  # 同じ差分に混ざって読みにくくなる (mixed reset は作業ツリーを書き換えないので消えは
+  # しない)。中断はせず警告だけ出す。件数指定は自分で幅を決めているので出さない。
+  [[ -n $(git status --porcelain) ]] &&
+    warn "==> Working tree is dirty. Existing changes will be mixed into the reset diff."
+  cut -f1 <<<"$sel"
+}
+# push の reset 先 revision を決める。件数指定ならそれを検証して返し、無指定ならベース
+# 選択の fzf にかける。中断時は空を返す (呼び出し側で no-op)。
+resolve_push_target() {
   local count="$1"
-  # root commit や履歴不足では HEAD~count が無い。先に検証して、途中まで reset した
-  # 中途半端な状態と phantom stack エントリを防ぐ (部分適用しない)。
-  if ! git rev-parse --verify --quiet "HEAD~$count" >/dev/null 2>&1; then
+  [[ -z $count ]] && {
+    cmd_pick_base
+    return
+  }
+  [[ $count =~ ^[1-9][0-9]*$ ]] ||
+    die "==> Invalid count: $count (expected a positive integer)"
+  # root commit や履歴不足では HEAD~count が無い。件数指定でしか起きないので、ここで
+  # 件数入りのメッセージを出す (cmd_push の汎用 guard より読める)。
+  git rev-parse --verify --quiet "HEAD~$count^{commit}" >/dev/null ||
     die "==> Cannot reset $count commit(s): HEAD~$count does not exist."
-  fi
+  echo "HEAD~$count"
+}
+# 指定した commit へ reset し、そこから HEAD までの first-parent commit を stack へ
+# 1 個ずつ積む (gre N もベース選択も同じ経路)。後から grr で任意の 1 段だけ redo できる。
+cmd_push() {
+  local target="$1" resolved pushed
+  # 実在しない revision で先へ進むと、途中まで reset した中途半端な状態と phantom stack
+  # エントリが残る。先に解決して部分適用を防ぐ (count 経路は main 側で別途検証済み)。
+  resolved=$(git rev-parse --verify --quiet "${target}^{commit}") ||
+    die "==> Invalid reset target: $target"
   mkdir -p "$(dirname "$marker")"
   # prune: 現 HEAD が stack top の祖先でなければ、分岐して新規コミットした (or top が
   # GC 済) => 旧 redo チェーンは全部 dead。push 前に捨てて stack の肥大化を防ぐ。
@@ -110,11 +204,13 @@ cmd_push() {
       warn "==> Stale redo stack cleared (HEAD diverged from top)."
     fi
   fi
-  # --first-parent: HEAD~count と同じ辿り方。merge があっても reset 先と一致させる。
+  # --first-parent: HEAD~N と同じ辿り方。merge があっても 1 段 1 コミットで積む。
   # 出力は newest first なので、1 個ずつ reset して積んだのと同じ行順になる。
-  git rev-list --first-parent -n "$count" HEAD >>"$marker"
-  git reset "HEAD~$count"
-  warn "==> Executed: git reset HEAD~$count"
+  pushed=$(git rev-list --first-parent "$resolved"..HEAD)
+  [[ -z $pushed ]] && die "==> Nothing to reset: $target is already HEAD."
+  printf '%s\n' "$pushed" >>"$marker"
+  git reset "$resolved"
+  warn "==> Executed: git reset $target"
   warn "    Stack depth: $(stack_depth)"
   warn "    Pushed (oldest first, newest last):"
   local h top body bl
@@ -180,8 +276,8 @@ main() {
   marker="$repo_stack_dir/$branch"
 
   # フラグはどの位置でもよい。非フラグ引数は mode 依存: restore なら復元先 hash
-  # (無指定で fzf)、push なら undo する個数 (無指定で 1)。
-  local mode=push force=0 target='' arg count=1
+  # (無指定で fzf)、push なら undo する個数 (無指定でベース選択の fzf)。
+  local mode=push force=0 target='' arg pick=''
   for arg in "$@"; do
     case "$arg" in
       -r) mode=restore ;;
@@ -203,12 +299,9 @@ main() {
     clean) cmd_clean ;;
     viewmarker) echo "$marker" | v ;;
     push)
-      if [[ -n $target ]]; then
-        [[ $target =~ ^[1-9][0-9]*$ ]] ||
-          die "==> Invalid count: $target (expected a positive integer)"
-        count=$target
-      fi
-      cmd_push "$count"
+      pick=$(resolve_push_target "$target")
+      [[ -z $pick ]] && return 0
+      cmd_push "$pick"
       ;;
   esac
 }

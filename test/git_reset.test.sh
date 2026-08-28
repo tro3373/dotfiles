@@ -6,7 +6,9 @@
 #
 # 検証対象 (grr の fzf 選択は非対話形 `git_reset -r <hash>` 経由でテストする。
 # fzf UI 自体は TTY 必須のため単体テスト対象外):
-#   * gre (push)    : 現在 HEAD を stack へ積み HEAD^ へ reset。複数 push できる。
+#   * gre N (push)  : HEAD~N までの commit を stack へ積み HEAD~N へ reset。複数 push できる。
+#   * gre (base 選択): 引数なしはベース候補 (各ブランチとの分岐点) を fzf で選び、そこへ
+#                      reset する。候補の並び・集約・件数表示を偽 fzf 経由で検証する。
 #   * grr (-r <hash>): 選んだ stack エントリへ reset し、そこまで pop。任意段へ一気に
 #                      redo できる (多段)。N 回 push → 段階的/一気の redo で完全復元。
 #   * divergence    : gre 後に新コミットを作った状態で grr すると、現 HEAD が選択先の
@@ -83,6 +85,15 @@ new_repo_with_merge() {
   commit_at 6 'commit C' f
 }
 
+# ベース候補の検証用 repo: A - B - C - D (現ブランチ)。base1/base2 は B、far は A を
+# 指す。base1/base2 は分岐点が同一なので 1 行へ集約される想定。
+new_repo_with_bases() {
+  new_repo
+  git -C "${repo}" branch base1 'HEAD~2'
+  git -C "${repo}" branch base2 'HEAD~2'
+  git -C "${repo}" branch far 'HEAD~3'
+}
+
 # 偽 fzf を PATH 先頭に置く。stdin の行から env FAKE_FZF_PICK に一致する第1フィールド
 # (lineno or 'HEAD') の行を 1 つ echo する。未設定/不一致なら中断扱い (exit 1)。
 # --preview / --bind 等の引数は無視。実 fzf (TTY 必須) なしで対話パスを検証する。
@@ -156,24 +167,24 @@ stack_subjects() {
   done <"${m}"
 }
 
-# gre 1回: HEAD が1つ前へ。元 HEAD が stack に1件積まれる。
+# gre 1: HEAD が1つ前へ。元 HEAD が stack に1件積まれる。
 test_gre_once_pushes_and_moves_back() {
   new_repo
   local before
   before=$(head_hash)
-  gr >/dev/null 2>&1
-  check 'gre once: HEAD が1つ前(C)へ' 'commit C' "$(subj)"
-  check 'gre once: stack 1件' '1' "$(stack_size)"
-  check 'gre once: stack top = 元HEAD(D)' "${before}" "$(stack_top)"
+  gr 1 >/dev/null 2>&1
+  check 'gre 1: HEAD が1つ前(C)へ' 'commit C' "$(subj)"
+  check 'gre 1: stack 1件' '1' "$(stack_size)"
+  check 'gre 1: stack top = 元HEAD(D)' "${before}" "$(stack_top)"
 }
 
-# gre 複数回: stack が上書きされず積み上がる。
+# gre 1 を複数回: stack が上書きされず積み上がる。
 test_gre_multiple_stacks() {
   new_repo
-  gr >/dev/null 2>&1 # push D -> HEAD=C
-  gr >/dev/null 2>&1 # push C -> HEAD=B
-  check 'gre x2: HEAD=B' 'commit B' "$(subj)"
-  check 'gre x2: stack 2件 (上書きされない)' '2' "$(stack_size)"
+  gr 1 >/dev/null 2>&1 # push D -> HEAD=C
+  gr 1 >/dev/null 2>&1 # push C -> HEAD=B
+  check 'gre 1 x2: HEAD=B' 'commit B' "$(subj)"
+  check 'gre 1 x2: stack 2件 (上書きされない)' '2' "$(stack_size)"
 }
 
 # gre N: N 個分まとめて undo。HEAD が N 個前へ移り、stack も N 件積まれる。
@@ -184,20 +195,20 @@ test_gre_count_undoes_n() {
   check 'gre 3: stack 3件' '3' "$(stack_size)"
 }
 
-# gre N は gre を N 回打つのと等価。stack の中身・順序まで一致させる
+# gre N は gre 1 を N 回打つのと等価。stack の中身・順序まで一致させる
 # (1件ずつ積む設計の担保。まとめて1件積む実装になったらここが落ちる)。
 test_gre_count_equals_repeated_gre() {
   new_repo
-  gr >/dev/null 2>&1
-  gr >/dev/null 2>&1
-  gr >/dev/null 2>&1
+  gr 1 >/dev/null 2>&1
+  gr 1 >/dev/null 2>&1
+  gr 1 >/dev/null 2>&1
   local repeated_head repeated_stack
   repeated_head=$(subj)
   repeated_stack=$(stack_subjects)
   new_repo
   gr 3 >/dev/null 2>&1
-  check 'gre 3: HEAD が gre x3 と同じ' "${repeated_head}" "$(subj)"
-  check 'gre 3: stack の中身/順序が gre x3 と同じ' "${repeated_stack}" "$(stack_subjects)"
+  check 'gre 3: HEAD が gre 1 x3 と同じ' "${repeated_head}" "$(subj)"
+  check 'gre 3: stack の中身/順序が gre 1 x3 と同じ' "${repeated_stack}" "$(stack_subjects)"
 }
 
 # gre N 後も段階 redo が効く (1件ずつ積むので任意の1段を選んで戻せる)。
@@ -284,8 +295,8 @@ test_extra_argument_rejected() {
 test_grr_pops_and_restores() {
   new_repo
   local hd
-  hd=$(head_hash)    # D
-  gr >/dev/null 2>&1 # HEAD=C, stack=[D]
+  hd=$(head_hash)      # D
+  gr 1 >/dev/null 2>&1 # HEAD=C, stack=[D]
   gr -r "${hd}" >/dev/null 2>&1
   check 'grr once: HEAD=D へ復元' 'commit D' "$(subj)"
   check 'grr once: stack 空' '0' "$(stack_size)"
@@ -296,9 +307,9 @@ test_multilevel_redo() {
   new_repo
   local hd
   hd=$(head_hash) # D
-  gr >/dev/null 2>&1
-  gr >/dev/null 2>&1
-  gr >/dev/null 2>&1 # push D,C,B -> HEAD=A, stack=[D,C,B]
+  gr 1 >/dev/null 2>&1
+  gr 1 >/dev/null 2>&1
+  gr 1 >/dev/null 2>&1 # push D,C,B -> HEAD=A, stack=[D,C,B]
   check 'multilevel: gre x3 で HEAD=A' 'commit A' "$(subj)"
   gr -r "${hd}" >/dev/null 2>&1 # 一気に D まで redo
   check 'multilevel: 任意段選択で HEAD=D' 'commit D' "$(subj)"
@@ -312,9 +323,9 @@ test_stepwise_redo() {
   hd=$(rev HEAD)
   hc=$(rev 'HEAD~1')
   hb=$(rev 'HEAD~2')
-  gr >/dev/null 2>&1
-  gr >/dev/null 2>&1
-  gr >/dev/null 2>&1 # stack=[D,C,B], HEAD=A
+  gr 1 >/dev/null 2>&1
+  gr 1 >/dev/null 2>&1
+  gr 1 >/dev/null 2>&1 # stack=[D,C,B], HEAD=A
   gr -r "${hb}" >/dev/null 2>&1
   check 'stepwise: B へ' 'commit B' "$(subj)"
   check 'stepwise: stack 2 (=[D,C])' '2' "$(stack_size)"
@@ -339,9 +350,9 @@ test_grr_empty_errors() {
 test_divergence_warns_and_aborts() {
   new_repo
   local hd
-  hd=$(head_hash)    # D
-  gr >/dev/null 2>&1 # push D -> HEAD=C
-  commit E           # HEAD=E; E は D の祖先でない => divergence
+  hd=$(head_hash)      # D
+  gr 1 >/dev/null 2>&1 # push D -> HEAD=C
+  commit E             # HEAD=E; E は D の祖先でない => divergence
   local head_before rc
   head_before=$(head_hash)
   gr -r "${hd}" >/dev/null 2>&1
@@ -356,8 +367,8 @@ test_grr_force_overrides_divergence() {
   new_repo
   local hd
   hd=$(head_hash)
-  gr >/dev/null 2>&1 # push D -> HEAD=C
-  commit E           # HEAD=E
+  gr 1 >/dev/null 2>&1 # push D -> HEAD=C
+  commit E             # HEAD=E
   gr -r -f "${hd}" >/dev/null 2>&1
   check 'grr -f: HEAD=D へ強制復元' 'commit D' "$(subj)"
   check 'grr -f: stack 空' '0' "$(stack_size)"
@@ -368,14 +379,14 @@ test_flag_order_independent() {
   new_repo
   local hd
   hd=$(head_hash)
-  gr >/dev/null 2>&1 # push D -> HEAD=C
-  commit E           # HEAD=E (divergence)
+  gr 1 >/dev/null 2>&1 # push D -> HEAD=C
+  commit E             # HEAD=E (divergence)
   gr -f -r "${hd}" >/dev/null 2>&1
   check 'flag order: -f -r <hash> でも強制復元 (HEAD=D)' 'commit D' "$(subj)"
   check 'flag order: stack 空' '0' "$(stack_size)"
 }
 
-# root commit (親なし) で gre すると phantom stack を作らず非0終了。
+# root commit (親なし) で gre 1 すると phantom stack を作らず非0終了。
 test_root_commit_push_guarded() {
   repo="${tmproot}/rootrepo"
   xdg="${tmproot}/rootcfg"
@@ -386,9 +397,9 @@ test_root_commit_push_guarded() {
   git -C "${repo}" config user.name t
   commit A # 単一コミット (root)
   local rc
-  gr >/dev/null 2>&1
+  gr 1 >/dev/null 2>&1
   rc=$?
-  check 'root commit: gre 非0終了' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'root commit: gre 1 非0終了' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
   check 'root commit: phantom stack なし(0件)' '0' "$(stack_size)"
 }
 
@@ -396,7 +407,7 @@ test_root_commit_push_guarded() {
 # 実在しないコミットは reset せず非0終了し、stack も壊さない。
 test_invalid_entry_fails_safe() {
   new_repo
-  gr >/dev/null 2>&1 # marker 作成 (stack=[D]), HEAD=C
+  gr 1 >/dev/null 2>&1 # marker 作成 (stack=[D]), HEAD=C
   local mfile before rc
   mfile=$(marker_file)
   printf '%s\n' 'not-a-commit' >>"${mfile}" # stack=[D, not-a-commit]
@@ -410,7 +421,7 @@ test_invalid_entry_fails_safe() {
 # fzf 経由 (偽 fzf で top=lineno1 を選択): build_rows + 選択パース + restore を通す。
 test_fzf_select_restores() {
   new_repo
-  gr >/dev/null 2>&1 # stack=[D], HEAD=C; top の lineno=1
+  gr 1 >/dev/null 2>&1 # stack=[D], HEAD=C; top の lineno=1
   FAKE_FZF_PICK=1 gr -r >/dev/null 2>&1
   check 'fzf select: HEAD=D へ復元' 'commit D' "$(subj)"
   check 'fzf select: stack 空' '0' "$(stack_size)"
@@ -421,8 +432,8 @@ test_fzf_order_newest_on_top() {
   new_repo
   local hd rowsfile
   hd=$(head_hash) # D = 最新コミット (最初に undo される = stack line1)
-  gr >/dev/null 2>&1
-  gr >/dev/null 2>&1 # stack=[D,C], HEAD=B
+  gr 1 >/dev/null 2>&1
+  gr 1 >/dev/null 2>&1 # stack=[D,C], HEAD=B
   rowsfile="${tmproot}/rows.txt"
   FAKE_FZF_PICK=HEAD FAKE_FZF_ROWS="${rowsfile}" gr -r >/dev/null 2>&1
   check 'order: 1行目 = 最新コミット D が上' "${hd}" "$(sed -n '1p' "${rowsfile}" | cut -f2)"
@@ -432,7 +443,7 @@ test_fzf_order_newest_on_top() {
 # fzf で HEAD 行を選ぶと no-op (終了0・HEAD/stack 不変)。
 test_fzf_select_head_is_noop() {
   new_repo
-  gr >/dev/null 2>&1 # stack=[D], HEAD=C
+  gr 1 >/dev/null 2>&1 # stack=[D], HEAD=C
   local hc rc
   hc=$(head_hash)
   FAKE_FZF_PICK=HEAD gr -r >/dev/null 2>&1
@@ -446,11 +457,11 @@ test_fzf_select_head_is_noop() {
 # 破棄され、stack は積み上がらず分岐後 HEAD のみになる (肥大化防止)。
 test_prune_on_divergent_gre() {
   new_repo
-  gr >/dev/null 2>&1 # push D -> HEAD=C, stack=[D]
-  commit E           # HEAD=E (D の兄弟=分岐), stack 上の D は dead
+  gr 1 >/dev/null 2>&1 # push D -> HEAD=C, stack=[D]
+  commit E             # HEAD=E (D の兄弟=分岐), stack 上の D は dead
   local he
-  he=$(head_hash)    # E
-  gr >/dev/null 2>&1 # prune で D 破棄 -> push E -> HEAD=C, stack=[E]
+  he=$(head_hash)      # E
+  gr 1 >/dev/null 2>&1 # prune で D 破棄 -> push E -> HEAD=C, stack=[E]
   check 'prune: 分岐後 gre で stack 積み上がらず1件' '1' "$(stack_size)"
   check 'prune: top = 分岐後HEAD(E) のみ' "${he}" "$(stack_top)"
 }
@@ -461,11 +472,11 @@ test_branch_keyed_separate_stacks() {
   new_repo
   local defbr
   defbr=$(git -C "${repo}" symbolic-ref --short HEAD)
-  gr >/dev/null 2>&1 # push on defbr; stack(defbr)=1, HEAD=C
+  gr 1 >/dev/null 2>&1 # push on defbr; stack(defbr)=1, HEAD=C
   check 'branch-key: defbr stack 1件' '1' "$(stack_size_for "${defbr}")"
   git -C "${repo}" checkout -q -b feature/x # at C
   check 'branch-key: 新branchは空stack' '0' "$(stack_size_for feature/x)"
-  gr >/dev/null 2>&1 # push on feature/x
+  gr 1 >/dev/null 2>&1 # push on feature/x
   check 'branch-key: feature/x stack 1件' '1' "$(stack_size_for feature/x)"
   check 'branch-key: defbr stack 保持1件 (混ざらない)' '1' "$(stack_size_for "${defbr}")"
 }
@@ -476,12 +487,83 @@ test_clean_removes_dead_branch_stack() {
   local defbr
   defbr=$(git -C "${repo}" symbolic-ref --short HEAD)
   git -C "${repo}" checkout -q -b feature/x
-  gr >/dev/null 2>&1                       # feature/x に stack 作成 (gre の mixed reset で working tree が dirty)
+  gr 1 >/dev/null 2>&1                     # feature/x に stack 作成 (gre の mixed reset で working tree が dirty)
   git -C "${repo}" checkout -qf "${defbr}" # -f: dirty tree を捨てて defbr へ戻る
   git -C "${repo}" branch -qD feature/x    # feature/x を消す -> stack 孤児化
   check 'clean: 掃除前 feature/x stack 1件' '1' "$(stack_size_for feature/x)"
   FAKE_TRASH_DIR="${tmproot}/trashed" FAKE_FZF_PICK='feature/x' gr -c >/dev/null 2>&1
   check 'clean: feature/x stack 掃除された(0件)' '0' "$(stack_size_for feature/x)"
+}
+
+# 引数なし gre: ベース候補を fzf で選び、その分岐点まで一気に reset する。
+test_gre_picks_base() {
+  new_repo_with_bases
+  local hb
+  hb=$(rev 'HEAD~2') # B = base1/base2 の分岐点
+  FAKE_FZF_PICK="${hb}" gr >/dev/null 2>&1
+  check 'base pick: HEAD=B へ' 'commit B' "$(subj)"
+  check 'base pick: stack 2件 (D,C)' '2' "$(stack_size)"
+  check 'base pick: stack top = 元HEAD(D)' "$(printf 'commit D\ncommit C')" "$(stack_subjects)"
+}
+
+# 候補行は近い (件数が少ない) 順。fzf の既定 layout は画面下から描くので 1 行目が
+# プロンプト直上 = カーソル初期位置になり、一番近い分岐点が無操作で選べる。
+test_base_rows_nearest_first() {
+  new_repo_with_bases
+  local rowsfile
+  rowsfile="${tmproot}/baserows.txt"
+  FAKE_FZF_PICK=none FAKE_FZF_ROWS="${rowsfile}" gr >/dev/null 2>&1
+  check 'base rows: 1行目 = 一番近い分岐点(B)' "$(rev 'HEAD~2')" "$(sed -n '1p' "${rowsfile}" | cut -f1)"
+  check 'base rows: 2行目 = より遠い分岐点(A)' "$(rev 'HEAD~3')" "$(sed -n '2p' "${rowsfile}" | cut -f1)"
+}
+
+# 分岐点が同じブランチは 1 行へ集約し、名前は全部並べる。別行にしても reset 先も件数も
+# 同じ行が並ぶだけで、選ぶ手掛かりにならないため。
+test_base_rows_group_same_base() {
+  new_repo_with_bases
+  local rowsfile line
+  rowsfile="${tmproot}/baserows2.txt"
+  FAKE_FZF_PICK=none FAKE_FZF_ROWS="${rowsfile}" gr >/dev/null 2>&1
+  line=$(sed -n '1p' "${rowsfile}")
+  check 'base rows: 同一分岐点は1行' '1' "$(grep -c "$(rev 'HEAD~2')" "${rowsfile}")"
+  check 'base rows: 集約行に branch 名を全部出す' '1' \
+    "$([[ ${line} == *'base1, base2'* ]] && echo 1 || echo 0)"
+}
+
+# merge を含むと first-parent 件数 (= stack の段数) と総コミット数がずれる。両方出さないと
+# 「N 件戻る」と読んだ数だけ grr できず食い違う。
+test_base_rows_show_merge_total() {
+  new_repo_with_merge
+  git -C "${repo}" branch base_a 'HEAD~3' # A。A..C は first-parent 3件 / 総数 5件 (S1,S2 込み)
+  local rowsfile
+  rowsfile="${tmproot}/mergerows.txt"
+  FAKE_FZF_PICK=none FAKE_FZF_ROWS="${rowsfile}" gr >/dev/null 2>&1
+  check 'base rows: merge 込み総数を併記' '1' \
+    "$(grep -c '3 commit(s) (5 w/ merges).*base_a' "${rowsfile}")"
+}
+
+# 現ブランチしか無い repo では候補が 0 件。fzf を開かず、件数指定を案内して終了する。
+test_base_no_candidates_errors() {
+  new_repo
+  local before out
+  before=$(head_hash)
+  out=$(gr_out)
+  check 'no candidates: 案内して非0終了' '1' \
+    "$([[ ${out} == *'No base branch candidates'* ]] && echo 1 || echo 0)"
+  check 'no candidates: HEAD 不変' "${before}" "$(head_hash)"
+  check 'no candidates: stack 作られない(0件)' '0' "$(stack_size)"
+}
+
+# fzf を中断 (選択なし) したら何もしない。終了0で HEAD/stack 不変。
+test_base_pick_abort_is_noop() {
+  new_repo_with_bases
+  local before rc
+  before=$(head_hash)
+  gr >/dev/null 2>&1 # FAKE_FZF_PICK 未設定 = 偽 fzf が中断扱いで exit 1
+  rc=$?
+  check 'base pick abort: 終了0 (no-op)' '0' "$([[ ${rc} -eq 0 ]] && echo 0 || echo 1)"
+  check 'base pick abort: HEAD 不変' "${before}" "$(head_hash)"
+  check 'base pick abort: stack 作られない(0件)' '0' "$(stack_size)"
 }
 
 main() {
@@ -492,6 +574,12 @@ main() {
   local pass=0 fail=0
 
   test_gre_once_pushes_and_moves_back
+  test_gre_picks_base
+  test_base_rows_nearest_first
+  test_base_rows_group_same_base
+  test_base_rows_show_merge_total
+  test_base_no_candidates_errors
+  test_base_pick_abort_is_noop
   test_gre_multiple_stacks
   test_gre_count_undoes_n
   test_gre_count_equals_repeated_gre
