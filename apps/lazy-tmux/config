@@ -4,3 +4,10 @@ install_common() {
   # go_install github.com/alchemmist/lazy-tmux/cmd/lazy-tmux@latest
   install_via_os_default
 }
+
+setting_common() {
+  # ~/.config/lazy-tmux 配下は lazy-tmux.toml だけなのでディレクトリごとリンクしない
+  make_dir_if_needed "$HOME/.config/lazy-tmux"
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/lazy-tmux.toml" "$HOME/.config/lazy-tmux/lazy-tmux.toml"
+}

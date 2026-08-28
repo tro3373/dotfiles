@@ -1,0 +1,12 @@
+# lazy-tmux 設定。setup が ~/.config/lazy-tmux/lazy-tmux.toml へ symlink する。
+# 既定値との差分だけを書く (全項目付きの雛形は `lazy-tmux config gen`、
+# 実効値の確認は `lazy-tmux config show`)。
+
+# 統合機能の master switch。
+# 有効だと claude pane を `claude --resume <session-id>`、codex pane を
+# `codex resume <session-id>` として復元し、前回の会話を勝手に引き継ぐ。
+# 復元後は素の `claude` / `codex` で始めたいので全体を切る。
+# 片方だけ残す場合は enabled = true に戻し、
+# [integrations.claude] / [integrations.codex] で個別に false を指定する。
+[integrations]
+enabled = false
