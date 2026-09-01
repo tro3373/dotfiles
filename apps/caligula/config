@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# https://github.com/ifd3f/caligula
+install_arch() {
+  def_install caligula
+}
+install_mac() {
+  exe brew tap philocalyst/tap
+  exe brew install caligula
+}
