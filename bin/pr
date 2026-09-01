@@ -28,7 +28,25 @@ Make a pull request via llm from git diff and commit list.
 EOF
 }
 
-check() { hass "${depends[@]}"; }
+has() { command -v "${1}" >&/dev/null; }
+hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test ! -t 0 && cat -) ${@:2}" | _ink "$1"; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+log() { _log white "$*"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+check() {
+  hass "${depends[@]}"
+  # -d は title/body を外部で用意して渡すモード。無いまま進むと空の PR ができる
+  if [[ -n $target_tmp_dir && $compact -eq 0 ]]; then
+    for f in title body; do
+      [[ -s "$target_tmp_dir/$f" ]] || die "==> $target_tmp_dir/$f not found or empty."
+    done
+  fi
+}
 initialize() {
   while true; do
     [[ -z $1 ]] && break
@@ -56,20 +74,23 @@ find_target_branch_with_fetch() {
   [[ -n $PR_TARGET_BRANCH ]] && echo "$PR_TARGET_BRANCH" && return
   branches=(develop main)
   if [[ $current_branch =~ ^(main|master)$ ]]; then
-    elog "==> Current branch is $current_branch. Please checkout to other branch."
+    die "==> Current branch is $current_branch. Please checkout to other branch."
   fi
   if [[ $current_branch == "develop" ]]; then
-    wlog "==> Current branch is $current_branch. Local changes will be pushed to $current_branch."
-    wlog "==> Press Enter to continue..(Cancel: Ctrl+C)"
+    warn "==> Current branch is $current_branch. Local changes will be pushed to $current_branch."
+    if [[ ! -t 0 ]]; then
+      die "==> Not a tty. Pass the base branch explicitly instead of confirming."
+    fi
+    warn "==> Press Enter to continue..(Cancel: Ctrl+C)"
     read -r _
     branches=(main master)
   fi
 
   # Fetch the latest changes from the remote repository
-  ilog "==> Git fetching.."
+  info "==> Git fetching.."
   git fetch origin
 
-  ilog "==> Finding target branch.."
+  info "==> Finding target branch.."
   remote_branches=$(git ls-remote --heads origin)
   for b in "${branches[@]}"; do
     if echo -e "$remote_branches" | grep -q "refs/heads/$b"; then
@@ -100,18 +121,18 @@ EOF
 }
 
 clear_tmp_dir() {
-  ilog "==> Cleaning $target_tmp_dir.."
+  info "==> Cleaning $target_tmp_dir.."
   rm -rf "$target_tmp_dir"
   mkdir -p "$target_tmp_dir"
 }
 
 create_diff() {
-  ilog "==> Creating diff.."
-  git_diff_ignored "$target_branch"..HEAD >"$target_tmp_dir"/diff
+  info "==> Creating diff.."
+  git_diff_ignored "$target_branch"...HEAD >"$target_tmp_dir"/diff
 }
 
 create_commit_list() {
-  ilog "==> Creating commit_list.."
+  info "==> Creating commit_list.."
   git log --oneline "$target_branch"..HEAD >"$target_tmp_dir"/commit_list
 }
 
@@ -127,11 +148,11 @@ create_pr_parts() {
   create_commit_list
 
   if [[ ! -s $target_tmp_dir/diff ]]; then
-    wlog "No changes"
+    warn "No changes"
     exit 0
   fi
 
-  ilog "==> Creating messages.json.."
+  info "==> Creating messages.json.."
   cat <"$target_tmp_dir"/diff |
     # head -200 |
     prp -ne gen-git-pr-message.md$ >"$target_tmp_dir"/prompt.md
@@ -147,7 +168,7 @@ create_pr_parts() {
   # cat <"$target_tmp_dir"/prompt.md |
   #   llm -c claude >"$target_tmp_dir"/messages.json
 
-  ilog "==> Creating title/body.."
+  info "==> Creating title/body.."
   jq -r '.title' "$target_tmp_dir"/messages.json >/dev/null 2>&1 || {
     cat <"$target_tmp_dir"/messages.json |
       sed -e '/^```/d' -e '/```json/d' -e '/^$/d' >"$target_tmp_dir"/messages.json.bk
@@ -169,7 +190,7 @@ create_compact_pr_parts() {
 }
 
 create_pr_with_push() {
-  ilog "==> Pushing commits.."
+  info "==> Pushing commits.."
   git push -u origin "$current_branch" 1>&2
   _target_branch=${target_branch#origin/}
   is_origin_is_gitlab && {
@@ -183,7 +204,7 @@ create_pr_with_push() {
 
 is_origin_is_gitlab() { git remote get-url origin 2>/dev/null | grep -q gitlab; }
 dump_pr_or_mr() {
-  ilog "==> Creating $1!.."
+  info "==> Creating $1!.."
   # shellcheck disable=SC2016
   cat <<EOF | ink yellow
 branch: $current_branch ==> $_target_branch
@@ -218,7 +239,7 @@ create_mr() {
 }
 
 end() {
-  ilog "==> Done!"
+  info "==> Done!"
 }
 
 main() {
@@ -227,10 +248,10 @@ main() {
   if [[ -z $target_branch ]]; then
     target_branch=$(find_target_branch_with_fetch)
     if [[ -z $target_branch ]]; then
-      elog "==> No target branch found."
+      die "==> No target branch found."
     fi
   fi
-  ilog "==> Target branch: $target_branch"
+  info "==> Target branch: $target_branch"
 
   if [[ $compact -eq 1 ]]; then
     target_tmp_dir=/tmp/pr
@@ -242,7 +263,7 @@ main() {
     create_pr_parts
   fi
   web_url=$(create_pr_with_push)
-  ilog "==> PR created successfully! see: $web_url"
+  info "==> PR created successfully! see: $web_url"
   open "$web_url"
 }
 main "$@"
