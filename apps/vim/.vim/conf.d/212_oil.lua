@@ -9,9 +9,9 @@ local function trash_external(path, cb)
     vim.schedule(function()
       if obj.code ~= 0 then
         cb(("trash failed (%d): %s"):format(obj.code, vim.trim(obj.stderr or "")))
-      else
-        cb(nil)
+        return
       end
+      cb(nil)
     end)
   end)
 end
@@ -20,7 +20,7 @@ end
 -- ※ oil 更新で delete_to_trash(path, cb) のシグネチャが変わったら要追従。
 require("oil.adapters.trash").delete_to_trash = trash_external
 
--- T/D: カーソル下を即 trash (dd+:w 不要の vaffle 流ショートカット)
+-- T: カーソル下を即 trash (dd+:w 不要の vaffle 流ショートカット)
 local function trash_cursor_entry()
   local oil = require("oil")
   local entry, dir = oil.get_cursor_entry(), oil.get_current_dir()
@@ -30,9 +30,9 @@ local function trash_cursor_entry()
   trash_external(dir .. entry.name, function(err)
     if err then
       vim.notify(err, vim.log.levels.ERROR)
-    else
-      require("oil.actions").refresh.callback() -- 削除を buffer に反映 (未保存編集があれば確認)
+      return
     end
+    require("oil.actions").refresh.callback() -- 削除を buffer に反映 (未保存編集があれば確認)
   end)
 end
 
@@ -41,11 +41,10 @@ end
 function _G.get_oil_winbar()
   local bufnr = vim.api.nvim_win_get_buf(vim.g.statusline_winid)
   local dir = require("oil").get_current_dir(bufnr)
-  if dir then
-    return vim.fn.fnamemodify(dir, ":~")
-  else
+  if not dir then
     return vim.api.nvim_buf_get_name(0)
   end
+  return vim.fn.fnamemodify(dir, ":~")
 end
 
 -- <CR>: nvim では読めない形式 (PDF/Office/動画/音声) は bin/open へ委譲する。
@@ -89,7 +88,6 @@ require("oil").setup({
   keymaps = {
     ["<CR>"] = { desc = "Open (PDF/Office/動画は bin/open)", callback = select_or_open_external, mode = "n" },
     ["T"] = { desc = "Trash (自前 trash)", callback = trash_cursor_entry, mode = "n" },
-    ["D"] = { desc = "Trash (自前 trash)", callback = trash_cursor_entry, mode = "n" },
   },
 })
 
