@@ -37,7 +37,7 @@ return {
     opts = {
       -- Copilot Next Edit Suggestions (複数行リファクタ提案を diff 表示)。
       -- 使用する copilot LSP client の enable は lsp.lua 側で行う。
-      nes = { enabled = true },
+      nes = { enabled = false },
       cli = {
         -- claude は nvim ネイティブの terminal ウィンドウ(既定=右split)で開く。
         -- mux.enabled=true にすると tmux 常駐へ切替 (nvim 再起動後もセッション維持できるが、
