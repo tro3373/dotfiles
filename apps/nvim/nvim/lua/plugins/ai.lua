@@ -175,6 +175,32 @@ return {
     "skanehira/denops-translate.vim",
     cond = vim.fn.executable("deno") == 1,
     dependencies = { "vim-denops/denops.vim" },
+    -- gtr の既定 client=gtx は全ユーザ共有の枠で、Google が 429 と HTML の
+    -- "Sorry..." ページを返す。gtr は status を見ずに JSON.parse するため
+    -- SyntaxError: Unexpected token '<' になる。client を変えれば同じ
+    -- エンドポイントが 200 を返すので、gtr が送る Android アプリ UA と
+    -- 整合する at に差し替える。upstream の main.ts は client を渡さないため
+    -- install/update のたびに当て直す。
+    build = function(plugin)
+      local path = plugin.dir .. "/denops/translate/main.ts"
+      local fd = io.open(path, "r")
+      if not fd then
+        return
+      end
+      local src = fd:read("*a")
+      fd:close()
+      if src:find('client: "at"', 1, true) then
+        return
+      end
+      local patched, n = src:gsub("(\n        targetLang: opt%.target,\n)", '%1        client: "at",\n', 1)
+      if n == 0 then
+        vim.notify("denops-translate: client=at patch failed (upstream changed?)", vim.log.levels.WARN)
+        return
+      end
+      fd = io.open(path, "w")
+      fd:write(patched)
+      fd:close()
+    end,
     -- 初回 <Leader>tr を速くするため keys ではなく VeryLazy で起動時にロードし、
     -- アイドル時に translate プラグインを登録しておく(キー押下時はネットワークのみ)。
     -- denops サーバは元々 VeryLazy で毎セッション起動するため追加コストは登録分のみ。
