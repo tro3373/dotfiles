@@ -219,6 +219,7 @@ let g:ale_pattern_options = {
 \   '.*/gen.go$': {'ale_linters': [], 'ale_fixers': []},
 \   '/var/lib/snapd/snap/go/.*\.go$': {'ale_enabled': 0},
 \   '/usr/local/go/.*\.go$': {'ale_enabled': 0},
+\   '.*/installs/\(golang\|go\)/.*/go/src/.*\.go$': {'ale_enabled': 0},
 \}
 "\ 'pattern': {'ale_linters': [], 'ale_fixers': []},
 "\ '\.*': {'ale_fixers': ['trim_whitespace', 'remove_trailing_lines']}}
