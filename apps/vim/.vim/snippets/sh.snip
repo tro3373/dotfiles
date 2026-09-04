@@ -77,8 +77,8 @@ snippet	has
 	has() { command -v "\${1}" >&/dev/null; }
 snippet	hasp
 	hasp() { command -p -v "\${1}" >&/dev/null; }
-snippet	hass
-	hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+snippet	requires
+	requires() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
 
 snippet	shellcheckignore
 alias	ignore
@@ -218,7 +218,7 @@ snippet	logsettt
 
 snippet	logcolorrr
 	has() { command -v "\${1}" >&/dev/null; }
-	hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+	requires() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
 	_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
 	#_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $(test ! -t 0 && cat -) ${@:2}" | _ink "\$1"; }
 	# shellcheck disable=SC2145
@@ -341,8 +341,8 @@ snippet	check_commandsss
 alias	dependsss
 	readonly depends=(curl fzf jq)
 	has() { command -v "\${1}" >&/dev/null; }
-	hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
-	# hass "${depends[@]}"
+	requires() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+	# requires "${depends[@]}"
 
 
 snippet	ifpipeee
@@ -424,10 +424,10 @@ snippet	initializzzz
 		check
 		set -euo pipefail
 	}
-	check() { hass "${depends[@]}"; }
+	check() { requires "${depends[@]}"; }
 	add_args() { args+=("$@"); }
 	has() { command -v "\${1}" >&/dev/null; }
-	hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+	requires() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
 	_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
 	# shellcheck disable=SC2145
 	_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "\$1"; }
