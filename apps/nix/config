@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
 install_common() {
-  if has nix; then
-    return
-  fi
   # Official Nix installer, single-user (--no-daemon).
   #   - Determinate's installer is multi-user only, so we stay on the official one to keep single-user.
   #   - single-user uninstall is simple: rm -rf /nix + ~/.nix-* (no daemon/nixbld/systemd to clean up).
