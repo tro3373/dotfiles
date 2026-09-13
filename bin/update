@@ -14,6 +14,9 @@ Usage:
   $command_name [option]
 Options
   -h|--help : Show this usage
+  -e : Execute update. (default: dry-run)
+  -a : Update by yay. (default: pacman)
+    Update AUR packages, or not.
 
 EOF
 }

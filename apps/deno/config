@@ -12,7 +12,7 @@ install_common() {
   local _ver
   _ver=$(asdf list deno 2>/dev/null | tail -1 | tr -d " ")
   # shellcheck disable=SC2016
-  exe "asdf global deno $_ver"
+  exe "asdf set -u deno $_ver"
 }
 # install_wsl() { not_supported; }
 # install_arch() {

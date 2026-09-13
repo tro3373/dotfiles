@@ -17,7 +17,7 @@ install_common() {
   fi
   exe asdf install flutter latest
   if ! flutter version >&/dev/null; then
-    exe asdf global flutter "$(asdf list flutter | tail -n 1)"
+    exe asdf set -u flutter "$(asdf list flutter | tail -n 1)"
   fi
 }
 install_arch() {
