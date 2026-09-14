@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+command_name=$(basename "$0") && readonly command_name
+socks_dir="${HOME}/.ssh/socks"
+dry_run=0
+patterns=()
+usage() {
+  cat <<EOF
+
+Clean ssh ControlMaster sockets in ${socks_dir}.
+Live masters are stopped by 'ssh -O exit', stale sockets are removed.
+
+  Usage:
+      $command_name [option] [pattern...]
+    Args
+      pattern : Substring of socket name (e.g. host name). All sockets if omitted
+    Options
+      -n|--dry-run : Show targets only
+      -h|--help    : Show this usage
+
+EOF
+}
+initialize() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -n | --dry-run) dry_run=1 ;;
+      *) patterns+=("$1") ;;
+    esac
+    shift
+  done
+  set -euo pipefail
+}
+matched() {
+  local name=$1 p
+  [[ ${#patterns[@]} -eq 0 ]] && return 0
+  for p in "${patterns[@]}"; do
+    [[ $name == *"$p"* ]] && return 0
+  done
+  return 1
+}
+
+main() {
+  initialize "$@"
+  [[ -d $socks_dir ]] || exit 0
+  local sock
+  while IFS= read -r -d '' sock; do
+    matched "$(basename "$sock")" || continue
+    echo "$sock"
+    [[ $dry_run -eq 1 ]] && continue
+    # master が生きていれば接続ごと止める (ソケットは master が消す)。
+    # 死んでいれば ssh は失敗するので残ったソケットを消す。
+    ssh -S "$sock" -O exit _ >/dev/null 2>&1 || true
+    rm -f "$sock"
+  done < <(find "$socks_dir" -mindepth 1 -maxdepth 1 ! -type d -print0)
+}
+main "$@"
