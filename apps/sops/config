@@ -9,7 +9,24 @@ install_common() {
 }
 
 setting_common() {
+  setup_global_env
   tips
+}
+
+# zsh 起動時に読み込む global.enc.env の置き場 (読み込みは apps/zsh/.zsh/90.additional.zsh)。
+setup_global_env() {
+  local dir=$HOME/.config/sops/env
+  if [[ -e $dir/.sops.yaml ]]; then
+    log "==> $dir/.sops.yaml already exists."
+    return
+  fi
+  if [[ ! -f ${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt} ]]; then
+    log "==> No age key. Skip creating $dir/.sops.yaml"
+    return
+  fi
+  make_dir_if_needed "$dir"
+  exe "(cd \"$dir\" && gen_sops_yaml)"
+  log "==> Edit global env: sops edit $dir/global.enc.env"
 }
 
 tips() {
@@ -59,6 +76,9 @@ tips() {
   sops exec-env secrets.enc.env 'terraform apply'   # 値を環境変数として注入
   sops exec-file secrets.enc.yaml 'cmd {}'          # 一時ファイルとして渡す
   ```
+  - ディレクトリ単位: .envrc に `use sops [file...]` (既定 secrets.enc.env。`setup direnv` の direnvrc)
+  - グローバル: `sops edit ~/.config/sops/env/global.enc.env` に書くと zsh 起動時に読み込む
+    - 環境変数は同ユーザの全プロセスから読める。一部のコマンドだけで使う鍵は exec-env で包む
 - 鍵を足す / 抜く
   - .sops.yaml の `age:` を直してから `sops updatekeys secrets.enc.yaml`
   - creation_rules は**新規作成時のみ**効く。既存ファイルは updatekeys しないと変わらない

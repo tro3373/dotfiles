@@ -3,6 +3,13 @@ _additional() {
   load_zsh ~/.fzf.zsh
   [[ -f ~/.nix-profile/etc/profile.d/nix.sh ]] && . ~/.nix-profile/etc/profile.d/nix.sh
   #[ -f ~/.secret ] && . ~/.secret
+  _load_sops_env ~/.config/sops/env/global.enc.env
+}
+
+# sops の暗号ファイルを復号して環境変数に載せる。平文はディスクに出さない (キャッシュもしない)。
+_load_sops_env() {
+  [[ -f $1 ]] && has sops && has direnv || return 0
+  eval "$(sops exec-env "$1" 'direnv dump zsh')"
 }
 _additional
 
