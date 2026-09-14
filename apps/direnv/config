@@ -7,19 +7,24 @@ install_mac() {
   install_via_os_default
 }
 setting_common() {
-  tips
+  local dir=$HOME/.config/direnv
+  make_dir_if_needed "$dir"
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/direnvrc" "$dir/direnvrc"
+  setup_whitelist "$dir/direnv.toml"
 }
-tips() {
-  cat <<'EOF' | inki
 
-- 特定の置き場を信頼する。
-  - ~/.config/direnv/direnv.toml
-    ```toml
-    [whitelist]
-    prefix = [
-      "/path/to/your/repo-1",
-      "/path/to/your/repo-2",
-    ]
-    ```
+# prefix 配下の .envrc は direnv allow なしで読み込まれる。
+setup_whitelist() {
+  local dst=$1
+  if [[ -e $dst ]]; then
+    log "==> $dst already exists."
+    return
+  fi
+  cat <<'EOF' | cat_tee "$dst"
+[whitelist]
+prefix = [
+]
 EOF
+  log "==> Add trusted dirs to whitelist.prefix in $dst (e.g. \"$HOME/ghq/github.com/you\",)"
 }

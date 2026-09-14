@@ -1,0 +1,11 @@
+# shellcheck shell=bash
+
+# .envrc で `use sops [file...]` と書くと、sops の暗号ファイルを環境変数として読み込む。
+# 引数を省くと secrets.enc.env。復号結果はディスクに出さない。
+use_sops() {
+  local f
+  for f in "${@:-secrets.enc.env}"; do
+    watch_file "$f" # 暗号ファイルを編集したら再読込
+    direnv_load sops exec-env "$f" 'direnv dump'
+  done
+}
