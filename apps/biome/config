@@ -11,7 +11,7 @@ install_common() {
   fi
   exe "(cd $current_dir && $_pm install -D @biomejs/biome)"
   exe "(cd $current_dir && $_pm install -D json)"
-  exe "(cd $current_dir && $_pmx json -I -f package.json -e 'this.scripts[\"checkfix\"]=\"$_pmx biome check --write --unsafe\"')"
+  exe "(cd $current_dir && $_pmx json -I -f package.json -e 'this.scripts=this.scripts||{};this.scripts[\"checkfix\"]=\"$_pmx biome check --write --unsafe\"')"
 }
 
 setting_common() {
