@@ -1591,6 +1591,11 @@ function! s:resolve_adr(num, bases) abort
 endfunction
 
 function! OpenUrlOrFilePathOnCursor() range abort
+  " HTML は行内の URL/パスではなくファイル自体をブラウザで開く
+  if &filetype ==# 'html'
+    call system('open ' . shellescape(expand('%:p')))
+    return
+  endif
   " tabedit でカレントバッファが変わるので、対象行と探索ベースは先に集める
   let l:bases = s:search_bases()
   let l:lines = getline(a:firstline, a:lastline)
