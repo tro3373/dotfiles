@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+main() {
+  set -eo pipefail
+  gh skill install --scope user --agent claude-code "$@"
+}
+main "$@"
