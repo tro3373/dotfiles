@@ -162,6 +162,7 @@ alias_with_compdef make m _make
 #   alias claude="specstory claude"
 # fi
 alias_with_compdef claude c
+alias ccp='CLAUDE_CONFIG_DIR=$HOME/.claude-pstack claude'
 alias_with_compdef cursor r
 alias_with_compdef tasks t
 alias_with_compdef flutter fl

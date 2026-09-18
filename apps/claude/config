@@ -23,6 +23,11 @@ setting_common() {
   for item in CLAUDE.md settings.json commands agents skills; do
     make_lnk_with_bkup "$HOME/.mo/claude/$item" "$HOME/.claude/$item"
   done
+  log "===> pstack profile (ccp)"
+  make_dir_if_needed "$HOME/.claude-pstack"
+  for item in CLAUDE.md agents skills; do
+    make_lnk_with_bkup "$HOME/.mo/claude-pstack/$item" "$HOME/.claude-pstack/$item"
+  done
   show_usage
 }
 
