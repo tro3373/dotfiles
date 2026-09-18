@@ -134,3 +134,13 @@ config 内で `$app_dir`（= `apps/{name}`）を参照するときは shellcheck
 2. **`~/.works.zsh` を消さない・直接汚さない** — マシン固有のローカル設定（PATH追加・秘密・completion）が入る `chmod 700` のファイル。多数の app config がここに追記する。PATH や env を永続化したいときは `add_path` / `tee_to_works_zsh` でここに足す。
 3. **shell profile を直接いじらない** — PATH は `apps/zsh/.zsh/` 側で管理する（例: nix は `NIX_INSTALLER_NO_MODIFY_PROFILE=1` でインストーラに profile を触らせず、`90.additional.zsh` で `~/.nix-profile/etc/profile.d/nix.sh` を source して通す）。
 4. **ディレクトリ名 = 実行コマンド名 を暗黙前提にしている** — 違うなら `is_installed` を上書きしないと導入済み判定を外す（「定義する関数」の `is_installed` 節を参照）。
+5. **GNOME Wayland では `wl-paste --watch` が使えない** — mutter は data-control protocol 非対応。クリップボード監視は XWayland 側 (clipnotify + xclip) で代替する（例: `apps/cliphist-tui`）。
+
+## よく使う追加パターン
+
+| やりたいこと | 書き方 | 手本 |
+|---|---|---|
+| systemd user service で常駐 | unit を `apps/{name}/` に置き `~/.config/systemd/user/` へ `make_lnk_with_bkup` → `daemon-reload` → `enable --now`。GUI 環境依存なら `WantedBy=graphical-session.target` | `apps/cliphist-tui/config`, `apps/clipper/config` |
+| 常駐から呼ぶ自作スクリプト | `apps/{name}/` に置き `make_link_to_bin` で `~/bin` へ。unit からは `%h/bin/<script>` で参照 | `apps/cliphist-tui/config` |
+| GNOME のショートカット登録 | `gset_ key add "<name>" "<binding>" "<command>"`（name で冪等、dry-run 対応）。既定キーとぶつかるなら先に `gsettings_if_needed` で外す | `apps/cliphist-tui/config` |
+| 導入後の使い方・仕組みの説明 | `tips() { cat <<'EOF' \| inki ... EOF; }` を定義し `setting_*` の最後で呼ぶ。「なぜこの構成か」もここに書く | `apps/sops/config`, `apps/cliphist-tui/config` |
