@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+# cliphist (履歴保存) + cliphist-tui (fzf で選択) を Super+V のポップアップで使う。
+# https://github.com/SHORiN-KiWATA/cliphist-tui
+
+readonly _watch_service=cliphist-x11-watch.service
+readonly _key_name="Clipboard History"
+readonly _key_binding="<Super>v"
+
+install_common() { not_supported; }
+install_wsl() { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+
+install_arch() {
+  def_install cliphist cliphist-tui-git chafa wl-clipboard xclip clipnotify-git
+}
+
+setting_common() { no_settings; }
+
+setting_arch() {
+  make_link_to_bin cliphist-x11-watch
+  _setup_watch_service
+  _setup_keybinding
+  tips
+}
+
+_setup_watch_service() {
+  local _dir="${HOME}/.config/systemd/user"
+  exe mkdir -p "$_dir"
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/$_watch_service" "$_dir/$_watch_service"
+  exe systemctl --user daemon-reload
+  exe systemctl --user enable --now "$_watch_service"
+}
+
+# GNOME 既定で Super+V は通知一覧 (toggle-message-tray) に割り当て済みなので外す。
+_setup_keybinding() {
+  gsettings_if_needed org.gnome.shell.keybindings toggle-message-tray "['<Super>m']"
+  gset_ key add "$_key_name" "$_key_binding" \
+    "ghostty --window-width=110 --window-height=30 -e cliphist-tui"
+}
+
+tips() {
+  cat <<'EOF' | inki
+- 構成
+  - cliphist: コピー履歴を保存する DB (`cliphist list` で中身確認)
+  - cliphist-tui: 履歴を fzf で選んでクリップボードへ戻す TUI
+  - cliphist-x11-watch.service: コピーを検知して cliphist へ保存する常駐 (systemd user)
+  - Super+V: ghostty で cliphist-tui を開く (GNOME カスタムショートカット)
+    - 選んだ後は Ctrl+V で貼り付け
+- なぜ `wl-paste --watch cliphist store` ではなく X11 経由か
+  - `wl-paste --watch` は Wayland の data-control protocol が必要
+  - GNOME (mutter) はこれを実装していない
+    - `Watch mode requires a compositor that supports the data-control protocol` で失敗する
+    - Hyprland / Sway 等の wlroots 系なら動く
+  - GNOME は Wayland のクリップボードを XWayland (X11 互換レイヤ) の CLIPBOARD にも同期する
+  - そこで X11 側の変更通知 (clipnotify) を受けて xclip で読み出し、cliphist store へ流す
+  - 保存対象は image/png と UTF8_STRING。PRIMARY (選択しただけ) は保存しない
+- 確認
+  - `systemctl --user status cliphist-x11-watch`
+  - `journalctl --user -u cliphist-x11-watch -f`
+- 履歴の全削除: `cliphist wipe`
+- 元に戻す
+  - `systemctl --user disable --now cliphist-x11-watch`
+  - `gset key rm "Clipboard History"`
+  - `gsettings reset org.gnome.shell.keybindings toggle-message-tray`
+EOF
+}

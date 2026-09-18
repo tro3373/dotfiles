@@ -1,0 +1,12 @@
+[Unit]
+Description=Store clipboard history to cliphist via XWayland
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/bin/cliphist-x11-watch
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

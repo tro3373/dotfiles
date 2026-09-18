@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# XWayland 側の CLIPBOARD 変更を clipnotify で待ち受け、cliphist へ保存する。
+# GNOME は data-control protocol 非対応で `wl-paste --watch` が使えないための代替。
+# 理由の詳細は apps/cliphist-tui/config の tips を参照。
+
+store() {
+  local _targets
+  _targets=$(xclip -o -selection clipboard -t TARGETS 2>/dev/null) || return 0
+  if grep -qx 'image/png' <<<"$_targets"; then
+    xclip -o -selection clipboard -t image/png | cliphist store
+    return
+  fi
+  grep -qx 'UTF8_STRING' <<<"$_targets" || return 0
+  xclip -o -selection clipboard -t UTF8_STRING | cliphist store
+}
+
+main() {
+  set -euo pipefail
+  while clipnotify -s clipboard; do
+    store || :
+  done
+}
+main "$@"
