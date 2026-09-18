@@ -32,12 +32,11 @@ function! GetGitRoot() abort
     let l:result = system("cd '" . expand('%:p:h') . "' && git rev-parse --is-inside-work-tree")
     let l:result = substitute(l:result, '\(\r\|\n\)\+', '', 'g')
     let l:isgitrepo = matchstr(l:result, "true")
-    if l:isgitrepo == "true"
-      let l:gitroot = system("cd '" . expand('%:p:h') . "' && git rev-parse --show-toplevel")
-      return substitute(l:gitroot, '\(\r\|\n\)\+', '', 'g')
-    else
+    if l:isgitrepo != "true"
       return "."
     endif
+    let l:gitroot = system("cd '" . expand('%:p:h') . "' && git rev-parse --show-toplevel")
+    return substitute(l:gitroot, '\(\r\|\n\)\+', '', 'g')
   catch
   endtry
 endfunction
@@ -51,11 +50,7 @@ command! GitRoot call GitRoot()
 function! GetClipboad() abort
   let l:result = ""
   try
-    if IsUbuntu()
-      let l:result = @"
-    else
-      let l:result = @+
-    endif
+    let l:result = IsUbuntu() ? @" : @+
   catch
   endtry
   return l:result
@@ -68,13 +63,14 @@ cnoremap <C-X> <C-R>=<SID>GetBufferDirectory()<CR>
 function! s:GetBufferDirectory()
   let path = expand('%:p:h')
   let cwd = getcwd()
-  let dir = '.'
+  let sep = exists('+shellslash') && !&shellslash ? '\' : '/'
   if match(path, escape(cwd, '\')) != 0
-  let dir = path
-  elseif strlen(path) > strlen(cwd)
-  let dir = strpart(path, strlen(cwd) + 1)
+    return path . sep
   endif
-  return dir . (exists('+shellslash') && !&shellslash ? '\' : '/')
+  if strlen(path) > strlen(cwd)
+    return strpart(path, strlen(cwd) + 1) . sep
+  endif
+  return '.' . sep
 endfunction
 
 " public 関数
@@ -115,7 +111,6 @@ function! GetGitRelativePath()
   let l:gitroot = GetGitRoot()
   if l:gitroot == "."
     return expand('%:p')
-  else
   endif
   let l:fullpath = expand('%:p')
   let l:gitroot_with_slash = l:gitroot . '/'
@@ -197,11 +192,7 @@ function! Ctags() abort
     return
   endif
   let l:gitroot = GetGitRoot()
-  if g:is_windows
-    let l:ctags = "ctags"
-  else
-    let l:ctags = substitute(system("which ctags"), '\(\r\|\n\)\+', '', 'g')
-  endif
+  let l:ctags = g:is_windows ? "ctags" : substitute(system("which ctags"), '\(\r\|\n\)\+', '', 'g')
   let l:tags = l:gitroot . "/.git/tags"
   let l:execmd = l:ctags . " --tag-relative --recurse --sort=yes --append=no -f " . l:gitroot . "/.git/tags " . l:gitroot
   " `execute system` は同期的に実行される
@@ -537,11 +528,11 @@ function! Strip(...) abort
   if a:0 >= 1
     call PickUp(a:1)
     call TrimLine()
-  else
-    call TrimHead()
-    call Trim()
-    call TrimLine()
-  end
+    return
+  endif
+  call TrimHead()
+  call Trim()
+  call TrimLine()
 endfunction
 command! -nargs=? Strip call Strip(<f-args>)
 function! TrimWord(...) abort
@@ -649,14 +640,14 @@ function! DeleteUnSelected() abort
     let l:start = l:match_end
   endwhile
 
-  if len(l:matches) > 0
-    " バッファをクリアして、マッチした部分のみを挿入
-    normal! ggdG
-    call setline(1, l:matches)
-    echo "Extracted " . len(l:matches) . " matches"
-  else
+  if len(l:matches) == 0
     echo "No matches found"
+    return
   endif
+  " バッファをクリアして、マッチした部分のみを挿入
+  normal! ggdG
+  call setline(1, l:matches)
+  echo "Extracted " . len(l:matches) . " matches"
 endfun
 command! DeleteUnSelected call DeleteUnSelected()
 
@@ -692,11 +683,7 @@ command! TrimSelectedLineInvert call TrimSelectedLineInvert()
 
 " 指定文字より後ろを削除
 function! DeleteAfter(...) abort
-  if a:0 >= 1
-    let val = a:1
-  else
-    let val = input("Input char to delete start: ")
-  endif
+  let val = a:0 >= 1 ? a:1 : input("Input char to delete start: ")
   if val == ""
     echo "\nSpecify something.."
     return
@@ -724,10 +711,10 @@ function! Encode(type) abort
   if a:type == 0
     exe ':set ff=dos'
     exe ':set fileencoding=cp932'
-  else
-    exe ':set ff=unix'
-    exe ':set fileencoding=utf-8'
+    return
   endif
+  exe ':set ff=unix'
+  exe ':set fileencoding=utf-8'
 endfun
 command! Doslize call Encode(0)
 command! ToWin call Encode(0)
@@ -744,13 +731,13 @@ function! ToCamelOrSnake(camel) range
       " 最初の文字を小文字に変換（camelCaseでは最初の文字は小文字であるべき）
       let line = substitute(line, '^\(\u\)', '\l\1', '')
       " アンダースコアに続く文字を大文字に変換
-      let convertedLine = substitute(line, '_\(\w\)', '\u\1', 'g')
-    else
-      " 大文字をアンダースコアに変換し、大文字を小文字にする
-      let convertedLine = substitute(line, '\(\u\)', '_\l\1', 'g')
-      " 文字列の先頭がアンダースコアの場合は削除
-      let convertedLine = substitute(convertedLine, '^_', '', '')
+      call add(convertedLines, substitute(line, '_\(\w\)', '\u\1', 'g'))
+      continue
     endif
+    " 大文字をアンダースコアに変換し、大文字を小文字にする
+    let convertedLine = substitute(line, '\(\u\)', '_\l\1', 'g')
+    " 文字列の先頭がアンダースコアの場合は削除
+    let convertedLine = substitute(convertedLine, '^_', '', '')
     call add(convertedLines, convertedLine)
   endfor
   " 変換したテキストを元の位置に置換
@@ -1180,9 +1167,9 @@ function! ToggleLinting() abort
   endif
   if g:ale_enabled
     call DisableLinting()
-  else
-    call EnableLinting()
+    return
   endif
+  call EnableLinting()
 endfunction
 command! ToggleLinting call ToggleLinting()
 nnoremap <silent> <Space>v :call ToggleLinting()<CR>
@@ -1643,9 +1630,9 @@ function! OpenUrlOrFilePathOnCursor() range abort
         echohl ErrorMsg
         echomsg printf('ADR-%d: docs/adr directory not found.', l:num)
         echohl None
-      else
-        execute 'tabedit ' . fnameescape(l:target)
+        continue
       endif
+      execute 'tabedit ' . fnameescape(l:target)
     endfor
   endif
 endfunction
