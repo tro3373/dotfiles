@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# リポジトリを移動し、Claude Code の会話履歴・メモリ・プロジェクト設定を新しいパスへ付け替える
+
+readonly depends=(jq sed find)
+command_name=$(basename "$0") && readonly command_name
+args=()
+execute=0
+projects_dir="$HOME/.claude/projects"
+claude_json="$HOME/.claude.json"
+
+usage() {
+  cat <<EOF
+
+リポジトリを移動し、Claude Code の会話履歴・メモリ・プロジェクト設定を新しいパスへ付け替える。
+
+  Usage:
+      $command_name [option] <src_abs_dir> <dst_abs_dir>
+    Options
+      -e        : 実際にコマンドを発行する (無しなら dry-run で発行するコマンドを表示するだけ)
+      -h|--help : Show this usage
+
+EOF
+}
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) execute=1 ;;
+      *) add_args "$1" ;;
+    esac
+    shift
+  done
+  check
+  set -euo pipefail
+}
+check() {
+  requires "${depends[@]}"
+  [[ ${#args[@]} -eq 2 ]] || { usage && exit 1; }
+}
+add_args() { args+=("$@"); }
+has() { command -v "${1}" >&/dev/null; }
+requires() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_log() { printf "\033[%s%s %s\033[0m\n" "$1" "$(date +"%Y-%m-%d %H:%M:%S")" "${*:2}" 1>&2; }
+log() { _log 0m "$*"; }
+info() { _log "1;36m" "$*"; }
+warn() { _log "1;33m" "$*"; }
+die() { _log "1;31m" "$*" && exit 1; }
+
+# 日本語で何をするかを出してから、コマンドを発行する (dry-run では表示のみ)
+run() {
+  info "$1"
+  shift
+  cmd "$@"
+}
+# コマンドを発行する (dry-run では表示のみ)。ループでは info を 1 回出してからこれを並べる
+cmd() {
+  if [[ $execute -eq 1 ]]; then
+    "$@"
+    return
+  fi
+  log "  (dry-run) $(printf '%q ' "$@")"
+}
+
+# Claude Code のプロジェクトディレクトリ名: 英数字以外を - に置き換えた絶対パス
+encode() { printf '%s' "$1" | sed 's/[^a-zA-Z0-9]/-/g'; }
+
+# 会話履歴とメモリのディレクトリを付け替え、会話ログ内の cwd を書き換える
+move_history() {
+  local src=$1 dst=$2
+  local src_proj dst_proj
+  src_proj="$projects_dir/$(encode "$src")"
+  dst_proj="$projects_dir/$(encode "$dst")"
+
+  local other
+  while IFS= read -r -d '' other; do
+    warn "==> 前方一致する別の履歴ディレクトリがあります (worktree 等)。必要なら手で付け替えてください: $other"
+  done < <(find "$projects_dir" -mindepth 1 -maxdepth 1 -type d -name "$(basename "$src_proj")-*" -print0)
+
+  if [[ ! -d $src_proj ]]; then
+    warn "==> 会話履歴のディレクトリが無いため付け替えを飛ばします: $src_proj"
+    return
+  fi
+  # 一覧は移動前に取る (dry-run では移動しないため)
+  local jsonls=()
+  mapfile -d '' jsonls < <(find "$src_proj" -maxdepth 1 -name '*.jsonl' -printf '%f\0')
+
+  run "会話履歴とメモリのディレクトリ名を付け替える" mv "$src_proj" "$dst_proj"
+
+  local sed_src name
+  sed_src=$(printf '%s' "$src" | sed 's/[][\.*^$|]/\\&/g')
+  info "会話ログの cwd を新しいパスへ書き換える (${#jsonls[@]} 件)"
+  for name in "${jsonls[@]}"; do
+    cmd sed -i -E "s|\"cwd\":\"${sed_src}(/[^\"]*)?\"|\"cwd\":\"${dst}\\1\"|g" "$dst_proj/$name"
+  done
+}
+
+# .claude.json のプロジェクト設定 (許可ツール・信頼・MCP 等) のキーを付け替える
+move_config() {
+  local src=$1 dst=$2
+  if ! jq -e --arg o "$src" '.projects | has($o)' "$claude_json" >/dev/null; then
+    warn "==> .claude.json に移動元のプロジェクト設定がないため飛ばします: $src"
+    return
+  fi
+  run ".claude.json をバックアップする" cp "$claude_json" "$claude_json.bak"
+  # shellcheck disable=SC2016 # bash -c 側で展開させる
+  run ".claude.json のプロジェクト設定のキーを付け替える" \
+    bash -c 'jq --arg o "$1" --arg n "$2" ".projects[\$n] = .projects[\$o] | del(.projects[\$o])" "$3" >"$3.tmp" && mv "$3.tmp" "$3"' \
+    _ "$src" "$dst" "$claude_json"
+}
+
+main() {
+  initialize "$@"
+  local src=${args[0]%/} dst=${args[1]%/}
+
+  [[ $src == /* && $dst == /* ]] || die "==> 絶対パスで指定してください: $src $dst"
+  [[ -d $src ]] || die "==> 移動元のディレクトリがありません: $src"
+  [[ ! -e $dst ]] || die "==> 移動先が既に存在します: $dst"
+  [[ $dst != "$src"/* ]] || die "==> 移動先が移動元の配下です: $dst"
+  [[ ! -e "$projects_dir/$(encode "$dst")" ]] || die "==> 移動先の履歴ディレクトリが既に存在します: $projects_dir/$(encode "$dst")"
+
+  if has pgrep && pgrep -x claude >/dev/null; then
+    warn "==> claude が起動中です。.claude.json が上書きで戻される恐れがあるため、全て閉じてから -e で実行してください"
+  fi
+  [[ $execute -eq 1 ]] || warn "==> dry-run です。実行するには -e を付けてください"
+
+  run "移動先の親ディレクトリを作成する" mkdir -p "$(dirname "$dst")"
+  run "リポジトリを移動する: $src => $dst" mv "$src" "$dst"
+  move_history "$src" "$dst"
+  move_config "$src" "$dst"
+  info "==> 完了"
+}
+
+main "$@"
