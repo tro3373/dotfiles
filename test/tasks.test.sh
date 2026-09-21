@@ -529,6 +529,20 @@ test_next_follows_reference() {
     '1' "$(grep -qx 'title: Test Title 1' <<<"${out}" && echo 1 || echo 0)"
 }
 
+# 7l. path (link 未生成): 初回の link 生成ログも stdout へ混ぜない
+test_path_stdout_clean_on_first_run() {
+  new_env t7l myrepo
+  write_config "${base}"
+  mkdir -p "${base}/myrepo"
+  printf '%s\n' '- [ ] First task body' >"${base}/myrepo/index.md"
+
+  local out
+  out=$(run_tasks_stdout --path)
+  check 'path-first-run: stdout は 1 行だけ' '1' "$(printf '%s\n' "${out}" | wc -l)"
+  check 'path-first-run: stdout は index.md パス' \
+    '1' "$([[ ${out} == */index.md && -f ${out} ]] && echo 1 || echo 0)"
+}
+
 # 7b. spawn (未split): split (index.md + worktree) してから tmux 起動
 test_spawn_splits_unsplit_then_tmux() {
   new_env t7b myrepo
@@ -1484,6 +1498,7 @@ main() {
   test_path_front_matter_target
   test_path_empty_dies
   test_next_follows_reference
+  test_path_stdout_clean_on_first_run
   test_spawn_splits_unsplit_then_tmux
   test_spawn_skips_existing_worktree
   test_spawn_default_sends_claude_command
