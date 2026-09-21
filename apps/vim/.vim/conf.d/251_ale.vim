@@ -143,6 +143,9 @@ let g:ale_go_gometalinter_options = '--enable=gosimple --enable=staticcheck'
 " QF1008: - Omit embedded fields from selector expression
 " 埋め込みフィールドをセレクター式から省略する
 let g:ale_go_staticcheck_options = '-checks=all,-ST1000,-QF1008'
+" $GOPATH/bin/staticcheck より PATH を優先する。devShell 等で go を上げた
+" プロジェクトでは、古い go でビルドされた $GOPATH/bin 版が新しい std を型チェックできない
+let g:ale_go_staticcheck_use_global = 1
 
 " Shell
 " SC1090: Use of uninitialized value. This warning is triggered when a shell script uses a variable that is not set.
