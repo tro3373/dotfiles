@@ -20,13 +20,8 @@ suggest() {
 setting_common() {
   log "==> claude"
   log "===> /init"
-  for item in CLAUDE.md settings.json commands agents skills; do
+  for item in CLAUDE.md settings.json commands agents skills rules; do
     make_lnk_with_bkup "$HOME/.mo/claude/$item" "$HOME/.claude/$item"
-  done
-  log "===> pstack profile (ccp)"
-  make_dir_if_needed "$HOME/.claude-pstack"
-  for item in CLAUDE.md settings.json agents skills; do
-    make_lnk_with_bkup "$HOME/.mo/claude-pstack/$item" "$HOME/.claude-pstack/$item"
   done
   show_usage
 }
