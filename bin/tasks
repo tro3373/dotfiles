@@ -61,6 +61,7 @@ Manage repository tasks.
       --path [N]          : Print index.md path of Nth pending task (default 1);
                             splits it (no worktree) if not split yet
       -n|--next           : Show Nth task chunk (default 1; also -n2, --next=2)
+                            (reference line => referenced index.md)
       -c|--clean          : Record completed task(s) to log and drop them (fzf if no N)
       ok|v|done|complete  : Mark task(s) as completed (fzf if no N)
       pr [pr args...]     : Run \`pr\` and mark status with ${pr_mark} on success
@@ -312,8 +313,16 @@ find_tasks() {
   find .tasks/ -maxdepth 1 -mindepth 1 -type f -name '*.md' 2>/dev/null | sort -nr || :
 }
 
+# Nth タスクを出す。参照行ならリンク 1 行では中身が分からないので参照先 index.md を出す。
 cat_first_task() {
+  local line index_md
   parse_tasks 0 "$task_index"
+  line=$(sed -n "${first_line}p" "$target_file")
+  if printf '%s\n' "$line" | grep -qE "$grep_key_reference" &&
+    index_md=$(resolve_reference_path "$(from_reference_line "$line")"); then
+    cat "$index_md"
+    return
+  fi
   sed -n "${first_line},${end_line}p" "$target_file"
 }
 
