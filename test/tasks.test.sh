@@ -11,6 +11,8 @@
 #   * split: {timestamp}_{name}/index.md(front matter) 生成、元リストは新形式参照行へ置換
 #       参照行 = - [ ] [dir名](store_root 相対 path)
 #   * split-all: 参照行を再 split せず終了 (無限ループ回帰)
+#   * split-dir: dir + 参照行だけ作り worktree は作らない
+#   * path: 作業対象 index.md の絶対パスだけを stdout へ (未 split なら worktree 無しで split / 冪等)
 #   * summary: front matter title 表示
 #   * complete: front matter status: ✅️ + title ✅️ + 親参照 [x]
 #   * complete: 通常サブタスク - [ ] => - [x]
@@ -79,6 +81,15 @@ run_tasks_status() {
 }
 
 run_tasks() {
+  run_tasks_raw "$@" 2>&1
+}
+
+# stdout だけを返す (stderr は捨てる)。パスを出力するモードの戻り値検証用。
+run_tasks_stdout() {
+  run_tasks_raw "$@" 2>/dev/null
+}
+
+run_tasks_raw() {
   (cd "${repo}" &&
     PATH="${fakebin}:${PATH}" \
       XDG_CONFIG_HOME="${xdg}" \
@@ -90,7 +101,7 @@ run_tasks() {
       FAKE_FZF_LOG="${fzf_log}" \
       FAKE_PR_LOG="${pr_log}" \
       FAKE_PR_EXIT="${pr_exit:-0}" \
-      "${tasks_bin}" "$@") 2>&1
+      "${tasks_bin}" "$@")
 }
 
 # LLM 生成 fake: stdin を捨て、呼び出し毎に連番の branch/name/title を返す。
@@ -388,6 +399,117 @@ test_split_creates_worktree() {
     '1' "$(grep -q -- '-a feature/test-1' "${wt_log}" 2>/dev/null && echo 1 || echo 0)"
   check 'split-wt: worktree .tasks.md linked to split index.md' \
     '1' "$([[ -L ${wt}/.tasks.md ]] && echo 1 || echo 0)"
+}
+
+# 7e. split-dir: index.md と参照行は作るが worktree は作らない
+test_split_dir_no_worktree() {
+  new_env t7e myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  printf '%s\n' '- [ ] First task body' >>"${base}/myrepo/index.md"
+
+  run_tasks -sd 1 >/dev/null 2>&1 || true
+
+  local idx
+  idx=$(find "${base}/myrepo" -mindepth 2 -name index.md -path '*_test-task-1/index.md' | head -1)
+  check 'split-dir: index.md created under {timestamp}_{name}' \
+    '1' "$([[ -n ${idx} ]] && echo 1 || echo 0)"
+  check 'split-dir: parent reference created' \
+    '1' "$(grep -qE -- '^- \[ \] \[[^]]*_test-task-1\]\(' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'split-dir: git_worktree not called' \
+    '0' "$([[ -s ${wt_log} ]] && echo 1 || echo 0)"
+  check 'split-dir: worktree dir not created' \
+    '0' "$([[ -d ${envdir}/myrepo-worktree ]] && echo 1 || echo 0)"
+}
+
+# 7f. path (未 split): 先頭タスクを worktree 無しで split し、index.md の絶対パスだけを stdout へ出す
+test_path_splits_inline_task() {
+  new_env t7f myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  printf '%s\n' '- [ ] First task body' >>"${base}/myrepo/index.md"
+
+  local out idx
+  out=$(run_tasks_stdout --path)
+  idx=$(find "${base}/myrepo" -mindepth 2 -name index.md -path '*_test-task-1/index.md' | head -1)
+  check 'path-inline: index.md created' \
+    '1' "$([[ -n ${idx} ]] && echo 1 || echo 0)"
+  check 'path-inline: stdout is only the index.md realpath' \
+    "$(realpath "${idx}" 2>/dev/null)" "${out}"
+  check 'path-inline: parent reference created' \
+    '1' "$(grep -qE -- '^- \[ \] \[[^]]*_test-task-1\]\(' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'path-inline: git_worktree not called' \
+    '0' "$([[ -s ${wt_log} ]] && echo 1 || echo 0)"
+}
+
+# 7g. path (参照行): 参照先 index.md を返す。再実行しても split し直さない (冪等)
+test_path_resolves_reference_idempotent() {
+  new_env t7g myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  printf '%s\n' '- [ ] First task body' >>"${base}/myrepo/index.md"
+
+  local first second dir_count
+  first=$(run_tasks_stdout --path)
+  second=$(run_tasks_stdout --path)
+  dir_count=$(find "${base}/myrepo" -mindepth 2 -name index.md | wc -l)
+  check 'path-ref: 2 回目は参照先を返す' "${first}" "${second}"
+  check 'path-ref: dir は 1 つだけ' '1' "${dir_count}"
+  check 'path-ref: meta 生成は 1 回だけ' '1' "$(cat "${meta_counter}")"
+}
+
+# 7h. path (N 指定): N 番目の未完了タスクを対象にする
+test_path_nth() {
+  new_env t7h myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  {
+    printf '%s\n' '- [ ] Alpha task body'
+    printf '%s\n' '- [ ] Bravo task body'
+  } >>"${base}/myrepo/index.md"
+
+  local out
+  out=$(run_tasks_stdout --path 2)
+  check 'path-nth: 2 番目のタスクが split される' \
+    '1' "$([[ -n ${out} ]] && grep -qF 'Bravo task body' "${out}" && echo 1 || echo 0)"
+  check 'path-nth: 1 番目は未 split のまま' \
+    '1' "$(grep -qxF -- '- [ ] Alpha task body' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+}
+
+# 7i. path (front matter 持ち): 対象ファイル自身が split 済み index.md ならそのまま返す (worktree 内)
+test_path_front_matter_target() {
+  new_env t7i myrepo
+  write_config "${base}"
+  local dir="${base}/myrepo/20260101-000000_test-task"
+  mkdir -p "${dir}"
+  cat >"${dir}/index.md" <<EOF
+---
+title: Self
+branch: feature/foo
+name: test-task
+status:
+parent: ${base}/myrepo/index.md
+---
+
+- [ ] Body task
+EOF
+
+  local out
+  out=$(run_tasks_stdout -f "${dir}/index.md" --path)
+  check 'path-fm: 対象ファイル自身を返す' "$(realpath "${dir}/index.md")" "${out}"
+  check 'path-fm: split しない' '0' "$([[ -e ${meta_counter} ]] && echo 1 || echo 0)"
+}
+
+# 7j. path (未完了無し): 非ゼロで終わり stdout に何も出さない
+test_path_empty_dies() {
+  new_env t7j myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+
+  local out rc=0
+  out=$(run_tasks_stdout --path) || rc=$?
+  check 'path-empty: 非ゼロ終了' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'path-empty: stdout は空' '' "${out}"
 }
 
 # 7b. spawn (未split): split (index.md + worktree) してから tmux 起動
@@ -1338,6 +1460,12 @@ main() {
   test_split_creates_dir_and_reference
   test_split_all_removed
   test_split_creates_worktree
+  test_split_dir_no_worktree
+  test_path_splits_inline_task
+  test_path_resolves_reference_idempotent
+  test_path_nth
+  test_path_front_matter_target
+  test_path_empty_dies
   test_spawn_splits_unsplit_then_tmux
   test_spawn_skips_existing_worktree
   test_spawn_default_sends_claude_command

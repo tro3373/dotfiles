@@ -37,6 +37,8 @@ task_index_explicit=0
 # --all: Nth 選択可能コマンド (split/complete/spawn/clean) で全候補を選択する
 select_all=0
 parse_skip_refs=0
+# split で worktree も作るか (-sd / --path は 0)
+split_worktree=1
 # spawn 対象 agent (-sp=claude / -spc=codex)。tmux 起動コマンドの分岐に使う。
 spawn_agent=claude
 # config (load_tasks_config が設定): store_root=絶対, tasks_subdir=相対, log_fmt=相対フォーマット
@@ -55,6 +57,9 @@ Manage repository tasks.
     Options
       -h|--help           : Show this usage
       -s|--split          : Split task(s) into a task dir + worktree (fzf if no N)
+      -sd|--split-dir     : Split task(s) into a task dir only (no worktree)
+      --path [N]          : Print index.md path of Nth pending task (default 1);
+                            splits it (no worktree) if not split yet
       -n|--next           : Show Nth task chunk (default 1; also -n2, --next=2)
       -c|--clean          : Record completed task(s) to log and drop them (fzf if no N)
       ok|v|done|complete  : Mark task(s) as completed (fzf if no N)
@@ -68,7 +73,7 @@ Manage repository tasks.
       --all               : Select all candidates for split/complete/spawn/clean
       --summary           : Show title of tasks
     Task index [N]
-      next/comment use the Nth pending task (1-based, default 1).
+      next/comment/path use the Nth pending task (1-based, default 1).
       split/complete/spawn/clean use N directly; omit N to pick via fzf
       multi-select (ctrl-l: toggle-all, ctrl-g: toggle-preview); --all selects
       all without fzf. Give N as 2 or -2.
@@ -81,6 +86,13 @@ initialize() {
     case "$1" in
       -h | --help) usage && exit 0 ;;
       -s | --split) mode="split" ;;
+      -sd | --split-dir) mode="split" && split_worktree=0 ;;
+      --path)
+        mode="path" && split_worktree=0
+        if [[ ${2:-} =~ ^[0-9]+$ ]]; then
+          shift && task_index=$1
+        fi
+        ;;
       -n | --next)
         mode="next"
         if [[ ${2:-} =~ ^[0-9]+$ ]]; then
@@ -461,6 +473,7 @@ split_task() {
 
 # 指定行のタスクブロックを split する (index.md 生成 + 参照行置換 + worktree 作成)。
 # timestamp は split 実行時。元リストの当該タスクは参照行へ置換 (削除しない)。
+# split_worktree=0 なら worktree は作らない (-sd / --path)。
 split_one_task() {
   local line_no="$1" tmp_file
   set_block_range "$line_no"
@@ -471,6 +484,7 @@ split_one_task() {
   rm -f "$tmp_file"
   info "==> Task split to: $task_index_md"
   info "==> Branch: $task_branch"
+  [[ $split_worktree -eq 1 ]] || return 0
   ensure_worktree "$task_branch" "$task_index_md"
   info "==> Worktree: $worktree_dir"
 }
@@ -968,6 +982,30 @@ spawn_tmux_session() {
   tmux send-keys -t "$session" "$cmd" Enter
 }
 
+# 作業対象の index.md 絶対パスを stdout へ出す。/task の入口で、以降の追記先を固定する。
+# 対象自体が front matter 持ち (worktree 内 / -f で index.md 指定) ならそれ自身。
+# そうでなければ N 番目の未完了タスクを見て、参照行なら参照先、未 split なら
+# worktree 無しで split して生成した index.md。再実行しても同じパスを返す (冪等)。
+# stdout はパスだけにする ($() で受けるため)。split 中のログは stderr へ逃がす。
+path_task() {
+  if has_front_matter; then
+    printf '%s\n' "$target_file"
+    return
+  fi
+  local fl line index_md
+  fl=$(list_task_lines 0 0 | sed -n "${task_index:-1}p" | cut -d: -f1)
+  [[ -n $fl ]] || die "==> No pending task at index ${task_index:-1} in $target_file" >&2
+  line=$(sed -n "${fl}p" "$target_file")
+  if printf '%s\n' "$line" | grep -qE "$grep_key_reference"; then
+    index_md=$(resolve_reference_path "$(from_reference_line "$line")") ||
+      die "==> Reference index not found: $line" >&2
+    printf '%s\n' "$index_md"
+    return
+  fi
+  split_one_task "$fl" >&2
+  printf '%s\n' "$task_index_md"
+}
+
 resolve_target() {
   if [[ -n $task_file ]]; then
     # -f で taskfile を直接指定。git_root はそのファイルの親dirから導出する
@@ -1013,6 +1051,7 @@ main() {
     add) add_task ;;
     complete) complete_task ;;
     spawn) spawn_task ;;
+    path) path_task ;;
     summary) summary_task ;;
     preview) preview_line "$task_index" ;;
     *) find_tasks | v ;;
