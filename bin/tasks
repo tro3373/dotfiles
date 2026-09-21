@@ -850,7 +850,8 @@ pr_status_file() {
 pr_task() {
   local file
   # pr の終了コードをそのまま返す。die で潰すと呼び出し側が原因を切り分けられない
-  "$script_dir"/pr "${pr_args[@]}" || exit $?
+  # PATH 上の別の pr を掴まないよう同梱の pr を呼ぶ。テスト用に TASKS_PR_CMD で差し替え可能
+  "${TASKS_PR_CMD:-$script_dir/pr}" "${pr_args[@]}" || exit $?
   file=$(pr_status_file) || {
     warn "==> No task file with front matter here. status not marked."
     return 0

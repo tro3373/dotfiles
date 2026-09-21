@@ -83,6 +83,7 @@ run_tasks() {
     PATH="${fakebin}:${PATH}" \
       XDG_CONFIG_HOME="${xdg}" \
       TASKS_GEN_META_CMD="${fake_meta}" \
+      TASKS_PR_CMD="${fakebin}/pr" \
       FAKE_META_COUNTER="${meta_counter}" \
       FAKE_WT_LOG="${wt_log}" \
       FAKE_TMUX_LOG="${tmux_log}" \
