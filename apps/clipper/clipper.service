@@ -8,8 +8,8 @@ ExecStart=/bin/bash -c 'export DISPLAY=${DISPLAY:-:0} && /usr/local/bin/clipper'
 Restart=always
 # Restart service after 10 seconds if service crashes
 RestartSec=10
-StandardOutput=syslog
-StandardError=syslog
+# StandardOutput=syslog
+# StandardError=syslog
 SyslogIdentifier=clipper
 
 [Install]
