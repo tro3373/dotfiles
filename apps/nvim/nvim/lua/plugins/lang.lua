@@ -58,4 +58,31 @@ return {
     end,
   },
   { "selimacerbas/live-server.nvim", cmd = { "LiveServerStart", "LiveServerStop" } },
+
+  -- csv/tsv を表形式で表示 (開いたら自動有効、:CsvViewToggle で切替)。keymaps は有効化したバッファのみ
+  {
+    "hat0uma/csvview.nvim",
+    cmd = { "CsvViewEnable", "CsvViewDisable", "CsvViewToggle" },
+    init = function()
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("CsvViewAuto", {}),
+        pattern = { "csv", "tsv" },
+        callback = function(ev)
+          require("csvview").enable(ev.buf)
+        end,
+      })
+    end,
+    opts = {
+      parser = { comments = { "#", "//" } },
+      view = { display_mode = "border", header_lnum = 1 },
+      keymaps = {
+        textobject_field_inner = { "if", mode = { "o", "x" } },
+        textobject_field_outer = { "af", mode = { "o", "x" } },
+        jump_next_field_end = { "<Tab>", mode = { "n", "v" } },
+        jump_prev_field_end = { "<S-Tab>", mode = { "n", "v" } },
+        jump_next_row = { "<Enter>", mode = { "n", "v" } },
+        jump_prev_row = { "<S-Enter>", mode = { "n", "v" } },
+      },
+    },
+  },
 }
