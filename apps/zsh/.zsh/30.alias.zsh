@@ -168,7 +168,7 @@ alias_with_compdef flutter fl
 alias_with_compdef speedtest st
 alias codeimg="germanium"
 alias germ="germanium"
-alias tb="tmux_buffer"
+alias tb=terminal-browser
 if has mmv; then
   mmv() {
     if [[ $# -ne 0 ]]; then

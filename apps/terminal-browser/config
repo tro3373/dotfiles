@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+install_arch() { _install; }
+install_mac() { _install; }
+_install() {
+  exe "curl -fsSL https://terminal-browser.sh/install | bash"
+}
