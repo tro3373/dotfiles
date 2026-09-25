@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+is_installed() {
+  has localsend
+}
+install_arch() {
+  def_install localsend-bin
+}
