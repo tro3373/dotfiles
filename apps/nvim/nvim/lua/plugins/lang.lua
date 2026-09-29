@@ -60,17 +60,61 @@ return {
   { "selimacerbas/live-server.nvim", cmd = { "LiveServerStart", "LiveServerStop" } },
 
   -- csv/tsv を表形式で表示 (開いたら自動有効、:CsvViewToggle で切替)。keymaps は有効化したバッファのみ
+  -- 閲覧用に csvlens (セル内折り返し可) も新規タブで自動起動する。:CsvLensAutoToggle で ON/OFF、:CsvLens で再表示
   {
     "hat0uma/csvview.nvim",
     cmd = { "CsvViewEnable", "CsvViewDisable", "CsvViewToggle" },
     init = function()
+      vim.g.csvlens_auto = true
+
+      local function open_csvlens(buf)
+        local file = vim.api.nvim_buf_get_name(buf)
+        -- 選択は row のまま起動する (column/cell 選択だと検索・フィルタが選択列だけになる)
+        local cmd = { "csvlens", "-W", "-i", file }
+        if vim.bo[buf].filetype == "tsv" then
+          table.insert(cmd, 2, "-t")
+        end
+        vim.cmd.tabnew()
+        local term = vim.api.nvim_get_current_buf()
+        vim.bo[term].bufhidden = "wipe"
+        vim.fn.jobstart(cmd, {
+          term = true,
+          on_exit = function()
+            if vim.api.nvim_buf_is_valid(term) then
+              vim.api.nvim_buf_delete(term, { force = true })
+            end
+          end,
+        })
+        vim.cmd.startinsert()
+      end
+
       vim.api.nvim_create_autocmd("FileType", {
         group = vim.api.nvim_create_augroup("CsvViewAuto", {}),
         pattern = { "csv", "tsv" },
         callback = function(ev)
           require("csvview").enable(ev.buf)
+          -- ディスク上の実ファイルだけ (プレビュー・diff 等の特殊バッファでは開かない)
+          local file = vim.api.nvim_buf_get_name(ev.buf)
+          if not vim.g.csvlens_auto or vim.bo[ev.buf].buftype ~= "" or vim.fn.filereadable(file) == 0 then
+            return
+          end
+          if vim.fn.executable("csvlens") == 0 then
+            return
+          end
+          vim.schedule(function()
+            if vim.api.nvim_get_current_buf() == ev.buf and not vim.wo.diff then
+              open_csvlens(ev.buf)
+            end
+          end)
         end,
       })
+      vim.api.nvim_create_user_command("CsvLens", function()
+        open_csvlens(0)
+      end, { desc = "Open current csv/tsv in csvlens" })
+      vim.api.nvim_create_user_command("CsvLensAutoToggle", function()
+        vim.g.csvlens_auto = not vim.g.csvlens_auto
+        vim.notify("csvlens auto open: " .. (vim.g.csvlens_auto and "ON" or "OFF"))
+      end, { desc = "Toggle auto opening csvlens for csv/tsv" })
     end,
     opts = {
       parser = { comments = { "#", "//" } },
