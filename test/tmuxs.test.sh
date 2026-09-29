@@ -643,11 +643,9 @@ test_stale_waiting_band_recovered() {
 
     # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
     export FAKE_PANES=$'%5 claude\n%6 zsh'
-    if [[ $via == cleanup ]]; then
-      run_hook __cleanup
-    else
-      run_hook running
-    fi
+    local event=running
+    [[ $via == cleanup ]] && event=__cleanup
+    run_hook "$event"
     check "stale/${via}: %6 のマーカーを削除" '__NONE__' "$(marker_content '%6')"
     check "stale/${via}: @tmuxs_band を unset" '__NONE__' "$(opt @tmuxs_band)"
     check "stale/${via}: status-style を通常へ復元" \
