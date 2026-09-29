@@ -73,22 +73,24 @@ band_sgr() {
   esac
 }
 
-# 現存する全 pane_id を連想配列 (nameref) に集める。死んだ pane の判定に使う。
-collect_alive_panes() {
+# Claude が動いている pane_id を連想配列 (nameref) に集める。古いマーカーの判定に使う。
+# Claude のツール実行中も pane_current_command は claude のまま (実測)。
+collect_claude_panes() {
   local -n _alive=$1
-  local p
-  while read -r p; do
-    [[ -n $p ]] && _alive["$p"]=1
-  done < <(tmux list-panes -a -F '#{pane_id}' 2>/dev/null)
+  local p cmd
+  while read -r p cmd; do
+    if [[ $cmd == claude ]]; then _alive["$p"]=1; fi
+  done < <(tmux list-panes -a -F '#{pane_id} #{pane_current_command}' 2>/dev/null)
 }
 
-# 死んだ pane (現存しない pane_id) のマーカーを削除する。
+# Claude が居ない pane (pane ごと消えた / Claude だけ終了した) のマーカーを削除する。
+# SessionEnd の remove が取りこぼしても、ここで回収する。
 cleanup_markers() {
   local dir
   dir=$(marker_dir)
   [[ -d $dir ]] || return 0
   local -A alive=()
-  collect_alive_panes alive
+  collect_claude_panes alive
   local f pid
   for f in "$dir"/*; do
     [[ -e $f ]] || continue
@@ -423,19 +425,14 @@ list_sessions() {
   print_groups
 }
 
-# 現存する pane のうち waiting マーカーを持つ数を数える。
-# 死んだ pane のマーカーは無視する (誤って waiting 扱いしない)。
+# waiting マーカーの数を数える。古いマーカーは呼び出し元 (update_indicator) が先に消している。
 count_waiting() {
   local dir n=0
   dir=$(marker_dir)
   if [[ -d $dir ]]; then
-    local -A alive=()
-    collect_alive_panes alive
-    local f pid
+    local f
     for f in "$dir"/*; do
       [[ -e $f ]] || continue
-      pid=${f##*/}
-      [[ -n ${alive[$pid]:-} ]] || continue
       [[ $(<"$f") == waiting ]] && n=$((n + 1))
     done
   fi
@@ -466,10 +463,12 @@ band_off() {
   tmux set -gu @tmuxs_band
 }
 
-# 待ち表示枠 (@tmuxs_waiting) と黄色帯を更新する。
+# 古いマーカーを消してから、待ち表示枠 (@tmuxs_waiting) と黄色帯を更新する。
 # 入力待ち pane があれば status-left の ⏳N を点灯し、band_enabled=1 なら黄色帯も点灯。
-# 無ければ消灯。同時 waiting でカウントが一時的にずれても次イベントで上書き整合する。
+# 無ければ消灯。冪等なので、帯がおかしいときは `tmuxs __cleanup` で呼び直せば戻る。
+# 同時 waiting でカウントが一時的にずれても次イベントで上書き整合する。
 update_indicator() {
+  cleanup_markers
   local n
   n=$(count_waiting)
   if ((n > 0)); then
@@ -507,10 +506,9 @@ handle_event() {
 
   write_marker "$state" "$dir" "$file"
 
-  # 待ち表示の再計算は waiting が絡む遷移時のみ (running 連発時の tmux IPC 抑制)。
-  if [[ $old == waiting || $state == waiting ]]; then
-    update_indicator
-  fi
+  # 再計算は状態が変わったときのみ (running 連発時の tmux IPC 抑制)。
+  # waiting が絡まない遷移でも走らせ、他 pane の古いマーカーと帯をここで回収する。
+  [[ $old == "$state" ]] || update_indicator
   return 0
 }
 
@@ -614,7 +612,7 @@ main() {
       tmux kill-session -t "$session"
       ;;
     __list) list_sessions ;;
-    __cleanup) cleanup_markers ;;
+    __cleanup) update_indicator ;;
     __new)
       # 新しいセッションを detached で作成し (名前は tmux 自動採番)、
       # 作成したセッションへ switch-client する。呼び出し元 fzf 側で accept して抜ける。
@@ -713,7 +711,7 @@ main() {
     *)
       local self
       self=$(realpath "$0")
-      cleanup_markers
+      update_indicator
       # 整形に使う list 幅を子プロセスへ渡す。reload で __list を再実行するときも
       # 同じ幅で揃える必要がある (FZF_COLUMNS は start 時点では 0 で当てにならない)。
       # lint-ignore: uppercase tmuxs / tmux が読む env 名は呼ばれる側が決める

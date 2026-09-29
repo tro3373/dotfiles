@@ -167,7 +167,7 @@ reset() {
   printf 'bg=colour234,fg=blue,default' >"${FAKE_STATE_DIR}/status-style"
   : >"${FAKE_TMUX_LOG}"
   # lint-ignore: uppercase tmuxs / tmux が読む env 名は呼ばれる側が決める
-  export TMUX_PANE='%5' TMUX='fake' FAKE_PANES='%5'
+  export TMUX_PANE='%5' TMUX='fake' FAKE_PANES='%5 claude'
 }
 
 marker_content() {
@@ -251,15 +251,16 @@ test_cleanup_removes_dead_markers() {
   clear_markers
   printf 'idle' >"${TMUXS_MARKER_DIR}/%1"
   printf 'running' >"${TMUXS_MARKER_DIR}/%2"
+  printf 'waiting' >"${TMUXS_MARKER_DIR}/%3"
   printf 'waiting' >"${TMUXS_MARKER_DIR}/%99"
   # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
-  export FAKE_PANES=$'%1\n%2'
+  export FAKE_PANES=$'%1 claude\n%2 claude\n%3 zsh'
 
   PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __cleanup
 
   local remain
   remain=$(cd "${TMUXS_MARKER_DIR}" && printf '%s ' * | sort)
-  check 'cleanup: 死んだ pane (%99) のマーカーのみ削除' \
+  check 'cleanup: 死んだ pane (%99) と Claude の居ない pane (%3) のマーカーを削除' \
     '%1 %2 ' "${remain}"
 }
 
@@ -577,11 +578,13 @@ test_indicator_set_then_cleared() {
     '__NONE__' "$(opt @tmuxs_waiting)"
 }
 
-# 19. waiting 非関与の遷移 (running) では待ち表示枠に触れない (tmux IPC 抑制)。
-test_indicator_untouched_without_waiting() {
+# 19. 状態が変わらないイベント (running 連発) では待ち表示枠に触れない (tmux IPC 抑制)。
+test_indicator_untouched_without_change() {
   reset
   run_hook running
-  check 'running(waiting 非関与): @tmuxs_waiting への set を発行しない' \
+  : >"${FAKE_TMUX_LOG}"
+  run_hook running
+  check 'running => running: @tmuxs_waiting への set を発行しない' \
     '' "$(grep '@tmuxs_waiting' "${FAKE_TMUX_LOG}" || true)"
 }
 
@@ -589,7 +592,7 @@ test_indicator_untouched_without_waiting() {
 test_indicator_counts_multiple() {
   reset
   # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
-  export FAKE_PANES=$'%5\n%6'
+  export FAKE_PANES=$'%5 claude\n%6 claude'
   printf 'waiting' >"${TMUXS_MARKER_DIR}/%6" # 別 pane が既に waiting
   run_hook waiting                           # 自分 %5 も waiting => 計 2
   check '複数 waiting: @tmuxs_waiting に ⏳2' yes \
@@ -625,6 +628,31 @@ test_band_empty_style_restore() {
   run_hook running
   check 'band/empty 解消: 空 style へ復元 (黄色が残らない)' \
     '' "$(opt status-style)"
+}
+
+# 23. waiting のまま Claude だけ終了し remove が来なかった pane (%6) の帯を回収する。
+#     手動の __cleanup でも、別 pane (%5) の状態変化でも消える。
+test_stale_waiting_band_recovered() {
+  local via
+  for via in cleanup hook; do
+    reset
+    # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+    export FAKE_PANES=$'%5 claude\n%6 claude'
+    TMUX_PANE='%6' run_hook waiting
+    check "stale/${via}: 前提 帯が点灯" '1' "$(opt @tmuxs_band)"
+
+    # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+    export FAKE_PANES=$'%5 claude\n%6 zsh'
+    if [[ $via == cleanup ]]; then
+      run_hook __cleanup
+    else
+      run_hook running
+    fi
+    check "stale/${via}: %6 のマーカーを削除" '__NONE__' "$(marker_content '%6')"
+    check "stale/${via}: @tmuxs_band を unset" '__NONE__' "$(opt @tmuxs_band)"
+    check "stale/${via}: status-style を通常へ復元" \
+      'bg=colour234,fg=blue,default' "$(opt status-style)"
+  done
 }
 
 # 19c. status に想定外の値 (単語) が入っても、マーク列 4 桁を超えて桁を崩さない。
@@ -720,10 +748,11 @@ main() {
   test_marker_states
   test_remove_deletes_marker
   test_indicator_set_then_cleared
-  test_indicator_untouched_without_waiting
+  test_indicator_untouched_without_change
   test_indicator_counts_multiple
   test_band_set_then_cleared
   test_band_empty_style_restore
+  test_stale_waiting_band_recovered
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
