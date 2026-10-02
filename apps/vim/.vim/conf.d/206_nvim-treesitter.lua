@@ -7,7 +7,7 @@
 -- markdown は従来どおり vim-markdown に任せ、ここでは何も足さない。
 local lua_mode = _G.src ~= nil
 
-local ts_highlight_filetypes = { hurl = true, dockerfile = true }
+local ts_highlight_filetypes = { hurl = true, dockerfile = true, yaml = true }
 local ts_indent_filetypes = { hurl = true }
 local ensure = { 'hurl', 'dockerfile' }
 if lua_mode then
