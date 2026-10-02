@@ -9,16 +9,16 @@ local lua_mode = _G.src ~= nil
 
 local ts_highlight_filetypes = { hurl = true, dockerfile = true, yaml = true }
 local ts_indent_filetypes = { hurl = true }
-local ensure = { 'hurl', 'dockerfile' }
+local ensure = { "hurl", "dockerfile" }
 if lua_mode then
   ts_highlight_filetypes.markdown = true
   ts_highlight_filetypes.markdown_inline = true
-  ensure = { 'hurl', 'markdown', 'markdown_inline' }
+  ensure = { "hurl", "markdown", "markdown_inline" }
 end
 
 -- Dockerfile.vim プラグインが filetype を大文字 'Dockerfile' にするため、
 -- treesitter の parser 'dockerfile'(小文字) と紐付ける
-vim.treesitter.language.register('dockerfile', 'Dockerfile')
+vim.treesitter.language.register("dockerfile", "Dockerfile")
 
 -- nvim 0.12 互換シム: nvim-treesitter master の injection ディレクティブ
 -- (set-lang-from-info-string! / set-lang-from-mimetype! / downcase!) は
@@ -32,7 +32,7 @@ if not vim.g._ts_node_list_compat then
   vim.g._ts_node_list_compat = true
   local get_node_text = vim.treesitter.get_node_text
   vim.treesitter.get_node_text = function(node, source, opts)
-    if type(node) == 'table' then
+    if type(node) == "table" then
       node = node[#node]
     end
     return get_node_text(node, source, opts)
@@ -40,7 +40,7 @@ if not vim.g._ts_node_list_compat then
 end
 
 ---@diagnostic disable-next-line: missing-fields
-require('nvim-treesitter.configs').setup({
+require("nvim-treesitter.configs").setup({
   ensure_installed = ensure,
   auto_install = true,
   highlight = {
@@ -73,9 +73,9 @@ if lua_mode then
     if fd then
       local q = fd:read("*a")
       fd:close()
-      q = q:gsub('%s*%(#set! conceal ""%)', '')
-      q = q:gsub('%s*%(#set! conceal_lines ""%)', '')
-      q = q .. '\n((block_quote_marker) @markup.quote (#set! priority 105))\n'
+      q = q:gsub('%s*%(#set! conceal ""%)', "")
+      q = q:gsub('%s*%(#set! conceal_lines ""%)', "")
+      q = q .. "\n((block_quote_marker) @markup.quote (#set! priority 105))\n"
       pcall(vim.treesitter.query.set, "markdown", "highlights", q)
     end
   end
