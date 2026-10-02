@@ -204,6 +204,11 @@ let g:ale_dockerfile_hadolint_options = '--ignore DL3008 --ignore DL3018'
 " 631: Line is to long (over 120 characters)
 let g:ale_lua_luacheck_options = '--ignore 631'
 
+" GitHub Actions
+" actionlint v1.7.12 は concurrency.queue を知らず誤検知する。
+" https://github.com/rhysd/actionlint/pull/654 を含む版が出たら削除する
+let g:ale_yaml_actionlint_options = "-ignore 'unexpected key \"queue\" for \"concurrency\"'"
+
 " Disable for minified code and enable whitespace trimming
 " Disable md linter because so slow.
 " Disable linter for ui components(shadcn)
