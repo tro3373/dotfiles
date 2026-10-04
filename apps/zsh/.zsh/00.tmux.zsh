@@ -28,6 +28,8 @@ tmux_automatically_attach_session() {
   ! shell_has_started_interactively && return 0
   ! is_enabled && return 0
   is_vscode && return 0
+  # herdr の pane 内では tmux を起動しない (TMUX は継承されないので is_tmux_runnning では弾けない)
+  [[ -n $HERDR_ENV ]] && return 0
 
   # is_screen_running && log "This is on screen." && return 1
   ! has tmux && log 'Error: tmux command not found' && return 1

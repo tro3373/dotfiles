@@ -14,4 +14,8 @@ install_mac() {
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
-setting_common() { no_settings; }
+setting_common() {
+  exe mkdir -p "${HOME}/.config/herdr"
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/config.toml" "${HOME}/.config/herdr/config.toml"
+}

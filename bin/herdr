@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# herdr の UI を tmux の外 (ghostty の新ウィンドウ) で起動する wrapper。
+# herdr の prefix を tmux と同じ C-a にしている為、tmux 上で開くとキーを tmux に取られる。
+# pane / api 等のサブコマンドはそのまま本体へ渡す。
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+real_herdr() {
+  local p
+  while read -r p; do
+    [[ $(cd "$(dirname "$p")" && pwd) == "$script_dir" ]] && continue
+    echo "$p"
+    return
+  done < <(type -ap herdr)
+  return 1
+}
+
+is_ui_launch() {
+  [[ $# -eq 0 ]] && return 0
+  [[ $1 == --session || $1 == --remote ]] && return 0
+  [[ $1 == session && $2 == attach ]]
+}
+
+main() {
+  set -eo pipefail
+  local bin
+  if ! bin=$(real_herdr); then
+    echo "herdr not found in PATH" >&2
+    exit 1
+  fi
+  if [[ -z $TMUX ]] || ! is_ui_launch "$@"; then
+    exec "$bin" "$@"
+  fi
+  if ! command -v ghostty >/dev/null 2>&1; then
+    echo "herdr: tmux 上では起動しない (prefix C-a が被る)。tmux の外で実行して" >&2
+    exit 1
+  fi
+  env -u TMUX -u TMUX_PANE setsid -f ghostty -e "$bin" "$@" >/dev/null 2>&1
+}
+main "$@"

@@ -1,0 +1,57 @@
+# herdr 設定。キーは ~/.tmux.conf に寄せる (tab = tmux window, workspace = tmux session)。
+# 既定値の一覧: herdr --default-config / 検証: herdr config check
+# prefix が tmux と同じ C-a なので tmux 上では起動しない (bin/herdr が ghostty に逃がす)
+onboarding = false
+
+[theme]
+name = "terminal"
+auto_switch = false
+
+[ui.toast]
+delivery = "herdr"
+
+[keys]
+prefix = "ctrl+a"
+
+reload_config = "prefix+ctrl+r"
+detach = "prefix+d"
+close_workspace = "prefix+shift+d"
+
+# セッション操作 (tmux: M-N / M-j / M-k / M-S)
+new_workspace = "alt+shift+n"
+next_workspace = "alt+j"
+previous_workspace = "alt+k"
+workspace_picker = "alt+shift+s"
+
+# ウィンドウ操作 (tmux: prefix+c / M-n / M-l / M-h / M-r / M-x)
+new_tab = "alt+n"
+next_tab = "alt+l"
+previous_tab = "alt+h"
+rename_tab = "alt+r"
+close_tab = "alt+x"
+
+# ペイン操作 (tmux: prefix+| / prefix+- / prefix+hjkl / prefix+HJKL)
+split_vertical = "prefix+|"
+split_horizontal = "prefix+minus"
+resize_pane_left = "prefix+shift+h"
+resize_pane_down = "prefix+shift+j"
+resize_pane_up = "prefix+shift+k"
+resize_pane_right = "prefix+shift+l"
+
+# Copy Mode 相当 (tmux: prefix+])
+edit_scrollback = "prefix+]"
+
+# popup (tmux: M-g / M-G)
+[[keys.command]]
+key = "alt+g"
+type = "popup"
+command = "tig"
+width = "90%"
+height = "90%"
+
+[[keys.command]]
+key = "alt+shift+g"
+type = "popup"
+command = "lazygit"
+width = "90%"
+height = "90%"
