@@ -5,7 +5,7 @@ pub_key="$script_dir/pub"
 
 ink() {
   local stdin=
-  if [[ ! -t 0 ]]; then
+  if [[ -p /dev/stdin || -f /dev/stdin ]]; then
     stdin="$(cat <&0)"
   fi
   if [[ $# -eq 0 && -z $stdin ]]; then
