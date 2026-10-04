@@ -57,6 +57,7 @@ alias l='ls -l --color=auto'
 export PATH=~/bin:~/.local/bin:$PATH
 command -v nvim >/dev/null && alias vim=nvim
 EOF
+  # lint-ignore: uppercase PATH は環境変数
   export PATH=~/bin:$PATH
 }
 

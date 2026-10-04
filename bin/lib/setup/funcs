@@ -183,21 +183,32 @@ set_default_install_command() {
   export def_install_cmd="sudo apt install -y"
   if is_mac; then
     def_install_cmd="brew install"
-  elif is_redhat; then
-    def_install_cmd="sudo yum install -y"
-  elif is_cygwin; then
-    def_install_cmd="apt-cyg install"
-  elif is_msys; then
-    def_install_cmd="pacman -S --noconfirm"
-  elif is_arch; then
-    if has yay; then
-      def_install_cmd="yay -S --noconfirm"
-    elif has yaourt; then
-      def_install_cmd="yaourt -S --noconfirm"
-    else
-      def_install_cmd="sudo pacman -S --noconfirm"
-    fi
+    return
   fi
+  if is_redhat; then
+    def_install_cmd="sudo yum install -y"
+    return
+  fi
+  if is_cygwin; then
+    def_install_cmd="apt-cyg install"
+    return
+  fi
+  if is_msys; then
+    def_install_cmd="pacman -S --noconfirm"
+    return
+  fi
+  if ! is_arch; then
+    return
+  fi
+  if has yay; then
+    def_install_cmd="yay -S --noconfirm"
+    return
+  fi
+  if has yaourt; then
+    def_install_cmd="yaourt -S --noconfirm"
+    return
+  fi
+  def_install_cmd="sudo pacman -S --noconfirm"
 }
 
 exe() {
@@ -291,53 +302,57 @@ is_same_link() {
 make_lnk_with_bkup() {
   local src=$1
   local lnk=$2
-  local need_backup=0
   # dlog " make_lnk_with_bkup Start lnk=$lnk src=$src"
   #if [ -e "${lnk}" ]; then
-  if isexist "${lnk}"; then
-    # dlog "   @@@@@@ exist!"
-    # ファイルタイプ(ファイル、ディレクトリ、リンク)をチェック
-    #if [ -n "`find "${lnk}" -maxdepth 0 -type l`" ]; then
-    if [ -L "${lnk}" ]; then
-      # リンク
-      # dlog "   @@@@@@ Link!"
-      local fullpath_lnk fullpath_src
-      fullpath_lnk="$(readlink_path "${lnk}")"
-      fullpath_src="$(readlink_path "${src}")"
-      # dlog "    lnk:$lnk => fullpath_lnk=$fullpath_lnk"
-      # dlog "    src:$src => fullpath_src=$fullpath_src"
-      if ! is_same_link "$fullpath_lnk" "$fullpath_src"; then
-        # 既に自分へのリンクの場合はなにもしない
-        # dlog "  => Already linked. Skip it. path=${lnk}"
-        return 0
-      else
-        # 他ファイルへのリンクなのでバックアップする
-        # dlog "  => Not match link. backup it. old link is ${fullpath_lnk} => new link is ${fullpath_src}"
-        need_backup=1
-      fi
-    elif [ -d "${lnk}" ]; then
-      # ディレクトリはバックアップする
-      # dlog "   @@@@@@ Dir!"
-      dlog "  => Directory exist. Backup it. path=$lnk"
-      need_backup=1
-    elif [ -f "${lnk}" ]; then
-      # 既存のファイルをバックアップする
-      # dlog "   @@@@@@ File!"
-      dlog "  => File exist. Backup it. path=$lnk"
-      need_backup=1
-    else
-      # dlog "   @@@@@@ little bit!"
-      # ないと思う
-      dlog "  => Little bit strange exist. path=${lnk} ... Do nothing"
-      return 0
-    fi
+  if ! isexist "${lnk}"; then
+    make_link "$src" "$lnk"
+    return
   fi
+  # dlog "   @@@@@@ exist!"
+  need_backup_lnk "$src" "$lnk" || return 0
   # バックアップが必要ならバックアップする
-  if [ $need_backup -eq 1 ]; then
-    # dlog "   @@@@@@ Backup!"
-    backup_file "${lnk}"
-  fi
+  # dlog "   @@@@@@ Backup!"
+  backup_file "${lnk}"
   make_link "$src" "$lnk"
+}
+
+# 既存の $2 をバックアップして $1 へのリンクに置き換えるべきなら 0 を返す
+need_backup_lnk() {
+  local src=$1
+  local lnk=$2
+  # ファイルタイプ(ファイル、ディレクトリ、リンク)をチェック
+  #if [ -n "`find "${lnk}" -maxdepth 0 -type l`" ]; then
+  if [ -L "${lnk}" ]; then
+    # リンク
+    # dlog "   @@@@@@ Link!"
+    local fullpath_lnk fullpath_src
+    fullpath_lnk="$(readlink_path "${lnk}")"
+    fullpath_src="$(readlink_path "${src}")"
+    # dlog "    lnk:$lnk => fullpath_lnk=$fullpath_lnk"
+    # dlog "    src:$src => fullpath_src=$fullpath_src"
+    # 既に自分へのリンクの場合はなにもしない
+    # dlog "  => Already linked. Skip it. path=${lnk}"
+    # 他ファイルへのリンクなのでバックアップする
+    # dlog "  => Not match link. backup it. old link is ${fullpath_lnk} => new link is ${fullpath_src}"
+    is_same_link "$fullpath_lnk" "$fullpath_src"
+    return
+  fi
+  if [ -d "${lnk}" ]; then
+    # ディレクトリはバックアップする
+    # dlog "   @@@@@@ Dir!"
+    dlog "  => Directory exist. Backup it. path=$lnk"
+    return 0
+  fi
+  if [ -f "${lnk}" ]; then
+    # 既存のファイルをバックアップする
+    # dlog "   @@@@@@ File!"
+    dlog "  => File exist. Backup it. path=$lnk"
+    return 0
+  fi
+  # dlog "   @@@@@@ little bit!"
+  # ないと思う
+  dlog "  => Little bit strange exist. path=${lnk} ... Do nothing"
+  return 1
 }
 
 backup() {
@@ -386,17 +401,23 @@ has_or_local_package() {
 has_local_package() {
   local p=$1
   if is_arch || is_msys; then
-    pacman -Qi "$p" >&/dev/null && return 0
-  elif is_ubuntu; then
-    dpkg -l "$p" | grep -E '^ii' >&/dev/null && return 0
-  elif is_redhat; then
-    rpm -qi "$p" >&/dev/null && return 0
-  elif is_mac; then
-    set_brew_installed_pkgs_if_needed
-    echo -e "$_brew_installed_pkgs" | grep -E "^$p$" >&/dev/null && return 0
-  else
-    return 1
+    pacman -Qi "$p" >&/dev/null
+    return
   fi
+  if is_ubuntu; then
+    dpkg -l "$p" | grep -E '^ii' >&/dev/null
+    return
+  fi
+  if is_redhat; then
+    rpm -qi "$p" >&/dev/null
+    return
+  fi
+  if is_mac; then
+    set_brew_installed_pkgs_if_needed
+    echo -e "$_brew_installed_pkgs" | grep -E "^$p$" >&/dev/null
+    return
+  fi
+  return 1
 }
 def_install() {
   local _pkgs=() _opts=()
@@ -472,17 +493,7 @@ _github() {
       exe git config --global --add safe.directory "$_path"
     fi
   fi
-  if [[ -e $_path ]]; then
-    exe cd "$_path"
-    log "==> Git pull rebasing .."
-    exe $_sudo git pull --rebase
-  else
-    # ignore depth 1 option because tag info not readable
-    # exe $_sudo git clone --depth 1 "$url" $_path
-    log "==> Git cloning $url .."
-    exe $_sudo git clone "$url" "$_path"
-    exe cd "$_path"
-  fi
+  _git_pull_or_clone "$_sudo" "$url" "$_path"
   if [[ -z $tag ]]; then
     if ! is_dry; then
       local tag
@@ -501,6 +512,23 @@ _github() {
     exe $_sudo git checkout -b "$tag" "$tag"
   fi
 }
+# shellcheck disable=SC2086 # _sudo は空のとき引数から消すため unquoted
+_git_pull_or_clone() {
+  local _sudo=$1
+  local url=$2
+  local _path=$3
+  if [[ -e $_path ]]; then
+    exe cd "$_path"
+    log "==> Git pull rebasing .."
+    exe $_sudo git pull --rebase
+    return
+  fi
+  # ignore depth 1 option because tag info not readable
+  # exe $_sudo git clone --depth 1 "$url" $_path
+  log "==> Git cloning $url .."
+  exe $_sudo git clone "$url" "$_path"
+  exe cd "$_path"
+}
 github_user_local() {
   _github /usr/local/src "$@"
 }
@@ -518,17 +546,17 @@ dl() {
     ! is_dry && log "===> Downloading from $_url"
     if has curl; then
       exe "curl -fLO \"$_url\""
-    else
-      exe "wget \"$_url\""
+      return
     fi
-  else
-    ! is_dry && log "===> Downloading from $_url to $_dst"
-    if has curl; then
-      exe "curl -fL \"$_url\" -o \"$_dst\""
-    else
-      exe "wget \"$_url\" -O \"$_dst\""
-    fi
+    exe "wget \"$_url\""
+    return
   fi
+  ! is_dry && log "===> Downloading from $_url to $_dst"
+  if has curl; then
+    exe "curl -fL \"$_url\" -o \"$_dst\""
+    return
+  fi
+  exe "wget \"$_url\" -O \"$_dst\""
 }
 
 go_install() {
@@ -641,14 +669,14 @@ cat_do() {
   if is_dry; then
     cat -
     log "===> the output will be pass to '$*'"
-  else
-    # MEMO: This debug log not work
-    # log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    # printf "> Executing: %s\n" "$*"
-    # log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-    # shellcheck disable=SC2294
-    cat - | "$@" >/dev/null
+    return
   fi
+  # MEMO: This debug log not work
+  # log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+  # printf "> Executing: %s\n" "$*"
+  # log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+  # shellcheck disable=SC2294
+  cat - | "$@" >/dev/null
 }
 
 cat_you_need_to() {
@@ -776,6 +804,7 @@ init_export_path_if_possible() {
     if [[ -e $_com_script_dir ]]; then
       if ! echo ":$PATH:" | grep ":$_com_script_dir:" >&/dev/null; then
         ilog "=> init_funcs Exporting PATH env the path $_com_script_dir.."
+        # lint-ignore: uppercase PATH は環境変数
         export PATH=$_com_script_dir:$PATH
       fi
     fi
@@ -790,6 +819,7 @@ init_detect_os() {
     fi
     _os=$(os)
   fi
+  # lint-ignore: uppercase 子プロセスへ渡す環境変数
   export DETECT_OS=$_os
 }
 
@@ -802,6 +832,7 @@ init_funcs() {
 
   local _home=/home
   [[ $(uname) == "Darwin" ]] && _home=/Users
+  # lint-ignore: uppercase 子プロセスへ渡す環境変数
   export DOT_PATH=$_home/$_user/.dot
   export _backup_root="${DOT_PATH}/bkup/setup"
   # 関数ロード
@@ -811,7 +842,7 @@ init_funcs() {
 }
 init_funcs "$@"
 
-[[ ${0} != "${BASH_SOURCE[0]}" ]] && return 0
+[[ ${BASH_SOURCE[0]} == "${0}" ]] || return 0
 _test() {
   # default_apps
   # default_apps |mapfile args
