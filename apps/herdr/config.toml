@@ -38,8 +38,10 @@ resize_pane_down = "prefix+shift+j"
 resize_pane_up = "prefix+shift+k"
 resize_pane_right = "prefix+shift+l"
 
-# Copy Mode 相当 (tmux: prefix+])
-edit_scrollback = "prefix+]"
+# Copy Mode (tmux: prefix+Space / prefix+])
+copy_mode = ["prefix+space", "prefix+]"]
+# scrollback を $EDITOR で開く (herdr 既定)
+edit_scrollback = "prefix+e"
 
 # popup (tmux: M-g / M-G)
 [[keys.command]]
