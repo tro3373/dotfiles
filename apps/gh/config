@@ -38,6 +38,10 @@ install_mac() {
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
+setting_common() {
+  exe "gh alias set --clobber co 'pr checkout'"
+  exe 'gh alias set --clobber b browse'
+}
 # setting_common() {
 #   if grep 'gh completion -s zsh' ~/.works.zsh >&/dev/null; then
 #     return
