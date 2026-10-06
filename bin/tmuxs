@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 # test: test/tmuxs.test.sh
 
-script_dir=$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd) && readonly script_dir
-# 一覧の名前列で、自動命名のセッションかを見分けるのに使う
-# shellcheck disable=SC1091
-source "${script_dir}/lib/tmux_session_name"
-
 # ---- pane 状態の書込側 (Claude hook 統合) --------------------------------
 # settings.json が pane 内で `tmuxs waiting|running|idle|remove` を呼ぶ。
 # waiting が 1 つでも発生したら status bar の待ち表示 (@tmuxs_waiting) に ⏳N を
@@ -492,6 +487,10 @@ list_sessions() {
   local -a ordered=()
   local namew=0 abw=0
 
+  # 自動命名のセッションかを見分ける命名規則。一覧でしか使わないので、頻繁に呼ばれる
+  # hook 経路 (tmuxs waiting 等) で読まないよう、ここで読み込む
+  # shellcheck disable=SC1091
+  source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/tmux_session_name"
   collect_session_stats
   collect_sessions
   sort_groups
