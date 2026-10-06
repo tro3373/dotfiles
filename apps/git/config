@@ -93,16 +93,16 @@ setting_common() {
   # shellcheck disable=SC2154
   make_lnk_with_bkup "$app_dir/git" "${HOME}/.config/git"
   make_link_dot2home
-  local usrn=0 mail=0 list
-  list="$(_current_git_config_list_global)"
-  while read -r line; do
+  local usrn=0 mail=0
+  # Read from fd 3: log reads stdin when it is a pipe and would swallow the remaining lines
+  while read -r line <&3; do
     [[ -z $line ]] && continue
     [[ $line =~ ^#.* ]] && continue
 
     local key
     key=$(echo "$line" | sed -e 's,^.\+global ,,g' -e 's,--add ,,g' -e 's, .\+,,g')
     # echo "$(printf "% -20s" $key) <== $line"
-    if echo -e "$list" | grep "$key=" >&/dev/null; then
+    if git config --global --get-all "$key" >&/dev/null; then
       # already configed.
       continue
     fi
@@ -125,7 +125,7 @@ setting_common() {
         exe "$line"
         ;;
     esac
-  done < <(cat_git_configs)
+  done 3< <(cat_git_configs)
 
   # shellcheck disable=SC2154
   [[ $additional -ne 1 ]] && return
@@ -137,13 +137,6 @@ setting_common() {
       setup_email
     fi
   fi
-}
-
-_current_git_config_list_global() {
-  if [[ ! -e $HOME/.gitconfig ]]; then
-    return
-  fi
-  git config --list --global 2>/dev/null
 }
 
 setting_msys() {
