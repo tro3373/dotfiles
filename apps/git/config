@@ -8,21 +8,21 @@ install_arch() {
 setup_username() {
   log "@@@@@ Input Your Git user.name"
   read -r gitusername
-  if [ ! "$gitusername" = "" ]; then
-    exe git config --global user.name "$gitusername"
-  else
+  if [ "$gitusername" = "" ]; then
     log "  => Do Nothing for git user.name"
+    return
   fi
+  exe git config --global user.name "$gitusername"
 }
 
 setup_email() {
   log "@@@@@ Input Your Git user.email"
   read -r gituseremail
-  if [ ! "$gituseremail" = "" ]; then
-    exe git config --global user.email "$gituseremail"
-  else
+  if [ "$gituseremail" = "" ]; then
     log "  => Do Nothing for git user.email"
+    return
   fi
+  exe git config --global user.email "$gituseremail"
 }
 
 cat_git_configs() {
