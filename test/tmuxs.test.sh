@@ -102,6 +102,12 @@ setup_test_repos() (
   tgit -C "${repos}/delta" worktree add -q --detach "${repos}/delta-worktree/det" "${base}"
   tgit -C "${repos}/delta" worktree add -q "${repos}/delta-worktree/even" \
     -b even refs/remotes/origin/main
+  # up: origin/main (c2) から作り upstream を c0 のブランチにする => upstream と比べて ↑2
+  #     (origin/HEAD と比べると差なし)
+  tgit -C "${repos}/delta" branch upbase "${base}"
+  tgit -C "${repos}/delta" worktree add -q "${repos}/delta-worktree/up" \
+    -b up refs/remotes/origin/main
+  tgit -C "${repos}/delta-worktree/up" branch -q --set-upstream-to=upbase
 )
 
 # ANSI エスケープだけを落とす (タブ区切りは残す)。
@@ -711,22 +717,23 @@ test_list_handles_spaced_session_name() {
 }
 
 # 19e. 自動命名のセッションはブランチ名、手で付けた名前と detached HEAD はセッション名。
-#      origin/HEAD との差を印の後ろ・名前の前に ↑N↓M で右寄せして揃える。
+#      upstream (無ければ origin/HEAD) との差を印の後ろ・名前の前に ↑N↓M で右寄せして揃える。
 #      差が無い行 (even) は空白。隠し列は素のセッション名のまま。
 test_list_branch_name_and_ahead_behind() {
   clear_markers
   # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
-  export FAKE_SESSIONS=$'delta\t1\t\ndelta-feature-feat\t1\t\ndelta-big\t1\t\ndelta-det\t1\t\ndelta-even\t1\t\ncustom\t1\t'
+  export FAKE_SESSIONS=$'delta\t1\t\ndelta-feature-feat\t1\t\ndelta-big\t1\t\ndelta-det\t1\t\ndelta-even\t1\t\ndelta-up\t1\t\ncustom\t1\t'
   set_fake_panes \
     delta '%1' "${repos}/delta" \
     delta-feature-feat '%2' "${repos}/delta-worktree/feature-feat" \
     delta-big '%3' "${repos}/delta-worktree/big" \
     delta-det '%4' "${repos}/delta-worktree/det" \
     delta-even '%5' "${repos}/delta-worktree/even" \
-    custom '%6' "${repos}/delta-worktree/big"
+    delta-up '%6' "${repos}/delta-worktree/up" \
+    custom '%7' "${repos}/delta-worktree/big"
 
   check 'list: 自動命名はブランチ名 + 印の後ろに ↑↓ を右寄せ' \
-    $'\tdelta\ndelta\t      \u21911 main          1w1p\ndelta-feature-feat\t    \u21911\u21932 feature/feat  1w1p\ndelta-big\t     \u219112 big           1w1p\ndelta-det\t      \u21932 delta-det     1w1p\ndelta-even\t         even          1w1p\ncustom\t     \u219112 custom        1w1p' \
+    $'\tdelta\ndelta\t      \u21911 main          1w1p\ndelta-feature-feat\t    \u21911\u21932 feature/feat  1w1p\ndelta-big\t     \u219112 big           1w1p\ndelta-det\t      \u21932 delta-det     1w1p\ndelta-even\t         even          1w1p\ndelta-up\t      \u21912 up            1w1p\ncustom\t     \u219112 custom        1w1p' \
     "$(list_plain)"
 }
 
