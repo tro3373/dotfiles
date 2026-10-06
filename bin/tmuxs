@@ -32,6 +32,10 @@ readonly fzf_gutter_cols=2
 # 印の絵文字そのものは bin/tasks が決める。ここは値を運ぶだけで対応表を持たない。
 readonly list_indent=4
 readonly list_gap=2
+# 一覧を開くたびに裏で fetch する間隔の下限 (分)。これより新しい FETCH_HEAD の repo は飛ばす。
+readonly fetch_interval_min=5
+# 一覧を開いた直後の 1 度だけ fetch するための印 (fzf の入力欄の文字。一覧では見えない)。
+readonly fetch_prompt='fetch'
 # 印 1 つあたりの表示幅。status の文字数からでなく、含まれる印の個数から
 # 空白の数を出す (✅️ は U+2705 + VS16 の 2 文字だが表示は 2 桁)。
 readonly mark_cols=2
@@ -227,6 +231,45 @@ git_info_of_path() {
   _gi_top=${tcache[$path]}
 }
 
+# worktree ルートのブランチ名と、デフォルトブランチ (origin/HEAD) との差を
+# nameref へ返す。差は "<ahead> <behind>" の 2 数。
+# detached HEAD はブランチ名を空、origin/HEAD が無い repo は差を空にする。
+# fetch はしない (一覧を開くたびにネットワークへ出ない)。最後に fetch した時点の差になる。
+# git 呼び出しは worktree ルート単位で呼び出し元の bcache / acache へメモ化する。
+git_head_of_top() {
+  local -n _gh_branch=$1 _gh_ab=$2
+  local top=$3 counts
+  _gh_branch=''
+  _gh_ab=''
+  [[ -n $top ]] || return 0
+  if [[ -z ${bcache[$top]+set} ]]; then
+    bcache[$top]=$(git -C "$top" symbolic-ref -q --short HEAD 2>/dev/null) || bcache[$top]=''
+    counts=$(git -C "$top" rev-list --left-right --count \
+      HEAD...refs/remotes/origin/HEAD 2>/dev/null) || counts=''
+    acache[$top]=${counts//$'\t'/ }
+  fi
+  _gh_branch=${bcache[$top]}
+  _gh_ab=${acache[$top]}
+}
+
+# 差 ("<ahead> <behind>") を ↑N↓M の表示へ nameref で返す。0 の側は出さない。
+# color=1 で ↑ を緑・↓ を赤にする (herdr と同じ配色)。39 は文字色だけを既定へ戻す
+# (0 だと行に掛けた他の属性まで消える)。
+ab_text() {
+  local -n _at_out=$1
+  local ahead=${2% *} behind=${2#* } color=$3 up='' down='' end=''
+  _at_out=''
+  [[ -n $2 ]] || return 0
+  if ((color)); then
+    up=$'\033[32m'
+    down=$'\033[31m'
+    end=$'\033[39m'
+  fi
+  ((ahead > 0)) && _at_out+="${up}↑${ahead}${end}"
+  ((behind > 0)) && _at_out+="${down}↓${behind}${end}"
+  return 0
+}
+
 # worktree ルートの .tasks.md を読み front matter の status の値を nameref へ返す。
 # .tasks.md は tasks store の index.md への symlink。front matter は先頭にあるので
 # 閉じの `---` で読み終える (数百行の index.md 全体は読まない)。
@@ -287,8 +330,11 @@ collect_session_stats() {
 # リポジトリ名のグループへ振り分ける。pane 数・状態・作業パスは
 # collect_session_stats が先に埋めてある。
 # 群内は waiting のセッションを先頭へ寄せ、残りは tmux の列挙順を保つ。
+# 名前列は、自動命名 (tmux_session_name と一致) ならブランチ名を出す。群の見出しに
+# repo 名があるので、セッション名の '<repo>-' 部分は冗長で、長いと後ろが切れる。
+# 手で付けた名前は rename の結果を見せるため、そのまま出す。
 collect_sessions() {
-  local name nwin attached mark repo top st
+  local name nwin attached mark repo top st branch ab
   while IFS=$'\t' read -r name nwin attached; do
     [[ -n $name ]] || continue
     mark=''
@@ -297,6 +343,11 @@ collect_sessions() {
     git_info_of_path repo top "${spath[$name]:-}"
     task_status st "$top"
     sstatus[$name]=$st
+    git_head_of_top branch ab "$top"
+    sab[$name]=$ab
+    sshown[$name]=$name
+    # top は symlink 解決済み。symlink 経由のパスで命名したセッションは一致せず名前のまま
+    [[ -n $branch && $name == "$(tmux_session_name "$top")" ]] && sshown[$name]=$branch
     [[ -n $repo ]] || repo=$no_repo_label
     gcount[$repo]=$((${gcount[$repo]:-0} + 1))
     if ((${prank[$name]:-0} == 3)); then
@@ -330,20 +381,26 @@ sort_groups() {
     LC_ALL=C sort -t$'\t' -k1,1n -k3,3n -k2,2nr -k4,4)
 }
 
-# 名前列と右列の幅を決める。list 幅が分かる場合は Nw Mp * が右端へ収まるよう
+# 名前列・↑↓ 列・右列の幅を決める。list 幅が分かる場合は Nw Mp * が右端へ収まるよう
 # 名前列を削る (最長名へ合わせるだけだと右列が画面外へ溢れる)。
+# ↑↓ 列は全行で差が無ければ幅 0 (列も後ろの空白も出さない)。
 calc_columns() {
-  local name w rightw=0
+  local name w rightw=0 ab
   for name in "${!sright[@]}"; do
-    disp_width w "$name"
+    disp_width w "${sshown[$name]}"
     ((w > namew)) && namew=$w
     disp_width w "${sright[$name]}"
     ((w > rightw)) && rightw=$w
+    ab_text ab "${sab[$name]}" 0
+    disp_width w "$ab"
+    ((w > abw)) && abw=$w
   done
   local cols
   num_or cols "${TMUXS_LIST_COLS:-0}" 0
   ((cols > 0)) || return 0
-  local avail=$((cols - list_indent - list_gap - rightw))
+  local abcols=0
+  ((abw > 0)) && abcols=$((abw + 1))
+  local avail=$((cols - list_indent - abcols - list_gap - rightw))
   ((avail < min_name_cols)) && avail=$min_name_cols
   ((namew > avail)) && namew=$avail
   return 0
@@ -372,11 +429,25 @@ mark_pad() {
   printf -v _mp_out '%*s%s' $((list_indent - n * mark_cols)) '' "$status"
 }
 
+# ↑↓ 列 (右寄せ + 名前との間の空白 1 つ) を nameref へ返す。列が無ければ空。
+# 状態色の行は緑地に緑で読めなくなるので ↑↓ に色を付けない。
+ab_column() {
+  local -n _ac_out=$1
+  local ab=$2 colored=$3 plain shown w
+  _ac_out=''
+  ((abw > 0)) || return 0
+  ab_text plain "$ab" 0
+  ab_text shown "$ab" "$colored"
+  # %*s は escape まで幅に数えるので、空白の数は色無しの表示幅から出す
+  disp_width w "$plain"
+  printf -v _ac_out '%*s%s ' $((abw - w)) '' "$shown"
+}
+
 # セッション行を 1 行出力する。1 列目は fzf 用の隠しフィールド (素のセッション名)。
 # 状態色は行全体を囲む前後の SGR として持ち、書式そのものは 1 本に保つ。
 print_session_row() {
-  local name=$1 shown sname sgr pre='' post='' pad
-  fit_disp shown "$name" "$namew"
+  local name=$1 shown sname sgr pre='' post='' pad abcol colored=1
+  fit_disp shown "${sshown[$name]}" "$namew"
   case ${prank[$name]:-0} in
     3) sname=waiting ;;
     2) sname=running ;;
@@ -386,10 +457,12 @@ print_session_row() {
   if state_sgr sgr "$sname"; then
     printf -v pre '\033[%sm' "$sgr"
     post=$'\033[0m'
+    colored=0
   fi
   mark_pad pad "${sstatus[$name]:-}"
-  printf '%s\t%s%s%s%*s%s%s\n' "$name" "$pre" \
-    "$pad" "$shown" "$list_gap" '' "${sright[$name]}" "$post"
+  ab_column abcol "${sab[$name]}" "$colored"
+  printf '%s\t%s%s%s%s%*s%s%s\n' "$name" "$pre" \
+    "$pad" "$abcol" "$shown" "$list_gap" '' "${sright[$name]}" "$post"
 }
 
 # 見出し行 + 配下セッション行を順に出力する。
@@ -413,16 +486,48 @@ print_groups() {
 # 各行は "<hidden>\t<表示>" のタブ区切り。fzf は --with-nth=2 で表示側だけを見せ、
 # {1} で素のセッション名 (preview / kill / switch のターゲット) を取る。
 list_sessions() {
-  local -A pcount=() prank=() spath=() rcache=() tcache=() \
-  gcount=() waiters=() others=() sright=() sstatus=()
+  local -A pcount=() prank=() spath=() rcache=() tcache=() bcache=() acache=() \
+  gcount=() waiters=() others=() sright=() sstatus=() sab=() sshown=()
   local -a ordered=()
-  local namew=0
+  local namew=0 abw=0
 
+  # 自動命名のセッションかを見分ける命名規則。一覧でしか使わないので、頻繁に呼ばれる
+  # hook 経路 (tmuxs waiting 等) で読まないよう、ここで読み込む
+  # shellcheck disable=SC1091
+  source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/tmux_session_name"
   collect_session_stats
   collect_sessions
   sort_groups
   calc_columns
   print_groups
+}
+
+# 1 repo を fetch する。fetch 済みの記録 (FETCH_HEAD) が新しければ飛ばす。
+# 裏で走らせるので、パスワード入力や ssh の確認で止まらないようにする。失敗は捨てる
+# (オフライン・認証切れでも一覧はそのまま出す)。
+fetch_repo() {
+  local common=$1
+  [[ -n $(find "$common/FETCH_HEAD" -mmin "-$fetch_interval_min" 2>/dev/null) ]] && return 0
+  GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh} -o BatchMode=yes" \
+    git --git-dir="$common" fetch -q origin >/dev/null 2>&1 || true
+}
+
+# 全セッションの repo を並列に fetch し、↓ (デフォルトブランチの遅れ) を最新にする。
+# worktree は親 repo と記録を共有するので、git の共通ディレクトリ単位で 1 回にまとめる。
+# origin の無い repo・git 管理外は飛ばす。
+fetch_all() {
+  local -A seen=()
+  local s pid ppath common
+  while IFS=$'\t' read -r s pid ppath; do
+    [[ -n $ppath ]] || continue
+    common=$(git -C "$ppath" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || continue
+    [[ -z ${seen[$common]:-} ]] || continue
+    seen[$common]=1
+    git --git-dir="$common" remote get-url origin >/dev/null 2>&1 || continue
+    fetch_repo "$common" &
+  done < <(tmux list-panes -a \
+    -F '#{session_name}'$'\t''#{pane_id}'$'\t''#{pane_current_path}')
+  wait
 }
 
 # waiting マーカーの数を数える。古いマーカーは呼び出し元 (update_indicator) が先に消している。
@@ -612,6 +717,7 @@ main() {
       tmux kill-session -t "$session"
       ;;
     __list) list_sessions ;;
+    __fetch) fetch_all ;;
     __cleanup) update_indicator ;;
     __new)
       # 新しいセッションを detached で作成し (名前は tmux 自動採番)、
@@ -726,7 +832,15 @@ main() {
       # 移動キーの一覧を回して bind を生成する。
       local skip_fwd='transform:[ -n {1} ] || echo down'
       local skip_back='transform:[ -n {1} ] || if [ {n} -eq 0 ]; then echo down; else echo up; fi'
-      local -a bind_args=(--bind "load:${skip_fwd}")
+      # 一覧はすぐ出し、裏の fetch が終わったら ↑↓ を最新にした一覧へ差し替える。
+      # reload-sync は差し替えまで今の一覧を残し、カーソルは同じ行位置に留まる。
+      # --track は使わない。差し替えまでの間 (fetch 中) 移動キーを受け付けなくなる (実測)。
+      # start では最初の一覧がまだ読まれていないので、最初の load で 1 度だけ差し替える。
+      # 差し替え後にも load が来るので、1 度目かの印に入力欄の文字 (--no-input で見えない) を使い、
+      # 差し替えと同時に消す。見出しを飛ばす skip_fwd を先に置く (後ろだと最初の行に残る)。
+      local fetch_once="transform<if test \"\$FZF_PROMPT\" = '${fetch_prompt}'; then"
+      fetch_once+=" echo 'change-prompt()+reload-sync($self __fetch; $self __list)'; fi>"
+      local -a bind_args=(--bind "load:${skip_fwd/#transform:/transform<}>+${fetch_once}")
       local key
       for key in j down ctrl-n ctrl-j; do
         bind_args+=(--bind "${key}:down+${skip_fwd}")
@@ -738,7 +852,7 @@ main() {
       bind_args+=(--bind "page-up:page-up+${skip_back}")
 
       list_sessions |
-        fzf --reverse --no-input --ansi \
+        fzf --reverse --no-input --ansi --prompt "$fetch_prompt" \
           --delimiter=$'\t' --with-nth=2 \
           --preview "$self __preview {1}" \
           --preview-window "right:${preview_ratio}%" \
