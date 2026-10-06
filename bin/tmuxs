@@ -32,6 +32,10 @@ readonly fzf_gutter_cols=2
 # 印の絵文字そのものは bin/tasks が決める。ここは値を運ぶだけで対応表を持たない。
 readonly list_indent=4
 readonly list_gap=2
+# 一覧を開くたびに裏で fetch する間隔の下限 (分)。これより新しい FETCH_HEAD の repo は飛ばす。
+readonly fetch_interval_min=5
+# 一覧を開いた直後の 1 度だけ fetch するための印 (fzf の入力欄の文字。一覧では見えない)。
+readonly fetch_prompt='fetch'
 # 印 1 つあたりの表示幅。status の文字数からでなく、含まれる印の個数から
 # 空白の数を出す (✅️ は U+2705 + VS16 の 2 文字だが表示は 2 桁)。
 readonly mark_cols=2
@@ -498,6 +502,34 @@ list_sessions() {
   print_groups
 }
 
+# 1 repo を fetch する。fetch 済みの記録 (FETCH_HEAD) が新しければ飛ばす。
+# 裏で走らせるので、パスワード入力や ssh の確認で止まらないようにする。失敗は捨てる
+# (オフライン・認証切れでも一覧はそのまま出す)。
+fetch_repo() {
+  local common=$1
+  [[ -n $(find "$common/FETCH_HEAD" -mmin "-$fetch_interval_min" 2>/dev/null) ]] && return 0
+  GIT_TERMINAL_PROMPT=0 GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh} -o BatchMode=yes" \
+    git --git-dir="$common" fetch -q origin >/dev/null 2>&1 || true
+}
+
+# 全セッションの repo を並列に fetch し、↓ (デフォルトブランチの遅れ) を最新にする。
+# worktree は親 repo と記録を共有するので、git の共通ディレクトリ単位で 1 回にまとめる。
+# origin の無い repo・git 管理外は飛ばす。
+fetch_all() {
+  local -A seen=()
+  local s pid ppath common
+  while IFS=$'\t' read -r s pid ppath; do
+    [[ -n $ppath ]] || continue
+    common=$(git -C "$ppath" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || continue
+    [[ -z ${seen[$common]:-} ]] || continue
+    seen[$common]=1
+    git --git-dir="$common" remote get-url origin >/dev/null 2>&1 || continue
+    fetch_repo "$common" &
+  done < <(tmux list-panes -a \
+    -F '#{session_name}'$'\t''#{pane_id}'$'\t''#{pane_current_path}')
+  wait
+}
+
 # waiting マーカーの数を数える。古いマーカーは呼び出し元 (update_indicator) が先に消している。
 count_waiting() {
   local dir n=0
@@ -685,6 +717,7 @@ main() {
       tmux kill-session -t "$session"
       ;;
     __list) list_sessions ;;
+    __fetch) fetch_all ;;
     __cleanup) update_indicator ;;
     __new)
       # 新しいセッションを detached で作成し (名前は tmux 自動採番)、
@@ -799,7 +832,15 @@ main() {
       # 移動キーの一覧を回して bind を生成する。
       local skip_fwd='transform:[ -n {1} ] || echo down'
       local skip_back='transform:[ -n {1} ] || if [ {n} -eq 0 ]; then echo down; else echo up; fi'
-      local -a bind_args=(--bind "load:${skip_fwd}")
+      # 一覧はすぐ出し、裏の fetch が終わったら ↑↓ を最新にした一覧へ差し替える。
+      # reload-sync は差し替えまで今の一覧を残し、カーソルは同じ行位置に留まる。
+      # --track は使わない。差し替えまでの間 (fetch 中) 移動キーを受け付けなくなる (実測)。
+      # start では最初の一覧がまだ読まれていないので、最初の load で 1 度だけ差し替える。
+      # 差し替え後にも load が来るので、1 度目かの印に入力欄の文字 (--no-input で見えない) を使い、
+      # 差し替えと同時に消す。見出しを飛ばす skip_fwd を先に置く (後ろだと最初の行に残る)。
+      local fetch_once="transform<if test \"\$FZF_PROMPT\" = '${fetch_prompt}'; then"
+      fetch_once+=" echo 'change-prompt()+reload-sync($self __fetch; $self __list)'; fi>"
+      local -a bind_args=(--bind "load:${skip_fwd/#transform:/transform<}>+${fetch_once}")
       local key
       for key in j down ctrl-n ctrl-j; do
         bind_args+=(--bind "${key}:down+${skip_fwd}")
@@ -811,7 +852,7 @@ main() {
       bind_args+=(--bind "page-up:page-up+${skip_back}")
 
       list_sessions |
-        fzf --reverse --no-input --ansi \
+        fzf --reverse --no-input --ansi --prompt "$fetch_prompt" \
           --delimiter=$'\t' --with-nth=2 \
           --preview "$self __preview {1}" \
           --preview-window "right:${preview_ratio}%" \

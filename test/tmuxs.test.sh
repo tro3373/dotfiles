@@ -782,6 +782,50 @@ test_list_ahead_behind_fits_width() {
     "$(printf '%s\n' "${out}" | tail -n1 | cut -f2- | awk '{print length($0)}')"
 }
 
+# __fetch 用。clone 元 (remote) を進めて、clone 側の origin/main が追従するかを見る。
+# clone 直後は FETCH_HEAD が無い (= 直近の fetch 扱いにならない)。
+setup_fetch_repos() (
+  set -e
+  tgit init -q -b main "${repos}/remote"
+  tgit -C "${repos}/remote" commit -q --allow-empty -m r0
+  tgit clone -q "${repos}/remote" "${repos}/clone"
+  tgit -C "${repos}/clone" worktree add -q "${repos}/clone-worktree/wt" -b wt
+)
+
+# 20b. __fetch はセッションの repo を fetch し、origin の記録を最新にする。
+#      worktree は親 repo と同じ記録を使うので、どちらから辿っても 1 回で済む。
+#      origin の無い repo (alpha) や git 管理外が混ざっても失敗しない。
+test_fetch_updates_origin() {
+  clear_markers
+  set_fake_panes \
+    clone '%1' "${repos}/clone" \
+    clwt '%2' "${repos}/clone-worktree/wt" \
+    alpha '%3' "${repos}/alpha" \
+    solo '%4' "${tmpdir}/plain"
+  tgit -C "${repos}/remote" commit -q --allow-empty -m r1
+
+  local rc
+  PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __fetch
+  rc=$?
+  check 'fetch: exit 0 (origin 無し・管理外が混ざっても)' 0 "${rc}"
+  check 'fetch: origin/main が remote の先頭へ追従する' \
+    "$(git -C "${repos}/remote" rev-parse HEAD)" \
+    "$(git -C "${repos}/clone" rev-parse refs/remotes/origin/main)"
+}
+
+# 20c. 直近 (5 分以内) に fetch 済みの repo は飛ばす。一覧を開くたびにネットワークへ出ない。
+test_fetch_skips_recently_fetched() {
+  clear_markers
+  set_fake_panes clone '%1' "${repos}/clone"
+  local before
+  before=$(git -C "${repos}/clone" rev-parse refs/remotes/origin/main)
+  tgit -C "${repos}/remote" commit -q --allow-empty -m r2
+
+  PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __fetch
+  check 'fetch: 5 分以内に fetch 済みなら fetch しない' \
+    "${before}" "$(git -C "${repos}/clone" rev-parse refs/remotes/origin/main)"
+}
+
 main() {
   # 各テストを最後まで実行して集計するため、あえて -e は付けない。
   set -uo pipefail
@@ -808,6 +852,10 @@ main() {
   setup_fake_tmux
   setup_test_repos || {
     printf '==> Error: setup_test_repos に失敗した\n' >&2
+    exit 1
+  }
+  setup_fetch_repos || {
+    printf '==> Error: setup_fetch_repos に失敗した\n' >&2
     exit 1
   }
 
@@ -841,6 +889,8 @@ main() {
   test_list_ahead_behind_colors
   test_list_ahead_behind_fits_width
   test_list_empty
+  test_fetch_updates_origin
+  test_fetch_skips_recently_fetched
 
   # イベント/フック系 (各テストは reset で TMUX='fake' / TMUX_PANE='%5' を export)。
   test_no_op_outside_tmux
