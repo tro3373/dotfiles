@@ -76,6 +76,32 @@ setup_test_repos() (
   printf -- '---\ntitle: t\nstatus: in progress\n---\n' \
     >"${repos}/alpha-worktree/odd/.tasks.md"
   printf -- '- [ ] plain\n' >"${repos}/beta/.tasks.md"
+  # ↑↓ 列用。remote は立てず origin/HEAD の参照だけ作る (fetch 済みと同じ状態)。
+  # origin/main = c2。各 worktree の自動命名は delta-<ディレクトリ名>
+  tgit init -q -b main "${repos}/delta"
+  tgit -C "${repos}/delta" commit -q --allow-empty -m c0
+  local base i
+  base=$(git -C "${repos}/delta" rev-parse HEAD)
+  tgit -C "${repos}/delta" commit -q --allow-empty -m c1
+  tgit -C "${repos}/delta" commit -q --allow-empty -m c2
+  tgit -C "${repos}/delta" update-ref refs/remotes/origin/main HEAD
+  tgit -C "${repos}/delta" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
+  # main: ↑1
+  tgit -C "${repos}/delta" commit -q --allow-empty -m local
+  # feature/feat: c0 から 1 つ積む => ↑1↓2。ディレクトリ名は '/' を '-' にしたもの
+  tgit -C "${repos}/delta" worktree add -q "${repos}/delta-worktree/feature-feat" \
+    -b feature/feat "${base}"
+  tgit -C "${repos}/delta-worktree/feature-feat" commit -q --allow-empty -m f1
+  # big: origin/main から 12 個 => ↑12 (2 桁で右寄せを見る)
+  tgit -C "${repos}/delta" worktree add -q "${repos}/delta-worktree/big" \
+    -b big refs/remotes/origin/main
+  for i in $(seq 12); do
+    tgit -C "${repos}/delta-worktree/big" commit -q --allow-empty -m "b${i}"
+  done
+  # det: detached HEAD で c0 => ↓2 / even: origin/main と同じ => 差なし
+  tgit -C "${repos}/delta" worktree add -q --detach "${repos}/delta-worktree/det" "${base}"
+  tgit -C "${repos}/delta" worktree add -q "${repos}/delta-worktree/even" \
+    -b even refs/remotes/origin/main
 )
 
 # ANSI エスケープだけを落とす (タブ区切りは残す)。
@@ -366,7 +392,7 @@ test_list_groups_by_repository() {
     alpha '%5' "${repos}/alpha"
 
   check 'list: repo 見出しでグループ化 (worktree は親へ / 管理外は末尾)' \
-    $'\talpha\nawt\t    awt    1w1p\nalpha\t    alpha  1w1p *\n\tbeta\nbeta\t    beta   2w2p\n\t(no repo)\nsolo\t    solo   1w1p' \
+    $'\talpha\nawt\t    awt   1w1p\nalpha\t    main  1w1p *\n\tbeta\nbeta\t    main  2w2p\n\t(no repo)\nsolo\t    solo  1w1p' \
     "$(list_plain)"
 }
 
@@ -387,7 +413,7 @@ test_list_waiting_group_first() {
   raw=$(run_list)
 
   check 'list: waiting を含む beta 群を最上位へ (群内も waiting 先頭)' \
-    $'\tbeta\nbeta2\t    beta2  1w1p\nbeta\t    beta   1w1p\n\talpha\nalpha\t    alpha  1w1p\nawt\t    awt    1w1p' \
+    $'\tbeta\nbeta2\t    beta2  1w1p\nbeta\t    main   1w1p\n\talpha\nalpha\t    main   1w1p\nawt\t    awt    1w1p' \
     "$(printf '%s' "${raw}" | strip_ansi)"
   check 'list: 見出し行には状態色を付けない (waiting 色はセッション行のみ 1 箇所)' \
     1 "$(printf '%s\n' "${raw}" | grep -c '48;2;229;175;30')"
@@ -517,7 +543,7 @@ test_list_marks_task_status() {
     beta '%5' "${repos}/beta"
 
   check 'list: status の印をそのまま出し、マーク列 4 桁で桁が揃う' \
-    $'\talpha\nwtdone\t  \u2705\ufe0fwtdone    1w1p\nwtundone\t    wtundone  1w1p\nwtpr\t  \U0001F680wtpr      1w1p\nwtboth\t\u2705\ufe0f\U0001F680wtboth    1w1p\n\tbeta\nbeta\t    beta      1w1p' \
+    $'\talpha\nwtdone\t  \u2705\ufe0fwtdone    1w1p\nwtundone\t    wtundone  1w1p\nwtpr\t  \U0001F680wtpr      1w1p\nwtboth\t\u2705\ufe0f\U0001F680wtboth    1w1p\n\tbeta\nbeta\t    main      1w1p' \
     "$(list_plain)"
 }
 
@@ -684,6 +710,78 @@ test_list_handles_spaced_session_name() {
     "$(list_plain)"
 }
 
+# 19e. 自動命名のセッションはブランチ名、手で付けた名前と detached HEAD はセッション名。
+#      origin/HEAD との差を印の後ろ・名前の前に ↑N↓M で右寄せして揃える。
+#      差が無い行 (even) は空白。隠し列は素のセッション名のまま。
+test_list_branch_name_and_ahead_behind() {
+  clear_markers
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  export FAKE_SESSIONS=$'delta\t1\t\ndelta-feature-feat\t1\t\ndelta-big\t1\t\ndelta-det\t1\t\ndelta-even\t1\t\ncustom\t1\t'
+  set_fake_panes \
+    delta '%1' "${repos}/delta" \
+    delta-feature-feat '%2' "${repos}/delta-worktree/feature-feat" \
+    delta-big '%3' "${repos}/delta-worktree/big" \
+    delta-det '%4' "${repos}/delta-worktree/det" \
+    delta-even '%5' "${repos}/delta-worktree/even" \
+    custom '%6' "${repos}/delta-worktree/big"
+
+  check 'list: 自動命名はブランチ名 + 印の後ろに ↑↓ を右寄せ' \
+    $'\tdelta\ndelta\t      \u21911 main          1w1p\ndelta-feature-feat\t    \u21911\u21932 feature/feat  1w1p\ndelta-big\t     \u219112 big           1w1p\ndelta-det\t      \u21932 delta-det     1w1p\ndelta-even\t         even          1w1p\ncustom\t     \u219112 custom        1w1p' \
+    "$(list_plain)"
+}
+
+# 19f. ↑ は緑・↓ は赤。状態色の付いた行は緑地に緑で読めなくなるので色を付けない
+#      (↑↓ そのものは出す)。待ち・実行中・アイドルの 3 状態とも同じ。
+test_list_ahead_behind_colors() {
+  clear_markers
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  export FAKE_SESSIONS=$'delta\t1\t\ndelta-feature-feat\t1\t\ndelta-big\t1\t\ndelta-det\t1\t\ncustom\t1\t'
+  set_fake_panes \
+    delta '%1' "${repos}/delta" \
+    delta-feature-feat '%2' "${repos}/delta-worktree/feature-feat" \
+    delta-big '%3' "${repos}/delta-worktree/big" \
+    delta-det '%4' "${repos}/delta-worktree/det" \
+    custom '%5' "${repos}/delta-worktree/big"
+  printf 'running' >"${TMUXS_MARKER_DIR}/%3"
+  printf 'idle' >"${TMUXS_MARKER_DIR}/%4"
+  printf 'waiting' >"${TMUXS_MARKER_DIR}/%5"
+
+  local raw row sess want
+  raw=$(run_list)
+  check 'list: ↑ を緑で出す' yes \
+    "$(grep -q $'^delta\t.*\033\\[32m\u21911\033\\[39m' <<<"${raw}" && echo yes || echo no)"
+  check 'list: ↑ 緑に続けて ↓ を赤で出す' yes \
+    "$(grep -q $'^delta-feature-feat\t.*\033\\[32m\u21911\033\\[39m\033\\[31m\u21932\033\\[39m' <<<"${raw}" && echo yes || echo no)"
+  for sess in delta-big:$'\u219112' delta-det:$'\u21932' custom:$'\u219112'; do
+    want=${sess#*:}
+    sess=${sess%%:*}
+    row=$(grep $'^'"${sess}"$'\t' <<<"${raw}")
+    check "list: 状態色の行 (${sess}) には ↑↓ の色を付けない" no \
+      "$(grep -q $'\033\\[3[12]m' <<<"${row}" && echo yes || echo no)"
+    check "list: 状態色の行 (${sess}) でも ↑↓ は出す" yes \
+      "$([[ $(strip_ansi <<<"${row}") == *"${want}"* ]] && echo yes || echo no)"
+  done
+}
+
+# 19g. list 幅が限られるときは ↑↓ 列の分だけ名前列を詰め、行を list 幅に収める。
+#      幅 24 => マーク 4 + ↑↓ 4 + 空白 1 + 名前 9 + 区切り 2 + '1w1p' 4。
+test_list_ahead_behind_fits_width() {
+  clear_markers
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  export FAKE_SESSIONS=$'delta-feature-feat\t1\t\ndelta-even\t1\t'
+  set_fake_panes \
+    delta-feature-feat '%1' "${repos}/delta-worktree/feature-feat" \
+    delta-even '%2' "${repos}/delta-worktree/even"
+
+  local out
+  out=$(TMUXS_LIST_COLS=24 list_plain)
+  check 'list: ↑↓ 列の分だけ名前列を詰める' \
+    $'\tdelta\ndelta-feature-feat\t    \u21911\u21932 feature..  1w1p\ndelta-even\t         even       1w1p' \
+    "${out}"
+  check 'list: ↑↓ 列があっても行が list 幅 (24) に収まる' 24 \
+    "$(printf '%s\n' "${out}" | tail -n1 | cut -f2- | awk '{print length($0)}')"
+}
+
 main() {
   # 各テストを最後まで実行して集計するため、あえて -e は付けない。
   set -uo pipefail
@@ -739,6 +837,9 @@ main() {
   test_list_marks_task_status
   test_list_clamps_unexpected_status
   test_list_handles_spaced_session_name
+  test_list_branch_name_and_ahead_behind
+  test_list_ahead_behind_colors
+  test_list_ahead_behind_fits_width
   test_list_empty
 
   # イベント/フック系 (各テストは reset で TMUX='fake' / TMUX_PANE='%5' を export)。

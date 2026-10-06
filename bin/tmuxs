@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # test: test/tmuxs.test.sh
 
+script_dir=$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd) && readonly script_dir
+# 一覧の名前列で、自動命名のセッションかを見分けるのに使う
+# shellcheck disable=SC1091
+source "${script_dir}/lib/tmux_session_name"
+
 # ---- pane 状態の書込側 (Claude hook 統合) --------------------------------
 # settings.json が pane 内で `tmuxs waiting|running|idle|remove` を呼ぶ。
 # waiting が 1 つでも発生したら status bar の待ち表示 (@tmuxs_waiting) に ⏳N を
@@ -227,6 +232,45 @@ git_info_of_path() {
   _gi_top=${tcache[$path]}
 }
 
+# worktree ルートのブランチ名と、デフォルトブランチ (origin/HEAD) との差を
+# nameref へ返す。差は "<ahead> <behind>" の 2 数。
+# detached HEAD はブランチ名を空、origin/HEAD が無い repo は差を空にする。
+# fetch はしない (一覧を開くたびにネットワークへ出ない)。最後に fetch した時点の差になる。
+# git 呼び出しは worktree ルート単位で呼び出し元の bcache / acache へメモ化する。
+git_head_of_top() {
+  local -n _gh_branch=$1 _gh_ab=$2
+  local top=$3 counts
+  _gh_branch=''
+  _gh_ab=''
+  [[ -n $top ]] || return 0
+  if [[ -z ${bcache[$top]+set} ]]; then
+    bcache[$top]=$(git -C "$top" symbolic-ref -q --short HEAD 2>/dev/null) || bcache[$top]=''
+    counts=$(git -C "$top" rev-list --left-right --count \
+      HEAD...refs/remotes/origin/HEAD 2>/dev/null) || counts=''
+    acache[$top]=${counts//$'\t'/ }
+  fi
+  _gh_branch=${bcache[$top]}
+  _gh_ab=${acache[$top]}
+}
+
+# 差 ("<ahead> <behind>") を ↑N↓M の表示へ nameref で返す。0 の側は出さない。
+# color=1 で ↑ を緑・↓ を赤にする (herdr と同じ配色)。39 は文字色だけを既定へ戻す
+# (0 だと行に掛けた他の属性まで消える)。
+ab_text() {
+  local -n _at_out=$1
+  local ahead=${2% *} behind=${2#* } color=$3 up='' down='' end=''
+  _at_out=''
+  [[ -n $2 ]] || return 0
+  if ((color)); then
+    up=$'\033[32m'
+    down=$'\033[31m'
+    end=$'\033[39m'
+  fi
+  ((ahead > 0)) && _at_out+="${up}↑${ahead}${end}"
+  ((behind > 0)) && _at_out+="${down}↓${behind}${end}"
+  return 0
+}
+
 # worktree ルートの .tasks.md を読み front matter の status の値を nameref へ返す。
 # .tasks.md は tasks store の index.md への symlink。front matter は先頭にあるので
 # 閉じの `---` で読み終える (数百行の index.md 全体は読まない)。
@@ -287,8 +331,11 @@ collect_session_stats() {
 # リポジトリ名のグループへ振り分ける。pane 数・状態・作業パスは
 # collect_session_stats が先に埋めてある。
 # 群内は waiting のセッションを先頭へ寄せ、残りは tmux の列挙順を保つ。
+# 名前列は、自動命名 (tmux_session_name と一致) ならブランチ名を出す。群の見出しに
+# repo 名があるので、セッション名の '<repo>-' 部分は冗長で、長いと後ろが切れる。
+# 手で付けた名前は rename の結果を見せるため、そのまま出す。
 collect_sessions() {
-  local name nwin attached mark repo top st
+  local name nwin attached mark repo top st branch ab
   while IFS=$'\t' read -r name nwin attached; do
     [[ -n $name ]] || continue
     mark=''
@@ -297,6 +344,11 @@ collect_sessions() {
     git_info_of_path repo top "${spath[$name]:-}"
     task_status st "$top"
     sstatus[$name]=$st
+    git_head_of_top branch ab "$top"
+    sab[$name]=$ab
+    sshown[$name]=$name
+    # top は symlink 解決済み。symlink 経由のパスで命名したセッションは一致せず名前のまま
+    [[ -n $branch && $name == "$(tmux_session_name "$top")" ]] && sshown[$name]=$branch
     [[ -n $repo ]] || repo=$no_repo_label
     gcount[$repo]=$((${gcount[$repo]:-0} + 1))
     if ((${prank[$name]:-0} == 3)); then
@@ -330,20 +382,26 @@ sort_groups() {
     LC_ALL=C sort -t$'\t' -k1,1n -k3,3n -k2,2nr -k4,4)
 }
 
-# 名前列と右列の幅を決める。list 幅が分かる場合は Nw Mp * が右端へ収まるよう
+# 名前列・↑↓ 列・右列の幅を決める。list 幅が分かる場合は Nw Mp * が右端へ収まるよう
 # 名前列を削る (最長名へ合わせるだけだと右列が画面外へ溢れる)。
+# ↑↓ 列は全行で差が無ければ幅 0 (列も後ろの空白も出さない)。
 calc_columns() {
-  local name w rightw=0
+  local name w rightw=0 ab
   for name in "${!sright[@]}"; do
-    disp_width w "$name"
+    disp_width w "${sshown[$name]}"
     ((w > namew)) && namew=$w
     disp_width w "${sright[$name]}"
     ((w > rightw)) && rightw=$w
+    ab_text ab "${sab[$name]}" 0
+    disp_width w "$ab"
+    ((w > abw)) && abw=$w
   done
   local cols
   num_or cols "${TMUXS_LIST_COLS:-0}" 0
   ((cols > 0)) || return 0
-  local avail=$((cols - list_indent - list_gap - rightw))
+  local abcols=0
+  ((abw > 0)) && abcols=$((abw + 1))
+  local avail=$((cols - list_indent - abcols - list_gap - rightw))
   ((avail < min_name_cols)) && avail=$min_name_cols
   ((namew > avail)) && namew=$avail
   return 0
@@ -372,11 +430,25 @@ mark_pad() {
   printf -v _mp_out '%*s%s' $((list_indent - n * mark_cols)) '' "$status"
 }
 
+# ↑↓ 列 (右寄せ + 名前との間の空白 1 つ) を nameref へ返す。列が無ければ空。
+# 状態色の行は緑地に緑で読めなくなるので ↑↓ に色を付けない。
+ab_column() {
+  local -n _ac_out=$1
+  local ab=$2 colored=$3 plain shown w
+  _ac_out=''
+  ((abw > 0)) || return 0
+  ab_text plain "$ab" 0
+  ab_text shown "$ab" "$colored"
+  # %*s は escape まで幅に数えるので、空白の数は色無しの表示幅から出す
+  disp_width w "$plain"
+  printf -v _ac_out '%*s%s ' $((abw - w)) '' "$shown"
+}
+
 # セッション行を 1 行出力する。1 列目は fzf 用の隠しフィールド (素のセッション名)。
 # 状態色は行全体を囲む前後の SGR として持ち、書式そのものは 1 本に保つ。
 print_session_row() {
-  local name=$1 shown sname sgr pre='' post='' pad
-  fit_disp shown "$name" "$namew"
+  local name=$1 shown sname sgr pre='' post='' pad abcol colored=1
+  fit_disp shown "${sshown[$name]}" "$namew"
   case ${prank[$name]:-0} in
     3) sname=waiting ;;
     2) sname=running ;;
@@ -386,10 +458,12 @@ print_session_row() {
   if state_sgr sgr "$sname"; then
     printf -v pre '\033[%sm' "$sgr"
     post=$'\033[0m'
+    colored=0
   fi
   mark_pad pad "${sstatus[$name]:-}"
-  printf '%s\t%s%s%s%*s%s%s\n' "$name" "$pre" \
-    "$pad" "$shown" "$list_gap" '' "${sright[$name]}" "$post"
+  ab_column abcol "${sab[$name]}" "$colored"
+  printf '%s\t%s%s%s%s%*s%s%s\n' "$name" "$pre" \
+    "$pad" "$abcol" "$shown" "$list_gap" '' "${sright[$name]}" "$post"
 }
 
 # 見出し行 + 配下セッション行を順に出力する。
@@ -413,10 +487,10 @@ print_groups() {
 # 各行は "<hidden>\t<表示>" のタブ区切り。fzf は --with-nth=2 で表示側だけを見せ、
 # {1} で素のセッション名 (preview / kill / switch のターゲット) を取る。
 list_sessions() {
-  local -A pcount=() prank=() spath=() rcache=() tcache=() \
-  gcount=() waiters=() others=() sright=() sstatus=()
+  local -A pcount=() prank=() spath=() rcache=() tcache=() bcache=() acache=() \
+  gcount=() waiters=() others=() sright=() sstatus=() sab=() sshown=()
   local -a ordered=()
-  local namew=0
+  local namew=0 abw=0
 
   collect_session_stats
   collect_sessions
