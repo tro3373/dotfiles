@@ -231,9 +231,10 @@ git_info_of_path() {
   _gi_top=${tcache[$path]}
 }
 
-# worktree ルートのブランチ名と、デフォルトブランチ (origin/HEAD) との差を
-# nameref へ返す。差は "<ahead> <behind>" の 2 数。
-# detached HEAD はブランチ名を空、origin/HEAD が無い repo は差を空にする。
+# worktree ルートのブランチ名と、upstream (@{u}) との差を nameref へ返す。
+# 差は "<ahead> <behind>" の 2 数。
+# upstream の無いブランチ (未 push・detached HEAD) はデフォルトブランチ (origin/HEAD) と比べる。
+# detached HEAD はブランチ名を空、どちらも無い repo は差を空にする。
 # fetch はしない (一覧を開くたびにネットワークへ出ない)。最後に fetch した時点の差になる。
 # git 呼び出しは worktree ルート単位で呼び出し元の bcache / acache へメモ化する。
 git_head_of_top() {
@@ -244,8 +245,9 @@ git_head_of_top() {
   [[ -n $top ]] || return 0
   if [[ -z ${bcache[$top]+set} ]]; then
     bcache[$top]=$(git -C "$top" symbolic-ref -q --short HEAD 2>/dev/null) || bcache[$top]=''
-    counts=$(git -C "$top" rev-list --left-right --count \
-      HEAD...refs/remotes/origin/HEAD 2>/dev/null) || counts=''
+    counts=$(git -C "$top" rev-list --left-right --count 'HEAD...@{u}' 2>/dev/null) ||
+      counts=$(git -C "$top" rev-list --left-right --count \
+        HEAD...refs/remotes/origin/HEAD 2>/dev/null) || counts=''
     acache[$top]=${counts//$'\t'/ }
   fi
   _gh_branch=${bcache[$top]}
@@ -512,7 +514,7 @@ fetch_repo() {
     git --git-dir="$common" fetch -q origin >/dev/null 2>&1 || true
 }
 
-# 全セッションの repo を並列に fetch し、↓ (デフォルトブランチの遅れ) を最新にする。
+# 全セッションの repo を並列に fetch し、↓ (upstream・デフォルトブランチの遅れ) を最新にする。
 # worktree は親 repo と記録を共有するので、git の共通ディレクトリ単位で 1 回にまとめる。
 # origin の無い repo・git 管理外は飛ばす。
 fetch_all() {
