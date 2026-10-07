@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# Claude Code の $BROWSER 用のラッパー。
+# claude.ai の Artifact だけ CLAUDE_ARTIFACT_CHROME_PROFILE のアカウントで開き、
+# それ以外は chrome に任せる (repo ごとの CHROME_PROFILE に従う)。
+# Claude Code は $BROWSER を 1 つの実行ファイルとして URL を引数に起動するので、
+# 環境変数の代入や引数付きの文字列は $BROWSER に書けない。
+
+main() {
+  set -euo pipefail
+  local url=${1:-}
+  if [[ $url =~ ^https://claude\.ai/(code/)?artifact/ ]]; then
+    # lint-ignore: uppercase chrome が読む環境変数名
+    export CHROME_PROFILE=${CLAUDE_ARTIFACT_CHROME_PROFILE:-${CHROME_PROFILE:-}}
+  fi
+  exec chrome "$@"
+}
+main "$@"
