@@ -5,12 +5,27 @@
 # 鍵は age を使う (KMS/PGP も使えるが、ローカル完結なら age が一番軽い)。
 
 install_common() {
+  if ! has go; then
+    add_dependency_args go
+    return
+  fi
+  if ! has age; then
+    add_dependency_args age
+    return
+  fi
   go_install github.com/getsops/sops/v3/cmd/sops@latest
 }
 
 setting_common() {
+  setup_age_key_file_env
   setup_global_env
-  tips
+}
+
+# mac は XDG_CONFIG_HOME が無いと ~/Library/Application Support/sops/age/keys.txt を探すので、
+# 鍵の場所を OS 共通で固定する。
+setup_age_key_file_env() {
+  # shellcheck disable=SC2016
+  echo 'export SOPS_AGE_KEY_FILE=$HOME/.config/sops/age/keys.txt' | tee_to_works_zsh SOPS_AGE_KEY_FILE=
 }
 
 # zsh 起動時に読み込む global.enc.env の置き場 (読み込みは apps/zsh/.zsh/90.additional.zsh)。
@@ -30,24 +45,29 @@ setup_global_env() {
 }
 
 tips() {
-  cat <<'EOF' | inki
+  cat <<'EOF'
 - 仕組み
   1. sops がランダムな「データ鍵」を 1 つ作り、値 (PASS=...)
      をそのデータ鍵で暗号化する。値の暗号文は 1 つだけ。
   2. そのデータ鍵を、A の公開鍵で暗号化したものと、B の公開鍵で暗号化したものの 2
      つを作り、ファイルの末尾に並べて保存する。
   3. 復号するときは、自分の秘密鍵で自分宛てのデータ鍵を取り出し、そのデータ鍵で値を戻す。
-- 鍵を作る (age。未導入なら `setup age`)
+- 鍵を作る (age)
   ```sh
   mkdir -p ~/.config/sops/age
   age-keygen -o ~/.config/sops/age/keys.txt
   # 公開鍵 (age1...) を後で .sops.yaml に書く。秘密鍵は git に入れない
   age-keygen -y ~/.config/sops/age/keys.txt
   ```
-  - `~/.config/sops/age/keys.txt` は sops の既定の探索先。env は要らない
-  - identity の探索順は SOPS_AGE_SSH_PRIVATE_KEY_FILE, SOPS_AGE_SSH_PRIVATE_KEY_CMD,
-    ~/.ssh/id_ed25519, SOPS_AGE_KEY, SOPS_AGE_KEY_FILE, SOPS_AGE_KEY_CMD
-  - 別マシンへ渡すときは秘密鍵をコピーするか `SOPS_AGE_KEY_FILE=/path/keys.txt`
+  - 秘密鍵は次の場所をすべて読み、見つかった鍵を全部試す (先勝ちではない。`sops --help` には載っていない)
+    - SOPS_AGE_SSH_PRIVATE_KEY_FILE, SOPS_AGE_SSH_PRIVATE_KEY_CMD, ~/.ssh/id_ed25519, ~/.ssh/id_rsa
+    - SOPS_AGE_KEY, SOPS_AGE_KEY_FILE, SOPS_AGE_KEY_CMD
+    - `<config dir>/sops/age/keys.txt`
+  - `<config dir>` は Linux なら `${XDG_CONFIG_HOME:-~/.config}`。
+    mac は XDG_CONFIG_HOME が無いと `~/Library/Application Support` になり ~/.config を見ない
+  - そのため `setup sops` が ~/.works.zsh に `SOPS_AGE_KEY_FILE=$HOME/.config/sops/age/keys.txt` を書く
+  - 鍵が見つからないと `Did not find keys in locations '...'` に探した場所が出る
+  - 別マシンへ渡すときは秘密鍵を同じ場所にコピーする
 - リポジトリ直下に .sops.yaml を置く (どのパスをどの鍵で暗号化するかの SSOT)
   ```sh
   gen_sops_yaml              # *.enc.{yaml,yml,json,env} を自分の公開鍵で暗号化するルールを書く
