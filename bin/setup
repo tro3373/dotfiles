@@ -91,17 +91,14 @@ handle_view_if_needed() {
   if [[ $view -ne 1 ]]; then
     return
   fi
-  local filter_keys=
+  local filter_keys=.
   if [[ ${#args[@]} -ne 0 ]]; then
     filter_keys="($(echo -n "${args[@]}" | tr ' ' '|'))"
   fi
 
   installable_apps |
-    if [[ -z $filter_keys ]]; then
-      cat -
-    else
-      cat - | grep -E "$filter_keys"
-    fi | xargs -n 1 -I{} echo "$apps_dir"/{}/config | v
+    grep -E "$filter_keys" |
+    xargs -n 1 -I{} echo "$apps_dir"/{}/config | v
   exit 0
 }
 

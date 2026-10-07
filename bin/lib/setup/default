@@ -1,7 +1,13 @@
 #!/bin/bash
-
 # shellcheck disable=SC2034
 # shellcheck disable=SC2154
+
+# setup がアプリごとに source して、各 config が上書きする既定の hook を定義し直す
+if [[ ${BASH_SOURCE[0]} == "${0}" ]]; then
+  echo "${BASH_SOURCE[0]} is source only" >&2
+  exit 1
+fi
+
 workdir="$app_dir/tmp"
 
 install_common() {
