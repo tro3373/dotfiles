@@ -37,3 +37,4 @@ is_installed() { has_or_local_package "$app"; }
 install_via_os_default() { def_install "$app"; }
 
 setconfig() { :; }
+tips() { :; }

@@ -67,6 +67,20 @@ dlog() { if is_debug; then _log yellow "$*"; fi; }
 inki() { cat - | ink green; }
 inke() { cat - | ink red; }
 inkd() { cat - | ink yellow; }
+# stdin を tips として表示する。``` で囲んだコマンド部分は cyan、それ以外は green。
+ink_tips() {
+  local line in_code=0
+  while IFS= read -r line; do
+    local color=green
+    if [[ $line =~ ^[[:space:]]*\`\`\` ]]; then
+      in_code=$((1 - in_code))
+      color=cyan
+    fi
+    ((in_code)) && color=cyan
+    # ink は stdin が pipe だと読み込むので、ループの残りの行を食べさせない
+    ink "$color" "$line" </dev/null
+  done
+}
 has() { command -v "${1}" >&/dev/null; }
 hasp() { command -p -v "${1}" >&/dev/null; } # -p: Search command in default PATH entries
 has_exclude_dot() { type -a "$1" 2>/dev/null | grep -v '.dot/bin/' | grep -q "$1"; }

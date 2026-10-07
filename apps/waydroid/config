@@ -20,7 +20,6 @@ setting_arch() {
   exe sudo systemctl enable --now waydroid-container.service
   init_waydroid_images
   install_libndk
-  tips_waydroid
 }
 
 # system type を二重管理しないよう、イメージ導入は bin/wad init に寄せる
@@ -48,8 +47,8 @@ install_libndk() {
   exe sudo venv/bin/python3 main.py install libndk
 }
 
-tips_waydroid() {
-  cat <<'EOF' | inki
+tips() {
+  cat <<'EOF'
 - GAPPS イメージは Play Protect 未認証。Play へのログインを弾かれることがある
   - 未登録でも通ることはあるので、弾かれてから対処すればいい
   - `wad cert` で android_id と登録先 URL が出る

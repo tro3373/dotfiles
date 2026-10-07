@@ -21,7 +21,6 @@ install_ubuntu() {
 }
 install_redhat() { not_supported; }
 setting_common() {
-  tips_cwd_fork
   if os orb; then
     not_supported
     return
@@ -30,8 +29,8 @@ setting_common() {
   make_lnk_with_bkup "$app_dir/wezterm" "${HOME}/.config/wezterm"
 }
 
-tips_cwd_fork() {
-  cat <<'EOF' | inki
+tips() {
+  cat <<'EOF'
 - Tips for cwd fork
   - Check or add below to .tmux.conf
     ```tmux

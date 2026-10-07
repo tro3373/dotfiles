@@ -25,7 +25,6 @@ setting_arch() {
   make_link_to_bin cliphist-x11-watch
   _setup_watch_service
   _setup_keybinding
-  tips
 }
 
 _setup_watch_service() {
@@ -45,7 +44,7 @@ _setup_keybinding() {
 }
 
 tips() {
-  cat <<'EOF' | inki
+  cat <<'EOF'
 - 構成
   - cliphist: コピー履歴を保存する DB (`cliphist list` で中身確認)
   - cliphist-tui: 履歴を fzf で選んでクリップボードへ戻す TUI

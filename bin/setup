@@ -219,6 +219,7 @@ setup_for_app() {
   if is_dry || is_installed; then
     for_setting=1
     setting_app
+    tips | ink_tips
   fi
 }
 

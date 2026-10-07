@@ -6,8 +6,9 @@ install_arch() {
 
 # FIXME: NOT WORK!!!
 # - remote desktop dialog open, and close with escape, then start hering...
-setting_arch() {
-  cat <<'EOF' | inki
+tips() {
+  is_arch || return 0
+  cat <<'EOF'
 - Setup manjaro gnome
   - Set hotkey to shift+1 in openwhispr gui.
   - and exec below

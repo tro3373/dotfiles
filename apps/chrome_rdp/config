@@ -14,11 +14,8 @@ install_ubuntu() {
   log "=> Success to install! Access chrome remote descktop https://remotedesktop.google.com/access/"
 }
 
-setting_common() {
-  tips
-}
 tips() {
-  cat <<'EOF' | inki
+  cat <<'EOF'
 - setup
   `crd --setup`
 EOF
