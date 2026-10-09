@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+readonly max_len=280
+readonly user_data_dir="$HOME/.local/share/xp/chrome"
+
+usage() {
+  cat <<EOF
+
+Open the X post screen filled with the text from stdin (Web Intent).
+Press the post button yourself.
+
+Usage:
+  echo "<text>" | $(basename "$0") [--url <URL>] [--dry-run]
+
+Options:
+  --url <URL>  Append the URL to the post
+  --dry-run    Print the text, URL and length (N/${max_len}) without opening
+
+EOF
+}
+
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --url)
+        if [[ $# -lt 2 ]]; then
+          echo "==> Error: --url needs a value" >&2
+          return 2
+        fi
+        url="$2"
+        shift 2
+        ;;
+      --dry-run)
+        dry_run=1
+        shift
+        ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      *)
+        usage >&2
+        return 2
+        ;;
+    esac
+  done
+}
+
+# X の数え方。twitter-text config v3 の重み表で、narrow の範囲は 1 字 1、それ以外は 2。
+# URL は長さに関わらず 23。intent の url は本文の後ろに空白 1 つを挟んで付く。
+# https://docs.x.com/fundamentals/counting-characters
+post_length() {
+  jq -nr --arg text "$text" --arg url "$url" '
+    def url_len: 23;
+    def urls: "https?://[!-~]*[A-Za-z0-9/=_#-]";
+    # U+0000-10FF, U+2000-200D, U+2010-201F, U+2032-2037
+    def narrow: . as $c | any([0, 4351], [8192, 8205], [8208, 8223], [8242, 8247]; .[0] <= $c and $c <= .[1]);
+    def weighted_len: ([scan(urls)] | length * url_len) + (gsub(urls; "") | explode | map(if narrow then 1 else 2 end) | add // 0);
+    ($text | weighted_len) + (if $url == "" then 0 else 1 + url_len end)
+  '
+}
+
+intent_url() {
+  jq -nr --arg text "$text" --arg url "$url" \
+    '"https://x.com/intent/tweet?text=\($text | @uri)" + (if $url == "" then "" else "&url=\($url | @uri)" end)'
+}
+
+main() {
+  set -euo pipefail
+  local url='' dry_run=''
+  parse_args "$@"
+  if [[ -t 0 ]]; then
+    usage >&2
+    return 2
+  fi
+  local text
+  text=$(jq -Rsr trim)
+  if [[ -z $text ]]; then
+    echo "==> Error: Empty text" >&2
+    return 1
+  fi
+  local len
+  len=$(post_length)
+  if [[ -n $dry_run ]]; then
+    printf '%s\n' "$text" ${url:+"$url"} "(${len}/${max_len})"
+    return
+  fi
+  if ((len > max_len)); then
+    echo "==> Error: ${len} exceeds ${max_len}" >&2
+    return 1
+  fi
+  # chrome は CHROME_PROFILE があると --profile-directory を足すので空にする。
+  # 初回は --no-first-run が無いと Chrome の初回画面で止まり、intent を開かない。
+  CHROME_PROFILE='' chrome --user-data-dir="$user_data_dir" --no-first-run "$(intent_url)"
+}
+main "$@"
