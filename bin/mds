@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+usage() {
+  cat <<EOF
+
+  Convert Markdown to HTML and copy it to clipboard as rich text.
+  Paste it into Slack to keep links, bold, lists and code blocks.
+
+  Usage:
+    $(basename "$0") <markdown>
+    cat file.md | $(basename "$0")
+
+EOF
+}
+
+# Slack keeps formatting only when pasted as text/html, not as mrkdwn text.
+copy_html() {
+  if [[ -n $WAYLAND_DISPLAY ]]; then
+    wl-copy --type text/html
+    return
+  fi
+  if [[ -n $DISPLAY ]]; then
+    xclip -selection clipboard -t text/html
+    return
+  fi
+  echo "No Wayland/X display to copy text/html." >&2
+  return 1
+}
+
+# Slack drops margins between pasted blocks, so put an empty paragraph
+# between top-level blocks. Depth counts nested container tags in marked output.
+separate_blocks() {
+  awk '
+    {
+      if (pending && $0 != "") { print "<p><br></p>"; pending = 0 }
+      print
+      depth += gsub(/<(ul|ol|blockquote|pre|table)[ >]/, "&")
+      depth -= gsub(/<\/(ul|ol|blockquote|pre|table)>/, "&")
+      if (depth == 0 && $0 ~ /(<\/(p|ul|ol|blockquote|pre|table|h[1-6])>|<hr>)$/) pending = 1
+    }
+  '
+}
+
+main() {
+  set -eo pipefail
+  if [[ $# -eq 0 && -t 0 ]]; then
+    usage
+    exit 1
+  fi
+  local md="$*"
+  if [[ $# -eq 0 ]]; then
+    md="$(cat)"
+  fi
+  printf '%s' "$md" |
+    bunx marked@latest --gfm --breaks 2>/dev/null |
+    separate_blocks |
+    copy_html
+}
+main "$@"
