@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# base に merge 済みのブランチを消す。既定はローカル、-r で origin。既定は dry-run、-e で実行。
+# usage: git_branch_clean [-e] [-r] [base]  (base 既定: origin/HEAD の指す先)
+
+dummy="echo"
+remote=
+base=
+
+initialize() {
+  for arg in "$@"; do
+    case "$arg" in
+      -e) dummy= ;;
+      -r) remote=1 ;;
+      *) base="$arg" ;;
+    esac
+  done
+  if [[ -z $base ]]; then
+    base=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's#^origin/##')
+  fi
+}
+
+clean_local() {
+  # `*` は今の checkout、`+` は別 worktree で checkout 中
+  git branch --merged "$base" |
+    { grep -vE "^\*|^\+|^\s*(${base}|develop|main|master)$" || true; } |
+    xargs -r $dummy git branch -d
+}
+
+clean_remote() {
+  git branch -r --merged "origin/$base" |
+    grep -E '^\s*origin/' |
+    { grep -vE "origin/(HEAD|${base}|develop|main|master)$" || true; } |
+    sed 's#^ *origin/##' |
+    xargs -r -n1 $dummy git push origin --delete
+}
+
+main() {
+  set -euo pipefail
+  initialize "$@"
+  git fetch --prune
+  if [[ -n $remote ]]; then
+    clean_remote
+    return
+  fi
+  clean_local
+}
+main "$@"
