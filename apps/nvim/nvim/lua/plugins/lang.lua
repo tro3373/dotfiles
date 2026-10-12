@@ -74,13 +74,24 @@ return {
         if vim.bo[buf].filetype == "tsv" then
           table.insert(cmd, 2, "-t")
         end
+        -- csvlens は UTF-8 以外 (cp932 等) を parse error で拒否するので、変換して stdin で渡す
+        local fenc = vim.bo[buf].fileencoding
+        if fenc ~= "" and fenc ~= "utf-8" then
+          table.remove(cmd)
+          cmd = ("iconv -f %s -t UTF-8 %s | %s"):format(
+            vim.fn.shellescape(fenc),
+            vim.fn.shellescape(file),
+            table.concat(cmd, " ")
+          )
+        end
         vim.cmd.tabnew()
         local term = vim.api.nvim_get_current_buf()
         vim.bo[term].bufhidden = "wipe"
         vim.fn.jobstart(cmd, {
           term = true,
-          on_exit = function()
-            if vim.api.nvim_buf_is_valid(term) then
+          -- 異常終了時はエラーを読めるようにタブを残す
+          on_exit = function(_, code)
+            if code == 0 and vim.api.nvim_buf_is_valid(term) then
               vim.api.nvim_buf_delete(term, { force = true })
             end
           end,
