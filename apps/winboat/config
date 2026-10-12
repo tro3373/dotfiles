@@ -24,4 +24,38 @@ setting_arch() {
   # shellcheck disable=SC2154
   make_lnk_with_bkup "$app_dir/winboat.desktop" "$HOME/.local/share/applications/winboat.desktop"
   make_lnk_with_bkup "$app_dir/winboat.svg" "$HOME/.local/share/icons/winboat.svg"
+  exe mkdir -p "$HOME/winboat/shared"
+  _add_rdp_shared_drive
+  _disable_samba
+}
+# 共有は RDP のドライブ転送で行うので、使えない samba (\\host.lan\Data) は止める。
+# 反映にはコンテナの作り直しが要る。
+# WinBoat は自分で起動したときにだけ host 側のポートを読み直すので、作り直したら WinBoat も再起動する。
+_disable_samba() {
+  local compose="$HOME/.winboat/docker-compose.yml"
+  if [[ ! -f $compose ]]; then
+    log "===> Skip disabling samba: $compose not found. Install Windows via WinBoat and re-run."
+    return
+  fi
+  if grep -q '^ *SAMBA:' "$compose"; then
+    return
+  fi
+  exe "sed -i 's/^\( *\)USERNAME:/\1SAMBA: \"N\"\n&/' '$compose'"
+  log "===> Run 'docker compose -f $compose up -d' and restart WinBoat to apply (Windows restarts)."
+}
+# host の AppArmor の smbd プロファイルがコンテナ内 smbd の共有ディレクトリ読み取りを拒否するため、
+# samba (\\host.lan\Data) ではなく RDP のドライブ転送 (\\tsclient\shared) で共有する。
+_add_rdp_shared_drive() {
+  local conf="$HOME/.winboat/winboat.config.json"
+  if [[ ! -f $conf ]]; then
+    log "===> Skip adding RDP shared drive: $conf not found. Launch WinBoat once and re-run."
+    return
+  fi
+  # 起動中の WinBoat は設定を変更するたびにメモリ上の内容でファイルを上書きするので、追記が消える
+  if pgrep -x winboat >/dev/null; then
+    elog "===> Skip adding RDP shared drive: WinBoat is running. Quit it and re-run."
+    return
+  fi
+  local arg="/drive:shared,$HOME/winboat/shared"
+  exe "jq --arg a '$arg' '.rdpArgs |= (map(select(.newArg != \$a)) + [{newArg: \$a, isReplacement: false}])' '$conf' >'$conf.tmp' && mv '$conf.tmp' '$conf'"
 }
