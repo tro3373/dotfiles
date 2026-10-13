@@ -254,21 +254,40 @@ git_head_of_top() {
   _gh_ab=${acache[$top]}
 }
 
+# worktree ルートのブランチが親リポジトリへ取り込み済みなら 1、それ以外は 0 を nameref へ返す。
+# 判定規則は lib/git_merged が持つ。worktree ルート単位で呼び出し元の mcache へメモ化する。
+git_merged_of_top() {
+  local -n _gm_out=$1
+  local top=$2 count
+  _gm_out=0
+  [[ -n $top ]] || return 0
+  if [[ -z ${mcache[$top]+set} ]]; then
+    mcache[$top]=0
+    count=$(git_unmerged_count "$top") && ((count == 0)) && mcache[$top]=1
+  fi
+  _gm_out=${mcache[$top]}
+}
+
 # 差 ("<ahead> <behind>") を ↑N↓M の表示へ nameref で返す。0 の側は出さない。
-# color=1 で ↑ を緑・↓ を赤にする (herdr と同じ配色)。39 は文字色だけを既定へ戻す
+# merged=1 なら親リポジトリへ取り込み済みの印を後ろに足す。
+# color=1 で ↑ を緑・↓ を赤・取り込み済みを紫 (GitHub の merged と同じ) にする (↑↓ は herdr と同じ配色)。39 は文字色だけを既定へ戻す
 # (0 だと行に掛けた他の属性まで消える)。
 ab_text() {
   local -n _at_out=$1
-  local ahead=${2% *} behind=${2#* } color=$3 up='' down='' end=''
+  local ahead=${2% *} behind=${2#* } color=$3 merged=$4 up='' down='' tick='' end=''
   _at_out=''
-  [[ -n $2 ]] || return 0
   if ((color)); then
     up=$'\033[32m'
     down=$'\033[31m'
+    tick=$'\033[35m'
     end=$'\033[39m'
   fi
-  ((ahead > 0)) && _at_out+="${up}↑${ahead}${end}"
-  ((behind > 0)) && _at_out+="${down}↓${behind}${end}"
+  if [[ -n $2 ]]; then
+    ((ahead > 0)) && _at_out+="${up}↑${ahead}${end}"
+    ((behind > 0)) && _at_out+="${down}↓${behind}${end}"
+  fi
+  # shellcheck disable=SC2154  # lib/git_merged が定義する
+  ((merged)) && _at_out+="${tick}${git_merged_icon}${end}"
   return 0
 }
 
@@ -336,7 +355,7 @@ collect_session_stats() {
 # repo 名があるので、セッション名の '<repo>-' 部分は冗長で、長いと後ろが切れる。
 # 手で付けた名前は rename の結果を見せるため、そのまま出す。
 collect_sessions() {
-  local name nwin attached mark repo top st branch ab
+  local name nwin attached mark repo top st branch ab merged
   while IFS=$'\t' read -r name nwin attached; do
     [[ -n $name ]] || continue
     mark=''
@@ -347,6 +366,8 @@ collect_sessions() {
     sstatus[$name]=$st
     git_head_of_top branch ab "$top"
     sab[$name]=$ab
+    git_merged_of_top merged "$top"
+    smerged[$name]=$merged
     sshown[$name]=$name
     # top は symlink 解決済み。symlink 経由のパスで命名したセッションは一致せず名前のまま
     [[ -n $branch && $name == "$(tmux_session_name "$top")" ]] && sshown[$name]=$branch
@@ -385,7 +406,7 @@ sort_groups() {
 
 # 名前列・↑↓ 列・右列の幅を決める。list 幅が分かる場合は Nw Mp * が右端へ収まるよう
 # 名前列を削る (最長名へ合わせるだけだと右列が画面外へ溢れる)。
-# ↑↓ 列は全行で差が無ければ幅 0 (列も後ろの空白も出さない)。
+# ↑↓ 列は全行で差も取り込み済みの印も無ければ幅 0 (列も後ろの空白も出さない)。
 calc_columns() {
   local name w rightw=0 ab
   for name in "${!sright[@]}"; do
@@ -393,7 +414,7 @@ calc_columns() {
     ((w > namew)) && namew=$w
     disp_width w "${sright[$name]}"
     ((w > rightw)) && rightw=$w
-    ab_text ab "${sab[$name]}" 0
+    ab_text ab "${sab[$name]}" 0 "${smerged[$name]}"
     disp_width w "$ab"
     ((w > abw)) && abw=$w
   done
@@ -435,11 +456,11 @@ mark_pad() {
 # 状態色の行は緑地に緑で読めなくなるので ↑↓ に色を付けない。
 ab_column() {
   local -n _ac_out=$1
-  local ab=$2 colored=$3 plain shown w
+  local ab=$2 colored=$3 merged=$4 plain shown w
   _ac_out=''
   ((abw > 0)) || return 0
-  ab_text plain "$ab" 0
-  ab_text shown "$ab" "$colored"
+  ab_text plain "$ab" 0 "$merged"
+  ab_text shown "$ab" "$colored" "$merged"
   # %*s は escape まで幅に数えるので、空白の数は色無しの表示幅から出す
   disp_width w "$plain"
   printf -v _ac_out '%*s%s ' $((abw - w)) '' "$shown"
@@ -462,7 +483,7 @@ print_session_row() {
     colored=0
   fi
   mark_pad pad "${sstatus[$name]:-}"
-  ab_column abcol "${sab[$name]}" "$colored"
+  ab_column abcol "${sab[$name]}" "$colored" "${smerged[$name]}"
   printf '%s\t%s%s%s%s%*s%s%s\n' "$name" "$pre" \
     "$pad" "$abcol" "$shown" "$list_gap" '' "${sright[$name]}" "$post"
 }
@@ -488,8 +509,8 @@ print_groups() {
 # 各行は "<hidden>\t<表示>" のタブ区切り。fzf は --with-nth=2 で表示側だけを見せ、
 # {1} で素のセッション名 (preview / kill / switch のターゲット) を取る。
 list_sessions() {
-  local -A pcount=() prank=() spath=() rcache=() tcache=() bcache=() acache=() \
-  gcount=() waiters=() others=() sright=() sstatus=() sab=() sshown=()
+  local -A pcount=() prank=() spath=() rcache=() tcache=() bcache=() acache=() mcache=() \
+  gcount=() waiters=() others=() sright=() sstatus=() sab=() smerged=() sshown=()
   local -a ordered=()
   local namew=0 abw=0
 
@@ -497,6 +518,8 @@ list_sessions() {
   # hook 経路 (tmuxs waiting 等) で読まないよう、ここで読み込む
   # shellcheck disable=SC1091
   source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/tmux_session_name"
+  # shellcheck disable=SC1091
+  source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/git_merged"
   collect_session_stats
   collect_sessions
   sort_groups

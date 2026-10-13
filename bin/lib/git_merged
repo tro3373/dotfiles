@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# worktree のブランチが親リポジトリへ取り込み済みかの判定規則 (SSOT)。
+# bin/git_worktree と bin/tmuxs が source する。
+#
+# 比較先は upstream でも origin/HEAD でもなく、main worktree (親リポジトリ) の HEAD。
+# git_worktree -m は push せずローカルの親リポジトリへ merge するので、
+# リモートと比べると取り込み済みの worktree が未取り込みに見える。
+# squash / rebase merge は祖先関係が残らないので未取り込みに見える。
+
+# 取り込み済みの印 (Nerd Font の Octicons git-merge)。
+# 編集で消えても気付けるよう、見えない私用領域の文字はエスケープで書く
+# shellcheck disable=SC2034  # source した側が使う
+git_merged_icon=$'\uf419'
+
+# worktree ルートの HEAD のうち、main worktree の HEAD に無いコミット数を出す。
+# 0 は取り込み済み。次のときは何も出さず非ゼロで返る:
+#   - main worktree 自身 (自分と比べると常に 0)
+#   - detached HEAD・git 管理外・比較できない
+#   - 作ってから 1 つもコミットしていないブランチ (祖先なので 0 になり、
+#     取り込み済みと区別できない。消してよい印に見せない)
+git_unmerged_count() {
+  local top=$1 branch created
+  local -a dirs=()
+  mapfile -t dirs < <(git -C "$top" rev-parse --path-format=absolute \
+    --git-dir --git-common-dir 2>/dev/null)
+  ((${#dirs[@]} == 2)) || return 1
+  [[ ${dirs[0]} != "${dirs[1]}" ]] || return 1
+  branch=$(git -C "$top" symbolic-ref -q HEAD) || return 1
+  # reflog の最古の行がブランチ作成時点。reflog が期限切れで消えていれば判定を諦めない
+  created=$(git -C "$top" reflog show --format=%H "$branch" -- 2>/dev/null | tail -n1)
+  [[ $created != "$(git -C "$top" rev-parse HEAD)" ]] || return 1
+  git -C "$top" rev-list --count main-worktree/HEAD..HEAD 2>/dev/null
+}
+
+# source 専用。直接実行されたら何もせず失敗する
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  echo "${0##*/}: source only" >&2
+  exit 1
+fi

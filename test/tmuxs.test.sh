@@ -108,6 +108,16 @@ setup_test_repos() (
   tgit -C "${repos}/delta" worktree add -q "${repos}/delta-worktree/up" \
     -b up refs/remotes/origin/main
   tgit -C "${repos}/delta-worktree/up" branch -q --set-upstream-to=upbase
+  # 取り込み済みの印用。fin は親リポジトリへ merge 済み、wip は未取り込み、new はコミット無し。
+  # remote も upstream も無いので ↑↓ は出ない
+  tgit init -q -b main "${repos}/eps"
+  tgit -C "${repos}/eps" commit -q --allow-empty -m e0
+  for i in fin wip new; do
+    tgit -C "${repos}/eps" worktree add -q "${repos}/eps-worktree/${i}" -b "${i}"
+  done
+  tgit -C "${repos}/eps-worktree/fin" commit -q --allow-empty -m f1
+  tgit -C "${repos}/eps-worktree/wip" commit -q --allow-empty -m w1
+  tgit -C "${repos}/eps" merge -q fin
 )
 
 # ANSI エスケープだけを落とす (タブ区切りは残す)。
@@ -789,6 +799,25 @@ test_list_ahead_behind_fits_width() {
     "$(printf '%s\n' "${out}" | tail -n1 | cut -f2- | awk '{print length($0)}')"
 }
 
+# 19h. 親リポジトリの HEAD へ取り込み済みの worktree は ↑↓ 列に印を出し、紫にする。
+#      未取り込み・コミットの無い worktree・親リポジトリ自身には出さない。
+test_list_merged_mark() {
+  clear_markers
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  export FAKE_SESSIONS=$'eps\t1\t\neps-fin\t1\t\neps-wip\t1\t\neps-new\t1\t'
+  set_fake_panes \
+    eps '%1' "${repos}/eps" \
+    eps-fin '%2' "${repos}/eps-worktree/fin" \
+    eps-wip '%3' "${repos}/eps-worktree/wip" \
+    eps-new '%4' "${repos}/eps-worktree/new"
+
+  check 'list: 取り込み済みの worktree だけに印を出す' \
+    $'\teps\neps\t      main  1w1p\neps-fin\t    \uf419 fin   1w1p\neps-wip\t      wip   1w1p\neps-new\t      new   1w1p' \
+    "$(list_plain)"
+  check 'list: 印を紫で出す' yes \
+    "$(grep -q $'^eps-fin\t.*\033\\[35m\uf419\033\\[39m' <<<"$(run_list)" && echo yes || echo no)"
+}
+
 # __fetch 用。clone 元 (remote) を進めて、clone 側の origin/main が追従するかを見る。
 # clone 直後は FETCH_HEAD が無い (= 直近の fetch 扱いにならない)。
 setup_fetch_repos() (
@@ -895,6 +924,7 @@ main() {
   test_list_branch_name_and_ahead_behind
   test_list_ahead_behind_colors
   test_list_ahead_behind_fits_width
+  test_list_merged_mark
   test_list_empty
   test_fetch_updates_origin
   test_fetch_skips_recently_fetched

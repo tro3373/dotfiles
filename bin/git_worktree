@@ -4,6 +4,8 @@ command_name=$(basename "$0") && readonly command_name
 worktree_dir_suffix="worktree" && readonly worktree_dir_suffix
 repo_root_label="RepositoryRoot" && readonly repo_root_label
 readonly depends=(git fzf)
+# shellcheck disable=SC1091
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/git_merged"
 mode=list
 branch=
 commit_hash=
@@ -155,6 +157,7 @@ _list_root_and_worktree_directories() {
       [[ -z $_target_path ]] && continue
       [[ $_target_path =~ ^#.* ]] && continue
       label="($repo_root_label)"
+      merged=$(_merged_label "$_target_path")
       if [[ $_target_path =~ ^$git_worktree_dir/ ]]; then
         # 一覧は read-only に保つ: リンク未生成 worktree で tasks を起動して
         # 自己修復(ファイル生成)させない。実体があるときだけ summary を引く。
@@ -163,9 +166,27 @@ _list_root_and_worktree_directories() {
           label=$(tasks --summary -f "${_target_path%/}/.tasks.md" 2>/dev/null || echo '(no tasks)')
       fi
       _time=$(stat -c %y "$_target_path" | cut -d. -f1 | sed -e 's, ,_,g')
-      printf "%s\t%s\t%s\n" "$_time" "$label" "$_target_path"
+      printf "%s\t%s\t%s\t%s\n" "$_time" "$label" "$merged" "$_target_path"
     done | sort -k 2 | column -t -s $'\t'
 
+}
+
+# 親リポジトリへの取り込み状況を一覧の 1 列にする。取り込み済みは印、
+# 未取り込みは +<コミット数>、判定対象外 (親リポジトリ自身・コミット無し・detached) は空欄。
+# 空欄は NBSP で出す。空文字や空白だと column が隣の区切りと一緒に詰めて桁がずれる。
+# awk の既定の区切りは NBSP を含まないので、末尾フィールドのパス取り出しは壊れない。
+_merged_label() {
+  local count
+  count=$(git_unmerged_count "$1") || {
+    echo $'\u00a0'
+    return 0
+  }
+  if [[ $count -eq 0 ]]; then
+    # shellcheck disable=SC2154  # lib/git_merged が定義する
+    echo "$git_merged_icon"
+    return 0
+  fi
+  echo "+$count"
 }
 
 _add_worktree() {

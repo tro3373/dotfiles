@@ -18,6 +18,9 @@
 #   * create_default_ln_config: ignored ファイルが 1 件も無いリポでも
 #       grep の非ゼロ終了で落ちず、空 config を書く。
 #
+#   * _merged_label: 親リポジトリの HEAD への取り込み状況を 印 / +N / 空欄 で返す。
+#       作ってからコミットの無いブランチは取り込み済みに見せない。
+#
 #   test/git_worktree   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
@@ -114,6 +117,7 @@ test_remove_untracked_does_not_need_sudo() {
   initial_toplevel="${git_org_root_dir}"
   local sudo_called=0
   (
+    # shellcheck disable=SC2329  # source した _do_remove_worktree が呼ぶ
     _force_remove_leftover() { echo CALLED >"${tmproot}/untracked.called"; }
     cd "${org}" && _do_remove_worktree "${wt}"
   ) >/dev/null 2>&1
@@ -137,6 +141,7 @@ test_remove_leftover_leaves_no_stale_entry() {
   initial_toplevel="${git_org_root_dir}"
   (
     # sudo rm 相当。確認プロンプトを挟まず権限を戻して消す
+    # shellcheck disable=SC2329  # source した _do_remove_worktree が呼ぶ
     _force_remove_leftover() { chmod -R u+w "$1" && rm -rf "$1"; }
     cd "${org}" && _do_remove_worktree "${wt}"
   ) >/dev/null 2>&1
@@ -151,6 +156,7 @@ test_remove_leftover_leaves_no_stale_entry() {
 # fzf は引数記録スタブに差し替える (stdin の一覧は捨て、受け取った引数を 1 行 1 個で
 # 返す)。スタブも branch 代入もサブシェル body に閉じるので他テストへ漏れない。
 capture_fzf_args() (
+  # shellcheck disable=SC2329  # source した _fzf_worktrees が呼ぶ
   fzf() {
     cat >/dev/null
     printf '%s\n' "$@"
@@ -201,6 +207,7 @@ test_org_root_outside_repo_fails() {
   mkdir -p "${outside}"
   local out status=0
   out=$(
+    # shellcheck disable=SC2329  # source した get_org_git_root が呼ぶ
     elog() { return 1; }
     cd "${outside}" && get_org_git_root
   ) || status=1
@@ -235,6 +242,27 @@ test_default_ln_config_without_ignored() {
   check 'no-ignored: 空の config を書く' '0' "$(wc -l <"${config}" | tr -d ' ')"
 }
 
+# 取り込み済み => 印 / 未取り込み => +N / 親リポ自身・コミット無し・detached => 空欄 (NBSP)
+test_merged_label() {
+  new_repo merged
+  local fin open fresh det
+  fin=$(add_wt feat-done)
+  open=$(add_wt feat-open)
+  fresh=$(add_wt feat-fresh)
+  git -C "${fin}" commit -q --allow-empty -m d1
+  git -C "${open}" commit -q --allow-empty -m o1
+  git -C "${open}" commit -q --allow-empty -m o2
+  git -C "${org}" merge -q feat-done
+  git -C "${org}" commit -q --allow-empty -m after
+  git -C "${org}" worktree add -q --detach "${org_wt}/det" >/dev/null 2>&1
+  det=$(realpath "${org_wt}/det")
+  check 'merged-label: 取り込み済みは印' $'\uf419' "$(_merged_label "${fin}")"
+  check 'merged-label: 未取り込みはコミット数' '+2' "$(_merged_label "${open}")"
+  check 'merged-label: コミット無しは取り込み済みに見せない' $'\u00a0' "$(_merged_label "${fresh}")"
+  check 'merged-label: detached HEAD は対象外' $'\u00a0' "$(_merged_label "${det}")"
+  check 'merged-label: 親リポジトリ自身は対象外' $'\u00a0' "$(_merged_label "${org}")"
+}
+
 main() {
   set -uo pipefail
   tmproot=$(mktemp -d)
@@ -251,6 +279,7 @@ main() {
   test_org_root_outside_repo_fails
   test_org_root_from_worktree_subdir
   test_default_ln_config_without_ignored
+  test_merged_label
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
