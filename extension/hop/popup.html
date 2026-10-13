@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+  <script type="module" src="popup.js"></script>
+</head>
+<body>
+  <section id="list-view">
+    <header>
+      <input id="search" type="search" placeholder="検索 / ↑↓ で選択 / Enter で実行" autocomplete="off">
+      <button id="add" class="icon" title="現在のタブを追加">+</button>
+    </header>
+    <ul id="items"></ul>
+    <p id="empty" class="muted" hidden>まだありません。開きたいページで + を押すと、そのページを登録できます。</p>
+    <footer>
+      <button id="json" class="link">JSON で一括編集 / バックアップ</button>
+    </footer>
+  </section>
+
+  <template id="section">
+    <li class="section"><span class="caret"></span><span class="group-name"></span><span class="count"></span></li>
+  </template>
+
+  <template id="item">
+    <li>
+      <img alt="">
+      <span class="text"><span class="name"></span><span class="host"></span></span>
+      <span class="tag" title="自動実行あり">auto</span>
+      <button class="edit" title="編集">&#9998;</button>
+    </li>
+  </template>
+
+  <form id="edit-view" hidden>
+    <label>名前<input name="name" required></label>
+    <label>グループ (任意)<input name="group" list="groups" autocomplete="off"></label>
+    <datalist id="groups"></datalist>
+    <label>URL<input name="url" type="url" required></label>
+    <label>開き方
+      <select name="target">
+        <option value="new">新しいタブ</option>
+        <option value="current">現在のタブ</option>
+      </select>
+    </label>
+    <div class="steps-head">
+      <span>自動実行 (任意)</span>
+      <button type="button" id="record" class="rec" title="URL を開き直して操作を録画する">&#9679; 録画</button>
+    </div>
+    <textarea name="steps" rows="7" spellcheck="false"></textarea>
+    <p class="error" id="edit-error"></p>
+    <div class="row">
+      <button type="button" id="delete" class="danger">削除</button>
+      <span class="spacer"></span>
+      <button type="button" class="cancel">キャンセル</button>
+      <button type="submit" class="primary">保存</button>
+    </div>
+  </form>
+
+  <form id="json-view" hidden>
+    <label>全アクション (並べ替え・バックアップ・復元)<textarea name="json" rows="16" spellcheck="false"></textarea></label>
+    <p class="error" id="json-error"></p>
+    <div class="row">
+      <button type="button" id="copy">コピー</button>
+      <span class="spacer"></span>
+      <button type="button" class="cancel">キャンセル</button>
+      <button type="submit" class="primary">保存</button>
+    </div>
+  </form>
+</body>
+</html>
