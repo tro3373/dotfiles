@@ -21,7 +21,8 @@ cat_prompt() {
   [[ $mode == ja ]] && llm_lang=日本語
   echo "Follow the instructions below. You **Must Use $llm_lang!**"
   # prp -ne gen-git-commit-message-output-format.md$
-  echo "Output only 'Commit Message' only."
+  # body の「なぜ」は diff に無いので、diff しか渡さないこの経路では捏造になる
+  echo "Output only the subject line (1 line). Do NOT write a body."
   git_diff_ignored --minimal --cached | prp -ne gen-git-commit-message.md$
   # git_diff_ignored --minimal --cached | prp -ne gen-git-commit-message-mitchellh.md$
 }
@@ -66,7 +67,7 @@ main() {
   if [[ $use_claude -eq 1 ]]; then
     lang="in English"
     [[ $mode == ja ]] && lang="in Japanese"
-    claude --dangerously-skip-permissions --enable-auto-mode --model haiku -p "/commit-ctx $lang. no ask. force do commit."
+    claude --dangerously-skip-permissions --enable-auto-mode --model haiku -p "/commit $lang. no ask. force do commit."
     return
   fi
   hass "${depends[@]}"
