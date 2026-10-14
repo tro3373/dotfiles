@@ -8,21 +8,6 @@ install_common() {
   exe 'tar -xzf gh*.tar.gz'
   exe 'sudo cp gh*/bin/gh /usr/local/bin/'
 }
-# install_common() {
-#   if ! has go; then
-#     log "golang not installed."
-#     return
-#   fi
-#   # Not work
-#   exe go install github.com/cli/cli/cmd/gh@latest
-# }
-# install_arch_by_snap() {
-#   if ! has snap; then
-#     log "No snap command exist. install snap first." 1>&2
-#     return
-#   fi
-#   exe sudo snap install gh --edge
-# }
 install_arch() {
   # NOTE: install latest `gh` command via `gh` command.
   # - yay install gh command to /usr/bin
@@ -38,36 +23,10 @@ install_mac() {
 }
 install_ubuntu() { not_supported; }
 install_redhat() { not_supported; }
+# hosts.yml は認証トークンを持つので、config.yml だけをリンクする。
 setting_common() {
-  exe "gh alias set --clobber co 'pr checkout'"
-  exe 'gh alias set --clobber b browse'
+  local dir=$HOME/.config/gh
+  make_dir_if_needed "$dir"
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/config.yml" "$dir/config.yml"
 }
-# setting_common() {
-#   if grep 'gh completion -s zsh' ~/.works.zsh >&/dev/null; then
-#     return
-#   fi
-#   exe "echo 'eval \"\$(gh completion -s zsh)\"' >> ~/.works.zsh"
-# }
-# setting_arch() { not_supported; }
-# setting_msys() { not_supported; }
-# setting_cygwin() { not_supported; }
-# setting_mac() { not_supported; }
-# setting_ubuntu() { not_supported; }
-# setting_redhat() { not_supported; }
-#is_installed
-#install_via_os_default
-#def_install
-#is_debug
-#is_dry
-#log
-#dlog
-#not_supported
-#make_link_dot2home
-#make_lnk_with_bkup
-#cd_work
-#make_work_if_needed
-#dl
-#dl_unzip
-#dl_untar
-#github
-#github_user_local
