@@ -5,29 +5,28 @@
 settings_d_mac="${HOME}/Library/Application Support/Cursor/User"
 settings_d_linux="$HOME/.config/Cursor/User"
 
-# install_arch() {
-#   def_install cursor-extracted
-#   make_link_to_bin cursor
-# }
+install_arch() {
+  def_install cursor-bin
+  make_link_to_bin cursor
+}
 
-_fnm=
+install_mac() {
+  def_install --cask cursor
+  make_link_to_bin cursor
+}
+
 install_common() {
-  if is_mac; then
-    def_install --cask cursor
-  else
-    log "==> Install from https://cursor.com/ja/download. Use Linux AppImage"
-    exe open https://cursor.com/ja/download
-    exe read -p "Press Enter after download"
-    local _bin
-    _bin=$(_find_binary)
-    if [[ -z $_bin ]]; then
-      log "==> No binary found"
-      return
-    fi
-    exe chmod +x "$_bin"
-    _fnm=$(basename "$_bin")
-    exe mv -v "$_bin" ~/tools/
+  log "==> Install from https://cursor.com/ja/download. Use Linux AppImage"
+  exe open https://cursor.com/ja/download
+  exe read -p "Press Enter after download"
+  local _bin
+  _bin=$(_find_binary)
+  if [[ -z $_bin ]]; then
+    log "==> No binary found"
+    return
   fi
+  exe chmod +x "$_bin"
+  exe mv -v "$_bin" ~/tools/
   make_link_to_bin cursor
 }
 
