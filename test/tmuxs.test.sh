@@ -7,6 +7,8 @@
 # PATH 先頭の偽 tmux が mutating 呼び出しをログ + 一時ファイルに記録し、query
 # (display-message / capture-pane / list-sessions / list-panes / show) を
 # 一時ファイル・env で答えるので実 tmux server を触らない。
+# 実 tmux での動作確認は `tmux -L <socket>` の隔離サーバで行い、
+# 終わったら kill-server する。fzf の x:kill-session で作業中のセッションを消し得る。
 # 偽 tmux の状態 (@tmuxs_* option 等) は FAKE_STATE_DIR 配下に永続化し、
 # hook の複数回起動 (別プロセス) 間でも tmux server のように状態を共有する。
 #
