@@ -65,12 +65,14 @@ default の `is_installed` は `has_or_local_package "$app"`、つまり **app�
 
 ```bash
 # apps/hunkdiff/config — install=hunkdiff / 実行コマンド=hunk のケース
-install_common() { npm_install hunkdiff; }
 is_installed()   { has hunk; }
+install_common() { npm_install hunkdiff; }
 ```
 
+- `is_installed` は config の先頭（shebang の直後）に書く。
 - 実行コマンド名 = ディレクトリ名 のとき（例: `apps/hunk` で実行コマンドも `hunk`）は default のままでよい。上書き不要。
 - 実行コマンドを持たない GUI アプリ等はパスの存在で判定する（例: `is_installed() { [[ -e /Applications/Foo.app ]]; }`）。
+- mac の cask で .app 名が分からないときは `brew list --cask {cask} >/dev/null 2>&1` で判定する（例: `apps/grok-bot/config`）。
 
 既存の上書き例:
 
