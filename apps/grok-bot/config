@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 
-install_common() { not_supported; }
-install_arch() {
-  def_install grok-bot-bin
+is_installed() {
+  if is_mac; then
+    brew list --cask grok-bot >/dev/null 2>&1
+    return
+  fi
+  has grok-bot
 }
+install_common() { not_supported; }
+install_arch() { def_install grok-bot-bin; }
+install_mac() { exe brew install --cask grok-bot; }
+setting_common() { no_settings; }
