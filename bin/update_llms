@@ -21,9 +21,9 @@ kick() {
     warn "==> No $cmd command exist, skip update."
     return 0
   }
-  info "=> Updating $cmd .."
+  info "=> $update_cmd .."
   $update_cmd
-  info "=> Updating $cmd Done!"
+  info "=> $update_cmd Done!"
 }
 
 main() {
