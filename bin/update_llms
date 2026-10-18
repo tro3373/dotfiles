@@ -1,7 +1,23 @@
 #!/usr/bin/env bash
 
 cmds=(
-  'claude upgrade'
+  'claude update'
+  'claude plugin marketplace update'
+  # -s user: some plugins are also installed at project scope, and auto-detect follows cwd.
+  'claude plugin update -s user codex@openai-codex'
+  'claude plugin update -s user eli5@claude-community'
+  'claude plugin update -s user html-plan@claude-community'
+  'claude plugin update -s user example-skills@anthropic-agent-skills'
+  'claude plugin update -s user mattpocock-skills@claude-plugins-official'
+  'claude plugin update -s user security-guidance@claude-plugins-official'
+  'claude plugin update -s user stripe@claude-plugins-official'
+  'claude plugin update -s user gopls-lsp@claude-plugins-official'
+  'claude plugin update -s user jdtls-lsp@claude-plugins-official'
+  'claude plugin update -s user kotlin-lsp@claude-plugins-official'
+  'claude plugin update -s user lua-lsp@claude-plugins-official'
+  'claude plugin update -s user pyright-lsp@claude-plugins-official'
+  'claude plugin update -s user rust-analyzer-lsp@claude-plugins-official'
+  'claude plugin update -s user typescript-lsp@claude-plugins-official'
 )
 
 has() { command -v "${1}" >&/dev/null; }
