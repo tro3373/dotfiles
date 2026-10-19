@@ -56,7 +56,8 @@ Manage repository tasks.
       $command_name [option] [N]
     Options
       -h|--help           : Show this usage
-      -s|--split          : Split task(s) into a task dir + worktree (fzf if no N)
+      -s|--split          : Split task(s) into a task dir + worktree (fzf if no N);
+                            already split ones only get their worktree ensured
       -sd|--split-dir     : Split task(s) into a task dir only (no worktree)
       --path [N]          : Print index.md path of Nth pending task (default 1);
                             splits it (no worktree) if not split yet
@@ -467,20 +468,43 @@ write_split_index() {
     die "==> Task path not under store_root: $task_index_md (store_root=$store_root)"
 }
 
-# 選択タスクを {timestamp}_{name}/index.md へ split し、worktree も作成する。
+# 選択タスクを split 済み状態にする (ensure_split)。参照行も候補に含め、
+# split 済みタスクは worktree の保証だけを行う。
 # Nth 未指定なら fzf multi-select。複数選択は行番号降順で処理する。
 split_task() {
-  parse_skip_refs=1
   local candidates selected
-  candidates=$(list_task_lines 0 1)
-  [[ -n $candidates ]] || die "==> No splittable tasks in $target_file"
+  candidates=$(list_task_lines 0 0)
+  [[ -n $candidates ]] || die "==> No pending tasks in $target_file"
   # fzf キャンセルは非ゼロ終了。set -e で即死せず friendly die へ繋ぐため || true
   selected=$(choose_lines "$candidates" "Select task(s) to split: ") || true
   [[ -n $selected ]] || die "==> No task selected."
-  process_selected "$selected" split_one_task
+  process_selected "$selected" ensure_split
 }
 
-# 指定行のタスクブロックを split する (index.md 生成 + 参照行置換 + worktree 作成)。
+# 指定行の pending タスクを split 済み状態にする (冪等)。split / spawn 共用。
+# 未 split: split_one_task (index.md 生成 + 参照行置換 + worktree)。
+# 参照行  : 参照先 index.md を解決し worktree を保証する。
+# split_worktree=0 なら worktree は扱わない。
+# 出力はグローバル: task_branch / task_index_md / worktree_dir (worktree 無しなら空)。
+ensure_split() {
+  local line_no="$1" line
+  worktree_dir=
+  line=$(sed -n "${line_no}p" "$target_file")
+  if ! printf '%s\n' "$line" | grep -qE "$grep_key_reference"; then
+    split_one_task "$line_no"
+    return
+  fi
+  task_index_md=$(resolve_reference_path "$(from_reference_line "$line")") ||
+    die "==> Reference index not found: $line"
+  task_branch=$(front_matter_value "$task_index_md" branch)
+  [[ -n $task_branch ]] || die "==> No 'branch' in front matter: $task_index_md"
+  info "==> Already split: $task_index_md"
+  [[ $split_worktree -eq 1 ]] || return 0
+  ensure_worktree "$task_branch" "$task_index_md"
+  info "==> Worktree: $worktree_dir"
+}
+
+# 指定行の未 split タスクブロックを split する (index.md 生成 + 参照行置換 + worktree 作成)。
 # timestamp は split 実行時。元リストの当該タスクは参照行へ置換 (削除しない)。
 # split_worktree=0 なら worktree は作らない (-sd / --path)。
 split_one_task() {
@@ -908,12 +932,23 @@ existing_worktree_for() {
       /^branch /{if ($2 == b) {print wt; exit}}' || :
 }
 
+# main worktree (repo root) の絶対パス。porcelain の先頭エントリが常に main。
+main_worktree_dir() {
+  git -C "$git_root" worktree list --porcelain 2>/dev/null |
+    awk '/^worktree /{print substr($0, 10); exit}' || :
+}
+
 # branch の worktree を保証する。既存なら作成を skip し、無ければ git_worktree で作成。
 # worktree 内 .tasks.md => index_md / .tasks => base の link も張る (冪等)。
 # split / spawn 共用。結果の worktree 絶対パスをグローバル worktree_dir にセットする。
 ensure_worktree() {
   local branch="$1" index_md="$2" wt base_dir
   wt=$(existing_worktree_for "$branch")
+  # main worktree を既存扱いすると repo root で spawn し、.tasks.md も repo の
+  # index.md のままになる。git は同一ブランチの二重 checkout を拒むので作成もできない
+  if [[ -n $wt && $wt == "$(main_worktree_dir)" ]]; then
+    die "==> Branch '$branch' is checked out in the main worktree: $wt => switch it to another branch, then rerun"
+  fi
   if [[ -n $wt ]]; then
     info "==> Worktree already exists, skip creation: $wt"
   fi
@@ -941,32 +976,12 @@ spawn_task() {
   process_selected "$selected" spawn_one
 }
 
-# 指定行の pending タスクを spawn する。
-# 参照行(split 済み): index.md を解決し worktree を保証してから tmux 起動。
-# 未 split タスク: split (index.md + worktree) してから tmux 起動。
+# 指定行の pending タスクを split 済み状態にし (ensure_split)、tmux を起動する。
 spawn_one() {
-  local line_no="$1" line is_ref ref_path index_md branch session
-  line=$(sed -n "${line_no}p" "$target_file")
-  is_ref=0
-  if printf '%s\n' "$line" | grep -qE "$grep_key_reference"; then
-    is_ref=1
-  fi
+  local line_no="$1" session
+  ensure_split "$line_no"
 
-  if [[ $is_ref -eq 0 ]]; then
-    split_one_task "$line_no"
-    branch="$task_branch"
-  fi
-  if [[ $is_ref -eq 1 ]]; then
-    ref_path=$(from_reference_line "$line")
-    # ref_path は store_root 相対なので絶対パスへ解決する
-    index_md="$store_root/$ref_path"
-    [[ -e $index_md ]] || die "==> Reference index not found: $index_md"
-    branch=$(front_matter_value "$index_md" branch)
-    [[ -n $branch ]] || die "==> No 'branch' in front matter: $index_md"
-    ensure_worktree "$branch" "$index_md"
-  fi
-
-  # tmux セッション作成 + agent (claude/codex) で task 起動 (worktree_dir は ensure_worktree がセット)
+  # tmux セッション作成 + agent (claude/codex) で task 起動 (worktree_dir は ensure_split がセット)
   # 命名規則は bin/cd-src-root と共有する (SSOT)。別々だと同じ worktree に
   # 名前違いのセッションが 2 つできる。
   session=$(tmux_session_name "$worktree_dir")

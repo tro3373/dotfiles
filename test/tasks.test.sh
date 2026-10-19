@@ -12,6 +12,8 @@
 #       参照行 = - [ ] [dir名](store_root 相対 path)
 #   * split-all: 参照行を再 split せず終了 (無限ループ回帰)
 #   * split-dir: dir + 参照行だけ作り worktree は作らない
+#   * split (参照行): 再 split せず worktree だけ保証する (冪等)
+#   * split/spawn: main worktree がそのブランチにいれば die
 #   * path: 作業対象 index.md の絶対パスだけを stdout へ (未 split なら worktree 無しで split / 冪等)
 #   * next: 参照行は参照先 index.md を出す
 #   * summary: front matter title 表示
@@ -541,6 +543,66 @@ test_path_stdout_clean_on_first_run() {
   check 'path-first-run: stdout は 1 行だけ' '1' "$(printf '%s\n' "${out}" | wc -l)"
   check 'path-first-run: stdout は index.md パス' \
     '1' "$([[ ${out} == */index.md && -f ${out} ]] && echo 1 || echo 0)"
+}
+
+# split 済みタスク (参照行 + front matter 持ち index.md, branch=feature/foo) を用意する。
+# commit も作る (main worktree のブランチ切り替えと worktree add に要る)。
+seed_split_task() {
+  run_tasks --summary >/dev/null 2>&1 || true
+  git -C "${repo}" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+  local repo_base="${base}/myrepo"
+  local dir="${repo_base}/20260101-000000_pre"
+  mkdir -p "${dir}"
+  printf '%s\n' '- [ ] [20260101-000000_pre](base/myrepo/20260101-000000_pre/index.md)' \
+    >>"${repo_base}/index.md"
+  cat >"${dir}/index.md" <<EOF
+---
+title: Pre Split
+branch: feature/foo
+name: pre
+status:
+parent: ${repo_base}/index.md
+---
+
+- [ ] sub
+EOF
+}
+
+# 7g. split (参照行): 再 split せず、worktree だけを作って link を張る
+test_split_reference_ensures_worktree() {
+  new_env t7sr myrepo
+  write_config "${base}"
+  seed_split_task
+
+  run_tasks -s 1 >/dev/null 2>&1 || true
+
+  local wt="${envdir}/myrepo-worktree/feature-foo"
+  check 'split-ref: git_worktree -a called for front matter branch' \
+    '1' "$(grep -q -- '-a feature/foo' "${wt_log}" 2>/dev/null && echo 1 || echo 0)"
+  check 'split-ref: worktree .tasks.md linked to referenced index.md' \
+    "$(realpath "${base}/myrepo/20260101-000000_pre/index.md")" "$(readlink "${wt}/.tasks.md" 2>/dev/null)"
+  check 'split-ref: no re-split (task dir count stays 1)' \
+    '1' "$(find "${base}/myrepo" -mindepth 2 -name index.md | wc -l)"
+  check 'split-ref: reference line kept' \
+    '1' "$(grep -cF -- '- [ ] [20260101-000000_pre](' "${base}/myrepo/index.md")"
+  check 'split-ref: tmux not called' \
+    '0' "$([[ -s ${tmux_log} ]] && echo 1 || echo 0)"
+}
+
+# 7h. split/spawn: main worktree がタスクのブランチにいると worktree を作れないので die する。
+# main worktree を既存 worktree と取り違えて repo root で spawn する回帰を防ぐ。
+test_dies_when_main_worktree_on_branch() {
+  new_env t7mb myrepo
+  write_config "${base}"
+  seed_split_task
+  git -C "${repo}" switch -q -c feature/foo
+
+  check 'main-on-branch: spawn exits non-zero' '1' "$(run_tasks_status --spawn 1)"
+  check 'main-on-branch: split exits non-zero' '1' "$(run_tasks_status -s 1)"
+  check 'main-on-branch: tmux not called' \
+    '0' "$([[ -s ${tmux_log} ]] && echo 1 || echo 0)"
+  check 'main-on-branch: git_worktree not called' \
+    '0' "$([[ -s ${wt_log} ]] && echo 1 || echo 0)"
 }
 
 # 7b. spawn (未split): split (index.md + worktree) してから tmux 起動
@@ -1492,6 +1554,8 @@ main() {
   test_split_all_removed
   test_split_creates_worktree
   test_split_dir_no_worktree
+  test_split_reference_ensures_worktree
+  test_dies_when_main_worktree_on_branch
   test_path_splits_inline_task
   test_path_resolves_reference_idempotent
   test_path_nth
