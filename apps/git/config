@@ -60,6 +60,7 @@ git config --global pull.rebase true
 git config --global rerere.enabled true
 git config --global fetch.prune true
 git config --global remote.origin.followRemoteHEAD always
+git config --global remote.origin.gh-resolved base
 git config --global --add merge.ff false
 git config --global rebase.autostash true
 git config --global init.defaultbranch main
