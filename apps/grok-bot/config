@@ -8,7 +8,41 @@ is_installed() {
   has grok-bot
 }
 install_common() { not_supported; }
-install_arch() { def_install grok-bot-bin; }
+install_arch() {
+  local url
+  url=$(grok_bot_latest_deb_url)
+  if [[ -z $url ]]; then
+    elog "grok-bot: latest deb url not found in $grok_bot_download_page"
+    return 1
+  fi
+  # .../grokbot/stable/<commit>/linux/x64/grok-bot_<ver>_amd64.deb
+  local commit ver
+  commit=$(echo "$url" | cut -d/ -f6)
+  ver=$(basename "$url" | cut -d_ -f2)
+
+  cd_work
+  del_if_exist grok-bot-bin
+  exe git clone --depth 1 https://aur.archlinux.org/grok-bot-bin.git
+  exe cd grok-bot-bin
+  local aur_ver
+  aur_ver=$(sed -n 's/^\s*pkgver = //p' .SRCINFO 2>/dev/null)
+  # AUR は公式リリースに遅れ、古い版はアプリが起動時に更新を要求して使えない。
+  # 遅れている間は、公式の最新 deb を指すように PKGBUILD を書き換えて自前でビルドする。
+  if [[ -n $aur_ver ]] && [[ $(vercmp "$aur_ver" "$ver") -ge 0 ]]; then
+    def_install grok-bot-bin
+    return
+  fi
+  ilog "grok-bot: AUR $aur_ver is behind $ver. Build from the official deb"
+  exe "sed -i -e 's/^pkgver=.*/pkgver=$ver/' -e 's/^pkgrel=.*/pkgrel=1/' -e 's/^_commit=.*/_commit=$commit/' PKGBUILD"
+  exe updpkgsums
+  exe makepkg -si --noconfirm
+}
+grok_bot_download_page=https://cursor.com/download/bot
+grok_bot_latest_deb_url() {
+  curl -fsSL "$grok_bot_download_page" |
+    grep -oE 'https://downloads\.cursor\.com/grokbot/stable/[0-9a-f]+/linux/x64/grok-bot_[^"\\ ]+_amd64\.deb' |
+    head -1
+}
 install_mac() { exe brew install --cask grok-bot; }
 setting_common() { no_settings; }
 setting_arch() {
