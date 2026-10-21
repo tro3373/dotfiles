@@ -425,6 +425,99 @@ test_split_dir_no_worktree() {
     '0' "$([[ -d ${envdir}/myrepo-worktree ]] && echo 1 || echo 0)"
 }
 
+# 7g. split: 壊れた meta は dir も参照行も作らず die する。
+# LLM の fallback で JSON が 2 つ混ざり、改行入りの名前で一覧を壊した事象の回帰。
+test_split_rejects_invalid_meta() {
+  local i=0 case_desc json
+  while IFS='|' read -r case_desc json; do
+    i=$((i + 1))
+    assert_split_rejects_meta
+  done <<'CASES'
+two JSON (provider error + fallback)|{"error":{"message":"Invalid API Key"}} {"branch":"feature/a","name":"n","title":"t"}
+two JSON (valid meta first)|{"branch":"feature/a","name":"n","title":"t"} {"error":{"message":"Invalid API Key"}}
+branch is null|{"branch":null,"name":"n","title":"t"}
+title is missing|{"branch":"feature/a","name":"n"}
+branch is empty|{"branch":"","name":"n","title":"t"}
+name is empty|{"branch":"feature/a","name":"","title":"t"}
+title is empty|{"branch":"feature/a","name":"n","title":""}
+name contains newline|{"branch":"feature/a","name":"a\nb","title":"t"}
+CASES
+}
+
+# meta fake が ${json} を返すとき、split が die し一覧も dir も変えないこと。
+assert_split_rejects_meta() {
+  local list='' fake_meta='' before rc=0 dir_count
+  setup_split_with_meta "t7g-${i}"
+  before=$(cat "${list}")
+
+  run_tasks -sd 1 >/dev/null 2>&1 || rc=$?
+
+  dir_count=$(find "${base}/myrepo" -mindepth 2 -name index.md | wc -l)
+  check "invalid-meta (${case_desc}): exit non-zero" \
+    '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check "invalid-meta (${case_desc}): no task dir created" '0' "${dir_count}"
+  check "invalid-meta (${case_desc}): list unchanged" "${before}" "$(cat "${list}")"
+}
+
+# 未 split のタスク 2 件を持つ myrepo を用意し、meta fake を ${json} 固定の出力に差し替える。
+# 呼び出し側の local list / fake_meta へ書く (run_tasks は動的スコープで fake_meta を拾う)。
+setup_split_with_meta() {
+  new_env "$1" myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  list="${base}/myrepo/index.md"
+  printf '%s\n' '- [ ] First task body' '- [ ] Second task body' >>"${list}"
+  fake_meta="${envdir}/fixed_meta"
+  printf '%s\n' "${json}" >"${envdir}/meta.json"
+  cat >"${fake_meta}" <<FAKE
+#!/usr/bin/env bash
+cat >/dev/null
+cat '${envdir}/meta.json'
+FAKE
+  chmod +x "${fake_meta}"
+}
+
+# 7g2. split: 文字列中の "null" は正当な値として受理する (弾くのは JSON の null だけ)。
+test_split_accepts_null_word_in_title() {
+  local list='' fake_meta='' json='{"branch":"feature/a","name":"n","title":"null チェック追加"}'
+  setup_split_with_meta t7g2
+
+  run_tasks -sd 1 >/dev/null 2>&1
+
+  check 'null-word: front matter title kept' \
+    '1' "$(grep -rqx 'title: null チェック追加' "${base}/myrepo" --include=index.md && echo 1 || echo 0)"
+}
+
+# 7g3. split: name のバックスラッシュは参照行にそのまま残り、一覧の 1 行に収まる。
+# sed の c\ はバックスラッシュをエスケープとして解釈し、\n で参照行が割れていた。
+test_split_keeps_backslash_in_reference() {
+  local list='' fake_meta='' json='{"branch":"feature/a","name":"fix\\nbug","title":"t"}'
+  setup_split_with_meta t7g3
+
+  run_tasks -sd 1 >/dev/null 2>&1
+
+  check 'backslash: list keeps 2 lines (reference + second task)' '2' "$(wc -l <"${list}")"
+  check 'backslash: reference line has literal \n' \
+    '1' "$(head -1 "${list}" | grep -qE -- '^- \[ \] \[[^]]*_fix\\nbug\]\(base/myrepo/[^)]*_fix\\nbug/index\.md\)$' && echo 1 || echo 0)"
+}
+
+# 7h. split: 参照行が改行を含むなら一覧を置換せず die する。
+# sed の c\ に改行入りの参照行を渡すと、一覧の行が欠けたり壊れた行が混ざる。
+test_split_rejects_reference_with_newline() {
+  new_env t7h $'my\nrepo'
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  local list="${base}/${repo##*/}/index.md" before rc=0
+  printf '%s\n' '- [ ] First task body' '- [ ] Second task body' >>"${list}"
+  before=$(cat "${list}")
+
+  run_tasks -sd 1 >/dev/null 2>&1 || rc=$?
+
+  check 'ref-newline: exit non-zero' \
+    '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
+  check 'ref-newline: list unchanged' "${before}" "$(cat "${list}")"
+}
+
 # 7f. path (未 split): 先頭タスクを worktree 無しで split し、index.md の絶対パスだけを stdout へ出す
 test_path_splits_inline_task() {
   new_env t7f myrepo
@@ -1554,6 +1647,10 @@ main() {
   test_split_all_removed
   test_split_creates_worktree
   test_split_dir_no_worktree
+  test_split_rejects_invalid_meta
+  test_split_accepts_null_word_in_title
+  test_split_keeps_backslash_in_reference
+  test_split_rejects_reference_with_newline
   test_split_reference_ensures_worktree
   test_dies_when_main_worktree_on_branch
   test_path_splits_inline_task

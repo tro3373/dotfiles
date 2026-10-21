@@ -434,6 +434,15 @@ gen_task_meta() {
   prp -ne 'gen-task-title-and-branch.md$' | llm -c tgpt -p groq -fc claude
 }
 
+# meta JSON (stdin) が split に使えるかを終了コードで返す。
+# 受理: JSON 値が 1 つだけで、
+# branch / name / title が空でなく制御文字 (改行含む) を含まない文字列。
+is_valid_task_meta() {
+  jq -se 'length == 1 and (.[0] | type == "object" and
+    all(.branch, .name, .title; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))' \
+    >/dev/null 2>&1
+}
+
 # tmp_file(タスク本文) と ts から split 先 index.md を構築する共通処理。
 # meta 生成・検証・dir 作成・front matter 書き出し・ref 算出を 1 箇所に集約する。
 # 出力はグローバル: task_branch / task_index_md / task_ref (store_root 相対)。
@@ -441,12 +450,10 @@ gen_task_meta() {
 write_split_index() {
   local tmp_file="$1" ts="$2" json_result name title base_dir task_dir parent_md
   json_result=$(gen_task_meta <"$tmp_file")
+  is_valid_task_meta <<<"$json_result" || die "==> Invalid task meta JSON: $json_result"
   task_branch=$(echo "$json_result" | jq -r '.branch')
   name=$(echo "$json_result" | jq -r '.name')
   title=$(echo "$json_result" | jq -r '.title')
-  if [[ -z $task_branch || -z $name || -z $title || $task_branch == null ]]; then
-    die "==> Invalid task meta JSON: $json_result"
-  fi
 
   # タスクディレクトリ: {tasks_subdir}/{repo}/{ts}_{name}/index.md
   # .tasks は {tasks_subdir}/{repo} を指す symlink
@@ -523,10 +530,14 @@ split_one_task() {
 }
 
 # first_line..end_line のタスクブロックを 1 行の参照リンク文字列に置換する (低レベル)
+# 参照行が制御文字 (改行含む) を含むなら置換せず die する。
 replace_block_with_reference_line() {
   local ref_line="$1"
+  [[ $ref_line != *[[:cntrl:]]* ]] ||
+    die "==> Reference line contains control characters: $(printf '%q' "$ref_line")"
+  # c\ の text はバックスラッシュをエスケープとして解釈する (\n => 改行)。二重にして字義どおり残す。
   sed -i "${first_line},${end_line}c\\
-${ref_line}" "$target_file"
+${ref_line//\\/\\\\}" "$target_file"
 }
 
 # split: 未完了タスクブロックを未完了参照行 (- [ ]) へ置換する
