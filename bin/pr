@@ -1,19 +1,24 @@
 #!/usr/bin/env bash
 
 command_name=$(basename "$0") && readonly command_name
+script_dir=$(cd "$(dirname "$0")" && pwd) && readonly script_dir
 readonly depends=(gh curl fzf jq llm)
+# 派生元の候補が同じ近さで並んだときに優先するブランチ (前ほど優先)
+readonly integration_branches=(develop main master)
 issues=
 title=
 body=
 target_tmp_dir=
+own_tmp_dir=0
 target_branch=
 current_branch=
 compact=0
+base_only=0
 
 usage() {
   cat <<EOF
 
-Make a pull request via llm from git diff and commit list.
+Make a pull request via llm from commit messages and diff stat.
 
   Usage:
       $command_name [option] [base_branch]
@@ -22,8 +27,13 @@ Make a pull request via llm from git diff and commit list.
       -i|--issue    : Issue number to link with the PR
       -t|--title "" : Specify title directly
       -b|--body ""  : Specify body directly
-      -d|--dir      : Specify target_tmp_dir
+      -d|--dir      : Specify target_tmp_dir that has title/body
       -c|--compact  : Compact mode
+      --base        : Print the base branch and exit
+
+    Base branch
+      [base_branch] > \$PR_TARGET_BRANCH > the nearest fork point on origin.
+      With a tty, pick one of origin's branches by fzf (nearest at the bottom).
 
 EOF
 }
@@ -40,8 +50,12 @@ warn() { _log yellow "$*"; }
 die() { _log red "$*" && exit 1; }
 check() {
   hass "${depends[@]}"
+  # -c は自分で parts を作る。-d の用意済み parts を上書きしてしまう
+  if [[ -n $target_tmp_dir && $compact -eq 1 ]]; then
+    die "==> -c and -d cannot be used together."
+  fi
   # -d は title/body を外部で用意して渡すモード。無いまま進むと空の PR ができる
-  if [[ -n $target_tmp_dir && $compact -eq 0 ]]; then
+  if [[ -n $target_tmp_dir ]]; then
     for f in title body; do
       [[ -s "$target_tmp_dir/$f" ]] || die "==> $target_tmp_dir/$f not found or empty."
     done
@@ -60,44 +74,86 @@ initialize() {
       -b | --body) shift && body="$1" ;;
       -d | --dir) shift && target_tmp_dir=$1 ;;
       -c | --compact) compact=1 ;;
+      --base) base_only=1 ;;
       *) target_branch=$1 ;;
     esac
     shift
   done
   check
-  trap end 0 1 2 3 15
+  trap end EXIT
   set -eo pipefail
+  # web_url=$(create_pr_with_push) の中で gh pr create が落ちても止まるように
+  shopt -s inherit_errexit
   current_branch=$(git rev-parse --abbrev-ref HEAD)
 }
 
 find_target_branch_with_fetch() {
   [[ -n $PR_TARGET_BRANCH ]] && echo "$PR_TARGET_BRANCH" && return
-  branches=(develop main)
+  local only=()
   if [[ $current_branch =~ ^(main|master)$ ]]; then
     die "==> Current branch is $current_branch. Please checkout to other branch."
   fi
   if [[ $current_branch == "develop" ]]; then
-    warn "==> Current branch is $current_branch. Local changes will be pushed to $current_branch."
-    if [[ ! -t 0 ]]; then
-      die "==> Not a tty. Pass the base branch explicitly instead of confirming."
-    fi
-    warn "==> Press Enter to continue..(Cancel: Ctrl+C)"
-    read -r _
-    branches=(main master)
+    # develop から切った feature も分岐点が近く見えるので、main/master に絞る
+    only=(main master)
+    confirm_push_to_develop
   fi
 
   # Fetch the latest changes from the remote repository
   info "==> Git fetching.."
-  git fetch origin
+  git fetch origin 1>&2
 
   info "==> Finding target branch.."
-  remote_branches=$(git ls-remote --heads origin)
-  for b in "${branches[@]}"; do
-    if echo -e "$remote_branches" | grep -q "refs/heads/$b"; then
-      echo "origin/$b"
-      return
-    fi
-  done
+  pick_target_branch "${only[@]}"
+}
+
+confirm_push_to_develop() {
+  # --base は push しないので確認は要らない
+  [[ $base_only -eq 1 ]] && return
+  warn "==> Current branch is $current_branch. Local changes will be pushed to $current_branch."
+  if [[ ! -t 0 ]]; then
+    die "==> Not a tty. Pass the base branch explicitly instead of confirming."
+  fi
+  warn "==> Press Enter to continue..(Cancel: Ctrl+C)"
+  read -r _
+}
+
+# origin の派生元候補を近い順に出す。引数があればそのブランチだけに絞る。
+# 各行: <件数>\t<優先順位>\t<origin/branch>\t<表示>
+list_base_candidates() {
+  local only=("$@") fp branch name rank i
+  "$script_dir"/git_base_candidates -r origin |
+    while IFS=$'\t' read -r fp _ _ branch; do
+      name=${branch#origin/}
+      [[ $name == "$current_branch" ]] && continue
+      [[ ${#only[@]} -gt 0 && " ${only[*]} " != *" $name "* ]] && continue
+      rank=${#integration_branches[@]}
+      for i in "${!integration_branches[@]}"; do
+        [[ ${integration_branches[$i]} == "$name" ]] && rank=$i
+      done
+      printf '%s\t%s\t%s\t%s  %s commit(s)\n' "$fp" "$rank" "$branch" "$branch" "$fp"
+    done |
+    sort -t$'\t' -k1,1n -k2,2n -k3,3
+}
+
+# 分岐点だけでは「親」と「自分から切られた子」を見分けられない。
+# tty があれば fzf で選ばせ、無ければ一番近いものを採る。
+pick_target_branch() {
+  local rows
+  rows=$(list_base_candidates "$@")
+  [[ -z $rows ]] && return
+  if [[ $base_only -eq 1 || ! -t 0 ]]; then
+    head -1 <<<"$rows" | cut -f3
+    return
+  fi
+  # SC2016: preview は fzf 側で {3} を展開させるため単一引用で正しい。
+  # shellcheck disable=SC2016
+  fzf --height=40% --select-1 \
+    --delimiter=$'\t' --with-nth=4 \
+    --prompt='base> ' \
+    --header='nearest base at the bottom' \
+    --preview 'git log --oneline --first-parent "$(git merge-base HEAD {3})"..HEAD' <<<"$rows" |
+    cut -f3
 }
 
 cat_issue() {
@@ -120,15 +176,27 @@ $(sed -e 's/^/- /' "$target_tmp_dir"/commit_list)
 EOF
 }
 
-clear_tmp_dir() {
-  info "==> Cleaning $target_tmp_dir.."
-  rm -rf "$target_tmp_dir"
-  mkdir -p "$target_tmp_dir"
+cat_prompt_input() {
+  cat <<EOF
+
+### Commit messages
+
+$(cat <"$target_tmp_dir"/commit_messages)
+
+### Diff stat
+
+$(cat <"$target_tmp_dir"/diff_stat)
+EOF
 }
 
-create_diff() {
-  info "==> Creating diff.."
-  git_diff_ignored "$target_branch"...HEAD >"$target_tmp_dir"/diff
+create_commit_messages() {
+  info "==> Creating commit_messages.."
+  git log --format='#### %s%n%n%b' "$target_branch"..HEAD >"$target_tmp_dir"/commit_messages
+}
+
+create_diff_stat() {
+  info "==> Creating diff_stat.."
+  git_diff_ignored --stat "$target_branch"...HEAD >"$target_tmp_dir"/diff_stat
 }
 
 create_commit_list() {
@@ -137,36 +205,28 @@ create_commit_list() {
 }
 
 create_pr_parts() {
-  clear_tmp_dir
   if [[ -n $title && -n $body ]]; then
     echo "$title" >"$target_tmp_dir"/title
     echo "$body" >"$target_tmp_dir"/body
     return
   fi
 
-  create_diff
+  create_diff_stat
+  create_commit_messages
   create_commit_list
 
-  if [[ ! -s $target_tmp_dir/diff ]]; then
+  if [[ ! -s $target_tmp_dir/diff_stat ]]; then
     warn "No changes"
     exit 0
   fi
 
+  # diff 本体は渡さない。大きい PR だと groq の入力上限を超えて落ちる。
+  # why はコミット body にあるので、要約の材料はコミットと stat で足りる
   info "==> Creating messages.json.."
-  cat <"$target_tmp_dir"/diff |
-    # head -200 |
+  cat_prompt_input |
     prp -ne gen-git-pr-message.md$ >"$target_tmp_dir"/prompt.md
-  # cat <"$target_tmp_dir"/prompt.md |
-  #   llm >"$target_tmp_dir"/messages.json
-  # _model=gemini-2.5-flash-lite
-  # _model=gemini-3-flash-preview
-  # _model=gemini-3.1-flash-lite-preview
-  # cat <"$target_tmp_dir"/prompt.md |
-  #   llm -c gemini -m $_model >"$target_tmp_dir"/messages.json
   cat <"$target_tmp_dir"/prompt.md |
     llm -p groq >"$target_tmp_dir"/messages.json
-  # cat <"$target_tmp_dir"/prompt.md |
-  #   llm -c claude >"$target_tmp_dir"/messages.json
 
   info "==> Creating title/body.."
   jq -r '.title' "$target_tmp_dir"/messages.json >/dev/null 2>&1 || {
@@ -183,7 +243,6 @@ create_pr_parts() {
 }
 
 create_compact_pr_parts() {
-  clear_tmp_dir
   echo "Merge $current_branch to $target_branch" >"$target_tmp_dir"/title
   create_commit_list
   cat_commit_list >"$target_tmp_dir"/body
@@ -238,8 +297,22 @@ create_mr() {
   glab mr view --json webUrl --jq '.webUrl'
 }
 
+# 自分で作った parts は成功したら消す。失敗したら -d で打ち直せるよう残す
 end() {
-  info "==> Done!"
+  local rc=$?
+  [[ $own_tmp_dir -eq 1 && $rc -eq 0 ]] && rm -rf "$target_tmp_dir"
+  [[ $own_tmp_dir -eq 1 && $rc -ne 0 && -s $target_tmp_dir/title ]] &&
+    warn "==> Parts kept. Retry: $command_name -d $target_tmp_dir $target_branch"
+  [[ $rc -eq 0 ]] && info "==> Done!"
+  return $rc
+}
+
+create_own_pr_parts() {
+  target_tmp_dir=$(mktemp -d -t pr.XXXXXX)
+  own_tmp_dir=1
+  local create=create_pr_parts
+  [[ $compact -eq 1 ]] && create=create_compact_pr_parts
+  $create
 }
 
 main() {
@@ -252,16 +325,9 @@ main() {
     fi
   fi
   info "==> Target branch: $target_branch"
+  [[ $base_only -eq 1 ]] && echo "$target_branch" && return
 
-  if [[ $compact -eq 1 ]]; then
-    target_tmp_dir=/tmp/pr
-    create_compact_pr_parts
-  fi
-
-  if [[ -z $target_tmp_dir ]]; then
-    target_tmp_dir=/tmp/pr
-    create_pr_parts
-  fi
+  [[ -z $target_tmp_dir ]] && create_own_pr_parts
   web_url=$(create_pr_with_push)
   info "==> PR created successfully! see: $web_url"
   open "$web_url"
