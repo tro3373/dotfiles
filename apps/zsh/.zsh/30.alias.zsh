@@ -152,6 +152,8 @@ alias vi=vim
 alias f="find -name"
 alias j="jobs -l"
 alias cddot="cd $DOTPATH"
+# direnv が nix の PATH を前に積むと coreutils の pr (印刷用の整形) が先に当たる
+alias pr="$DOTPATH/bin/pr"
 alias history="history -i"
 alias_with_compdef git g _git
 alias_with_compdef docker d
