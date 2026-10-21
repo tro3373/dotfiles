@@ -7,6 +7,8 @@
 #     tgpt は API のエラー JSON を stdout へ出してから失敗する。
 #     混ざると呼び出し側の JSON parse が壊れる (tasks の meta 生成)。
 #   * primary が成功したら primary の出力だけを出し、fallback は呼ばない。
+#   * claude はユーザ設定・MCP・tool・skill を読まずに起動する:
+#     読むと 1 回ごとに数秒遅くなり、ユーザ向けの規約が出力に混ざる。
 #
 #   test/llm.test.sh   # 全テスト実行
 
@@ -26,7 +28,7 @@ check() {
 
 # tgpt / claude の偽物。
 # tgpt: FAKE_TGPT_EXIT が 0 以外なら、エラー JSON を stdout へ出して失敗する。
-# claude: 呼ばれたことを FAKE_CLAUDE_LOG へ記録し、fallback の JSON を出す。
+# claude: 受け取った引数を 1 行ずつ FAKE_CLAUDE_LOG へ記録し、fallback の JSON を出す。
 write_fake_bins() {
   fakebin="${tmproot}/bin"
   mkdir -p "${fakebin}"
@@ -43,7 +45,7 @@ FAKE
   cat >"${fakebin}/claude" <<'FAKE'
 #!/usr/bin/env bash
 cat >/dev/null
-echo called >>"${FAKE_CLAUDE_LOG}"
+printf '[%s]\n' "$@" >>"${FAKE_CLAUDE_LOG}"
 printf '%s\n' '{"from":"claude"}'
 FAKE
   chmod +x "${fakebin}/tgpt" "${fakebin}/claude"
@@ -77,6 +79,17 @@ test_primary_success_skips_fallback() {
   check 'primary: fallback not called' '0' "$(grep -c . "${claude_log}")"
 }
 
+# 3. claude はユーザ設定・MCP・tool・skill を読まずに起動する。
+test_claude_skips_user_environment() {
+  FAKE_TGPT_EXIT=1 run_llm
+  local args
+  args=$(tr '\n' ' ' <"${claude_log}")
+  check 'claude: no setting sources' '1' "$([[ ${args} == *'[--setting-sources] []'* ]] && echo 1 || echo 0)"
+  check 'claude: strict mcp config' '1' "$([[ ${args} == *'[--strict-mcp-config]'* ]] && echo 1 || echo 0)"
+  check 'claude: no tools' '1' "$([[ ${args} == *'[--tools] []'* ]] && echo 1 || echo 0)"
+  check 'claude: no skills' '1' "$([[ ${args} == *'[--disable-slash-commands]'* ]] && echo 1 || echo 0)"
+}
+
 main() {
   set -uo pipefail
   tmproot=$(mktemp -d)
@@ -86,6 +99,7 @@ main() {
 
   test_fallback_stdout_excludes_failed_primary
   test_primary_success_skips_fallback
+  test_claude_skips_user_environment
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

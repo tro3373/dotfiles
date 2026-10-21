@@ -98,11 +98,12 @@ _tgpt() {
 
 _claude() {
   hass claude
-  # tmp_org=/tmp/llm-claude-prompt-org.md
-  # cat - >$tmp_org
-  # command claude -p "$tmp_org の指示を実行して"
-  # command claude -p "標準入力からの指示を実行して."
-  command claude --model haiku --dangerously-skip-permissions -p "Execute the instructions from standard input." # --output-format json
+  # Skip user settings (CLAUDE.md, hooks, plugins), MCP servers, tools and skills:
+  # loading them costs ~3.5s per call and leaks user rules into the output.
+  # --bare would skip them too, but it refuses OAuth login and needs ANTHROPIC_API_KEY.
+  command claude --model haiku -p \
+    --setting-sources "" --strict-mcp-config --tools "" --disable-slash-commands \
+    --system-prompt "You are a text generator. Follow the instructions from standard input and output only the result."
 }
 
 _codex() {
