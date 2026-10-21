@@ -90,33 +90,17 @@ cmd_restore() {
   }
   restore_to "$lineno" "$hash" "$force"
 }
-# reset 先のベース候補を fzf 行として組み立てる。候補は「各ブランチと HEAD の
-# merge-base」= そのブランチから見た分岐点。git はブランチの派生元を記録しないので、
-# 分岐点を計算で出すしかない (reflog の Created from は local 限定・期限切れするため
-# 当てにしない)。
-#   * refs/remotes/*/HEAD は短縮名が 'origin' になり origin/main 等と同じ分岐点で
-#     重複するので除外する
-#   * 件数 0 (= 分岐点が HEAD と同じ) は reset 先にならないので落とす
+# reset 先のベース候補を fzf 行として組み立てる。候補 (各ブランチとの分岐点) は
+# git_base_candidates が近い順に出す。
 #   * 同じ分岐点に落ちるブランチは 1 行へまとめる (reset 先も件数も同一のため)。
 #     名前は全部並べる: どのブランチ由来かが選ぶときの手掛かりになる
-# 件数は --first-parent 基準。HEAD~N と同じ数え方なので stack の段数 (= grr で戻せる
-# 回数) と一致する。merge を含んで総数と食い違うときだけ総数を併記する。総数の方が
-# 「未コミットに戻る変更量」に近いが、段数と取り違えると grr の回数が合わなくなる。
+# 件数は --first-parent 基準なので stack の段数 (= grr で戻せる回数) と一致する。
+# merge を含んで総数と食い違うときだけ総数を併記する。総数の方が「未コミットに戻る
+# 変更量」に近いが、段数と取り違えると grr の回数が合わなくなる。
 # 各行: <分岐点 hash>\t<表示>
 build_base_rows() {
-  local cur full short base fp all disp bnames
-  cur=$(git symbolic-ref -q --short HEAD || echo '')
-  git for-each-ref --format='%(refname)%09%(refname:short)' refs/heads refs/remotes |
-    while IFS=$'\t' read -r full short; do
-      [[ $full == */HEAD ]] && continue
-      [[ -z $short || $short == "$cur" || $short == removed/* ]] && continue
-      base=$(git merge-base HEAD "$short" 2>/dev/null) || continue
-      fp=$(git rev-list --count --first-parent "$base"..HEAD)
-      [[ $fp -eq 0 ]] && continue
-      all=$(git rev-list --count "$base"..HEAD)
-      printf '%s\t%s\t%s\t%s\n' "$fp" "$all" "$base" "$short"
-    done |
-    sort -t$'\t' -k1,1n -k3,3 |
+  local base disp bnames
+  "$(dirname "$0")"/git_base_candidates |
     awk -F'\t' '
       {
         if ($3 in names) { names[$3] = names[$3] ", " $4; next }

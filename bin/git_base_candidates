@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+command_name=$(basename "$0") && readonly command_name
+
+usage() {
+  cat <<EOF
+
+List branches HEAD may have been derived from, nearest fork point first.
+
+  Usage:
+      $command_name [option]
+    Options
+      -h|--help          : Show this usage
+      -r|--remote <name> : Only list refs/remotes/<name>/* (e.g. origin)
+
+  Output (TSV, 1 line per branch):
+      <commits(first-parent)>\t<commits(all)>\t<fork point hash>\t<branch>
+
+EOF
+}
+
+# git はブランチの派生元を記録しないので、各ブランチと HEAD の merge-base (= 分岐点) を
+# 計算して候補にする (reflog の Created from は local 限定・期限切れするため当てにしない)。
+#   * refs/remotes/*/HEAD は短縮名が 'origin' になり origin/main 等と同じ分岐点で
+#     重複するので除外する
+#   * 件数 0 (= 分岐点が HEAD と同じ) は派生元にならないので落とす
+# 件数は --first-parent 基準。HEAD~N と同じ数え方。merge を含む総数は 2 列目に出す。
+main() {
+  local refs=(refs/heads refs/remotes) cur full short base fp all
+  while [[ -n $1 ]]; do
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -r | --remote) shift && refs=("refs/remotes/$1") ;;
+      *) echo "==> Unknown option: $1" >&2 && exit 1 ;;
+    esac
+    shift
+  done
+  cur=$(git symbolic-ref -q --short HEAD || echo '')
+  git for-each-ref --format='%(refname)%09%(refname:short)' "${refs[@]}" |
+    while IFS=$'\t' read -r full short; do
+      [[ $full == */HEAD ]] && continue
+      [[ -z $short || $short == "$cur" || $short == removed/* ]] && continue
+      base=$(git merge-base HEAD "$short" 2>/dev/null) || continue
+      fp=$(git rev-list --count --first-parent "$base"..HEAD)
+      [[ $fp -eq 0 ]] && continue
+      all=$(git rev-list --count "$base"..HEAD)
+      printf '%s\t%s\t%s\t%s\n' "$fp" "$all" "$base" "$short"
+    done |
+    sort -t$'\t' -k1,1n -k3,3
+}
+main "$@"
