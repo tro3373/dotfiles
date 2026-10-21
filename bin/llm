@@ -133,12 +133,21 @@ _dispatch() {
 }
 
 _llm() {
-  local input
+  local input out
   input=$(cat -)
+  if [[ -z $fallback_cmd ]]; then
+    _dispatch "$cmd" <<<"$input"
+    return
+  fi
   # Run primary in a subshell so a hard failure (e.g. hass/die on a missing
   # binary) becomes a non-zero return that triggers the fallback cmd.
-  (_dispatch "$cmd") <<<"$input" && return 0
-  [[ -z $fallback_cmd ]] && return 1
+  # Buffer its stdout: tgpt prints the provider's error JSON to stdout before
+  # failing, and streaming it would prepend that to the fallback output.
+  if out=$( (_dispatch "$cmd") <<<"$input"); then
+    printf '%s\n' "$out"
+    return 0
+  fi
+  printf '%s\n' "$out" >&2
   warn "==> Command '${cmd:-tgpt}' failed. Fallback to '$fallback_cmd'."
   _dispatch "$fallback_cmd" <<<"$input"
 }
