@@ -20,6 +20,7 @@
 #   * complete: front matter status: ✅️ + title ✅️ + 親参照 [x]
 #   * complete: 通常サブタスク - [ ] => - [x]
 #   * clean: 完了参照行を log_fmt へ転記 (削除せず残す。done 廃止)
+#   * log 転記: 見出しは日付順に差し込み、参照行はその日付の節へ入れる
 #   * add: 1 行目の行頭の記号だけ落とす / 同じ ID があれば 1 秒ずつ先の空きを振る
 #   * pr: pr を包んで成功時だけ status へ 🚀 を足す (並びは ✅️🚀 に正規化)
 #
@@ -1342,6 +1343,47 @@ EOF
     '2' "$(grep -cE -- '_(one|two)\]\(' "${log}" 2>/dev/null || true)"
 }
 
+# 22b. log 転記: 見出しは日付順に差し込み、参照行はその日付の節へ入れる (末尾に足さない)。
+# 既存見出しの曜日表記が生成側と違っても、日付が同じなら同じ節として扱う。
+test_log_keeps_date_order() {
+  new_env t22b myrepo
+  write_config "${base}"
+  local repo_base="${base}/myrepo" log name
+  log="${envdir}/logs/2026/2026-01-01-log.md"
+  mkdir -p "$(dirname "${log}")" "${repo_base}"
+  printf '%s\n' '## 2026-01-05 (x)' '- [x] old-05' '## 2026-01-20 (x)' '- [x] old-20' >"${log}"
+  for name in 20260110-000000_ten 20260105-000000_five; do
+    mkdir -p "${repo_base}/${name}"
+    printf '%s\n' "- [ ] [${name}](base/myrepo/${name}/index.md)" >>"${repo_base}/index.md"
+    printf -- '---\ntitle: T\nbranch: b\nname: n\nstatus:\nparent: %s\n---\n\n' \
+      "${repo_base}/index.md" >"${repo_base}/${name}/index.md"
+    run_tasks ok -f "${repo_base}/${name}/index.md" >/dev/null 2>&1 || true
+  done
+
+  check 'log-order: 既存の見出しより前の日付の見出しは、その前に入る' \
+    "$(printf '%s\n' '## 2026-01-05 (x)' "$(date -d 20260110 +'## %Y-%m-%d (%a)')" '## 2026-01-20 (x)')" \
+    "$(grep '^## ' "${log}")"
+  check 'log-order: 既存の見出しの日付の参照行は、その見出しの節に入る' \
+    '- [x] [20260105-000000_five](base/myrepo/20260105-000000_five/index.md)' \
+    "$(grep -A1 -xF -- '- [x] old-05' "${log}" | tail -n1)"
+  check 'log-order: 曜日表記が違っても同じ日付の見出しを使う' \
+    '1' "$(grep -c '^## 2026-01-05' "${log}")"
+}
+
+# 22c. log 転記: 本文の \ をエスケープとして解釈せず、1 行のまま残す
+test_log_keeps_backslash() {
+  new_env t22c myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  local md="${base}/myrepo/index.md" log
+  local line='- [x] [20260105_000000] C:\new\tab と \| を直す'
+  log="${envdir}/logs/2026/2026-01-01-log.md"
+  printf '%s\n' "${line}" >>"${md}"
+  run_tasks -c --all >/dev/null 2>&1 || true
+  check 'log: 本文の \ を解釈せず 1 行のまま残す' \
+    '1' "$(grep -cxF -- "${line}" "${log}" 2>/dev/null || true)"
+}
+
 # 23. add: 1 行目の行頭の箇条書き記号だけを落とし、ID を振った未完了タスクにする
 test_add_strips_leading_marker_only() {
   new_env t23 myrepo
@@ -1738,6 +1780,8 @@ main() {
   test_split_all_flag
   test_clean_worktree_excludes_done_reference
   test_log_writes_dated_header
+  test_log_keeps_date_order
+  test_log_keeps_backslash
   test_add_strips_leading_marker_only
   test_add_avoids_duplicate_id
   test_preview_line_block_and_ref

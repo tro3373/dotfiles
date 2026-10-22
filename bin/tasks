@@ -710,19 +710,48 @@ reference_log_path() {
   current_log_path
 }
 
-# 完了参照行を log へ転記する。ref の日付見出しが無ければ先に追加し、その配下へ ref を
-# 追記する。見出し・ref とも既存なら追記しない (再実行冪等)。
+# 完了参照行を log へ転記する。ref は日付見出しの節の末尾へ入れる。
+# 見出しが無ければ、日付順の位置へ見出しごと差し込む。ref が既にあれば何もしない (再実行冪等)。
+# 見出しは日付 (## YYYY-MM-DD) で突き合わせる。曜日はロケールで表記が変わるため。
 append_reference_to_log() {
-  local log_path="$1" ref="$2" header
+  local log_path="$1" ref="$2" header merged
   mkdir -p "$(dirname "$log_path")"
+  grep -qxF -- "$ref" "$log_path" 2>/dev/null && return 0
   header=$(reference_date_header "$ref")
-  if ! grep -qxF -- "$header" "$log_path" 2>/dev/null; then
-    printf '%s\n' "$header" >>"$log_path"
-  fi
-  if grep -qxF -- "$ref" "$log_path" 2>/dev/null; then
-    return 0
-  fi
-  printf '%s\n' "$ref" >>"$log_path"
+  touch "$log_path"
+  merged=$(insert_reference_under_header "$header" "$ref" <"$log_path")
+  printf '%s\n' "$merged" >"$log_path"
+}
+
+# stdin の log に ref を差し込んだ全文を stdout へ出す (append_reference_to_log の本体)。
+insert_reference_under_header() {
+  # -v で渡すと本文の \n などがエスケープとして解釈され、転記した行が壊れる
+  HEADER="$1" REF="$2" awk '
+    function date_key(line) {
+      if (line !~ /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/) return ""
+      return substr(line, 4, 10)
+    }
+    # 見出し h の節 (次の見出しの手前まで) の、最後の空でない行
+    function section_end(h,    i, last) {
+      last = h
+      for (i = h + 1; i <= NR && lines[i] !~ /^##? /; i++) if (lines[i] != "") last = i
+      return last
+    }
+    { lines[NR] = $0 }
+    END {
+      header = ENVIRON["HEADER"]
+      ref = ENVIRON["REF"]
+      key = date_key(header)
+      for (i = 1; i <= NR; i++) if (date_key(lines[i]) == key) { sec = i; break }
+      if (sec) after = section_end(sec)
+      if (!sec) for (i = 1; i <= NR; i++) if (date_key(lines[i]) > key) { before = i; break }
+      for (i = 1; i <= NR; i++) {
+        if (i == before) print header "\n" ref
+        print lines[i]
+        if (i == after) print ref
+      }
+      if (!sec && !before) print header "\n" ref
+    }'
 }
 
 complete_task() {
