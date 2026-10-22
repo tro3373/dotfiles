@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
 command_name=$(basename "$0") && readonly command_name
-worktree_dir_suffix="worktree" && readonly worktree_dir_suffix
 repo_root_label="RepositoryRoot" && readonly repo_root_label
 readonly depends=(git fzf)
 # shellcheck disable=SC1091
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/git_merged"
+# shellcheck disable=SC1091
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/worktree_path"
 mode=list
 branch=
 commit_hash=
@@ -95,11 +96,6 @@ get_org_git_root() {
   realpath "$(dirname "$common")"
 }
 
-get_worktree_branch_name() {
-  # Replace slashes with hyphens for the branch name
-  echo "${branch//\//-}"
-}
-
 _fzf_worktrees() {
   # 位置引数でブランチ名を渡されたら絞り込みクエリにする。worktree の
   # ディレクトリ名はスラッシュをハイフンに潰してあるので、一覧の行に
@@ -117,7 +113,7 @@ _fzf_worktrees() {
   #                   (.tasks.md サマリの文字列で当たるのを防ぐ)
   local filter_args=()
   [[ -n $branch ]] && filter_args=(
-    --query "$(get_worktree_branch_name)" --select-1
+    --query "$(worktree_dir_name "$branch")" --select-1
     --exact --no-extended --nth=-1
   )
   # NOTE: --exit-0 は付けない。一致 0 件で黙って終わるとブランチ名の
@@ -198,7 +194,7 @@ _add_worktree() {
     # fi
     create_default_ln_config
   fi
-  dst_dir="$git_worktree_dir/$(get_worktree_branch_name)"
+  dst_dir=$(worktree_dir "$git_org_root_dir" "$branch")
 
   ilog "==> Adding worktree to $dst_dir for $branch branch hash:$commit_hash.."
   # shellcheck disable=SC2206
@@ -479,7 +475,7 @@ main() {
   cd "$git_org_root_dir" || {
     elog "Failed to change directory to git root: $git_org_root_dir"
   }
-  git_worktree_dir="${git_org_root_dir}-$worktree_dir_suffix"
+  git_worktree_dir=$(worktree_root_dir "$git_org_root_dir")
   if [[ ! -e $git_worktree_dir ]]; then
     mkdir -p "$git_worktree_dir"
   fi

@@ -125,13 +125,14 @@ FAKE
 }
 
 # worktree/tmux の fake を fakebin へ書き出し PATH 先頭に差し込む (run_tasks 参照)。
-# git_worktree -a <branch>: 実 worktree 規約と同じ <org>-worktree/<name> を mkdir し、
+# git_worktree -a <branch>: 実物と同じ lib/worktree_path でパスを決めて mkdir し、
 # パスを echo・呼び出しを FAKE_WT_LOG へ記録する (real git worktree/tmux 非依存)。
 write_fake_bins() {
   fakebin="${tmproot}/fakebin"
   mkdir -p "${fakebin}"
-  cat >"${fakebin}/git_worktree" <<'FAKE'
-#!/usr/bin/env bash
+  {
+    printf '#!/usr/bin/env bash\nsource %q\n' "$(dirname "${tasks_bin}")/lib/worktree_path"
+    cat <<'FAKE'
 echo "$*" >>"${FAKE_WT_LOG:-/dev/null}"
 mode= ; branch=
 while [[ -n ${1:-} ]]; do
@@ -143,12 +144,11 @@ while [[ -n ${1:-} ]]; do
   shift
 done
 [[ $mode == add ]] || exit 0
-name=${branch//\//-}
-org=$(realpath "$(dirname "$(git rev-parse --git-common-dir)")")
-wt="${org}-worktree/${name}"
+wt=$(worktree_dir "$(realpath "$(dirname "$(git rev-parse --git-common-dir)")")" "$branch")
 mkdir -p "$wt"
 echo "$wt"
 FAKE
+  } >"${fakebin}/git_worktree"
   cat >"${fakebin}/tmux" <<'FAKE'
 #!/usr/bin/env bash
 echo "$*" >>"${FAKE_TMUX_LOG:-/dev/null}"

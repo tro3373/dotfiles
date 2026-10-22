@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# worktree の置き場所の決まり (SSOT)。
+#   <repo の root>-worktree/<branch の '/' を '-' にした名前>
+# 作る側 (bin/git_worktree) と、パスから repo を読み取る側 (lib/tmux_session_name) が source する。
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  echo "==> Source this file instead of running it: $0" >&2
+  exit 1
+fi
+
+worktree_root_suffix=-worktree
+
+# repo の worktree を並べるディレクトリ。
+worktree_root_dir() { printf '%s\n' "${1%/}${worktree_root_suffix}"; }
+
+# branch の worktree のディレクトリ名。
+worktree_dir_name() { printf '%s\n' "${1//\//-}"; }
+
+# repo の root と branch から、その worktree のパスを返す。
+worktree_dir() { printf '%s/%s\n' "$(worktree_root_dir "$1")" "$(worktree_dir_name "$2")"; }
+
+# dir が worktree の置き場所にあれば、repo のディレクトリ名を変数 $2 へ入れて 0 を返す。
+# 置き場所の外なら 1。
+# 値を stdout でなく変数で返すのは、候補一覧 (数百件) に回すときに $() の fork を足さないため。
+worktree_repo_name() {
+  local -n _wrn_out=$2
+  local _wrn_parent=${1%/}
+  _wrn_parent=${_wrn_parent%/*}
+  _wrn_parent=${_wrn_parent##*/}
+  [[ $_wrn_parent == *"$worktree_root_suffix" ]] || return 1
+  _wrn_out=${_wrn_parent%"$worktree_root_suffix"}
+}

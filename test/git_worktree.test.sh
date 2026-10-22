@@ -21,6 +21,8 @@
 #   * _merged_label: 親リポジトリの HEAD への取り込み状況を 印 / +N / 空欄 で返す。
 #       作ってからコミットの無いブランチは取り込み済みに見せない。
 #
+#   * -a: <org>-worktree/<branch の / を - にした名前> に作り、そのパスだけを stdout に出す。
+#
 #   test/git_worktree   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
@@ -263,6 +265,21 @@ test_merged_label() {
   check 'merged-label: 親リポジトリ自身は対象外' $'\u00a0' "$(_merged_label "${org}")"
 }
 
+# -a: <org>-worktree/<branch の / を - にした名前> に作り、そのパスだけを stdout に出す。
+# fzf は存在確認だけに使われるので、空の fake で足りる。
+test_add_places_worktree_by_branch() {
+  new_repo addpath
+  local fakebin="${tmproot}/addpath/fakebin" out
+  mkdir -p "${fakebin}"
+  printf '#!/bin/sh\n' >"${fakebin}/fzf"
+  chmod +x "${fakebin}/fzf"
+  out=$(cd "${org}" && PATH="${fakebin}:${PATH}" "${gwt_bin}" -a feature/foo 2>/dev/null)
+  check 'add: <org>-worktree/<branch の / を - にした名前> に作る' \
+    "$(realpath -m "${org_wt}")/feature-foo" "${out}"
+  check 'add: そのパスに worktree の実体がある' \
+    '1' "$([[ -e ${org_wt}/feature-foo/.git ]] && echo 1 || echo 0)"
+}
+
 main() {
   set -uo pipefail
   tmproot=$(mktemp -d)
@@ -280,6 +297,7 @@ main() {
   test_org_root_from_worktree_subdir
   test_default_ln_config_without_ignored
   test_merged_label
+  test_add_places_worktree_by_branch
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
