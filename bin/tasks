@@ -183,7 +183,20 @@ current_is_worktree_dir() {
   gitdir=$(git -C "$git_root" rev-parse --path-format=absolute --git-dir 2>/dev/null) || return 1
   [[ $common != "$gitdir" ]]
 }
-get_timestamp_prefix() { date +"[%Y%m%d_%H%M%S]"; }
+# 引数 (epoch 秒) を省くと現在時刻。
+get_timestamp_prefix() { date -d "@${1:-$(date +%s)}" +"[%Y%m%d_%H%M%S]"; }
+# file に無い ID を返す。同じ秒の ID があれば 1 秒ずつ先の空きを探す。
+# ミリ秒を足して避けない。ID は [YYYYMMDD_HHMMSS] の形で引かれる。
+next_free_timestamp_prefix() {
+  local file="$1" epoch prefix
+  epoch=$(date +%s)
+  prefix=$(get_timestamp_prefix "$epoch")
+  while grep -qF -- "$prefix" "$file" 2>/dev/null; do
+    epoch=$((epoch + 1))
+    prefix=$(get_timestamp_prefix "$epoch")
+  done
+  printf '%s' "$prefix"
+}
 # 絶対パスの先頭 $HOME を ~ に畳む / ~ を $HOME に展開する。
 # 参照や parent をユーザ名非依存の ~ 形式で保存し、利用時に展開する。
 to_tilde() { printf '%s' "${1/#$HOME/\~}"; }
@@ -879,7 +892,8 @@ add_task() {
   local input_content
   read_input_content
 
-  input_content=$(echo "${input_content}" | sed -e '1s/- \[ \] //' -e '1s/- //' -e "1s/^/- [ ] $(get_timestamp_prefix) /")
+  input_content=$(echo "${input_content}" |
+    sed -e '1s/^- \[ \] //' -e '1s/^- //' -e "1s/^/- [ ] $(next_free_timestamp_prefix "${target_file}") /")
 
   if [[ -s ${target_file} ]] && [[ -n $(tail -c1 "${target_file}") ]]; then
     printf '\n' >>"${target_file}"

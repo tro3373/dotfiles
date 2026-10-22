@@ -20,6 +20,7 @@
 #   * complete: front matter status: ✅️ + title ✅️ + 親参照 [x]
 #   * complete: 通常サブタスク - [ ] => - [x]
 #   * clean: 完了参照行を log_fmt へ転記 (削除せず残す。done 廃止)
+#   * add: 1 行目の行頭の記号だけ落とす / 同じ ID があれば 1 秒ずつ先の空きを振る
 #   * pr: pr を包んで成功時だけ status へ 🚀 を足す (並びは ✅️🚀 に正規化)
 #
 #   test/tasks   # 全テスト実行
@@ -104,6 +105,7 @@ run_tasks_raw() {
       FAKE_FZF_LOG="${fzf_log}" \
       FAKE_PR_LOG="${pr_log}" \
       FAKE_PR_EXIT="${pr_exit:-0}" \
+      FAKE_NOW="${fake_now:-}" \
       "${tasks_bin}" "$@")
 }
 
@@ -173,8 +175,16 @@ FAKE
 echo "$*" >>"${FAKE_PR_LOG:-/dev/null}"
 exit "${FAKE_PR_EXIT:-0}"
 FAKE
+  # fake date: FAKE_NOW があれば `date +%s` だけその値を返す。他の書式は本物へ渡す
+  {
+    printf '#!/usr/bin/env bash\nreal_date=%q\n' "$(command -v date)"
+    cat <<'FAKE'
+[[ -n ${FAKE_NOW:-} && $* == '+%s' ]] && echo "${FAKE_NOW}" && exit 0
+exec "${real_date}" "$@"
+FAKE
+  } >"${fakebin}/date"
   chmod +x "${fakebin}/git_worktree" "${fakebin}/tmux" "${fakebin}/fzf" \
-    "${fakebin}/bat" "${fakebin}/pr"
+    "${fakebin}/bat" "${fakebin}/pr" "${fakebin}/date"
 }
 
 # 1. config の tasks_subdir 配下 {tasks_subdir}/{repo}/index.md に link を生成する
@@ -1332,6 +1342,51 @@ EOF
     '2' "$(grep -cE -- '_(one|two)\]\(' "${log}" 2>/dev/null || true)"
 }
 
+# 23. add: 1 行目の行頭の箇条書き記号だけを落とし、ID を振った未完了タスクにする
+test_add_strips_leading_marker_only() {
+  new_env t23 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  local md="${base}/myrepo/index.md"
+
+  printf '%s\n' 'A を - に置き換える' | run_tasks -a >/dev/null 2>&1 || true
+  printf '%s\n' '- [ ] B task' | run_tasks -a >/dev/null 2>&1 || true
+  printf '%s\n' '- C task' | run_tasks -a >/dev/null 2>&1 || true
+
+  local id='\[[0-9]{8}_[0-9]{6}\]'
+  check 'add: 1 行目の本文中の「- 」を残す' \
+    '1' "$(grep -cE -- "^- \[ \] ${id} A を - に置き換える$" "${md}")"
+  check 'add: 1 行目の行頭の「- [ ] 」を落とす' \
+    '1' "$(grep -cE -- "^- \[ \] ${id} B task$" "${md}")"
+  check 'add: 1 行目の行頭の「- 」を落とす' \
+    '1' "$(grep -cE -- "^- \[ \] ${id} C task$" "${md}")"
+}
+
+# 24. add: 同じファイルに同じ ID があれば 1 秒ずつ先の空きを振る (形と幅は変えない)。
+# 時計は fake date (FAKE_NOW) で止める。実時間だと追加までに秒が進んで期待値がずれる。
+test_add_avoids_duplicate_id() {
+  new_env t24 myrepo
+  write_config "${base}"
+  run_tasks --summary >/dev/null 2>&1 || true
+  local md="${base}/myrepo/index.md"
+  ts() { date -d "@$1" +'[%Y%m%d_%H%M%S]'; }
+  fake_now=1767225600
+
+  printf '%s\n' "- [ ] $(ts "${fake_now}") taken" >>"${md}"
+  printf '%s\n' 'one' | run_tasks -a >/dev/null 2>&1 || true
+  check 'add: 同じ ID が既にあれば +1 秒した ID を振る' \
+    "- [ ] $(ts $((fake_now + 1))) one" "$(grep -F -- ' one' "${md}")"
+
+  {
+    printf '%s\n' "- [ ] $(ts $((fake_now + 2))) taken2"
+    printf '%s\n' "- [ ] $(ts $((fake_now + 3))) taken3"
+  } >>"${md}"
+  printf '%s\n' 'two' | run_tasks -a >/dev/null 2>&1 || true
+  check 'add: +1 秒先も埋まっていれば、さらに先の空きを振る' \
+    "- [ ] $(ts $((fake_now + 4))) two" "$(grep -F -- ' two' "${md}")"
+  fake_now=
+}
+
 # 21. preview: 実ブロックはブロック境界まで、参照行は参照先 index.md を表示
 test_preview_line_block_and_ref() {
   new_env t21 myrepo
@@ -1683,6 +1738,8 @@ main() {
   test_split_all_flag
   test_clean_worktree_excludes_done_reference
   test_log_writes_dated_header
+  test_add_strips_leading_marker_only
+  test_add_avoids_duplicate_id
   test_preview_line_block_and_ref
   test_pr_marks_status
   test_pr_failure_keeps_status
