@@ -478,11 +478,8 @@ local function set_yank_post_in_remote()
     cb = yank_post_in_remote,
   })
 end
-if vim.fn.executable(winclip) == 1 then
-  set_yank_post_for_win()
-else
-  set_yank_post_in_remote()
-end
+local set_yank_post = vim.fn.executable(winclip) == 1 and set_yank_post_for_win or set_yank_post_in_remote
+set_yank_post()
 
 -- local rc の置き場は git root 基準 (vim 側 100_base.vim の GetGitRoot() と揃える)。
 -- getcwd() 基準だとサブディレクトリで nvim を起動した際に別ファイルを見に行ってしまう。
