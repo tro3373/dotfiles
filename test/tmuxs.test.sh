@@ -397,7 +397,7 @@ test_switch_no_waiting_keeps_active() {
 
 # 11. list はセッションをリポジトリ単位でグループ化する。
 #     worktree (alpha-worktree/br1) は親 alpha へ畳み、git 管理外は末尾の
-#     (no repo) へ集約する。グループはセッション数の多い順。
+#     (no repo) へ集約する。
 test_list_groups_by_repository() {
   clear_markers
   # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
@@ -454,6 +454,22 @@ test_list_truncates_to_width() {
     "${out}"
   check 'list: 整形後の行が list 幅 (20) に収まる' 20 \
     "$(printf '%s\n' "${out}" | tail -n1 | cut -f2- | awk '{print length($0)}')"
+}
+
+# 13b. 群はリポジトリ名の順で、セッション数では動かさない。増減のたびに群が動くと追えない。
+#      beta 2 件 vs alpha 1 件でも alpha が先。
+test_list_groups_by_name_not_count() {
+  clear_markers
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  export FAKE_SESSIONS=$'alpha\t1\t\nbeta\t1\t\nbeta2\t1\t'
+  set_fake_panes \
+    alpha '%1' "${repos}/alpha" \
+    beta '%2' "${repos}/beta" \
+    beta2 '%3' "${repos}/beta"
+
+  check 'list: セッション数の多い beta 群より名前順の alpha 群が先' \
+    $'\talpha\nalpha\t    main   1w1p\n\tbeta\nbeta\t    main   1w1p\nbeta2\t    beta2  1w1p' \
+    "$(list_plain)"
 }
 
 # 14. (no repo) はセッション数が最多でも末尾に来る。
@@ -914,6 +930,7 @@ main() {
   test_list_groups_by_repository
   test_list_waiting_keeps_order
   test_list_truncates_to_width
+  test_list_groups_by_name_not_count
   test_list_no_repo_group_last
   test_list_repo_name_edge_layouts
   test_list_aligns_fullwidth_name

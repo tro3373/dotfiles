@@ -372,30 +372,28 @@ collect_sessions() {
     # top は symlink 解決済み。symlink 経由のパスで命名したセッションは一致せず名前のまま
     [[ -n $branch && $name == "$(tmux_session_name "$top")" ]] && sshown[$name]=$branch
     [[ -n $repo ]] || repo=$no_repo_label
-    gcount[$repo]=$((${gcount[$repo]:-0} + 1))
     members[$repo]+="${name}"$'\n'
   done < <(tmux list-sessions \
     -F $'#{session_name}\t#{session_windows}\t#{?session_attached,1,}')
   return 0
 }
 
-# グループの表示順を決める。git 管理外の群は末尾、残りはセッション数の多い順で、
-# 同数はリポジトリ名の昇順。状態では動かさない (waiting は行の色で見分ける)。
-# nkey (管理外か) はセッション数より優先する。後ろに置くと同数時のタイブレークに
-# しかならず、管理外のセッションが多いときに git リポジトリ群より上へ浮く。
+# グループの表示順を決める。git 管理外の群は末尾、残りはリポジトリ名の昇順。
+# 状態 (waiting は行の色で見分ける) やセッション数では並べ替えない。
+# 捌いたりセッションを増減したりするたびに群が動くと目で追えない。
 # ordered の各要素はソートキー付きで、末尾フィールドがリポジトリ名。
 sort_groups() {
   local repo line nkey
   local -a lines=()
-  for repo in "${!gcount[@]}"; do
+  for repo in "${!members[@]}"; do
     nkey=0
     [[ $repo == "$no_repo_label" ]] && nkey=1
-    printf -v line '%d\t%d\t%s' "${gcount[$repo]}" "$nkey" "$repo"
+    printf -v line '%d\t%s' "$nkey" "$repo"
     lines+=("$line")
   done
   ((${#lines[@]})) || return 0
   mapfile -t ordered < <(printf '%s\n' "${lines[@]}" |
-    LC_ALL=C sort -t$'\t' -k2,2n -k1,1nr -k3,3)
+    LC_ALL=C sort -t$'\t' -k1,1n -k2,2)
 }
 
 # 名前列・↑↓ 列・右列の幅を決める。list 幅が分かる場合は Nw Mp * が右端へ収まるよう
@@ -504,7 +502,7 @@ print_groups() {
 # {1} で素のセッション名 (preview / kill / switch のターゲット) を取る。
 list_sessions() {
   local -A pcount=() prank=() spath=() rcache=() tcache=() bcache=() acache=() mcache=() \
-  gcount=() members=() sright=() sstatus=() sab=() smerged=() sshown=()
+  members=() sright=() sstatus=() sab=() smerged=() sshown=()
   local -a ordered=()
   local namew=0 abw=0
 
