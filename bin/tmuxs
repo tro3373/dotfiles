@@ -350,7 +350,7 @@ collect_session_stats() {
 # セッション一覧を tmux の列挙順で読み、右列 (Nw Mp と attach の *) を組み立てつつ
 # リポジトリ名のグループへ振り分ける。pane 数・状態・作業パスは
 # collect_session_stats が先に埋めてある。
-# 群内は waiting のセッションを先頭へ寄せ、残りは tmux の列挙順を保つ。
+# 群内は状態で並べ替えず tmux の列挙順を保つ。捌くたびに行が動くと目で追えない。
 # 名前列は、自動命名 (tmux_session_name と一致) ならブランチ名を出す。群の見出しに
 # repo 名があるので、セッション名の '<repo>-' 部分は冗長で、長いと後ろが切れる。
 # 手で付けた名前は rename の結果を見せるため、そのまま出す。
@@ -373,35 +373,29 @@ collect_sessions() {
     [[ -n $branch && $name == "$(tmux_session_name "$top")" ]] && sshown[$name]=$branch
     [[ -n $repo ]] || repo=$no_repo_label
     gcount[$repo]=$((${gcount[$repo]:-0} + 1))
-    if ((${prank[$name]:-0} == 3)); then
-      waiters[$repo]+="${name}"$'\n'
-      continue
-    fi
-    others[$repo]+="${name}"$'\n'
+    members[$repo]+="${name}"$'\n'
   done < <(tmux list-sessions \
     -F $'#{session_name}\t#{session_windows}\t#{?session_attached,1,}')
   return 0
 }
 
-# グループの表示順を決める。waiting を含む群を最上位、git 管理外の群は末尾、
-# 残りはセッション数の多い順で、同数はリポジトリ名の昇順。
+# グループの表示順を決める。git 管理外の群は末尾、残りはセッション数の多い順で、
+# 同数はリポジトリ名の昇順。状態では動かさない (waiting は行の色で見分ける)。
 # nkey (管理外か) はセッション数より優先する。後ろに置くと同数時のタイブレークに
 # しかならず、管理外のセッションが多いときに git リポジトリ群より上へ浮く。
 # ordered の各要素はソートキー付きで、末尾フィールドがリポジトリ名。
 sort_groups() {
-  local repo line wkey nkey
+  local repo line nkey
   local -a lines=()
   for repo in "${!gcount[@]}"; do
-    wkey=1
-    [[ -n ${waiters[$repo]:-} ]] && wkey=0
     nkey=0
     [[ $repo == "$no_repo_label" ]] && nkey=1
-    printf -v line '%d\t%d\t%d\t%s' "$wkey" "${gcount[$repo]}" "$nkey" "$repo"
+    printf -v line '%d\t%d\t%s' "${gcount[$repo]}" "$nkey" "$repo"
     lines+=("$line")
   done
   ((${#lines[@]})) || return 0
   mapfile -t ordered < <(printf '%s\n' "${lines[@]}" |
-    LC_ALL=C sort -t$'\t' -k1,1n -k3,3n -k2,2nr -k4,4)
+    LC_ALL=C sort -t$'\t' -k2,2n -k1,1nr -k3,3)
 }
 
 # 名前列・↑↓ 列・右列の幅を決める。list 幅が分かる場合は Nw Mp * が右端へ収まるよう
@@ -500,7 +494,7 @@ print_groups() {
     while IFS= read -r name; do
       [[ -n $name ]] || continue
       print_session_row "$name"
-    done <<<"${waiters[$repo]:-}${others[$repo]:-}"
+    done <<<"${members[$repo]:-}"
   done
   return 0
 }
@@ -510,7 +504,7 @@ print_groups() {
 # {1} で素のセッション名 (preview / kill / switch のターゲット) を取る。
 list_sessions() {
   local -A pcount=() prank=() spath=() rcache=() tcache=() bcache=() acache=() mcache=() \
-  gcount=() waiters=() others=() sright=() sstatus=() sab=() smerged=() sshown=()
+  gcount=() members=() sright=() sstatus=() sab=() smerged=() sshown=()
   local -a ordered=()
   local namew=0 abw=0
 

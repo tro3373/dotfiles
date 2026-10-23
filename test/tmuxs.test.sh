@@ -308,7 +308,7 @@ test_cleanup_removes_dead_markers() {
     '%1 %2 ' "${remain}"
 }
 
-# 7. list は waiting を含む session を上位へ並べ、状態色で背景強調する。
+# 7. list は状態で並べ替えず、状態色で背景強調する。
 #    C は running(%3) と idle(%4) を持つが優先度で running に集約される。
 #    D は idle のみ。A はマーカー無し(色なし)。
 test_list_state_color_and_sort() {
@@ -330,8 +330,8 @@ test_list_state_color_and_sort() {
   raw=$(run_list)
   stripped=$(printf '%s' "${raw}" | strip_ansi)
 
-  check 'list: waiting(B) を上位へ並べ替え + 状態集約 (C=running)' \
-    $'\talpha\nB\t    B  1w1p\nA\t    A  1w1p\nC\t    C  1w2p\nD\t    D  1w1p' "${stripped}"
+  check 'list: waiting(B) でも列挙順のまま + 状態集約 (C=running)' \
+    $'\talpha\nA\t    A  1w1p\nB\t    B  1w1p\nC\t    C  1w2p\nD\t    D  1w1p' "${stripped}"
   check 'list: B 行に waiting 背景色 (#E5AF1E)' yes \
     "$(printf '%s' "${raw}" | grep -q '48;2;229;175;30' && echo yes || echo no)"
   check 'list: C 行に running 背景色 (#799478)' yes \
@@ -414,9 +414,9 @@ test_list_groups_by_repository() {
     "$(list_plain)"
 }
 
-# 12. waiting を含むグループを最上位へ上げ、グループ内でも waiting を先頭にする。
-#     セッション数は同数 (各 2) なので、waiting が無ければ名前順で alpha が先。
-test_list_waiting_group_first() {
+# 12. waiting があっても群の順・群内の順を動かさない。捌くたびに行が動くと追えない。
+#     セッション数は同数 (各 2) なので、名前順で alpha が先。
+test_list_waiting_keeps_order() {
   clear_markers
   # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
   export FAKE_SESSIONS=$'alpha\t1\t\nawt\t1\t\nbeta\t1\t\nbeta2\t1\t'
@@ -430,8 +430,8 @@ test_list_waiting_group_first() {
   local raw
   raw=$(run_list)
 
-  check 'list: waiting を含む beta 群を最上位へ (群内も waiting 先頭)' \
-    $'\tbeta\nbeta2\t    beta2  1w1p\nbeta\t    main   1w1p\n\talpha\nalpha\t    main   1w1p\nawt\t    awt    1w1p' \
+  check 'list: waiting を含む beta 群も群内の beta2 も位置を変えない' \
+    $'\talpha\nalpha\t    main   1w1p\nawt\t    awt    1w1p\n\tbeta\nbeta\t    main   1w1p\nbeta2\t    beta2  1w1p' \
     "$(printf '%s' "${raw}" | strip_ansi)"
   check 'list: 見出し行には状態色を付けない (waiting 色はセッション行のみ 1 箇所)' \
     1 "$(printf '%s\n' "${raw}" | grep -c '48;2;229;175;30')"
@@ -912,7 +912,7 @@ main() {
   test_switch_focuses_waiting_pane
   test_switch_no_waiting_keeps_active
   test_list_groups_by_repository
-  test_list_waiting_group_first
+  test_list_waiting_keeps_order
   test_list_truncates_to_width
   test_list_no_repo_group_last
   test_list_repo_name_edge_layouts
