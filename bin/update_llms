@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
 
-cmds=(
-  'claude update'
-  'claude plugin marketplace update'
-  # -s user: some plugins are also installed at project scope, and auto-detect follows cwd.
-  'claude plugin update -s user codex@openai-codex'
-  'claude plugin update -s user eli5@claude-community'
-  'claude plugin update -s user html-plan@claude-community'
-  'claude plugin update -s user example-skills@anthropic-agent-skills'
-  'claude plugin update -s user mattpocock-skills@claude-plugins-official'
-  'claude plugin update -s user security-guidance@claude-plugins-official'
-  'claude plugin update -s user stripe@claude-plugins-official'
-  'claude plugin update -s user gopls-lsp@claude-plugins-official'
-  'claude plugin update -s user jdtls-lsp@claude-plugins-official'
-  'claude plugin update -s user kotlin-lsp@claude-plugins-official'
-  'claude plugin update -s user lua-lsp@claude-plugins-official'
-  'claude plugin update -s user pyright-lsp@claude-plugins-official'
-  'claude plugin update -s user rust-analyzer-lsp@claude-plugins-official'
-  'claude plugin update -s user typescript-lsp@claude-plugins-official'
+# Auto-update only the plugins trusted here.
+readonly -a plugins=(
+  gopls-lsp@claude-plugins-official
+  jdtls-lsp@claude-plugins-official
+  kotlin-lsp@claude-plugins-official
+  lua-lsp@claude-plugins-official
+  pyright-lsp@claude-plugins-official
+  rust-analyzer-lsp@claude-plugins-official
+  typescript-lsp@claude-plugins-official
+  security-guidance@claude-plugins-official
+  example-skills@anthropic-agent-skills
+  eli5@claude-community
+  html-plan@claude-community
+  codex@openai-codex
+  stripe@claude-plugins-official
+  mattpocock-skills@claude-plugins-official
+  pstack@cursor-plugins
 )
+
+# Enabled but intentionally not auto-updated. Not warned about.
+readonly -a ignores=()
 
 has() { command -v "${1}" >&/dev/null; }
 hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
@@ -31,21 +33,82 @@ info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 die() { _log red "$*" && exit 1; }
 
+build_cmds() {
+  local plugin
+  cmds=(
+    'claude update'
+    'claude plugin marketplace update'
+  )
+  for plugin in "${plugins[@]}"; do
+    # -s user: some plugins are also installed at project scope, and auto-detect follows cwd.
+    cmds+=("claude plugin update -s user ${plugin}")
+  done
+}
+
 kick() {
-  cmd="$(echo "$update_cmd" | awk '{print $1}')"
-  has "$cmd" || {
-    warn "==> No $cmd command exist, skip update."
+  local -a args
+  local out
+  read -ra args <<<"${update_cmd}"
+  if ! has "${args[0]}"; then
+    warn "==> No ${args[0]} command exist, skip update."
     return 0
-  }
-  info "=> $update_cmd .."
-  $update_cmd
-  info "=> $update_cmd Done!"
+  fi
+  info "=> ${update_cmd} .."
+  out=$("${args[@]}" 2>&1 | tee /dev/stderr)
+  collect_updated
+  info "=> ${update_cmd} Done!"
+}
+
+collect_updated() {
+  local line
+  # Both `claude update` and `claude plugin update` say "updated from <old> to <new>" only when a newer version was installed.
+  while IFS= read -r line; do
+    updated+=("${line}")
+  done < <(grep -F 'updated from' <<<"${out}")
+}
+
+warn_uncovered() {
+  local settings="${HOME}/.claude/settings.json"
+  local known=" ${plugins[*]} ${ignores[*]} "
+  local plugin
+  [[ -f ${settings} ]] || return 0
+  if ! has jq; then
+    warn "==> No jq command exist, skip checking enabled plugins."
+    return 0
+  fi
+  while IFS= read -r plugin; do
+    warn_if_uncovered
+  done < <(jq -r '.enabledPlugins // {} | to_entries[] | select(.value == true) | .key' "${settings}")
+}
+
+warn_if_uncovered() {
+  [[ ${known} == *" ${plugin} "* ]] && return 0
+  # Built-in plugins ship with Claude Code itself and are updated by `claude update`.
+  [[ ${plugin} == *@builtin ]] && return 0
+  warn "==> ${plugin} is enabled but not auto-updated. Add it to plugins or ignores in $0."
+}
+
+report_updated() {
+  local line
+  if [[ ${#updated[@]} -eq 0 ]]; then
+    info "==> No updates."
+    return 0
+  fi
+  info "==> Updated:"
+  for line in "${updated[@]}"; do
+    info "  ${line}"
+  done
 }
 
 main() {
-  set -eo pipefail
+  set -euo pipefail
+  local -a cmds=() updated=()
+  local update_cmd
+  build_cmds
   for update_cmd in "${cmds[@]}"; do
     kick
   done
+  warn_uncovered
+  report_updated
 }
 main "$@"
