@@ -179,27 +179,36 @@ return {
     -- "Sorry..." ページを返す。gtr は status を見ずに JSON.parse するため
     -- SyntaxError: Unexpected token '<' になる。client を変えれば同じ
     -- エンドポイントが 200 を返すので、gtr が送る Android アプリ UA と
-    -- 整合する at に差し替える。upstream の main.ts は client を渡さないため
-    -- install/update のたびに当て直す。
+    -- 整合する at に差し替える。
+    -- main.ts を書き換えると lazy の update が local changes で止まるため、
+    -- git 管理外の import map で ./deps.ts を GTR だけ差し替えた shim に向ける。
+    -- denops は main.ts と同じディレクトリの import_map.json を読み、
+    -- lazy の変更検知 (git ls-files -d -m) は未追跡ファイルを見ない。
     build = function(plugin)
-      local path = plugin.dir .. "/denops/translate/main.ts"
-      local fd = io.open(path, "r")
-      if not fd then
-        return
+      local dir = plugin.dir .. "/denops/translate/"
+      local files = {
+        ["deps_at.ts"] = [[
+import { GTR as Base } from "translate-orig/deps.ts";
+import type { TranslateOptions, TranslateResult } from "translate-orig/deps.ts";
+export * from "translate-orig/deps.ts";
+
+export class GTR extends Base {
+  translate(text: string, opts?: TranslateOptions): Promise<TranslateResult> {
+    return super.translate(text, { client: "at", ...opts });
+  }
+}
+]],
+        -- denops の import map は specifier を文字列のまま照合するので、
+        -- shim から本物の deps.ts を引く別名を置いて ./deps.ts の置換を避ける。
+        ["import_map.json"] = vim.json.encode({
+          imports = { ["./deps.ts"] = "./deps_at.ts", ["translate-orig"] = "." },
+        }),
+      }
+      for name, content in pairs(files) do
+        local fd = assert(io.open(dir .. name, "w"))
+        fd:write(content)
+        fd:close()
       end
-      local src = fd:read("*a")
-      fd:close()
-      if src:find('client: "at"', 1, true) then
-        return
-      end
-      local patched, n = src:gsub("(\n        targetLang: opt%.target,\n)", '%1        client: "at",\n', 1)
-      if n == 0 then
-        vim.notify("denops-translate: client=at patch failed (upstream changed?)", vim.log.levels.WARN)
-        return
-      end
-      fd = io.open(path, "w")
-      fd:write(patched)
-      fd:close()
     end,
     -- 初回 <Leader>tr を速くするため keys ではなく VeryLazy で起動時にロードし、
     -- アイドル時に translate プラグインを登録しておく(キー押下時はネットワークのみ)。
