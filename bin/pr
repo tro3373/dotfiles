@@ -11,6 +11,8 @@ body=
 target_tmp_dir=
 own_tmp_dir=0
 target_branch=
+head_branch=
+head_ref=HEAD
 current_branch=
 compact=0
 base_only=0
@@ -22,6 +24,7 @@ Make a pull request via llm from commit messages and diff stat.
 
   Usage:
       $command_name [option] [base_branch]
+      $command_name [option] <head_branch> <base_branch>
     Options
       -h|--help     : Show this usage
       -i|--issue    : Issue number to link with the PR
@@ -34,6 +37,11 @@ Make a pull request via llm from commit messages and diff stat.
     Base branch
       [base_branch] > \$PR_TARGET_BRANCH > the nearest fork point on origin.
       With a tty, pick one of origin's branches by fzf (nearest at the bottom).
+
+    Head branch
+      Omitted: push the current branch and open the PR from it.
+      Given: open the PR from origin/<head_branch> as it is, without checkout or push.
+        e.g. $command_name -c develop staging-kyotanabe
 
 EOF
 }
@@ -62,6 +70,7 @@ check() {
   fi
 }
 initialize() {
+  local positionals=()
   while true; do
     [[ -z $1 ]] && break
     case "$1" in
@@ -75,16 +84,33 @@ initialize() {
       -d | --dir) shift && target_tmp_dir=$1 ;;
       -c | --compact) compact=1 ;;
       --base) base_only=1 ;;
-      *) target_branch=$1 ;;
+      *) positionals+=("$1") ;;
     esac
     shift
   done
+  case ${#positionals[@]} in
+    0) ;;
+    1) target_branch=${positionals[0]} ;;
+    2) head_branch=${positionals[0]} target_branch=${positionals[1]} ;;
+    *) usage && die "==> Too many branches: ${positionals[*]}" ;;
+  esac
   check
   trap end EXIT
   set -eo pipefail
   # web_url=$(create_pr_with_push) の中で gh pr create が落ちても止まるように
   shopt -s inherit_errexit
   current_branch=$(git rev-parse --abbrev-ref HEAD)
+}
+
+# head を指定したらローカルのブランチは使わない。
+# ローカルが古いまま PR の本文を作らないよう、origin の最新どうしで比べる
+use_head_branch() {
+  [[ -z $head_branch ]] && return
+  info "==> Git fetching.."
+  git fetch origin 1>&2
+  current_branch=${head_branch#origin/}
+  head_ref=origin/$current_branch
+  target_branch=origin/${target_branch#origin/}
 }
 
 find_target_branch_with_fetch() {
@@ -191,17 +217,17 @@ EOF
 
 create_commit_messages() {
   info "==> Creating commit_messages.."
-  git log --format='#### %s%n%n%b' "$target_branch"..HEAD >"$target_tmp_dir"/commit_messages
+  git log --format='#### %s%n%n%b' "$target_branch".."$head_ref" >"$target_tmp_dir"/commit_messages
 }
 
 create_diff_stat() {
   info "==> Creating diff_stat.."
-  git_diff_ignored --stat "$target_branch"...HEAD >"$target_tmp_dir"/diff_stat
+  git_diff_ignored --stat "$target_branch"..."$head_ref" >"$target_tmp_dir"/diff_stat
 }
 
 create_commit_list() {
   info "==> Creating commit_list.."
-  git log --oneline "$target_branch"..HEAD >"$target_tmp_dir"/commit_list
+  git log --oneline "$target_branch".."$head_ref" >"$target_tmp_dir"/commit_list
 }
 
 create_pr_parts() {
@@ -243,14 +269,13 @@ create_pr_parts() {
 }
 
 create_compact_pr_parts() {
-  echo "Merge $current_branch to $target_branch" >"$target_tmp_dir"/title
+  echo "Merge $current_branch to ${target_branch#origin/}" >"$target_tmp_dir"/title
   create_commit_list
   cat_commit_list >"$target_tmp_dir"/body
 }
 
 create_pr_with_push() {
-  info "==> Pushing commits.."
-  git push -u origin "$current_branch" 1>&2
+  push_current_branch
   _target_branch=${target_branch#origin/}
   is_origin_is_gitlab && {
     dump_pr_or_mr MR
@@ -259,6 +284,12 @@ create_pr_with_push() {
   }
   dump_pr_or_mr PR
   create_pr
+}
+
+push_current_branch() {
+  [[ -n $head_branch ]] && return
+  info "==> Pushing commits.."
+  git push -u origin "$current_branch" 1>&2
 }
 
 is_origin_is_gitlab() { git remote get-url origin 2>/dev/null | grep -q gitlab; }
@@ -284,7 +315,7 @@ create_pr() {
   # Mark PR as ready
   # --draft
   # gh pr ready 1>&2
-  gh pr view --json url --jq '.url'
+  gh pr view "$current_branch" --json url --jq '.url'
 }
 
 create_mr() {
@@ -294,7 +325,7 @@ create_mr() {
     --source-branch "$current_branch" \
     --title "$(cat <"$target_tmp_dir"/title)" \
     --description "$(cat <"$target_tmp_dir"/body)" 1>&2
-  glab mr view --json webUrl --jq '.webUrl'
+  glab mr view "$current_branch" --json webUrl --jq '.webUrl'
 }
 
 # 自分で作った parts は成功したら消す。失敗したら -d で打ち直せるよう残す
@@ -302,7 +333,7 @@ end() {
   local rc=$?
   [[ $own_tmp_dir -eq 1 && $rc -eq 0 ]] && rm -rf "$target_tmp_dir"
   [[ $own_tmp_dir -eq 1 && $rc -ne 0 && -s $target_tmp_dir/title ]] &&
-    warn "==> Parts kept. Retry: $command_name -d $target_tmp_dir $target_branch"
+    warn "==> Parts kept. Retry: $command_name -d $target_tmp_dir $head_branch $target_branch"
   [[ $rc -eq 0 ]] && info "==> Done!"
   return $rc
 }
@@ -317,6 +348,7 @@ create_own_pr_parts() {
 
 main() {
   initialize "$@"
+  use_head_branch
 
   if [[ -z $target_branch ]]; then
     target_branch=$(find_target_branch_with_fetch)
