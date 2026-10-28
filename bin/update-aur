@@ -1,0 +1,225 @@
+#!/usr/bin/env bash
+
+command_name=$(basename "$0") && readonly command_name
+cache_dir=${UPDATE_AUR_CACHE:-$HOME/.cache/yay}
+dummy="echo"
+review=0
+
+# 自動で更新してよい AUR の pkgbase => メンテナ。
+# メンテナが変わったら自動更新を止め、手動確認へ回す。
+declare -A trusted=(
+  ["google-chrome"]="gromit"
+  ["chrome-remote-desktop"]="lapsus"
+  ["google-cloud-cli"]="jvybihal"
+  ["zoom"]="edh"
+  ["slack-desktop"]="ogarcia"
+)
+
+usage() {
+  cat <<EOF
+
+Update AUR packages without reviewing the PKGBUILD diff,
+only for trusted packages whose diff is a plain version bump.
+Others are listed for manual review.
+With -r, review the others one by one (diff + hints) and apply on y.
+
+Usage:
+  $command_name [option]
+Options
+  -h|--help : Show this usage
+  -e : Execute update. (default: dry-run)
+  -r : Review and apply untrusted packages one by one. (implies -e)
+
+EOF
+}
+
+initialize() {
+  while true; do
+    [[ -z $1 ]] && break
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      -e) dummy= ;;
+      -r) dummy= && review=1 ;;
+      *) usage && exit 1 ;;
+    esac
+    shift
+  done
+}
+
+# 変更行がバージョン更新だけ (pkgver・pkgrel・*ver 変数・チェックサム) かを判定する。
+# 値に / $ ` ; などを許さないので、URL のテンプレートや build 手順は書き換えられない。
+is_version_bump_line() {
+  local line=$1
+  local re_val='[A-Za-z0-9._+-]+'
+  local re_sum="'?[0-9a-f]+'?"
+  local patterns=(
+    "^(pkgver|pkgrel|_[A-Za-z0-9_]*ver)=${re_val}\$"
+    "^[[:space:]]*([a-z0-9]+sums(_[a-z0-9_]+)?=\\()?${re_sum}\\)?\$"
+    "^[[:space:]]+(pkgver|pkgrel) = ${re_val}\$"
+    '^[[:space:]]+[a-z0-9]+sums(_[a-z0-9_]+)? = [0-9a-f]+$'
+    "^[[:space:]]+noextract = ${re_val}\$"
+  )
+  local p
+  for p in "${patterns[@]}"; do
+    [[ $line =~ $p ]] && return 0
+  done
+  return 1
+}
+
+# バージョン更新でない変更行に、何に注意すべきかを付ける。
+hint_line() {
+  case "$1" in
+    *install=*) echo "install script (runs as root)" ;;
+    *depends*) echo "dependency change" ;;
+    *curl* | *wget* | *base64* | *eval* | *'| sh'* | *'|sh'* | *'| bash'* | *sudo* | *systemctl* | */etc/*) echo "suspicious command" ;;
+    *source* | *://*) echo "download source change" ;;
+    *) echo "other change" ;;
+  esac
+}
+
+# .SRCINFO の source 行の集合が、数字を無視すれば前回と同じか。
+# 同じなら取得元はバージョン番号しか変わっていない (ホストもパスも同じ)。
+sources_only_version_changed() {
+  local diff=$1
+  local norm='s/^[-+]//; s/[0-9]+/N/g'
+  [[ "$(grep -E '^-[[:space:]]+source' <<<"$diff" | sed -E "$norm" | sort)" == "$(grep -E '^\+[[:space:]]+source' <<<"$diff" | sed -E "$norm" | sort)" ]]
+}
+
+# HEAD (前回ビルドした版) から origin/master への変更のうち、バージョン更新でないものを 1 行ずつ出す。
+# 何も出なければバージョン更新だけ。
+# .SRCINFO も検査するのは、yay が依存解決にこちらを使うため (depends 追加で別の AUR パッケージが入る)。
+diff_findings() {
+  local dir=$1
+  local other
+  other=$(git -C "$dir" diff --name-only HEAD origin/master | grep -v -x -E 'PKGBUILD|\.SRCINFO' || true)
+  [[ -n $other ]] && echo "other files changed: $(paste -sd' ' <<<"$other")"
+  local diff skip_source=0 line
+  diff=$(git -C "$dir" diff -U0 HEAD origin/master -- PKGBUILD .SRCINFO | grep -E '^[-+]' | grep -v -E '^(\+\+\+|---) ' || true)
+  sources_only_version_changed "$diff" && skip_source=1
+  while IFS= read -r line; do
+    [[ -z $line ]] && continue
+    is_version_bump_line "${line:1}" && continue
+    [[ $skip_source -eq 1 && $line =~ ^[-+][[:space:]]+source ]] && continue
+    echo "$(hint_line "$line"): $line"
+  done <<<"$diff"
+}
+
+# 差分がバージョン更新だけなら 0。だめなら理由を stdout に出す。
+check_diff() {
+  local dir=$1
+  if git -C "$dir" diff --quiet HEAD origin/master; then
+    echo "no diff from last build"
+    return 1
+  fi
+  local findings
+  findings=$(diff_findings "$dir")
+  [[ -z $findings ]] && return 0
+  head -1 <<<"$findings"
+  return 1
+}
+
+fetch_info() {
+  local q
+  q=$(printf 'arg[]=%s&' "$@")
+  curl -fsS "https://aur.archlinux.org/rpc/v5/info?${q%&}" |
+    jq -r '.results[] | [.Name, .PackageBase, (.Maintainer // "-"), .NumVotes] | @tsv'
+}
+
+# 自動更新してよいかを判定する。だめなら理由を stdout に出す。
+judge() {
+  local base=$1 maintainer=$2
+  local entry=${trusted[$base]:-}
+  if [[ -z $entry ]]; then
+    echo "not trusted"
+    return 1
+  fi
+  if [[ $maintainer != "$entry" ]]; then
+    echo "maintainer changed: $entry => $maintainer"
+    return 1
+  fi
+  local dir=$cache_dir/$base
+  if [[ ! -d $dir/.git ]]; then
+    echo "no build cache: $dir"
+    return 1
+  fi
+  git -C "$dir" fetch -q origin || {
+    echo "fetch failed"
+    return 1
+  }
+  check_diff "$dir"
+}
+
+print_findings() {
+  local findings=$1
+  if [[ -z $findings ]]; then
+    echo "  only version bump"
+    return
+  fi
+  awk '{print "  ! " $0}' <<<"$findings"
+}
+
+ask() {
+  local ans
+  read -r -p "$1" ans </dev/tty
+  echo "$ans"
+}
+
+# 差分の要約 (注意点) と差分本体を見せ、y なら適用する。q なら 1 を返して打ち切る。
+review_one() {
+  local base=$1 names=$2 info=$3
+  local dir=$cache_dir/$base
+  echo
+  ilog "=> $base ($names) $info"
+  if [[ ! -d $dir/.git ]]; then
+    echo "  no build cache. check with: yay -S --diffmenu $names"
+    return 0
+  fi
+  git -C "$dir" fetch -q origin
+  git -C "$dir" --no-pager log --format='  commit %h %an: %s' HEAD..origin/master
+  print_findings "$(diff_findings "$dir")"
+  git -C "$dir" -c color.ui=always --no-pager diff HEAD origin/master | less -RFX
+  case "$(ask "Apply $names? [y/N/q] ")" in
+    y | Y)
+      # shellcheck disable=SC2086
+      yay -S --noconfirm --answerdiff None --answerclean None $names
+      ;;
+    q | Q) return 1 ;;
+  esac
+}
+
+main() {
+  initialize "$@"
+  set -euo pipefail
+  local qua
+  qua=$(yay -Qua || true)
+  if [[ -z $qua ]]; then
+    ilog "=> No AUR updates."
+    return
+  fi
+  local auto=() bases=() name base maintainer votes reason
+  local -A names_of=() info_of=()
+  # shellcheck disable=SC2046
+  while IFS=$'\t' read -r name base maintainer votes; do
+    if reason=$(judge "$base" "$maintainer"); then
+      auto+=("$name")
+      continue
+    fi
+    echo "  manual: $name ($reason)"
+    [[ -z ${names_of[$base]:-} ]] && bases+=("$base")
+    names_of[$base]="${names_of[$base]:+${names_of[$base]} }$name"
+    info_of[$base]="[$(awk -v n="$name" '$1 == n {print $2, $3, $4}' <<<"$qua"), maintainer: $maintainer, votes: $votes, $reason]"
+  done < <(fetch_info $(awk '{print $1}' <<<"$qua"))
+  if [[ ${#auto[@]} -gt 0 ]]; then
+    ilog "=> Updating trusted AUR packages.. (${auto[*]})"
+    $dummy yay -S --noconfirm --answerdiff None --answerclean None "${auto[@]}"
+  fi
+  [[ ${#bases[@]} -eq 0 ]] && return
+  if [[ $review -eq 0 ]]; then
+    ilog "=> Review and apply one by one: $command_name -r"
+    return
+  fi
+  for base in "${bases[@]}"; do
+    review_one "$base" "${names_of[$base]}" "${info_of[$base]}" || break
+  done
+}
+main "$@"

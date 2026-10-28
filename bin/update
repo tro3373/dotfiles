@@ -48,16 +48,17 @@ not_supported() { echo "Not supported." 1>&2 && exit 1; }
 update_arch() {
   ilog "=> Cleaning.."
   $dummy clear_pkg_cache
-  local _cmd="sudo pacman"
-  if has yay && [[ $all -eq 1 ]]; then
-    local _cmd=yay
-  fi
   ilog "=> Updating.."
   # NOTE /usr/binを優先させて、システムアップグレード時は/usr/bin/pythonが使われるようにする
   # lint-ignore: uppercase PATH は環境変数。local で関数スコープに閉じる
   local PATH="/usr/bin:$PATH"
-  # shellcheck disable=SC2086
-  $dummy $_cmd -Syu --noconfirm "${args[@]}"
+  $dummy sudo pacman -Syu --noconfirm "${args[@]}"
+  if ! has yay || [[ $all -ne 1 ]]; then
+    return
+  fi
+  local _exec=()
+  [[ -z $dummy ]] && _exec=(-e)
+  update-aur "${_exec[@]}"
 }
 update_ubuntu() {
   ilog "=> Updating.."
