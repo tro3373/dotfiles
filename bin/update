@@ -2,7 +2,6 @@
 
 command_name=$(basename "$0") && readonly command_name
 dummy="echo"
-all=0
 args=()
 
 usage() {
@@ -15,8 +14,6 @@ Usage:
 Options
   -h|--help : Show this usage
   -e : Execute update. (default: dry-run)
-  -a : Update by yay. (default: pacman)
-    Update AUR packages, or not.
 
 EOF
 }
@@ -34,7 +31,6 @@ initialize() {
     case "$1" in
       -h | --help) usage && exit 0 ;;
       -e) dummy= ;;
-      -a) all=1 ;;
       #-f*|--file*) file=${1#*=} ;;
       #-f|--file) shift && file=$1 ;;
       *) add_args "$1" ;;
@@ -53,9 +49,7 @@ update_arch() {
   # lint-ignore: uppercase PATH は環境変数。local で関数スコープに閉じる
   local PATH="/usr/bin:$PATH"
   $dummy sudo pacman -Syu --noconfirm "${args[@]}"
-  if ! has yay || [[ $all -ne 1 ]]; then
-    return
-  fi
+  has yay || return 0
   local _exec=()
   [[ -z $dummy ]] && _exec=(-e)
   update-aur "${_exec[@]}"
