@@ -13,6 +13,7 @@ declare -A trusted=(
   ["google-cloud-cli"]="jvybihal"
   ["zoom"]="edh"
   ["slack-desktop"]="ogarcia"
+  ["grok-bot-bin"]="falser"
 )
 
 usage() {
@@ -46,7 +47,7 @@ initialize() {
   done
 }
 
-# 変更行がバージョン更新だけ (pkgver・pkgrel・*ver 変数・チェックサム) かを判定する。
+# 変更行がバージョン更新だけ (pkgver・pkgrel・*ver 変数・_commit・チェックサム) かを判定する。
 # 値に / $ ` ; などを許さないので、URL のテンプレートや build 手順は書き換えられない。
 is_version_bump_line() {
   local line=$1
@@ -54,6 +55,7 @@ is_version_bump_line() {
   local re_sum="'?[0-9a-f]+'?"
   local patterns=(
     "^(pkgver|pkgrel|_[A-Za-z0-9_]*ver)=${re_val}\$"
+    '^_commit=[0-9a-f]{7,40}$'
     "^[[:space:]]*([a-z0-9]+sums(_[a-z0-9_]+)?=\\()?${re_sum}\\)?\$"
     "^[[:space:]]+(pkgver|pkgrel) = ${re_val}\$"
     '^[[:space:]]+[a-z0-9]+sums(_[a-z0-9_]+)? = [0-9a-f]+$'
@@ -77,11 +79,11 @@ hint_line() {
   esac
 }
 
-# .SRCINFO の source 行の集合が、数字を無視すれば前回と同じか。
+# .SRCINFO の source 行の集合が、数字とコミットハッシュを無視すれば前回と同じか。
 # 同じなら取得元はバージョン番号しか変わっていない (ホストもパスも同じ)。
 sources_only_version_changed() {
   local diff=$1
-  local norm='s/^[-+]//; s/[0-9]+/N/g'
+  local norm='s/^[-+]//; s/[0-9a-f]{7,40}/H/g; s/[0-9]+/N/g'
   [[ "$(grep -E '^-[[:space:]]+source' <<<"$diff" | sed -E "$norm" | sort)" == "$(grep -E '^\+[[:space:]]+source' <<<"$diff" | sed -E "$norm" | sort)" ]]
 }
 

@@ -4,7 +4,7 @@
 #
 # 担保したいのは:
 #   * 信頼リストにあり、メンテナが同じで、PKGBUILD/.SRCINFO の差分がバージョン更新だけなら自動で更新する。
-#     取得元 URL は、数字を除いて前回と同じとき (ホスト・パスが同じ) だけバージョン更新とみなす。
+#     取得元 URL は、数字とコミットハッシュを除いて前回と同じとき (ホスト・パスが同じ) だけバージョン更新とみなす。
 #   * それ以外 (信頼リスト外・メンテナ変更・install スクリプト追加・取得元ドメイン変更・
 #     depends 追加・他ファイル変更) は自動更新せず、手動確認に回し、update-aur -r を案内する。
 #
@@ -61,14 +61,15 @@ srcinfo() {
 }
 
 # AUR 側 (origin) に 1.0 を置き、yay のキャッシュとして clone する。
-# その後 origin へ 2.0 の更新を積む。$1 は 2.0 の commit 前に origin で実行する追加の変更。
+# その後 origin へ 2.0 の更新を積む。$1 は 2.0、$2 は 1.0 の commit 前に origin で実行する追加の変更。
 setup_repo() {
-  local extra=$1 origin="${tmproot}/origin" cache="${tmproot}/cache/google-chrome"
+  local extra=$1 base_extra=${2:-:} origin="${tmproot}/origin" cache="${tmproot}/cache/google-chrome"
   rm -rf "${origin}" "${tmproot}/cache"
   mkdir -p "${origin}"
   git_q init "${origin}"
   pkgbuild 1.0 aaaa >"${origin}/PKGBUILD"
   srcinfo 1.0 aaaa >"${origin}/.SRCINFO"
+  (cd "${origin}" && eval "${base_extra}")
   git_q -C "${origin}" add -A
   git_q -C "${origin}" commit -m 1.0
   git_q clone "${origin}" "${cache}"
@@ -98,9 +99,17 @@ test_version_bump_is_updated() {
   check "バージョン更新だけなら yay -S する" 1 "$(contains "${yay_log}" "-S --noconfirm --answerdiff None --answerclean None google-chrome")"
 }
 
+test_commit_bump_is_updated() {
+  setup_repo "echo _commit=2222222def >>PKGBUILD; srcinfo 2.0 bbbb dl.google.com/2222222def >.SRCINFO" \
+    "echo _commit=1111111abc >>PKGBUILD; srcinfo 1.0 aaaa dl.google.com/1111111abc >.SRCINFO"
+  run google-chrome gromit
+  check "コミットハッシュの更新だけなら手動確認に出さない" 0 "$(contains "${out}" "manual:")"
+  check "コミットハッシュの更新だけなら yay -S する" 1 "$(contains "${yay_log}" "google-chrome")"
+}
+
 test_rejected() {
-  local desc=$1 extra=$2 pkg=${3:-google-chrome} maintainer=${4:-gromit}
-  setup_repo "${extra}"
+  local desc=$1 extra=$2 pkg=${3:-google-chrome} maintainer=${4:-gromit} base_extra=${5:-:}
+  setup_repo "${extra}" "${base_extra}"
   run "${pkg}" "${maintainer}"
   check "${desc}: yay -S しない" "" "${yay_log}"
   check "${desc}: 手動確認に出す" 1 "$(contains "${out}" "manual: ${pkg}")"
@@ -115,6 +124,7 @@ main() {
   write_fake_bins
 
   test_version_bump_is_updated
+  test_commit_bump_is_updated
   test_rejected "信頼リスト外" ":" not-trusted
   test_rejected "メンテナ変更" ":" google-chrome attacker
   test_rejected "install スクリプト追加" "echo 'install=evil.install' >>PKGBUILD"
@@ -123,6 +133,7 @@ main() {
   test_rejected "同じホストで取得元パス変更" "srcinfo 2.0 bbbb dl.google.com/evil >.SRCINFO"
   test_rejected "depends 追加" "printf '\tdepends = evil-bin\n' >>.SRCINFO"
   test_rejected "他ファイル変更" "echo x >evil.sh"
+  test_rejected "_commit をハッシュ以外へ変更" "echo '_commit=\$(curl x)' >>PKGBUILD" google-chrome gromit "echo _commit=1111111abc >>PKGBUILD"
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
