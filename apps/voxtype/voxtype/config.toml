@@ -9,14 +9,15 @@ sample_rate = 16000
 max_duration_secs = 60
 
 [whisper]
-model = "base"   # tiny, base, small, medium, large-v3, large-v3-turbo
+model = "large-v3-turbo"   # tiny, base, small, medium, large-v3, large-v3-turbo
+threads = 8  # vox と揃える (物理コア数)
 language = "ja"     # Or "auto" for detection, or language code (es, fr, de, etc.)
 translate = false   # Translate non-English speech to English
-# threads = 4       # CPU threads for inference (omit for auto-detect)
 # on_demand_loading = true  # Load model only when recording (saves memory)
 
 [output]
-mode = "clipboard"       # "type", "clipboard", or "paste"
+mode = "paste"       # "type", "clipboard", or "paste"
+paste_keys = "ctrl+shift+v"  # ターミナルでも貼れるように
 fallback_to_clipboard = true
 type_delay_ms = 0   # Increase if characters are dropped
 # Note: "paste" mode copies to clipboard then simulates Ctrl+V
@@ -34,3 +35,6 @@ type_delay_ms = 0   # Increase if characters are dropped
 
 # # State file for Waybar/polybar integration (enabled by default)
 # state_file = "auto"  # Or custom path, or "disabled" to turn off
+
+[osd]
+enabled = false  # 1.1 から録音中に波形 OSD が出る
