@@ -2,6 +2,7 @@
 
 # GNOME の gsettings を扱いやすくするラッパ。
 #   * set は現在値と同じならスキップする(冪等)
+#   * add は文字列リストに要素が無いときだけ末尾へ足す(冪等)
 #   * カスタムキーバインドは name を主キーとし custom<N> の採番を自動化する
 
 command_name=$(basename "$0") && readonly command_name
@@ -11,6 +12,7 @@ custom_schema="$media_keys_schema.custom-keybinding" && readonly custom_schema
 custom_keys_name=custom-keybindings && readonly custom_keys_name
 custom_path_prefix=/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom && readonly custom_path_prefix
 dry_run=0
+gsettings_opts=()
 args=()
 
 usage() {
@@ -23,9 +25,11 @@ Get/Set GNOME settings via gsettings.
     Options
       -h|--help    : Show this usage
       -n|--dry-run : Print commands instead of applying them
+      -s|--schemadir <dir> : Use schemas in <dir> (e.g. a GNOME Shell extension's schemas dir)
     Commands
       get <schema[:path]> <key>          : Print the current value
       set <schema[:path]> <key> <value>  : Set the value if it differs
+      add <schema[:path]> <key> <item>   : Append <item> to a string list if absent
       ls  [schema]                       : List schemas, or keys and values of a schema
       key ls                             : List custom keybindings
       key add <name> <binding> <command> : Add or update a custom keybinding by name
@@ -35,6 +39,8 @@ Get/Set GNOME settings via gsettings.
       $command_name ls org.gnome.desktop.wm.keybindings
       $command_name get org.gnome.desktop.peripherals.keyboard delay
       $command_name set org.gnome.desktop.wm.keybindings maximize "['<Super>Up']"
+      $command_name add org.gnome.shell enabled-extensions foo@example.com
+      $command_name -s /usr/share/gnome-shell/extensions/foo@example.com/schemas set org.gnome.shell.extensions.foo bar 1
       $command_name key add "Open Terminal" "<Primary><Alt>t" wezterm
       $command_name key rm "Open Terminal"
 
@@ -48,12 +54,19 @@ die() {
 }
 has() { command -v "${1}" >&/dev/null; }
 is_dry() { [[ $dry_run -eq 1 ]]; }
+gs() { gsettings "${gsettings_opts[@]}" "$@"; }
+# dry-run で表示する、gs が実行するのと同じ gsettings コマンド行
+gs_echo() { echo "gsettings ${gsettings_opts[*]:+${gsettings_opts[*]} }$*"; }
 
 initialize() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -h | --help) usage && exit 0 ;;
       -n | --dry-run) dry_run=1 && shift ;;
+      -s | --schemadir)
+        [[ $# -ge 2 ]] || die "$1 requires <dir>"
+        gsettings_opts=(--schemadir "$2") && shift 2
+        ;;
       *) break ;;
     esac
   done
@@ -87,28 +100,28 @@ normalize() {
 set_if_needed() {
   local _schema=$1 _key=$2 _val=$3
   local _cur
-  _cur=$(gsettings get "$_schema" "$_key" 2>/dev/null) || _cur=
+  _cur=$(gs get "$_schema" "$_key" 2>/dev/null) || _cur=
   if [[ $(normalize "$_cur") == "$(normalize "$_val")" ]]; then
     log "==> Skip(no change): $_schema $_key $_val"
     return 0
   fi
   if is_dry; then
-    echo "gsettings set $_schema $_key $_val"
+    gs_echo "set $_schema $_key $_val"
     return 0
   fi
   log "==> Set: $_schema $_key $_val"
-  gsettings set "$_schema" "$_key" "$_val"
+  gs set "$_schema" "$_key" "$_val"
 }
 
 # custom-keybindings に登録済みの dconf path を 1 行ずつ出力する。
 custom_paths() {
-  gsettings get "$media_keys_schema" "$custom_keys_name" |
+  gs get "$media_keys_schema" "$custom_keys_name" |
     tr "'" '\n' | grep '^/org/' || true
 }
 
 custom_get() {
   local _path=$1 _key=$2
-  normalize "$(gsettings get "$custom_schema:$_path" "$_key")"
+  normalize "$(gs get "$custom_schema:$_path" "$_key")"
 }
 
 # 標準入力の各行を GVariant の文字列配列表記へ変換する。空なら "@as []"
@@ -149,7 +162,7 @@ next_free_path() {
 
 cmd_get() {
   [[ $# -eq 2 ]] || die "get requires <schema[:path]> <key>"
-  gsettings get "$1" "$2"
+  gs get "$1" "$2"
 }
 
 cmd_set() {
@@ -157,9 +170,27 @@ cmd_set() {
   set_if_needed "$1" "$2" "$3"
 }
 
+# GVariant の文字列配列表記を 1 要素 1 行へ展開する。"@as []" なら何も出さない
+list_items() {
+  grep -oE "'[^']*'" <<<"$1" | tr -d "'" || true
+}
+
+cmd_add() {
+  [[ $# -eq 3 ]] || die "add requires <schema[:path]> <key> <item>"
+  local _schema=$1 _key=$2 _item=$3
+  local _items
+  _items=$(list_items "$(gs get "$_schema" "$_key")")
+  if grep -qxF "$_item" <<<"$_items"; then
+    log "==> Skip(already added): $_schema $_key $_item"
+    return 0
+  fi
+  set_if_needed "$_schema" "$_key" \
+    "$(printf '%s\n%s\n' "$_items" "$_item" | to_gvariant_list)"
+}
+
 cmd_ls() {
-  [[ $# -eq 0 ]] && gsettings list-schemas | sort && return 0
-  gsettings list-recursively "$1"
+  [[ $# -eq 0 ]] && gs list-schemas | sort && return 0
+  gs list-recursively "$1"
 }
 
 key_ls() {
@@ -204,11 +235,11 @@ key_rm() {
   set_if_needed "$media_keys_schema" "$custom_keys_name" \
     "$({ custom_paths | grep -vxF "$_path" || true; } | to_gvariant_list)"
   if is_dry; then
-    echo "gsettings reset-recursively $custom_schema:$_path"
+    gs_echo "reset-recursively $custom_schema:$_path"
     return 0
   fi
   log "==> Reset: $custom_schema:$_path"
-  gsettings reset-recursively "$custom_schema:$_path"
+  gs reset-recursively "$custom_schema:$_path"
 }
 
 cmd_key() {
@@ -229,6 +260,7 @@ main() {
   case "$_cmd" in
     get) cmd_get "${args[@]:1}" ;;
     set) cmd_set "${args[@]:1}" ;;
+    add) cmd_add "${args[@]:1}" ;;
     ls) cmd_ls "${args[@]:1}" ;;
     key) cmd_key "${args[@]:1}" ;;
     *) die "Unknown command: $_cmd" ;;

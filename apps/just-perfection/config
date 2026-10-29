@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# GNOME Shell 拡張 Just Perfection で、標準設定に無い通知バナーの位置を右上へ移す。
+# https://gitlab.gnome.org/jrahmatzadeh/just-perfection
+
+readonly _uuid=just-perfection-desktop@just-perfection
+readonly _ext_dir=/usr/share/gnome-shell/extensions/$_uuid
+readonly _schema=org.gnome.shell.extensions.just-perfection
+# 0: top start, 1: top center, 2: top end, 3: bottom start, 4: bottom center, 5: bottom end
+readonly _banner_top_end=2
+
+is_installed() { [[ -d $_ext_dir ]]; }
+
+install_common() { not_supported; }
+install_wsl() { not_supported; }
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+
+install_arch() {
+  def_install gnome-shell-extension-just-perfection-desktop
+}
+
+setting_common() { no_settings; }
+
+# Wayland の GNOME Shell は導入直後の拡張を再ログインまで認識せず、
+# gnome-extensions enable が失敗する。enabled-extensions へ直接足して次回ログインで有効にする。
+setting_arch() {
+  gset_ add org.gnome.shell enabled-extensions "$_uuid"
+  gset_ -s "$_ext_dir/schemas" set "$_schema" notification-banner-position "$_banner_top_end"
+}
