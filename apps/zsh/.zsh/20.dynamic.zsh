@@ -80,6 +80,10 @@ _cat_path() {
   # NOTE: add_path: Added later has high priority
   #------------------------------------------------------
 
+  # mason が入れる LSP/formatter は OS の同名コマンドより優先させない。
+  # add_path は先頭へ足すので、末尾へ足す
+  export PATH="$PATH:${HOME}/.local/share/nvim/mason/bin"
+
   # For Win.
   add_path "/mingw64/bin" # for silver searcher ag in msys
   add_path "/mnt/c/Program Files (x86)/Google/Chrome/Application"
