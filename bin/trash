@@ -130,7 +130,11 @@ cat_pj_conf() {
     # generate default config
     gomi --version >&/dev/null
   fi
-  sed "s,gomi_dir:.*,gomi_dir: $git_root/.trash,g" "$base_conf"
+  # gomi は strategy: legacy のときだけ gomi_dir を使う
+  sed \
+    -e "s,strategy:.*,strategy: legacy,g" \
+    -e "s,gomi_dir:.*,gomi_dir: $git_root/.trash,g" \
+    "$base_conf"
 }
 main() {
   has gomi || {
@@ -142,9 +146,7 @@ main() {
   fi
   git_root=$(get_git_root)
   pj_conf="$git_root/.trash/.gomi.conf"
-  if [[ ! -e $pj_conf ]]; then
-    gen_pj_conf
-  fi
+  gen_pj_conf
   gomi --config "$pj_conf" "$@"
 }
 main "$@"
