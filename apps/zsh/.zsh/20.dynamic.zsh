@@ -19,7 +19,7 @@ _dynamic() {
   _cache_load manpath
   _cache_load lscolors
 
-  _cache_loads sheldon uv direnv gh glab gog sops
+  _cache_loads sheldon uv direnv gh glab gog sops task2
 }
 
 _cache_loads() {
@@ -215,6 +215,10 @@ _cat_gog() {
 
 _cat_sops() {
   sops completion zsh
+}
+
+_cat_task2() {
+  task2 completion zsh
 }
 
 _dynamic
