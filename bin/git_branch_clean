@@ -1,47 +1,123 @@
 #!/usr/bin/env bash
 # base に merge 済みのブランチを消す。既定はローカル、-r で origin。既定は dry-run、-e で実行。
-# usage: git_branch_clean [-e] [-r] [base]  (base 既定: origin/HEAD の指す先)
+# usage: git_branch_clean [-e] [-r] [-i] [-g] [base]  (base 既定: origin/HEAD の指す先)
+#   -i  fzf で選んで消す。ローカルでは gone も候補に出す (-g 込み)
+#   -g  upstream が消えたブランチ (squash merge 等で --merged に出ないもの) もローカルの候補に入れる
 
-dummy="echo"
-remote=
-base=
+readonly protected_branches=(develop main master)
+readonly log_format='%Cred%h %Cgreen(%cd)%Creset -%C(yellow)%d%Creset %s %C(bold blue)<%an>%Creset'
 
 initialize() {
+  local arg
   for arg in "$@"; do
-    case "$arg" in
-      -e) dummy= ;;
+    case "${arg}" in
+      -e) execute=1 ;;
       -r) remote=1 ;;
-      *) base="$arg" ;;
+      -i) interactive=1 gone=1 ;;
+      -g) gone=1 ;;
+      -*)
+        echo "==> Error: unknown option: ${arg}" >&2
+        return 2
+        ;;
+      *) base="${arg}" ;;
     esac
   done
-  if [[ -z $base ]]; then
-    base=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's#^origin/##')
+  [[ -n ${base} ]] && return
+  base=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's#^origin/##')
+}
+
+# 出力は 1 行 1 候補の `<kind>\t<branch>`。kind は merged か gone。
+list_local() {
+  git branch --format '%(refname:short)' --merged "origin/${base}" | sed 's/^/merged\t/'
+  [[ -z ${gone} ]] && return
+  git branch --format '%(refname:short)%09%(upstream:track)' |
+    awk -F'\t' '$2 == "[gone]" { print "gone\t" $1 }'
+}
+
+list_remote() {
+  git branch -r --format '%(refname:short)' --merged "origin/${base}" |
+    sed -n 's#^origin/#merged\t#p'
+}
+
+# どの worktree でも checkout 中のブランチは消せないので候補から外す
+checked_out_branches() {
+  git worktree list --porcelain | sed -n 's#^branch refs/heads/##p'
+}
+
+# 保護ブランチ・base・引数のブランチを除き、merged と gone の重複は先に出た merged を残す
+exclude() {
+  local skip
+  skip=$(printf '%s\n' "${protected_branches[@]}" "${base}" "$@")
+  awk -F'\t' -v skip="${skip}" '
+    BEGIN { n = split(skip, s, "\n"); for (i = 1; i <= n; i++) ex[s[i]] = 1 }
+    !($2 in ex) && !seen[$2]++
+  '
+}
+
+select_targets() {
+  if [[ -z ${interactive} ]]; then
+    cat
+    return
   fi
+  # 何も選ばずに抜けたときの非 0 を、削除対象なしとして扱う
+  fzf -m \
+    --delimiter '\t' \
+    --preview "git log --color=always --graph --pretty=format:'${log_format}' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S' ${ref_prefix}{2}" \
+    --preview-window=down,border-top,60% \
+    --exit-0 \
+    --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview' || true
+}
+
+run() {
+  if [[ -z ${execute} ]]; then
+    printf '%s\n' "$*"
+    return
+  fi
+  "$@"
+}
+
+delete_targets() {
+  local branch
+  while IFS=$'\t' read -r _ branch; do
+    delete_one
+  done
+}
+
+# 候補は origin/base に merge 済みか upstream が消えたものに絞ってあるので -D で消す。
+# -d は upstream か HEAD との比較なので、base 以外を checkout 中だと merge 済みでも拒否する。
+delete_one() {
+  if [[ -n ${remote} ]]; then
+    run git push origin --delete "${branch}"
+    return
+  fi
+  run git branch -D "${branch}"
 }
 
 clean_local() {
-  # `*` は今の checkout、`+` は別 worktree で checkout 中
-  git branch --merged "$base" |
-    { grep -vE "^\*|^\+|^\s*(${base}|develop|main|master)$" || true; } |
-    xargs -r $dummy git branch -d
+  local ref_prefix=''
+  list_local | exclude "$(checked_out_branches)" | select_targets | delete_targets
 }
 
 clean_remote() {
-  git branch -r --merged "origin/$base" |
-    grep -E '^\s*origin/' |
-    { grep -vE "origin/(HEAD|${base}|develop|main|master)$" || true; } |
-    sed 's#^ *origin/##' |
-    xargs -r -n1 $dummy git push origin --delete
+  local ref_prefix=origin/
+  list_remote | exclude | select_targets | delete_targets
 }
 
-main() {
-  set -euo pipefail
-  initialize "$@"
-  git fetch --prune
-  if [[ -n $remote ]]; then
+clean() {
+  if [[ -n ${remote} ]]; then
     clean_remote
     return
   fi
   clean_local
+}
+
+main() {
+  set -euo pipefail
+  local execute='' remote='' interactive='' gone='' base=''
+  initialize "$@"
+  git fetch --prune
+  clean
+  [[ -n ${execute} ]] && return
+  echo "==> dry-run. -e で実行" >&2
 }
 main "$@"
