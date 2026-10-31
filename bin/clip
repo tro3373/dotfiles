@@ -1,62 +1,72 @@
 #!/usr/bin/env bash
 
 command_name=$(basename "$0") && readonly command_name
-readonly depends=(clipper socat)
-readonly local_sock="$HOME"/.clipper.sock
-readonly remote_sock="$HOME"/.clipper.r.sock
+readonly tty="${CLIP_TTY:-/dev/tty}"
 
 usage() {
-  cat <<EOF
+  cat <<EOU
 
-Copy to os clipboard for wrap different distribution.
-Arguments and Normal input will be clipped.
+Copy stdin to the os clipboard (local and over ssh).
 
   Usage:
-      $command_name [option]
+      echo foo | $command_name
     Options
       -h|--help : Show this usage
-      -d        : start daemon
-      -k        : kill daemon
 
-EOF
+  tmux 内  : tmux load-buffer -w (tmux が OSC52 で端末へ送る)
+  ssh 先   : /dev/tty へ OSC52
+  local    : pbcopy / wl-copy / xclip
+
+EOU
 }
 
 has() { command -v "${1}" >&/dev/null; }
-hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
-_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
-# shellcheck disable=SC2145
-_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
-log() { _log white "$*"; }
-info() { _log cyan "$*"; }
-warn() { _log yellow "$*"; }
-error() { _log red "$*" && exit 1; }
-is_remote() { test -n "$SSH_CONNECTION"; }
+is_remote() { [[ -n ${SSH_CONNECTION:-} || -n ${SSH_TTY:-} ]]; }
 
-initialize() {
-  while true; do
-    [[ -z $1 ]] && break
-    case "$1" in
-      -h | --help) usage && exit 0 ;;
-    esac
-    shift
-  done
-  # TODO Get IP from SSH_CONNECTION and use it
-  sock="$local_sock"
-  is_remote && sock="$remote_sock"
-  check
-  set -eo pipefail
+copy_osc52() {
+  local encoded
+  encoded=$(base64 | tr -d '\n')
+  printf '\033]52;c;%s\a' "${encoded}" >"${tty}"
 }
 
-check() {
-  hass "${depends[@]}"
-  if [[ ! -S $sock ]]; then
-    error "==> Socket file $sock not exist. No clipper daemon running?"
+copy_local() {
+  if has pbcopy; then
+    pbcopy
+    return
   fi
+  if [[ -n ${WAYLAND_DISPLAY:-} ]] && has wl-copy; then
+    wl-copy
+    return
+  fi
+  if has xclip; then
+    xclip -selection clipboard
+    return
+  fi
+  echo "==> Error: No clipboard command (pbcopy / wl-copy / xclip)." >&2
+  return 1
+}
+
+copy() {
+  # tmux の copy-pipe から呼ばれると /dev/tty が無いので、tmux 内は ssh 先でも tmux に任せる
+  if [[ -n ${TMUX:-} ]]; then
+    tmux load-buffer -w -
+    return
+  fi
+  if is_remote; then
+    copy_osc52
+    return
+  fi
+  copy_local
 }
 
 main() {
-  initialize "$@"
-  cat - |
-    socat - UNIX-CONNECT:"$sock"
+  set -euo pipefail
+  case "${1:-}" in
+    -h | --help)
+      usage
+      return 0
+      ;;
+  esac
+  copy
 }
 main "$@"

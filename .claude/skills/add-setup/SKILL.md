@@ -142,7 +142,7 @@ config 内で `$app_dir`（= `apps/{name}`）を参照するときは shellcheck
 
 | やりたいこと | 書き方 | 手本 |
 |---|---|---|
-| systemd user service で常駐 | unit を `apps/{name}/` に置き `~/.config/systemd/user/` へ `make_lnk_with_bkup` → `daemon-reload` → `enable --now`。GUI 環境依存なら `WantedBy=graphical-session.target` | `apps/cliphist-tui/config`, `apps/clipper/config` |
+| systemd user service で常駐 | unit を `apps/{name}/` に置き `~/.config/systemd/user/` へ `make_lnk_with_bkup` → `daemon-reload` → `enable --now`。GUI 環境依存なら `WantedBy=graphical-session.target` | `apps/cliphist-tui/config` |
 | 常駐から呼ぶ自作スクリプト | `apps/{name}/` に置き `make_link_to_bin` で `~/bin` へ。unit からは `%h/bin/<script>` で参照 | `apps/cliphist-tui/config` |
 | GNOME のショートカット登録 | `gset_ key add "<name>" "<binding>" "<command>"`（name で冪等、dry-run 対応）。既定キーとぶつかるなら先に `gsettings_if_needed` で外す | `apps/cliphist-tui/config` |
 | 導入後の使い方・仕組みの説明 | `tips() { cat <<'EOF' \| inki ... EOF; }` を定義し `setting_*` の最後で呼ぶ。「なぜこの構成か」もここに書く | `apps/sops/config`, `apps/cliphist-tui/config` |

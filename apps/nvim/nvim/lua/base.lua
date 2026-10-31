@@ -444,7 +444,7 @@ local function set_yank_post_for_win()
 end
 
 -- リモート接続時のクリップボードフォワード設定
--- OSC52 対応端末なら OSC52、未対応なら clipper(bin/clip) にフォールバック
+-- OSC52 対応端末なら OSC52、未対応なら bin/clip にフォールバック
 local function set_yank_post_in_remote()
   -- if vim.fn.getenv("IS_VAGRANT") == "1" or vim.fn.getenv("IS_ORB") == "1" then
   if vim.fn.getenv("IS_VAGRANT") == "1" then
@@ -456,7 +456,7 @@ local function set_yank_post_in_remote()
   end
   local clip = getenv("HOME", "") .. "/.dot/bin/clip"
   local osc52_copy = require("vim.ui.clipboard.osc52").copy("+")
-  local function yank_post_via_clipper()
+  local function yank_post_via_clip()
     local cliptmp = vim.fn.getenv("HOME") .. "/.vim/.clip.tmp"
     local clip_content = vim.fn.split(vim.fn.getreg("0"), "\n")
     vim.fn.writefile(clip_content, cliptmp)
@@ -469,7 +469,7 @@ local function set_yank_post_in_remote()
       return
     end
     if vim.fn.executable(clip) == 1 then
-      yank_post_via_clipper()
+      yank_post_via_clip()
     end
   end
   aumg({
