@@ -88,6 +88,7 @@ alias gc="git commit"
 alias gr="git remote -v"
 alias gre="git_reset"
 alias grr="git_reset -r"
+alias r="git_review"
 alias gs="git status"
 alias gn="git_no_merges"
 alias li="linear"
@@ -165,7 +166,7 @@ alias_with_compdef make m _make
 #   alias claude="specstory claude"
 # fi
 alias_with_compdef claude c
-alias_with_compdef cursor r
+# alias_with_compdef cursor r
 alias_with_compdef tasks t
 alias tt=task2
 alias_with_compdef flutter fl
