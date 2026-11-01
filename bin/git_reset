@@ -257,7 +257,9 @@ main() {
   # repo_stack_dir: この repo の全 branch stack を束ねる dir (-c の掃除対象範囲)。
   repo_stack_dir="$config_dir/$repo_dir_name"
   # stack: 1 行 1 ハッシュ。末尾が top (gre=append/push, grr=fzf で選んで redo/pop)。
-  marker="$repo_stack_dir/$branch"
+  # GIT_RESET_MARKER で stack ファイルを直接指定できる (git_review の使い捨て worktree 用)。
+  # detached HEAD の既定キーは HEAD の hash なので、gre で HEAD が動くと grr が stack を見失う。
+  marker="${GIT_RESET_MARKER:-$repo_stack_dir/$branch}"
 
   # フラグはどの位置でもよい。非フラグ引数は mode 依存: restore なら復元先 hash
   # (無指定で fzf)、push なら undo する個数 (無指定でベース選択の fzf)。
