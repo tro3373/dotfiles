@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+command_name=$(basename "$0") && readonly command_name
+script_dir=$(dirname "$(realpath "${BASH_SOURCE[0]}")") && readonly script_dir
+# shellcheck disable=SC1091
+source "$script_dir/lib/worktree_path"
+has() { command -v "${1}" >&/dev/null; }
+hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+info() { _log cyan "$*"; }
+warn() { _log yellow "$*"; }
+die() { _log red "$*" && exit 1; }
+
+usage() {
+  cat <<EOF
+
+git_reset (gre) in a throwaway worktree.
+The current branch is checked out to a temporary worktree and reset there,
+so the original working tree is left untouched.
+A shell starts in the worktree. Exiting the shell removes the worktree.
+
+  Usage:
+      $command_name [N]
+    Options
+      -h|--help : Show this usage
+    Notes
+      Arguments are passed to git_reset (no arg: pick the base with fzf).
+      If files were edited in the session, asks before removing.
+
+EOF
+}
+
+# 作業ツリーが target のコミットと違うか (= セッション中に編集したか)。
+# 一時 index に作業ツリーを丸ごと載せて比べる。untracked も拾うため git diff では足りない。
+is_edited() {
+  local wt="$1" target="$2" idx
+  idx="$(git -C "$wt" rev-parse --absolute-git-dir)/review-index"
+  GIT_INDEX_FILE="$idx" git -C "$wt" add -A
+  ! GIT_INDEX_FILE="$idx" git -C "$wt" diff --cached --quiet "$target"
+}
+
+# 編集が無ければ消す。編集があれば聞き、y 以外 (EOF 含む) は残す。
+cleanup() {
+  local wt="$1" target="$2" ans=''
+  [[ -d $wt ]] || return 0
+  if [[ -n ${session_started:-} ]] && is_edited "$wt" "$target"; then
+    warn "==> Edited files in $wt:"
+    git -C "$wt" status --short | head -20 >&2
+    read -r -p "==> Discard edits and remove the worktree? [y/N]: " ans || :
+    if [[ ! $ans =~ ^[Yy]$ ]]; then
+      warn "==> Kept: $wt"
+      warn "    Remove later: git worktree remove --force $wt"
+      return 0
+    fi
+  fi
+  git -C "$repo_root" worktree remove --force "$wt"
+  info "==> Removed: $wt"
+}
+
+main() {
+  set -euo pipefail
+  [[ ${1:-} == -h || ${1:-} == --help ]] && usage && exit 0
+  hass git fzf
+  repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || die "==> Not git repository"
+  local target name
+  target=$(git rev-parse HEAD)
+  name=$(git symbolic-ref -q --short HEAD || git rev-parse --short HEAD)
+
+  # 再起動で /tmp が消えた worktree の登録を掃除する。
+  git -C "$repo_root" worktree prune
+  local wt
+  wt=$(mktemp -d -t "review-$(basename "$repo_root")-$(worktree_dir_name "$name").XXXX")
+  # trap は worktree add より先に張る: add 後に何で落ちても後片付けされるように。
+  # shellcheck disable=SC2064
+  trap "cleanup '$wt' '$target'" EXIT
+  git -C "$repo_root" worktree add -q --detach "$wt" "$target"
+
+  # ベースの選択と reset は git_reset に任せる。stack は worktree の gitdir に置き、
+  # worktree と一緒に消えるようにする。セッション内の gre / grr も同じ stack を使う。
+  GIT_RESET_MARKER="$(git -C "$wt" rev-parse --absolute-git-dir)/review-stack"
+  export GIT_RESET_MARKER
+  (cd "$wt" && "$script_dir/git_reset" "$@")
+  if [[ $(git -C "$wt" rev-parse HEAD) == "$target" ]]; then
+    info "==> Nothing was reset."
+    return 0
+  fi
+
+  info "==> Reviewing $name (base: $(git -C "$wt" log -1 --format='%h %s' HEAD))"
+  info "    $wt"
+  info "    exit to remove the worktree."
+  session_started=1
+  # Ctrl-C はセッション内のコマンドに向けたもの。ここで死ぬと後片付けを飛ばす。
+  # '' (無視) にしないのは、無視が子の shell へ引き継がれて Ctrl-C が効かなくなるため。
+  trap ':' INT
+  (cd "$wt" && "${SHELL:-bash}") || :
+}
+main "$@"
