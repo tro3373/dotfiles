@@ -73,8 +73,9 @@ main() {
   local wt
   wt=$(mktemp -d -t "review-$(basename "$repo_root")-$(worktree_dir_name "$name").XXXX")
   # trap は worktree add より先に張る: add 後に何で落ちても後片付けされるように。
-  # shellcheck disable=SC2064
-  trap "cleanup '$wt' '$target'" EXIT
+  # 値は trap 文字列に埋め込まず変数で渡す。ブランチ名の ' でコマンドとして解釈されるため。
+  review_wt=$wt review_target=$target
+  trap 'cleanup "$review_wt" "$review_target"' EXIT
   git -C "$repo_root" worktree add -q --detach "$wt" "$target"
 
   # ベースの選択と reset は git_reset に任せる。stack は worktree の gitdir に置き、
