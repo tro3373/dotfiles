@@ -444,7 +444,7 @@ gen_task_meta() {
     "${TASKS_GEN_META_CMD}"
     return
   fi
-  prp -ne 'gen-task-title-and-branch.md$' | llm -c tgpt -p groq -fc claude
+  gen_task_title_and_branch
 }
 
 # meta JSON (stdin) が split に使えるかを終了コードで返す。
