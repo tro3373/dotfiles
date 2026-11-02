@@ -70,7 +70,10 @@ test_passes_generated_meta_as_flags() {
 }
 
 # 番兵を付けて読み、末尾の改行まで比べる
-read_exact() { cat "$1" 2>/dev/null; printf .; }
+read_exact() {
+  cat "$1" 2>/dev/null
+  printf .
+}
 
 test_passes_body_to_task2_stdin() {
   local body
