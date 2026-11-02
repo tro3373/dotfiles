@@ -19,7 +19,7 @@ _dynamic() {
   _cache_load manpath
   _cache_load lscolors
 
-  _cache_loads sheldon uv direnv gh glab gog sops task2
+  _cache_loads sheldon uv direnv gh glab gog sops task2 his
 }
 
 _cache_loads() {
@@ -219,6 +219,12 @@ _cat_sops() {
 
 _cat_task2() {
   task2 completion zsh
+}
+
+_cat_his() {
+  his completion zsh
+  # cobra 1.3 の出力は source されると compdef しない
+  echo 'compdef _his his'
 }
 
 _dynamic
