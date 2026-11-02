@@ -6,17 +6,37 @@
 #
 # - 受理: JSON 値が 1 つだけで、branch / name / title が空でなく制御文字 (改行含む) を含まない文字列
 # - 生成に失敗したか受理できなければ、stderr に出して終了コード 1
+# - ${XDG_CONFIG_HOME:-~/.config}/tasks/terms.tsv があれば、
+#   英語の技術用語を日本語に置き換えない指示を prompt の前に付ける
+#   - 1 行 1 語: 使わない日本語 TAB 代わりの英語 [TAB 許す語 (`,` 区切り)]。# で始まる行は読まない
 
 die() {
   echo "==> Error: $*" >&2
   exit 1
 }
 
+# terms.tsv から groq へ渡す指示を作る。ファイルが無ければ何も出さない
+terms_rule() {
+  local tsv="${XDG_CONFIG_HOME:-$HOME/.config}/tasks/terms.tsv"
+  [[ -f ${tsv} ]] || return 0
+  printf '%s\n' '- Term rule (IMPORTANT): Do not replace English technical terms with Japanese words.' \
+    '  Never write the Japanese word on the left in branch, name or title; write the word on the right.' \
+    '  Words after "ok:" contain the left word but may be written as they are.'
+  awk -F'\t' '!/^#/ && NF >= 2 {
+    ok = $3 == "" ? "" : " (ok: " $3 ")"
+    gsub(/,/, ", ", ok)
+    print "  - " $1 " => " $2 ok
+  }' "${tsv}"
+}
+
 main() {
   set -euo pipefail
   [[ ! -t 0 ]] || die "本文を stdin で渡す"
   local meta
-  meta=$(prp -ne 'gen-task-title-and-branch.md$' | llm -c tgpt -p groq -fc claude) || die "生成に失敗"
+  local rule prp_args=(-ne 'gen-task-title-and-branch.md$')
+  rule=$(terms_rule)
+  [[ -z ${rule} ]] || prp_args=(-pm "${rule}" "${prp_args[@]}")
+  meta=$(prp "${prp_args[@]}" | llm -c tgpt -p groq -fc claude) || die "生成に失敗"
   jq -se 'length == 1 and (.[0] | type == "object" and
     all(.branch, .name, .title; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))' \
     >/dev/null 2>&1 <<<"${meta}" || die "生成結果が不正: ${meta}"

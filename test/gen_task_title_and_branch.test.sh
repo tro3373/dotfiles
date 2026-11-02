@@ -25,13 +25,15 @@ setup() {
   tmproot=$(mktemp -d)
   fakebin="${tmproot}/bin"
   llm_out="${tmproot}/llm.out"
-  calls_log="${tmproot}/calls.log"
+  # prp と llm はパイプで同時に動くので、書く順が決まらない。ログを分ける
+  prp_log="${tmproot}/prp.log"
+  calls_log="${tmproot}/llm.log"
   llm_exit=0
   mkdir -p "${fakebin}"
   # prp の fake: 引数を残し、本文に prompt の印を付けて流す
   cat >"${fakebin}/prp" <<EOS
 #!/usr/bin/env bash
-echo "prp \$*" >>"${calls_log}"
+echo "prp \$*" >>"${prp_log}"
 echo PROMPT
 cat
 EOS
@@ -47,8 +49,9 @@ EOS
 }
 
 run() {
-  rm -f "${calls_log}"
-  out=$(printf '%s' "$1" | PATH="${fakebin}:${PATH}" FAKE_LLM_EXIT="${llm_exit}" "${gen_bin}" 2>/dev/null)
+  rm -f "${prp_log}" "${calls_log}"
+  out=$(printf '%s' "$1" | PATH="${fakebin}:${PATH}" XDG_CONFIG_HOME="${tmproot}/config" \
+    FAKE_LLM_EXIT="${llm_exit}" "${gen_bin}" 2>/dev/null)
   rc=$?
 }
 
@@ -59,7 +62,22 @@ test_outputs_valid_meta() {
   check 'valid: 終了コード 0' '0' "${rc}"
   check 'valid: prompt を付けた本文を groq で生成する' \
     $'prp -ne gen-task-title-and-branch.md$\nllm -c tgpt -p groq -fc claude\nPROMPT\n- [ ] x を直す\n  - 詳細' \
-    "$(cat "${calls_log}")"
+    "$(cat "${prp_log}" "${calls_log}")"
+}
+
+# terms.tsv (日本語 TAB 英語 TAB 許す語) があれば、英語の技術用語を日本語に置き換えない指示を prompt の前に付ける
+test_adds_terms_rule() {
+  printf '%s' '{"branch":"feature/x","name":"x","title":"x"}' >"${llm_out}"
+  mkdir -p "${tmproot}/config/tasks"
+  printf '# comment\n秘密\tsecret\t秘密鍵,秘密保持\n鉤\thook\n' >"${tmproot}/config/tasks/terms.tsv"
+  run 'x'
+  rm -r "${tmproot}/config"
+  local prp_call
+  prp_call=$(cat "${prp_log}")
+  check 'terms: 日本語 => 英語 の対応を渡す' '1' "$([[ ${prp_call} == *'- 秘密 => secret (ok: 秘密鍵, 秘密保持)'* ]] && echo 1 || echo 0)"
+  check 'terms: 許す語の無い行も渡す' '1' "$([[ ${prp_call} == *'- 鉤 => hook'* && ${prp_call} != *'- 鉤 => hook (ok'* ]] && echo 1 || echo 0)"
+  check 'terms: コメント行は渡さない' '0' "$([[ ${prp_call} == *comment* ]] && echo 1 || echo 0)"
+  check 'terms: prompt の前に付ける (-pm)' '1' "$([[ ${prp_call} == 'prp -pm '* ]] && echo 1 || echo 0)"
 }
 
 test_rejects_invalid_meta() {
@@ -91,6 +109,7 @@ main() {
   local pass=0 fail=0
 
   test_outputs_valid_meta
+  test_adds_terms_rule
   test_rejects_invalid_meta
   test_fails_when_llm_fails
 
