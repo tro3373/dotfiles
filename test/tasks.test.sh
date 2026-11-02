@@ -17,10 +17,9 @@
 #   * path: 作業対象 index.md の絶対パスだけを stdout へ (未 split なら worktree 無しで split / 冪等)
 #   * next: 参照行は参照先 index.md を出す
 #   * summary: front matter title 表示
-#   * complete: front matter status: ✅️ + title ✅️ + 親参照 [x]
+#   * complete: front matter status: ✅️ + title ✅️ + 親参照 [x] (ログへは書かない)
 #   * complete: 通常サブタスク - [ ] => - [x]
-#   * clean: 完了参照行を log_fmt へ転記 (削除せず残す。done 廃止)
-#   * log 転記: 見出しは日付順に差し込み、参照行はその日付の節へ入れる
+#   * clean: 未 split の完了タスクを split する (1 行だけのタスクも)。ログへは書かない
 #   * add: 1 行目の行頭の記号だけ落とす / 同じ ID があれば 1 秒ずつ先の空きを振る
 #   * pr: pr を包んで成功時だけ status へ 🚀 を足す (並びは ✅️🚀 に正規化)
 #
@@ -64,17 +63,15 @@ new_env() {
 # store_root=dirname / tasks_subdir=basename へ分解し、tasks_store_dir が tasks_base に一致する。
 write_config() {
   local tasks_base="${1:-${base}}"
-  write_config_kv "$(dirname "${tasks_base}")" "$(basename "${tasks_base}")" \
-    'logs/%Y/%Y-%m-01-log.md'
+  write_config_kv "$(dirname "${tasks_base}")" "$(basename "${tasks_base}")"
 }
 
-# config.env に store_root/tasks_subdir/log_fmt を verbatim で書き出す (検証用)。
+# config.env に store_root/tasks_subdir を verbatim で書き出す (検証用)。
 write_config_kv() {
   mkdir -p "${xdg}/tasks"
   {
     printf 'store_root=%s\n' "$1"
     printf 'tasks_subdir=%s\n' "$2"
-    printf "log_fmt='%s'\n" "$3"
   } >"${xdg}/tasks/config.env"
 }
 
@@ -222,7 +219,7 @@ test_dies_without_config() {
 # 3. store_root が未設定なら die する
 test_dies_without_store_root() {
   new_env t3 myrepo
-  write_config_kv '' 'tasks' 'logs/x.md'
+  write_config_kv '' 'tasks'
 
   local out rc
   out=$(run_tasks --summary)
@@ -236,7 +233,7 @@ test_dies_without_store_root() {
 # 3a2. tasks_subdir が未設定なら die する
 test_dies_without_tasks_subdir() {
   new_env t3a2 myrepo
-  write_config_kv "${base}" '' 'logs/x.md'
+  write_config_kv "${base}" ''
 
   local out rc
   out=$(run_tasks --summary)
@@ -247,24 +244,10 @@ test_dies_without_tasks_subdir() {
     '1' "$([[ ${out} == *"is not set"* ]] && echo 1 || echo 0)"
 }
 
-# 3a3. log_fmt が未設定なら die する
-test_dies_without_log_fmt() {
-  new_env t3a3 myrepo
-  write_config_kv "$(dirname "${base}")" "$(basename "${base}")" ''
-
-  local out rc
-  out=$(run_tasks --summary)
-  rc=$?
-
-  check 'no-log_fmt: exit non-zero' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
-  check 'no-log_fmt: message says "is not set"' \
-    '1' "$([[ ${out} == *"is not set"* ]] && echo 1 || echo 0)"
-}
-
 # 3b. 相対パスの store_root は絶対パスでないとして die する
 test_dies_with_relative_store_root() {
   new_env t3b myrepo
-  write_config_kv 'relative/root' 'tasks' 'logs/x.md'
+  write_config_kv 'relative/root' 'tasks'
 
   local out rc
   out=$(run_tasks --summary)
@@ -280,7 +263,7 @@ test_accepts_quoted_tilde_store_root() {
   new_env t3c myrepo
   local fake_home="${envdir}/home"
   mkdir -p "${fake_home}"
-  write_config_kv '"~/troot"' 'tasks' 'logs/x.md'
+  write_config_kv '"~/troot"' 'tasks'
 
   local rc
   (cd "${repo}" &&
@@ -847,7 +830,7 @@ EOF
     '1' "$([[ ${out} == *"[My Split Title]"* ]] && echo 1 || echo 0)"
 }
 
-# 9. complete (front matter): status: ✅️ + title ✅️ + 親参照 [x] + log 転記
+# 9. complete (front matter): status: ✅️ + title ✅️ + 親参照 [x]。ログへは書かない
 test_complete_front_matter_task() {
   new_env t9 myrepo
   write_config "${base}"
@@ -877,12 +860,8 @@ EOF
     '1' "$(grep -qx 'title: Done Me' "${dir}/index.md" && echo 1 || echo 0)"
   check 'complete-fm: parent reference marked [x]' \
     '1' "$(grep -qF -- "- [x] [20260101-000000_test-task](${ref})" "${repo_base}/index.md" && echo 1 || echo 0)"
-
-  # 内容日付 (参照行 ts = 2026-01) の log へ転記する (実行日でなく)
-  local log
-  log="${envdir}/logs/2026/2026-01-01-log.md"
-  check 'complete-fm: 完了参照を内容日付 (2026-01) の log へ転記' \
-    '1' "$(grep -qF -- "- [x] [20260101-000000_test-task](${ref})" "${log}" 2>/dev/null && echo 1 || echo 0)"
+  check 'complete-fm: ログを書かない' \
+    '0' "$([[ -e ${envdir}/logs ]] && echo 1 || echo 0)"
 }
 
 # 9b. complete (front matter): 参照行が worktree .tasks.md symlink 表記 (store_root 相対の
@@ -916,12 +895,8 @@ EOF
     '1' "$(grep -qx 'status: ✅️' "${dir}/index.md" && echo 1 || echo 0)"
   check 'complete-fm-wtref: worktree-symlink reference marked [x]' \
     '1' "$(grep -qF -- "- [x] [feature-foo](${wt}/.tasks.md)" "${repo_base}/index.md" && echo 1 || echo 0)"
-
-  local y ym log
-  y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${envdir}/logs/${y}/${ym}-01-log.md"
-  check 'complete-fm-wtref: 完了参照を log へ転記' \
-    '1' "$(grep -qF -- "- [x] [feature-foo](${wt}/.tasks.md)" "${log}" 2>/dev/null && echo 1 || echo 0)"
+  check 'complete-fm-wtref: ログを書かない' \
+    '0' "$([[ -e ${envdir}/logs ]] && echo 1 || echo 0)"
 }
 
 # 10. complete (通常サブタスク): - [ ] => - [x]
@@ -955,8 +930,7 @@ test_complete_skips_reference() {
     '1' "$(grep -qF -- '- [ ] [20260101-000000_x](20260101-000000_x/index.md)' "${base}/myrepo/index.md" && echo 1 || echo 0)"
 }
 
-# 12. clean: 完了参照行 (split 済み) は候補外。転記も削除もしない。
-# split 済みタスクの完了記録は complete 側 (mark_parent_reference_done) が担う。
+# 12. clean: 完了参照行 (split 済み) は候補外。削除しない。
 test_clean_excludes_done_reference() {
   new_env t12 myrepo
   write_config "${base}"
@@ -971,13 +945,6 @@ test_clean_excludes_done_reference() {
 
   run_tasks -c --all >/dev/null 2>&1 || true
 
-  # log_fmt = store_root 起点 logs/%Y/%Y-%m-01-log.md。store_root => envdir
-  local y ym log
-  y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${envdir}/logs/${y}/${ym}-01-log.md"
-
-  check 'clean: 完了参照は log へ転記しない (候補外)' \
-    '0' "$([[ -f ${log} ]] && grep -qE '_done[12]\]' "${log}" && echo 1 || echo 0)"
   check 'clean: 完了参照は index.md に残す' \
     '2' "$(grep -cE '_done[12]\]' "${base}/myrepo/index.md" 2>/dev/null || true)"
   check 'clean: 未完了参照は index.md に残す' \
@@ -986,7 +953,7 @@ test_clean_excludes_done_reference() {
     '1' "$(grep -qF -- '通常の未完了タスク' "${base}/myrepo/index.md" && echo 1 || echo 0)"
 }
 
-# 13. clean(normal): 未split 完了タスクを split し、関連ファイル移動・log 転記・参照保持
+# 13. clean(normal): 未split 完了タスクを split し、関連ファイル移動・参照保持。ログへは書かない
 test_clean_splits_unsplit_completed_task() {
   new_env t13 myrepo
   write_config "${base}"
@@ -1027,20 +994,17 @@ EOF
   check 'clean-split: 本文が言及しない loose file は移動しない' \
     '1' "$([[ -f ${base}/myrepo/other-task-note.md ]] && echo 1 || echo 0)"
 
-  # 内容日付 (ブロック内最新 ts = 2026-06-24) の log へ転記する (実行日でなく)
-  local log
-  log="${envdir}/logs/2026/2026-06-01-log.md"
-  check 'clean-split: 参照を内容日付 (2026-06) の log へ転記' \
-    '1' "$(grep -qE -- '_test-task-1\]' "${log}" 2>/dev/null && echo 1 || echo 0)"
+  check 'clean-split: ログを書かない' \
+    '0' "$([[ -e ${envdir}/logs ]] && echo 1 || echo 0)"
   check 'clean-split: 完了ブロックを index.md から除去' \
     '0' "$(grep -qF -- 'Completed big task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
   check 'clean-split: normal も参照行を index.md に残す' \
     '1' "$(grep -qE -- '_test-task-1\]\(' "${base}/myrepo/index.md" && echo 1 || echo 0)"
 }
 
-# 13b. clean: 1 行のみ (本文なし) の完了タスクは split せず生の行を log へ転記し、
-# index.md からは削除する (dir も参照行も作らない)。
-test_clean_single_line_no_split() {
+# 13b. clean: 1 行のみ (本文なし) の完了タスクも split する。
+# split 先が残るので、日ごとのログ (his gen) が作成日でリンクできる。
+test_clean_single_line_splits() {
   new_env t13b myrepo
   write_config "${base}"
   run_tasks --summary >/dev/null 2>&1 || true
@@ -1049,14 +1013,15 @@ test_clean_single_line_no_split() {
 
   run_tasks -c --all >/dev/null 2>&1 || true
 
-  local log
-  log="${envdir}/logs/2026/2026-06-01-log.md"
-  check 'clean-single: split dir を作らない' \
-    '0' "$(find "${base}/myrepo" -maxdepth 1 -type d -name '*_test-task-*' | wc -l)"
-  check 'clean-single: 生の行を内容日付 (2026-06) の log へ転記' \
-    '1' "$(grep -qF -- '- [x] [20260624_194043] single line done task' "${log}" 2>/dev/null && echo 1 || echo 0)"
-  check 'clean-single: タスクを index.md から削除' \
-    '0' "$(grep -qF -- 'single line done task' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  local idx="${base}/myrepo/20260624-194043_test-task-1/index.md"
+  check 'clean-single: 内容日付 (2026-06-24) の dir へ split する' \
+    '1' "$([[ -f ${idx} ]] && echo 1 || echo 0)"
+  check 'clean-single: split 先に元の行を残す' \
+    '1' "$([[ -f ${idx} ]] && grep -qF -- 'single line done task' "${idx}" && echo 1 || echo 0)"
+  check 'clean-single: 元の行は完了参照行に置き換わる' \
+    '1' "$(grep -qE -- '^- \[x\] \[[^]]*_test-task-1\]\(' "${base}/myrepo/index.md" && echo 1 || echo 0)"
+  check 'clean-single: ログを書かない' \
+    '0' "$([[ -e ${envdir}/logs ]] && echo 1 || echo 0)"
 }
 
 # 14. clean: タスク内に [ts] 無ければ clean 実行時 timestamp を使う
@@ -1078,7 +1043,7 @@ EOF
     '1' "$([[ -n ${dir} ]] && echo 1 || echo 0)"
 }
 
-# 14b. clean: 内容日付が判定できない (ブロックに [ts] 無し) 場合は警告し実行日の log へ転記
+# 14b. clean: 内容日付が判定できない (ブロックに [ts] 無し) 場合は警告する
 test_clean_warns_when_entry_date_unknown() {
   new_env t14b myrepo
   write_config "${base}"
@@ -1094,12 +1059,6 @@ EOF
 
   check 'clean-unknown: 内容日付不明で警告を出す' \
     '1' "$([[ ${out} == *"Cannot determine entry date"* ]] && echo 1 || echo 0)"
-
-  # 内容日付不明時は実行日 (今日) の log へフォールバックして転記する
-  local today_log
-  today_log="${envdir}/logs/$(date +%Y)/$(date +%Y-%m)-01-log.md"
-  check 'clean-unknown: 実行日の log へフォールバック転記' \
-    '1' "$(grep -qE -- '_test-task-1\]' "${today_log}" 2>/dev/null && echo 1 || echo 0)"
 }
 
 # 15. clean: 未完了 - [ ] タスクは split 対象外で残す
@@ -1121,7 +1080,7 @@ EOF
     '0' "$(grep -qF -- 'Completed to split' "${base}/myrepo/index.md" && echo 1 || echo 0)"
 }
 
-# 16. clean(worktree): 完了タスクを split・log 転記するが参照行は削除しない (再実行で重複なし)
+# 16. clean(worktree): 完了タスクを split するが参照行は削除しない (再実行で増えない)
 test_clean_worktree_keeps_reference() {
   new_env t16 myrepo
   write_config "${base}"
@@ -1154,33 +1113,25 @@ EOF
         "${tasks_bin}" "$@") >/dev/null 2>&1
   }
 
-  # worktree でも未 split 完了インラインタスクは clean で split+転記できる (手動 clean)
+  # worktree でも未 split 完了インラインタスクは clean で split できる (手動 clean)
   run_wt -c --all || true
 
   check 'clean-wt: 参照行を index.md に残す (削除しない)' \
     '1' "$(grep -qE -- '^- \[x\] \[[^]]*_test-task-1\]\(' "${wt_md}" && echo 1 || echo 0)"
 
-  # 内容日付 (ブロック内 ts = 2026-06-24) の log へ転記する
-  local log
-  log="${envdir}/logs/2026/2026-06-01-log.md"
-  check 'clean-wt: 参照を内容日付 (2026-06) の log へ転記' \
-    '1' "$(grep -qE -- '_test-task-1\]' "${log}" 2>/dev/null && echo 1 || echo 0)"
 
   run_wt -c --all || true
-  check 'clean-wt: 再実行で log 重複なし (1 件)' \
-    '1' "$(grep -cE -- '_test-task-[0-9]+\]' "${log}" 2>/dev/null || true)"
   check 'clean-wt: 再実行で split dir 増えず (再 split しない)' \
     '1' "$(find "${base}/myrepo" -maxdepth 1 -type d -name '*_test-task-*' | wc -l)"
   check 'clean-wt: 再実行後も参照行残存' \
     '1' "$(grep -qE -- '^- \[x\] \[[^]]*_test-task-1\]\(' "${wt_md}" && echo 1 || echo 0)"
 }
 
-# 17. clean --all: 未 split 完了タスクを全件 split+転記 (fzf 非経由・非対話で安全)
+# 17. clean --all: 未 split 完了タスクを全件 split (fzf 非経由・非対話で安全)
 test_clean_all_flag() {
   new_env t17 myrepo
   write_config "${base}"
   run_tasks --summary >/dev/null 2>&1 || true
-  # 内容日付は別の月にして log ファイルの振り分けを検証する (log_fmt は %Y-%m-01 = 月単位)
   cat >>"${base}/myrepo/index.md" <<'EOF'
 - [x] Done one
   - [20260101_000000] 🎉 完了
@@ -1190,26 +1141,14 @@ EOF
 
   run_tasks -c --all >/dev/null 2>&1 || true
 
-  # 内容日付が異なる2件はそれぞれの日付の log ファイルへ振り分けられる
-  local log1 log2 today_log dir_count
-  log1="${envdir}/logs/2026/2026-01-01-log.md"
-  log2="${envdir}/logs/2026/2026-03-01-log.md"
-  today_log="${envdir}/logs/$(date +%Y)/$(date +%Y-%m)-01-log.md"
+  local dir_count
   dir_count=$(find "${base}/myrepo" -maxdepth 1 -type d -name '*_test-task-*' | wc -l)
   check 'clean-all: 完了2件を split (dir 2)' '2' "${dir_count}"
-  check 'clean-all: 2026-01 の完了は 2026-01 log へ' \
-    '1' "$(grep -qE -- '20260101-000000_test-task' "${log1}" 2>/dev/null && echo 1 || echo 0)"
-  check 'clean-all: 2026-03 の完了は 2026-03 log へ' \
-    '1' "$(grep -qE -- '20260315-000000_test-task' "${log2}" 2>/dev/null && echo 1 || echo 0)"
-  check 'clean-all: 2026-01 log に 2026-03 分は混ざらない' \
-    '0' "$(grep -qE -- '20260315' "${log1}" 2>/dev/null && echo 1 || echo 0)"
-  check 'clean-all: 実行日 (今日) の log には転記しない' \
-    '0' "$([[ -f ${today_log} ]] && grep -qE -- '_test-task-[0-9]+\]' "${today_log}" && echo 1 || echo 0)"
   check 'clean-all: fzf を経由しない (非対話)' \
     '0' "$([[ -s ${fzf_log} ]] && echo 1 || echo 0)"
 }
 
-# 18. clean N: Nth 完了タスクのみ split+転記し、他は未 split のまま残す
+# 18. clean N: Nth 完了タスクのみ split し、他は未 split のまま残す
 test_clean_select_nth() {
   new_env t18 myrepo
   write_config "${base}"
@@ -1223,11 +1162,9 @@ EOF
 
   run_tasks -c 1 >/dev/null 2>&1 || true
 
-  # Nth=1 = "Done one" (内容日付 2026-01) のみ、その日付の log へ転記
-  local log
-  log="${envdir}/logs/2026/2026-01-01-log.md"
-  check 'clean-nth: 1件のみ内容日付 (2026-01) の log へ転記 (Nth のみ)' \
-    '1' "$(grep -cE -- '_test-task-[0-9]+\]' "${log}" 2>/dev/null || true)"
+  # Nth=1 = "Done one" だけを split する
+  check 'clean-nth: 1件のみ split (Nth のみ)' \
+    '1' "$(find "${base}/myrepo" -maxdepth 1 -type d -name '*_test-task-*' | wc -l)"
   check 'clean-nth: 1件目は split 済み (ブロック消滅)' \
     '0' "$(grep -qF -- '- [x] Done one' "${base}/myrepo/index.md" && echo 1 || echo 0)"
   check 'clean-nth: 2件目は未 split で残す' \
@@ -1255,8 +1192,8 @@ test_split_all_flag() {
     '0' "$([[ -s ${fzf_log} ]] && echo 1 || echo 0)"
 }
 
-# 20. clean(worktree): 完了参照行は候補外。log 転記せず index.md にも残す
-# 完了参照行は normal/worktree とも候補外 (split 済み完了は complete 側で log 転記済み)。
+# 20. clean(worktree): 完了参照行は候補外。index.md に残す
+# 完了参照行は normal/worktree とも候補外 (split 済み)。
 test_clean_worktree_excludes_done_reference() {
   new_env t20 myrepo
   write_config "${base}"
@@ -1283,105 +1220,8 @@ test_clean_worktree_excludes_done_reference() {
       FAKE_META_COUNTER="${meta_counter}" FAKE_FZF_LOG="${fzf_log}" \
       "${tasks_bin}" -c --all) >/dev/null 2>&1 || true
 
-  local y ym log
-  y=$(date +%Y) && ym=$(date +%Y-%m)
-  log="${envdir}/logs/${y}/${ym}-01-log.md"
-  check 'clean-wt-excl: 完了参照行は log へ転記しない' \
-    '0' "$([[ -f ${log} ]] && grep -qF -- '_prior]' "${log}" && echo 1 || echo 0)"
   check 'clean-wt-excl: 完了参照行は index.md に残る' \
     '1' "$(grep -qF -- '20260101-000000_prior' "${wt_md}" && echo 1 || echo 0)"
-}
-
-# 22. log 転記: ref の timestamp から日付見出し (## YYYY-MM-DD (曜)) を生成し見出し配下へ
-# 記録する。同日付の参照を複数転記しても見出しは重複しない (冪等)。
-test_log_writes_dated_header() {
-  new_env t22 myrepo
-  write_config "${base}"
-  local repo_base="${base}/myrepo"
-  local dir1="${repo_base}/20260101-000000_one"
-  local dir2="${repo_base}/20260101-235959_two"
-  local ref1='base/myrepo/20260101-000000_one/index.md'
-  local ref2='base/myrepo/20260101-235959_two/index.md'
-  mkdir -p "${dir1}" "${dir2}"
-  {
-    printf '%s\n' "- [ ] [20260101-000000_one](${ref1})"
-    printf '%s\n' "- [ ] [20260101-235959_two](${ref2})"
-  } >"${repo_base}/index.md"
-  cat >"${dir1}/index.md" <<EOF
----
-title: One
-branch: feature/one
-name: one
-status:
-parent: ${repo_base}/index.md
----
-
-EOF
-  cat >"${dir2}/index.md" <<EOF
----
-title: Two
-branch: feature/two
-name: two
-status:
-parent: ${repo_base}/index.md
----
-
-EOF
-
-  run_tasks ok -f "${dir1}/index.md" >/dev/null 2>&1 || true
-  run_tasks ok -f "${dir2}/index.md" >/dev/null 2>&1 || true
-
-  # 完了参照の内容日付 (2026-01) の log ファイルへ、その日付見出しで記録する
-  local log header
-  log="${envdir}/logs/2026/2026-01-01-log.md"
-  header=$(date -d 20260101 +'## %Y-%m-%d (%a)')
-  check 'log-header: ref timestamp から日付見出しを生成' \
-    '1' "$(grep -qxF -- "${header}" "${log}" 2>/dev/null && echo 1 || echo 0)"
-  check 'log-header: 同日付の見出しは重複しない (1 件)' \
-    '1' "$(grep -cxF -- "${header}" "${log}" 2>/dev/null || true)"
-  check 'log-header: 両参照を見出し配下へ記録' \
-    '2' "$(grep -cE -- '_(one|two)\]\(' "${log}" 2>/dev/null || true)"
-}
-
-# 22b. log 転記: 見出しは日付順に差し込み、参照行はその日付の節へ入れる (末尾に足さない)。
-# 既存見出しの曜日表記が生成側と違っても、日付が同じなら同じ節として扱う。
-test_log_keeps_date_order() {
-  new_env t22b myrepo
-  write_config "${base}"
-  local repo_base="${base}/myrepo" log name
-  log="${envdir}/logs/2026/2026-01-01-log.md"
-  mkdir -p "$(dirname "${log}")" "${repo_base}"
-  printf '%s\n' '## 2026-01-05 (x)' '- [x] old-05' '## 2026-01-20 (x)' '- [x] old-20' >"${log}"
-  for name in 20260110-000000_ten 20260105-000000_five; do
-    mkdir -p "${repo_base}/${name}"
-    printf '%s\n' "- [ ] [${name}](base/myrepo/${name}/index.md)" >>"${repo_base}/index.md"
-    printf -- '---\ntitle: T\nbranch: b\nname: n\nstatus:\nparent: %s\n---\n\n' \
-      "${repo_base}/index.md" >"${repo_base}/${name}/index.md"
-    run_tasks ok -f "${repo_base}/${name}/index.md" >/dev/null 2>&1 || true
-  done
-
-  check 'log-order: 既存の見出しより前の日付の見出しは、その前に入る' \
-    "$(printf '%s\n' '## 2026-01-05 (x)' "$(date -d 20260110 +'## %Y-%m-%d (%a)')" '## 2026-01-20 (x)')" \
-    "$(grep '^## ' "${log}")"
-  check 'log-order: 既存の見出しの日付の参照行は、その見出しの節に入る' \
-    '- [x] [20260105-000000_five](base/myrepo/20260105-000000_five/index.md)' \
-    "$(grep -A1 -xF -- '- [x] old-05' "${log}" | tail -n1)"
-  check 'log-order: 曜日表記が違っても同じ日付の見出しを使う' \
-    '1' "$(grep -c '^## 2026-01-05' "${log}")"
-}
-
-# 22c. log 転記: 本文の \ をエスケープとして解釈せず、1 行のまま残す
-test_log_keeps_backslash() {
-  new_env t22c myrepo
-  write_config "${base}"
-  run_tasks --summary >/dev/null 2>&1 || true
-  local md="${base}/myrepo/index.md" log
-  local line='- [x] [20260105_000000] C:\new\tab と \| を直す'
-  log="${envdir}/logs/2026/2026-01-01-log.md"
-  printf '%s\n' "${line}" >>"${md}"
-  run_tasks -c --all >/dev/null 2>&1 || true
-  check 'log: 本文の \ を解釈せず 1 行のまま残す' \
-    '1' "$(grep -cxF -- "${line}" "${log}" 2>/dev/null || true)"
 }
 
 # 23. add: 1 行目の行頭の箇条書き記号だけを落とし、ID を振った未完了タスクにする
@@ -1735,7 +1575,6 @@ main() {
   test_dies_without_config
   test_dies_without_store_root
   test_dies_without_tasks_subdir
-  test_dies_without_log_fmt
   test_dies_with_relative_store_root
   test_accepts_quoted_tilde_store_root
   test_requires_config_even_with_links
@@ -1770,7 +1609,7 @@ main() {
   test_complete_skips_reference
   test_clean_excludes_done_reference
   test_clean_splits_unsplit_completed_task
-  test_clean_single_line_no_split
+  test_clean_single_line_splits
   test_clean_timestamp_fallback_to_now
   test_clean_warns_when_entry_date_unknown
   test_clean_skips_pending_tasks
@@ -1779,9 +1618,6 @@ main() {
   test_clean_select_nth
   test_split_all_flag
   test_clean_worktree_excludes_done_reference
-  test_log_writes_dated_header
-  test_log_keeps_date_order
-  test_log_keeps_backslash
   test_add_strips_leading_marker_only
   test_add_avoids_duplicate_id
   test_preview_line_block_and_ref

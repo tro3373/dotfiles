@@ -41,10 +41,9 @@ parse_skip_refs=0
 split_worktree=1
 # spawn 対象 agent (-sp=claude / -spc=codex)。tmux 起動コマンドの分岐に使う。
 spawn_agent=claude
-# config (load_tasks_config が設定): store_root=絶対, tasks_subdir=相対, log_fmt=相対フォーマット
+# config (load_tasks_config が設定): store_root=絶対, tasks_subdir=相対
 store_root=
 tasks_subdir=
-log_fmt=
 tasks_store_dir=
 
 usage() {
@@ -63,7 +62,7 @@ Manage repository tasks.
                             splits it (no worktree) if not split yet
       -n|--next           : Show Nth task chunk (default 1; also -n2, --next=2)
                             (reference line => referenced index.md)
-      -c|--clean          : Record completed task(s) to log and drop them (fzf if no N)
+      -c|--clean          : Split completed inline task(s) into task dirs (fzf if no N)
       ok|v|done|complete  : Mark task(s) as completed (fzf if no N)
       pr [pr args...]     : Run \`pr\` and mark status with ${pr_mark} on success
                             (everything after \`pr\` is passed through verbatim)
@@ -221,13 +220,6 @@ resolve_reference_path() {
   realpath "$p" 2>/dev/null
 }
 
-# log_fmt の strftime 指定子 (%Y, %Y-%m 等) を date で実値化する。
-expand_log_fmt() { date +"$1"; }
-
-# 実行日の日付別ログの絶対パスを返す (store_root 起点で log_fmt を実値化)。
-# 内容日付が判定できないときの reference_log_path のフォールバック先。
-current_log_path() { printf '%s\n' "$store_root/$(expand_log_fmt "$log_fmt")"; }
-
 # YAML front matter を出力 (title, branch, name, parent)。status は常に空。
 # body は呼び出し側で追記する。front matter スキーマの SSOT。
 emit_front_matter() {
@@ -297,19 +289,17 @@ initialize_worktree_links() {
   [[ -e $dst_tasks_md ]] || _ln "$wt_md" "$dst_tasks_md"
 }
 
-# config から store_root/tasks_subdir/log_fmt を読み込む。SSOT は config。
+# config から store_root/tasks_subdir を読み込む。SSOT は config。
 # tasks_store_dir = store_root/tasks_subdir。main から全モード共通で1回だけ呼ぶ。
-# log_fmt は strftime 指定子を含むパスフォーマット (ex: log_fmt=logs/%Y/%Y-%m-01-log.md)。
 load_tasks_config() {
   local config_file="${XDG_CONFIG_HOME:-$HOME/.config}/tasks/config.env"
   [[ -f $config_file ]] ||
-    die "==> No config: $config_file => Define store_root, tasks_subdir, log_fmt"
+    die "==> No config: $config_file => Define store_root, tasks_subdir"
   # shellcheck source=/dev/null
   source "$config_file" ||
     die "==> Failed to load config (syntax error?): $config_file"
   [[ -n ${store_root:-} ]] || die "==> 'store_root' is not set in $config_file"
   [[ -n ${tasks_subdir:-} ]] || die "==> 'tasks_subdir' is not set in $config_file"
-  [[ -n ${log_fmt:-} ]] || die "==> 'log_fmt' is not set in $config_file"
   store_root=$(from_tilde "$store_root")
   [[ $store_root == /* ]] ||
     die "==> 'store_root' must be an absolute path: $store_root"
@@ -635,10 +625,10 @@ front_matter_value() {
   ' "$file"
 }
 
-# 選択した未 split 完了インラインタスク (- [x]) を split して log_fmt へ転記する。
-# 候補は未 split 完了タスクのみ (完了参照行は除外): split 済みタスクの完了は complete
-# 時に mark_parent_reference_done が log 転記するため clean では扱わない。参照行は残す。
-# Nth 未指定なら fzf multi-select、--all で全件。log_fmt は store_root を起点に解決する。
+# 選択した未 split 完了インラインタスク (- [x]) を split する。参照行は残す。
+# 候補は未 split 完了タスクのみ (完了参照行は除外)。
+# 日ごとのログへは書かない: his gen が split 先の作成日でリンクする。
+# Nth 未指定なら fzf multi-select、--all で全件。
 clean_tasks() {
   local candidates selected
   candidates=$(list_task_lines 1 1)
@@ -649,109 +639,15 @@ clean_tasks() {
   selected=$(choose_lines "$candidates" "Select completed task(s) to clean: ") || true
   [[ -n $selected ]] || die "==> No task selected."
   process_selected "$selected" clean_one_task
-  info "==> Recorded completed task references to date-based logs under $store_root"
 }
 
-# 指定行の完了タスクを clean する。複数行の未 split 完了ブロックは先に split し、
-# 完了参照行を log へ転記する (参照行は残す / normal/worktree 共通)。
-# 1 行のみ (本文なし) のタスクは split せず生の行を log へ転記し、リストから削除する。
+# 指定行の完了タスクを split する (1 行だけのタスクも。normal/worktree 共通)。
+# 1 行だけのタスクも split するのは、split 先が無いと his gen がリンクできず記録が消えるため。
 clean_one_task() {
-  local line_no="$1" line ref_line log_path
+  local line_no="$1" line
   line=$(sed -n "${line_no}p" "$target_file")
-  if ! printf '%s\n' "$line" | grep -qE "$grep_key_reference_done"; then
-    set_block_range "$line_no"
-    if [[ $first_line -eq $end_line ]]; then
-      log_path=$(reference_log_path "$line")
-      append_reference_to_log "$log_path" "$line"
-      sed -i "${first_line},${end_line}d" "$target_file"
-      info "==> Recorded to $log_path (single-line, removed from list)"
-      return
-    fi
-    split_completed_one "$line_no"
-  fi
-  ref_line=$(sed -n "${line_no}p" "$target_file")
-  log_path=$(reference_log_path "$ref_line")
-  append_reference_to_log "$log_path" "$ref_line"
-  info "==> Recorded to $log_path"
-}
-
-# ref (完了参照行) の split timestamp (YYYYMMDD-HHMMSS) から内容日付 YYYYMMDD を取り出す。
-# timestamp 無し (worktree symlink 参照等) は空。日付見出しと log パス解決の共用 SSOT。
-reference_ymd() {
-  local ts
-  ts=$(grep -oE '[0-9]{8}[-_][0-9]{6}' <<<"$1" | head -1 || :)
-  printf '%s' "${ts:0:8}"
-}
-
-# ref の内容日付から日付見出し '## %Y-%m-%d (%a)' を生成する。日付不明時は実行日。
-# log をタスク日付別にグルーピングするための SSOT。
-reference_date_header() {
-  local ymd
-  ymd=$(reference_ymd "$1")
-  if [[ -n $ymd ]]; then
-    date -d "$ymd" +'## %Y-%m-%d (%a)' 2>/dev/null && return
-  fi
-  date +'## %Y-%m-%d (%a)'
-}
-
-# ref の内容日付で日付別 log の絶対パスを返す (store_root 起点で log_fmt を実値化)。
-# 内容日付が判定できなければ実行日の log (current_log_path) へフォールバックし警告する。
-# 「転記先を転記する内容の日付で決める」ための SSOT。clean と complete で共用する。
-reference_log_path() {
-  local ref="$1" ymd fmt
-  ymd=$(reference_ymd "$ref")
-  if [[ -n $ymd ]] && fmt=$(date -d "$ymd" +"$log_fmt" 2>/dev/null); then
-    printf '%s\n' "$store_root/$fmt"
-    return
-  fi
-  # warn は stdout 出力。本関数は $() で値捕捉されるため警告は >&2 で stderr へ逃がす
-  # (>&2 を外すと警告文が log_path に混入し誤パスを生む: load-bearing)。
-  warn "==> Cannot determine entry date from reference, using today's log: $ref" >&2
-  current_log_path
-}
-
-# 完了参照行を log へ転記する。ref は日付見出しの節の末尾へ入れる。
-# 見出しが無ければ、日付順の位置へ見出しごと差し込む。ref が既にあれば何もしない (再実行冪等)。
-# 見出しは日付 (## YYYY-MM-DD) で突き合わせる。曜日はロケールで表記が変わるため。
-append_reference_to_log() {
-  local log_path="$1" ref="$2" header merged
-  mkdir -p "$(dirname "$log_path")"
-  grep -qxF -- "$ref" "$log_path" 2>/dev/null && return 0
-  header=$(reference_date_header "$ref")
-  touch "$log_path"
-  merged=$(insert_reference_under_header "$header" "$ref" <"$log_path")
-  printf '%s\n' "$merged" >"$log_path"
-}
-
-# stdin の log に ref を差し込んだ全文を stdout へ出す (append_reference_to_log の本体)。
-insert_reference_under_header() {
-  # -v で渡すと本文の \n などがエスケープとして解釈され、転記した行が壊れる
-  HEADER="$1" REF="$2" awk '
-    function date_key(line) {
-      if (line !~ /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/) return ""
-      return substr(line, 4, 10)
-    }
-    # 見出し h の節 (次の見出しの手前まで) の、最後の空でない行
-    function section_end(h,    i, last) {
-      last = h
-      for (i = h + 1; i <= NR && lines[i] !~ /^##? /; i++) if (lines[i] != "") last = i
-      return last
-    }
-    { lines[NR] = $0 }
-    END {
-      header = ENVIRON["HEADER"]
-      ref = ENVIRON["REF"]
-      key = date_key(header)
-      for (i = 1; i <= NR; i++) if (date_key(lines[i]) == key) { sec = i; break }
-      if (sec) after = section_end(sec)
-      if (!sec) for (i = 1; i <= NR; i++) if (date_key(lines[i]) > key) { before = i; break }
-      for (i = 1; i <= NR; i++) {
-        if (i == before) print header "\n" ref
-        print lines[i]
-        if (i == after) print ref
-      }
-      if (!sec && !before) print header "\n" ref
-    }'
+  printf '%s\n' "$line" | grep -qE "$grep_key_reference_done" && return 0
+  split_completed_one "$line_no"
 }
 
 complete_task() {
@@ -825,12 +721,11 @@ complete_front_matter_task() {
   mark_parent_reference_done
 }
 
-# 親 index.md の当該参照行 (- [ ] [title](path)) を [x] 化し、日付別ログへ転記する。
+# 親 index.md の当該参照行 (- [ ] [title](path)) を [x] 化する。
 # 参照行のパス表記は複数系統 (store_root 相対 index.md / worktree .tasks.md の ~ パス) が
 # 混在しうるため、リテラル一致でなく解決後の絶対実パスで $target_file と突き合わせる。
-# split タスク完了の記録は clean を介さずここで残す (transfer は冪等)。
 mark_parent_reference_done() {
-  local parent lineno line line_path log_path ref
+  local parent lineno line line_path
   parent=$(from_tilde "$(front_matter_value "$target_file" parent)")
   [[ -n $parent && -e $parent ]] || return 0
   lineno=
@@ -847,9 +742,6 @@ mark_parent_reference_done() {
   }
   sed -i "${lineno}s/- \[ \]/- [x]/" "$parent"
   info "==> Parent reference marked done: $parent"
-  ref=$(sed -n "${lineno}p" "$parent")
-  log_path=$(reference_log_path "$ref")
-  append_reference_to_log "$log_path" "$ref"
 }
 
 # 通常サブタスクを完了にする。Nth 未指定なら fzf multi-select。
