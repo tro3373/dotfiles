@@ -1,7 +1,6 @@
 #!/usr/bin/env -S bash -e
 
 command_name=$(basename "$0") && readonly command_name
-dst=/tmp/"$command_name".tmp.md && readonly dst
 pre_message=
 edit=1
 
@@ -34,6 +33,7 @@ initialize() {
   done
 }
 add_args() { args+=("$@"); }
+cleanup() { rm -rf "${tmp_dir:-}"; }
 main() {
   initialize "$@"
   set -euo pipefail
@@ -46,6 +46,10 @@ main() {
   )
   [[ -z $f ]] && return 0
 
+  # ディレクトリにするのは、nvim の filetype 用に名前を .md で終えるため。
+  trap cleanup EXIT
+  tmp_dir=$(mktemp -d -t "$command_name".XXXXXX)
+  local dst="$tmp_dir"/prompt.md
   {
     [[ -n $pre_message ]] && echo "$pre_message"
     cat <"$f"
