@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
+#
+# gen_task_title_and_branch - タスクの本文 (stdin) から branch / name / title の JSON を 1 つ出す。
+#
+#   printf -- '- [ ] 依頼\n  - 詳細\n' | gen_task_title_and_branch
+#
+# - 受理: JSON 値が 1 つだけで、branch / name / title が空でなく制御文字 (改行含む) を含まない文字列
+# - 生成に失敗したか受理できなければ、stderr に出して終了コード 1
 
-has() { command -v "${1}" >&/dev/null; }
-hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
-_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
-# shellcheck disable=SC2145
-_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
-log() { _log white "$*"; }
-info() { _log cyan "$*"; }
-warn() { _log yellow "$*"; }
-error() { _log red "$*" && exit 1; }
+die() {
+  echo "==> Error: $*" >&2
+  exit 1
+}
 
 main() {
-  set -eo pipefail
-  if [[ ! -p /dev/stdin ]]; then
-    error "==> This script must be run with a pipe or redirection."
-  fi
-  cat - |
-    prp -ne gen-task-title-and-branch.md$ |
-    llm
+  set -euo pipefail
+  [[ ! -t 0 ]] || die "本文を stdin で渡す"
+  local meta
+  meta=$(prp -ne 'gen-task-title-and-branch.md$' | llm -c tgpt -p groq -fc claude) || die "生成に失敗"
+  jq -se 'length == 1 and (.[0] | type == "object" and
+    all(.branch, .name, .title; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))' \
+    >/dev/null 2>&1 <<<"${meta}" || die "生成結果が不正: ${meta}"
+  printf '%s\n' "${meta}"
 }
 main "$@"

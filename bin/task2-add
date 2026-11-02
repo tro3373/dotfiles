@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#
+# task2-add - 本文 (stdin) から LLM で title / name / branch を作り、task2 add に渡す。
+#
+#   printf -- '- [ ] 依頼\n  - 詳細\n' | task2-add [task2 add のフラグ...]
+#
+# - 引数は task2 add のフラグだけを渡す。本文は stdin だけから受ける
+# - 引数は生成値の後ろに付ける。--title / --name / --branch を渡すと生成値に勝つ
+# - 本文は末尾の改行も含めてバイトのまま task2 add の stdin へ渡す
+# - stdout は task2 add の出力 (ID) をそのまま出す。終了コードも task2 add のもの
+
+die() {
+  echo "==> Error: $*" >&2
+  exit 1
+}
+
+main() {
+  set -euo pipefail
+  [[ ! -t 0 ]] || die "本文を stdin で渡す"
+  local body meta
+  # $(cat) は末尾の改行を落とすので、番兵を付けて読み、外す
+  body=$(
+    cat
+    printf .
+  )
+  body=${body%.}
+  [[ -n ${body//[[:space:]]/} ]] || die "本文が空"
+  # task2 は LLM を呼ばない決め事なので、title / name / branch は呼び出し側のここで作る
+  meta=$(gen_task_title_and_branch < <(printf '%s' "${body}")) || die "title / name / branch の生成に失敗"
+  local title name branch
+  title=$(jq -r '.title' <<<"${meta}")
+  name=$(jq -r '.name' <<<"${meta}")
+  branch=$(jq -r '.branch' <<<"${meta}")
+  exec task2 add --title "${title}" --name "${name}" --branch "${branch}" "$@" < <(printf '%s' "${body}")
+}
+main "$@"
