@@ -49,15 +49,15 @@ return {
     end,
   },
 
-  -- markdown preview (作者 fork) + live-server
+  -- markdown preview (旧 markdown-preview.nvim) + kitehost (旧 live-server.nvim)
   {
-    "tro3373/markdown-preview.nvim",
+    "selimacerbas/mdkite.nvim",
     ft = "markdown",
+    dependencies = { "selimacerbas/kitehost.nvim" },
     config = function()
       _G.src("800_markdown-preview.vim")
     end,
   },
-  { "selimacerbas/live-server.nvim", cmd = { "LiveServerStart", "LiveServerStop" } },
 
   -- csv/tsv を表形式で表示 (開いたら自動有効、:CsvViewToggle で切替)。keymaps は有効化したバッファのみ
   -- 閲覧用に csvlens (セル内折り返し可) も新規タブで自動起動する。:CsvLensAutoToggle で ON/OFF、:CsvLens で再表示

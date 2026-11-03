@@ -1,5 +1,5 @@
-if !g:plug.is_installed("markdown-preview.nvim")
+if !g:plug.is_installed("mdkite.nvim")
   finish
 endif
 
-nmap <Space>s <cmd>MarkdownPreview<CR>
+nmap <Space>s <cmd>MdKite start<CR>
