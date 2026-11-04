@@ -231,6 +231,16 @@ test_rejects_empty_body() {
   check 'empty: task2 add を呼ばない' 'no' "$(exists "${task2_args}")"
 }
 
+test_help() {
+  local opt
+  for opt in -h --help; do
+    run 'x' "${opt}"
+    check "help (${opt}): 終了コード 0" '0' "${rc}"
+    check "help (${opt}): 使い方を出す" 'yes' "$([[ ${out} == *'task2-add --lines 10,20'* ]] && echo yes || echo no)"
+    check "help (${opt}): task2 add を呼ばない" 'no' "$(exists "${task2_args}")"
+  done
+}
+
 test_lines_adds_whole_block() {
   run_index --lines 9,9
   check 'lines: 範囲がブロックの途中でも、ブロック全体を 1 タスクで add する' '1' "$(cat "${calls}" 2>/dev/null)"
@@ -404,6 +414,7 @@ main() {
   test_stdin_does_not_read_index
   test_rejects_failed_generation
   test_rejects_empty_body
+  test_help
   test_lines_adds_whole_block
   test_lines_adds_each_block_in_order
   test_lines_excludes_trailing_blank

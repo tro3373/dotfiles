@@ -5,8 +5,9 @@
 #   printf -- '- [ ] 依頼\n  - 詳細\n' | task2-add [task2 add のフラグ...]   # stdin の本文を 1 タスク
 #   task2-add [task2 add のフラグ...]                # 端末: index.md のブロックを fzf で選び、ブロックごとに 1 タスク
 #   task2-add --lines 10,20 [task2 add のフラグ...]  # index.md の行範囲にかかるブロックごとに 1 タスク
+#   task2-add -h                                     # この説明を出す
 #
-# - 引数は --lines のほかは task2 add のフラグだけを渡す
+# - 引数は --lines / -h のほかは task2 add のフラグだけを渡す
 # - 引数は生成値の後ろに付ける。--title / --name / --branch を渡すと生成値に勝つ
 # - 本文は末尾の改行も含めてバイトのまま task2 add の stdin へ渡す
 # - stdout は task2 add の出力 (ID) をそのまま出す
@@ -111,10 +112,19 @@ usage_die() {
   exit 2
 }
 
+# 冒頭のコメント (2 行目の後ろから、最初のコメントでない行の手前まで) を出す
+usage() {
+  awk 'NR < 3 { next } !/^#/ { exit } { sub(/^# ?/, ""); print }' "${BASH_SOURCE[0]}"
+}
+
 # --lines を lines に取り出し、残りを task2 add へ渡す args に入れる
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
       --lines)
         [[ $# -ge 2 ]] || usage_die "--lines に行範囲 (例: 10,20) を渡す"
         has_lines=true
