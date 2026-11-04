@@ -1,36 +1,247 @@
 #!/usr/bin/env bash
 #
-# task2-add - 本文 (stdin) から LLM で title / name / branch を作り、task2 add に渡す。
+# task2-add - 本文から LLM で title / name / branch を作り、task2 add に渡す。
 #
-#   printf -- '- [ ] 依頼\n  - 詳細\n' | task2-add [task2 add のフラグ...]
+#   printf -- '- [ ] 依頼\n  - 詳細\n' | task2-add [task2 add のフラグ...]   # stdin の本文を 1 タスク
+#   task2-add [task2 add のフラグ...]                # 端末: index.md のブロックを fzf で選び、ブロックごとに 1 タスク
+#   task2-add --lines 10,20 [task2 add のフラグ...]  # index.md の行範囲にかかるブロックごとに 1 タスク
 #
-# - 引数は task2 add のフラグだけを渡す。本文は stdin だけから受ける
+# - 引数は --lines のほかは task2 add のフラグだけを渡す
 # - 引数は生成値の後ろに付ける。--title / --name / --branch を渡すと生成値に勝つ
 # - 本文は末尾の改行も含めてバイトのまま task2 add の stdin へ渡す
-# - stdout は task2 add の出力 (ID) をそのまま出す。終了コードも task2 add のもの
+# - stdout は task2 add の出力 (ID) をそのまま出す
+# - index.md から取り込むとき
+#   - index.md は `task2 where` の `index` (cwd の repo のもの)
+#   - ブロック: 行頭が `- [ ]` の行と、その下の字下げした行。間の空行は含み、末尾の空行は含まない
+#     - 人の側だけを見る。task2 が作り直す一覧の側 (config の index_position が指すマーカーの向こう) は見ない
+#     - 旧 tasks の参照行 (`- [ ] [<ID>_<name>](<path>.md)` のようにリンクだけで .md を指す行) は頭にしない
+#   - ブロックを上から 1 つずつ add し、add できたら index.md から消す
+#   - add に失敗したら止まる。失敗したブロックと後ろのブロックは index.md に残る
+# - 終了コード: 0 成功 / 1 失敗 / 2 使い方エラー / 130 fzf で選ばずに閉じた / task2 add が失敗したらその終了コード
+
+# index.md の各行を line[] に読み、人の側のブロックの開始行 bs[] と終了行 be[] を nb 個つくる。
+# 変数 pos に task2 の index_position (top / bottom) を渡す。
+# マーカーの形と、どちらが一覧の側かは task2 の README「### index.md」と同じにする。
+# ずれると、task2 が守っている一覧の側の行を取り込んで消す
+# shellcheck disable=SC2016 # awk の script。shell に展開させない
+readonly parse_awk='
+function blank(s) { return s ~ /^[ \t]*$/ }
+function marker(i) { return line[i] == MARKER && (i == 1 || blank(line[i - 1])) && (i == NR || blank(line[i + 1])) }
+function legacy_ref(s) { return s ~ /^- \[ \] \[[^]]*\]\([^)]*\.md\)[ \t]*$/ }
+# 人の側の行範囲 hs..he。top は最初のマーカーの後ろ、bottom は最後のマーカーの手前。マーカーが無ければ全行
+function human(    i) {
+  hs = 1
+  he = NR
+  if (pos == "bottom") {
+    for (i = NR; i >= 1; i--) if (marker(i)) { he = i - 1; return }
+    return
+  }
+  for (i = 1; i <= NR; i++) if (marker(i)) { hs = i + 1; return }
+}
+function parse(    i, open) {
+  MARKER = sprintf("%80s", "")
+  gsub(/ /, "-", MARKER)
+  human()
+  nb = 0
+  open = 0
+  for (i = hs; i <= he; i++) {
+    if (line[i] ~ /^- \[ \]( |$)/ && !legacy_ref(line[i])) {
+      nb++
+      bs[nb] = i
+      be[nb] = i
+      open = 1
+      continue
+    }
+    if (!open || blank(line[i])) continue
+    if (line[i] ~ /^[ \t]/) {
+      be[nb] = i
+      continue
+    }
+    open = 0
+  }
+}
+{ line[NR] = $0 }
+'
+
+# ブロックごとに「開始行,終了行<TAB>頭の行から `- [ ] ` を除いたもの」を出す
+readonly list_awk="${parse_awk}"'
+END {
+  parse()
+  for (k = 1; k <= nb; k++) {
+    head = line[bs[k]]
+    sub(/^- \[ \] ?/, "", head)
+    printf "%d,%d\t%s\n", bs[k], be[k], head
+  }
+}
+'
+
+# 環境変数 T2A_BLOCK と中身が同じ最初のブロックを消した index.md を出す。無ければ終了コード 3。
+# 行番号でなく中身で探す: add の後に task2 が一覧を作り直すと、人の側の行番号がずれる。
+# 前後の空行は 1 つに詰め、ファイル末尾のブロックなら手前の空行も消す。
+readonly remove_awk="${parse_awk}"'
+function text(s, e,    t, i) {
+  t = ""
+  for (i = s; i <= e; i++) t = t line[i] "\n"
+  return t
+}
+END {
+  parse()
+  for (k = 1; k <= nb; k++) if (text(bs[k], be[k]) == ENVIRON["T2A_BLOCK"]) break
+  if (k > nb) exit 3
+  ds = bs[k]
+  de = be[k]
+  j = de + 1
+  while (j <= NR && blank(line[j])) j++
+  if (ds == 1 || blank(line[ds - 1])) de = j - 1
+  if (j > NR) {
+    de = NR
+    while (ds > 1 && blank(line[ds - 1])) ds--
+  }
+  for (i = 1; i <= NR; i++) if (i < ds || i > de) print line[i]
+}
+'
 
 die() {
   echo "==> Error: $*" >&2
   exit 1
 }
 
-main() {
-  set -euo pipefail
-  [[ ! -t 0 ]] || die "本文を stdin で渡す"
-  local body meta
-  # $(cat) は末尾の改行を落とすので、番兵を付けて読み、外す
+usage_die() {
+  echo "==> Error: $*" >&2
+  exit 2
+}
+
+# --lines を lines に取り出し、残りを task2 add へ渡す args に入れる
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --lines)
+        [[ $# -ge 2 ]] || usage_die "--lines に行範囲 (例: 10,20) を渡す"
+        has_lines=true
+        lines="$2"
+        shift 2
+        ;;
+      *)
+        args+=("$1")
+        shift
+        ;;
+    esac
+  done
+}
+
+# body を 1 タスクとして add する。終了コードは task2 add のもの
+add_body() {
+  local meta title name branch
+  # task2 は LLM を呼ばない決め事なので、title / name / branch は呼び出し側のここで作る
+  meta=$(gen_task_title_and_branch < <(printf '%s' "${body}")) || die "title / name / branch の生成に失敗"
+  title=$(jq -r '.title' <<<"${meta}")
+  name=$(jq -r '.name' <<<"${meta}")
+  branch=$(jq -r '.branch' <<<"${meta}")
+  task2 add --title "${title}" --name "${name}" --branch "${branch}" "${args[@]}" < <(printf '%s' "${body}")
+}
+
+add_stdin() {
+  local body
+  # $(cat) は末尾の改行を落とすので、sentinel を付けて読み、外す
   body=$(
     cat
     printf .
   )
   body=${body%.}
   [[ -n ${body//[[:space:]]/} ]] || die "本文が空"
-  # task2 は LLM を呼ばない決め事なので、title / name / branch は呼び出し側のここで作る
-  meta=$(gen_task_title_and_branch < <(printf '%s' "${body}")) || die "title / name / branch の生成に失敗"
-  local title name branch
-  title=$(jq -r '.title' <<<"${meta}")
-  name=$(jq -r '.name' <<<"${meta}")
-  branch=$(jq -r '.branch' <<<"${meta}")
-  exec task2 add --title "${title}" --name "${name}" --branch "${branch}" "$@" < <(printf '%s' "${body}")
+  add_body
+}
+
+# 取り込むブロックの「開始行,終了行」を 1 行ずつ出す。--lines があれば範囲にかかるもの、無ければ fzf で選んだもの
+choose_ranges() {
+  if [[ ${has_lines} == false ]]; then
+    pick_blocks
+    return
+  fi
+  [[ ${lines} =~ ^([0-9]+)(,([0-9]+))?$ ]] || usage_die "--lines は <開始行>,<終了行>: ${lines}"
+  local from="${BASH_REMATCH[1]}" to="${BASH_REMATCH[3]:-${BASH_REMATCH[1]}}" ranges
+  ((from >= 1 && from <= to)) || usage_die "--lines は 1 以上で、開始行 <= 終了行: ${lines}"
+  ranges=$(awk -F '\t' -v from="${from}" -v to="${to}" \
+    '{ split($1, r, ","); if (r[1] + 0 <= to && r[2] + 0 >= from) print $1 }' <<<"${blocks}")
+  [[ -n ${ranges} ]] || die "${from}-${to} 行にブロックが無い: ${index}"
+  printf '%s\n' "${ranges}"
+}
+
+pick_blocks() {
+  local picked
+  picked=$(fzf --multi --delimiter '\t' --with-nth 2.. --prompt 'task2 add> ' \
+    --preview "sed -n {1}p $(printf '%q' "${snapshot}")" <<<"${blocks}") || return
+  cut -f 1 <<<"${picked}"
+}
+
+# 行範囲 range の中身を、行ごとに改行を付けて出す
+block_text() {
+  awk -v from="${range%,*}" -v to="${range#*,}" 'NR >= from && NR <= to' "${snapshot}"
+}
+
+# task2 の config の index_position。書いていなければ task2 の既定の top
+read_index_position() {
+  local config pos=""
+  config=$(task2 config --path) || die "task2 の config の場所を引けない (task2 config --path に失敗)"
+  [[ -f ${config} ]] && pos=$(sed -n 's/^index_position:[[:space:]]*\([a-z]*\).*/\1/p' "${config}")
+  printf '%s\n' "${pos:-top}"
+}
+
+# body のブロックを index.md から消す。task2 の一覧の作り直しと同じ、index.md のディレクトリの lock を取る
+remove_block() {
+  local real tmp
+  real=$(realpath "${index}")
+  (
+    flock -x 9
+    tmp=$(mktemp "${real}.XXXXXX")
+    if ! T2A_BLOCK="${body}" awk -v pos="${position}" "${remove_awk}" "${real}" >"${tmp}"; then
+      rm -f "${tmp}"
+      echo "==> Warn: add したブロックが index.md に見つからず、消せない (書き換えられた)" >&2
+      exit 0
+    fi
+    chmod --reference="${real}" "${tmp}"
+    mv "${tmp}" "${real}"
+  ) 9<"$(dirname "${index}")"
+}
+
+add_from_index() {
+  local where index position snapshot blocks ranges range body bodies=()
+  where=$(task2 where) || die "index.md の場所を引けない (task2 where に失敗)"
+  index=$(jq -r '.index // empty' <<<"${where}")
+  [[ -n ${index} ]] || die "task2 where の JSON に index が無い"
+  [[ -f ${index} ]] || die "index.md が無い: ${index}"
+  position=$(read_index_position)
+  # 他の task2 が一覧を作り直すと人の側の行番号がずれる。fzf で人が選ぶ間も起きるので、
+  # 候補・preview・本文の切り出しは同じ写しから読む。消すときだけ実物を中身で探す
+  snapshot=$(mktemp)
+  # shellcheck disable=SC2064 # snapshot は local なので、今の値で trap に埋める
+  trap "rm -f $(printf '%q' "${snapshot}")" EXIT
+  cp "${index}" "${snapshot}"
+  blocks=$(awk -v pos="${position}" "${list_awk}" "${snapshot}")
+  [[ -n ${blocks} ]] || die "index.md に「- [ ]」で始まるブロックが無い: ${index}"
+  ranges=$(choose_ranges)
+  while read -r range; do
+    body=$(
+      block_text
+      printf .
+    )
+    bodies+=("${body%.}")
+  done <<<"${ranges}"
+  for body in "${bodies[@]}"; do
+    add_body
+    remove_block
+  done
+}
+
+main() {
+  set -euo pipefail
+  shopt -s inherit_errexit
+  local has_lines=false lines="" args=()
+  parse_args "$@"
+  if [[ ${has_lines} == false && ! -t 0 ]]; then
+    add_stdin
+    return
+  fi
+  add_from_index
 }
 main "$@"
