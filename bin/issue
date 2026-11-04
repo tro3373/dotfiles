@@ -1,73 +1,269 @@
 #!/usr/bin/env bash
 
-readonly depends=(fzf)
+# Open GitHub issue(s) as task-list markdown, append them to .tasks.md, or
+# create a new one.
+#
+# Open (default): pick issue(s) with fzf, convert them to task-list markdown,
+# then view them in nvim, one tab per issue.
+#   issue [-R owner/repo]
+# To tasks: same pick + convert, but append each issue to .tasks.md via
+# `tasks -a`, marked with a `tracker: gh=owner/repo#NN` line so /task can read
+# and comment on the issue it came from.
+#   issue -t [-R owner/repo]
+# Create: write the body in nvim (or pass -f), then `gh issue create --web`.
+# Without --title, the title is generated from the body by the LLM.
+#   issue -a [-f file] [--title title] [-R owner/repo]
+#
+# The repo defaults to the one gh resolves from the current directory's git
+# remote.
+
 command_name=$(basename "$0") && readonly command_name
+# Task-list markdown line ("- [ ] Title"). issue_to_tasks writes the format and
+# insert_tracker reads it back, so the pattern lives in one place.
+readonly task_re='^- \[[x ]\] (.*)$'
+# repo args for every gh call: set by parse_args. Empty means "let gh resolve
+# the repo from the current directory's git remote".
+gh_repo_args=()
+mode=open
 file=
 title=
-args=()
+md_indent_bin=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/md_indent && readonly md_indent_bin
+has() { command -v "${1}" >&/dev/null; }
+hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
+_ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
+# shellcheck disable=SC2145
+_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
+info() { _log cyan "$*"; }
+die() { _log red "$*" && exit 1; }
+
 usage() {
   cat <<EOF
 
-Create new GitHub Issue. start editor to write issue body.
+$command_name [-t|--to-tasks] [-a|--add [-f file] [--title title]] [-R owner/repo]
 
-  Usage:
-      $command_name [option] [-f file] [-t title]
-    Options
-      -h|--help : Show this usage
+  Open (default): pick issue(s) with fzf, convert them to task-list markdown,
+  then view them in nvim, one tab per issue. TAB toggles a pick.
+  Options:
+    -t, --to-tasks  Append the selected issue(s) to .tasks.md instead of opening
+                    them in nvim
+    -a, --add       Create a new issue. The body is written in nvim unless -f
+                    is given; the title is generated unless --title is given
+    -f, --file      Body file for -a
+        --title     Title for -a
+    -R, --repo      Target repo (owner/repo). Defaults to the repo gh resolves
+                    from the current directory's git remote
+    -h, --help      Show this help message and exit
 
 EOF
 }
-initialize() {
-  while true; do
-    [[ -z $1 ]] && break
+
+parse_args() {
+  # 綴り違いを黙って読み飛ばすと、意図しないモードや repo で動くので知らない引数は落とす。
+  while [[ -n ${1:-} ]]; do
     case "$1" in
       -h | --help) usage && exit 0 ;;
-      # -e) dummy= ;;
-      # -f*|--file*) file=${1#*=} ;;
-      -f | --file) shift && file=$1 ;;
-      -t | --title) shift && title=$1 ;;
-      *) add_args "$1" ;;
+      -t | --to-tasks) mode=to-tasks ;;
+      -a | --add) mode=add ;;
+      -f | --file)
+        [[ -n ${2:-} ]] || die "==> Error: $1 requires a file"
+        shift && file=$1
+        ;;
+      --title)
+        [[ -n ${2:-} ]] || die "==> Error: $1 requires a title"
+        shift && title=$1
+        ;;
+      -R | --repo)
+        [[ -n ${2:-} ]] || die "==> Error: $1 requires owner/repo"
+        shift && gh_repo_args=(-R "$1")
+        ;;
+      *) die "==> Error: Unknown option: $1" ;;
     esac
     shift
   done
-  check
-  set -euo pipefail
+  if [[ ${mode} != add && (-n ${file} || -n ${title}) ]]; then
+    die "==> Error: -f / --title are only for -a"
+  fi
 }
-check() { hass "${depends[@]}"; }
-add_args() { args+=("$@"); }
-has() { command -v "${1}" >&/dev/null; }
-hass() { for arg in "$@"; do has "$arg" || error "==> No $arg command exist."; done; }
-_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
-# shellcheck disable=SC2145
-_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
-log() { _log white "$*"; }
-info() { _log cyan "$*"; }
-warn() { _log yellow "$*"; }
-error() { _log red "$*" && exit 1; }
+
+view_issue() {
+  gh issue view "$1" "${gh_repo_args[@]}" --json number,title,body,comments,url
+}
+
+list_issues_json() {
+  # 一覧と一緒に body も取る。preview をこの JSON から引けばカーソル移動のたびに gh を
+  # 叩かずに済み、body を足しても一覧の取得時間はほぼ変わらない (comments は足すと
+  # 数倍遅くなるので取らない。comments は選んだ後の view_issue で取る)。
+  gh issue list "${gh_repo_args[@]}" --state open --limit 200 \
+    --json number,title,labels,author,body
+}
+
+issue_lines() {
+  # Tab-delimited list for fzf: NUMBER, TITLE, LABELS, AUTHOR.
+  jq -r '.[] | [.number, .title, (.labels | map(.name) | join(",")), .author.login] | @tsv'
+}
+
+# gh の日時 ("2026-03-02T21:43:46Z") をローカルの分精度に落とす。
+# 秒はタスクの本文で追う情報ではないし、桁が揃わないと読みにくい。
+format_datetime() {
+  date -d "$1" '+%Y-%m-%d %H:%M' 2>/dev/null || printf '%s' "$1"
+}
+
+issue_to_tasks() {
+  # Convert `gh issue view --json number,title,body,comments,url` into
+  # markdown task-list format:
+  #
+  #   - [ ] [#NN] Title
+  #     <body as markdown>
+  #     - Comments
+  #       - login • 2026-03-02 21:43
+  #         <comment body as markdown>
+  #     - View this issue on GitHub: <url>
+  #
+  # Everything below the title is indented by two spaces, which is what keeps
+  # the whole issue one task: bin/tasks ends a task block at the next line
+  # starting with "- " or "#" in column 0.
+  local raw number shown i comment author created url
+  raw=$(cat)
+  number=$(jq -r '.number' <<<"${raw}")
+  printf -- '- [ ] [#%s] %s\n' "${number}" "$(jq -r '.title // ""' <<<"${raw}")"
+
+  jq -r '.body // ""' <<<"${raw}" | "${md_indent_bin}" 2
+
+  # gh は comments を作成順 (古い順) で返すので、そのまま辿れば時系列になる。
+  shown=$(jq -r '.comments // [] | length' <<<"${raw}")
+  if ((shown > 0)); then
+    printf '  - Comments\n'
+    for ((i = 0; i < shown; i++)); do
+      comment=$(jq -c --argjson i "${i}" '.comments[$i]' <<<"${raw}")
+      author=$(jq -r '.author.login // "(unknown)"' <<<"${comment}")
+      created=$(format_datetime "$(jq -r '.createdAt // ""' <<<"${comment}")")
+      printf '    - %s • %s\n' "${author}" "${created}"
+      jq -r '.body // ""' <<<"${comment}" | "${md_indent_bin}" 6
+    done
+  fi
+
+  url=$(jq -r '.url // ""' <<<"${raw}")
+  [[ -n ${url} ]] && printf '  - View this issue on GitHub: %s\n' "${url}"
+  return 0
+}
+
+insert_tracker() {
+  # Put the `tracker:` marker (~/.claude/skills/task/references/tracker.md) right
+  # under the title line. /task reads that marker to know which issue a task
+  # belongs to; a task without one never triggers the issue integration.
+  # Only the title line can match: issue_to_tasks indents every body line.
+  local tracker=$1 line
+  while IFS='' read -r line || [[ -n ${line} ]]; do
+    printf '%s\n' "${line}"
+    if [[ ${line} =~ ${task_re} ]]; then
+      printf '  - tracker: %s\n' "${tracker}"
+    fi
+  done
+}
+
+tracker_of() {
+  # tracker の owner/repo は issue の URL だけから取る。-R で別 repo を見ることが
+  # あるので、cwd の repo を前提にすると /task が無い issue へ投稿しに行く。
+  # host も github.com に限る: `gh=owner/repo#NN` は host を持たず、/task は
+  # github.com へ投稿するため、GHE の URL は黙って別の issue を指す。
+  local url=$1
+  local url_re='^https://github\.com/([^/]+/[^/]+)/issues/([0-9]+)$'
+  [[ ${url} =~ ${url_re} ]] || return 1
+  printf 'gh=%s#%s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+}
+
+append_to_tasks() {
+  # `tasks -a` turns one call into one task, so each issue is appended on its own.
+  local number raw tracker
+  for number in "$@"; do
+    raw=$(view_issue "${number}")
+    if ! tracker=$(tracker_of "$(jq -r '.url // ""' <<<"${raw}")"); then
+      die "==> Error: Cannot build a tracker for #${number}; add the task by hand"
+    fi
+    issue_to_tasks <<<"${raw}" | insert_tracker "${tracker}" | tasks -a
+  done
+}
+
+open_in_nvim() {
+  # nvim fills a single buffer from stdin, so several issues need real files:
+  # one <NN>.md per pick, opened as tabs. The files are scratch, so drop them
+  # once nvim exits.
+  local tmpdir number status=0
+  local -a files=()
+  tmpdir=$(mktemp -d)
+  for number in "$@"; do
+    view_issue "${number}" | issue_to_tasks >"${tmpdir}/${number}.md"
+    files+=("${tmpdir}/${number}.md")
+  done
+  # Hold nvim's status so `set -e` cannot skip the cleanup on :cq or a crash.
+  nvim -p "${files[@]}" || status=$?
+  rm -rf "${tmpdir}"
+  return "${status}"
+}
+
+issue_select_open() {
+  # Pick issue(s) with fzf (NUMBER is the first tab field, TAB toggles a pick),
+  # convert each to task-list markdown, then hand it to the sink the mode picks:
+  # nvim (open) or .tasks.md (to-tasks).
+  local lines cache preview status=0
+  cache=$(mktemp)
+  if ! list_issues_json >"${cache}"; then
+    rm -f "${cache}"
+    die "==> Error: Failed to list GitHub issues"
+  fi
+  # $n は jq の変数。シェルに展開させない。
+  # shellcheck disable=SC2016
+  local filter='.[] | select(.number == $n) | "# #\(.number) \(.title)\n\n\(.body)"'
+  preview="jq -r --argjson n {1} $(printf '%q' "${filter}") $(printf '%q' "${cache}")"
+  lines=$(
+    issue_lines <"${cache}" |
+      fzf --multi --delimiter '\t' \
+        --preview "${preview}" \
+        --preview-window 'right,60%,wrap' \
+        --select-1 --exit-0
+  ) || status=$?
+  rm -f "${cache}"
+  ((status == 0)) || return 0
+  [[ -z ${lines} ]] && return 0
+  local -a numbers=()
+  mapfile -t numbers < <(cut -f1 <<<"${lines}")
+  if [[ ${mode} == to-tasks ]]; then
+    append_to_tasks "${numbers[@]}"
+    return 0
+  fi
+  open_in_nvim "${numbers[@]}"
+}
+
+create_issue() {
+  hass nvim
+  if [[ -z ${file} ]]; then
+    local git_root prj
+    git_root=$(git rev-parse --show-toplevel 2>/dev/null || :)
+    [[ -n ${git_root} ]] || die "==> Not inside git repository"
+    prj=$(basename "${git_root}")
+    file="/tmp/$(date +%Y-%m-%d_%H-%M-%S).${prj}.new-issue.md"
+    nvim -p "${file}"
+  fi
+  [[ -s ${file} ]] || die "==> File is empty: ${file}"
+  info "==> Creating issue from ${file}.."
+  if [[ -z ${title} ]]; then
+    hass prp llm
+    title=$(prp -ne gen-pr-title-from-file-ja.md$ <"${file}" | llm)
+  fi
+  gh issue create "${gh_repo_args[@]}" --web --title "${title}" -F "${file}"
+}
 
 main() {
-  initialize "$@"
-  git_root=$(git rev-parse --show-toplevel 2>/dev/null || :)
-  if [[ -z $git_root ]]; then
-    error "==> Not inside git repository"
+  set -euo pipefail
+  parse_args "$@"
+  hass gh
+  if [[ ${mode} == add ]]; then
+    create_issue
+    return
   fi
-  # file="${args[*]}"
-  if [[ -z $file ]]; then
-    prj=$(basename "$git_root")
-    timestamp=$(date +%Y-%m-%d_%H-%M-%S)
-    file="/tmp/$timestamp.$prj.new-issue.md"
-    # touch "$file"
-    # trap 'rm -f "$file"' EXIT
-    nvim -p "$file"
-  fi
-  if [[ ! -s $file ]]; then
-    # rm -v "$file"
-    error "==> File is empty: $file"
-  fi
-  info "==> Creating issue from $file.."
-  if [[ -z $title ]]; then
-    title=$(cat <"$file" | prp -ne gen-pr-title-from-file-ja.md$ | llm)
-  fi
-  gh issue create --web --title "$title" -F "$file"
+  hass jq fzf
+  issue_select_open
 }
-main "$@"
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
+fi
