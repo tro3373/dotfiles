@@ -21,9 +21,9 @@ fire_stdin() {
 fire() {
   if [[ ! -t 0 ]]; then
     fire_stdin
-  else
-    ff "$@"
+    return
   fi
+  ff "$@"
 }
 
 fire_files() {
