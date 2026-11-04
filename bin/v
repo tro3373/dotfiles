@@ -52,7 +52,7 @@ fire_files() {
       -q "$query" \
       -0 -1 \
       --preview 'bat --color=always --line-range=:500 {}' \
-      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort'
+      --bind 'ctrl-y:execute-silent(echo {} |clip)+abort'
 }
 
 main() {

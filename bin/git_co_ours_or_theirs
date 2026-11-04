@@ -19,7 +19,7 @@ EOF
       --reverse \
       -m \
       --preview="echo {} | cut -c4- | xargs git diff --color=always" \
-      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {}|cut -c4-|clip)+abort' |
+      --bind 'ctrl-y:execute-silent(echo {}|cut -c4-|clip)+abort' |
     cut -c4- |
     xargs -n 1 echo git checkout "$opt"
 }

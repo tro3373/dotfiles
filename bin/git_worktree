@@ -122,7 +122,6 @@ _fzf_worktrees() {
   fzf \
     --reverse \
     --height=100% \
-    --bind 'ctrl-l:toggle-all' \
     --preview='p=$(echo {} | awk "{print \$NF}")/.tasks.md; [ -e "$p" ] && bat --color=always "$p" || echo "(no tasks file)"' \
     --preview-window=down:70% \
     "${filter_args[@]}" \

@@ -41,8 +41,7 @@ main() {
     fzf -m \
       --preview 'echo {}; echo "----------------------------------------"; head -100 {}' \
       --select-1 \
-      --exit-0 \
-      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview' |
+      --exit-0 |
     v
 }
 main "$@"

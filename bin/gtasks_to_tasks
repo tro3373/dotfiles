@@ -199,7 +199,7 @@ stream_target_bundles() {
       fzf --multi \
         --prompt='Tasks> ' \
         --with-nth=2..2 \
-        --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' \
+        --bind 'ctrl-y:execute-silent(echo {} |clip)+abort' \
         --delimiter=$'\t' || true
     }
 }

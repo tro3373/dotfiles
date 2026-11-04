@@ -257,6 +257,10 @@ fi
 # fzf 設定
 # --------------------------------------------------------
 if has fzf; then
+  # 全 fzf 共通の key bind。tab は layout に合わせて次の候補へ進む toggle-out にする。
+  # 既定の toggle+down は既定 layout (下から上へ並ぶ) で最下行から動けず、2 回目の tab が
+  # 同じ行の選択を外すため multi-select できない。
+  export FZF_DEFAULT_OPTS="--bind=tab:toggle-out,btab:toggle-in,ctrl-l:toggle-all"
   # Setting ag as the default source for fzf
   if has rg; then
     export FZF_DEFAULT_COMMAND='rg --files --hidden --follow --glob "!.git/*"'
@@ -390,8 +394,7 @@ rm_cache() {
     fzf -m \
       --preview 'echo {}; echo "----------------------------------------"; head -100 {}' \
       --select-1 \
-      --exit-0 \
-      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview' |
+      --exit-0 |
     xargs rm -v
 }
 

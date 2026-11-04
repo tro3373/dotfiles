@@ -21,7 +21,7 @@ main() {
       --select-1 \
       --multi \
       --tac \
-      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' |
+      --bind 'ctrl-y:execute-silent(echo {} |clip)+abort' |
     sort -t$'\t' -k1,1n |
     cut -f2- |
     while IFS=$'\t' read -r project parent type summary body; do

@@ -4,7 +4,7 @@ main() {
   local tmp=/tmp/tmux_buffer
   tmux capture-pane -S - -p |
     sed '/^$/d' |
-    fzf --tac -m --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview' |
+    fzf --tac -m |
     tac >"$tmp"
   nvim "$tmp"
 }

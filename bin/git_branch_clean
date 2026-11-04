@@ -64,8 +64,7 @@ select_targets() {
     --delimiter '\t' \
     --preview "git log --color=always --graph --pretty=format:'${log_format}' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S' ${ref_prefix}{2}" \
     --preview-window=down,border-top,60% \
-    --exit-0 \
-    --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview' || true
+    --exit-0 || true
 }
 
 run() {

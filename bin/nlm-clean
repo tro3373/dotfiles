@@ -60,7 +60,7 @@ select_notebooks() {
         --preview 'nlm source list {1}' \
         --preview-window=hidden,down,border-top,60% \
         --exit-0 \
-        --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview,ctrl-y:execute-silent(echo {} |clip)+abort' \
+        --bind 'ctrl-y:execute-silent(echo {} |clip)+abort' \
         --bind "ctrl-o:execute-silent(open ${notebook_url}/{1})"
   )
 }

@@ -76,7 +76,7 @@ Manage repository tasks.
     Task index [N]
       next/comment/path use the Nth pending task (1-based, default 1).
       split/complete/spawn/clean use N directly; omit N to pick via fzf
-      multi-select (ctrl-l: toggle-all, ctrl-g: toggle-preview); --all selects
+      multi-select (keys follow FZF_DEFAULT_OPTS); --all selects
       all without fzf. Give N as 2 or -2.
 EOF
 }
@@ -391,15 +391,14 @@ preview_line() {
   sed -n "${first_line},${end_line}p" "$target_file" | _bat_md "$(basename "$target_file")"
 }
 
-# bin/v 互換 keybind の multi-select fzf。stdin=候補(lineno:行内容)、$1=prompt。
+# multi-select fzf (key bind は FZF_DEFAULT_OPTS の既定に任せる)。stdin=候補(lineno:行内容)、$1=prompt。
 # 表示は行番号列を隠し、preview は当該ブロック (参照行は参照先 index.md) を表示する。
 # preview は自分自身を --preview-line で再呼び出しし、ブロック境界解決を共有する。
 fzf_select() {
   fzf --multi --reverse --height=80% \
     --delimiter=: --with-nth=2.. \
     --prompt="$1" \
-    --preview "'$self_path' -f '$target_file' --preview-line {1}" \
-    --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview'
+    --preview "'$self_path' -f '$target_file' --preview-line {1}"
 }
 
 # 候補(lineno:行内容)から選択行を返す。--all 時は全件、Nth 明示時は N 番目、

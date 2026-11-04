@@ -8,8 +8,7 @@ main() {
       --preview 'echo {}; echo "----------------------------------------"; head -100 {}' \
       --tac \
       --select-1 \
-      --exit-0 \
-      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview' |
+      --exit-0 |
     xargs grep '^## 20.*' |
     nvim -
 }

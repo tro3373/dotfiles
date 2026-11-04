@@ -5,8 +5,7 @@ main() {
     fzf -m \
       --preview 'echo {}; echo "----------------------------------------"; bat --color=always {}' \
       --select-1 \
-      --exit-0 \
-      --bind 'ctrl-l:toggle-all,ctrl-g:toggle-preview' |
+      --exit-0 |
     xargs rm -rfv
 }
 main "$@"
