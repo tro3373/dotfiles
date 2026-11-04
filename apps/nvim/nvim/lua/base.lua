@@ -17,6 +17,36 @@ aug({
   group = "extra-whitespace",
   cb = [[call matchadd('ExtraWhitespace', '[\u00A0\u2000-\u200B\u3000]')]],
 })
+-- 半角の濁点・半濁点 (U+FF9E/FF9F) を、前の文字ごと同じ色で出す。
+-- nvim は前の文字と 1 セルにまとめ、tmux は 1 セルずつ数える。
+-- このため含む行より下で、描画とカーソル位置が 1 列ずれる。
+-- matchadd でなく extmark で付ける。
+-- 正規表現は、まとめられた文字を [] や . で前の文字ごと吸収し、色を付ける位置に当たらない。
+local halfwidth_marks_ns = vim.api.nvim_create_namespace("halfwidth-sound-marks")
+local halfwidth_marks = { "\u{FF9E}", "\u{FF9F}" }
+local function mark_halfwidth_sound_marks(buf)
+  vim.api.nvim_buf_clear_namespace(buf, halfwidth_marks_ns, 0, -1)
+  for lnum, line in ipairs(vim.api.nvim_buf_get_lines(buf, 0, -1, false)) do
+    for _, m in ipairs(halfwidth_marks) do
+      local s = line:find(m, 1, true)
+      while s do
+        local base = s > 1 and s - 1 + vim.str_utf_start(line, s - 1) or s
+        vim.api.nvim_buf_set_extmark(buf, halfwidth_marks_ns, lnum - 1, base - 1, {
+          end_col = s - 1 + #m,
+          hl_group = "ExtraWhitespace",
+        })
+        s = line:find(m, s + #m, true)
+      end
+    end
+  end
+end
+aug({
+  events = { "BufWinEnter", "TextChanged", "TextChangedI" },
+  group = "extra-whitespace",
+  cb = function(args)
+    mark_halfwidth_sound_marks(args.buf)
+  end,
+})
 aug({
   events = { "ColorScheme" },
   group = "extra-whitespace",
