@@ -24,19 +24,19 @@ updated_src_dirs() {
 }
 fire() {
   {
-    find "$mo"/dr/ -maxdepth 1 -mindepth 1 -type f -name "*.md"
-    find "$news_letter"/ideas/daily/ -maxdepth 1 -mindepth 1 -type f -name "*-trend.md"
+    find "$mo"/dr/ -mindepth 3 -maxdepth 3 -type f -name index.md
+    find "$news_letter"/v2/ -mindepth 3 -maxdepth 3 -type f -name index.md
   } |
     while read -r line; do
       [[ -z $line ]] && continue
-      echo "$(basename "$line" | sed -e 's,-,,g') $line"
+      echo "$(basename "$(dirname "$line")" | sed -e 's,-,,g') $line"
     done
 }
 main() {
   set -eo pipefail
   updated_src_dirs
   fire |
-    sort -nr -k 1 |
+    sort -r -k 1,1 |
     cut -d' ' -f2 |
     fzf -m \
       --preview 'echo {}; echo "----------------------------------------"; head -100 {}' \
