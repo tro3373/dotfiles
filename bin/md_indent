@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# Indent markdown so it nests under a task-list line.
+#
+#   printf '%s\n' "${body}" | md_indent 2
+#
+# stdin  : markdown
+# stdout : each line indented by $1 spaces, with trailing whitespace and blank
+#          lines dropped
+#
+# タスク 1 件が画面に収まることのほうが、markdown の段落区切りや hardBreak の
+# 行末 2 スペースより効く。空白だけの行は行末を落とした時点で空行になり、まとめて
+# 消える。例外はフェンスの中身だけ: そこの空行と行末空白はコードの一部で、消すと
+# 中身が変わる (区切りの ``` 行自体は本文ではないので落とす)。
+
+md_indent() {
+  local pad=$1 line in_fence=0 is_fence
+  local fence_re='^[[:space:]]*```'
+  while IFS='' read -r line || [[ -n ${line} ]]; do
+    is_fence=0
+    [[ ${line} =~ ${fence_re} ]] && {
+      is_fence=1
+      in_fence=$((1 - in_fence))
+    }
+    ((in_fence == 0 || is_fence)) && line="${line%"${line##*[![:space:]]}"}"
+    if [[ -z ${line} ]]; then
+      ((in_fence)) || continue
+      printf '\n'
+      continue
+    fi
+    printf '%*s%s\n' "${pad}" '' "${line}"
+  done
+}
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  set -euo pipefail
+  [[ ${1:-} =~ ^[0-9]+$ ]] || {
+    echo "Usage: md_indent <spaces>" >&2
+    exit 1
+  }
+  md_indent "$1"
+fi

@@ -65,6 +65,7 @@ gh_repo_args=()
 # ADF (Jira の本文 JSON) -> markdown の変換器。PATH ではなく隣を見る: この
 # スクリプトを source するテストや、PATH を通していない環境でも同じものを使う。
 adf2md_bin=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/adf2md && readonly adf2md_bin
+md_indent_bin=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/md_indent && readonly md_indent_bin
 has() { command -v "${1}" >&/dev/null; }
 hass() { for _arg in "$@"; do has "$_arg" || die "==> No $_arg command exist."; done; }
 _ink() { if has ink; then ink "$@"; else cat - 1>&2; fi; }
@@ -166,6 +167,7 @@ init_config() {
 resolve_config() {
   # Pick the per-project config from JIRA_PROJECT; init it on first use.
   local dir="${XDG_CONFIG_HOME:-${HOME}/.config}/.jira"
+  # lint-ignore: uppercase jira CLI が読む環境変数名なので変えられない
   export JIRA_CONFIG_FILE="${JIRA_CONFIG_FILE:-${dir}/.config.${JIRA_PROJECT}.yml}"
   [[ -f ${JIRA_CONFIG_FILE} ]] || init_config
 }
@@ -250,30 +252,6 @@ format_datetime() {
   date -d "$1" '+%Y-%m-%d %H:%M' 2>/dev/null || printf '%s' "$1"
 }
 
-indent_lines() {
-  # stdin の各行を $1 個の空白で字下げし、行末の空白と空行を落とす。タスク 1 件が
-  # 画面に収まることのほうが、markdown の段落区切りや hardBreak の行末 2 スペース
-  # より効く。空白だけの行は行末を落とした時点で空行になり、まとめて消える。
-  # 例外はフェンスの中身だけ: そこの空行と行末空白はコードの一部で、消すと中身が
-  # 変わる (区切りの ``` 行自体は本文ではないので落とす)。
-  local pad=$1 line in_fence=0 is_fence
-  local fence_re='^[[:space:]]*```'
-  while IFS='' read -r line || [[ -n ${line} ]]; do
-    is_fence=0
-    [[ ${line} =~ ${fence_re} ]] && {
-      is_fence=1
-      in_fence=$((1 - in_fence))
-    }
-    ((in_fence == 0 || is_fence)) && line="${line%"${line##*[![:space:]]}"}"
-    if [[ -z ${line} ]]; then
-      ((in_fence)) || continue
-      printf '\n'
-      continue
-    fi
-    printf '%*s%s\n' "${pad}" '' "${line}"
-  done
-}
-
 issue_to_tasks() {
   # Convert the raw `jira issue view --raw` JSON into markdown task-list format:
   #
@@ -295,7 +273,7 @@ issue_to_tasks() {
   printf -- '- [ ] [%s] %s\n' "${key}" "${summary}"
 
   desc=$(jq -c '.fields.description' <<<"${raw}" | "${adf2md_bin}")
-  [[ -n ${desc} ]] && printf '%s\n' "${desc}" | indent_lines 2
+  [[ -n ${desc} ]] && printf '%s\n' "${desc}" | "${md_indent_bin}" 2
 
   # jira は comments を作成順 (古い順) で返すので、そのまま辿れば時系列になる。
   shown=$(jq -r '.fields.comment.comments | length' <<<"${raw}")
@@ -312,7 +290,7 @@ issue_to_tasks() {
       author=$(jq -r '.author.displayName // .author.name // "(unknown)"' <<<"${comment}")
       created=$(format_datetime "$(jq -r '.created // ""' <<<"${comment}")")
       printf '    - %s • %s\n' "${author}" "${created}"
-      jq -c '.body' <<<"${comment}" | "${adf2md_bin}" | indent_lines 6
+      jq -c '.body' <<<"${comment}" | "${adf2md_bin}" | "${md_indent_bin}" 6
     done
   fi
 
