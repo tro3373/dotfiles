@@ -173,7 +173,7 @@ aumg({
 })
 -- <C-n>/<C-p>: quickfix ウィンドウが開いていれば次/前の候補へ移動 (端で wrap)、
 -- 開いていなければ LSP 診断の次/前へジャンプ (診断は loclist にも一覧表示)。
--- markdown だけは診断の代わりにタスク先頭 (行頭の `- [ ]` / `- [x]`) の次/前へ移る (端で wrap)。
+-- markdown だけは診断の代わりに区切り (行頭のタスク `- [ ]` / `- [x]`・見出し・`---`・```) の次/前へ移る (端で wrap)。
 -- Copilot 等が全バッファに attach するため「LSP 有無」では分岐できず、quickfix 窓の
 -- 開閉で振り分ける。診断ジャンプもここに集約し lsp.lua 側には buffer-local を持たせない。
 -- markdown の診断へは nvim 標準の ]d / [d で飛べる。
@@ -185,17 +185,19 @@ local function diag_jump(count)
 end
 -- search() は検索レジスタとハイライトを変えない (`/^- [` + n だと直前の検索語が消える)
 -- `\[.\]` でチェック欄 1 文字に絞る。`- [text](url)` のリンク行に止まらないため
-local function md_task_jump(dir)
+-- 見出しは `#` の後の空白を必須にする。`#tag` のような行に止まらないため
+-- 行単位の正規表現なので、コードブロック内の `# comment` 行にも止まる
+local function md_section_jump(dir)
   if dir < 0 then
-    -- 行の途中からの後方検索は今の行の先頭に当たり、前のタスクへ進まないため列 0 から探す
+    -- 行の途中からの後方検索は今の行の先頭に当たり、前の区切りへ進まないため列 0 から探す
     vim.api.nvim_win_set_cursor(0, { vim.fn.line("."), 0 })
   end
-  vim.fn.search([=[^- \[.\]]=], dir > 0 and "sw" or "bsw")
+  vim.fn.search([=[^\(- \[.\]\|#\{1,6} \|---$\|```\)]=], dir > 0 and "sw" or "bsw")
 end
 local function cn_cp(qf_cmd, qf_wrap, dir)
   local qf_closed = vim.fn.getqflist({ winid = 0 }).winid == 0
   if qf_closed and vim.bo.filetype == "markdown" then
-    return md_task_jump(dir)
+    return md_section_jump(dir)
   end
   if qf_closed then
     return diag_jump(dir)
@@ -206,10 +208,10 @@ local function cn_cp(qf_cmd, qf_wrap, dir)
 end
 vim.keymap.set("n", "<C-n>", function()
   cn_cp("cnext", "cfirst", 1)
-end, { silent = true, desc = "Quickfix 窓ありは次候補 / markdown は次タスク / 他は診断次へ" })
+end, { silent = true, desc = "Quickfix 窓ありは次候補 / markdown は次の区切り / 他は診断次へ" })
 vim.keymap.set("n", "<C-p>", function()
   cn_cp("cprevious", "clast", -1)
-end, { silent = true, desc = "Quickfix 窓ありは前候補 / markdown は前タスク / 他は診断前へ" })
+end, { silent = true, desc = "Quickfix 窓ありは前候補 / markdown は前の区切り / 他は診断前へ" })
 vim.opt.diffopt:append("vertical") -- デフォルトのdiffspritは縦分割指定
 vim.opt.mouse = "a" -- ターミナル時でもマウスを使えるようにする
 -- vim.opt.guioptions:append("a")
