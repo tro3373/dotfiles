@@ -298,11 +298,23 @@ _rename_removed_branch() {
     wlog "==> Failed to rename branch '${cur}' -> '${renamed}'. Continuing removal."
 }
 
+# path が worktree の置き場所 ($git_worktree_dir) の直下にあれば 0。
+# symlink は解決してから比べるので、置き場所の外を指すリンクは通らない。
+_is_under_worktree_root() {
+  local resolved
+  resolved=$(realpath -e "$1" 2>/dev/null) || return 1
+  [[ ${resolved%/*} == "$(realpath -e "$git_worktree_dir")" ]]
+}
+
 _force_remove_leftover() {
-  # git が消しきれなかった実体を sudo で片付ける。docker が掘った root:root の
+  # git が消しきれなかった実体を片付ける。docker が掘った root:root の
   # ディレクトリ等がここに来る。何を消すのか分からないまま Enter を押させたくないので、
   # sudo が要る理由 (自分の所有でないパス) を先に列挙してから確認する。
   local target_path="$1"
+  if ! _is_under_worktree_root "${target_path}"; then
+    elog "==> '${target_path}' is not directly under '${git_worktree_dir}'. Refusing to touch it with sudo."
+    return 1
+  fi
   local foreign foreign_total
   # -user は数値 uid も取る。読めない配下で find 自身が Permission denied を吐くため 2>/dev/null。
   foreign=$(find "${target_path}" ! -user "$(id -u)" -printf '%u:%g %p\n' 2>/dev/null) || true
@@ -314,10 +326,13 @@ _force_remove_leftover() {
       wlog "==> ... and $((foreign_total - 20)) more."
     fi
   fi
-  wlog "==> Worktree path '${target_path}' still exists. Force remove with sudo? (Cancel: Ctrl+C)"
+  wlog "==> Worktree path '${target_path}' still exists. Take ownership with sudo and trash it? (Cancel: Ctrl+C)"
   # 非対話 (EOF) で無確認 sudo へ進ませない。read の失敗を握り潰さず明示的に落とす。
   read -r _ || elog "==> No confirmation input. Aborting removal of '${target_path}'."
-  sudo rm -rfv "${target_path}"
+  # sudo には削除をさせない。所有者を戻すだけにして、消すのは自分の権限の trash に任せる。
+  # 誤ったパスが来ても被害は chown に留まり、消した中身は trash から戻せる。
+  sudo chown -R --no-dereference "$(id -u):$(id -g)" "${target_path}"
+  trash "${target_path}"
 }
 
 _do_remove_worktree() {

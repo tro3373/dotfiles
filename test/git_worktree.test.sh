@@ -15,6 +15,9 @@
 #       (誤認すると main が <cwd>-worktree の空 dir を掘る)。worktree の
 #       サブディレクトリからでも親リポの root を返す。
 #
+#   * _force_remove_leftover: worktree の置き場所の直下でなければ sudo を呼ばずに中止する。
+#       sudo は chown だけを行い、削除は trash に渡す。
+#
 #   * create_default_ln_config: ignored ファイルが 1 件も無いリポでも
 #       grep の非ゼロ終了で落ちず、空 config を書く。
 #
@@ -154,6 +157,48 @@ test_remove_leftover_leaves_no_stale_entry() {
     "$(git -C "${org}" branch -d removed/feat-G >/dev/null 2>&1 && echo 0 || echo 1)"
 }
 
+# 置き場所の外のパスには sudo を一切呼ばずに中止する。
+test_force_remove_refuses_outside_worktree_root() {
+  new_repo outside
+  local outside="${tmproot}/outside/victim"
+  mkdir -p "${outside}" "${org_wt}"
+  # shellcheck disable=SC2034  # source した _is_under_worktree_root が参照する
+  git_worktree_dir="${org_wt}"
+  (
+    # shellcheck disable=SC2329  # source した _force_remove_leftover が呼ぶ
+    sudo() { echo CALLED >"${tmproot}/outside.sudo"; }
+    # shellcheck disable=SC2329
+    trash() { echo CALLED >"${tmproot}/outside.trash"; }
+    echo | _force_remove_leftover "${outside}"
+  ) >/dev/null 2>&1
+  check 'outside: sudo を呼ばない' '0' "$([[ -e ${tmproot}/outside.sudo ]] && echo 1 || echo 0)"
+  check 'outside: trash を呼ばない' '0' "$([[ -e ${tmproot}/outside.trash ]] && echo 1 || echo 0)"
+  check 'outside: 対象が残る' '1' "$([[ -e ${outside} ]] && echo 1 || echo 0)"
+
+  # 置き場所の中を指す symlink でも、解決先が外なら通さない
+  ln -s "${outside}" "${org_wt}/link"
+  check 'outside: 外を指す symlink は置き場所の直下と見なさない' '1' \
+    "$(_is_under_worktree_root "${org_wt}/link" && echo 0 || echo 1)"
+}
+
+# 置き場所の直下なら、sudo は chown だけを行い、削除は trash に渡す。
+test_force_remove_chowns_then_trashes() {
+  new_repo inside
+  local target="${org_wt}/feat-H"
+  mkdir -p "${target}"
+  # shellcheck disable=SC2034  # source した _is_under_worktree_root が参照する
+  git_worktree_dir="${org_wt}"
+  (
+    # shellcheck disable=SC2329  # source した _force_remove_leftover が呼ぶ
+    sudo() { echo "$1" >>"${tmproot}/inside.sudo"; }
+    # shellcheck disable=SC2329
+    trash() { echo "$1" >"${tmproot}/inside.trash"; }
+    echo | _force_remove_leftover "${target}"
+  ) >/dev/null 2>&1
+  check 'inside: sudo は chown だけ' 'chown' "$(cat "${tmproot}/inside.sudo" 2>/dev/null)"
+  check 'inside: trash に対象を渡す' "${target}" "$(cat "${tmproot}/inside.trash" 2>/dev/null)"
+}
+
 # branch を設定して _fzf_worktrees を呼び、fzf へ渡った引数列を返す。
 # fzf は引数記録スタブに差し替える (stdin の一覧は捨て、受け取った引数を 1 行 1 個で
 # 返す)。スタブも branch 代入もサブシェル body に閉じるので他テストへ漏れない。
@@ -291,6 +336,8 @@ main() {
   test_remove_other_worktree_emits_nothing
   test_remove_untracked_does_not_need_sudo
   test_remove_leftover_leaves_no_stale_entry
+  test_force_remove_refuses_outside_worktree_root
+  test_force_remove_chowns_then_trashes
   test_fzf_args_with_branch
   test_fzf_args_without_branch
   test_org_root_outside_repo_fails
