@@ -157,8 +157,8 @@ _list_root_and_worktree_directories() {
         label=$(_task_summary "${_target_path%/}")
       fi
       _time=$(stat -c %y "$_target_path" | cut -d. -f1 | sed -e 's, ,_,g')
-      printf "%s\t%s\t%s\t%s\n" "$_time" "$label" "$merged" "$_target_path"
-    done | sort -k 2 | column -t -s $'\t'
+      printf "%s\t%s\t%s\t%s\n" "$_time" "$merged" "$label" "$_target_path"
+    done | sort -t $'\t' -k 3 | column -t -s $'\t'
 
 }
 
