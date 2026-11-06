@@ -29,7 +29,27 @@ setup_fake_tmux() {
   export FAKE_STATE_DIR="${tmpdir}/tmuxstate"
   mkdir -p "${FAKE_STATE_DIR}"
   write_fake_tmux
-  chmod +x "${fakebin}/tmux"
+  write_fake_task2
+  chmod +x "${fakebin}/tmux" "${fakebin}/task2"
+}
+
+# 偽 task2。`current -C <dir> --mark|--label` だけを受け、<dir>/.task2-fake の
+# 1 行目 (印) / 2 行目 (表示名) を出す。ファイルが無ければタスク無しとして終了コード 1。
+write_fake_task2() {
+  cat >"${fakebin}/task2" <<'EOS'
+#!/usr/bin/env bash
+dir=. want=
+while (($#)); do
+  case $1 in
+    -C) dir=$2; shift ;;
+    --mark) want=1 ;;
+    --label) want=2 ;;
+  esac
+  shift
+done
+[[ -f $dir/.task2-fake && -n $want ]] || exit 1
+sed -n "${want}p" "$dir/.task2-fake"
+EOS
 }
 
 # テスト用 git。グローバル設定を無効化してあるので identity を毎回渡す。
@@ -78,6 +98,13 @@ setup_test_repos() (
   printf -- '---\ntitle: t\nstatus: in progress\n---\n' \
     >"${repos}/alpha-worktree/odd/.tasks.md"
   printf -- '- [ ] plain\n' >"${repos}/beta/.tasks.md"
+  # task2 のタスクを持つ worktree。旧 .tasks.md より task2 を優先することの検証用に両方置く。
+  # t2abbr は表示名あり、t2none は表示名が空 (ブランチ名へ落ちる)
+  tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/t2abbr" -b brt2abbr
+  tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/t2none" -b brt2none
+  printf '\u2705 \U0001F680\n短い名前\n' >"${repos}/alpha-worktree/t2abbr/.task2-fake"
+  printf -- '---\ntitle: t\nstatus: \U0001F680\n---\n' >"${repos}/alpha-worktree/t2abbr/.tasks.md"
+  printf '\U0001F6A7\n\n' >"${repos}/alpha-worktree/t2none/.task2-fake"
   # ↑↓ 列用。remote は立てず origin/HEAD の参照だけ作る (fetch 済みと同じ状態)。
   # origin/main = c2。各 worktree の自動命名は delta-<ディレクトリ名>
   tgit init -q -b main "${repos}/delta"
@@ -581,6 +608,23 @@ test_list_marks_task_status() {
     "$(list_plain)"
 }
 
+# 19c. task2 のタスクがあれば印と表示名を task2 から取る。
+#      印は空白を詰めてマーク列へ置き、旧 .tasks.md の status より優先する。
+#      表示名は自動命名のセッションだけに出し、空ならブランチ名へ落ちる。手で付けた名前はそのまま。
+test_list_task2_mark_and_label() {
+  clear_markers
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  export FAKE_SESSIONS=$'alpha-t2abbr\t1\t\nalpha-t2none\t1\t\nmanual\t1\t'
+  set_fake_panes \
+    alpha-t2abbr '%1' "${repos}/alpha-worktree/t2abbr" \
+    alpha-t2none '%2' "${repos}/alpha-worktree/t2none" \
+    manual '%3' "${repos}/alpha-worktree/t2abbr"
+
+  check 'list: task2 の印と表示名を出し、手動名はそのまま' \
+    $'\talpha\nalpha-t2abbr\t\u2705\U0001F680短い名前  1w1p\nalpha-t2none\t  \U0001F6A7brt2none  1w1p\nmanual\t\u2705\U0001F680manual    1w1p' \
+    "$(list_plain)"
+}
+
 # 20. セッションが 1 つも無い場合は空出力で正常終了する。
 test_list_empty() {
   clear_markers
@@ -938,6 +982,7 @@ main() {
   test_list_clamps_min_name_width
   test_list_uses_first_pane_path
   test_list_marks_task_status
+  test_list_task2_mark_and_label
   test_list_clamps_unexpected_status
   test_list_handles_spaced_session_name
   test_list_branch_name_and_ahead_behind

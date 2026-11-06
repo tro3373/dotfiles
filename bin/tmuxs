@@ -26,10 +26,10 @@ readonly preview_ratio=60
 # fzf がリスト左端に常時確保するポインタ + マーカー列。
 readonly fzf_gutter_cols=2
 # セッション行の左端に置くマーク列の幅と、名前列と右列 (Nw Mp) の間隔。
-# マーク列には .tasks.md の front matter の status をそのまま置き、
+# マーク列には task2 の印 (無ければ .tasks.md の front matter の status) をそのまま置き、
 # 足りない分は同じ表示幅の空白を左に埋めて右詰めにする。
 # 印は最大 2 つ (✅️ と 🚀) 並ぶので、絵文字 1 つ 2 桁 x 2 で 4 桁を確保する。
-# 印の絵文字そのものは bin/tasks が決める。ここは値を運ぶだけで対応表を持たない。
+# 印の絵文字そのものは task2 / bin/tasks が決める。ここは値を運ぶだけで対応表を持たない。
 readonly list_indent=4
 readonly list_gap=2
 # 一覧を開くたびに裏で fetch する間隔の下限 (分)。これより新しい FETCH_HEAD の repo は飛ばす。
@@ -291,6 +291,36 @@ ab_text() {
   return 0
 }
 
+# worktree ルートのタスクの印と表示名を nameref へ返す。task2 のタスクを優先し、
+# 無ければ旧 .tasks.md の status へ落とす (表示名は空)。旧 tasks は移行が済むまで残す。
+# 表示名を abbr と title のどちらにするかは task2 (current --label) が決める。
+# task2 の印は空白区切り (`✅ 🚀`)。マーク列は空白も 1 桁に数えるので詰める。
+# task2 は worktree ルート単位で呼び出し元の kcache / lcache へメモ化する。
+task_info_of_top() {
+  local -n _ti_mark=$1 _ti_label=$2
+  local top=$3
+  _ti_mark=''
+  _ti_label=''
+  [[ -n $top ]] || return 0
+  [[ -n ${kcache[$top]+set} ]] || fill_task_info "$top"
+  _ti_mark=${kcache[$top]}
+  _ti_label=${lcache[$top]}
+}
+
+# task_info_of_top のメモ化の中身。top の印と表示名を kcache / lcache へ埋める。
+fill_task_info() {
+  local top=$1 mark legacy
+  kcache[$top]=''
+  lcache[$top]=''
+  if mark=$(task2 current -C "$top" --mark 2>/dev/null); then
+    kcache[$top]=${mark// /}
+    lcache[$top]=$(task2 current -C "$top" --label 2>/dev/null) || lcache[$top]=''
+    return 0
+  fi
+  task_status legacy "$top"
+  kcache[$top]=$legacy
+}
+
 # worktree ルートの .tasks.md を読み front matter の status の値を nameref へ返す。
 # .tasks.md は tasks store の index.md への symlink。front matter は先頭にあるので
 # 閉じの `---` で読み終える (数百行の index.md 全体は読まない)。
@@ -351,18 +381,19 @@ collect_session_stats() {
 # リポジトリ名のグループへ振り分ける。pane 数・状態・作業パスは
 # collect_session_stats が先に埋めてある。
 # 群内は状態で並べ替えず tmux の列挙順を保つ。捌くたびに行が動くと目で追えない。
-# 名前列は、自動命名 (tmux_session_name と一致) ならブランチ名を出す。群の見出しに
-# repo 名があるので、セッション名の '<repo>-' 部分は冗長で、長いと後ろが切れる。
+# 名前列は、自動命名 (tmux_session_name と一致) ならタスクの表示名 (task2)、
+# 無ければブランチ名を出す。群の見出しに repo 名があるので、セッション名の
+# '<repo>-' 部分は冗長で、長いと後ろが切れる。
 # 手で付けた名前は rename の結果を見せるため、そのまま出す。
 collect_sessions() {
-  local name nwin attached mark repo top st branch ab merged
+  local name nwin attached mark repo top st label branch ab merged
   while IFS=$'\t' read -r name nwin attached; do
     [[ -n $name ]] || continue
     mark=''
     [[ -n $attached ]] && mark=' *'
     sright[$name]="${nwin}w${pcount[$name]:-0}p${mark}"
     git_info_of_path repo top "${spath[$name]:-}"
-    task_status st "$top"
+    task_info_of_top st label "$top"
     sstatus[$name]=$st
     git_head_of_top branch ab "$top"
     sab[$name]=$ab
@@ -370,7 +401,8 @@ collect_sessions() {
     smerged[$name]=$merged
     sshown[$name]=$name
     # top は symlink 解決済み。symlink 経由のパスで命名したセッションは一致せず名前のまま
-    [[ -n $branch && $name == "$(tmux_session_name "$top")" ]] && sshown[$name]=$branch
+    [[ -n ${label:-$branch} && $name == "$(tmux_session_name "$top")" ]] &&
+      sshown[$name]=${label:-$branch}
     [[ -n $repo ]] || repo=$no_repo_label
     members[$repo]+="${name}"$'\n'
   done < <(tmux list-sessions \
@@ -502,6 +534,7 @@ print_groups() {
 # {1} で素のセッション名 (preview / kill / switch のターゲット) を取る。
 list_sessions() {
   local -A pcount=() prank=() spath=() rcache=() tcache=() bcache=() acache=() mcache=() \
+  kcache=() lcache=() \
   members=() sright=() sstatus=() sab=() smerged=() sshown=()
   local -a ordered=()
   local namew=0 abw=0
