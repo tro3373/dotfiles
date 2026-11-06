@@ -9,6 +9,7 @@
 #   * 範囲なしでも、編集中の index.md を保存してから task2-add を呼ぶ
 #   * 範囲ありで buffer がディスクと違えば (外で書き換えられた)、task2-add を呼ばずに読み直す
 #   * task2-add が失敗したら端末のタブを残す (エラーを読めるように)
+#   * エラーは stdpath("log")/task2.log に、理由と cwd・buffer・index・範囲を追記する
 #
 # task2.lua だけを --clean な nvim に読み込む (lazy.nvim / mason 等を起動しない)。
 #
@@ -37,6 +38,8 @@ setup() {
   t2a_args="${tmproot}/t2a.args"
   t2a_tty="${tmproot}/t2a.tty"
   t2a_seen="${tmproot}/t2a.seen"
+  # XDG_STATE_HOME を tmproot に向けるので、stdpath("log") はここになる
+  log="${tmproot}/state/nvim/task2.log"
   mkdir -p "${fakebin}" "$(dirname "${index}")"
   # task2 の fake: where だけに答え、index.md のパスを JSON で出す
   cat >"${fakebin}/task2" <<EOS
@@ -60,6 +63,8 @@ EOS
   driver="${tmproot}/driver.lua"
   cat >"${driver}" <<'LUA'
 vim.opt.rtp:prepend(vim.env.md_conf)
+-- headless の -l では ERROR の通知が例外になり、端末の job の on_exit から投げると driver が止まる
+vim.notify = function() end
 require("task2")
 vim.cmd.edit(vim.fn.fnameescape(vim.env.md_file))
 local buf = vim.api.nvim_get_current_buf()
@@ -73,7 +78,6 @@ if vim.env.md_shift == "1" then
   table.insert(disk, 1, "- ⬜ [後から足されたタスク](x/task.md)")
   vim.fn.writefile(disk, vim.env.md_file)
 end
--- コマンドのエラー (vim.notify の ERROR) は Ex コマンドの失敗として投げられる。probe を書くまで進める
 pcall(vim.cmd, vim.env.md_cmd)
 for _, b in ipairs(vim.api.nvim_list_bufs()) do
   local job = vim.b[b].terminal_job_id
@@ -91,7 +95,7 @@ LUA
 reset() {
   printf '%s\n' '- [ ] a' '  - a の詳細' '- [ ] b' >"${index}"
   printf '%s\n' '- [ ] x' '  - y' >"${other}"
-  rm -f "${probe}" "${t2a_args}" "${t2a_tty}" "${t2a_seen}"
+  rm -f "${probe}" "${t2a_args}" "${t2a_tty}" "${t2a_seen}" "${log}"
 }
 
 # $1=開くファイル, $2=打つ Ex コマンド, $3=保存せずに 1 行目へ書く文字 (空なら書かない)。
@@ -99,7 +103,7 @@ reset() {
 run() {
   reset
   PATH="${fakebin}:${PATH}" md_conf="${conf}" md_file="$1" md_cmd="$2" md_edit="${3:-}" md_out="${probe}" \
-    md_shift="${MD_SHIFT:-}" nvim --headless --clean -l "${driver}" >/dev/null 2>&1
+    md_shift="${MD_SHIFT:-}" XDG_STATE_HOME="${tmproot}/state" nvim --headless --clean -l "${driver}" >/dev/null 2>&1
   buffer=$(sed -n 1p "${probe}" 2>/dev/null)
   tabs=$(sed -n 2p "${probe}" 2>/dev/null)
 }
@@ -137,6 +141,8 @@ test_no_range_saves_buffer_first() {
 test_range_on_stale_buffer() {
   MD_SHIFT=1 run "${index}" '2,3Task2Add'
   check 'stale: buffer がディスクと違えば task2-add を呼ばない' 'none' "$(read_or_none "${t2a_args}")"
+  check 'stale: ログに buffer とディスクの食い違いを書く' 'stale: buffer 3 行 / disk 4 行 / 最初に違う行 1' \
+    "$(grep -o 'stale: .*' "${log}" 2>/dev/null)"
   check 'stale: ディスクの中身を読み直す' '- ⬜ [後から足されたタスク](x/task.md)|- [ ] a|  - a の詳細|- [ ] b' "${buffer}"
 }
 
@@ -144,11 +150,21 @@ test_range_on_other_file() {
   run "${other}" '1,2Task2Add'
   check 'other: 範囲を選んだ buffer が index.md でなければ task2-add を呼ばない' 'none' "$(read_or_none "${t2a_args}")"
   check 'other: buffer を変えない' '- [ ] x|  - y' "${buffer}"
+  check 'other: ログに理由・buffer・index・範囲を書く' \
+    $'[Task2Add] index.md の行を選んで打つ: '"${index}"$'\n  buffer: '"${other}"$'\n  index: '"${index}"$'\n  range: 1,2' \
+    "$(sed -E '1s/^[0-9: -]+ //' "${log}" 2>/dev/null | grep -v -e '^  cwd: ' -e '^  buffer_real: ')"
 }
 
 test_failure_keeps_terminal() {
   FAKE_T2A_EXIT=1 run "${index}" '2,3Task2Add'
   check 'failed: task2-add が失敗したら端末のタブを残す' '2' "${tabs}"
+  check 'failed: ログに終了コードと argv を書く' $'終了コード 1\n  argv: task2-add --lines 2,3' \
+    "$(grep -o -e '終了コード [0-9]*' -e '  argv: .*' "${log}" 2>/dev/null)"
+}
+
+test_success_writes_no_log() {
+  run "${index}" '2,3Task2Add'
+  check 'success: 成功したらログを書かない' 'none' "$(read_or_none "${log}")"
 }
 
 main() {
@@ -164,6 +180,7 @@ main() {
   test_range_on_stale_buffer
   test_range_on_other_file
   test_failure_keeps_terminal
+  test_success_writes_no_log
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

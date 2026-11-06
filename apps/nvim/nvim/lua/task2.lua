@@ -4,6 +4,7 @@
 --   範囲なし (:Task2Add): task2-add の fzf でブロックを選ぶ
 -- task2-add は新しいタブの端末で動かす。fzf と LLM の待ちとエラーを見せるため。
 -- 終わったら index.md を読み直す (task2-add が add したブロックを消し、task2 が一覧を作り直す)。
+-- エラーは通知に加えて stdpath("log")/task2.log に、cwd・buffer・index・範囲と一緒に追記する。
 
 local M = {}
 
@@ -52,33 +53,67 @@ local function save(path)
   end)
 end
 
-local function notify_error(msg)
-  vim.notify("[Task2Add] " .. msg, vim.log.levels.ERROR)
+local log_path = vim.fs.joinpath(vim.fn.stdpath("log"), "task2.log")
+
+-- 赤文字の通知は消えるので、原因を後から追えるよう同じ内容と ctx をログにも残す
+local function notify_error(msg, ctx)
+  local entry = { os.date("%Y-%m-%d %H:%M:%S") .. " [Task2Add] " .. msg }
+  for _, k in ipairs({ "cwd", "buffer", "buffer_real", "index", "range", "argv", "stale" }) do
+    if ctx[k] then
+      table.insert(entry, "  " .. k .. ": " .. ctx[k])
+    end
+  end
+  vim.fn.mkdir(vim.fs.dirname(log_path), "p")
+  vim.fn.writefile(entry, log_path, "a")
+  vim.notify("[Task2Add] " .. msg .. " (詳細: " .. log_path .. ")", vim.log.levels.ERROR)
+end
+
+-- buffer とディスクの食い違いの要約。行数と、最初に違う行
+local function stale_summary(buf_lines, disk_lines)
+  local first = 0
+  for i = 1, math.max(#buf_lines, #disk_lines) do
+    if buf_lines[i] ~= disk_lines[i] then
+      first = i
+      break
+    end
+  end
+  return ("buffer %d 行 / disk %d 行 / 最初に違う行 %d"):format(#buf_lines, #disk_lines, first)
 end
 
 -- range = nil (fzf で選ぶ) | { line1, line2 } (今の buffer の行範囲。buffer は index.md)
 function M.add(range)
+  local name = vim.api.nvim_buf_get_name(0)
+  local ctx = {
+    cwd = vim.fn.getcwd(),
+    buffer = name,
+    buffer_real = name ~= "" and real_path(name) or nil,
+    range = range and (range.line1 .. "," .. range.line2) or "(なし)",
+  }
   local index, err = where_index()
   if not index then
-    notify_error(err)
+    notify_error(err, ctx)
     return
   end
+  ctx.index = index
   -- task2-add はディスク上の index.md の行番号で読むので、別のファイルの行を渡さない
-  if range and real_path(vim.api.nvim_buf_get_name(0)) ~= real_path(index) then
-    notify_error("index.md の行を選んで打つ: " .. index)
+  if range and ctx.buffer_real ~= real_path(index) then
+    notify_error("index.md の行を選んで打つ: " .. index, ctx)
     return
   end
   save(index)
   local argv = { "task2-add" }
   if range then
     -- 他の task2 が一覧を作り直したのに読み直していない buffer の行番号は、ディスクでは別の行を指す
-    if not vim.deep_equal(vim.api.nvim_buf_get_lines(0, 0, -1, false), vim.fn.readfile(index)) then
+    local buf_lines, disk_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false), vim.fn.readfile(index)
+    if not vim.deep_equal(buf_lines, disk_lines) then
+      ctx.stale = stale_summary(buf_lines, disk_lines)
       vim.cmd.checktime(vim.api.nvim_get_current_buf())
-      notify_error("index.md が外で書き換えられていた。読み直したので選び直す")
+      notify_error("index.md が外で書き換えられていた。読み直したので選び直す", ctx)
       return
     end
-    vim.list_extend(argv, { "--lines", range.line1 .. "," .. range.line2 })
+    vim.list_extend(argv, { "--lines", ctx.range })
   end
+  ctx.argv = table.concat(argv, " ")
   vim.cmd.tabnew()
   local term = vim.api.nvim_get_current_buf()
   vim.bo[term].bufhidden = "wipe"
@@ -87,7 +122,14 @@ function M.add(range)
     on_exit = function(_, code)
       reload(index)
       -- 失敗したらエラーを読めるようにタブを残す
-      if code == 0 and vim.api.nvim_buf_is_valid(term) then
+      if code ~= 0 then
+        notify_error(
+          "task2-add が終了コード " .. code .. " で終わった。端末のタブに出力が残る",
+          ctx
+        )
+        return
+      end
+      if vim.api.nvim_buf_is_valid(term) then
         vim.api.nvim_buf_delete(term, { force = true })
       end
     end,
