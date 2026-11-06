@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
-# gen_task_title_and_branch - タスクの本文 (stdin) から branch / name / title の JSON を 1 つ出す。
+# gen_task_title_and_branch - タスクの本文 (stdin) から branch / name / title / abbr の JSON を 1 つ出す。
 #
 #   printf -- '- [ ] 依頼\n  - 詳細\n' | gen_task_title_and_branch
 #
-# - 受理: JSON 値が 1 つだけで、branch / name / title が空でなく制御文字 (改行含む) を含まない文字列
+# - 受理: JSON 値が 1 つだけで、branch / name / title / abbr が空でなく制御文字 (改行含む) を含まない文字列
 # - 生成に失敗したか受理できなければ、stderr に出して終了コード 1
 # - ${XDG_CONFIG_HOME:-~/.config}/tasks/terms.tsv があれば、
 #   英語の技術用語を日本語に置き換えない指示を prompt の前に付ける
@@ -20,7 +20,7 @@ terms_rule() {
   local tsv="${XDG_CONFIG_HOME:-$HOME/.config}/tasks/terms.tsv"
   [[ -f ${tsv} ]] || return 0
   printf '%s\n' '- Term rule (IMPORTANT): Do not replace English technical terms with Japanese words.' \
-    '  Never write the Japanese word on the left in branch, name or title; write the word on the right.' \
+    '  Never write the Japanese word on the left in branch, name, title or abbr; write the word on the right.' \
     '  Words after "ok:" contain the left word but may be written as they are.'
   awk -F'\t' '!/^#/ && NF >= 2 {
     ok = $3 == "" ? "" : " (ok: " $3 ")"
@@ -38,7 +38,7 @@ main() {
   [[ -z ${rule} ]] || prp_args=(-pm "${rule}" "${prp_args[@]}")
   meta=$(prp "${prp_args[@]}" | llm -c tgpt -p groq -fc claude) || die "生成に失敗"
   jq -se 'length == 1 and (.[0] | type == "object" and
-    all(.branch, .name, .title; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))' \
+    all(.branch, .name, .title, .abbr; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))' \
     >/dev/null 2>&1 <<<"${meta}" || die "生成結果が不正: ${meta}"
   printf '%s\n' "${meta}"
 }

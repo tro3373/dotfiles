@@ -56,9 +56,9 @@ run() {
 }
 
 test_outputs_valid_meta() {
-  printf '%s' '{"branch":"feature/x","name":"x","title":"x を直す"}' >"${llm_out}"
+  printf '%s' '{"branch":"feature/x","name":"x","title":"x を直す","abbr":"a"}' >"${llm_out}"
   run $'- [ ] x を直す\n  - 詳細'
-  check 'valid: JSON をそのまま出す' '{"branch":"feature/x","name":"x","title":"x を直す"}' "${out}"
+  check 'valid: JSON をそのまま出す' '{"branch":"feature/x","name":"x","title":"x を直す","abbr":"a"}' "${out}"
   check 'valid: 終了コード 0' '0' "${rc}"
   check 'valid: prompt を付けた本文を groq で生成する' \
     $'prp -ne gen-task-title-and-branch.md$\nllm -c tgpt -p groq -fc claude\nPROMPT\n- [ ] x を直す\n  - 詳細' \
@@ -67,7 +67,7 @@ test_outputs_valid_meta() {
 
 # terms.tsv (日本語 TAB 英語 TAB 許す語) があれば、英語の技術用語を日本語に置き換えない指示を prompt の前に付ける
 test_adds_terms_rule() {
-  printf '%s' '{"branch":"feature/x","name":"x","title":"x"}' >"${llm_out}"
+  printf '%s' '{"branch":"feature/x","name":"x","title":"x","abbr":"a"}' >"${llm_out}"
   mkdir -p "${tmproot}/config/tasks"
   printf '# comment\n秘密\tsecret\t秘密鍵,秘密保持\n鉤\thook\n' >"${tmproot}/config/tasks/terms.tsv"
   run 'x'
@@ -82,10 +82,10 @@ test_adds_terms_rule() {
 
 test_rejects_invalid_meta() {
   local meta
-  for meta in 'not json' '{"branch":"b","name":"n"}' '{"branch":"b","name":"","title":"t"}' \
-    '{"branch":"b","name":1,"title":"t"}' '["b","n","t"]' \
-    '{"branch":"b","name":"n","title":"t"}{"branch":"b","name":"n","title":"t"}' \
-    '{"branch":"b","name":"a\nb","title":"t"}' '{"branch":"b\tc","name":"n","title":"t"}'; do
+  for meta in 'not json' '{"branch":"b","name":"n"}' '{"branch":"b","name":"n","title":"t"}' '{"branch":"b","name":"n","title":"t","abbr":""}' '{"branch":"b","name":"","title":"t","abbr":"a"}' \
+    '{"branch":"b","name":1,"title":"t","abbr":"a"}' '["b","n","t"]' \
+    '{"branch":"b","name":"n","title":"t","abbr":"a"}{"branch":"b","name":"n","title":"t","abbr":"a"}' \
+    '{"branch":"b","name":"a\nb","title":"t","abbr":"a"}' '{"branch":"b\tc","name":"n","title":"t","abbr":"a"}'; do
     printf '%s' "${meta}" >"${llm_out}"
     run 'x'
     check "invalid (${meta}): 終了コード 1" '1' "${rc}"
@@ -94,7 +94,7 @@ test_rejects_invalid_meta() {
 }
 
 test_fails_when_llm_fails() {
-  printf '%s' '{"branch":"b","name":"n","title":"t"}' >"${llm_out}"
+  printf '%s' '{"branch":"b","name":"n","title":"t","abbr":"a"}' >"${llm_out}"
   llm_exit=3
   run 'x'
   llm_exit=0
