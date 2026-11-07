@@ -37,7 +37,7 @@ _init() {
   # Editor
   ######################################################
   export EDITOR=vim
-  has nvim && export EDITOR=nvim
+  has nvim && export EDITOR="nvim -p"
   export CVSEDITOR="${EDITOR}"
   export SVN_EDITOR="${EDITOR}"
   export GIT_EDITOR="${GIT_EDITOR:-${EDITOR}}"
