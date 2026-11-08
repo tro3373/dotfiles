@@ -295,30 +295,53 @@ ab_text() {
 # 無ければ旧 .tasks.md の status へ落とす (表示名は空)。旧 tasks は移行が済むまで残す。
 # 表示名を abbr と title のどちらにするかは task2 (current --label) が決める。
 # task2 の印は空白区切り (`✅ 🚀`)。マーク列は空白も 1 桁に数えるので詰める。
-# task2 は worktree ルート単位で呼び出し元の kcache / lcache へメモ化する。
+# task2 の結果は load_task2_info が先に kcache / lcache へ埋めてある。
 task_info_of_top() {
   local -n _ti_mark=$1 _ti_label=$2
   local top=$3
   _ti_mark=''
   _ti_label=''
   [[ -n $top ]] || return 0
-  [[ -n ${kcache[$top]+set} ]] || fill_task_info "$top"
+  [[ -n ${kcache[$top]+set} ]] || fill_legacy_task_info "$top"
   _ti_mark=${kcache[$top]}
   _ti_label=${lcache[$top]}
 }
 
-# task_info_of_top のメモ化の中身。top の印と表示名を kcache / lcache へ埋める。
-fill_task_info() {
-  local top=$1 mark legacy
-  kcache[$top]=''
-  lcache[$top]=''
-  if mark=$(task2 current -C "$top" --mark 2>/dev/null); then
-    kcache[$top]=${mark// /}
-    lcache[$top]=$(task2 current -C "$top" --label 2>/dev/null) || lcache[$top]=''
-    return 0
-  fi
+# task2 のタスクが無い top の印を旧 .tasks.md から kcache へ埋める。
+fill_legacy_task_info() {
+  local top=$1 legacy
   task_status legacy "$top"
   kcache[$top]=$legacy
+  lcache[$top]=''
+}
+
+# top の task2 の印と表示名を 1 行で出す。タスクが無ければ何も出さない。
+# 区切りは US (0x1f)。タブは IFS の空白扱いで、空の印が詰まって表示名とずれる。
+print_task2_info() {
+  local top=$1 mark label
+  mark=$(task2 current -C "$top" --mark 2>/dev/null) || return 0
+  label=$(task2 current -C "$top" --label 2>/dev/null) || label=''
+  printf '%s\x1f%s\x1f%s\n' "$top" "$mark" "$label"
+}
+
+# 全セッションの worktree ルートへ task2 を並列に打ち、kcache / lcache へ埋める。
+# task2 は 1 回の大半が起動コストで、直列だと一覧の生成時間の過半を占める。
+load_task2_info() {
+  local name repo top mark label
+  local -A seen=()
+  for name in "${!spath[@]}"; do
+    git_info_of_path repo top "${spath[$name]}"
+    [[ -n $top ]] && seen[$top]=1
+  done
+  while IFS=$'\x1f' read -r top mark label; do
+    kcache[$top]=${mark// /}
+    lcache[$top]=$label
+  done < <(
+    for top in "${!seen[@]}"; do
+      print_task2_info "$top" &
+    done
+    wait
+  )
 }
 
 # worktree ルートの .tasks.md を読み front matter の status の値を nameref へ返す。
@@ -546,6 +569,7 @@ list_sessions() {
   # shellcheck disable=SC1091
   source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/git_merged"
   collect_session_stats
+  load_task2_info
   collect_sessions
   sort_groups
   calc_columns

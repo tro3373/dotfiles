@@ -105,6 +105,8 @@ setup_test_repos() (
   printf '\u2705 \U0001F680\n短い名前\n' >"${repos}/alpha-worktree/t2abbr/.task2-fake"
   printf -- '---\ntitle: t\nstatus: \U0001F680\n---\n' >"${repos}/alpha-worktree/t2abbr/.tasks.md"
   printf '\U0001F6A7\n\n' >"${repos}/alpha-worktree/t2none/.task2-fake"
+  tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/t2nomark" -b brt2nomark
+  printf '\n印なしの名前\n' >"${repos}/alpha-worktree/t2nomark/.task2-fake"
   # ↑↓ 列用。remote は立てず origin/HEAD の参照だけ作る (fetch 済みと同じ状態)。
   # origin/main = c2。各 worktree の自動命名は delta-<ディレクトリ名>
   tgit init -q -b main "${repos}/delta"
@@ -625,6 +627,18 @@ test_list_task2_mark_and_label() {
     "$(list_plain)"
 }
 
+# 19d. task2 の印が空でも、表示名は印の列へずれず名前列に出る。
+test_list_task2_label_without_mark() {
+  clear_markers
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  export FAKE_SESSIONS=$'alpha-t2nomark\t1\t'
+  set_fake_panes alpha-t2nomark '%1' "${repos}/alpha-worktree/t2nomark"
+
+  check 'list: 印が空のタスクは表示名だけを出す' \
+    $'\talpha\nalpha-t2nomark\t    印なしの名前  1w1p' \
+    "$(list_plain)"
+}
+
 # 20. セッションが 1 つも無い場合は空出力で正常終了する。
 test_list_empty() {
   clear_markers
@@ -983,6 +997,7 @@ main() {
   test_list_uses_first_pane_path
   test_list_marks_task_status
   test_list_task2_mark_and_label
+  test_list_task2_label_without_mark
   test_list_clamps_unexpected_status
   test_list_handles_spaced_session_name
   test_list_branch_name_and_ahead_behind
