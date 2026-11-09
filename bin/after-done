@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+#
+# after-done - cwd の repo の after-done (done を検知した後の処理) を見る・変える。
+#
+#   after-done                          # 端末: fzf で選ぶ。端末でなければ今の値を出す
+#   after-done merge|merge-push|pr|ask  # 指定の値にする
+#   after-done -h                       # この説明を出す
+#
+# - ask: 人に聞く。after-done ファイルを消す
+# - 値の読み手は /bot の after_done.sh
+# - 終了コード: 0 成功 / 1 失敗 / 2 使い方エラー / 130 fzf で選ばずに閉じた
+
+usage() {
+  sed -n '3,/^$/s/^# \{0,1\}//p' "${BASH_SOURCE[0]}"
+}
+
+usage_die() {
+  printf '==> Error: %s\n' "$1" >&2
+  usage >&2
+  return 2
+}
+
+current_value() {
+  [[ -s ${config} ]] || {
+    printf 'ask\n'
+    return 0
+  }
+  printf '%s\n' "$(<"${config}")"
+}
+
+# 今の値を先頭に置くと、fzf で Enter だけ押しても値が変わらない
+choices() {
+  awk -F '\t' -v cur="${current}" '
+    $1 == cur { print; next }
+    { rest = rest $0 ORS }
+    END { printf "%s", rest }
+  ' <<'CHOICES'
+merge-push	マージして push
+merge	マージのみ
+pr	PR を依頼
+ask	人に聞く
+CHOICES
+}
+
+pick() {
+  choices | fzf --delimiter '\t' --with-nth 1,2 --prompt 'after-done> ' \
+    --header "${repo}: ${current}" | cut -f1
+}
+
+apply_value() {
+  case "${value}" in
+    merge | merge-push | pr) printf '%s\n' "${value}" >"${config}" ;;
+    ask)
+      [[ -e ${config} ]] && trash "${config}" >/dev/null
+      ;;
+    *)
+      usage_die "不正な値: ${value}"
+      return 2
+      ;;
+  esac
+  printf '%s: %s => %s\n' "${repo}" "${current}" "${value}"
+}
+
+main() {
+  set -euo pipefail
+  [[ ${1:-} == -h || ${1:-} == --help ]] && {
+    usage
+    return 0
+  }
+  (($# <= 1)) || {
+    usage_die "引数は 1 つまで"
+    return 2
+  }
+  local where store config repo current value
+  where=$(task2 where)
+  store=$(dirname "$(jq -er '.index' <<<"${where}")")
+  repo=$(basename "${store}")
+  config="${store}/after-done"
+  current=$(current_value)
+  value=${1:-}
+  [[ -z ${value} && ! -t 0 ]] && {
+    printf '%s\n' "${current}"
+    return 0
+  }
+  [[ -n ${value} ]] || value=$(pick) || return 130
+  [[ -n ${value} ]] || return 130
+  apply_value
+}
+
+main "$@"
