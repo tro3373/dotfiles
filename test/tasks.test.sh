@@ -1119,7 +1119,6 @@ EOF
   check 'clean-wt: 参照行を index.md に残す (削除しない)' \
     '1' "$(grep -qE -- '^- \[x\] \[[^]]*_test-task-1\]\(' "${wt_md}" && echo 1 || echo 0)"
 
-
   run_wt -c --all || true
   check 'clean-wt: 再実行で split dir 増えず (再 split しない)' \
     '1' "$(find "${base}/myrepo" -maxdepth 1 -type d -name '*_test-task-*' | wc -l)"
