@@ -734,6 +734,38 @@ test_band_set_then_cleared() {
     'bg=colour234,fg=blue,default' "$(opt status-style)"
 }
 
+# 別の pane の帯の更新が終わるまで待つ。割り込むと後から消した側が勝ち、黄色帯が点かない。
+test_band_update_waits_for_lock() {
+  reset
+
+  flock "${TMUXS_MARKER_DIR}.lock" sleep 1 &
+  local holder=$! started elapsed
+  sleep 0.2
+  started=${EPOCHREALTIME/./}
+  run_hook waiting
+  elapsed=$(((${EPOCHREALTIME/./} - started) / 1000))
+  wait "${holder}"
+  check '帯の更新: lock の解放を待ってから更新する' yes \
+    "$( ((elapsed >= 500)) && echo yes || echo no)"
+  check '帯の更新: 待った後に帯を点ける' '1' "$(opt @tmuxs_band)"
+}
+
+# 状態の遷移だけを、変化の前後と帯の結果つきで残す。黄色にならなかった場面を後から追うため。
+test_transition_logged() {
+  reset
+  rm -f "${TMUXS_MARKER_DIR}.log"
+
+  run_hook waiting
+  run_hook waiting
+  run_hook running
+  local log="${TMUXS_MARKER_DIR}.log"
+  check '遷移ログ: 状態が変わった回数だけ残す' 2 "$(wc -l <"${log}")"
+  check '遷移ログ: waiting への遷移と帯の点灯を残す' yes \
+    "$(grep -q '%5 =>waiting band=1$' "${log}" && echo yes || echo no)"
+  check '遷移ログ: running への遷移と帯の消灯を残す' yes \
+    "$(grep -q '%5 waiting=>running band=$' "${log}" && echo yes || echo no)"
+}
+
 # 22. 退避元 status-style が空文字でも band ON->OFF で黄色が残らない (番兵で判定)。
 test_band_empty_style_restore() {
   reset
@@ -1016,6 +1048,8 @@ main() {
   test_indicator_untouched_without_change
   test_indicator_counts_multiple
   test_band_set_then_cleared
+  test_band_update_waits_for_lock
+  test_transition_logged
   test_band_empty_style_restore
   test_stale_waiting_band_recovered
 

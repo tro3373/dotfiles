@@ -13,6 +13,8 @@ readonly waiting_color='#E5AF1E'
 # @tmuxs_band 条件配色と連動し文字は暗色に切替わる)。0=OFF: status-left の
 # ⏳N インジケータのみ。
 readonly band_enabled=1
+# 帯の更新の排他を待つ上限 (秒)。hook から呼ばれるので Claude を長く止めない。
+readonly lock_wait_sec=2
 
 # preview で各 pane を末尾空行を除いた最新何行に絞るかの既定値。
 # fzf 実行時は FZF_PREVIEW_LINES から 3 pane 一望になるよう上書きする。
@@ -622,8 +624,6 @@ count_waiting() {
 # status-style は style option で format 非展開のため tmux.conf の #{?...} では制御できず直接 set する。
 # 退避済み判定は番兵 @tmuxs_band の有無で行い、二重上書きで黄色を「通常」と誤退避しないようにする。
 # (conf 未リロードでも自己完結で復元できる。通常配色を hook にハードコードしない)
-# 注意: 複数 pane がほぼ同時に band 突入すると show->set 非アトミックで後発が黄色を誤退避する
-# レースがあるが、低頻度かつ best-effort のため未防御。
 # status-left/right は文字列 option なので @tmuxs_band 条件で文字色が追従する。
 band_on() {
   [[ $(tmux show -gv @tmuxs_band 2>/dev/null) == 1 ]] ||
@@ -647,6 +647,15 @@ band_off() {
 # 無ければ消灯。冪等なので、帯がおかしいときは `tmuxs __cleanup` で呼び直せば戻る。
 # 同時 waiting でカウントが一時的にずれても次イベントで上書き整合する。
 update_indicator() {
+  # 待ちに失敗しても更新はする。hook を止めず、帯は次のイベントで整合する。
+  (
+    flock -w "${lock_wait_sec}" 9 || true
+    refresh_indicator
+  ) 9>"$(marker_dir).lock"
+}
+
+# update_indicator の本体。排他なしで呼ばない (band_on / band_off が別 pane と交錯する)。
+refresh_indicator() {
   cleanup_markers
   local n
   n=$(count_waiting)
@@ -673,6 +682,14 @@ write_marker() {
   printf '%s' "$state" >"$file"
 }
 
+# 状態の遷移を 1 行残す。消えてよい診断情報なので tmpfs に置き、失敗は無視する。
+log_transition() {
+  local old=$1 state=$2 band
+  band=$(tmux show -gv @tmuxs_band 2>/dev/null) || band=''
+  printf '%(%F %T)T %s %s=>%s band=%s\n' -1 "${TMUX_PANE}" "$old" "$state" "$band" \
+    >>"$(marker_dir).log" 2>/dev/null || true
+}
+
 # hook イベント本体。tmux 外 (TMUX_PANE / TMUX 未設定) では何もせず戻る。
 # best-effort のため set -e を効かせず、呼び出し元が exit 0 する。
 handle_event() {
@@ -687,7 +704,9 @@ handle_event() {
 
   # 再計算は状態が変わったときのみ (running 連発時の tmux IPC 抑制)。
   # waiting が絡まない遷移でも走らせ、他 pane の古いマーカーと帯をここで回収する。
-  [[ $old == "$state" ]] || update_indicator
+  [[ $old == "$state" ]] && return 0
+  update_indicator
+  log_transition "$old" "$state"
   return 0
 }
 
