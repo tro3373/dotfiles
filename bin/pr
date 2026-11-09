@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 
 command_name=$(basename "$0") && readonly command_name
-script_dir=$(cd "$(dirname "$0")" && pwd) && readonly script_dir
-readonly depends=(gh curl fzf jq llm)
-# 派生元の候補が同じ近さで並んだときに優先するブランチ (前ほど優先)
-readonly integration_branches=(develop main master)
+readonly depends=(gh)
 issues=
 title=
 body=
@@ -14,13 +11,12 @@ target_branch=
 head_branch=
 head_ref=HEAD
 current_branch=
-compact=0
 base_only=0
 
 usage() {
   cat <<EOF
 
-Make a pull request via llm from commit messages and diff stat.
+Make a pull request from the commit list.
 
   Usage:
       $command_name [option] [base_branch]
@@ -31,17 +27,20 @@ Make a pull request via llm from commit messages and diff stat.
       -t|--title "" : Specify title directly
       -b|--body ""  : Specify body directly
       -d|--dir      : Specify target_tmp_dir that has title/body
-      -c|--compact  : Compact mode
       --base        : Print the base branch and exit
 
     Base branch
-      [base_branch] > \$PR_TARGET_BRANCH > the nearest fork point on origin.
-      With a tty, pick one of origin's branches by fzf (nearest at the bottom).
+      [base_branch] > \$PR_TARGET_BRANCH > origin/develop (when it exists
+      and the current branch is not develop) > origin's default branch.
+
+    Title / Body
+      Title: -t, else the subject of the only commit, else "Merge <head> to <base>".
+      Body : -b, else the commit list. -i appends the linked issues.
 
     Head branch
       Omitted: push the current branch and open the PR from it.
       Given: open the PR from origin/<head_branch> as it is, without checkout or push.
-        e.g. $command_name -c develop staging-kyotanabe
+        e.g. $command_name develop staging-kyotanabe
 
 EOF
 }
@@ -58,10 +57,6 @@ warn() { _log yellow "$*"; }
 die() { _log red "$*" && exit 1; }
 check() {
   hass "${depends[@]}"
-  # -c は自分で parts を作る。-d の用意済み parts を上書きしてしまう
-  if [[ -n $target_tmp_dir && $compact -eq 1 ]]; then
-    die "==> -c and -d cannot be used together."
-  fi
   # -d は title/body を外部で用意して渡すモード。無いまま進むと空の PR ができる
   if [[ -n $target_tmp_dir ]]; then
     for f in title body; do
@@ -82,8 +77,8 @@ initialize() {
       -t | --title) shift && title="$1" ;;
       -b | --body) shift && body="$1" ;;
       -d | --dir) shift && target_tmp_dir=$1 ;;
-      -c | --compact) compact=1 ;;
       --base) base_only=1 ;;
+      -*) usage && die "==> Unknown option: $1" ;;
       *) positionals+=("$1") ;;
     esac
     shift
@@ -115,22 +110,23 @@ use_head_branch() {
 
 find_target_branch_with_fetch() {
   [[ -n $PR_TARGET_BRANCH ]] && echo "$PR_TARGET_BRANCH" && return
-  local only=()
   if [[ $current_branch =~ ^(main|master)$ ]]; then
     die "==> Current branch is $current_branch. Please checkout to other branch."
   fi
-  if [[ $current_branch == "develop" ]]; then
-    # develop から切った feature も分岐点が近く見えるので、main/master に絞る
-    only=(main master)
-    confirm_push_to_develop
-  fi
+  [[ $current_branch == "develop" ]] && confirm_push_to_develop
 
-  # Fetch the latest changes from the remote repository
   info "==> Git fetching.."
   git fetch origin 1>&2
 
   info "==> Finding target branch.."
-  pick_target_branch "${only[@]}"
+  if [[ $current_branch != "develop" ]] && git rev-parse --verify -q refs/remotes/origin/develop >/dev/null; then
+    echo origin/develop
+    return
+  fi
+  local default_base
+  default_base=$(git ls-remote --symref origin HEAD | awk '/^ref:/ { sub("refs/heads/", "", $2); print "origin/" $2; exit }')
+  [[ $default_base == "origin/$current_branch" ]] && die "==> Current branch is origin's default branch. Pass the base branch explicitly."
+  echo "$default_base"
 }
 
 confirm_push_to_develop() {
@@ -142,44 +138,6 @@ confirm_push_to_develop() {
   fi
   warn "==> Press Enter to continue..(Cancel: Ctrl+C)"
   read -r _
-}
-
-# origin の派生元候補を近い順に出す。引数があればそのブランチだけに絞る。
-# 各行: <件数>\t<優先順位>\t<origin/branch>\t<表示>
-list_base_candidates() {
-  local only=("$@") fp branch name rank i
-  "$script_dir"/git_base_candidates -r origin |
-    while IFS=$'\t' read -r fp _ _ branch; do
-      name=${branch#origin/}
-      [[ $name == "$current_branch" ]] && continue
-      [[ ${#only[@]} -gt 0 && " ${only[*]} " != *" $name "* ]] && continue
-      rank=${#integration_branches[@]}
-      for i in "${!integration_branches[@]}"; do
-        [[ ${integration_branches[$i]} == "$name" ]] && rank=$i
-      done
-      printf '%s\t%s\t%s\t%s  %s commit(s)\n' "$fp" "$rank" "$branch" "$branch" "$fp"
-    done |
-    sort -t$'\t' -k1,1n -k2,2n -k3,3
-}
-
-# 分岐点だけでは「親」と「自分から切られた子」を見分けられない。
-# tty があれば fzf で選ばせ、無ければ一番近いものを採る。
-pick_target_branch() {
-  local rows
-  rows=$(list_base_candidates "$@")
-  [[ -z $rows ]] && return
-  if [[ $base_only -eq 1 || ! -t 0 ]]; then
-    head -1 <<<"$rows" | cut -f3
-    return
-  fi
-  # SC2016: preview は fzf 側で {3} を展開させるため単一引用で正しい。
-  # shellcheck disable=SC2016
-  fzf --height=40% --select-1 \
-    --delimiter=$'\t' --with-nth=4 \
-    --prompt='base> ' \
-    --header='nearest base at the bottom' \
-    --preview 'git log --oneline --first-parent "$(git merge-base HEAD {3})"..HEAD' <<<"$rows" |
-    cut -f3
 }
 
 cat_issue() {
@@ -202,76 +160,27 @@ $(sed -e 's/^/- /' "$target_tmp_dir"/commit_list)
 EOF
 }
 
-cat_prompt_input() {
-  cat <<EOF
-
-### Commit messages
-
-$(cat <"$target_tmp_dir"/commit_messages)
-
-### Diff stat
-
-$(cat <"$target_tmp_dir"/diff_stat)
-EOF
-}
-
-create_commit_messages() {
-  info "==> Creating commit_messages.."
-  git log --format='#### %s%n%n%b' "$target_branch".."$head_ref" >"$target_tmp_dir"/commit_messages
-}
-
-create_diff_stat() {
-  info "==> Creating diff_stat.."
-  git_diff_ignored --stat "$target_branch"..."$head_ref" >"$target_tmp_dir"/diff_stat
-}
-
-create_commit_list() {
+create_pr_parts() {
   info "==> Creating commit_list.."
   git log --oneline "$target_branch".."$head_ref" >"$target_tmp_dir"/commit_list
-}
-
-create_pr_parts() {
-  if [[ -n $title && -n $body ]]; then
-    echo "$title" >"$target_tmp_dir"/title
-    echo "$body" >"$target_tmp_dir"/body
-    return
-  fi
-
-  create_diff_stat
-  create_commit_messages
-  create_commit_list
-
-  if [[ ! -s $target_tmp_dir/diff_stat ]]; then
+  if [[ ! -s $target_tmp_dir/commit_list ]]; then
     warn "No changes"
     exit 0
   fi
 
-  # diff 本体は渡さない。大きい PR だと groq の入力上限を超えて落ちる。
-  # why はコミット body にあるので、要約の材料はコミットと stat で足りる
-  info "==> Creating messages.json.."
-  cat_prompt_input |
-    prp -ne gen-git-pr-message.md$ >"$target_tmp_dir"/prompt.md
-  cat <"$target_tmp_dir"/prompt.md |
-    llm -p groq >"$target_tmp_dir"/messages.json
-
   info "==> Creating title/body.."
-  jq -r '.title' "$target_tmp_dir"/messages.json >/dev/null 2>&1 || {
-    cat <"$target_tmp_dir"/messages.json |
-      sed -e '/^```/d' -e '/```json/d' -e '/^$/d' >"$target_tmp_dir"/messages.json.bk
-    mv "$target_tmp_dir"/messages.json.bk "$target_tmp_dir"/messages.json
-  }
-  jq -r '.title' "$target_tmp_dir"/messages.json >"$target_tmp_dir"/title
-  jq -r '.body' "$target_tmp_dir"/messages.json >"$target_tmp_dir"/body
+  local pr_title=$title
+  if [[ -z $pr_title && $(wc -l <"$target_tmp_dir"/commit_list) -eq 1 ]]; then
+    pr_title=$(git log -1 --format=%s "$head_ref")
+  fi
+  [[ -z $pr_title ]] && pr_title="Merge $current_branch to ${target_branch#origin/}"
+  echo "$pr_title" >"$target_tmp_dir"/title
+
+  cat_commit_list >"$target_tmp_dir"/body
+  [[ -n $body ]] && echo "$body" >"$target_tmp_dir"/body
   if [[ -n $issues ]]; then
     cat_issue >>"$target_tmp_dir"/body
   fi
-  cat_commit_list >>"$target_tmp_dir"/body
-}
-
-create_compact_pr_parts() {
-  echo "Merge $current_branch to ${target_branch#origin/}" >"$target_tmp_dir"/title
-  create_commit_list
-  cat_commit_list >"$target_tmp_dir"/body
 }
 
 create_pr_with_push() {
@@ -341,9 +250,7 @@ end() {
 create_own_pr_parts() {
   target_tmp_dir=$(mktemp -d -t pr.XXXXXX)
   own_tmp_dir=1
-  local create=create_pr_parts
-  [[ $compact -eq 1 ]] && create=create_compact_pr_parts
-  $create
+  create_pr_parts
 }
 
 main() {
