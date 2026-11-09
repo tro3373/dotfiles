@@ -1541,6 +1541,38 @@ function! s:collect_adrs(line) abort
   return l:nums
 endfunction
 
+" 行中の task2 の ID (YYYYMMDD-HHMMSS) を集める。戻り値: ID のリスト
+"   パス・ファイル名・長い数字列の一部は ID として拾わない。
+"   Markdownリンクは s:collect_paths が解決するので除去してから走査する
+function! s:collect_task2_ids(line) abort
+  let l:ids = []
+  let l:rest = substitute(a:line, '\v\[[^\]]*\]\([^)]+\)', ' ', 'g')
+  let l:start = 0
+  while 1
+    let [l:m, l:s, l:e] = matchstrpos(l:rest, '\v(^|[^0-9A-Za-z_/.-])\zs\d{8}-\d{6}\ze\.?([^0-9A-Za-z_/.-]|$)', l:start)
+    if l:s == -1
+      break
+    endif
+    call add(l:ids, l:m)
+    let l:start = l:e
+  endwhile
+  return l:ids
+endfunction
+
+" task2 の ID ごとに task.md をタブで開く (同じ ID は 1 回)。引けない ID はエラーを出して飛ばす
+function! s:open_task2_ids(ids) abort
+  for l:id in uniq(sort(copy(a:ids)))
+    let l:out = trim(system('task2 show ' . shellescape(l:id) . ' --path'))
+    if v:shell_error != 0
+      echohl ErrorMsg
+      echomsg l:out
+      echohl None
+      continue
+    endif
+    execute 'tabedit ' . fnameescape(l:out)
+  endfor
+endfunction
+
 " ADR 番号を開く対象に解決する。戻り値: ['file'|'dir'|'error', path]
 "   a:bases は s:search_bases() の探索ベース (先頭から docs/adr を持つ repo を採用)
 "   1. {repo_root}/docs/adr/NNNN-*.md を番号の数値一致で探索
@@ -1589,6 +1621,7 @@ function! OpenUrlOrFilePathOnCursor() range abort
   let l:urls = []
   let l:paths = []
   let l:adrs = []
+  let l:task2_ids = []
   for l:line in l:lines
     " URL を優先。行内に複数あっても全 URL を拾う
     " (Markdownリンクの url も同パターンで `)` 手前まで拾える)
@@ -1600,9 +1633,10 @@ function! OpenUrlOrFilePathOnCursor() range abort
     " URL が無い行だけ token を走査してファイルパス / ADR 参照判定
     call extend(l:paths, s:collect_paths(l:line, l:bases))
     call extend(l:adrs, s:collect_adrs(l:line))
+    call extend(l:task2_ids, s:collect_task2_ids(l:line))
   endfor
-  if empty(l:urls) && empty(l:paths) && empty(l:adrs)
-    echo "No URL or file path found."
+  if empty(l:urls) && empty(l:paths) && empty(l:adrs) && empty(l:task2_ids)
+    echo "No URL, file path, ADR or task2 ID found."
     return
   endif
   " URL はブラウザで全部開く
@@ -1635,6 +1669,7 @@ function! OpenUrlOrFilePathOnCursor() range abort
       execute 'tabedit ' . fnameescape(l:target)
     endfor
   endif
+  call s:open_task2_ids(l:task2_ids)
 endfunction
 nnoremap <silent> <Leader>j :call OpenUrlOrFilePathOnCursor()<CR>
 nnoremap <silent> gf :call OpenUrlOrFilePathOnCursor()<CR>
