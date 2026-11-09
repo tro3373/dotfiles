@@ -164,17 +164,16 @@ create_pr_parts() {
   if [[ -z $pr_title && $(wc -l <"$target_tmp_dir"/commit_list) -eq 1 ]]; then
     pr_title=$(git log -1 --format=%s "$head_ref")
   fi
-  [[ -z $pr_title ]] && pr_title="Merge $current_branch to ${target_branch#origin/}"
+  [[ -z $pr_title ]] && pr_title="Merge $current_branch to $_target_branch"
   echo "$pr_title" >"$target_tmp_dir"/title
 
-  echo "${body:-${current_branch} => ${target_branch#origin/}}" >"$target_tmp_dir"/body
+  echo "${body:-$current_branch => $_target_branch}" >"$target_tmp_dir"/body
   [[ -n $issues ]] && cat_issue >>"$target_tmp_dir"/body
   return 0
 }
 
 create_pr_with_push() {
   push_current_branch
-  _target_branch=${target_branch#origin/}
   is_origin_is_gitlab && {
     dump_pr_or_mr MR
     create_mr
@@ -255,6 +254,7 @@ main() {
   info "==> Target branch: $target_branch"
   [[ $base_only -eq 1 ]] && echo "$target_branch" && return
 
+  _target_branch=${target_branch#origin/}
   [[ -z $target_tmp_dir ]] && create_own_pr_parts
   web_url=$(create_pr_with_push)
   info "==> PR created successfully! see: $web_url"
