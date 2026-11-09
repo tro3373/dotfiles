@@ -225,6 +225,7 @@ _cat_his() {
   his completion zsh
   # cobra 1.3 の出力は source されると compdef しない
   echo 'compdef _his his'
+  his hook zsh
 }
 
 _dynamic
