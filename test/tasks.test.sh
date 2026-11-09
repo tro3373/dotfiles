@@ -1315,12 +1315,12 @@ parent: ${base}/myrepo/index.md
 
 EOF
 
-  run_tasks -f "${dir}/index.md" pr -d /tmp/pr origin/main >/dev/null 2>&1 || true
+  run_tasks -f "${dir}/index.md" pr -i 12 origin/main >/dev/null 2>&1 || true
 
   check 'pr: status に 🚀 が入る' \
     '1' "$(grep -qx 'status: 🚀' "${dir}/index.md" && echo 1 || echo 0)"
   check 'pr: 引数をそのまま pr へ渡す' \
-    '1' "$(grep -qF -- '-d /tmp/pr origin/main' "${pr_log}" 2>/dev/null && echo 1 || echo 0)"
+    '1' "$(grep -qF -- '-i 12 origin/main' "${pr_log}" 2>/dev/null && echo 1 || echo 0)"
   check 'pr: tasks 自身の -f は pr へ渡さない' \
     '0' "$(grep -qF -- '-f ' "${pr_log}" 2>/dev/null && echo 1 || echo 0)"
 }

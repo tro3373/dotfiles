@@ -8,9 +8,8 @@
 #                    > origin の default branch。分岐点は見ない
 #   * title        : -t > commit が 1 件ならその件名 > "Merge <head> to <base>"
 #   * body         : -b > "<head> => <base>" の 1 行。-i は関連 Issue を末尾に足す
-#   * -d           : 用意済みの title/body をそのまま使う
 #   * commit 無し  : PR を作らず exit 0
-#   * 一時 dir     : 成功したら消し、PR 作成に失敗したら -d で打ち直せるよう残す
+#   * PR 作成失敗  : 中断する
 #   * 引数ガード   : 未知のオプション、main 上での実行は中断する
 #
 #   test/pr.test.sh   # 全テスト実行
@@ -96,7 +95,7 @@ new_repo_without_develop() {
 # ${repo} で pr を実行する (stdin は tty でない)。stdout だけ返す。
 run_pr() {
   (cd "${repo}" && PATH="${fakebin}:${bin_dir}:${PATH}" FAKE_LOG="${tmproot}" \
-    TMPDIR="${tmproot}/tmp" "${bin_dir}/pr" "$@" </dev/null 2>/dev/null)
+    "${bin_dir}/pr" "$@" </dev/null 2>/dev/null)
 }
 
 test_base_feature_from_develop() {
@@ -158,7 +157,6 @@ test_guard_on_default_branch() {
   new_repo_without_develop trunk
   git -C "${repo}" checkout -q trunk
   commit h 'commit E'
-  mkdir -p "${tmproot}/tmp"
   run_pr >/dev/null
   check "default branch 上では中断" "1" "$?"
   check "default branch 上では push しない" "1" "$(git -C "${origin}" rev-list --count trunk)"
@@ -167,7 +165,6 @@ test_guard_on_default_branch() {
 test_guard_develop_without_tty() {
   new_repo
   commit h 'commit E'
-  mkdir -p "${tmproot}/tmp"
   run_pr >/dev/null
   check "develop 上は tty が無ければ中断" "1" "$?"
   check "develop の確認で止めたら push しない" "3" "$(git -C "${origin}" rev-list --count develop)"
@@ -175,20 +172,17 @@ test_guard_develop_without_tty() {
 
 test_generate_head_branch() {
   new_repo
-  mkdir -p "${tmproot}/tmp"
   run_pr feature-a origin/develop >/dev/null
   check "head 指定なら origin の head の件名が title" "1" "$(grep -cx 'commit D' "${tmproot}/gh_args")"
   check "head 指定ならその branch から PR を作る" "1" "$(grep -cx 'feature-a' "${tmproot}/gh_args")"
   check "head 指定でも body は base に origin/ が付かない 1 行" "feature-a => develop" "$(cat "${tmproot}/gh_body")"
 }
 
-# feature-b を develop から切り、commit E (body 付き) を 1 件積んで tmp dir を用意する。
+# feature-b を develop から切り、commit E (body 付き) を 1 件積む。
 setup_one_commit() {
   new_repo
   git -C "${repo}" checkout -q -b feature-b develop
   commit h 'commit E' 'because of reason E'
-  trash "${tmproot}/tmp" >/dev/null 2>&1
-  mkdir -p "${tmproot}/tmp"
 }
 
 test_generate_one_commit() {
@@ -197,7 +191,6 @@ test_generate_one_commit() {
   check "commit が 1 件なら件名が title" "1" "$(grep -cx 'commit E' "${tmproot}/gh_args")"
   check "body は head => base の 1 行" "feature-b => develop" "$(cat "${tmproot}/gh_body")"
   check "Issue 指定が無ければ関連 Issue は付かない" "0" "$(grep -c '関連Issue' "${tmproot}/gh_body")"
-  check "成功したら一時 dir を消す" "0" "$(find "${tmproot}/tmp" -mindepth 1 | wc -l)"
 }
 
 test_generate_several_commits() {
@@ -224,30 +217,18 @@ test_generate_override() {
   check "-b でも -i は付く" "1" "$(grep -cx -- '- #12' "${tmproot}/gh_body")"
 }
 
-test_generate_dir() {
-  setup_one_commit
-  mkdir -p "${tmproot}/parts"
-  echo 'prepared title' >"${tmproot}/parts/title"
-  echo 'prepared body' >"${tmproot}/parts/body"
-  run_pr -d "${tmproot}/parts" origin/develop >/dev/null
-  check "-d の title を使う" "1" "$(grep -cx 'prepared title' "${tmproot}/gh_args")"
-  check "-d の body を使う" "1" "$(grep -cx 'prepared body' "${tmproot}/gh_body")"
-}
-
 test_generate_no_commits() {
   new_repo
   git -C "${repo}" checkout -q -b feature-b develop
-  mkdir -p "${tmproot}/tmp"
   run_pr origin/develop >/dev/null
   check "commit が無ければ exit 0" "0" "$?"
   check "commit が無ければ PR を作らない" "0" "$(find "${tmproot}" -maxdepth 1 -name gh_args | wc -l)"
 }
 
-test_keep_parts_on_failure() {
+test_create_failure() {
   setup_one_commit
   FAKE_GH_FAIL=1 run_pr origin/develop >/dev/null
   check "PR 作成に失敗したら中断" "1" "$?"
-  check "失敗したら parts を残す" "1" "$(find "${tmproot}/tmp" -name title | wc -l)"
 }
 
 main() {
@@ -270,9 +251,8 @@ main() {
   test_generate_several_commits
   test_generate_issue
   test_generate_override
-  test_generate_dir
   test_generate_no_commits
-  test_keep_parts_on_failure
+  test_create_failure
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
 }

@@ -129,7 +129,7 @@ initialize() {
       pr)
         # `pr` 以降は全て pr の引数として素通しする。pr が将来どんな option を
         # 増やしても tasks 側と衝突しない。tasks 自身への option (-f 等) は
-        # `pr` より前に置く: tasks -f <path> pr -d /tmp/pr origin/main
+        # `pr` より前に置く: tasks -f <path> pr -i 12 origin/main
         mode="pr" && shift && pr_args=("$@")
         break
         ;;

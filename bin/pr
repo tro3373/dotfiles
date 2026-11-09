@@ -5,8 +5,8 @@ readonly depends=(gh)
 issues=
 title=
 body=
-target_tmp_dir=
-own_tmp_dir=0
+pr_title=
+pr_body=
 target_branch=
 head_branch=
 head_ref=HEAD
@@ -26,7 +26,6 @@ Make a pull request.
       -i|--issue    : Issue number to link with the PR
       -t|--title "" : Specify title directly
       -b|--body ""  : Specify body directly
-      -d|--dir      : Specify target_tmp_dir that has title/body
       --base        : Print the base branch and exit
 
     Base branch
@@ -55,15 +54,6 @@ log() { _log white "$*"; }
 info() { _log cyan "$*"; }
 warn() { _log yellow "$*"; }
 die() { _log red "$*" && exit 1; }
-check() {
-  hass "${depends[@]}"
-  # -d は title/body を外部で用意して渡すモード。無いまま進むと空の PR ができる
-  if [[ -n $target_tmp_dir ]]; then
-    for f in title body; do
-      [[ -s "$target_tmp_dir/$f" ]] || die "==> $target_tmp_dir/$f not found or empty."
-    done
-  fi
-}
 initialize() {
   local positionals=()
   while true; do
@@ -76,7 +66,6 @@ initialize() {
       -i | --issue) shift && issues="$1" ;;
       -t | --title) shift && title="$1" ;;
       -b | --body) shift && body="$1" ;;
-      -d | --dir) shift && target_tmp_dir=$1 ;;
       --base) base_only=1 ;;
       -*) usage && die "==> Unknown option: $1" ;;
       *) positionals+=("$1") ;;
@@ -89,8 +78,7 @@ initialize() {
     2) head_branch=${positionals[0]} target_branch=${positionals[1]} ;;
     *) usage && die "==> Too many branches: ${positionals[*]}" ;;
   esac
-  check
-  trap end EXIT
+  hass "${depends[@]}"
   set -eo pipefail
   # web_url=$(create_pr_with_push) の中で gh pr create が落ちても止まるように
   shopt -s inherit_errexit
@@ -152,23 +140,22 @@ EOF
 }
 
 create_pr_parts() {
-  info "==> Creating commit_list.."
-  git log --oneline "$target_branch".."$head_ref" >"$target_tmp_dir"/commit_list
-  if [[ ! -s $target_tmp_dir/commit_list ]]; then
+  local commit_count
+  commit_count=$(git rev-list --count "$target_branch".."$head_ref")
+  if [[ $commit_count -eq 0 ]]; then
     warn "No changes"
     exit 0
   fi
 
   info "==> Creating title/body.."
-  local pr_title=$title
-  if [[ -z $pr_title && $(wc -l <"$target_tmp_dir"/commit_list) -eq 1 ]]; then
+  pr_title=$title
+  if [[ -z $pr_title && $commit_count -eq 1 ]]; then
     pr_title=$(git log -1 --format=%s "$head_ref")
   fi
   [[ -z $pr_title ]] && pr_title="Merge $current_branch to $_target_branch"
-  echo "$pr_title" >"$target_tmp_dir"/title
 
-  echo "${body:-$current_branch => $_target_branch}" >"$target_tmp_dir"/body
-  [[ -n $issues ]] && cat_issue >>"$target_tmp_dir"/body
+  pr_body=${body:-$current_branch => $_target_branch}
+  [[ -n $issues ]] && pr_body+=$'\n'$(cat_issue)
   return 0
 }
 
@@ -195,19 +182,19 @@ dump_pr_or_mr() {
   # shellcheck disable=SC2016
   cat <<EOF | ink yellow
 branch: $current_branch ==> $_target_branch
- title: $(cat <"$target_tmp_dir"/title)
+ title: $pr_title
   body:
-$(cat <"$target_tmp_dir"/body | sed 's/"/\\"/g; s/`/\\`/g')
+$(sed 's/"/\\"/g; s/`/\\`/g' <<<"$pr_body")
 EOF
 }
 
 create_pr() {
   # Make PR
-  cat <"$target_tmp_dir"/body |
+  printf '%s\n' "$pr_body" |
     gh pr create \
       --base "$_target_branch" \
       --head "$current_branch" \
-      --title "$(cat <"$target_tmp_dir"/title)" \
+      --title "$pr_title" \
       --body-file - 1>&2
   # Mark PR as ready
   # --draft
@@ -220,25 +207,9 @@ create_mr() {
   glab mr create \
     --target-branch "$_target_branch" \
     --source-branch "$current_branch" \
-    --title "$(cat <"$target_tmp_dir"/title)" \
-    --description "$(cat <"$target_tmp_dir"/body)" 1>&2
+    --title "$pr_title" \
+    --description "$pr_body" 1>&2
   glab mr view "$current_branch" --json webUrl --jq '.webUrl'
-}
-
-# 自分で作った parts は成功したら消す。失敗したら -d で打ち直せるよう残す
-end() {
-  local rc=$?
-  [[ $own_tmp_dir -eq 1 && $rc -eq 0 ]] && rm -rf "$target_tmp_dir"
-  [[ $own_tmp_dir -eq 1 && $rc -ne 0 && -s $target_tmp_dir/title ]] &&
-    warn "==> Parts kept. Retry: $command_name -d $target_tmp_dir $head_branch $target_branch"
-  [[ $rc -eq 0 ]] && info "==> Done!"
-  return $rc
-}
-
-create_own_pr_parts() {
-  target_tmp_dir=$(mktemp -d -t pr.XXXXXX)
-  own_tmp_dir=1
-  create_pr_parts
 }
 
 main() {
@@ -255,9 +226,10 @@ main() {
   [[ $base_only -eq 1 ]] && echo "$target_branch" && return
 
   _target_branch=${target_branch#origin/}
-  [[ -z $target_tmp_dir ]] && create_own_pr_parts
+  create_pr_parts
   web_url=$(create_pr_with_push)
   info "==> PR created successfully! see: $web_url"
   open "$web_url"
+  info "==> Done!"
 }
 main "$@"
