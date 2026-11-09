@@ -7,7 +7,7 @@
 #   * --base       : 引数 > $PR_TARGET_BRANCH > origin/develop (あり、かつ develop 上でない)
 #                    > origin の default branch。分岐点は見ない
 #   * title        : -t > commit が 1 件ならその件名 > "Merge <head> to <base>"
-#   * body         : -b > コミット一覧。-i は関連 Issue を末尾に足す
+#   * body         : -b > "<head> => <base>" の 1 行。-i は関連 Issue を末尾に足す
 #   * -d           : 用意済みの title/body をそのまま使う
 #   * commit 無し  : PR を作らず exit 0
 #   * 一時 dir     : 成功したら消し、PR 作成に失敗したら -d で打ち直せるよう残す
@@ -179,6 +179,7 @@ test_generate_head_branch() {
   run_pr feature-a origin/develop >/dev/null
   check "head 指定なら origin の head の件名が title" "1" "$(grep -cx 'commit D' "${tmproot}/gh_args")"
   check "head 指定ならその branch から PR を作る" "1" "$(grep -cx 'feature-a' "${tmproot}/gh_args")"
+  check "head 指定でも body は base に origin/ が付かない 1 行" "feature-a => develop" "$(cat "${tmproot}/gh_body")"
 }
 
 # feature-b を develop から切り、commit E (body 付き) を 1 件積んで tmp dir を用意する。
@@ -194,7 +195,7 @@ test_generate_one_commit() {
   setup_one_commit
   run_pr origin/develop >/dev/null
   check "commit が 1 件なら件名が title" "1" "$(grep -cx 'commit E' "${tmproot}/gh_args")"
-  check "body にコミット一覧が付く" "1" "$(grep -c '^- .* commit E$' "${tmproot}/gh_body")"
+  check "body は head => base の 1 行" "feature-b => develop" "$(cat "${tmproot}/gh_body")"
   check "Issue 指定が無ければ関連 Issue は付かない" "0" "$(grep -c '関連Issue' "${tmproot}/gh_body")"
   check "成功したら一時 dir を消す" "0" "$(find "${tmproot}/tmp" -mindepth 1 | wc -l)"
 }
@@ -204,14 +205,14 @@ test_generate_several_commits() {
   commit i 'commit F'
   run_pr origin/develop >/dev/null
   check "commit が複数なら Merge title" "1" "$(grep -cx 'Merge feature-b to develop' "${tmproot}/gh_args")"
-  check "body に全 commit が載る" "2" "$(grep -c '^- .* commit [EF]$' "${tmproot}/gh_body")"
+  check "commit が複数でも body は head => base の 1 行" "feature-b => develop" "$(cat "${tmproot}/gh_body")"
 }
 
 test_generate_issue() {
   setup_one_commit
   run_pr -i 12 origin/develop >/dev/null
   check "-i で関連 Issue が付く" "1" "$(grep -cx -- '- #12' "${tmproot}/gh_body")"
-  check "-i でもコミット一覧は残る" "1" "$(grep -c '^- .* commit E$' "${tmproot}/gh_body")"
+  check "-i でも body の 1 行目は head => base" "feature-b => develop" "$(head -n 1 "${tmproot}/gh_body")"
 }
 
 test_generate_override() {
@@ -219,7 +220,7 @@ test_generate_override() {
   run_pr -t 'my title' -b 'my body' -i 12 origin/develop >/dev/null
   check "-t が title になる" "1" "$(grep -cx 'my title' "${tmproot}/gh_args")"
   check "-b が body になる" "1" "$(grep -cx 'my body' "${tmproot}/gh_body")"
-  check "-b でもコミット一覧は付かない" "0" "$(grep -c 'commit E' "${tmproot}/gh_body")"
+  check "-b なら既定の 1 行は付かない" "0" "$(grep -c 'feature-b => develop' "${tmproot}/gh_body")"
   check "-b でも -i は付く" "1" "$(grep -cx -- '- #12' "${tmproot}/gh_body")"
 }
 

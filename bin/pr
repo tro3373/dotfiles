@@ -16,7 +16,7 @@ base_only=0
 usage() {
   cat <<EOF
 
-Make a pull request from the commit list.
+Make a pull request.
 
   Usage:
       $command_name [option] [base_branch]
@@ -35,7 +35,7 @@ Make a pull request from the commit list.
 
     Title / Body
       Title: -t, else the subject of the only commit, else "Merge <head> to <base>".
-      Body : -b, else the commit list. -i appends the linked issues.
+      Body : -b, else "<head> => <base>". -i appends the linked issues.
 
     Head branch
       Omitted: push the current branch and open the PR from it.
@@ -151,16 +151,6 @@ $(echo "$issues" | tr ',' '\n' | sed -e 's/^/- #/')
 EOF
 }
 
-cat_commit_list() {
-  cat <<EOF
-
-## コミット一覧
-
-$(sed -e 's/^/- /' "$target_tmp_dir"/commit_list)
-
-EOF
-}
-
 create_pr_parts() {
   info "==> Creating commit_list.."
   git log --oneline "$target_branch".."$head_ref" >"$target_tmp_dir"/commit_list
@@ -177,7 +167,7 @@ create_pr_parts() {
   [[ -z $pr_title ]] && pr_title="Merge $current_branch to ${target_branch#origin/}"
   echo "$pr_title" >"$target_tmp_dir"/title
 
-  echo "${body:-$(cat_commit_list)}" >"$target_tmp_dir"/body
+  echo "${body:-${current_branch} => ${target_branch#origin/}}" >"$target_tmp_dir"/body
   [[ -n $issues ]] && cat_issue >>"$target_tmp_dir"/body
   return 0
 }
