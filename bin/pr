@@ -123,6 +123,7 @@ find_target_branch_with_fetch() {
     echo origin/develop
     return
   fi
+  # refs/remotes/origin/HEAD は clone 以外の repo に無いので、origin に聞く
   local default_base
   default_base=$(git ls-remote --symref origin HEAD | awk '/^ref:/ { sub("refs/heads/", "", $2); print "origin/" $2; exit }')
   [[ $default_base == "origin/$current_branch" ]] && die "==> Current branch is origin's default branch. Pass the base branch explicitly."
@@ -176,11 +177,9 @@ create_pr_parts() {
   [[ -z $pr_title ]] && pr_title="Merge $current_branch to ${target_branch#origin/}"
   echo "$pr_title" >"$target_tmp_dir"/title
 
-  cat_commit_list >"$target_tmp_dir"/body
-  [[ -n $body ]] && echo "$body" >"$target_tmp_dir"/body
-  if [[ -n $issues ]]; then
-    cat_issue >>"$target_tmp_dir"/body
-  fi
+  echo "${body:-$(cat_commit_list)}" >"$target_tmp_dir"/body
+  [[ -n $issues ]] && cat_issue >>"$target_tmp_dir"/body
+  return 0
 }
 
 create_pr_with_push() {
