@@ -20,7 +20,6 @@ install_common() {
 setting_common() {
   setup_completion
 
-  setup_asdf_lang golang
   setup_asdf_lang nodejs
   setup_asdf_lang python
   setup_asdf_lang terraform
