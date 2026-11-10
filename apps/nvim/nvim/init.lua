@@ -18,4 +18,4 @@ _G.src("102_funcs.vim") -- utility コマンド/関数群
 _G.src("999_custom.vim") -- 追加ハイライト等
 
 require("run") -- 現在バッファ実行 → 右 vsplit 表示 (vim-quickrun の nvim 代替)
-require("task2") -- :Task2Add (index.md のブロックを task2 のタスクにする)
+require("tasks") -- :TasksAdd (index.md のブロックを tasks のタスクにする)

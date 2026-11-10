@@ -11,7 +11,7 @@ make_stubs() {
   work_dir=$(mktemp -d)
   mkdir -p "${work_dir}/bin" "${work_dir}/store/repo"
   config="${work_dir}/store/repo/after-done"
-  cat >"${work_dir}/bin/task2" <<STUB
+  cat >"${work_dir}/bin/tasks" <<STUB
 #!/usr/bin/env bash
 [[ -n "\${WHERE_FAILS:-}" ]] && exit 2
 printf '{"index":"${work_dir}/store/repo/index.md"}\n'
@@ -27,7 +27,7 @@ cat >"${work_dir}/fzf_input"
 [[ -n "\${FZF_PICK:-}" ]] || exit 130
 sed -n "\${FZF_PICK}p" "${work_dir}/fzf_input"
 STUB
-  chmod +x "${work_dir}/bin/task2" "${work_dir}/bin/trash" "${work_dir}/bin/fzf"
+  chmod +x "${work_dir}/bin/tasks" "${work_dir}/bin/trash" "${work_dir}/bin/fzf"
 }
 
 fail() {

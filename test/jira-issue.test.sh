@@ -7,7 +7,7 @@
 # fixture も raw の形で組む (raw_issue ヘルパ)。本文の ADF -> markdown 変換自体は
 # bin/adf2md の担当なので、ここでは「組み立て」だけを見る: タイトル行、字下げ、
 # コメントの並びと区切り、footer、件数の欠け。
-# issue_select_open のテストは fzf/jira/task2/nvim/gh を関数でスタブして検証する。
+# issue_select_open のテストは fzf/jira/tasks/nvim/gh を関数でスタブして検証する。
 #
 #   test/jira-issue.test.sh   # 全テスト実行
 
@@ -191,7 +191,7 @@ test_trailing_whitespace_is_trimmed_except_inside_fences() {
 }
 
 # --- issue_select_open 用スタブ ------------------------------------------
-# 実コマンドを呼ばず、fzf の引数と sink (task2/nvim/gh) への入力を ${stub_log} に
+# 実コマンドを呼ばず、fzf の引数と sink (tasks/nvim/gh) への入力を ${stub_log} に
 # 記録する。stub_log / fzf_selection は各テスト関数の local を動的スコープで参照。
 
 # 候補一覧。fzf は ${fzf_selection} をそのまま選択結果として返す (空なら中断)。
@@ -221,11 +221,11 @@ jira() {
                comment: {total: 0, comments: []}}}'
 }
 
-# task2 は呼び出し引数と stdin を記録する (stdin は "| " 前置)
-task2() {
-  printf 'task2 %s\n' "$*" >>"${stub_log}"
+# tasks は呼び出し引数と stdin を記録する (stdin は "| " 前置)
+tasks() {
+  printf 'tasks %s\n' "$*" >>"${stub_log}"
   sed 's/^/| /' >>"${stub_log}"
-  return "${task2_rc:-0}"
+  return "${tasks_rc:-0}"
 }
 
 # nvim は開いたファイルの置き場と、タブごとのファイル名・中身を記録する。
@@ -278,17 +278,17 @@ fzf_line() { grep '^fzf ' "${stub_log}"; }
 nvim_tmpdir() { sed -n 's/^tmpdir //p' "${stub_log}"; }
 sink_log() { grep -v -e '^fzf ' -e '^tmpdir ' -e '^gh ' "${stub_log}"; }
 gh_lines() { grep '^gh ' "${stub_log}"; }
-task2_lines() { grep '^task2 ' "${stub_log}"; }
+tasks_lines() { grep '^tasks ' "${stub_log}"; }
 tracker_lines() { sed -n 's/^| //p' "${stub_log}" | grep -- '- tracker:'; }
 
-# 12. to-tasks は複数選択でき、issue ごとに task2 add が呼ばれる
+# 12. to-tasks は複数選択でき、issue ごとに tasks add が呼ばれる
 test_to_tasks_appends_each_selected_issue() {
   local stub_log fzf_selection
   stub_log=$(mktemp)
   fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
   issue_select_open to-tasks
-  check '複数選択した issue が 1 件ずつ task2 add に渡る' \
-    "$(printf 'task2 add\n| - [ ] [K-1] title of K-1\n|   - tracker: jira=K-1\n|   body of K-1\ntask2 add\n| - [ ] [K-2] title of K-2\n|   - tracker: jira=K-2\n|   body of K-2')" \
+  check '複数選択した issue が 1 件ずつ tasks add に渡る' \
+    "$(printf 'tasks add\n| - [ ] [K-1] title of K-1\n|   - tracker: jira=K-1\n|   body of K-1\ntasks add\n| - [ ] [K-2] title of K-2\n|   - tracker: jira=K-2\n|   body of K-2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -316,8 +316,8 @@ test_to_tasks_with_single_pick_appends_one_task() {
   stub_log=$(mktemp)
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-tasks
-  check '1 件選択なら task2 add は 1 回だけ' \
-    "$(printf 'task2 add\n| - [ ] [K-1] title of K-1\n|   - tracker: jira=K-1\n|   body of K-1')" \
+  check '1 件選択なら tasks add は 1 回だけ' \
+    "$(printf 'tasks add\n| - [ ] [K-1] title of K-1\n|   - tracker: jira=K-1\n|   body of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -369,7 +369,7 @@ test_cancelled_selection_calls_no_sink() {
   local stub_log fzf_selection=""
   stub_log=$(mktemp)
   issue_select_open to-tasks
-  check '選択なしなら task2 は呼ばれない' '' "$(sink_log)"
+  check '選択なしなら tasks は呼ばれない' '' "$(sink_log)"
 
   : >"${stub_log}"
   issue_select_open
@@ -388,7 +388,7 @@ test_to_gh_creates_one_issue_per_selection() {
   fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
   issue_select_open to-gh
   check '選択した issue ごとに [KEY] 付きの GH issue が作られる' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntask2 add\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   body of K-1\ngh-title [K-2] title of K-2\n| - [ ] [K-2] title of K-2\n|   body of K-2\njira issue link remote K-2 https://github.com/o/r/issues/2 [K-2] title of K-2\ntask2 add\n| - [ ] [K-2] title of K-2\n|   - tracker: gh=o/r#2 jira=K-2\n|   body of K-2')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks add\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   body of K-1\ngh-title [K-2] title of K-2\n| - [ ] [K-2] title of K-2\n|   body of K-2\njira issue link remote K-2 https://github.com/o/r/issues/2 [K-2] title of K-2\ntasks add\n| - [ ] [K-2] title of K-2\n|   - tracker: gh=o/r#2 jira=K-2\n|   body of K-2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -401,7 +401,7 @@ test_to_gh_skips_existing_issue() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '既存の [KEY] issue があれば作成しない' '' "$(sink_log)"
-  check '既存の [KEY] issue があればタスクも積まない' '' "$(task2_lines)"
+  check '既存の [KEY] issue があればタスクも積まない' '' "$(tasks_lines)"
   rm -f "${stub_log}"
 }
 
@@ -414,7 +414,7 @@ test_to_gh_creates_when_hit_lacks_key_prefix() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '[KEY] を含まない検索ヒットでは作成をスキップしない' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntask2 add\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   body of K-1')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks add\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   body of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -464,7 +464,7 @@ test_to_gh_matches_the_key_only_as_a_title_prefix() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '[KEY] がタイトル先頭でないヒットは既存扱いにしない' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntask2 add\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   body of K-1')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks add\n| - [ ] [K-1] title of K-1\n|   - tracker: gh=o/r#1 jira=K-1\n|   body of K-1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -594,12 +594,12 @@ test_to_gh_stops_when_the_url_shape_is_unexpected() {
   fzf_selection=$(printf 'K-1\tsummary1')
   (issue_select_open to-gh) >/dev/null 2>&1
   rc=$?
-  check '想定外の URL 形式ならタスクを積まない' '' "$(task2_lines)"
+  check '想定外の URL 形式ならタスクを積まない' '' "$(tasks_lines)"
   check '想定外の URL 形式なら異常終了する' 1 "${rc}"
   rm -f "${stub_log}"
 }
 
-# 36. tracker は task2 のタスクの目印。GitHub issue 本文には入れない
+# 36. tracker は tasks のタスクの目印。GitHub issue 本文には入れない
 #     (本文へ入れると issue が自分自身を指す行を持つ)
 test_to_gh_body_has_no_tracker_line() {
   local stub_log fzf_selection
@@ -617,7 +617,7 @@ test_to_gh_body_has_no_tracker_line() {
 #     この経路の止まり方が変わる)
 test_to_gh_links_before_appending_the_task() {
   local stub_log fzf_selection rc=0
-  local task2_rc=1
+  local tasks_rc=1
   stub_log=$(mktemp)
   fzf_selection=$(printf 'K-1\tsummary1')
   (
@@ -641,7 +641,7 @@ test_to_gh_rejects_a_non_github_host() {
   fzf_selection=$(printf 'K-1\tsummary1')
   (issue_select_open to-gh) >/dev/null 2>&1
   rc=$?
-  check 'github.com 以外の host ではタスクを積まない' '' "$(task2_lines)"
+  check 'github.com 以外の host ではタスクを積まない' '' "$(tasks_lines)"
   check 'github.com 以外の host なら異常終了する' 1 "${rc}"
   rm -f "${stub_log}"
 }
