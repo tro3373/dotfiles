@@ -51,7 +51,16 @@ test_doc_path_falls_back_to_index() {
   local dir="${tmp}/main"
   mkdir -p "${dir}"
   printf '%s\n' "${tmp}/store/index.md" >"${dir}/.index-path"
+  touch "${tmp}/store/index.md"
   check 'doc_path: タスクが無ければ repo の index.md' "${tmp}/store/index.md" "$(task2_doc_path "${dir}")"
+}
+
+test_doc_path_fails_without_index() {
+  local dir="${tmp}/fresh" rc=0
+  mkdir -p "${dir}"
+  printf '%s\n' "${tmp}/store/missing.md" >"${dir}/.index-path"
+  task2_doc_path "${dir}" >/dev/null || rc=$?
+  check 'doc_path: index.md がまだ無ければ終了コード 1' 1 "${rc}"
 }
 
 test_append_adds_to_end() {
@@ -96,6 +105,7 @@ main() {
 
   test_doc_path_prefers_task
   test_doc_path_falls_back_to_index
+  test_doc_path_fails_without_index
   test_append_adds_to_end
   test_append_skips_empty
   test_append_waits_for_lock

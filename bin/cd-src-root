@@ -41,7 +41,6 @@ preview() {
 
   local tasks_file
   tasks_file=$(task2_doc_path "$dir") || return 0
-  [[ -e $tasks_file ]] || return 0
   printf '\n--- %s ---\n' "${tasks_file##*/}"
   local -a viewer=(cat)
   command -v bat >/dev/null 2>&1 && viewer=(bat --color=always --style=plain --paging=never)

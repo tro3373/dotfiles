@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 # task2 の index.md (repo ごとの一覧と人の書く欄) を引き、人の書く欄 (末尾) へ追記する。
 
-# cwd の repo の index.md の絶対パスを出す。ファイルがあるとは限らない。
+# cwd の repo の index.md の絶対パスを出す。引けないか、まだ無ければ stderr に書いて終了コード 1。
 task2_index_path() {
-  task2 where | jq -er '.index'
+  local index
+  if ! index=$(task2 where | jq -er '.index'); then
+    echo "==> Error: Failed to find the task2 index.md of this repository." >&2
+    return 1
+  fi
+  if [[ ! -e ${index} ]]; then
+    echo "==> Error: ${index} not found. Add a task with task2 add first." >&2
+    return 1
+  fi
+  printf '%s\n' "${index}"
 }
 
-# dir で見せるべき task2 のファイルを出す。
+# dir で見せるべき task2 のファイルを出す。どちらも無ければ終了コード 1。
 # ブランチのタスクがあればその task.md、無ければ repo の index.md。
 # main checkout は普通タスクを持たないので、index.md へ落とさないと何も出ない。
 task2_doc_path() {

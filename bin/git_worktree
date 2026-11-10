@@ -7,6 +7,8 @@ readonly depends=(git fzf)
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/git_merged"
 # shellcheck disable=SC1091
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/worktree_path"
+# shellcheck disable=SC1091
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/task2_index"
 mode=list
 branch=
 commit_hash=
@@ -118,11 +120,14 @@ _fzf_worktrees() {
   )
   # NOTE: --exit-0 は付けない。一致 0 件で黙って終わるとブランチ名の
   # 打ち間違いに気づけない。空の一覧を出してその場で打ち直させる。
+  # preview は lib の関数を呼ぶので、fzf の子 shell を bash にして関数を渡す。
+  export -f task2_doc_path task2_index_path
   # shellcheck disable=SC2016
   fzf \
     --reverse \
     --height=100% \
-    --preview='d=$(echo {} | awk "{print \$NF}"); p=$(task2 current -C "$d" --path 2>/dev/null || (cd "$d" && task2 where 2>/dev/null | jq -er .index)) && [ -e "$p" ] && bat --color=always "$p" || echo "(no tasks file)"' \
+    --with-shell='bash -c' \
+    --preview='p=$(task2_doc_path "$(echo {} | awk "{print \$NF}")") && bat --color=always "$p" || echo "(no tasks file)"' \
     --preview-window=down:70% \
     "${filter_args[@]}" \
     "$@"
