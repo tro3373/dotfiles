@@ -122,7 +122,7 @@ _fzf_worktrees() {
   fzf \
     --reverse \
     --height=100% \
-    --preview='d=$(echo {} | awk "{print \$NF}"); p=$(task2 current -C "$d" --path 2>/dev/null) && bat --color=always "$p" || echo "(no tasks file)"' \
+    --preview='d=$(echo {} | awk "{print \$NF}"); p=$(task2 current -C "$d" --path 2>/dev/null || (cd "$d" && task2 where 2>/dev/null | jq -er .index)) && [ -e "$p" ] && bat --color=always "$p" || echo "(no tasks file)"' \
     --preview-window=down:70% \
     "${filter_args[@]}" \
     "$@"
