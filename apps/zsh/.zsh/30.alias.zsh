@@ -167,7 +167,6 @@ alias_with_compdef make m _make
 # fi
 alias_with_compdef claude c
 # alias_with_compdef cursor r
-alias_with_compdef tasks t
 # alias tt=task2
 alias_with_compdef task2 tt _task2
 alias ta=task2-add
