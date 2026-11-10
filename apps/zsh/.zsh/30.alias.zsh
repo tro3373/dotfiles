@@ -167,9 +167,8 @@ alias_with_compdef make m _make
 # fi
 alias_with_compdef claude c
 # alias_with_compdef cursor r
-# alias tt=task2
-alias_with_compdef task2 tt _task2
-alias ta=task2-add
+alias_with_compdef tasks t _tasks
+alias ta=tasks-add
 alias_with_compdef flutter fl
 alias_with_compdef speedtest st
 alias codeimg="germanium"

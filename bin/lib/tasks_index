@@ -1,34 +1,34 @@
 #!/usr/bin/env bash
-# task2 の index.md (repo ごとの一覧と人の書く欄) を引き、人の書く欄 (末尾) へ追記する。
+# tasks の index.md (repo ごとの一覧と人の書く欄) を引き、人の書く欄 (末尾) へ追記する。
 
 # cwd の repo の index.md の絶対パスを出す。引けないか、まだ無ければ stderr に書いて終了コード 1。
-task2_index_path() {
+tasks_index_path() {
   local index
-  if ! index=$(task2 where | jq -er '.index'); then
-    echo "==> Error: Failed to find the task2 index.md of this repository." >&2
+  if ! index=$(tasks where | jq -er '.index'); then
+    echo "==> Error: Failed to find the tasks index.md of this repository." >&2
     return 1
   fi
   if [[ ! -e ${index} ]]; then
-    echo "==> Error: ${index} not found. Add a task with task2 add first." >&2
+    echo "==> Error: ${index} not found. Add a task with tasks add first." >&2
     return 1
   fi
   printf '%s\n' "${index}"
 }
 
-# dir で見せるべき task2 のファイルを出す。どちらも無ければ終了コード 1。
+# dir で見せるべき tasks のファイルを出す。どちらも無ければ終了コード 1。
 # ブランチのタスクがあればその task.md、無ければ repo の index.md。
 # main checkout は普通タスクを持たないので、index.md へ落とさないと何も出ない。
-task2_doc_path() {
+tasks_doc_path() {
   local dir=$1
-  task2 current -C "${dir}" --path 2>/dev/null && return 0
-  (cd "${dir}" && task2_index_path 2>/dev/null)
+  tasks current -C "${dir}" --path 2>/dev/null && return 0
+  (cd "${dir}" && tasks_index_path 2>/dev/null)
 }
 
 # stdin を index.md の末尾へ足す。
-# task2 は一覧を作り直すとき index.md を rename で置き換えるので、
+# tasks は一覧を作り直すとき index.md を rename で置き換えるので、
 # 同じディレクトリの flock を取らずに書くと、作り直しと重なった分が消える。
 # 中身は lock の外で読み切る。読む間 (fzf・API) ずっと lock を握らない。
-task2_index_append() {
+tasks_index_append() {
   local index=$1 body
   body=$(cat)
   [[ -n ${body} ]] || return 0

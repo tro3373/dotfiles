@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 # apps/vim/.vim/conf.d/102_funcs.vim の OpenUrlOrFilePathOnCursor が
-# task2 の ID (YYYYMMDD-HHMMSS) を task.md へ解決してタブで開く挙動のテスト (実 nvim headless)。
-# task2 と open は PATH 先頭の fake に差し替える。
+# tasks の ID (YYYYMMDD-HHMMSS) を task.md へ解決してタブで開く挙動のテスト (実 nvim headless)。
+# tasks と open は PATH 先頭の fake に差し替える。
 #
-#   test/nvim-task2-id-open.test.sh   # 全テスト実行
+#   test/nvim-tasks-id-open.test.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 funcs=$(cd "${script_dir}/../apps/vim/.vim/conf.d" && pwd)/102_funcs.vim
@@ -34,20 +34,20 @@ check() {
 mkdir -p "${tmproot}/bin" "${tasks}/${known_a}_a" "${tasks}/${known_b}_b" "${tmproot}/repo"
 touch "${tasks}/${known_a}_a/task.md" "${tasks}/${known_b}_b/task.md"
 
-cat >"${tmproot}/bin/task2" <<SH
+cat >"${tmproot}/bin/tasks" <<SH
 #!/usr/bin/env bash
-# task2 show <ID> --path だけを真似る
+# tasks show <ID> --path だけを真似る
 [[ \$1 == show && \$3 == --path ]] || exit 2
 for d in "${tasks}/\$2"_*; do
   [[ -d \$d ]] || break
   echo "\$d/task.md"
   exit 0
 done
-echo "task2: タスクが見つからない: \$2" >&2
+echo "tasks: タスクが見つからない: \$2" >&2
 exit 1
 SH
 printf '#!/usr/bin/env bash\n' >"${tmproot}/bin/open"
-chmod +x "${tmproot}/bin/task2" "${tmproot}/bin/open"
+chmod +x "${tmproot}/bin/tasks" "${tmproot}/bin/open"
 
 harness="${tmproot}/harness.vim"
 cat >"${harness}" <<'VIM'

@@ -1541,10 +1541,10 @@ function! s:collect_adrs(line) abort
   return l:nums
 endfunction
 
-" 行中の task2 の ID (YYYYMMDD-HHMMSS) を集める。戻り値: ID のリスト
+" 行中の tasks の ID (YYYYMMDD-HHMMSS) を集める。戻り値: ID のリスト
 "   パス・ファイル名・長い数字列の一部は ID として拾わない。
 "   Markdownリンクは s:collect_paths が解決するので除去してから走査する
-function! s:collect_task2_ids(line) abort
+function! s:collect_tasks_ids(line) abort
   let l:ids = []
   let l:rest = substitute(a:line, '\v\[[^\]]*\]\([^)]+\)', ' ', 'g')
   let l:start = 0
@@ -1559,10 +1559,10 @@ function! s:collect_task2_ids(line) abort
   return l:ids
 endfunction
 
-" task2 の ID ごとに task.md をタブで開く (同じ ID は 1 回)。引けない ID はエラーを出して飛ばす
-function! s:open_task2_ids(ids) abort
+" tasks の ID ごとに task.md をタブで開く (同じ ID は 1 回)。引けない ID はエラーを出して飛ばす
+function! s:open_tasks_ids(ids) abort
   for l:id in uniq(sort(copy(a:ids)))
-    let l:out = trim(system('task2 show ' . shellescape(l:id) . ' --path'))
+    let l:out = trim(system('tasks show ' . shellescape(l:id) . ' --path'))
     if v:shell_error != 0
       echohl ErrorMsg
       echomsg l:out
@@ -1621,7 +1621,7 @@ function! OpenUrlOrFilePathOnCursor() range abort
   let l:urls = []
   let l:paths = []
   let l:adrs = []
-  let l:task2_ids = []
+  let l:tasks_ids = []
   for l:line in l:lines
     " URL を優先。行内に複数あっても全 URL を拾う
     " (Markdownリンクの url も同パターンで `)` 手前まで拾える)
@@ -1633,10 +1633,10 @@ function! OpenUrlOrFilePathOnCursor() range abort
     " URL が無い行だけ token を走査してファイルパス / ADR 参照判定
     call extend(l:paths, s:collect_paths(l:line, l:bases))
     call extend(l:adrs, s:collect_adrs(l:line))
-    call extend(l:task2_ids, s:collect_task2_ids(l:line))
+    call extend(l:tasks_ids, s:collect_tasks_ids(l:line))
   endfor
-  if empty(l:urls) && empty(l:paths) && empty(l:adrs) && empty(l:task2_ids)
-    echo "No URL, file path, ADR or task2 ID found."
+  if empty(l:urls) && empty(l:paths) && empty(l:adrs) && empty(l:tasks_ids)
+    echo "No URL, file path, ADR or tasks ID found."
     return
   endif
   " URL はブラウザで全部開く
@@ -1669,7 +1669,7 @@ function! OpenUrlOrFilePathOnCursor() range abort
       execute 'tabedit ' . fnameescape(l:target)
     endfor
   endif
-  call s:open_task2_ids(l:task2_ids)
+  call s:open_tasks_ids(l:tasks_ids)
 endfunction
 nnoremap <silent> <Leader>j :call OpenUrlOrFilePathOnCursor()<CR>
 nnoremap <silent> gf :call OpenUrlOrFilePathOnCursor()<CR>

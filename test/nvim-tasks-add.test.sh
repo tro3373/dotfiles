@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
-# apps/nvim/nvim/lua/task2.lua の :Task2Add のテスト (実 nvim headless。task2 と task2-add は fake)。
+# apps/nvim/nvim/lua/tasks.lua の :TasksAdd のテスト (実 nvim headless。tasks と tasks-add は fake)。
 #
 # 検証対象 (要件):
-#   * 範囲を選んで :Task2Add => 保存してから、選んだ行範囲を task2-add --lines に渡し、終わったら index.md を読み直す
-#   * 範囲なしの :Task2Add => task2-add を引数なしで端末 (stdin が tty) で開き、終わったら index.md を読み直す
-#   * 範囲を選んだ buffer が task2 where の index.md でなければ task2-add を呼ばない
-#   * 範囲なしでも、編集中の index.md を保存してから task2-add を呼ぶ
-#   * 範囲ありで buffer がディスクと違えば (外で書き換えられた)、task2-add を呼ばずに読み直す
-#   * task2-add が失敗したら端末のタブを残す (エラーを読めるように)
-#   * エラーは stdpath("log")/task2.log に、理由と cwd・buffer・index・範囲を追記する
+#   * 範囲を選んで :TasksAdd => 保存してから、選んだ行範囲を tasks-add --lines に渡し、終わったら index.md を読み直す
+#   * 範囲なしの :TasksAdd => tasks-add を引数なしで端末 (stdin が tty) で開き、終わったら index.md を読み直す
+#   * 範囲を選んだ buffer が tasks where の index.md でなければ tasks-add を呼ばない
+#   * 範囲なしでも、編集中の index.md を保存してから tasks-add を呼ぶ
+#   * 範囲ありで buffer がディスクと違えば (外で書き換えられた)、tasks-add を呼ばずに読み直す
+#   * tasks-add が失敗したら端末のタブを残す (エラーを読めるように)
+#   * エラーは stdpath("log")/tasks.log に、理由と cwd・buffer・index・範囲を追記する
 #
-# task2.lua だけを --clean な nvim に読み込む (lazy.nvim / mason 等を起動しない)。
+# tasks.lua だけを --clean な nvim に読み込む (lazy.nvim / mason 等を起動しない)。
 #
-#   test/nvim-task2-add.test.sh   # 全テスト実行
+#   test/nvim-tasks-add.test.sh   # 全テスト実行
 
 check() {
   local desc="$1" expected="$2" actual="$3"
@@ -39,16 +39,16 @@ setup() {
   t2a_tty="${tmproot}/t2a.tty"
   t2a_seen="${tmproot}/t2a.seen"
   # XDG_STATE_HOME を tmproot に向けるので、stdpath("log") はここになる
-  log="${tmproot}/state/nvim/task2.log"
+  log="${tmproot}/state/nvim/tasks.log"
   mkdir -p "${fakebin}" "$(dirname "${index}")"
-  # task2 の fake: where だけに答え、index.md のパスを JSON で出す
-  cat >"${fakebin}/task2" <<EOS
+  # tasks の fake: where だけに答え、index.md のパスを JSON で出す
+  cat >"${fakebin}/tasks" <<EOS
 #!/usr/bin/env bash
 [[ \$1 == where ]] || exit 2
 printf '{"place":"main","index":"%s"}\n' "${index}"
 EOS
-  # task2-add の fake: 引数・stdin が端末か・起動したときの index.md を残し、ブロックを消した体で 2 行目を消す
-  cat >"${fakebin}/task2-add" <<EOS
+  # tasks-add の fake: 引数・stdin が端末か・起動したときの index.md を残し、ブロックを消した体で 2 行目を消す
+  cat >"${fakebin}/tasks-add" <<EOS
 #!/usr/bin/env bash
 echo "\$*" >"${t2a_args}"
 [[ -t 0 ]] && echo tty >"${t2a_tty}" || echo notty >"${t2a_tty}"
@@ -56,7 +56,7 @@ cp "${index}" "${t2a_seen}"
 sed -i 2d "${index}"
 exit "\${FAKE_T2A_EXIT:-0}"
 EOS
-  chmod +x "${fakebin}/task2" "${fakebin}/task2-add"
+  chmod +x "${fakebin}/tasks" "${fakebin}/tasks-add"
 
   # 対象を開き、md_edit があれば 1 行目をその文字に書き換え (保存しない)、md_cmd を打つ。
   # 端末の job の終わりを待ち、「buffer の中身 (| 区切り)」「タブの数」を probe に書き出す
@@ -65,14 +65,14 @@ EOS
 vim.opt.rtp:prepend(vim.env.md_conf)
 -- headless の -l では ERROR の通知が例外になり、端末の job の on_exit から投げると driver が止まる
 vim.notify = function() end
-require("task2")
+require("tasks")
 vim.cmd.edit(vim.fn.fnameescape(vim.env.md_file))
 local buf = vim.api.nvim_get_current_buf()
 local edit = vim.env.md_edit
 if edit and edit ~= "" then
   vim.api.nvim_buf_set_lines(buf, 0, 1, false, { edit })
 end
--- md_shift=1: 開いた後に、他の task2 が一覧を作り直した体でディスクの先頭へ行を足す
+-- md_shift=1: 開いた後に、他の tasks が一覧を作り直した体でディスクの先頭へ行を足す
 if vim.env.md_shift == "1" then
   local disk = vim.fn.readfile(vim.env.md_file)
   table.insert(disk, 1, "- ⬜ [後から足されたタスク](x/task.md)")
@@ -113,57 +113,57 @@ read_or_none() {
 }
 
 test_range_passes_lines() {
-  run "${index}" '2,3Task2Add'
-  check 'range: 選んだ行範囲を task2-add --lines に渡す' '--lines 2,3' "$(read_or_none "${t2a_args}")"
+  run "${index}" '2,3TasksAdd'
+  check 'range: 選んだ行範囲を tasks-add --lines に渡す' '--lines 2,3' "$(read_or_none "${t2a_args}")"
   check 'range: 終わったら index.md を読み直す' '- [ ] a|- [ ] b' "${buffer}"
   check 'range: 成功したら端末のタブを閉じる' '1' "${tabs}"
 }
 
 test_range_saves_buffer_first() {
-  run "${index}" '1,1Task2Add' '- [ ] 書き換えた a'
-  check 'range-save: task2-add を呼ぶ前に、編集中の buffer を保存する' \
+  run "${index}" '1,1TasksAdd' '- [ ] 書き換えた a'
+  check 'range-save: tasks-add を呼ぶ前に、編集中の buffer を保存する' \
     $'- [ ] 書き換えた a\n  - a の詳細\n- [ ] b' "$(read_or_none "${t2a_seen}")"
 }
 
 test_no_range_opens_fzf() {
-  run "${index}" 'Task2Add'
-  check 'no-range: task2-add を引数なしで呼ぶ' '' "$(read_or_none "${t2a_args}")"
-  check 'no-range: task2-add の stdin を端末にする (fzf を開く)' 'tty' "$(read_or_none "${t2a_tty}")"
+  run "${index}" 'TasksAdd'
+  check 'no-range: tasks-add を引数なしで呼ぶ' '' "$(read_or_none "${t2a_args}")"
+  check 'no-range: tasks-add の stdin を端末にする (fzf を開く)' 'tty' "$(read_or_none "${t2a_tty}")"
   check 'no-range: 終わったら index.md を読み直す' '- [ ] a|- [ ] b' "${buffer}"
 }
 
 test_no_range_saves_buffer_first() {
-  run "${index}" 'Task2Add' '- [ ] 書き換えた a'
-  check 'no-range-save: 範囲なしでも、task2-add を呼ぶ前に編集中の index.md を保存する' \
+  run "${index}" 'TasksAdd' '- [ ] 書き換えた a'
+  check 'no-range-save: 範囲なしでも、tasks-add を呼ぶ前に編集中の index.md を保存する' \
     $'- [ ] 書き換えた a\n  - a の詳細\n- [ ] b' "$(read_or_none "${t2a_seen}")"
 }
 
 test_range_on_stale_buffer() {
-  MD_SHIFT=1 run "${index}" '2,3Task2Add'
-  check 'stale: buffer がディスクと違えば task2-add を呼ばない' 'none' "$(read_or_none "${t2a_args}")"
+  MD_SHIFT=1 run "${index}" '2,3TasksAdd'
+  check 'stale: buffer がディスクと違えば tasks-add を呼ばない' 'none' "$(read_or_none "${t2a_args}")"
   check 'stale: ログに buffer とディスクの食い違いを書く' 'stale: buffer 3 行 / disk 4 行 / 最初に違う行 1' \
     "$(grep -o 'stale: .*' "${log}" 2>/dev/null)"
   check 'stale: ディスクの中身を読み直す' '- ⬜ [後から足されたタスク](x/task.md)|- [ ] a|  - a の詳細|- [ ] b' "${buffer}"
 }
 
 test_range_on_other_file() {
-  run "${other}" '1,2Task2Add'
-  check 'other: 範囲を選んだ buffer が index.md でなければ task2-add を呼ばない' 'none' "$(read_or_none "${t2a_args}")"
+  run "${other}" '1,2TasksAdd'
+  check 'other: 範囲を選んだ buffer が index.md でなければ tasks-add を呼ばない' 'none' "$(read_or_none "${t2a_args}")"
   check 'other: buffer を変えない' '- [ ] x|  - y' "${buffer}"
   check 'other: ログに理由・buffer・index・範囲を書く' \
-    $'[Task2Add] index.md の行を選んで打つ: '"${index}"$'\n  buffer: '"${other}"$'\n  index: '"${index}"$'\n  range: 1,2' \
+    $'[TasksAdd] index.md の行を選んで打つ: '"${index}"$'\n  buffer: '"${other}"$'\n  index: '"${index}"$'\n  range: 1,2' \
     "$(sed -E '1s/^[0-9: -]+ //' "${log}" 2>/dev/null | grep -v -e '^  cwd: ' -e '^  buffer_real: ')"
 }
 
 test_failure_keeps_terminal() {
-  FAKE_T2A_EXIT=1 run "${index}" '2,3Task2Add'
-  check 'failed: task2-add が失敗したら端末のタブを残す' '2' "${tabs}"
-  check 'failed: ログに終了コードと argv を書く' $'終了コード 1\n  argv: task2-add --lines 2,3' \
+  FAKE_T2A_EXIT=1 run "${index}" '2,3TasksAdd'
+  check 'failed: tasks-add が失敗したら端末のタブを残す' '2' "${tabs}"
+  check 'failed: ログに終了コードと argv を書く' $'終了コード 1\n  argv: tasks-add --lines 2,3' \
     "$(grep -o -e '終了コード [0-9]*' -e '  argv: .*' "${log}" 2>/dev/null)"
 }
 
 test_success_writes_no_log() {
-  run "${index}" '2,3Task2Add'
+  run "${index}" '2,3TasksAdd'
   check 'success: 成功したらログを書かない' 'none' "$(read_or_none "${log}")"
 }
 

@@ -72,7 +72,7 @@ main() {
     return 2
   }
   local where store config repo current value
-  where=$(task2 where)
+  where=$(tasks where)
   store=$(dirname "$(jq -er '.index' <<<"${where}")")
   repo=$(basename "${store}")
   config="${store}/after-done"
