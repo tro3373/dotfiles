@@ -79,31 +79,23 @@ setup_test_repos() (
   tgit -C "${repos}/super" -c protocol.file.allow=always \
     submodule add -q ../alpha sub
   tgit init -q --bare "${repos}/bare.git"
-  # list のマーク列用。.tasks.md の front matter の status で印を出し分ける worktree と、
-  # front matter を持たない親リポの .tasks.md (= 印を出さない側)。
+  # list のマーク列用。task2 の印で出し分ける worktree と、タスクを持たない親リポ (= 印を出さない側)。
   tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/done" -b brdone
   tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/undone" -b brundone
   tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/pr" -b brpr
   tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/both" -b brboth
-  printf -- '---\ntitle: t\nstatus: \u2705\ufe0f\n---\n\n- [ ] rest\n' \
-    >"${repos}/alpha-worktree/done/.tasks.md"
-  printf -- '---\ntitle: t\nstatus:\n---\n' \
-    >"${repos}/alpha-worktree/undone/.tasks.md"
-  printf -- '---\ntitle: t\nstatus: \U0001F680\n---\n' \
-    >"${repos}/alpha-worktree/pr/.tasks.md"
-  printf -- '---\ntitle: t\nstatus: \u2705\ufe0f\U0001F680\n---\n' \
-    >"${repos}/alpha-worktree/both/.tasks.md"
-  # tasks が書かない値 (単語・印 3 つ) が来ても列幅を超えないことの検証用
+  printf '\u2705\ufe0f\n\n' >"${repos}/alpha-worktree/done/.task2-fake"
+  printf '\n\n' >"${repos}/alpha-worktree/undone/.task2-fake"
+  printf '\U0001F680\n\n' >"${repos}/alpha-worktree/pr/.task2-fake"
+  printf '\u2705\ufe0f\U0001F680\n\n' >"${repos}/alpha-worktree/both/.task2-fake"
+  # task2 が書かない値 (単語) が来ても列幅を超えないことの検証用
   tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/odd" -b brodd
-  printf -- '---\ntitle: t\nstatus: in progress\n---\n' \
-    >"${repos}/alpha-worktree/odd/.tasks.md"
-  printf -- '- [ ] plain\n' >"${repos}/beta/.tasks.md"
-  # task2 のタスクを持つ worktree。旧 .tasks.md より task2 を優先することの検証用に両方置く。
+  printf 'in progress\n\n' >"${repos}/alpha-worktree/odd/.task2-fake"
+  # task2 の表示名を持つ worktree。
   # t2abbr は表示名あり、t2none は表示名が空 (ブランチ名へ落ちる)
   tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/t2abbr" -b brt2abbr
   tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/t2none" -b brt2none
   printf '\u2705 \U0001F680\n短い名前\n' >"${repos}/alpha-worktree/t2abbr/.task2-fake"
-  printf -- '---\ntitle: t\nstatus: \U0001F680\n---\n' >"${repos}/alpha-worktree/t2abbr/.tasks.md"
   printf '\U0001F6A7\n\n' >"${repos}/alpha-worktree/t2none/.task2-fake"
   tgit -C "${repos}/alpha" worktree add -q "${repos}/alpha-worktree/t2nomark" -b brt2nomark
   printf '\n印なしの名前\n' >"${repos}/alpha-worktree/t2nomark/.task2-fake"
@@ -592,7 +584,7 @@ test_list_uses_first_pane_path() {
     $'\talpha\nmix\t    mix  1w2p' "$(list_plain)"
 }
 
-# 19b. .tasks.md の front matter の status をそのまま左端のマーク列へ出す。
+# 19b. task2 の印をそのまま左端のマーク列へ出す。
 #      マーク列は 4 桁固定。印 1 つなら 2 桁分、印なしなら 4 桁分を空白で埋める。
 test_list_marks_task_status() {
   clear_markers
@@ -611,7 +603,7 @@ test_list_marks_task_status() {
 }
 
 # 19c. task2 のタスクがあれば印と表示名を task2 から取る。
-#      印は空白を詰めてマーク列へ置き、旧 .tasks.md の status より優先する。
+#      印は空白を詰めてマーク列へ置く。
 #      表示名は自動命名のセッションだけに出し、空ならブランチ名へ落ちる。手で付けた名前はそのまま。
 test_list_task2_mark_and_label() {
   clear_markers
@@ -803,7 +795,7 @@ test_stale_waiting_band_recovered() {
   done
 }
 
-# 19c. status に想定外の値 (単語) が入っても、マーク列 4 桁を超えて桁を崩さない。
+# 19c. 印に想定外の値 (単語) が入っても、マーク列 4 桁を超えて桁を崩さない。
 #      %*s は幅が負だと空白を増やす方向に効くため、クランプが無いと右列が押し出される。
 test_list_clamps_unexpected_status() {
   clear_markers
@@ -813,7 +805,7 @@ test_list_clamps_unexpected_status() {
     wtodd '%1' "${repos}/alpha-worktree/odd" \
     wtdone '%2' "${repos}/alpha-worktree/done"
 
-  check 'list: 想定外の status は捨てて 4 桁の空白に収める' \
+  check 'list: 想定外の印は捨てて 4 桁の空白に収める' \
     $'\talpha\nwtodd\t    wtodd   1w1p\nwtdone\t  \u2705\ufe0fwtdone  1w1p' \
     "$(list_plain)"
 }

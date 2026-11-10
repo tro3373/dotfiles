@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tmux セッション名の生成規則 (SSOT)。bin/tasks と bin/cd-src-root が source する。
+# tmux セッション名の生成規則 (SSOT)。
 #
 # ディレクトリ 1 つから名前を決める。同じディレクトリなら、どの入口から起動しても
 # 同じ名前になる (= 1 つの worktree に 2 セッションできない) ことが目的。

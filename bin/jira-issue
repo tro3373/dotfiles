@@ -19,13 +19,13 @@
 # Open (default): pick issue(s) with fzf, convert them to task-list markdown,
 # then view them in nvim, one tab per issue.
 #   jira-issue
-# To tasks: same pick + convert, but append the result to .tasks.md via
-# `tasks -a` instead of opening nvim.
+# To tasks: same pick + convert, but add the result as a task via
+# `task2 add` instead of opening nvim.
 #   jira-issue -t
 # To GitHub: same pick + convert, but create one GitHub issue per pick,
 # titled "[KEY] SUMMARY" with the converted markdown as its body. The created
 # URL is linked back to the Jira issue as a web link, then the same markdown is
-# appended to .tasks.md. An issue whose title already carries that [KEY] is
+# added as a task2 task. An issue whose title already carries that [KEY] is
 # skipped (and so is its task), so re-picking the same issue never creates a
 # duplicate. Creation only; closing stays manual.
 #   jira-issue -g [-R owner/repo]
@@ -85,11 +85,11 @@ $command_name [-t|--to-tasks] [-g|--to-gh [-R owner/repo]] [-a|--add]
   Open (default): pick issue(s) with fzf, convert them to task-list markdown,
   then view them in nvim, one tab per issue. TAB toggles a pick.
   Options:
-    -t, --to-tasks  Append the selected issue(s) to .tasks.md instead of opening
+    -t, --to-tasks  Add the selected issue(s) as task2 tasks instead of opening
                     them in nvim
     -g, --to-gh     Create a GitHub issue per selected issue instead of
                     opening them in nvim, link its URL back to the Jira issue,
-                    then append it to the .tasks.md of the current directory.
+                    then add it as a task2 task of the current repository.
                     The title carries a [KEY] prefix; an issue whose title
                     already has that [KEY] is skipped
     -R, --repo      Target repo (owner/repo) for -g. Defaults to the repo gh
@@ -264,8 +264,8 @@ issue_to_tasks() {
   #
   # The body comes from bin/adf2md, so headings, nested lists and fenced code
   # blocks (language included) survive. Everything below the title is indented
-  # by two spaces, which is what keeps the whole issue one task: bin/tasks ends
-  # a task block at the next line starting with "- " or "#" in column 0.
+  # by two spaces, which is what keeps the whole issue one `- [ ]` step: a body
+  # line starting with "- " or "#" in column 0 would read as a step or heading of its own.
   local raw key summary desc self browse total shown i comment author created
   raw=$(cat)
   key=$(jq -r '.key // ""' <<<"${raw}")
@@ -304,11 +304,11 @@ issue_to_tasks() {
 }
 
 append_to_tasks() {
-  # `tasks -a` turns one call into one task, so each issue is appended on its own.
+  # `task2 add` turns one call into one task, so each issue is added on its own.
   local key
   for key in "$@"; do
     view_issue "${key}" | issue_to_tasks |
-      insert_tracker "jira=${key}" | tasks -a
+      insert_tracker "jira=${key}" | task2 add
   done
 }
 
@@ -386,8 +386,8 @@ create_gh_issue() {
 }
 
 add_gh_task() {
-  # 作成した issue を cwd の .tasks.md にも積む。3 手順の最後に置く: tasks は
-  # git worktree と .tasks.md を要求するのに対し -R は「その repo に居なくてよい」
+  # 作成した issue を cwd の repo の task2 タスクにも積む。3 手順の最後に置く: task2 add は
+  # cwd の repo を要求するのに対し -R は「その repo に居なくてよい」
   # ための引数なので、ここが一番落ちやすい。先に link を済ませておけば、落ちても
   # 失うのはタスク 1 件だけで、手で足せる。
   # tracker の owner/repo と番号は作成した URL だけから取る。-R で別 repo に作る
@@ -399,7 +399,7 @@ add_gh_task() {
     die "==> Error: Cannot build a tracker from ${url}; add the task by hand"
   fi
   local tracker="gh=${BASH_REMATCH[1]}#${BASH_REMATCH[2]} jira=${key}"
-  if ! printf '%s\n' "${markdown}" | insert_tracker "${tracker}" | tasks -a; then
+  if ! printf '%s\n' "${markdown}" | insert_tracker "${tracker}" | task2 add; then
     die "==> Error: Created and linked ${url} but could not append its task; add it by hand with: ${tracker}"
   fi
 }
@@ -436,7 +436,7 @@ create_gh_issues() {
 issue_select_open() {
   # Pick issue(s) with fzf (KEY is the first tab field, TAB toggles a pick),
   # convert each to task list markdown, then hand it to the sink the mode
-  # picks: nvim (default), .tasks.md (to-tasks) or GitHub (to-gh).
+  # picks: nvim (default), task2 (to-tasks) or GitHub (to-gh).
   # JIRA_CONFIG_FILE is exported, so the preview/view subprocesses inherit
   # the per-project config.
   local mode="${1:-open}"

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-# bin/issue のユニットテスト (実 gh / fzf / nvim / tasks 不要)。
+# bin/issue のユニットテスト (実 gh / fzf / nvim / task2 不要)。
 #
 # issue_to_tasks は `gh issue view --json number,title,body,comments,url` の JSON を
 # 受け取るので、fixture もその形で組む (gh_issue ヘルパ)。
-# issue_select_open / parse_args は gh / fzf / tasks / nvim を関数でスタブして検証する。
+# issue_select_open / parse_args は gh / fzf / task2 / nvim を関数でスタブして検証する。
 #
 #   test/issue.test.sh   # 全テスト実行
 
@@ -99,8 +99,8 @@ gh() {
   [[ ${4:-} == -R ]] && repo=$5
   gh_issue "${number}" "body of #${number}" '[]' "${gh_url-https://github.com/${repo}/issues/${number}}"
 }
-tasks() {
-  printf 'tasks %s\n' "$*" >>"${stub_log}"
+task2() {
+  printf 'task2 %s\n' "$*" >>"${stub_log}"
   sed 's/^/| /' >>"${stub_log}"
 }
 nvim() {
@@ -115,14 +115,14 @@ nvim() {
 
 sink_log() { grep -v -e '^fzf ' -e '^gh ' -e '^preview> ' "${stub_log}"; }
 
-# 5. to-tasks は issue ごとに tracker 付きで tasks -a に渡す
+# 5. to-tasks は issue ごとに tracker 付きで task2 add に渡す
 test_to_tasks_appends_each_selected_issue() {
   local stub_log fzf_selection mode=to-tasks gh_repo_args=()
   stub_log=$(mktemp)
   fzf_selection=$(printf '1\tt1\n2\tt2')
   issue_select_open
-  check '複数選択した issue が tracker 付きで 1 件ずつ tasks -a に渡る' \
-    "$(printf 'tasks -a\n| - [ ] [#1] title of #1\n|   - tracker: gh=o/r#1\n|   body of #1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1\ntasks -a\n| - [ ] [#2] title of #2\n|   - tracker: gh=o/r#2\n|   body of #2\n|   - View this issue on GitHub: https://github.com/o/r/issues/2')" \
+  check '複数選択した issue が tracker 付きで 1 件ずつ task2 add に渡る' \
+    "$(printf 'task2 add\n| - [ ] [#1] title of #1\n|   - tracker: gh=o/r#1\n|   body of #1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1\ntask2 add\n| - [ ] [#2] title of #2\n|   - tracker: gh=o/r#2\n|   body of #2\n|   - View this issue on GitHub: https://github.com/o/r/issues/2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -139,13 +139,13 @@ test_repo_override_reaches_every_gh_call() {
   rm -f "${stub_log}"
 }
 
-# 7. tracker を作れない URL なら tasks に積まずに止まる
+# 7. tracker を作れない URL なら task2 に積まずに止まる
 test_to_tasks_stops_on_unexpected_url() {
   local stub_log fzf_selection mode=to-tasks gh_repo_args=() gh_url=https://ghe.example.com/o/r/issues/1
   stub_log=$(mktemp)
   fzf_selection=$(printf '1\tt1')
   (issue_select_open) 2>/dev/null
-  check 'tracker を作れなければ tasks -a を呼ばない' '' "$(sink_log)"
+  check 'tracker を作れなければ task2 add を呼ばない' '' "$(sink_log)"
   rm -f "${stub_log}"
 }
 
@@ -166,7 +166,7 @@ test_cancelled_selection_calls_no_sink() {
   local stub_log fzf_selection='' mode=to-tasks gh_repo_args=()
   stub_log=$(mktemp)
   issue_select_open
-  check 'キャンセル時は tasks も nvim も呼ばない' '' "$(sink_log)"
+  check 'キャンセル時は task2 も nvim も呼ばない' '' "$(sink_log)"
   rm -f "${stub_log}"
 }
 

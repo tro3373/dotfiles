@@ -28,10 +28,10 @@ readonly preview_ratio=60
 # fzf がリスト左端に常時確保するポインタ + マーカー列。
 readonly fzf_gutter_cols=2
 # セッション行の左端に置くマーク列の幅と、名前列と右列 (Nw Mp) の間隔。
-# マーク列には task2 の印 (無ければ .tasks.md の front matter の status) をそのまま置き、
+# マーク列には task2 の印をそのまま置き、
 # 足りない分は同じ表示幅の空白を左に埋めて右詰めにする。
 # 印は最大 2 つ (✅️ と 🚀) 並ぶので、絵文字 1 つ 2 桁 x 2 で 4 桁を確保する。
-# 印の絵文字そのものは task2 / bin/tasks が決める。ここは値を運ぶだけで対応表を持たない。
+# 印の絵文字そのものは task2 が決める。ここは値を運ぶだけで対応表を持たない。
 readonly list_indent=4
 readonly list_gap=2
 # 一覧を開くたびに裏で fetch する間隔の下限 (分)。これより新しい FETCH_HEAD の repo は飛ばす。
@@ -205,7 +205,7 @@ list_cols() {
 # リポジトリ名は git 管理外なら空文字、ルートは bare / 管理外なら空文字。
 # --git-common-dir は worktree でも親リポジトリの .git を指すため、
 # worktree のセッションが親リポジトリのグループへ畳まれる。
-# --show-toplevel は worktree ごとのルートを返すので .tasks.md の在処になる。
+# --show-toplevel は worktree ごとのルートを返すので、task2 current -C に渡す先になる。
 # bare では toplevel だけが失敗し stdout に common-dir の 1 行しか出ない。
 # 終了コードで捨てず行数で見分ける (bare のグループ分けを壊さない)。
 # git 呼び出しは path 単位で呼び出し元の rcache / tcache へメモ化する。
@@ -293,8 +293,7 @@ ab_text() {
   return 0
 }
 
-# worktree ルートのタスクの印と表示名を nameref へ返す。task2 のタスクを優先し、
-# 無ければ旧 .tasks.md の status へ落とす (表示名は空)。旧 tasks は移行が済むまで残す。
+# worktree ルートのタスクの印と表示名を nameref へ返す。
 # 表示名を abbr と title のどちらにするかは task2 (current --label) が決める。
 # task2 の印は空白区切り (`✅ 🚀`)。マーク列は空白も 1 桁に数えるので詰める。
 # task2 の結果は load_task2_info が先に kcache / lcache へ埋めてある。
@@ -304,17 +303,8 @@ task_info_of_top() {
   _ti_mark=''
   _ti_label=''
   [[ -n $top ]] || return 0
-  [[ -n ${kcache[$top]+set} ]] || fill_legacy_task_info "$top"
-  _ti_mark=${kcache[$top]}
-  _ti_label=${lcache[$top]}
-}
-
-# task2 のタスクが無い top の印を旧 .tasks.md から kcache へ埋める。
-fill_legacy_task_info() {
-  local top=$1 legacy
-  task_status legacy "$top"
-  kcache[$top]=$legacy
-  lcache[$top]=''
+  _ti_mark=${kcache[$top]:-}
+  _ti_label=${lcache[$top]:-}
 }
 
 # top の task2 の印と表示名を 1 行で出す。タスクが無ければ何も出さない。
@@ -344,35 +334,6 @@ load_task2_info() {
     done
     wait
   )
-}
-
-# worktree ルートの .tasks.md を読み front matter の status の値を nameref へ返す。
-# .tasks.md は tasks store の index.md への symlink。front matter は先頭にあるので
-# 閉じの `---` で読み終える (数百行の index.md 全体は読まない)。
-# 親リポジトリの index.md には front matter が無く、その場合は空を返す。
-task_status() {
-  local -n _ts_out=$1
-  local root=$2 file line first=1
-  _ts_out=''
-  [[ -n $root ]] || return 0
-  file="$root/.tasks.md"
-  [[ -f $file ]] || return 0
-  while IFS= read -r line; do
-    if ((first)); then
-      first=0
-      [[ $line == '---' ]] || return 0
-      continue
-    fi
-    [[ $line == '---' ]] && return 0
-    if [[ $line == status:* ]]; then
-      line=${line#status:}
-      # 前後の空白だけを落とす。値は絵文字なのでここでは中身を解釈しない
-      _ts_out=${line#"${line%%[![:space:]]*}"}
-      _ts_out=${_ts_out%"${_ts_out##*[![:space:]]}"}
-      return 0
-    fi
-  done <"$file"
-  return 0
 }
 
 # 全 pane を一度に列挙し、セッション単位の pane 数・代表状態・作業パスを集める

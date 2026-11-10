@@ -122,7 +122,7 @@ _fzf_worktrees() {
   fzf \
     --reverse \
     --height=100% \
-    --preview='d=$(echo {} | awk "{print \$NF}"); p=$(task2 current -C "$d" --path 2>/dev/null) || p=$d/.tasks.md; [ -e "$p" ] && bat --color=always "$p" || echo "(no tasks file)"' \
+    --preview='d=$(echo {} | awk "{print \$NF}"); p=$(task2 current -C "$d" --path 2>/dev/null) && bat --color=always "$p" || echo "(no tasks file)"' \
     --preview-window=down:70% \
     "${filter_args[@]}" \
     "$@"
@@ -162,14 +162,9 @@ _list_root_and_worktree_directories() {
 
 }
 
-# task2 のタスクがあれば優先し、無ければ旧 .tasks.md のサマリへ落とす。
-# 旧 tasks は移行が済むまで残す。
 _task_summary() {
   local dir=$1
   task2 current -C "$dir" --summary 2>/dev/null && return
-  # 一覧は read-only に保つ: リンク未生成 worktree で tasks を起動して
-  # 自己修復(ファイル生成)させない。実体があるときだけ summary を引く。
-  [[ -e "$dir/.tasks.md" ]] && tasks --summary -f "$dir/.tasks.md" 2>/dev/null && return
   echo '(no tasks)'
 }
 

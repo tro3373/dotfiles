@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-# Open GitHub issue(s) as task-list markdown, append them to .tasks.md, or
+# Open GitHub issue(s) as task-list markdown, add them as task2 tasks, or
 # create a new one.
 #
 # Open (default): pick issue(s) with fzf, convert them to task-list markdown,
 # then view them in nvim, one tab per issue.
 #   issue [-R owner/repo]
-# To tasks: same pick + convert, but append each issue to .tasks.md via
-# `tasks -a`, marked with a `tracker: gh=owner/repo#NN` line so /task can read
+# To tasks: same pick + convert, but add each issue as a task via
+# `task2 add`, marked with a `tracker: gh=owner/repo#NN` line so /task can read
 # and comment on the issue it came from.
 #   issue -t [-R owner/repo]
 # Create: write the body in nvim (or pass -f), then `gh issue create --web`.
@@ -44,7 +44,7 @@ $command_name [-t|--to-tasks] [-a|--add [-f file] [--title title]] [-R owner/rep
   Open (default): pick issue(s) with fzf, convert them to task-list markdown,
   then view them in nvim, one tab per issue. TAB toggles a pick.
   Options:
-    -t, --to-tasks  Append the selected issue(s) to .tasks.md instead of opening
+    -t, --to-tasks  Add the selected issue(s) as task2 tasks instead of opening
                     them in nvim
     -a, --add       Create a new issue. The body is written in nvim unless -f
                     is given; the title is generated unless --title is given
@@ -120,8 +120,8 @@ issue_to_tasks() {
   #     - View this issue on GitHub: <url>
   #
   # Everything below the title is indented by two spaces, which is what keeps
-  # the whole issue one task: bin/tasks ends a task block at the next line
-  # starting with "- " or "#" in column 0.
+  # the whole issue one `- [ ]` step: a body line starting with "- " or "#"
+  # in column 0 would read as a step or heading of its own.
   local raw number shown i comment author created url
   raw=$(cat)
   number=$(jq -r '.number' <<<"${raw}")
@@ -173,14 +173,14 @@ tracker_of() {
 }
 
 append_to_tasks() {
-  # `tasks -a` turns one call into one task, so each issue is appended on its own.
+  # `task2 add` turns one call into one task, so each issue is added on its own.
   local number raw tracker
   for number in "$@"; do
     raw=$(view_issue "${number}")
     if ! tracker=$(tracker_of "$(jq -r '.url // ""' <<<"${raw}")"); then
       die "==> Error: Cannot build a tracker for #${number}; add the task by hand"
     fi
-    issue_to_tasks <<<"${raw}" | insert_tracker "${tracker}" | tasks -a
+    issue_to_tasks <<<"${raw}" | insert_tracker "${tracker}" | task2 add
   done
 }
 
@@ -204,7 +204,7 @@ open_in_nvim() {
 issue_select_open() {
   # Pick issue(s) with fzf (NUMBER is the first tab field, TAB toggles a pick),
   # convert each to task-list markdown, then hand it to the sink the mode picks:
-  # nvim (open) or .tasks.md (to-tasks).
+  # nvim (open) or task2 (to-tasks).
   local lines cache preview status=0
   cache=$(mktemp)
   if ! list_issues_json >"${cache}"; then
