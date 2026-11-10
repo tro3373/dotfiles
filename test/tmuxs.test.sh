@@ -2,7 +2,7 @@
 
 # bin/tmuxs のユニットテスト (実 tmux 不要)。2 グループを 1 ファイルに統合。
 #   * 管理サブコマンド系: __kill / __list / __preview / __cleanup / __switch
-#   * イベント/フック系  : tmuxs waiting|running|idle|remove
+#   * イベント/フック系  : tmuxs waiting|running|done|idle|remove
 #
 # PATH 先頭の偽 tmux が mutating 呼び出しをログ + 一時ファイルに記録し、query
 # (display-message / capture-pane / list-sessions / list-panes / show) を
@@ -331,34 +331,40 @@ test_cleanup_removes_dead_markers() {
 
 # 7. list は状態で並べ替えず、状態色で背景強調する。
 #    C は running(%3) と idle(%4) を持つが優先度で running に集約される。
-#    D は idle のみ。A はマーカー無し(色なし)。
+#    D は idle のみ。E は done と idle を持ち done に集約される。A はマーカー無し(色なし)。
 test_list_state_color_and_sort() {
   clear_markers
   # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
-  export FAKE_SESSIONS=$'A\t1\t\nB\t1\t\nC\t1\t\nD\t1\t'
+  export FAKE_SESSIONS=$'A\t1\t\nB\t1\t\nC\t1\t\nD\t1\t\nE\t1\t'
   set_fake_panes \
     A '%1' "${repos}/alpha" \
     B '%2' "${repos}/alpha" \
     C '%3' "${repos}/alpha" \
     C '%4' "${repos}/alpha" \
-    D '%5' "${repos}/alpha"
+    D '%5' "${repos}/alpha" \
+    E '%6' "${repos}/alpha" \
+    E '%7' "${repos}/alpha"
   printf 'waiting' >"${TMUXS_MARKER_DIR}/%2"
   printf 'running' >"${TMUXS_MARKER_DIR}/%3"
   printf 'idle' >"${TMUXS_MARKER_DIR}/%4"
   printf 'idle' >"${TMUXS_MARKER_DIR}/%5"
+  printf 'idle' >"${TMUXS_MARKER_DIR}/%6"
+  printf 'done' >"${TMUXS_MARKER_DIR}/%7"
 
   local raw stripped
   raw=$(run_list)
   stripped=$(printf '%s' "${raw}" | strip_ansi)
 
   check 'list: waiting(B) でも列挙順のまま + 状態集約 (C=running)' \
-    $'\talpha\nA\t    A  1w1p\nB\t    B  1w1p\nC\t    C  1w2p\nD\t    D  1w1p' "${stripped}"
+    $'\talpha\nA\t    A  1w1p\nB\t    B  1w1p\nC\t    C  1w2p\nD\t    D  1w1p\nE\t    E  1w2p' "${stripped}"
   check 'list: B 行に waiting 背景色 (#E5AF1E)' yes \
     "$(printf '%s' "${raw}" | grep -q '48;2;229;175;30' && echo yes || echo no)"
   check 'list: C 行に running 背景色 (#799478)' yes \
     "$(printf '%s' "${raw}" | grep -q '48;2;121;148;120' && echo yes || echo no)"
   check 'list: D 行に idle 背景色 (#4E4E4E)' yes \
     "$(printf '%s' "${raw}" | grep -q '48;2;78;78;78' && echo yes || echo no)"
+  check 'list: E 行に done 背景色 (#3E7A8C)' yes \
+    "$(printf '%s' "${raw}" | grep -q '48;2;62;122;140' && echo yes || echo no)"
 }
 
 # 8. __preview はマーカー保持 pane のヘッダ帯を状態色に塗る。
@@ -645,7 +651,7 @@ test_list_empty() {
 }
 
 # ============================================================================
-# イベント/フック系 (tmuxs waiting|running|idle|remove)
+# イベント/フック系 (tmuxs waiting|running|done|idle|remove)
 # ============================================================================
 
 # 15. tmux 外 (TMUX_PANE 未設定) では何もしない (no-op)。
@@ -665,6 +671,21 @@ test_marker_states() {
   check 'idle: マーカー内容 idle' 'idle' "$(marker_content '%5')"
   run_hook waiting
   check 'waiting: マーカー内容 waiting' 'waiting' "$(marker_content '%5')"
+  run_hook 'done'
+  check 'done: マーカー内容 done' 'done' "$(marker_content '%5')"
+}
+
+# 終わっただけの pane (done) は待ちに数えない。帯と ⏳N は人の返事が要る pane だけで点く。
+test_done_not_counted_as_waiting() {
+  reset
+  export FAKE_PANES=$'%5 claude\n%6 claude'
+  printf 'done' >"${TMUXS_MARKER_DIR}/%6"
+  run_hook waiting
+  check 'done は数えない: 自分の waiting だけで ⏳1' yes \
+    "$(opt @tmuxs_waiting | grep -q '⏳1' && echo yes || echo no)"
+  run_hook 'done'
+  check 'waiting => done: @tmuxs_waiting を消灯' '__NONE__' "$(opt @tmuxs_waiting)"
+  check 'waiting => done: @tmuxs_band を消灯' '__NONE__' "$(opt @tmuxs_band)"
 }
 
 # 17. remove はマーカーを削除する。
@@ -1039,6 +1060,7 @@ main() {
   test_indicator_set_then_cleared
   test_indicator_untouched_without_change
   test_indicator_counts_multiple
+  test_done_not_counted_as_waiting
   test_band_set_then_cleared
   test_band_update_waits_for_lock
   test_transition_logged
