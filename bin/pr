@@ -131,11 +131,9 @@ confirm_push_to_develop() {
 
 cat_issue() {
   cat <<EOF
-
 ## 関連Issue
 
 $(echo "$issues" | tr ',' '\n' | sed -e 's/^/- #/')
-
 EOF
 }
 
@@ -148,14 +146,14 @@ create_pr_parts() {
   fi
 
   info "==> Creating title/body.."
-  pr_title=$title
+  pr_title=$(printf '%s' "$title")
   if [[ -z $pr_title && $commit_count -eq 1 ]]; then
     pr_title=$(git log -1 --format=%s "$head_ref")
   fi
   [[ -z $pr_title ]] && pr_title="Merge $current_branch to $_target_branch"
 
-  pr_body=${body:-$current_branch => $_target_branch}
-  [[ -n $issues ]] && pr_body+=$'\n'$(cat_issue)
+  pr_body=$(printf '%s' "${body:-$current_branch => $_target_branch}")
+  [[ -n $issues ]] && pr_body+=$'\n\n'$(cat_issue)
   return 0
 }
 

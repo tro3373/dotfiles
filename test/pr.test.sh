@@ -7,7 +7,8 @@
 #   * --base       : 引数 > $PR_TARGET_BRANCH > origin/develop (あり、かつ develop 上でない)
 #                    > origin の default branch。分岐点は見ない
 #   * title        : -t > commit が 1 件ならその件名 > "Merge <head> to <base>"
-#   * body         : -b > "<head> => <base>" の 1 行。-i は関連 Issue を末尾に足す
+#   * body         : -b > "<head> => <base>" の 1 行。-i は空行を挟んで関連 Issue の節を末尾に足す
+#   * 末尾改行     : -t・-b の末尾改行は落とす。gh へ渡す body は改行 1 つで終える
 #   * commit 無し  : PR を作らず exit 0
 #   * PR 作成失敗  : 中断する
 #   * 引数ガード   : 未知のオプション、main 上での実行は中断する
@@ -206,6 +207,17 @@ test_generate_issue() {
   run_pr -i 12 origin/develop >/dev/null
   check "-i で関連 Issue が付く" "1" "$(grep -cx -- '- #12' "${tmproot}/gh_body")"
   check "-i でも body の 1 行目は head => base" "feature-b => develop" "$(head -n 1 "${tmproot}/gh_body")"
+  check "-i は 1 行目の後に空行を挟んで関連 Issue の節を足す" \
+    "$(printf 'feature-b => develop\n\n## 関連Issue\n\n- #12')" "$(cat "${tmproot}/gh_body")"
+}
+
+test_generate_trailing_newlines() {
+  setup_one_commit
+  run_pr -t $'my title\n\n' -b $'my body\n\n' -i 12 origin/develop >/dev/null
+  check "-t の末尾改行は落とす" "--body-file" "$(grep -A1 -x 'my title' "${tmproot}/gh_args" | sed -n 2p)"
+  check "-b の末尾改行は落とし、空行 1 つで関連 Issue を足す" \
+    "$(printf 'my body\n\n## 関連Issue\n\n- #12')" "$(cat "${tmproot}/gh_body")"
+  check "gh へ渡す body は改行 1 つで終える" "5" "$(wc -l <"${tmproot}/gh_body")"
 }
 
 test_generate_override() {
@@ -251,6 +263,7 @@ main() {
   test_generate_several_commits
   test_generate_issue
   test_generate_override
+  test_generate_trailing_newlines
   test_generate_no_commits
   test_create_failure
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
