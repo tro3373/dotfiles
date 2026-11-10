@@ -28,3 +28,8 @@ task2_index_append() {
     printf '%s\n' "${body}" >>"${index}"
   ) 9<"$(dirname "${index}")"
 }
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  echo "${0##*/}: source only" >&2
+  exit 1
+fi
