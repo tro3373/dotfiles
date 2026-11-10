@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
+# shellcheck disable=SC1091
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/task2_index"
+
 main() {
   set -eo pipefail
   local dst
-  if ! dst=$(task2 where | jq -er '.index'); then
+  if ! dst=$(task2_index_path); then
     elog "==> Error: Failed to find the task2 index.md of this repository."
     exit 1
   fi
@@ -11,7 +14,9 @@ main() {
     elog "==> Error: $dst not found. Add a task with task2 add first."
     exit 1
   fi
-  gtasks_to_tasks "$@" >>"$dst"
+  local body
+  body=$(gtasks_to_tasks "$@")
+  task2_index_append "$dst" <<<"$body"
   echo "$dst" | v
 }
 main "$@"
