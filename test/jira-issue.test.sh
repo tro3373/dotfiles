@@ -11,8 +11,6 @@
 #
 #   test/jira-issue.test.sh   # 全テスト実行
 
-set -uo pipefail
-
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 jira_issue_bin=$(cd "${script_dir}/../bin" && pwd)/jira-issue
 
@@ -649,6 +647,7 @@ test_to_gh_rejects_a_non_github_host() {
 }
 
 main() {
+  set -uo pipefail
   local pass=0 fail=0
 
   test_title_line
