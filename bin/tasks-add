@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# tasks-add - 本文から LLM で title / name / abbr を作り、tasks add に渡す。
+# tasks-add - 本文から LLM で title / name / branch / abbr を作り、tasks add に渡す。
 #
 #   printf -- '- [ ] 依頼\n  - 詳細\n' | tasks-add [tasks add のフラグ...]   # stdin の本文を 1 タスク
 #   tasks-add [tasks add のフラグ...]                # 端末: index.md のブロックを fzf で選び、ブロックごとに 1 タスク
@@ -8,7 +8,7 @@
 #   tasks-add -h                                     # この説明を出す
 #
 # - 引数は --lines / -h のほかは tasks add のフラグだけを渡す
-# - 引数は生成値の後ろに付ける。--title / --name / --abbr を渡すと生成値に勝つ
+# - 引数は生成値の後ろに付ける。--title / --name / --branch / --abbr を渡すと生成値に勝つ
 # - 本文は末尾の改行も含めてバイトのまま tasks add の stdin へ渡す
 # - stdout は tasks add の出力 (ID) をそのまま出す
 # - index.md から取り込むとき
@@ -141,13 +141,14 @@ parse_args() {
 
 # body を 1 タスクとして add する。終了コードは tasks add のもの
 add_body() {
-  local meta title name abbr
-  # tasks は LLM を呼ばない決め事なので、title / name / abbr は呼び出し側のここで作る
-  meta=$(tasks-meta < <(printf '%s' "${body}")) || die "title / name / abbr の生成に失敗"
+  local meta title name branch abbr
+  # tasks は LLM を呼ばない決め事なので、title / name / branch / abbr は呼び出し側のここで作る
+  meta=$(tasks-meta < <(printf '%s' "${body}")) || die "title / name / branch / abbr の生成に失敗"
   title=$(jq -r '.title' <<<"${meta}")
   name=$(jq -r '.name' <<<"${meta}")
+  branch=$(jq -r '.branch' <<<"${meta}")
   abbr=$(jq -r '.abbr' <<<"${meta}")
-  tasks add --title "${title}" --name "${name}" --abbr "${abbr}" "${args[@]}" < <(printf '%s' "${body}")
+  tasks add --title "${title}" --name "${name}" --branch "${branch}" --abbr "${abbr}" "${args[@]}" < <(printf '%s' "${body}")
 }
 
 add_stdin() {

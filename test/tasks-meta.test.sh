@@ -2,7 +2,7 @@
 
 # bin/tasks-meta のユニットテスト (llm を fake に差し替え。NW 不要)。
 #
-# 担保したいのは、naming.md に従わせて生成し、LLM の出力のうち name / title / abbr として使えるものだけを通すこと。
+# 担保したいのは、naming.md に従わせて生成し、LLM の出力のうち branch / name / title / abbr として使えるものだけを通すこと。
 # 改行入りの値は task.md の front matter や一覧を壊すので拒む。
 #
 #   test/tasks-meta.test.sh   # 全テスト実行
@@ -48,9 +48,9 @@ run() {
 }
 
 test_outputs_valid_meta() {
-  printf '%s' '{"name":"x","title":"x を直す","abbr":"a"}' >"${llm_out}"
+  printf '%s' '{"branch":"feature/x","name":"x","title":"x を直す","abbr":"a"}' >"${llm_out}"
   run $'- [ ] x を直す\n  - 詳細'
-  check 'valid: JSON をそのまま出す' '{"name":"x","title":"x を直す","abbr":"a"}' "${out}"
+  check 'valid: JSON をそのまま出す' '{"branch":"feature/x","name":"x","title":"x を直す","abbr":"a"}' "${out}"
   check 'valid: 終了コード 0' '0' "${rc}"
   local call
   call=$(cat "${calls_log}")
@@ -60,7 +60,7 @@ test_outputs_valid_meta() {
 }
 
 test_fails_without_naming() {
-  printf '%s' '{"name":"x","title":"x","abbr":"a"}' >"${llm_out}"
+  printf '%s' '{"branch":"feature/x","name":"x","title":"x","abbr":"a"}' >"${llm_out}"
   mv "${tmproot}/config/tasks/naming.md" "${tmproot}/naming.md"
   run 'x'
   mv "${tmproot}/naming.md" "${tmproot}/config/tasks/naming.md"
@@ -70,7 +70,7 @@ test_fails_without_naming() {
 
 # terms.tsv (日本語 TAB 英語 TAB 許す語) があれば、英語の技術用語を日本語に置き換えない指示を prompt の前に付ける
 test_adds_terms_rule() {
-  printf '%s' '{"name":"x","title":"x","abbr":"a"}' >"${llm_out}"
+  printf '%s' '{"branch":"feature/x","name":"x","title":"x","abbr":"a"}' >"${llm_out}"
   printf '# comment\n秘密\tsecret\t秘密鍵,秘密保持\n鉤\thook\n' >"${tmproot}/config/tasks/terms.tsv"
   run 'x'
   rm "${tmproot}/config/tasks/terms.tsv"
@@ -83,10 +83,11 @@ test_adds_terms_rule() {
 
 test_rejects_invalid_meta() {
   local meta
-  for meta in 'not json' '{"name":"n","title":"t"}' '{"name":"n","title":"t","abbr":""}' '{"name":"","title":"t","abbr":"a"}' \
-    '{"name":1,"title":"t","abbr":"a"}' '["n","t","a"]' \
-    '{"name":"n","title":"t","abbr":"a"}{"name":"n","title":"t","abbr":"a"}' \
-    '{"name":"a\nb","title":"t","abbr":"a"}' '{"name":"n","title":"t\tc","abbr":"a"}'; do
+  for meta in 'not json' '{"branch":"b","name":"n","title":"t"}' '{"name":"n","title":"t","abbr":"a"}' \
+    '{"branch":"b","name":"n","title":"t","abbr":""}' '{"branch":"","name":"n","title":"t","abbr":"a"}' \
+    '{"branch":"b","name":1,"title":"t","abbr":"a"}' '["b","n","t","a"]' \
+    '{"branch":"b","name":"n","title":"t","abbr":"a"}{"branch":"b","name":"n","title":"t","abbr":"a"}' \
+    '{"branch":"b","name":"a\nb","title":"t","abbr":"a"}' '{"branch":"b\tc","name":"n","title":"t","abbr":"a"}'; do
     printf '%s' "${meta}" >"${llm_out}"
     run 'x'
     check "invalid (${meta}): 終了コード 1" '1' "${rc}"
@@ -95,7 +96,7 @@ test_rejects_invalid_meta() {
 }
 
 test_fails_when_llm_fails() {
-  printf '%s' '{"name":"n","title":"t","abbr":"a"}' >"${llm_out}"
+  printf '%s' '{"branch":"b","name":"n","title":"t","abbr":"a"}' >"${llm_out}"
   llm_exit=3
   run 'x'
   llm_exit=0

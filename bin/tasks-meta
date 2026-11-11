@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# tasks-meta - タスクの本文 (stdin) から name / title / abbr の JSON を 1 つ出す。
+# tasks-meta - タスクの本文 (stdin) から branch / name / title / abbr の JSON を 1 つ出す。
 #
 #   printf -- '- [ ] 依頼\n  - 詳細\n' | tasks-meta
 #
 # - 付け方は ${XDG_CONFIG_HOME:-~/.config}/tasks/naming.md に従わせる。無ければ終了コード 1
-# - 受理: JSON 値が 1 つだけで、name / title / abbr が空でなく制御文字 (改行含む) を含まない文字列
+# - 受理: JSON 値が 1 つだけで、branch / name / title / abbr が空でなく制御文字 (改行含む) を含まない文字列
 # - 生成に失敗したか受理できなければ、stderr に出して終了コード 1
 # - ${XDG_CONFIG_HOME:-~/.config}/tasks/terms.tsv があれば、
 #   英語の技術用語を日本語に置き換えない指示を prompt に付ける
@@ -21,7 +21,7 @@ terms_rule() {
   local tsv="$1"
   [[ -f ${tsv} ]] || return 0
   printf '%s\n' '- Term rule (IMPORTANT): Do not replace English technical terms with Japanese words.' \
-    '  Never write the Japanese word on the left in name, title or abbr; write the word on the right.' \
+    '  Never write the Japanese word on the left in branch, name, title or abbr; write the word on the right.' \
     '  Words after "ok:" contain the left word but may be written as they are.'
   awk -F'\t' '!/^#/ && NF >= 2 {
     ok = $3 == "" ? "" : " (ok: " $3 ")"
@@ -33,10 +33,10 @@ terms_rule() {
 prompt() {
   local dir="$1"
   cat <<'PROMPT'
-Generate name, title and abbr of a task from the content below, following the naming rules.
+Generate branch, name, title and abbr of a task from the content below, following the naming rules.
 
 - Output only one JSON object. No explanations, no backquotes.
-  {"name": "...", "title": "...", "abbr": "..."}
+  {"branch": "...", "name": "...", "title": "...", "abbr": "..."}
 PROMPT
   terms_rule "${dir}/terms.tsv"
   printf '\n-- Naming rules --\n\n'
@@ -52,7 +52,7 @@ main() {
   [[ -f ${dir}/naming.md ]] || die "付け方が無い: ${dir}/naming.md"
   meta=$(prompt "${dir}" | llm -c tgpt -p groq -fc claude) || die "生成に失敗"
   jq -se 'length == 1 and (.[0] | type == "object" and
-    all(.name, .title, .abbr; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))' \
+    all(.branch, .name, .title, .abbr; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))' \
     >/dev/null 2>&1 <<<"${meta}" || die "生成結果が不正: ${meta}"
   printf '%s\n' "${meta}"
 }
