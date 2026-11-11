@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# bin/tasks-add のユニットテスト (gen_task_title_and_branch・tasks・fzf を fake に差し替え。NW 不要)。
+# bin/tasks-add のユニットテスト (tasks-meta・tasks・fzf を fake に差し替え。NW 不要)。
 #
 # 担保したいのは次の 2 つ。
-#   * 生成した title / name / branch と本文を tasks add へどう渡すか。
+#   * 生成した title / name / abbr と本文を tasks add へどう渡すか。
 #     引数は生成値の後ろに付ける: pflag は後勝ちなので、利用者の --title などが生成値に勝つ
 #   * index.md のブロック (`- [ ]` の行と、その下の字下げした行) を選んで 1 つずつ add し、
 #     add できたブロックだけを index.md から消すこと。
@@ -45,7 +45,7 @@ setup() {
   meta_exit=0
   mkdir -p "${fakebin}" "${index_dir}"
   # 生成コマンドの fake: 受けた本文を残し、meta.json を出す
-  cat >"${fakebin}/gen_task_title_and_branch" <<EOS
+  cat >"${fakebin}/tasks-meta" <<EOS
 #!/usr/bin/env bash
 cat >"${meta_in}"
 cat "${meta_json}"
@@ -86,8 +86,8 @@ cat >"${fzf_in}"
 [[ -n \${FAKE_FZF_SHIFT:-} ]] && sed -i '1i - ⬜ [後から足されたタスク](store/repo/20261102-000009_z/task.md)' "${index}"
 awk -F '\t' -v re="\${FAKE_FZF_PICK:-^\$}" '\$2 ~ re { print; n++ } END { exit n ? 0 : 130 }' "${fzf_in}"
 EOS
-  chmod +x "${fakebin}/gen_task_title_and_branch" "${fakebin}/tasks" "${fakebin}/fzf"
-  printf '%s' '{"branch":"feature/x-y","name":"x-を-y","title":"x を y","abbr":"x-y"}' >"${meta_json}"
+  chmod +x "${fakebin}/tasks-meta" "${fakebin}/tasks" "${fakebin}/fzf"
+  printf '%s' '{"name":"x-を-y","title":"x を y","abbr":"x-y"}' >"${meta_json}"
 
   # 一覧の側 (先頭) とマーカーと人の側を持つ index.md。行番号をテストで指すので、行を変えたら全テストを見直す
   #    1-2: CLI の一覧 / 4: マーカー / 8-11: ブロック A (10 の空行は 11 が字下げなので A の内)
@@ -179,8 +179,8 @@ exists() {
 
 test_passes_generated_meta_as_flags() {
   run $'- [ ] [20261101_213912] x を y にする\n  - 詳細'
-  check 'meta: 生成した title / name / branch / abbr を tasks add のフラグで渡す' \
-    $'add\n--title\nx を y\n--name\nx-を-y\n--branch\nfeature/x-y\n--abbr\nx-y' "$(cat "${tasks_args}" 2>/dev/null)"
+  check 'meta: 生成した title / name / abbr を tasks add のフラグで渡す' \
+    $'add\n--title\nx を y\n--name\nx-を-y\n--abbr\nx-y' "$(cat "${tasks_args}" 2>/dev/null)"
   check 'meta: 本文を生成コマンドに渡す' \
     $'- [ ] [20261101_213912] x を y にする\n  - 詳細' "$(cat "${meta_in}" 2>/dev/null)"
 }
@@ -196,7 +196,7 @@ test_passes_body_to_tasks_stdin() {
 test_appends_args_after_generated_flags() {
   run 'x' --parent 2026 --title '手で付けた題' -R mo
   check 'args: 引数は生成値の後ろに付けて tasks add へ渡す' \
-    $'add\n--title\nx を y\n--name\nx-を-y\n--branch\nfeature/x-y\n--abbr\nx-y\n--parent\n2026\n--title\n手で付けた題\n-R\nmo' \
+    $'add\n--title\nx を y\n--name\nx-を-y\n--abbr\nx-y\n--parent\n2026\n--title\n手で付けた題\n-R\nmo' \
     "$(cat "${tasks_args}" 2>/dev/null)"
 }
 
@@ -271,7 +271,7 @@ test_lines_excludes_trailing_blank() {
 test_lines_passes_args_without_lines() {
   run_index --lines 15,15 --parent 2026 -R mo
   check 'lines: --lines を除いた引数を、生成値の後ろに付けて tasks add へ渡す' \
-    $'add\n--title\nx を y\n--name\nx-を-y\n--branch\nfeature/x-y\n--abbr\nx-y\n--parent\n2026\n-R\nmo' \
+    $'add\n--title\nx を y\n--name\nx-を-y\n--abbr\nx-y\n--parent\n2026\n-R\nmo' \
     "$(cat "${tmproot}/args.1" 2>/dev/null)"
 }
 
@@ -342,7 +342,7 @@ test_tty_adds_selected_blocks() {
   check 'fzf: 1 回目は選んだ上のブロック' "${block_a}." "$(read_exact "${tmproot}/in.1")"
   check 'fzf: 2 回目は選んだ下のブロック' "${block_d}." "$(read_exact "${tmproot}/in.2")"
   check 'fzf: 引数を生成値の後ろに付けて tasks add へ渡す' \
-    $'add\n--title\nx を y\n--name\nx-を-y\n--branch\nfeature/x-y\n--abbr\nx-y\n--parent\n2026' \
+    $'add\n--title\nx を y\n--name\nx-を-y\n--abbr\nx-y\n--parent\n2026' \
     "$(cat "${tmproot}/args.2" 2>/dev/null)"
   check 'fzf: 選んだブロックだけを index.md から消す' "$(index_without '8,12d;18,19d')" "$(read_exact "${index}")"
   check 'fzf: 成功の終了コード 0' '0' "${rc}"

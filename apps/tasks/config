@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+setting_common() {
+  log "==> tasks"
+  local dir="${XDG_CONFIG_HOME:-$HOME/.config}/tasks"
+  make_dir_if_needed "${dir}"
+  make_lnk_with_bkup "$HOME/.mo/claude/skills/task/references/naming.md" "${dir}/naming.md"
+  make_lnk_with_bkup "$HOME/.mo/claude/hooks/term-ja-en.tsv" "${dir}/terms.tsv"
+}
