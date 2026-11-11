@@ -113,17 +113,46 @@ cleanup_markers() {
 # 桁が揃わない。表示幅 (端末カラム数) で数え直す。
 # 戻り値をコマンド置換で返すと 1 文字ごとに fork するので nameref で返す。
 
-# コードポイントが全角 (表示 2 桁) かを判定する。CJK・かな・ハングル・全角記号が対象。
+# コードポイントが全角 (表示 2 桁) かを判定する。CJK・かな・ハングル・全角記号・絵文字が対象。
 is_wide_cp() {
   local cp=$1
   ((cp >= 0x1100 && cp <= 0x115F)) && return 0
+  is_wide_emoji_cp "$cp" && return 0
   ((cp >= 0x2E80 && cp <= 0xA4CF)) && return 0
   ((cp >= 0xAC00 && cp <= 0xD7A3)) && return 0
   ((cp >= 0xF900 && cp <= 0xFAFF)) && return 0
   ((cp >= 0xFE30 && cp <= 0xFE6F)) && return 0
   ((cp >= 0xFF00 && cp <= 0xFF60)) && return 0
   ((cp >= 0xFFE0 && cp <= 0xFFE6)) && return 0
+  ((cp >= 0x1F300 && cp <= 0x1F64F)) && return 0
+  ((cp >= 0x1F680 && cp <= 0x1F6FF)) && return 0
+  ((cp >= 0x1F900 && cp <= 0x1F9FF)) && return 0
+  ((cp >= 0x1FA70 && cp <= 0x1FAFF)) && return 0
   ((cp >= 0x20000))
+}
+
+# U+FFFF 以下で、East Asian Width が W の絵文字 (✅ ⬜ ⭐ ⚡ など)。
+# 範囲でまとめると ★ ✓ のような 1 桁の記号まで 2 桁に数えてしまうので、W のものだけを並べる。
+is_wide_emoji_cp() {
+  case $(printf '%X' "$1") in
+    231A | 231B | 23E9 | 23EA | 23EB | 23EC | 23F0 | 23F3 | 25FD | 25FE | 2614 | 2615 | \
+      264[89A-F] | 265[0-3] | 267F | 2693 | 26A1 | 26AA | 26AB | 26BD | 26BE | 26C4 | 26C5 | \
+      26CE | 26D4 | 26EA | 26F2 | 26F3 | 26F5 | 26FA | 26FD | 2705 | 270A | 270B | 2728 | \
+      274C | 274E | 2753 | 2754 | 2755 | 2757 | 2795 | 2796 | 2797 | 27B0 | 27BF | 2B1B | \
+      2B1C | 2B50 | 2B55) return 0 ;;
+  esac
+  return 1
+}
+
+# コードポイントの表示幅 (0・1・2) を nameref へ返す。
+# VS16 (U+FE0F) と ZWJ (U+200D) は直前の絵文字に付く見えない文字で、幅を持たない。
+cp_cols() {
+  local -n _cc_out=$1
+  local cp=$2
+  _cc_out=1
+  ((cp == 0xFE0F || cp == 0x200D)) && _cc_out=0 && return 0
+  is_wide_cp "$cp" && _cc_out=2
+  return 0
 }
 
 # 文字列の表示幅を nameref 引数へ返す。
@@ -138,8 +167,7 @@ disp_width() {
   for ((i = 0; i < ${#s}; i++)); do
     c=${s:i:1}
     printf -v cp '%d' "'$c"
-    add=1
-    is_wide_cp "$cp" && add=2
+    cp_cols add "$cp"
     n=$((n + add))
   done
   _dw_out=$n
@@ -157,8 +185,7 @@ fit_disp() {
     for ((i = 0; i < ${#s}; i++)); do
       c=${s:i:1}
       printf -v cp '%d' "'$c"
-      add=1
-      is_wide_cp "$cp" && add=2
+      cp_cols add "$cp"
       ((n + add > width - 2)) && break
       out+=$c
       n=$((n + add))

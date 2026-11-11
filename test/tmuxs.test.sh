@@ -563,6 +563,21 @@ test_list_truncates_fullwidth_name() {
     "$(TMUXS_LIST_COLS=19 list_plain)"
 }
 
+# 17b. 絵文字は表示 2 桁、VS16 (U+FE0F) は 0 桁で数える。abbr の先頭に絵文字が来る。
+test_list_aligns_emoji_name() {
+  clear_markers
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  export FAKE_SESSIONS=$'\U0001F517 ab\t1\t\n\U0001F6E0\ufe0f x\t1\t\nabcdef\t1\t'
+  set_fake_panes \
+    $'\U0001F517 ab' '%1' "${repos}/alpha" \
+    $'\U0001F6E0\ufe0f x' '%2' "${repos}/alpha" \
+    abcdef '%3' "${repos}/alpha"
+
+  check 'list: 絵文字を 2 桁、VS16 を 0 桁で数えて桁を揃える' \
+    $'\talpha\n\U0001F517 ab\t    \U0001F517 ab   1w1p\n\U0001F6E0\ufe0f x\t    \U0001F6E0\ufe0f x    1w1p\nabcdef\t    abcdef  1w1p' \
+    "$(list_plain)"
+}
+
 # 18. list 幅が極端に狭くても名前列は min_name_cols (8) より下げない。
 #     幅 10 だと計算上は 2 桁になるが 8 でクランプし、行は幅を超える。
 test_list_clamps_min_name_width() {
@@ -1038,6 +1053,7 @@ main() {
   test_list_repo_name_edge_layouts
   test_list_aligns_fullwidth_name
   test_list_truncates_fullwidth_name
+  test_list_aligns_emoji_name
   test_list_clamps_min_name_width
   test_list_uses_first_pane_path
   test_list_marks_task_status
