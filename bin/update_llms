@@ -17,6 +17,7 @@ readonly -a plugins=(
   stripe@claude-plugins-official
   mattpocock-skills@claude-plugins-official
   pstack@cursor-plugins
+  yomiyasu@yomiyasu
 )
 
 # Enabled but intentionally not auto-updated. Not warned about.
