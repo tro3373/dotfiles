@@ -562,7 +562,9 @@ command! OneLine call OneLine()
 " 改行付与
 function! OneLineReverse() abort
   let dst = input("Input char to replace LF: ")
-  call SilentFExec(':%s/'.dst.'//g')
+  call SilentFExec(':%s/'.dst.'/
+
+/g')
 endfun
 command! OneLineReverse call OneLineReverse()
 command! MultiLine call OneLineReverse()
@@ -1398,8 +1400,9 @@ function! s:resolve_token_as_path(token, bases) abort
   let l:cand = s:extract_path_from_word(l:cand)
   " 行番号抽出 (`path:42`, `path:+42`, `path#L42`)
   " 範囲指定 (`path:42-99`, `path#L42-L99`) は開始行だけ使う (終了行は捨てる)
+  " grep -n / compiler の `path:42:` `path:42:7:` も受ける (桁と末尾 `:` は捨てる)
   let l:lnum = 0
-  let l:m = matchlist(l:cand, '\v^(.+)(:\+?|#L)(\d+)(-L?\d+)?$')
+  let l:m = matchlist(l:cand, '\v^(.{-1,})(:\+?|#L)(\d+)(-L?\d+)?(:\d+)?:?$')
   if !empty(l:m)
     let l:cand = l:m[1]
     let l:lnum = str2nr(l:m[3])
