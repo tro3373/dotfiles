@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+
+command_name=$(basename "$0") && readonly command_name
+usage() {
+  cat <<EOF
+
+Create github repo under ghq root with an initial layout:
+empty root commit, then .gitignore (optional), then LICENSE (default: mit)
+
+Usage:
+  $command_name [options] <repo>|<owner>/<repo>
+Options
+  -h|--help : Show this usage
+  --public : Create as public (default: private)
+  --description <text> : Repository description
+  --gitignore <lang> : Commit .gitignore from GitHub template (case-insensitive, e.g. go)
+  --license <key> : Commit LICENSE from GitHub license key (default: mit, none: skip)
+
+EOF
+}
+
+log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow 1>&2; }
+
+die() {
+  log "$*"
+  exit 1
+}
+
+# owner を省いた名前は gh の login 名で補う。ghq create の既定 user (git の user) と
+# gh の login が違うと、ローカルのパスと GitHub 上の owner がずれるため。
+full_name_of() {
+  local name="$1"
+  if [[ $name == */* ]]; then
+    echo "$name"
+    return
+  fi
+  echo "$(gh api user -q .login)/$name"
+}
+
+require_value() {
+  [[ $# -ge 2 ]] || die "$1 requires a value"
+}
+
+add_step() {
+  step_paths+=("$1")
+  step_contents+=("$2")
+  step_messages+=("$3")
+}
+
+# gh api の名前は大文字小文字を区別する (go => 404, Go => OK)。
+add_gitignore_step() {
+  local names name resolved="" source
+  names=$(gh api gitignore/templates -q '.[]') || die "Failed to list gitignore templates"
+  while IFS= read -r name; do
+    if [[ ${name,,} == "${gitignore,,}" ]]; then
+      resolved=$name
+      break
+    fi
+  done <<<"$names"
+  [[ -n $resolved ]] || die "Unknown gitignore template: $gitignore. Available: $(tr '\n' ' ' <<<"$names")"
+  source=$(gh api "gitignore/templates/$resolved" -q .source) || die "Failed to fetch gitignore template: $resolved"
+  add_step .gitignore "$source" "Add .gitignore"
+}
+
+# テンプレートごとに placeholder の綴りが違うので、全綴りを 1 表に持つ。
+# `[]` のような表に無い文字列は触らない。
+add_license_step() {
+  local owner body key
+  owner=$(git config user.name) || die "git config user.name is not set"
+  local -A placeholders=(
+    ["[year]"]=$(date +%Y)
+    ["[yyyy]"]=$(date +%Y)
+    ["[fullname]"]=$owner
+    ["[name of copyright owner]"]=$owner
+  )
+  body=$(gh api "licenses/$license" -q .body) || die "Failed to fetch license: $license"
+  for key in "${!placeholders[@]}"; do
+    body=${body//"$key"/"${placeholders[$key]}"}
+  done
+  add_step LICENSE "$body" "Add LICENSE"
+}
+
+commit_steps() {
+  local i
+  for i in "${!step_paths[@]}"; do
+    printf '%s\n' "${step_contents[$i]}" >"$dir/${step_paths[$i]}"
+    git -C "$dir" add -- "${step_paths[$i]}"
+    git -C "$dir" commit -q -m "${step_messages[$i]}"
+  done
+}
+
+main() {
+  set -euo pipefail
+  local visibility=--private gitignore="" license=mit
+  local -a args=() description_args=() step_paths=() step_contents=() step_messages=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      --public) visibility=--public ;;
+      --description) require_value "$@" && description_args=(--description "$2") && shift ;;
+      --gitignore) require_value "$@" && gitignore=$2 && shift ;;
+      --license) require_value "$@" && license=$2 && shift ;;
+      -*) die "Unknown option: $1" ;;
+      *) args+=("$1") ;;
+    esac
+    shift
+  done
+  [[ ${#args[@]} -eq 1 ]] || die "Specify exactly one repository name"
+
+  local full_name dir
+  full_name=$(full_name_of "${args[0]}")
+
+  # 取得失敗でローカルにも remote にも何も残さないよう、ghq create より前に全部取る。
+  [[ -z $gitignore ]] || add_gitignore_step
+  [[ $license == none ]] || add_license_step
+
+  log "==> Creating local repository $full_name .."
+  dir=$(ghq create "$full_name")
+  git -C "$dir" commit -q --allow-empty -m "Initial empty commit"
+  commit_steps
+
+  log "==> Creating GitHub repository $full_name .."
+  if ! gh repo create "$full_name" "$visibility" "${description_args[@]}"; then
+    rm -rf "$dir"
+    die "Failed to create GitHub repository. Removed $dir"
+  fi
+
+  # gh の git_protocol 設定に依らず、ghq get -p と同じ SSH の remote にする。
+  git -C "$dir" remote add origin "git@github.com:$full_name.git"
+  git -C "$dir" push -q -u origin HEAD
+
+  log "==> Below path is created"
+  echo "$dir"
+}
+main "$@"
