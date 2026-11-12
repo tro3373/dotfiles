@@ -38,7 +38,7 @@ full_name_of() {
 }
 
 require_value() {
-  [[ $# -ge 2 ]] || die "$1 requires a value"
+  if [[ $# -lt 2 ]]; then die "$1 requires a value"; fi
 }
 
 add_step() {
@@ -57,7 +57,7 @@ add_gitignore_step() {
       break
     fi
   done <<<"$names"
-  [[ -n $resolved ]] || die "Unknown gitignore template: $gitignore. Available: $(tr '\n' ' ' <<<"$names")"
+  if [[ -z $resolved ]]; then die "Unknown gitignore template: $gitignore. Available: $(tr '\n' ' ' <<<"$names")"; fi
   source=$(gh api "gitignore/templates/$resolved" -q .source) || die "Failed to fetch gitignore template: $resolved"
   add_step .gitignore "$source" "Add .gitignore"
 }
@@ -105,14 +105,14 @@ main() {
     esac
     shift
   done
-  [[ ${#args[@]} -eq 1 ]] || die "Specify exactly one repository name"
+  if [[ ${#args[@]} -ne 1 ]]; then die "Specify exactly one repository name"; fi
 
   local full_name dir
   full_name=$(full_name_of "${args[0]}")
 
   # 取得失敗でローカルにも remote にも何も残さないよう、ghq create より前に全部取る。
-  [[ -z $gitignore ]] || add_gitignore_step
-  [[ $license == none ]] || add_license_step
+  if [[ -n $gitignore ]]; then add_gitignore_step; fi
+  if [[ $license != none ]]; then add_license_step; fi
 
   log "==> Creating local repository $full_name .."
   dir=$(ghq create "$full_name")

@@ -34,10 +34,10 @@ run_claude() {
     err "claude -p /usage が失敗した (exit $?)"
     return 1
   }
-  [[ -n ${out//[[:space:]]/} ]] || {
+  if [[ -z ${out//[[:space:]]/} ]]; then
     err "claude -p /usage の出力が空"
     return 1
-  }
+  fi
   printf '%s\n' "${out}"
 }
 
