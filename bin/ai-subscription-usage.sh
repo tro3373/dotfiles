@@ -30,7 +30,7 @@ err() { echo "ai-subscription-usage: $*" >&2; }
 run_claude() {
   echo "===== Claude Code (/usage) ====="
   local out
-  out=$(cd "${work_dir}" && "${claude_bin}" -p "/usage") || {
+  out=$(cd "${work_dir}" && DISABLE_AUTOUPDATER=1 "${claude_bin}" -p "/usage") || {
     err "claude -p /usage が失敗した (exit $?)"
     return 1
   }
@@ -76,7 +76,7 @@ run_codex() {
 
   # command を 2 引数以上で渡すと tmux は shell を介さず直接 exec する (対話 zsh を起動しない)。
   t new-session -d -s "${session}" -x "${pane_width}" -y "${pane_height}" \
-    -c "${work_dir}" /usr/bin/env "${codex_bin}" \; \
+    -c "${work_dir}" /usr/bin/env "${codex_bin}" -c check_for_update_on_startup=false \; \
     set-option -t "${session}" remain-on-exit on || {
     err "tmux セッションを起動できない"
     return 1
