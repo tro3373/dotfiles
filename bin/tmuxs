@@ -104,6 +104,10 @@ cleanup_markers() {
   local -A cmds=()
   local rc=0
   collect_pane_commands cmds || rc=$?
+  # 偽の tmux (テストが PATH に置いたもの) や別の server は、空や他人の一覧を返す。
+  # それを信じると生きている pane のマーカーを全部消し、帯と ⏳ が消える。
+  ((${#cmds[@]} == 0)) && return 0
+  [[ -n ${TMUX_PANE:-} && -z ${cmds[$TMUX_PANE]+x} ]] && return 0
   local f pid
   for f in "$dir"/*; do
     [[ -e $f ]] || continue

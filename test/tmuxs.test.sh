@@ -321,7 +321,8 @@ test_cleanup_removes_dead_markers() {
   # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
   export FAKE_PANES=$'%1 claude\n%2 claude\n%3 zsh'
 
-  PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __cleanup
+  # テストを走らせた端末の TMUX_PANE は偽の一覧に無く、cleanup が止まるので外す。
+  env -u TMUX_PANE PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __cleanup
 
   local remain
   remain=$(cd "${TMUXS_MARKER_DIR}" && printf '%s ' * | sort)
@@ -348,6 +349,28 @@ test_cleanup_logged() {
     "$(grep -q ' - cleanup %3=waiting cmd=zsh panes=2 claude=1 rc=0$' "${log}" && echo yes || echo no)"
   check 'cleanup ログ: 消えた pane は command を (none) で残す' yes \
     "$(grep -q ' - cleanup %99=waiting cmd=(none) panes=2 claude=1 rc=0$' "${log}" && echo yes || echo no)"
+}
+
+# 呼んだ pane が見えない pane 一覧 (別の tmux server・偽の tmux) では、マーカーを 1 つも消さない。
+test_cleanup_skips_foreign_pane_list() {
+  clear_markers
+  printf 'waiting' >"${TMUXS_MARKER_DIR}/%1"
+  printf 'waiting' >"${TMUXS_MARKER_DIR}/%2"
+
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  FAKE_PANES='' TMUX_PANE='%1' PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __cleanup
+  check 'cleanup: pane 一覧が空なら消さない' '%1 %2 ' \
+    "$(cd "${TMUXS_MARKER_DIR}" && printf '%s ' * | sort)"
+
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  FAKE_PANES='%9 claude' TMUX_PANE='%1' PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __cleanup
+  check 'cleanup: 呼んだ pane が一覧に無ければ消さない' '%1 %2 ' \
+    "$(cd "${TMUXS_MARKER_DIR}" && printf '%s ' * | sort)"
+
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  FAKE_PANES='' env -u TMUX_PANE PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __cleanup
+  check 'cleanup: tmux 外から呼んでも、pane 一覧が空なら消さない' '%1 %2 ' \
+    "$(cd "${TMUXS_MARKER_DIR}" && printf '%s ' * | sort)"
 }
 
 # 7. list は状態で並べ替えず、状態色で背景強調する。
@@ -1064,6 +1087,7 @@ main() {
   test_preview_stacks_panes
   test_cleanup_removes_dead_markers
   test_cleanup_logged
+  test_cleanup_skips_foreign_pane_list
   test_list_state_color_and_sort
   test_preview_state_band
   test_switch_focuses_waiting_pane
