@@ -82,14 +82,17 @@ band_sgr() {
   esac
 }
 
-# Claude が動いている pane_id を連想配列 (nameref) に集める。古いマーカーの判定に使う。
+# 全 pane の pane_current_command を連想配列 (nameref, pane_id => command) に集める。
+# 戻り値は tmux list-panes の終了コード。古いマーカーの判定に使う。
 # Claude のツール実行中も pane_current_command は claude のまま (実測)。
-collect_claude_panes() {
-  local -n _alive=$1
-  local p cmd
+collect_pane_commands() {
+  local -n _cmds=$1
+  local out rc=0 p cmd
+  out=$(tmux list-panes -a -F '#{pane_id} #{pane_current_command}' 2>/dev/null) || rc=$?
   while read -r p cmd; do
-    if [[ $cmd == claude ]]; then _alive["$p"]=1; fi
-  done < <(tmux list-panes -a -F '#{pane_id} #{pane_current_command}' 2>/dev/null)
+    [[ -n $p ]] && _cmds["$p"]=$cmd
+  done <<<"$out"
+  return "$rc"
 }
 
 # Claude が居ない pane (pane ごと消えた / Claude だけ終了した) のマーカーを削除する。
@@ -98,14 +101,31 @@ cleanup_markers() {
   local dir
   dir=$(marker_dir)
   [[ -d $dir ]] || return 0
-  local -A alive=()
-  collect_claude_panes alive
+  local -A cmds=()
+  local rc=0
+  collect_pane_commands cmds || rc=$?
   local f pid
   for f in "$dir"/*; do
     [[ -e $f ]] || continue
     pid=${f##*/}
-    [[ -n ${alive[$pid]:-} ]] || rm -f "$f"
+    [[ ${cmds[$pid]:-} == claude ]] && continue
+    log_cleanup "$pid" "$(<"$f")" "${cmds[$pid]-(none)}" cmds "$rc"
+    rm -f "$f"
   done
+}
+
+# cleanup_markers が消したマーカーを 1 行残す。消した理由を後から追うため、
+# 消した pane の command と、そのとき見えていた pane 数・claude の pane 数・tmux の終了コードを書く。
+log_cleanup() {
+  local victim=$1 content=$2 cmd=$3 rc=$5
+  local -n _seen=$4
+  local p claude=0
+  for p in "${!_seen[@]}"; do
+    [[ ${_seen[$p]} == claude ]] && claude=$((claude + 1))
+  done
+  printf '%(%F %T)T %s cleanup %s=%s cmd=%s panes=%d claude=%d rc=%d\n' -1 \
+    "${TMUX_PANE:--}" "$victim" "$content" "$cmd" "${#_seen[@]}" "$claude" "$rc" \
+    >>"$(marker_dir).log" 2>/dev/null || true
 }
 
 # ---- 表示幅ユーティリティ ------------------------------------------------

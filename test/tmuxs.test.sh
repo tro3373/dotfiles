@@ -329,6 +329,27 @@ test_cleanup_removes_dead_markers() {
     '%1 %2 ' "${remain}"
 }
 
+# 消したマーカーは、消した理由 (見えた command・pane 数・claude 数・tmux の終了コード) と残す。
+test_cleanup_logged() {
+  clear_markers
+  local log="${TMUXS_MARKER_DIR}.log"
+  rm -f "${log}"
+  printf 'idle' >"${TMUXS_MARKER_DIR}/%1"
+  printf 'waiting' >"${TMUXS_MARKER_DIR}/%3"
+  printf 'waiting' >"${TMUXS_MARKER_DIR}/%99"
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
+  export FAKE_PANES=$'%1 claude\n%3 zsh'
+
+  # 呼び出し元の pane 欄を固定するため、テストを走らせた端末の TMUX_PANE を外す。
+  env -u TMUX_PANE PATH="${fakebin}:${PATH}" "${tmuxs_bin}" __cleanup
+
+  check 'cleanup ログ: 消したマーカーだけ残す' 2 "$(wc -l <"${log}")"
+  check 'cleanup ログ: Claude の居ない pane は見えた command を残す' yes \
+    "$(grep -q ' - cleanup %3=waiting cmd=zsh panes=2 claude=1 rc=0$' "${log}" && echo yes || echo no)"
+  check 'cleanup ログ: 消えた pane は command を (none) で残す' yes \
+    "$(grep -q ' - cleanup %99=waiting cmd=(none) panes=2 claude=1 rc=0$' "${log}" && echo yes || echo no)"
+}
+
 # 7. list は状態で並べ替えず、状態色で背景強調する。
 #    C は running(%3) と idle(%4) を持つが優先度で running に集約される。
 #    D は idle のみ。E は done と idle を持ち done に集約される。A はマーカー無し(色なし)。
@@ -693,6 +714,7 @@ test_marker_states() {
 # 終わっただけの pane (done) は待ちに数えない。帯と ⏳N は人の返事が要る pane だけで点く。
 test_done_not_counted_as_waiting() {
   reset
+  # lint-ignore: uppercase 偽 tmux が読む env 名は fake 側と揃える必要があり小文字化できない
   export FAKE_PANES=$'%5 claude\n%6 claude'
   printf 'done' >"${TMUXS_MARKER_DIR}/%6"
   run_hook waiting
@@ -1041,6 +1063,7 @@ main() {
   test_list_pads_and_marks_attached
   test_preview_stacks_panes
   test_cleanup_removes_dead_markers
+  test_cleanup_logged
   test_list_state_color_and_sort
   test_preview_state_band
   test_switch_focuses_waiting_pane
