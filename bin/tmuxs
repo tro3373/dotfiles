@@ -939,11 +939,13 @@ main() {
       # {1} には素のセッション名が入る。見出し行は {1} が空。
       # 移動キーは全て transform で包み、見出しに乗ったらもう一歩進めて
       # カーソルをセッション行にしか置かない (先頭が見出しの場合は load で送る)。
-      # 先頭行まで戻ったときだけ ({n} が 0) 進む向きへ折り返す。
-      # 1 つでも掛け忘れると見出しに乗れてしまうので、判定は 2 つの文字列に閉じ込め、
+      # 1 行ずつの移動は --cycle で端から反対の端へ回る。先頭の見出しで up すると最終行へ回る。
+      # page-up は回さず、先頭行まで戻ったら ({n} が 0) 進む向きへ折り返す。
+      # 1 つでも掛け忘れると見出しに乗れてしまうので、判定は文字列に閉じ込め、
       # 移動キーの一覧を回して bind を生成する。
       local skip_fwd='transform:[ -n {1} ] || echo down'
-      local skip_back='transform:[ -n {1} ] || if [ {n} -eq 0 ]; then echo down; else echo up; fi'
+      local skip_back='transform:[ -n {1} ] || echo up'
+      local skip_page_back='transform:[ -n {1} ] || if [ {n} -eq 0 ]; then echo down; else echo up; fi'
       # 一覧はすぐ出し、裏の fetch が終わったら ↑↓ を最新にした一覧へ差し替える。
       # reload-sync は差し替えまで今の一覧を残し、カーソルは同じ行位置に留まる。
       # --track は使わない。差し替えまでの間 (fetch 中) 移動キーを受け付けなくなる (実測)。
@@ -961,10 +963,10 @@ main() {
         bind_args+=(--bind "${key}:up+${skip_back}")
       done
       bind_args+=(--bind "page-down:page-down+${skip_fwd}")
-      bind_args+=(--bind "page-up:page-up+${skip_back}")
+      bind_args+=(--bind "page-up:page-up+${skip_page_back}")
 
       list_sessions |
-        fzf --reverse --no-input --ansi --prompt "$fetch_prompt" \
+        fzf --reverse --cycle --no-input --ansi --prompt "$fetch_prompt" \
           --delimiter=$'\t' --with-nth=2 \
           --preview "$self __preview {1}" \
           --preview-window "right:${preview_ratio}%" \
