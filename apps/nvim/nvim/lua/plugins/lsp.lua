@@ -222,7 +222,7 @@ return {
             schemaStore = { enable = true },
             schemas = {
               ["https://json.schemastore.org/github-workflow.json"] = ".github/workflows/*.{yml,yaml}",
-              ["file:///home/archuser/.config/yaml-schema-disable.json"] = {
+              ["file://" .. vim.fn.expand("~/.config/yaml-schema-disable.json")] = {
                 "**/tasks/*.yml",
                 "**/tasks/*.yaml",
                 "**/handlers/*.yml",
