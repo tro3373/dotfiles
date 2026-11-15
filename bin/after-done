@@ -2,10 +2,11 @@
 #
 # after-done - cwd の repo の after-done (done を検知した後の処理) を見る・変える。
 #
-#   after-done                          # 端末: fzf で選ぶ。端末でなければ今の値を出す
-#   after-done merge|merge-push|pr|ask  # 指定の値にする
-#   after-done -h                       # この説明を出す
+#   after-done                                        # 端末: fzf で選ぶ。端末でなければ今の値を出す
+#   after-done merge|merge-push|merge-confirm|pr|ask  # 指定の値にする
+#   after-done -h                                     # この説明を出す
 #
+# - merge-confirm: マージのみ。マージの前に人に確認する
 # - ask: 人に聞く。after-done ファイルを消す
 # - 値の読み手は /bot の after_done.sh
 # - 終了コード: 0 成功 / 1 失敗 / 2 使い方エラー / 130 fzf で選ばずに閉じた
@@ -37,6 +38,7 @@ choices() {
   ' <<'CHOICES'
 merge-push	マージして push
 merge	マージのみ
+merge-confirm	確認してからマージのみ
 pr	PR を依頼
 ask	人に聞く
 CHOICES
@@ -49,7 +51,7 @@ pick() {
 
 apply_value() {
   case "${value}" in
-    merge | merge-push | pr) printf '%s\n' "${value}" >"${config}" ;;
+    merge | merge-push | merge-confirm | pr) printf '%s\n' "${value}" >"${config}" ;;
     ask)
       [[ -e ${config} ]] && trash "${config}" >/dev/null
       ;;

@@ -92,6 +92,7 @@ main() {
 
   check 'merge を書く' NONE 0 $'merge' merge
   check 'merge-push を書く' NONE 0 $'merge-push' merge-push
+  check 'merge-confirm を書く' NONE 0 $'merge-confirm' merge-confirm
   check 'pr を書く' NONE 0 $'pr' pr
   check '今の値を上書きする' 'merge\n' 0 $'pr' pr
   check 'ask はファイルを消す' 'merge\n' 0 NONE ask
@@ -106,6 +107,7 @@ main() {
 
   check_pick '選んだ値を書く' NONE 2 $'merge-push' ask
   check_pick '今の値が先頭に来る' 'pr\n' 1 $'pr' pr
+  check_pick '今の値が merge-confirm でも先頭に来る' 'merge-confirm\n' 1 $'merge-confirm' merge-confirm
   check_pick '閉じたら変えない' 'pr\n' '' $'pr' pr
 
   ((fails == 0)) || return 1
