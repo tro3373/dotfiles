@@ -138,8 +138,10 @@ _setup_key_delay_repeat() {
 }
 
 _setup_mount_media_setting() {
-  # Disable automount external media
-  gsettings_if_needed org.gnome.desktop.media-handling automount false
+  # Mount external media on plug-in: tools hooked onto a mount unit start without opening a file manager
+  gsettings_if_needed org.gnome.desktop.media-handling automount true
+  # Do not open a file manager window on every mount
+  gsettings_if_needed org.gnome.desktop.media-handling automount-open false
 }
 
 _setup_suspend_hibernate() {
