@@ -203,6 +203,11 @@ return {
       vim.lsp.config("lua_ls", {
         settings = { Lua = { diagnostics = { globals = { "vim" } } } },
       })
+      -- shellcheck は ALE が回す。bashls は shellcheck を nvim の cwd で起動するので、
+      -- スクリプトのディレクトリ基準の source 先 (SCRIPTDIR) を開けない。
+      vim.lsp.config("bashls", {
+        settings = { bashIde = { shellcheckPath = "" } },
+      })
       vim.lsp.config("pylsp", {
         settings = {
           pylsp = {
