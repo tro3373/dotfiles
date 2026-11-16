@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  echo "==> Error: source only (loaded by setup): ${BASH_SOURCE[0]}" >&2
+  exit 1
+fi
+
 manjaro_user=archuser && readonly manjaro_user
 
 pre_setup() {
@@ -86,12 +91,12 @@ _setup_user_group() {
   # shellcheck disable=SC2154
   # exe sudo mv /etc/sudoers.d/10-installer "$_backup_root"/
   local target=/etc/sudoers.d/20-$manjaro_user
-  echo "$manjaro_user ALL=(ALL) NOPASSWD: ALL" |
-    if is_dry; then
-      cat -
-    else
-      cat - | sudo tee $target
-    fi
+  local line="$manjaro_user ALL=(ALL) NOPASSWD: ALL"
+  if is_dry; then
+    echo "$line"
+    return
+  fi
+  echo "$line" | sudo tee $target
 }
 
 _setup_cronie() {
@@ -117,9 +122,9 @@ _setup_visudo_editor() {
   fi
   if is_dry; then
     sudo sed -n -e 's,EDITOR=.*,EDITOR=vim,p' $target
-  else
-    exe sudo sed -i -e 's,EDITOR=.*,EDITOR=vim,g' $target
+    return
   fi
+  exe sudo sed -i -e 's,EDITOR=.*,EDITOR=vim,g' $target
 }
 
 _setup_home_dir_names() {

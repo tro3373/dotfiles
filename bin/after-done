@@ -22,10 +22,10 @@ usage_die() {
 }
 
 current_value() {
-  [[ -s ${config} ]] || {
+  if [[ ! -s ${config} ]]; then
     printf 'ask\n'
     return 0
-  }
+  fi
   printf '%s\n' "$(<"${config}")"
 }
 
@@ -84,8 +84,10 @@ main() {
     printf '%s\n' "${current}"
     return 0
   }
-  [[ -n ${value} ]] || value=$(pick) || return 130
-  [[ -n ${value} ]] || return 130
+  if [[ -z ${value} ]]; then
+    value=$(pick) || return 130
+  fi
+  [[ -z ${value} ]] && return 130
   apply_value
 }
 

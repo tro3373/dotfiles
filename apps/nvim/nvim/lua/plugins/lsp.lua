@@ -97,22 +97,27 @@ return {
           ["<Tab>"] = cmp.mapping(function(fallback)
             if accept_copilot() then
               return
-            elseif cmp.visible() then
-              cmp.select_next_item()
-            elseif luasnip.expand_or_jumpable() then
-              luasnip.expand_or_jump()
-            else
-              fallback()
             end
+            if cmp.visible() then
+              cmp.select_next_item()
+              return
+            end
+            if luasnip.expand_or_jumpable() then
+              luasnip.expand_or_jump()
+              return
+            end
+            fallback()
           end, { "i", "s" }),
           ["<S-Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
               cmp.select_prev_item()
-            elseif luasnip.jumpable(-1) then
-              luasnip.jump(-1)
-            else
-              fallback()
+              return
             end
+            if luasnip.jumpable(-1) then
+              luasnip.jump(-1)
+              return
+            end
+            fallback()
           end, { "i", "s" }),
           ["<C-Space>"] = cmp.mapping.complete(),
           -- 改行は補完確定せず素直に改行 (asyncomplete の挙動踏襲)

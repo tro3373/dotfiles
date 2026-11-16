@@ -24,7 +24,7 @@ STUB
   cat >"${work_dir}/bin/fzf" <<STUB
 #!/usr/bin/env bash
 cat >"${work_dir}/fzf_input"
-[[ -n "\${FZF_PICK:-}" ]] || exit 130
+[[ -z "\${FZF_PICK:-}" ]] && exit 130
 sed -n "\${FZF_PICK}p" "${work_dir}/fzf_input"
 STUB
   chmod +x "${work_dir}/bin/tasks" "${work_dir}/bin/trash" "${work_dir}/bin/fzf"
@@ -42,10 +42,10 @@ set_config() {
 }
 
 read_config() {
-  [[ -e ${config} ]] || {
+  if [[ ! -e ${config} ]]; then
     printf 'NONE'
     return 0
-  }
+  fi
   cat "${config}"
 }
 
@@ -57,14 +57,18 @@ check() {
   PATH="${work_dir}/bin:${PATH}" bash "${target}" "$@" >/dev/null 2>&1 </dev/null || code=$?
   ((code == want_code)) || fail "code ${want_code}" "code ${code}"
   got=$(read_config)
-  [[ ${got} == "${want}" ]] || fail "${want}" "${got}"
+  if [[ ${got} != "${want}" ]]; then
+    fail "${want}" "${got}"
+  fi
 }
 
 check_show() {
   local name="$1" before="$2" want="$3" got
   set_config "${before}"
   got=$(PATH="${work_dir}/bin:${PATH}" bash "${target}" 2>/dev/null </dev/null)
-  [[ ${got} == "${want}" ]] || fail "${want}" "${got}"
+  if [[ ${got} != "${want}" ]]; then
+    fail "${want}" "${got}"
+  fi
 }
 
 # 端末で打った形にするため script の pty の中で動かす
@@ -78,9 +82,13 @@ check_pick() {
   set_config "${before}"
   run_on_tty "${pick}" || true
   got=$(read_config)
-  [[ ${got} == "${want}" ]] || fail "${want}" "${got}"
+  if [[ ${got} != "${want}" ]]; then
+    fail "${want}" "${got}"
+  fi
   first=$(head -1 "${work_dir}/fzf_input" | cut -f1)
-  [[ ${first} == "${want_first}" ]] || fail "${want_first}" "${first}"
+  if [[ ${first} != "${want_first}" ]]; then
+    fail "${want_first}" "${first}"
+  fi
 }
 
 main() {
