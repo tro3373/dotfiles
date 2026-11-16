@@ -135,8 +135,6 @@ split_pane() {
 }
 
 main() {
-  set -e
-
   fzf="$(command -v fzf 2>/dev/null)" || fzf="$(dirname "$0")/fzf"
   if [[ ! -x $fzf ]]; then
     fail 'fzf executable not found'
@@ -200,6 +198,7 @@ main() {
   zoomed=""
   setup_zoom
 
+  set -e
   # Clean up named pipes on exit
   id=$RANDOM
   argsf="${TMPDIR:-/tmp}/fzf-args-$id"

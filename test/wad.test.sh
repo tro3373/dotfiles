@@ -34,7 +34,7 @@ check() {
   printf 'ok   - %s\n' "${desc}"
 }
 
-# sudo / systemctl / iptables / waydroid の偽物を用意する。挙動は FAKE_* env で
+# sudo / systemctl / iptables / waydroid の偽物を用意する。挙動は fake_* env で
 # 切り替え、呼ばれた引数は ${log} へ追記して検証する。
 new_fakebin() {
   fakebin="${tmproot}/bin"
@@ -86,7 +86,7 @@ if args[:1] == ["status"]:
     print("Session:\t" + os.environ.get("fake_session", "RUNNING"))
     print("Container:\tRUNNING")
 elif args[:2] == ["prop", "get"]:
-    value = os.environ.get("FAKE_" + args[2].split(".")[-1].upper(), "")
+    value = os.environ.get("fake_" + args[2].split(".")[-1].lower(), "")
     if value:
         print(value)
 EOS
@@ -99,7 +99,7 @@ EOS
 run_wad() {
   : >"${log}"
   PATH="${fakebin}:${PATH}" WAD_WAYDROID_BIN="${fake_waydroid}" \
-    "${wad_bin}" "$@" >/dev/null 2>&1
+    "${wad_bin}" "$@" >"${tmproot}/wad.out" 2>&1
 }
 
 # ${log} から $1 に一致した行数を数える。$1 は BRE なので `|` は区切り文字の
@@ -210,6 +210,7 @@ test_size_without_arg_only_reads() {
 
   check '現在値は prop get で読む' '2' "$(count_log 'prop|get')"
   check '読むだけで prop set しない' '0' "$(count_log 'prop|set')"
+  check '読んだ現在値を表示する' '1' "$(grep -c -- 'size: 484x1080' "${tmproot}/wad.out")"
   unset fake_width fake_height
 }
 
