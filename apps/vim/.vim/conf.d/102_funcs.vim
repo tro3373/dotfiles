@@ -1397,17 +1397,32 @@ function! s:resolve_token_as_path(token, bases) abort
   if !empty(l:md)
     let l:cand = l:md
   endif
-  let l:cand = s:extract_path_from_word(l:cand)
-  " 行番号抽出 (`path:42`, `path:+42`, `path#L42`)
-  " 範囲指定 (`path:42-99`, `path#L42-L99`) は開始行だけ使う (終了行は捨てる)
-  " grep -n / compiler の `path:42:` `path:42:7:` も受ける (桁と末尾 `:` は捨てる)
-  let l:lnum = 0
-  let l:m = matchlist(l:cand, '\v^(.{-1,})(:\+?|#L)(\d+)(-L?\d+)?(:\d+)?:?$')
-  if !empty(l:m)
-    let l:cand = l:m[1]
-    let l:lnum = str2nr(l:m[3])
-  endif
+  let [l:cand, l:lnum] = s:split_lnum(s:extract_path_from_word(l:cand))
   return [s:resolve_path(l:cand, a:bases), l:lnum]
+endfunction
+
+" 末尾の行番号指定を外す。戻り値: [path, lnum]。指定が無ければ lnum は 0
+"   `path:42`, `path:+42`, `path#L42` を受ける
+"   範囲指定 (`path:42-99`, `path#L42-L99`) は開始行だけ使う (終了行は捨てる)
+"   grep -n / compiler の `path:42:` `path:42:7:` も受ける (桁と末尾 `:` は捨てる)
+function! s:split_lnum(cand) abort
+  let l:m = matchlist(a:cand, '\v^(.{-1,})(:\+?|#L)(\d+)(-L?\d+)?(:\d+)?:?$')
+  return empty(l:m) ? [a:cand, 0] : [l:m[1], str2nr(l:m[3])]
+endfunction
+
+" percent-encode (`%28` など) を元のバイト列に戻す。日本語の UTF-8 も連続したバイトとして戻る
+function! s:percent_decode(s) abort
+  return substitute(a:s, '%\(\x\x\)', '\=eval(printf(''"\x%s"'', submatch(1)))', 'g')
+endfunction
+
+" Markdownリンクのリンク先 `[text](dest)` の dest をファイルパスと行番号に解決する
+" 戻り値: [resolved_path, lnum]。解決できなければ ['', 0]
+"   行番号は decode の前に外す。decode 後だと名前の `#` (`%23`) を行番号指定と読む
+"   s:resolve_token_as_path には通さない。decode で戻した名前の `(` `)` を削ってしまう
+function! s:resolve_link_dest(dest, bases) abort
+  let l:dest = substitute(a:dest, '^<\(.*\)>$', '\1', '')
+  let [l:cand, l:lnum] = s:split_lnum(l:dest)
+  return [s:resolve_path(s:percent_decode(l:cand), a:bases), l:lnum]
 endfunction
 
 " 指定ディレクトリの git root を返す (非 git / 失敗時は '')
@@ -1496,11 +1511,10 @@ function! s:collect_urls(line) abort
   return l:urls
 endfunction
 
-" token を解決し、ファイルパスなら paths に [path, lnum] を追加する
-function! s:add_resolved_path(paths, token, bases) abort
-  let [l:path, l:lnum] = s:resolve_token_as_path(a:token, a:bases)
-  if !empty(l:path)
-    call add(a:paths, [l:path, l:lnum])
+" 解決結果 [path, lnum] がファイルパスなら paths に追加する
+function! s:add_resolved_path(paths, resolved) abort
+  if !empty(a:resolved[0])
+    call add(a:paths, a:resolved)
   endif
 endfunction
 
@@ -1514,13 +1528,13 @@ function! s:collect_paths(line, bases) abort
     if l:s == -1
       break
     endif
-    call s:add_resolved_path(l:paths, l:m, a:bases)
+    call s:add_resolved_path(l:paths, s:resolve_link_dest(l:m, a:bases))
     let l:start = l:e
   endwhile
   " 2. Markdownリンクを除去した残りを空白区切り token として走査 (bare パス)
   let l:rest = substitute(a:line, '\v\[[^\]]*\]\([^)]+\)', ' ', 'g')
   for l:token in split(l:rest, '\s\+')
-    call s:add_resolved_path(l:paths, l:token, a:bases)
+    call s:add_resolved_path(l:paths, s:resolve_token_as_path(l:token, a:bases))
   endfor
   return l:paths
 endfunction
