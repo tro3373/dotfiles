@@ -64,7 +64,7 @@ initialize() {
       -h | --help) usage && exit 0 ;;
       -n | --dry-run) dry_run=1 && shift ;;
       -s | --schemadir)
-        [[ $# -ge 2 ]] || die "$1 requires <dir>"
+        [[ $# -lt 2 ]] && die "$1 requires <dir>"
         gsettings_opts=(--schemadir "$2") && shift 2
         ;;
       *) break ;;
@@ -161,12 +161,12 @@ next_free_path() {
 }
 
 cmd_get() {
-  [[ $# -eq 2 ]] || die "get requires <schema[:path]> <key>"
+  [[ $# -ne 2 ]] && die "get requires <schema[:path]> <key>"
   gs get "$1" "$2"
 }
 
 cmd_set() {
-  [[ $# -eq 3 ]] || die "set requires <schema[:path]> <key> <value>"
+  [[ $# -ne 3 ]] && die "set requires <schema[:path]> <key> <value>"
   set_if_needed "$1" "$2" "$3"
 }
 
@@ -176,7 +176,7 @@ list_items() {
 }
 
 cmd_add() {
-  [[ $# -eq 3 ]] || die "add requires <schema[:path]> <key> <item>"
+  [[ $# -ne 3 ]] && die "add requires <schema[:path]> <key> <item>"
   local _schema=$1 _key=$2 _item=$3
   local _items
   _items=$(list_items "$(gs get "$_schema" "$_key")")
@@ -206,7 +206,7 @@ key_ls() {
 }
 
 key_add() {
-  [[ $# -eq 3 ]] || die "key add requires <name> <binding> <command>"
+  [[ $# -ne 3 ]] && die "key add requires <name> <binding> <command>"
   local _name=$1 _binding=$2 _cmd=$3
   local _path
   _path=$(find_path_by_name "$_name") || _path=$(next_free_path)
@@ -223,7 +223,7 @@ key_add() {
 }
 
 key_rm() {
-  [[ $# -eq 1 ]] || die "key rm requires <name>"
+  [[ $# -ne 1 ]] && die "key rm requires <name>"
   local _name=$1
   local _path
   if ! _path=$(find_path_by_name "$_name"); then

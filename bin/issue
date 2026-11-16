@@ -65,15 +65,15 @@ parse_args() {
       -t | --to-tasks) mode=to-tasks ;;
       -a | --add) mode=add ;;
       -f | --file)
-        [[ -n ${2:-} ]] || die "==> Error: $1 requires a file"
+        [[ -z ${2:-} ]] && die "==> Error: $1 requires a file"
         shift && file=$1
         ;;
       --title)
-        [[ -n ${2:-} ]] || die "==> Error: $1 requires a title"
+        [[ -z ${2:-} ]] && die "==> Error: $1 requires a title"
         shift && title=$1
         ;;
       -R | --repo)
-        [[ -n ${2:-} ]] || die "==> Error: $1 requires owner/repo"
+        [[ -z ${2:-} ]] && die "==> Error: $1 requires owner/repo"
         shift && gh_repo_args=(-R "$1")
         ;;
       *) die "==> Error: Unknown option: $1" ;;
@@ -168,7 +168,7 @@ tracker_of() {
   # github.com へ投稿するため、GHE の URL は黙って別の issue を指す。
   local url=$1
   local url_re='^https://github\.com/([^/]+/[^/]+)/issues/([0-9]+)$'
-  [[ ${url} =~ ${url_re} ]] || return 1
+  [[ ! ${url} =~ ${url_re} ]] && return 1
   printf 'gh=%s#%s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
 }
 
@@ -239,12 +239,12 @@ create_issue() {
   if [[ -z ${file} ]]; then
     local git_root prj
     git_root=$(git rev-parse --show-toplevel 2>/dev/null || :)
-    [[ -n ${git_root} ]] || die "==> Not inside git repository"
+    [[ -z ${git_root} ]] && die "==> Not inside git repository"
     prj=$(basename "${git_root}")
     file="/tmp/$(date +%Y-%m-%d_%H-%M-%S).${prj}.new-issue.md"
     nvim -p "${file}"
   fi
-  [[ -s ${file} ]] || die "==> File is empty: ${file}"
+  [[ ! -s ${file} ]] && die "==> File is empty: ${file}"
   info "==> Creating issue from ${file}.."
   if [[ -z ${title} ]]; then
     hass prp llm

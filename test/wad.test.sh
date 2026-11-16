@@ -34,11 +34,11 @@ check() {
   printf 'ok   - %s\n' "${desc}"
 }
 
-# sudo / systemctl / iptables / waydroid の偽物を用意する。挙動は FAKE_* env で
-# 切り替え、呼ばれた引数は ${LOG} へ追記して検証する。
+# sudo / systemctl / iptables / waydroid の偽物を用意する。挙動は fake_* env で
+# 切り替え、呼ばれた引数は ${log} へ追記して検証する。
 new_fakebin() {
   fakebin="${tmproot}/bin"
-  LOG="${tmproot}/calls.log"
+  log="${tmproot}/calls.log"
   mkdir -p "${fakebin}"
 
   # sudo は iptables のみ PATH 上の偽物へ委譲する。他 (systemctl start,
@@ -49,23 +49,23 @@ if [[ $1 == iptables ]]; then
   shift
   exec iptables "$@"
 fi
-echo "sudo $*" >>"${LOG}"
+echo "sudo $*" >>"${log}"
 EOS
 
   cat >"${fakebin}/systemctl" <<'EOS'
 #!/usr/bin/env bash
-echo "systemctl $*" >>"${LOG}"
-[[ $1 == is-active ]] || exit 0
-[[ ${FAKE_UNIT_ACTIVE} == 1 ]]
+echo "systemctl $*" >>"${log}"
+[[ $1 != is-active ]] && exit 0
+[[ ${fake_unit_active} == 1 ]]
 EOS
 
   # -S: chain の存在確認 (Docker 有無)。-C: rule の存在確認 (冪等性)。
   cat >"${fakebin}/iptables" <<'EOS'
 #!/usr/bin/env bash
-echo "iptables $*" >>"${LOG}"
+echo "iptables $*" >>"${log}"
 case $1 in
-  -S) [[ ${FAKE_HAS_DOCKER_USER} == 1 ]] ;;
-  -C) [[ ${FAKE_RULE_EXISTS} == 1 ]] ;;
+  -S) [[ ${fake_has_docker_user} == 1 ]] ;;
+  -C) [[ ${fake_rule_exists} == 1 ]] ;;
   *) exit 0 ;;
 esac
 EOS
@@ -79,33 +79,33 @@ import os
 import sys
 
 args = sys.argv[1:]
-with open(os.environ["LOG"], "a") as f:
+with open(os.environ["log"], "a") as f:
     f.write("|".join(args) + "\n")
 
 if args[:1] == ["status"]:
-    print("Session:\t" + os.environ.get("FAKE_SESSION", "RUNNING"))
+    print("Session:\t" + os.environ.get("fake_session", "RUNNING"))
     print("Container:\tRUNNING")
 elif args[:2] == ["prop", "get"]:
-    value = os.environ.get("FAKE_" + args[2].split(".")[-1].upper(), "")
+    value = os.environ.get("fake_" + args[2].split(".")[-1].lower(), "")
     if value:
         print(value)
 EOS
 
   chmod +x "${fakebin}"/sudo "${fakebin}"/systemctl "${fakebin}"/iptables "${fake_waydroid}"
-  export LOG
+  export log
 }
 
 # fakebin 経由で wad を実行し、終了コードを返す。
 run_wad() {
-  : >"${LOG}"
+  : >"${log}"
   PATH="${fakebin}:${PATH}" WAD_WAYDROID_BIN="${fake_waydroid}" \
-    "${wad_bin}" "$@" >/dev/null 2>&1
+    "${wad_bin}" "$@" >"${tmproot}/wad.out" 2>&1
 }
 
-# ${LOG} から $1 に一致した行数を数える。$1 は BRE なので `|` は区切り文字の
+# ${log} から $1 に一致した行数を数える。$1 は BRE なので `|` は区切り文字の
 # ままリテラル扱いになり、末尾の値が空であることを `|$` で表現できる。
 count_log() {
-  grep -c -- "$1" "${LOG}" || true
+  grep -c -- "$1" "${log}" || true
 }
 
 # --- allow_forward ---------------------------------------------------------
@@ -113,7 +113,7 @@ count_log() {
 # 1. 既に active でも DOCKER-USER へ挿す (再起動後に効かせる為の回帰テスト)。
 #    cert は container_up を通る最短経路。
 test_inserts_when_container_already_active() {
-  export FAKE_UNIT_ACTIVE=1 FAKE_HAS_DOCKER_USER=1 FAKE_RULE_EXISTS=0
+  export fake_unit_active=1 fake_has_docker_user=1 fake_rule_exists=0
   run_wad cert
 
   check 'active でも -i の accept を挿す' '1' \
@@ -126,7 +126,7 @@ test_inserts_when_container_already_active() {
 
 # 2. rule が既にあれば挿さない (毎回呼ばれるので重複が積み上がる)。
 test_idempotent_when_rule_exists() {
-  export FAKE_UNIT_ACTIVE=1 FAKE_HAS_DOCKER_USER=1 FAKE_RULE_EXISTS=1
+  export fake_unit_active=1 fake_has_docker_user=1 fake_rule_exists=1
   run_wad cert
 
   check '既存 rule があれば -I しない' '0' "$(count_log 'iptables -I')"
@@ -135,7 +135,7 @@ test_idempotent_when_rule_exists() {
 
 # 3. Docker 未使用なら DOCKER-USER chain が無い。触らず正常終了する。
 test_noop_without_docker() {
-  export FAKE_UNIT_ACTIVE=1 FAKE_HAS_DOCKER_USER=0 FAKE_RULE_EXISTS=0
+  export fake_unit_active=1 fake_has_docker_user=0 fake_rule_exists=0
   run_wad cert
 
   check 'chain が無ければ -C しない' '0' "$(count_log 'iptables -C')"
@@ -144,7 +144,7 @@ test_noop_without_docker() {
 
 # 4. inactive なら container を起こした上で挿す。
 test_starts_container_then_inserts() {
-  export FAKE_UNIT_ACTIVE=0 FAKE_HAS_DOCKER_USER=1 FAKE_RULE_EXISTS=0
+  export fake_unit_active=0 fake_has_docker_user=1 fake_rule_exists=0
   run_wad cert
 
   check 'inactive なら container を起動する' '1' \
@@ -156,7 +156,7 @@ test_starts_container_then_inserts() {
 
 # 5. phone preset は Pixel 10 Pro の縦横比 (484x1080) を prop に書く。
 test_size_phone_preset() {
-  export FAKE_SESSION=RUNNING
+  export fake_session=RUNNING
   run_wad size phone
 
   check 'phone は width=484' '1' "$(count_log 'prop|set|persist.waydroid.width|484')"
@@ -166,7 +166,7 @@ test_size_phone_preset() {
 # 6. tablet preset は両辺を空にする。空 = 既定 (ディスプレイ依存) 復帰。
 #    空文字を渡せていないと既定に戻らないので、値が空であることまで見る。
 test_size_tablet_clears_props() {
-  export FAKE_SESSION=RUNNING
+  export fake_session=RUNNING
   run_wad size tablet
 
   check 'tablet は width を空にする' '1' "$(count_log 'prop|set|persist.waydroid.width|$')"
@@ -175,7 +175,7 @@ test_size_tablet_clears_props() {
 
 # 7. preset 名でなく <w>x<h> を直接渡せる。
 test_size_accepts_explicit_geometry() {
-  export FAKE_SESSION=RUNNING
+  export fake_session=RUNNING
   run_wad size 720x1606
 
   check '任意指定の width' '1' "$(count_log 'prop|set|persist.waydroid.width|720')"
@@ -184,7 +184,7 @@ test_size_accepts_explicit_geometry() {
 
 # 8. 不正な指定は prop を触らずエラー終了する。
 test_size_rejects_invalid_spec() {
-  export FAKE_SESSION=RUNNING
+  export fake_session=RUNNING
   run_wad size 480
   local rc=$?
 
@@ -195,7 +195,7 @@ test_size_rejects_invalid_spec() {
 # 9. session 停止中は prop を触らず落ちる。waydroid の prop set は停止中でも
 #    exit 0 を返す為、ここを通すと「設定したのに反映されない」を黙って作る。
 test_size_fails_loud_when_session_stopped() {
-  export FAKE_SESSION=STOPPED
+  export fake_session=STOPPED
   run_wad size phone
   local rc=$?
 
@@ -205,18 +205,19 @@ test_size_fails_loud_when_session_stopped() {
 
 # 10. 引数なしは現在値を読むだけで書き換えない。
 test_size_without_arg_only_reads() {
-  export FAKE_SESSION=RUNNING FAKE_WIDTH=484 FAKE_HEIGHT=1080
+  export fake_session=RUNNING fake_width=484 fake_height=1080
   run_wad size
 
   check '現在値は prop get で読む' '2' "$(count_log 'prop|get')"
   check '読むだけで prop set しない' '0' "$(count_log 'prop|set')"
-  unset FAKE_WIDTH FAKE_HEIGHT
+  check '読んだ現在値を表示する' '1' "$(grep -c -- 'size: 484x1080' "${tmproot}/wad.out")"
+  unset fake_width fake_height
 }
 
 # 11. book preset は紙の判型 (1:√2) を prop に書く。値そのものより比が本質で、
 #     ここが崩れると kshot の PDF が紙と違う縦横比のページになる。
 test_size_book_preset() {
-  export FAKE_SESSION=RUNNING
+  export fake_session=RUNNING
   run_wad size book
 
   check 'book は width=764' '1' "$(count_log 'prop|set|persist.waydroid.width|764')"

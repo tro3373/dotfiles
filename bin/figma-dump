@@ -67,14 +67,14 @@ is_url() { [[ ${1:-} =~ ^https?:// ]]; }
 # Figma の design/file URL から FILE_KEY を抽出する。非該当時は何も出力しない。
 extract_file_key() {
   local url="${1:-}"
-  [[ ${url} =~ figma\.com/[a-zA-Z]+/([A-Za-z0-9]+) ]] || return 0
+  [[ ! ${url} =~ figma\.com/[a-zA-Z]+/([A-Za-z0-9]+) ]] && return 0
   echo "${BASH_REMATCH[1]}"
 }
 
 # Figma URL のクエリから node-id の生値を抽出する。非該当時は何も出力しない。
 extract_node_id() {
   local url="${1:-}"
-  [[ ${url} =~ [?\&]node-id=([^&\#]+) ]] || return 0
+  [[ ! ${url} =~ [?\&]node-id=([^&\#]+) ]] && return 0
   echo "${BASH_REMATCH[1]}"
 }
 

@@ -856,7 +856,6 @@ init_funcs() {
 }
 init_funcs "$@"
 
-[[ ${BASH_SOURCE[0]} == "${0}" ]] || return 0
 _test() {
   # default_apps
   # default_apps |mapfile args
@@ -867,4 +866,6 @@ _test() {
   done
   echo "${args[@]}"
 }
-_test "$@"
+if [[ ${BASH_SOURCE[0]} == "${0}" ]]; then
+  _test "$@"
+fi

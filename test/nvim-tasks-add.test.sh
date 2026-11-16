@@ -44,7 +44,7 @@ setup() {
   # tasks の fake: where だけに答え、index.md のパスを JSON で出す
   cat >"${fakebin}/tasks" <<EOS
 #!/usr/bin/env bash
-[[ \$1 == where ]] || exit 2
+[[ \$1 != where ]] && exit 2
 printf '{"place":"main","index":"%s"}\n' "${index}"
 EOS
   # tasks-add の fake: 引数・stdin が端末か・起動したときの index.md を残し、ブロックを消した体で 2 行目を消す

@@ -34,7 +34,7 @@ session_exists() {
 # 破綻するので、自分自身を --preview で呼び直して bash のまま書く。
 preview() {
   local dir=${1:-}
-  [[ -d $dir ]] || return 0
+  [[ ! -d $dir ]] && return 0
 
   # onefetch 不在 (127) も 非 git repo での失敗も、まとめて ls へ倒す。
   onefetch --no-art "$dir" 2>/dev/null || ls -laF "$dir"
@@ -63,7 +63,9 @@ drop_active_sessions() {
   done < <(tmux list-sessions -F '#S' 2>/dev/null)
   while IFS= read -r dir; do
     name=$(tmux_session_name "$dir")
-    [[ -n ${active[$name]:-} ]] || printf '%s\n' "$dir"
+    if [[ -z ${active[$name]:-} ]]; then
+      printf '%s\n' "$dir"
+    fi
   done
 }
 
@@ -71,7 +73,7 @@ drop_active_sessions() {
 # 現セッションを rename して cd する。命名済みなら何もせず 1 を返す。
 adopt_current_session() {
   local name=$1 src=$2
-  [[ $(tmux display-message -p '#S') =~ ^[0-9]+$ ]] || return 1
+  [[ ! $(tmux display-message -p '#S') =~ ^[0-9]+$ ]] && return 1
   local pane
   pane=$(tmux display-message -p '#{pane_id}') # popup 内の $TMUX_PANE は popup 自身を指すので使わない
   tmux rename-session "$name"
@@ -97,7 +99,9 @@ switch_to_sessions() {
     name=$(tmux_session_name "$src")
     prepare_session "$name" "$src" "$adopt"
     adopt=0
-    [[ -n $switch_to ]] || switch_to=$name
+    if [[ -z $switch_to ]]; then
+      switch_to=$name
+    fi
   done
   tmux switch-client -t "$switch_to" # 乗っ取り時は現セッション宛なので no-op
 }
@@ -124,7 +128,9 @@ main() {
 
   # preview は自分自身に委譲する。PATH 経由起動でも絶対パスへ寄せておく。
   local self=${BASH_SOURCE[0]}
-  [[ $self == /* ]] || self=$(command -v -- "$self" 2>/dev/null || echo "$self")
+  if [[ $self != /* ]]; then
+    self=$(command -v -- "$self" 2>/dev/null || echo "$self")
+  fi
 
   local -a fzf_opts=(--tac --query "$query" --preview "$(printf '%q' "$self") --preview {}")
   ((popup)) && fzf_opts+=(--multi)

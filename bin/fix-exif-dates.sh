@@ -90,7 +90,9 @@ scan_files() {
     g_epochs+=("$(parse_dt "${date}")")
   done < <(find . -maxdepth 1 -type f -print0 | sort -z)
 
-  [[ ${#g_files[@]} -gt 0 ]] || die "日時メタデータを持つメディアファイルが見つからない: ${target_dir}"
+  if [[ ${#g_files[@]} -le 0 ]]; then
+    die "日時メタデータを持つメディアファイルが見つからない: ${target_dir}"
+  fi
 }
 
 # 最古の日時を持つファイルを基準に決める
@@ -163,12 +165,12 @@ parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -t | --date)
-        [[ -n ${2:-} ]] || die "-t には日時が必要。"
+        [[ -z ${2:-} ]] && die "-t には日時が必要。"
         opt_date="$2"
         shift 2
         ;;
       -d | --dir)
-        [[ -n ${2:-} ]] || die "-d にはディレクトリが必要。"
+        [[ -z ${2:-} ]] && die "-d にはディレクトリが必要。"
         opt_dir="$2"
         shift 2
         ;;
@@ -186,10 +188,10 @@ parse_args() {
         ;;
     esac
   done
-  [[ -n ${opt_date} ]] || {
+  if [[ -z ${opt_date} ]]; then
     usage
     die "-t / --date は必須。"
-  }
+  fi
 }
 
 main() {
@@ -206,7 +208,7 @@ main() {
   command -v exiftool >/dev/null 2>&1 || die "exiftool が無い。'brew install exiftool' を実行して。"
 
   target_dir="${opt_dir:-.}"
-  [[ -d ${target_dir} ]] || die "ディレクトリが無い: ${target_dir}"
+  [[ ! -d ${target_dir} ]] && die "ディレクトリが無い: ${target_dir}"
   cd "${target_dir}"
   target_dir="$(pwd)"
 
@@ -218,7 +220,7 @@ main() {
   resolve_offset
   print_plan
 
-  if ((!opt_apply)); then
+  if ((! opt_apply)); then
     printf '==> ドライラン終了。適用するには -a / --apply を付けて再実行。\n' >&2
     return 0
   fi

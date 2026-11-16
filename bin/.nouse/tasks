@@ -103,12 +103,16 @@ initialize() {
       -n[0-9]*)
         mode="next"
         task_index=${1#-n}
-        [[ $task_index =~ ^[1-9][0-9]*$ ]] || die "==> Invalid option: $1"
+        if [[ ! $task_index =~ ^[1-9][0-9]*$ ]]; then
+          die "==> Invalid option: $1"
+        fi
         ;;
       --next=*)
         mode="next"
         task_index=${1#--next=}
-        [[ $task_index =~ ^[1-9][0-9]*$ ]] || die "==> Invalid option: $1"
+        if [[ ! $task_index =~ ^[1-9][0-9]*$ ]]; then
+          die "==> Invalid option: $1"
+        fi
         ;;
       -c | --clean) mode="clean" ;;
       --all) select_all=1 ;;
@@ -143,10 +147,14 @@ initialize() {
         ;;
       -[0-9]*)
         task_index=${1#-}
-        [[ $task_index =~ ^[1-9][0-9]*$ ]] || die "==> Invalid option: $1"
+        if [[ ! $task_index =~ ^[1-9][0-9]*$ ]]; then
+          die "==> Invalid option: $1"
+        fi
         ;;
       [0-9]*)
-        [[ $1 =~ ^[1-9][0-9]*$ ]] || die "==> Invalid index: $1"
+        if [[ ! $1 =~ ^[1-9][0-9]*$ ]]; then
+          die "==> Invalid index: $1"
+        fi
         task_index=$1
         ;;
       -*) die "==> Invalid option: $1" ;;
@@ -216,7 +224,9 @@ from_reference_line() { sed -E 's/^- \[[ xX]\] \[[^]]*\]\((.*)\)$/\1/' <<<"$1"; 
 resolve_reference_path() {
   local p
   p=$(from_tilde "$1")
-  [[ $p == /* ]] || p="$store_root/$p"
+  if [[ $p != /* ]]; then
+    p="$store_root/$p"
+  fi
   realpath "$p" 2>/dev/null
 }
 
@@ -283,26 +293,37 @@ initialize_worktree_links() {
   wt_dir="$base_dir/${wt_ts}_${name}"
   mkdir -p "$wt_dir"
   wt_md="$wt_dir/index.md"
-  [[ -e $wt_md ]] ||
+  if [[ ! -e $wt_md ]]; then
     emit_front_matter "$branch" "$branch" "$name" "$(to_tilde "$(realpath "$org_root/.tasks.md")")" >"$wt_md"
-  [[ -e $dst_tasks_dir ]] || _ln "$base_dir" "$dst_tasks_dir"
-  [[ -e $dst_tasks_md ]] || _ln "$wt_md" "$dst_tasks_md"
+  fi
+  if [[ ! -e $dst_tasks_dir ]]; then
+    _ln "$base_dir" "$dst_tasks_dir"
+  fi
+  if [[ ! -e $dst_tasks_md ]]; then
+    _ln "$wt_md" "$dst_tasks_md"
+  fi
 }
 
 # config から store_root/tasks_subdir を読み込む。SSOT は config。
 # tasks_store_dir = store_root/tasks_subdir。main から全モード共通で1回だけ呼ぶ。
 load_tasks_config() {
   local config_file="${XDG_CONFIG_HOME:-$HOME/.config}/tasks/config.env"
-  [[ -f $config_file ]] ||
+  if [[ ! -f $config_file ]]; then
     die "==> No config: $config_file => Define store_root, tasks_subdir"
+  fi
   # shellcheck source=/dev/null
   source "$config_file" ||
     die "==> Failed to load config (syntax error?): $config_file"
-  [[ -n ${store_root:-} ]] || die "==> 'store_root' is not set in $config_file"
-  [[ -n ${tasks_subdir:-} ]] || die "==> 'tasks_subdir' is not set in $config_file"
+  if [[ -z ${store_root:-} ]]; then
+    die "==> 'store_root' is not set in $config_file"
+  fi
+  if [[ -z ${tasks_subdir:-} ]]; then
+    die "==> 'tasks_subdir' is not set in $config_file"
+  fi
   store_root=$(from_tilde "$store_root")
-  [[ $store_root == /* ]] ||
+  if [[ $store_root != /* ]]; then
     die "==> 'store_root' must be an absolute path: $store_root"
+  fi
   store_root=$(realpath -m "$store_root")
   tasks_store_dir="$store_root/$tasks_subdir"
 }
@@ -348,7 +369,9 @@ list_task_lines() {
 set_block_range() {
   first_line="$1"
   second_line=$(grep -nE '^(- |#)' "$target_file" | awk -F: -v fl="$first_line" '$1 > fl {print $1; exit}')
-  [[ -n $second_line ]] || second_line=$(($(wc -l <"$target_file") + 1))
+  if [[ -z $second_line ]]; then
+    second_line=$(($(wc -l <"$target_file") + 1))
+  fi
   end_line=$((second_line - 1))
 }
 
@@ -361,7 +384,9 @@ parse_tasks() {
     die "==> Empty tasks."
   fi
   fl=$(list_task_lines "$comp" "$parse_skip_refs" | sed -n "${index}p" | cut -d: -f1)
-  [[ -n $fl ]] || die "==> Task index ${index} not found."
+  if [[ -z $fl ]]; then
+    die "==> Task index ${index} not found."
+  fi
   set_block_range "$fl"
 }
 
@@ -421,7 +446,7 @@ choose_lines() {
 process_selected() {
   local selected="$1" fn="$2" sel
   while IFS= read -r sel; do
-    [[ -n $sel ]] || continue
+    [[ -z $sel ]] && continue
     "$fn" "${sel%%:*}"
   done < <(printf '%s\n' "$selected" | sort -t: -k1,1nr)
 }
@@ -473,8 +498,9 @@ write_split_index() {
 
   # ref は store_root 相対パス
   task_ref=${task_index_md#"$store_root"/}
-  [[ $task_ref != /* ]] ||
+  if [[ $task_ref == /* ]]; then
     die "==> Task path not under store_root: $task_index_md (store_root=$store_root)"
+  fi
 }
 
 # 選択タスクを split 済み状態にする (ensure_split)。参照行も候補に含め、
@@ -483,10 +509,14 @@ write_split_index() {
 split_task() {
   local candidates selected
   candidates=$(list_task_lines 0 0)
-  [[ -n $candidates ]] || die "==> No pending tasks in $target_file"
+  if [[ -z $candidates ]]; then
+    die "==> No pending tasks in $target_file"
+  fi
   # fzf キャンセルは非ゼロ終了。set -e で即死せず friendly die へ繋ぐため || true
   selected=$(choose_lines "$candidates" "Select task(s) to split: ") || true
-  [[ -n $selected ]] || die "==> No task selected."
+  if [[ -z $selected ]]; then
+    die "==> No task selected."
+  fi
   process_selected "$selected" ensure_split
 }
 
@@ -506,9 +536,11 @@ ensure_split() {
   task_index_md=$(resolve_reference_path "$(from_reference_line "$line")") ||
     die "==> Reference index not found: $line"
   task_branch=$(front_matter_value "$task_index_md" branch)
-  [[ -n $task_branch ]] || die "==> No 'branch' in front matter: $task_index_md"
+  if [[ -z $task_branch ]]; then
+    die "==> No 'branch' in front matter: $task_index_md"
+  fi
   info "==> Already split: $task_index_md"
-  [[ $split_worktree -eq 1 ]] || return 0
+  [[ $split_worktree -ne 1 ]] && return 0
   ensure_worktree "$task_branch" "$task_index_md"
   info "==> Worktree: $worktree_dir"
 }
@@ -526,7 +558,7 @@ split_one_task() {
   rm -f "$tmp_file"
   info "==> Task split to: $task_index_md"
   info "==> Branch: $task_branch"
-  [[ $split_worktree -eq 1 ]] || return 0
+  [[ $split_worktree -ne 1 ]] && return 0
   ensure_worktree "$task_branch" "$task_index_md"
   info "==> Worktree: $worktree_dir"
 }
@@ -535,8 +567,9 @@ split_one_task() {
 # 参照行が制御文字 (改行含む) を含むなら置換せず die する。
 replace_block_with_reference_line() {
   local ref_line="$1"
-  [[ $ref_line != *[[:cntrl:]]* ]] ||
+  if [[ $ref_line == *[[:cntrl:]]* ]]; then
     die "==> Reference line contains control characters: $(printf '%q' "$ref_line")"
+  fi
   # c\ の text はバックスラッシュをエスケープとして解釈する (\n => 改行)。二重にして字義どおり残す。
   sed -i "${first_line},${end_line}c\\
 ${ref_line//\\/\\\\}" "$target_file"
@@ -599,7 +632,7 @@ move_related_files() {
   index_name=$(basename "$target_file")
   while IFS= read -r f; do
     [[ $f == "$index_name" ]] && continue
-    [[ -f "$src_dir/$f" ]] || continue
+    [[ ! -f "$src_dir/$f" ]] && continue
     mv "$src_dir/$f" "$dst_dir/"
     info "==> Moved related file: $f"
   done < <(grep -oE '[A-Za-z0-9._-]+\.[A-Za-z0-9]+' "$block_file" 2>/dev/null | sort -u)
@@ -636,7 +669,9 @@ clean_tasks() {
     return 0
   fi
   selected=$(choose_lines "$candidates" "Select completed task(s) to clean: ") || true
-  [[ -n $selected ]] || die "==> No task selected."
+  if [[ -z $selected ]]; then
+    die "==> No task selected."
+  fi
   process_selected "$selected" clean_one_task
 }
 
@@ -688,10 +723,10 @@ build_status_with_mark() {
 write_front_matter_status() {
   local file="$1" value="$2" lineno
   lineno=$(awk '/^status:/{print NR; exit}' "$file")
-  [[ -n $lineno ]] || {
+  if [[ -z $lineno ]]; then
     warn "==> No 'status:' line in front matter: $file"
     return 1
-  }
+  fi
   local line='status:'
   [[ -n $value ]] && line="status: ${value}"
   sed -i "${lineno}c\\
@@ -726,7 +761,7 @@ complete_front_matter_task() {
 mark_parent_reference_done() {
   local parent lineno line line_path
   parent=$(from_tilde "$(front_matter_value "$target_file" parent)")
-  [[ -n $parent && -e $parent ]] || return 0
+  [[ -z $parent || ! -e $parent ]] && return 0
   lineno=
   while IFS= read -r line; do
     line_path=$(resolve_reference_path "$(from_reference_line "${line#*:}")") || continue
@@ -735,10 +770,10 @@ mark_parent_reference_done() {
       break
     fi
   done < <(grep -nE "$grep_key_reference" "$parent" 2>/dev/null || :)
-  [[ -n $lineno ]] || {
+  if [[ -z $lineno ]]; then
     warn "==> No parent reference exists in $parent"
     return 0
-  }
+  fi
   sed -i "${lineno}s/- \[ \]/- [x]/" "$parent"
   info "==> Parent reference marked done: $parent"
 }
@@ -749,9 +784,13 @@ complete_normal_task() {
   parse_skip_refs=1
   local candidates selected
   candidates=$(list_task_lines 0 1)
-  [[ -n $candidates ]] || die "==> Empty tasks."
+  if [[ -z $candidates ]]; then
+    die "==> Empty tasks."
+  fi
   selected=$(choose_lines "$candidates" "Select task(s) to complete: ") || true
-  [[ -n $selected ]] || die "==> No task selected."
+  if [[ -z $selected ]]; then
+    die "==> No task selected."
+  fi
   process_selected "$selected" complete_one_task
 }
 
@@ -828,9 +867,11 @@ add_task() {
 # タスクを持たないリポジトリで pr を打っただけで store にディレクトリを生やさない。
 pr_status_file() {
   local file=${task_file:-}
-  [[ -n $file ]] || file="$(git rev-parse --show-toplevel 2>/dev/null)/.tasks.md"
+  if [[ -z $file ]]; then
+    file="$(git rev-parse --show-toplevel 2>/dev/null)/.tasks.md"
+  fi
   file=$(realpath "$file" 2>/dev/null) || return 1
-  [[ -f $file ]] || return 1
+  [[ ! -f $file ]] && return 1
   has_front_matter "$file" || return 1
   printf '%s\n' "$file"
 }
@@ -900,13 +941,18 @@ ensure_worktree() {
   if [[ -z $wt ]]; then
     wt=$(git_worktree -a "$branch") ||
       die "==> Failed to create worktree for: $branch"
-    [[ -n $wt && -e $wt ]] ||
+    if [[ -z $wt || ! -e $wt ]]; then
       die "==> Failed to create worktree for: $branch"
+    fi
   fi
   base_dir=$(realpath "$git_root/.tasks")
   # dangling symlink でも -L で検出し _ln の二重作成失敗を防ぐ
-  [[ -e "$wt/.tasks.md" || -L "$wt/.tasks.md" ]] || _ln "$index_md" "$wt/.tasks.md"
-  [[ -e "$wt/.tasks" || -L "$wt/.tasks" ]] || _ln "$base_dir" "$wt/.tasks"
+  if [[ ! -e "$wt/.tasks.md" && ! -L "$wt/.tasks.md" ]]; then
+    _ln "$index_md" "$wt/.tasks.md"
+  fi
+  if [[ ! -e "$wt/.tasks" && ! -L "$wt/.tasks" ]]; then
+    _ln "$base_dir" "$wt/.tasks"
+  fi
   worktree_dir="$wt"
 }
 
@@ -915,9 +961,13 @@ spawn_task() {
   local candidates selected
   # 未 split 含む全 pending タスクが対象 (skip_refs=0)
   candidates=$(list_task_lines 0 0)
-  [[ -n $candidates ]] || die "==> No tasks to spawn in $target_file"
+  if [[ -z $candidates ]]; then
+    die "==> No tasks to spawn in $target_file"
+  fi
   selected=$(choose_lines "$candidates" "Select task(s) to spawn: ") || true
-  [[ -n $selected ]] || die "==> No task selected."
+  if [[ -z $selected ]]; then
+    die "==> No task selected."
+  fi
   process_selected "$selected" spawn_one
 }
 
@@ -963,7 +1013,9 @@ path_task() {
   fi
   local fl line index_md
   fl=$(list_task_lines 0 0 | sed -n "${task_index:-1}p" | cut -d: -f1)
-  [[ -n $fl ]] || die "==> No pending task at index ${task_index:-1} in $target_file" >&2
+  if [[ -z $fl ]]; then
+    die "==> No pending task at index ${task_index:-1} in $target_file" >&2
+  fi
   line=$(sed -n "${fl}p" "$target_file")
   if printf '%s\n' "$line" | grep -qE "$grep_key_reference"; then
     index_md=$(resolve_reference_path "$(from_reference_line "$line")") ||
@@ -1008,7 +1060,9 @@ main() {
   if [[ $mode != preview && $(basename "$target_file") == ".tasks.md" ]]; then
     initialize_links_if_needed
   fi
-  [[ -e $target_file ]] || die "==> Task file not found: $target_file"
+  if [[ ! -e $target_file ]]; then
+    die "==> Task file not found: $target_file"
+  fi
   # NOTE: fix sed -i overwrite symlink and break link, so use realpath
   target_file=$(realpath "$target_file")
 

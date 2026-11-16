@@ -126,7 +126,9 @@ parse_args() {
         exit 0
         ;;
       --lines)
-        [[ $# -ge 2 ]] || usage_die "--lines に行範囲 (例: 10,20) を渡す"
+        if [[ $# -lt 2 ]]; then
+          usage_die "--lines に行範囲 (例: 10,20) を渡す"
+        fi
         has_lines=true
         lines="$2"
         shift 2
@@ -159,7 +161,7 @@ add_stdin() {
     printf .
   )
   body=${body%.}
-  [[ -n ${body//[[:space:]]/} ]] || die "本文が空"
+  [[ -z ${body//[[:space:]]/} ]] && die "本文が空"
   add_body
 }
 
@@ -169,12 +171,14 @@ choose_ranges() {
     pick_blocks
     return
   fi
-  [[ ${lines} =~ ^([0-9]+)(,([0-9]+))?$ ]] || usage_die "--lines は <開始行>,<終了行>: ${lines}"
+  if [[ ! ${lines} =~ ^([0-9]+)(,([0-9]+))?$ ]]; then
+    usage_die "--lines は <開始行>,<終了行>: ${lines}"
+  fi
   local from="${BASH_REMATCH[1]}" to="${BASH_REMATCH[3]:-${BASH_REMATCH[1]}}" ranges
   ((from >= 1 && from <= to)) || usage_die "--lines は 1 以上で、開始行 <= 終了行: ${lines}"
   ranges=$(awk -F '\t' -v from="${from}" -v to="${to}" \
     '{ split($1, r, ","); if (r[1] + 0 <= to && r[2] + 0 >= from) print $1 }' <<<"${blocks}")
-  [[ -n ${ranges} ]] || die "${from}-${to} 行にブロックが無い: ${index}"
+  [[ -z ${ranges} ]] && die "${from}-${to} 行にブロックが無い: ${index}"
   printf '%s\n' "${ranges}"
 }
 
@@ -219,8 +223,8 @@ add_from_index() {
   local where index position snapshot blocks ranges range body bodies=()
   where=$(tasks where) || die "index.md の場所を引けない (tasks where に失敗)"
   index=$(jq -r '.index // empty' <<<"${where}")
-  [[ -n ${index} ]] || die "tasks where の JSON に index が無い"
-  [[ -f ${index} ]] || die "index.md が無い: ${index}"
+  [[ -z ${index} ]] && die "tasks where の JSON に index が無い"
+  [[ ! -f ${index} ]] && die "index.md が無い: ${index}"
   position=$(read_index_position)
   # 他の tasks が一覧を作り直すと人の側の行番号がずれる。fzf で人が選ぶ間も起きるので、
   # 候補・preview・本文の切り出しは同じ写しから読む。消すときだけ実物を中身で探す
@@ -229,7 +233,7 @@ add_from_index() {
   trap "rm -f $(printf '%q' "${snapshot}")" EXIT
   cp "${index}" "${snapshot}"
   blocks=$(awk -v pos="${position}" "${list_awk}" "${snapshot}")
-  [[ -n ${blocks} ]] || die "index.md に「- [ ]」で始まるブロックが無い: ${index}"
+  [[ -z ${blocks} ]] && die "index.md に「- [ ]」で始まるブロックが無い: ${index}"
   ranges=$(choose_ranges)
   while read -r range; do
     body=$(

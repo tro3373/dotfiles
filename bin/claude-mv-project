@@ -36,7 +36,9 @@ initialize() {
 }
 check() {
   requires "${depends[@]}"
-  [[ ${#args[@]} -eq 2 ]] || { usage && exit 1; }
+  if [[ ${#args[@]} -ne 2 ]]; then
+    usage && exit 1
+  fi
 }
 add_args() { args+=("$@"); }
 has() { command -v "${1}" >&/dev/null; }
@@ -113,16 +115,18 @@ main() {
   initialize "$@"
   local src=${args[0]%/} dst=${args[1]%/}
 
-  [[ $src == /* && $dst == /* ]] || die "==> 絶対パスで指定してください: $src $dst"
-  [[ -d $src ]] || die "==> 移動元のディレクトリがありません: $src"
-  [[ ! -e $dst ]] || die "==> 移動先が既に存在します: $dst"
-  [[ $dst != "$src"/* ]] || die "==> 移動先が移動元の配下です: $dst"
-  [[ ! -e "$projects_dir/$(encode "$dst")" ]] || die "==> 移動先の履歴ディレクトリが既に存在します: $projects_dir/$(encode "$dst")"
+  [[ $src != /* || $dst != /* ]] && die "==> 絶対パスで指定してください: $src $dst"
+  [[ ! -d $src ]] && die "==> 移動元のディレクトリがありません: $src"
+  [[ -e $dst ]] && die "==> 移動先が既に存在します: $dst"
+  [[ $dst == "$src"/* ]] && die "==> 移動先が移動元の配下です: $dst"
+  [[ -e "$projects_dir/$(encode "$dst")" ]] && die "==> 移動先の履歴ディレクトリが既に存在します: $projects_dir/$(encode "$dst")"
 
   if has pgrep && pgrep -x claude >/dev/null; then
     warn "==> claude が起動中です。.claude.json が上書きで戻される恐れがあるため、全て閉じてから -e で実行してください"
   fi
-  [[ $execute -eq 1 ]] || warn "==> dry-run です。実行するには -e を付けてください"
+  if [[ $execute -ne 1 ]]; then
+    warn "==> dry-run です。実行するには -e を付けてください"
+  fi
 
   run "移動先の親ディレクトリを作成する" mkdir -p "$(dirname "$dst")"
   run "リポジトリを移動する: $src => $dst" mv "$src" "$dst"

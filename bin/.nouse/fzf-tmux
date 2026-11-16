@@ -7,18 +7,6 @@ fail() {
   exit 2
 }
 
-fzf="$(command -v fzf 2>/dev/null)" || fzf="$(dirname "$0")/fzf"
-[[ -x $fzf ]] || fail 'fzf executable not found'
-
-args=()
-opt=""
-skip=""
-swap=""
-close=""
-term=""
-[[ -n $LINES ]] && lines=$LINES || lines=$(tput lines)
-[[ -n $COLUMNS ]] && columns=$COLUMNS || columns=$(tput cols)
-
 help() {
   echo >&2 'usage: fzf-tmux [-u|-d [HEIGHT[%]]] [-l|-r [WIDTH[%]]] [--] [FZF OPTIONS]
 
@@ -33,143 +21,196 @@ help() {
   exit
 }
 
-while [[ $# -gt 0 ]]; do
-  arg="$1"
-  shift
-  [[ -z $skip ]] && case "$arg" in
-    -)
-      term=1
-      ;;
-    --help)
-      help
-      ;;
-    --version)
-      echo "fzf-tmux (with fzf $("$fzf" --version))"
-      exit
-      ;;
-    -w* | -h* | -d* | -u* | -r* | -l*)
-      if [[ $arg =~ ^.[lrw] ]]; then
-        opt="-h"
-        if [[ $arg =~ ^.l ]]; then
-          opt="$opt -d"
-          swap="; swap-pane -D ; select-pane -L"
-          close="; tmux swap-pane -D"
-        fi
-      else
-        opt=""
-        if [[ $arg =~ ^.u ]]; then
-          opt="$opt -d"
-          swap="; swap-pane -D ; select-pane -U"
-          close="; tmux swap-pane -D"
-        fi
-      fi
-      if [[ ${#arg} -gt 2 ]]; then
-        size="${arg:2}"
-      else
-        if [[ $1 =~ ^[0-9]+%?$ ]]; then
-          size="$1"
-          shift
-        else
-          continue
-        fi
-      fi
+# set opt/swap/close from the direction flag in arg
+set_direction() {
+  opt=""
+  if [[ $arg =~ ^.[lrw] ]]; then
+    opt="-h"
+  fi
+  if [[ $arg =~ ^.([lu]) ]]; then
+    opt="$opt -d"
+    swap="; swap-pane -D ; select-pane -${BASH_REMATCH[1]^^}"
+    close="; tmux swap-pane -D"
+  fi
+}
 
-      if [[ $size =~ %$ ]]; then
-        size=${size:0:${#size}-1}
-        if [[ -n $swap ]]; then
-          opt="$opt -p $((100 - size))"
-        else
-          opt="$opt -p $size"
-        fi
-      else
-        if [[ -n $swap ]]; then
-          if [[ $arg =~ ^.l ]]; then
-            max=$columns
-          else
-            max=$lines
-          fi
-          size=$((max - size))
-          [[ $size -lt 0 ]] && size=0
-          opt="$opt -l $size"
-        else
-          opt="$opt -l $size"
-        fi
-      fi
-      ;;
-    --)
-      # "--" can be used to separate fzf-tmux options from fzf options to
-      # avoid conflicts
-      skip=1
-      continue
-      ;;
-    *)
-      args+=("$arg")
-      ;;
-  esac
-  [[ -n $skip ]] && args+=("$arg")
-done
-
-if [[ -z $TMUX || $opt =~ ^-h && $columns -le 40 || ! $opt =~ ^-h && $lines -le 15 ]]; then
-  "$fzf" "${args[@]}"
-  exit $?
-fi
+# append the size option derived from size to opt
+apply_size() {
+  local value
+  if [[ $size =~ %$ ]]; then
+    size=${size:0:${#size}-1}
+    value=$size
+    if [[ -n $swap ]]; then
+      value=$((100 - size))
+    fi
+    opt="$opt -p $value"
+    return
+  fi
+  value=$size
+  if [[ -n $swap ]]; then
+    local max=$lines
+    if [[ $arg =~ ^.l ]]; then
+      max=$columns
+    fi
+    value=$((max - size))
+    if [[ $value -lt 0 ]]; then
+      value=0
+    fi
+  fi
+  opt="$opt -l $value"
+}
 
 # Handle zoomed tmux pane by moving it to a temp window
-if tmux list-panes -F '#F' | grep -q Z; then
+setup_zoom() {
+  if ! tmux list-panes -F '#F' | grep -q Z; then
+    return
+  fi
   zoomed=1
   original_window=$(tmux display-message -p "#{window_id}")
-  tmp_window=$(tmux new-window -d -P -F "#{window_id}" "bash -c 'while :; do for c in \\| / - \\\\; do sleep 0.2; printf \"\\r\$c fzf-tmux is running\\r\"; done; done'")
-  tmux swap-pane -t $tmp_window \; select-window -t $tmp_window
-fi
+  tmp_window=$(tmux new-window -d -P -F "#{window_id}" "bash -c 'while :; do for c in \\| / - \\\; do sleep 0.2; printf \"\\r\$c fzf-tmux is running\\r\"; done; done'")
+  tmux swap-pane -t "$tmp_window" \; select-window -t "$tmp_window"
+}
 
-set -e
-
-# Clean up named pipes on exit
-id=$RANDOM
-argsf="${TMPDIR:-/tmp}/fzf-args-$id"
-fifo1="${TMPDIR:-/tmp}/fzf-fifo1-$id"
-fifo2="${TMPDIR:-/tmp}/fzf-fifo2-$id"
-fifo3="${TMPDIR:-/tmp}/fzf-fifo3-$id"
+# shellcheck disable=SC2329 # invoked via trap in main
 cleanup() {
-  rm -f $argsf $fifo1 $fifo2 $fifo3
+  rm -f "$argsf" "$fifo1" "$fifo2" "$fifo3"
 
   # Remove temp window if we were zoomed
   if [[ -n $zoomed ]]; then
-    tmux swap-pane -t $original_window \; \
-      select-window -t $original_window \; \
-      kill-window -t $tmp_window \; \
+    tmux swap-pane -t "$original_window" \; \
+      select-window -t "$original_window" \; \
+      kill-window -t "$tmp_window" \; \
       resize-pane -Z
   fi
 }
-trap cleanup EXIT SIGINT SIGTERM
 
-envs="env TERM=$TERM "
-[[ -n $FZF_DEFAULT_OPTS ]] && envs="$envs FZF_DEFAULT_OPTS=$(printf %q "$FZF_DEFAULT_OPTS")"
-[[ -n $FZF_DEFAULT_COMMAND ]] && envs="$envs FZF_DEFAULT_COMMAND=$(printf %q "$FZF_DEFAULT_COMMAND")"
-
-mkfifo -m o+w $fifo2
-mkfifo -m o+w $fifo3
+build_envs() {
+  envs="env TERM=$TERM "
+  if [[ -n $FZF_DEFAULT_OPTS ]]; then
+    envs="$envs FZF_DEFAULT_OPTS=$(printf %q "$FZF_DEFAULT_OPTS")"
+  fi
+  if [[ -n $FZF_DEFAULT_COMMAND ]]; then
+    envs="$envs FZF_DEFAULT_COMMAND=$(printf %q "$FZF_DEFAULT_COMMAND")"
+  fi
+}
 
 # Build arguments to fzf
-opts=""
-for arg in "${args[@]}"; do
-  arg="${arg//\\/\\\\}"
-  arg="${arg//\"/\\\"}"
-  arg="${arg//\`/\\\`}"
-  arg="${arg//$/\\$}"
-  opts="$opts \"$arg\""
-done
+build_opts() {
+  local a
+  opts=""
+  for a in "${args[@]}"; do
+    a="${a//\\/\\\\}"
+    a="${a//\"/\\\"}"
+    a="${a//\`/\\\`}"
+    a="${a//$/\\$}"
+    opts="$opts \"$a\""
+  done
+}
 
-if [[ -n $term ]] || [[ -t 0 ]]; then
-  cat <<<"\"$fzf\" $opts > $fifo2; echo \$? > $fifo3 $close" >$argsf
-  TMUX=$(echo $TMUX | cut -d , -f 1,2) tmux set-window-option synchronize-panes off \; set-window-option remain-on-exit off \; split-window $opt "cd $(printf %q "$PWD");$envs bash $argsf" $swap \
+split_with_tty() {
+  cat <<<"\"$fzf\" $opts > $fifo2; echo \$? > $fifo3 $close" >"$argsf"
+  TMUX=$(echo "$TMUX" | cut -d , -f 1,2) tmux set-window-option synchronize-panes off \; set-window-option remain-on-exit off \; split-window $opt "cd $(printf %q "$PWD");$envs bash $argsf" $swap \
     >/dev/null 2>&1
-else
-  mkfifo $fifo1
-  cat <<<"\"$fzf\" $opts < $fifo1 > $fifo2; echo \$? > $fifo3 $close" >$argsf
-  TMUX=$(echo $TMUX | cut -d , -f 1,2) tmux set-window-option synchronize-panes off \; set-window-option remain-on-exit off \; split-window $opt "$envs bash $argsf" $swap \
+}
+
+split_with_pipe() {
+  mkfifo "$fifo1"
+  cat <<<"\"$fzf\" $opts < $fifo1 > $fifo2; echo \$? > $fifo3 $close" >"$argsf"
+  TMUX=$(echo "$TMUX" | cut -d , -f 1,2) tmux set-window-option synchronize-panes off \; set-window-option remain-on-exit off \; split-window $opt "$envs bash $argsf" $swap \
     >/dev/null 2>&1
-  cat <&0 >$fifo1 &
-fi
-cat $fifo2
-exit "$(cat $fifo3)"
+  cat <&0 >"$fifo1" &
+}
+
+split_pane() {
+  if [[ -n $term || -t 0 ]]; then
+    split_with_tty
+    return
+  fi
+  split_with_pipe
+}
+
+main() {
+  fzf="$(command -v fzf 2>/dev/null)" || fzf="$(dirname "$0")/fzf"
+  if [[ ! -x $fzf ]]; then
+    fail 'fzf executable not found'
+  fi
+
+  args=()
+  opt=""
+  skip=""
+  swap=""
+  close=""
+  term=""
+  lines="${LINES:-$(tput lines)}"
+  columns="${COLUMNS:-$(tput cols)}"
+
+  while [[ $# -gt 0 ]]; do
+    arg="$1"
+    shift
+    if [[ -n $skip ]]; then
+      args+=("$arg")
+      continue
+    fi
+    case "$arg" in
+      -)
+        term=1
+        ;;
+      --help)
+        help
+        ;;
+      --version)
+        echo "fzf-tmux (with fzf $("$fzf" --version))"
+        exit
+        ;;
+      -w* | -h* | -d* | -u* | -r* | -l*)
+        set_direction
+        size="${arg:2}"
+        if [[ ${#arg} -le 2 ]]; then
+          if [[ ! $1 =~ ^[0-9]+%?$ ]]; then
+            continue
+          fi
+          size="$1"
+          shift
+        fi
+        apply_size
+        ;;
+      --)
+        # "--" can be used to separate fzf-tmux options from fzf options to
+        # avoid conflicts
+        skip=1
+        ;;
+      *)
+        args+=("$arg")
+        ;;
+    esac
+  done
+
+  if [[ -z $TMUX || $opt =~ ^-h && $columns -le 40 || ! $opt =~ ^-h && $lines -le 15 ]]; then
+    "$fzf" "${args[@]}"
+    exit $?
+  fi
+
+  zoomed=""
+  setup_zoom
+
+  set -e
+  # Clean up named pipes on exit
+  id=$RANDOM
+  argsf="${TMPDIR:-/tmp}/fzf-args-$id"
+  fifo1="${TMPDIR:-/tmp}/fzf-fifo1-$id"
+  fifo2="${TMPDIR:-/tmp}/fzf-fifo2-$id"
+  fifo3="${TMPDIR:-/tmp}/fzf-fifo3-$id"
+  trap 'cleanup' EXIT SIGINT SIGTERM
+
+  build_envs
+
+  mkfifo -m o+w "$fifo2"
+  mkfifo -m o+w "$fifo3"
+
+  build_opts
+  split_pane
+  cat "$fifo2"
+  exit "$(cat "$fifo3")"
+}
+
+main "$@"

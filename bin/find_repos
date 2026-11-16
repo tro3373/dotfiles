@@ -4,7 +4,7 @@ find_root_dirs=("$HOME"/src)
 find_entries() {
   # git repository を探す
   for d in "${find_root_dirs[@]}"; do
-    [[ -d $d ]] || continue
+    [[ ! -d $d ]] && continue
     find "$d/" -maxdepth 4 -type d -name '.git' -print0 2>/dev/null |
       sed -z 's|/.git$||' 2>/dev/null
   done

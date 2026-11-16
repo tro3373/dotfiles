@@ -1,10 +1,10 @@
 #!/usr/bin/env -S bash -e
 
 main() {
-  [[ $# -eq 1 ]] || {
+  if [[ $# -ne 1 ]]; then
     echo "Usage: $0 <ssh-key-file>"
     exit 1
-  }
+  fi
   ssh-keygen -lf "$1"
 }
 main "$@"

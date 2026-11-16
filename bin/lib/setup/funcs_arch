@@ -79,6 +79,14 @@ cat_hosts() {
 EOF
 }
 
+replace_or_append_hosts() {
+  if getent hosts | grep "$_old_host" >&/dev/null; then
+    exe sed -i -e "s,$_old_host,$_hostname,g" /etc/hosts
+    return
+  fi
+  cat_hosts | sudo_tee -a "$target"
+}
+
 setup_hostname() {
   local _hostname="$*" target=/etc/hostname _old_host
   if grep "$_hostname" $target >&/dev/null; then
@@ -90,11 +98,7 @@ setup_hostname() {
   exe hostnamectl
   target=/etc/hosts
   backup $target
-  if getent hosts | grep "$_old_host" >&/dev/null; then
-    exe sed -i -e "s,$_old_host,$_hostname,g" /etc/hosts
-  else
-    cat_hosts | sudo_tee -a $target
-  fi
+  replace_or_append_hosts
   exe getent hosts
 }
 
@@ -150,9 +154,9 @@ EOF
 cat_pacman_mirrorlist() {
   if is_arm; then
     cat_pacman_mirrorlist_arm
-  else
-    cat_pacman_mirrorlist_x86_64
+    return
   fi
+  cat_pacman_mirrorlist_x86_64
 }
 
 improve_pacman_millerlist() {
@@ -202,7 +206,7 @@ setup_gnupg_keyserver_settings() {
     exe cp /etc/pacman.d/gnupg/gpg.conf "$local_gpg_settings"
     echo "keyserver $key_server" |
       cat_tee -a "$local_gpg_settings"
-    [[ $d =~ /home/.* ]] || continue
+    [[ ! $d =~ /home/.* ]] && continue
     local _u
     _u=$(basename "$d")
     exe chown "$_u.$_u" -R "$(dirname "$local_gpg_settings")"
@@ -470,8 +474,9 @@ gen_wpa_supplicant() {
   exe chmod 600 "$target"
 }
 
-[[ $0 != "${BASH_SOURCE[0]}" ]] && return 0
 _test() {
   :
 }
-_test "$@"
+if [[ ${BASH_SOURCE[0]} == "${0}" ]]; then
+  _test "$@"
+fi

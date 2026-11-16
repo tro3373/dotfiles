@@ -81,7 +81,7 @@ is_auto_named() {
 has_git_path() {
   local p
   while IFS= read -r p; do
-    [[ -n $p ]] || continue
+    [[ -z $p ]] && continue
     if git -C "$p" rev-parse --git-dir >/dev/null 2>&1; then
       return 0
     fi
@@ -127,7 +127,7 @@ is_leftover_session() {
   # 揃って空文字になる (tmux 3.7c で確認) 為、list-sessions / list-panes から取る。
   attached=$(tmux list-sessions -f "#{==:#{session_name},${s}}" \
     -F '#{session_attached}' 2>/dev/null)
-  [[ ${attached} == 0 ]] || return 1
+  [[ ${attached} != 0 ]] && return 1
   # -s はセッション内の全 window の pane を列挙する。1 行なら 1 window 1 pane。
   mapfile -t panes < <(tmux list-panes -s -t "=${s}" -F '#{pane_current_command}' 2>/dev/null)
   ((${#panes[@]} == 1)) || return 1
@@ -161,7 +161,7 @@ run_bootstrap() {
     return 0
   fi
   while IFS= read -r s; do
-    [[ -n $s ]] || continue
+    [[ -z $s ]] && continue
     # kill 後に最低 1 セッション残ることを確かめる (最後の 1 つを消すとサーバが死ぬ)。
     (($(tmux list-sessions -F x 2>/dev/null | wc -l) > 1)) || break
     is_leftover_session "$s" || continue
@@ -190,7 +190,7 @@ run_wake() {
 
   local s snap reason
   while IFS=$'\t' read -r s _; do
-    [[ -n $s ]] || continue
+    [[ -z $s ]] && continue
     if tmux has-session -t "=${s}" 2>/dev/null; then
       continue
     fi
@@ -215,7 +215,7 @@ run_wake() {
 run_save() {
   local dry=$1 s forgot=0
   while IFS=$'\t' read -r s _; do
-    [[ -n $s ]] || continue
+    [[ -z $s ]] && continue
     if tmux has-session -t "=${s}" 2>/dev/null; then
       continue
     fi

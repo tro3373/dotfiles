@@ -31,7 +31,7 @@ tasks_doc_path() {
 tasks_index_append() {
   local index=$1 body
   body=$(cat)
-  [[ -n ${body} ]] || return 0
+  [[ -z ${body} ]] && return 0
   (
     flock -x 9
     printf '%s\n' "${body}" >>"${index}"

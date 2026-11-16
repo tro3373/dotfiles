@@ -47,7 +47,7 @@ while (($#)); do
   esac
   shift
 done
-[[ -f $dir/.tasks-fake && -n $want ]] || exit 1
+[[ ! -f $dir/.tasks-fake || -z $want ]] && exit 1
 sed -n "${want}p" "$dir/.tasks-fake"
 EOS
 }

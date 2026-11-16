@@ -54,8 +54,12 @@ test_parallel_calls_do_not_mix_bodies() {
     body_of A | run_prp -ne p.md >"${tmproot}/a.out" &
     body_of B | run_prp -ne p.md >"${tmproot}/b.out" &
     wait
-    [[ $(cat "${tmproot}/a.out") == "${want_a}" ]] || mixed=$((mixed + 1))
-    [[ $(cat "${tmproot}/b.out") == "${want_b}" ]] || mixed=$((mixed + 1))
+    if [[ $(cat "${tmproot}/a.out") != "${want_a}" ]]; then
+      mixed=$((mixed + 1))
+    fi
+    if [[ $(cat "${tmproot}/b.out") != "${want_b}" ]]; then
+      mixed=$((mixed + 1))
+    fi
   done
   check 'parallel: 各呼び出しは自分の本文だけを返す (40 出力中の混入数)' '0' "${mixed}"
   check 'parallel: TMPDIR に何も残さない' '' "$(ls -A "${tmproot}/tmp")"

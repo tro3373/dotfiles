@@ -39,19 +39,19 @@ check() {
 }
 
 # 200x100 の偽スクリーン。黒地に白い矩形 (20,10)-(180,90) を置き、その内側 y=50 に
-# ページ毎に動く目印を描く。FAKE_PAGES 枚を超えたら目印が動かなくなり「最終ページで
+# ページ毎に動く目印を描く。fake_pages 枚を超えたら目印が動かなくなり「最終ページで
 # ページ送りしても画面が変わらない」Kindle の挙動になる。
-# FAKE_CLOCK=1 の時は上端 y=1..3 に毎ショット動く点を足す。これが時計の代役で、
+# fake_clock=1 の時は上端 y=1..3 に毎ショット動く点を足す。これが時計の代役で、
 # 比較領域が上端を含んでいると永久に終端へ辿り着かなくなる。
 new_fakebin() {
   fakebin="${tmproot}/bin"
-  LOG="${tmproot}/calls.log"
-  CNT="${tmproot}/shots"
+  log="${tmproot}/calls.log"
+  cnt="${tmproot}/shots"
   mkdir -p "${fakebin}"
 
   cat >"${fakebin}/adb" <<'EOS'
 #!/usr/bin/env bash
-printf '%s\n' "$*" >>"${LOG}"
+printf '%s\n' "$*" >>"${log}"
 [[ $1 == -s ]] && shift 2
 cmd=$1
 shift
@@ -62,20 +62,20 @@ case ${cmd} in
       "wm size") printf 'Physical size: 200x100\r\n' ;;
       dumpsys*)
         printf '  topResumedActivity=ActivityRecord{0 u0 %s/.Main} t1}\r\n' \
-          "${FAKE_TOP:-com.amazon.kindle}"
+          "${fake_top:-com.amazon.kindle}"
         ;;
     esac
     ;;
   exec-out)
-    n=$(<"${CNT}")
+    n=$(<"${cnt}")
     n=$((n + 1))
-    printf '%s' "${n}" >"${CNT}"
+    printf '%s' "${n}" >"${cnt}"
     p=${n}
-    ((p > FAKE_PAGES)) && p=${FAKE_PAGES}
+    ((p > fake_pages)) && p=${fake_pages}
     args=(-size 200x100 xc:black
       -fill white -draw "rectangle 20,10 180,90"
       -fill black -draw "rectangle $((30 + p * 3)),45 $((36 + p * 3)),55")
-    [[ ${FAKE_CLOCK:-} == 1 ]] &&
+    [[ ${fake_clock:-} == 1 ]] &&
       args+=(-fill white -draw "rectangle $((n % 7)),1 $((n % 7 + 2)),3")
     # 実機の screencap は RGBA で来る。alpha を落とす後処理を試したいので偽物も
     # png32 (= 8bit RGBA 固定) で出す
@@ -86,23 +86,23 @@ exit 0
 EOS
 
   chmod +x "${fakebin}/adb"
-  export LOG CNT
+  export log cnt
 }
 
 # fakebin 経由で kshot を実行する。-w 0 は待ち時間を潰す為 (実機では描画待ちが要る)。
 run_kshot() {
-  : >"${LOG}"
-  printf '0' >"${CNT}"
+  : >"${log}"
+  printf '0' >"${cnt}"
   PATH="${fakebin}:${PATH}" KSHOT_SERIAL=fake:5555 KSHOT_OUT="${tmproot}/out" \
     "${kshot_bin}" -w 0 "$@" >"${tmproot}/stdout" 2>"${tmproot}/stderr"
 }
 
 count_png() {
   local d="${tmproot}/out/$1/$2"
-  [[ -d ${d} ]] || {
+  if [[ ! -d ${d} ]]; then
     echo 0
     return
-  }
+  fi
   find "${d}" -name '*.png' | wc -l
 }
 
@@ -112,19 +112,19 @@ count_png() {
 #    頭に混ざって全ページ壊れる。壊れた PNG は magick が読めず落ちるだけなので、
 #    撮り方そのものを引数で見る。
 test_screencap_drops_stderr() {
-  export FAKE_PAGES=3
+  export fake_pages=3
   run_kshot a1
 
-  check 'screencap を呼んでいる' '5' "$(grep -c -- 'exec-out' "${LOG}")"
+  check 'screencap を呼んでいる' '5' "$(grep -c -- 'exec-out' "${log}")"
   check 'stderr を捨てずに呼んだ screencap は無い' '0' \
-    "$(grep -- 'exec-out' "${LOG}" | grep -vc -- 'screencap -p 2>/dev/null')"
+    "$(grep -- 'exec-out' "${log}" | grep -vc -- 'screencap -p 2>/dev/null')"
 }
 
 # --- 終端判定 ---------------------------------------------------------------
 
 # 2. 同じ画面が 2 回続いたら止め、末尾の重複 2 枚を捨てて本文 4 枚だけ残す。
 test_stops_at_duplicate_and_drops_them() {
-  export FAKE_PAGES=4
+  export fake_pages=4
   run_kshot a2
 
   check '本文 4 ページだけ残る' '4' "$(count_png a2 raw)"
@@ -134,7 +134,7 @@ test_stops_at_duplicate_and_drops_them() {
 # 3. -k は重複の許容回数。3 にしても捨てる枚数が追随し、本文は 4 枚のまま。
 #    ここが固定だと -k を上げた分だけ最終ページのコピーが尻に残る。
 test_stop_after_is_honored() {
-  export FAKE_PAGES=4
+  export fake_pages=4
   run_kshot -k 3 a3
 
   check '-k 3 でも本文は 4 ページ' '4' "$(count_png a3 raw)"
@@ -143,9 +143,9 @@ test_stop_after_is_honored() {
 # 4. 上端が毎ショット変わっても終端に辿り着く。比較領域が全画面だと時計で永久に
 #    差が出続け、-n の上限 (ここでは 12) まで撮り切ってしまう。
 test_ignores_changing_status_bar() {
-  export FAKE_PAGES=4 FAKE_CLOCK=1
+  export fake_pages=4 fake_clock=1
   run_kshot -n 12 a4
-  unset FAKE_CLOCK
+  unset fake_clock
 
   check '時計が動いても 4 ページで止まる' '4' "$(count_png a4 raw)"
 }
@@ -153,7 +153,7 @@ test_ignores_changing_status_bar() {
 # 5. -n に当たったら黙って打ち切らず警告する。撮り切れていない本を「完了」と
 #    見せるのが一番まずい。
 test_warns_on_max_pages() {
-  export FAKE_PAGES=99
+  export fake_pages=99
   run_kshot -n 3 a5
 
   check '上限到達を警告する' '1' \
@@ -170,48 +170,48 @@ test_warns_on_max_pages() {
 # 6. 既定は左開き (英語書籍) 向きで、画面を右から左へ払う。200x100 の偽スクリーン
 #    なので 4/5=160 から 1/5=40 へ。
 test_swipe_defaults_to_ltr() {
-  export FAKE_PAGES=3
+  export fake_pages=3
   run_kshot b1
 
-  check 'ページ送りを実際に打っている' '4' "$(grep -c -- 'shell input swipe' "${LOG}")"
+  check 'ページ送りを実際に打っている' '4' "$(grep -c -- 'shell input swipe' "${log}")"
   check '既定と違う向きに払った swipe は無い' '0' \
-    "$(grep -- 'shell input swipe' "${LOG}" | grep -vc -- 'swipe 160 50 40 50 100')"
+    "$(grep -- 'shell input swipe' "${log}" | grep -vc -- 'swipe 160 50 40 50 100')"
 }
 
 # 7. -R は向きを反転する。縦書きの日本語書籍は右開きで、既定の向きだと 1 ページ目
 #    から一歩も動かない (実機で確認済み)。向きの取り違えは「数ページの本」が
 #    黙って出来る形で表面化するので、ここは固定しておく。
 test_rtl_reverses_direction() {
-  export FAKE_PAGES=3
+  export fake_pages=3
   run_kshot -R b2
 
   check '-R では全ての swipe が左->右' '0' \
-    "$(grep -- 'shell input swipe' "${LOG}" | grep -vc -- 'swipe 40 50 160 50 100')"
+    "$(grep -- 'shell input swipe' "${log}" | grep -vc -- 'swipe 40 50 160 50 100')"
   check '-R では既定の向きを一度も使わない' '0' \
-    "$(grep -c -- 'shell input swipe 160 50' "${LOG}")"
+    "$(grep -c -- 'shell input swipe 160 50' "${log}")"
 }
 
 # 8. -p tap も同じ向きの規則に従う。突く端が逆だと前のページへ戻ってしまう。
 test_tap_follows_direction() {
-  export FAKE_PAGES=3
+  export fake_pages=3
   run_kshot -p tap b3
   check '既定の tap は右端だけ' '0' \
-    "$(grep -- 'shell input tap' "${LOG}" | grep -vc -- 'tap 190 50')"
-  check 'tap を選ぶと swipe しない' '0' "$(grep -c -- 'shell input swipe' "${LOG}")"
+    "$(grep -- 'shell input tap' "${log}" | grep -vc -- 'tap 190 50')"
+  check 'tap を選ぶと swipe しない' '0' "$(grep -c -- 'shell input swipe' "${log}")"
 
   run_kshot -p tap -R b4
   check '-R の tap は左端だけ' '0' \
-    "$(grep -- 'shell input tap' "${LOG}" | grep -vc -- 'tap 10 50')"
+    "$(grep -- 'shell input tap' "${log}" | grep -vc -- 'tap 10 50')"
 }
 
 # 9. 知らない -p は撮り始める前に落とす。数十分かけた撮影の後で気付くのは遅い。
 test_rejects_unknown_turn_method() {
-  export FAKE_PAGES=3
+  export fake_pages=3
   run_kshot -p fling b5
   local rc=$?
 
   check '不正な -p は非ゼロ終了' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
-  check '不正な -p では adb を触らない' '0' "$(grep -c 'exec-out' "${LOG}")"
+  check '不正な -p では adb を触らない' '0' "$(grep -c 'exec-out' "${log}")"
 }
 
 # --- 前面チェック -----------------------------------------------------------
@@ -219,10 +219,10 @@ test_rejects_unknown_turn_method() {
 # 10. Kindle が前面に無ければ撮らない。ライブラリ画面やホーム画面を延々撮って
 #    しまうのを防ぐ。
 test_refuses_when_kindle_not_foreground() {
-  export FAKE_PAGES=4 FAKE_TOP=com.example.other
+  export fake_pages=4 fake_top=com.example.other
   run_kshot a6
   local rc=$?
-  unset FAKE_TOP
+  unset fake_top
 
   check '前面が Kindle でなければ非ゼロ終了' '1' "$([[ ${rc} -ne 0 ]] && echo 1 || echo 0)"
   check '前面が Kindle でなければ 1 枚も撮らない' '0' "$(count_png a6 raw)"
@@ -231,7 +231,7 @@ test_refuses_when_kindle_not_foreground() {
 # 11. raw が既にあれば上書きしない。撮り直しの取り違えで数十分かけた撮影を
 #    潰さない為。
 test_refuses_to_overwrite_existing_raw() {
-  export FAKE_PAGES=3
+  export fake_pages=3
   run_kshot a7
   local before
   before=$(count_png a7 raw)
@@ -247,7 +247,7 @@ test_refuses_to_overwrite_existing_raw() {
 # 12. トリムは全ページ共通の矩形で切る。ページ毎に trim すると寸法がばらつき、
 #    PDF がページ毎に伸縮する。
 test_trims_all_pages_to_one_size() {
-  export FAKE_PAGES=4
+  export fake_pages=4
   run_kshot a8
 
   local sizes
@@ -267,7 +267,7 @@ test_trims_all_pages_to_one_size() {
 
 # 13. PDF と zip が実際に出来る。zip は本 1 冊分の PNG をまとめたもの。
 test_emits_pdf_and_zip() {
-  export FAKE_PAGES=4
+  export fake_pages=4
   run_kshot a9
 
   check 'PDF が出来る' '1' "$([[ -s ${tmproot}/out/a9/a9.pdf ]] && echo 1 || echo 0)"
@@ -277,12 +277,12 @@ test_emits_pdf_and_zip() {
 
 # 14. -r は撮影を飛ばして後処理だけやり直す。トリムし直しの度に本を撮り直させない為。
 test_redo_skips_capture() {
-  export FAKE_PAGES=4
+  export fake_pages=4
   run_kshot a10
   rm -rf "${tmproot}/out/a10/png"
   run_kshot -r a10
 
-  check '-r では screencap しない' '0' "$(grep -c 'exec-out' "${LOG}")"
+  check '-r では screencap しない' '0' "$(grep -c 'exec-out' "${log}")"
   check '-r で png を作り直す' '4' "$(count_png a10 png)"
 }
 
