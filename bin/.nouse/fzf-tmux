@@ -27,14 +27,9 @@ set_direction() {
   if [[ $arg =~ ^.[lrw] ]]; then
     opt="-h"
   fi
-  if [[ $arg =~ ^.l ]]; then
+  if [[ $arg =~ ^.([lu]) ]]; then
     opt="$opt -d"
-    swap="; swap-pane -D ; select-pane -L"
-    close="; tmux swap-pane -D"
-  fi
-  if [[ $arg =~ ^.u ]]; then
-    opt="$opt -d"
-    swap="; swap-pane -D ; select-pane -U"
+    swap="; swap-pane -D ; select-pane -${BASH_REMATCH[1]^^}"
     close="; tmux swap-pane -D"
   fi
 }
