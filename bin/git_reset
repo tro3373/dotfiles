@@ -45,7 +45,6 @@ restore_to() {
   fi
   # divergence: 現 HEAD が選択先の祖先 (= 前進 redo) なら安全。祖先でなければ巻き戻し
   # 後に新履歴ができており、reset は今の branch 上のコミットを捨ててしまう。
-  # 判定は repo 単位 (branch 非考慮): marker は repo ごとに 1 本のため。
   if [[ $force -ne 1 ]] && ! git merge-base --is-ancestor HEAD "$hash"; then
     warn "==> Divergence detected: HEAD is not an ancestor of $hash."
     warn "    Restoring would drop the commits currently on the branch."
@@ -161,7 +160,7 @@ resolve_push_target() {
     cmd_pick_base
     return
   }
-  [[ $count =~ ^[1-9][0-9]*$ ]] ||
+  [[ ! $count =~ ^[1-9][0-9]*$ ]] &&
     die "==> Invalid count: $count (expected a positive integer)"
   # root commit や履歴不足では HEAD~count が無い。件数指定でしか起きないので、ここで
   # 件数入りのメッセージを出す (cmd_push の汎用 guard より読める)。
@@ -246,20 +245,22 @@ cmd_clean() {
 }
 main() {
   set -eo pipefail
-  git_root=$(git rev-parse --show-toplevel 2>/dev/null || :)
-  [[ -z $git_root ]] && die "==> Not git repository"
-  repo_dir_name=${git_root/\//}
-  repo_dir_name=${repo_dir_name//\//-}
-  # stack は branch 単位で分ける。detached HEAD は短縮 hash をキーにする。branch 名の
+  local git_dir stack_root branch
+  git_dir=$(git rev-parse --absolute-git-dir 2>/dev/null || :)
+  [[ -z $git_dir ]] && die "==> Not git repository"
+  # stack は git dir に置く。worktree ごとに分かれ、repo や worktree を消すと一緒に消える。
+  # 1 行 1 ハッシュ。末尾が top (gre=append/push, grr=fzf で選んで redo/pop)。
+  stack_root="$git_dir/reset-stack"
+  # repo_stack_dir: branch 単位の stack を束ねる dir (-c の掃除対象範囲)。branch 名の
   # '/' (feature/x) はそのままサブディレクトリにする (sanitize せず bijective)。
-  branch=$(git symbolic-ref -q --short HEAD || echo "DETACHED-$(git rev-parse --short HEAD)")
-  config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/$command_name"
-  # repo_stack_dir: この repo の全 branch stack を束ねる dir (-c の掃除対象範囲)。
-  repo_stack_dir="$config_dir/$repo_dir_name"
-  # stack: 1 行 1 ハッシュ。末尾が top (gre=append/push, grr=fzf で選んで redo/pop)。
-  # GIT_RESET_MARKER で stack ファイルを直接指定できる (git_review の使い捨て worktree 用)。
-  # detached HEAD の既定キーは HEAD の hash なので、gre で HEAD が動くと grr が stack を見失う。
-  marker="${GIT_RESET_MARKER:-$repo_stack_dir/$branch}"
+  repo_stack_dir="$stack_root/heads"
+  # detached HEAD のキーは固定にする。HEAD の hash をキーにすると、
+  # gre で HEAD が動いた後に grr が stack を見失う。
+  marker="$stack_root/detached"
+  branch=$(git symbolic-ref -q --short HEAD || :)
+  if [[ -n $branch ]]; then
+    marker="$repo_stack_dir/$branch"
+  fi
 
   # フラグはどの位置でもよい。非フラグ引数は mode 依存: restore なら復元先 hash
   # (無指定で fzf)、push なら undo する個数 (無指定でベース選択の fzf)。

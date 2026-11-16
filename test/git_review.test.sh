@@ -67,9 +67,9 @@ FAKE
   echo "status=$(git status --porcelain | tr '\n' ' ')"
 } >"$FAKE_SHELL_LOG"
 [[ ${FAKE_SHELL_EDIT:-} == 1 ]] && echo edited >g
-# セッション内で grr => gre をやり直す (FAKE_SHELL_REDO にベース hash)。
+# セッション内で grr (元の HEAD = feature の先頭へ) => gre をやり直す。
 if [[ -n ${FAKE_SHELL_REDO:-} ]]; then
-  "$GIT_RESET" -r "$(tail -n1 "$GIT_RESET_MARKER")" >/dev/null 2>&1
+  "$GIT_RESET" -r "$(git rev-parse feature)" >/dev/null 2>&1
   echo "after_grr=$(git log -1 --format=%s)" >>"$FAKE_SHELL_LOG"
   "$GIT_RESET" 1 >/dev/null 2>&1
   echo "after_gre=$(git log -1 --format=%s)" >>"$FAKE_SHELL_LOG"

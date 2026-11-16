@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # bin/git_reset のユニットテスト (実 git 使用・viewer 不要)。
-# 隔離した実 git リポジトリと一時 XDG_CONFIG_HOME を用意し、git_reset を
+# 隔離した実 git リポジトリを用意し、git_reset を
 # サブプロセス実行して HEAD と marker(stack) の状態を検証する。
 #
 # 検証対象 (grr の fzf 選択は非対話形 `git_reset -r <hash>` 経由でテストする。
@@ -31,12 +31,11 @@ check() {
   printf 'ok   - %s\n' "${desc}"
 }
 
-# 隔離 repo (commit A B C D) と一時 XDG_CONFIG_HOME を作る。グローバル repo/xdg を設定。
+# 隔離 repo (commit A B C D) を作る。グローバル repo を設定。
 new_repo() {
   repo="${tmproot}/repo"
-  xdg="${tmproot}/config"
-  rm -rf "${repo}" "${xdg}"
-  mkdir -p "${repo}" "${xdg}"
+  rm -rf "${repo}"
+  mkdir -p "${repo}"
   git -C "${repo}" init -q
   git -C "${repo}" config user.email t@t
   git -C "${repo}" config user.name t
@@ -69,9 +68,8 @@ commit_at() {
 # より新しくして、commit date 順に並べると S2 が B を追い越すようにする。
 new_repo_with_merge() {
   repo="${tmproot}/mergerepo"
-  xdg="${tmproot}/mergeconfig"
-  rm -rf "${repo}" "${xdg}"
-  mkdir -p "${repo}" "${xdg}"
+  rm -rf "${repo}"
+  mkdir -p "${repo}"
   git -C "${repo}" init -q
   git -C "${repo}" config user.email t@t
   git -C "${repo}" config user.name t
@@ -123,8 +121,8 @@ FAKETRASH
   chmod +x "${fakebin}/trash"
 }
 
-# git_reset を repo 内・XDG 差し替え・偽 fzf を PATH 先頭にしてサブプロセス実行する。
-gr() { (cd "${repo}" && PATH="${fakebin}:${PATH}" XDG_CONFIG_HOME="${xdg}" "${gr_bin}" "$@"); }
+# git_reset を repo 内・偽 fzf を PATH 先頭にしてサブプロセス実行する。
+gr() { (cd "${repo}" && PATH="${fakebin}:${PATH}" "${gr_bin}" "$@"); }
 # gr のログを文字列で返す (どのエラー経路で落ちたかを assert する用)。ログは ink 経由で
 # 出力先が変わるため stdout/stderr を両方拾う。非0終了でもテストを止めない。
 gr_out() { gr "$@" 2>&1 || true; }
@@ -134,10 +132,12 @@ head_hash() { git -C "${repo}" rev-parse HEAD; }
 rev() { git -C "${repo}" rev-parse "$1"; } # 任意 revision の hash
 commit() { echo "$1" >"${repo}/f" && git -C "${repo}" add -A && git -C "${repo}" commit -qm "commit $1"; }
 
-# stack は repo_dir/branch の nested-dir に置かれるので leaf file を find で拾う。
+# ${repo} の worktree が使う stack の置き場 (git dir の下)。
+stack_root() { echo "$(git -C "${repo}" rev-parse --absolute-git-dir)/reset-stack"; }
+# stack は branch 名の nested-dir に置かれるので leaf file を find で拾う。
 # 単一 branch のテストでは 1 ファイルなので先頭を返せば十分。
 marker_file() {
-  find "${xdg}/git_reset" -type f 2>/dev/null | head -n1
+  find "$(stack_root)" -type f 2>/dev/null | head -n1
 }
 stack_size() {
   local m
@@ -147,7 +147,7 @@ stack_size() {
 # 指定 branch ($1, '/' 可) の stack 行数。ファイル無し/空なら 0。
 stack_size_for() {
   local m
-  m=$(find "${xdg}/git_reset" -type f -path "*/$1" 2>/dev/null | head -n1)
+  m=$(find "$(stack_root)/heads" -type f -path "*/heads/$1" 2>/dev/null | head -n1)
   [[ -n ${m} && -s ${m} ]] && grep -c '.' "${m}" || echo 0
 }
 stack_top() {
@@ -160,7 +160,7 @@ stack_top() {
 stack_subjects() {
   local m h
   m=$(marker_file)
-  [[ -n ${m} && -s ${m} ]] || return 0
+  [[ -z ${m} || ! -s ${m} ]] && return 0
   while IFS= read -r h; do
     [[ -z ${h} ]] && continue
     git -C "${repo}" log -1 --format=%s "${h}"
@@ -389,9 +389,8 @@ test_flag_order_independent() {
 # root commit (親なし) で gre 1 すると phantom stack を作らず非0終了。
 test_root_commit_push_guarded() {
   repo="${tmproot}/rootrepo"
-  xdg="${tmproot}/rootcfg"
-  rm -rf "${repo}" "${xdg}"
-  mkdir -p "${repo}" "${xdg}"
+  rm -rf "${repo}"
+  mkdir -p "${repo}"
   git -C "${repo}" init -q
   git -C "${repo}" config user.email t@t
   git -C "${repo}" config user.name t
@@ -493,6 +492,38 @@ test_clean_removes_dead_branch_stack() {
   check 'clean: 掃除前 feature/x stack 1件' '1' "$(stack_size_for feature/x)"
   FAKE_TRASH_DIR="${tmproot}/trashed" FAKE_FZF_PICK='feature/x' gr -c >/dev/null 2>&1
   check 'clean: feature/x stack 掃除された(0件)' '0' "$(stack_size_for feature/x)"
+}
+
+# detached HEAD: gre で HEAD が動いても同じ stack を引けて、grr で戻せる。
+test_detached_head_keeps_stack() {
+  new_repo
+  git -C "${repo}" checkout -q --detach
+  local hd
+  hd=$(head_hash)
+  gr 1 >/dev/null 2>&1
+  check 'detached: gre 1 で HEAD=C' 'commit C' "$(subj)"
+  check 'detached: stack 1件' '1' "$(stack_size)"
+  gr -r "${hd}" >/dev/null 2>&1
+  check 'detached: grr で HEAD=D へ復元' 'commit D' "$(subj)"
+  check 'detached: detached の stack は -c の掃除対象 (heads) に入らない' '0' \
+    "$(find "$(stack_root)/heads" -type f 2>/dev/null | wc -l)"
+}
+
+# linked worktree の stack はその worktree の git dir に置かれる。元の repo とは混ざらず、
+# worktree を消すと一緒に消える。
+test_worktree_has_own_stack() {
+  new_repo
+  local main_repo="${repo}" wt="${tmproot}/wt" wt_stack
+  rm -rf "${wt}"
+  git -C "${main_repo}" worktree add -q -b wtbranch "${wt}"
+  repo="${wt}"
+  gr 1 >/dev/null 2>&1
+  wt_stack=$(stack_root)
+  check 'worktree: stack 1件' '1' "$(stack_size)"
+  repo="${main_repo}"
+  check 'worktree: 元の repo の stack は空' '0' "$(stack_size)"
+  git -C "${main_repo}" worktree remove --force "${wt}"
+  check 'worktree: 削除で stack も消える' 'no' "$([[ -e ${wt_stack} ]] && echo yes || echo no)"
 }
 
 # 引数なし gre: ベース候補を fzf で選び、その分岐点まで一気に reset する。
@@ -604,6 +635,8 @@ main() {
   test_prune_on_divergent_gre
   test_branch_keyed_separate_stacks
   test_clean_removes_dead_branch_stack
+  test_detached_head_keeps_stack
+  test_worktree_has_own_stack
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

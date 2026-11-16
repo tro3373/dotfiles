@@ -44,7 +44,7 @@ is_edited() {
 # 編集が無ければ消す。編集があれば聞き、y 以外 (EOF 含む) は残す。
 cleanup() {
   local wt="$1" target="$2" ans=''
-  [[ -d $wt ]] || return 0
+  [[ ! -d $wt ]] && return 0
   if [[ -n ${session_started:-} ]] && is_edited "$wt" "$target"; then
     warn "==> Edited files in $wt:"
     git -C "$wt" status --short | head -20 >&2
@@ -78,10 +78,8 @@ main() {
   trap 'cleanup "$review_wt" "$review_target"' EXIT
   git -C "$repo_root" worktree add -q --detach "$wt" "$target"
 
-  # ベースの選択と reset は git_reset に任せる。stack は worktree の gitdir に置き、
-  # worktree と一緒に消えるようにする。セッション内の gre / grr も同じ stack を使う。
-  GIT_RESET_MARKER="$(git -C "$wt" rev-parse --absolute-git-dir)/review-stack"
-  export GIT_RESET_MARKER
+  # ベースの選択と reset は git_reset に任せる。stack は worktree の git dir に置かれるので、
+  # worktree と一緒に消える。セッション内の gre / grr も同じ stack を使う。
   (cd "$wt" && "$script_dir/git_reset" "$@")
   if [[ $(git -C "$wt" rev-parse HEAD) == "$target" ]]; then
     info "==> Nothing was reset."
