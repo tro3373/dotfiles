@@ -100,10 +100,10 @@ main() {
   echo "  - ~/.config/nix ~/.config/nixpkgs (if present)"
   local ans
   read -r -p "Really proceed? [yes/N] " ans
-  [[ ${ans} == "yes" ]] || {
+  if [[ ${ans} != "yes" ]]; then
     echo "Aborted."
     exit 0
-  }
+  fi
 
   # --- 1. 念のため動いている Nix プロセスを止める ---------------------------
   # single-user なので daemon はいない想定だが、残プロセスがあれば掃除する。

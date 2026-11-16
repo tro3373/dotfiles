@@ -84,7 +84,7 @@ fix_dst_fnm_no_ext() {
 # non-image clipboard yields a file that is not a PNG. Validate by signature.
 is_png() {
   local f=$1
-  [[ -s $f ]] || return 1
+  [[ ! -s $f ]] && return 1
   head -c 8 "$f" | cmp -s - <(printf '\x89PNG\r\n\x1a\n')
 }
 tmp_png_to_dst() {

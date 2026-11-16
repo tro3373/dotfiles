@@ -16,7 +16,7 @@ die() { _log red "$*" && exit 1; }
 is_url() { [[ $1 =~ ^https?://.* ]]; }
 
 open_remote_if_detected() {
-  [[ -n "${REMOTEHOST}${SSH_CONNECTION}" ]] || return 1
+  [[ -z "${REMOTEHOST}${SSH_CONNECTION}" ]] && return 1
   [[ -z $REMOTE_FORWARD_REVERSE_PORT ]] && die "==> No REMOTE_FORWARD_REVERSE_PORT env var found, cannot open remotely."
   [[ ${#files[@]} -eq 0 && ${#urls[@]} -eq 0 ]] && die "==> No urls or files to open remotely."
   if [[ ${#files[@]} -gt 0 ]]; then

@@ -59,10 +59,12 @@ resolve_search_dir() {
   local path_arg="$1" pane_dir="$2" realpath_cmd="$3"
 
   local dir="${path_arg:-$pane_dir}"
-  [[ $dir == /* ]] || dir="$pane_dir/$dir"
+  if [[ $dir != /* ]]; then
+    dir="$pane_dir/$dir"
+  fi
   command -v "$realpath_cmd" >/dev/null 2>&1 && dir=$("$realpath_cmd" -m "$dir")
 
-  [[ -d $dir ]] || die "Directory '$dir' does not exist."
+  [[ ! -d $dir ]] && die "Directory '$dir' does not exist."
   echo "$dir"
 }
 
@@ -112,7 +114,7 @@ format_output() {
 main() {
   set -euo pipefail
 
-  [[ -n ${TMUX-} ]] || die "This script must be run inside a tmux session."
+  [[ -z ${TMUX-} ]] && die "This script must be run inside a tmux session."
 
   local pane_id pane_dir pane_pid
   pane_id=$(tmux display-message -p '#{pane_id}')
@@ -132,7 +134,7 @@ main() {
         die "Unknown option '$1'"
         ;;
       *)
-        [[ -z $path_arg ]] || die "Only one path argument is allowed."
+        [[ -n $path_arg ]] && die "Only one path argument is allowed."
         path_arg="$1"
         shift
         ;;
@@ -180,7 +182,7 @@ main() {
   # --- File/Directory Selection (cd in for cleaner relative paths) ---
   local selected_files_str
   selected_files_str=$(cd "$search_dir" && "$fd_cmd" "${fd_flags[@]}" | ~/.fzf/bin/fzf --multi --reverse --freeze-right=1 --bind 'tab:toggle' --preview "$preview_cmd" "${grep_toggle_flags[@]}" || true)
-  [[ -n $selected_files_str ]] || exit 0
+  [[ -z $selected_files_str ]] && exit 0
 
   local selected_files=()
   while IFS= read -r line; do

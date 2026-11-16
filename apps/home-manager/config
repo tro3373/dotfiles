@@ -6,10 +6,10 @@ install_common() {
   fi
   local _nix_sh=$HOME/.nix-profile/etc/profile.d/nix.sh
   if ! has nix; then
-    [[ -e $_nix_sh ]] || {
+    if [[ ! -e $_nix_sh ]]; then
       add_dependency_args nix
       return
-    }
+    fi
     # apps/nix does not modify shell profiles, so a nix installed earlier in this setup run is not on PATH yet.
     # shellcheck disable=SC1090
     . "$_nix_sh"

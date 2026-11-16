@@ -101,7 +101,7 @@ size() {
   fi
 
   spec=${sizes[$1]:-$1}
-  [[ $spec =~ ^([0-9]*)x([0-9]*)$ ]] || die "==> Invalid size: $1 (<w>x<h> | ${!sizes[*]})"
+  [[ ! $spec =~ ^([0-9]*)x([0-9]*)$ ]] && die "==> Invalid size: $1 (<w>x<h> | ${!sizes[*]})"
   wd prop set persist.waydroid.width "${BASH_REMATCH[1]}"
   wd prop set persist.waydroid.height "${BASH_REMATCH[2]}"
   info "==> size=$1. restart the session to apply: wad stop && wad"
@@ -115,7 +115,7 @@ main() {
     return
   fi
 
-  [[ -x $waydroid_bin ]] || die "==> No waydroid command exist. sudo pacman -S waydroid && wad init"
+  [[ ! -x $waydroid_bin ]] && die "==> No waydroid command exist. sudo pacman -S waydroid && wad init"
 
   case ${1:-} in
     init)

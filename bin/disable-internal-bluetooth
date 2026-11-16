@@ -44,8 +44,8 @@ find_usb_path() {
   local f dir
   for f in /sys/bus/usb/devices/*/idVendor; do
     dir=$(dirname "$f")
-    [[ $(cat "$f" 2>/dev/null) == "$vid" ]] || continue
-    [[ $(cat "$dir/idProduct" 2>/dev/null) == "$pid" ]] || continue
+    [[ $(cat "$f" 2>/dev/null) != "$vid" ]] && continue
+    [[ $(cat "$dir/idProduct" 2>/dev/null) != "$pid" ]] && continue
     echo "$dir"
     return 0
   done
@@ -87,10 +87,10 @@ create_rule() {
 
 # udev ルールが有れば削除して再読込する
 remove_rule() {
-  [[ -e $rule ]] || {
+  if [[ ! -e $rule ]]; then
     info "=> udev ルールは有りません (既に有効化済み)。"
     return
-  }
+  fi
   log "=> udev ルールを削除します: $rule"
   sudo rm "$rule"
   reload

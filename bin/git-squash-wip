@@ -52,7 +52,7 @@ verify_repo() {
 count_head_wip() {
   local subject
   while IFS= read -r subject; do
-    [[ ${subject} == wip:* ]] || break
+    [[ ${subject} != wip:* ]] && break
     head_wip=$((head_wip + 1))
   done < <(git log --first-parent --format=%s HEAD)
 }

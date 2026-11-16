@@ -32,7 +32,7 @@ write_fake_bins() {
   mkdir -p "${fakebin}"
   cat >"${fakebin}/claude" <<'FAKE'
 #!/usr/bin/env bash
-[[ $1 == plugin && $2 == update ]] || exit 0
+[[ $1 != plugin || $2 != update ]] && exit 0
 plugin="${*: -1}"
 if [[ $plugin == "${FAKE_UPDATED_PLUGIN:-}" ]]; then
   echo "✔ Plugin \"$plugin\" updated from 1.0.0 to 1.1.0 for scope user. Restart to apply changes."

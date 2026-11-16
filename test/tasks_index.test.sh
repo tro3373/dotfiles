@@ -28,7 +28,7 @@ write_fake_tasks() {
 #!/usr/bin/env bash
 case $1 in
   current)
-    [[ -f $3/.task-path ]] || exit 1
+    [[ ! -f $3/.task-path ]] && exit 1
     cat "$3/.task-path"
     ;;
   where)

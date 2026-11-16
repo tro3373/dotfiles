@@ -72,7 +72,7 @@ warn_uncovered() {
   local settings="${HOME}/.claude/settings.json"
   local known=" ${plugins[*]} ${ignores[*]} "
   local plugin
-  [[ -f ${settings} ]] || return 0
+  [[ ! -f ${settings} ]] && return 0
   if ! has jq; then
     warn "==> No jq command exist, skip checking enabled plugins."
     return 0

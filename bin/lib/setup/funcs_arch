@@ -202,7 +202,7 @@ setup_gnupg_keyserver_settings() {
     exe cp /etc/pacman.d/gnupg/gpg.conf "$local_gpg_settings"
     echo "keyserver $key_server" |
       cat_tee -a "$local_gpg_settings"
-    [[ $d =~ /home/.* ]] || continue
+    [[ ! $d =~ /home/.* ]] && continue
     local _u
     _u=$(basename "$d")
     exe chown "$_u.$_u" -R "$(dirname "$local_gpg_settings")"

@@ -157,7 +157,7 @@ install_fake_fzf() {
 input=$(cat)
 [[ -n ${FZF_LOG:-} ]] && printf '%s\n' "${input}" >"${FZF_LOG}"
 selected=$(printf '%s\n' "${input}" | grep -E "${FZF_PICK}")
-[[ -n ${selected} ]] || exit 1
+[[ -z ${selected} ]] && exit 1
 printf '%s\n' "${selected}"
 EOF
   chmod +x "${tmp}/bin/fzf"

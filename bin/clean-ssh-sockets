@@ -42,7 +42,7 @@ matched() {
 
 main() {
   initialize "$@"
-  [[ -d $socks_dir ]] || exit 0
+  [[ ! -d $socks_dir ]] && exit 0
   local sock
   while IFS= read -r -d '' sock; do
     matched "$(basename "$sock")" || continue

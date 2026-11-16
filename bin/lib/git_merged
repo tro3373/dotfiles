@@ -24,11 +24,11 @@ git_unmerged_count() {
   mapfile -t dirs < <(git -C "$top" rev-parse --path-format=absolute \
     --git-dir --git-common-dir 2>/dev/null)
   ((${#dirs[@]} == 2)) || return 1
-  [[ ${dirs[0]} != "${dirs[1]}" ]] || return 1
+  [[ ${dirs[0]} == "${dirs[1]}" ]] && return 1
   branch=$(git -C "$top" symbolic-ref -q HEAD) || return 1
   # reflog の最古の行がブランチ作成時点。reflog が期限切れで消えていれば判定を諦めない
   created=$(git -C "$top" reflog show --format=%H "$branch" -- 2>/dev/null | tail -n1)
-  [[ $created != "$(git -C "$top" rev-parse HEAD)" ]] || return 1
+  [[ $created == "$(git -C "$top" rev-parse HEAD)" ]] && return 1
   git -C "$top" rev-list --count main-worktree/HEAD..HEAD 2>/dev/null
 }
 

@@ -37,9 +37,9 @@ touch "${tasks}/${known_a}_a/task.md" "${tasks}/${known_b}_b/task.md"
 cat >"${tmproot}/bin/tasks" <<SH
 #!/usr/bin/env bash
 # tasks show <ID> --path だけを真似る
-[[ \$1 == show && \$3 == --path ]] || exit 2
+[[ \$1 != show || \$3 != --path ]] && exit 2
 for d in "${tasks}/\$2"_*; do
-  [[ -d \$d ]] || break
+  [[ ! -d \$d ]] && break
   echo "\$d/task.md"
   exit 0
 done

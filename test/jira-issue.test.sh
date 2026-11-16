@@ -36,7 +36,7 @@ check() {
 # local を動的スコープで差し替える。
 raw_issue() {
   local desc="${1:-null}" comments="${2:-[]}" total="${3:-}"
-  [[ -n ${total} ]] || total=$(jq -n --argjson c "${comments}" '$c | length')
+  total="${total:-$(jq -n --argjson c "${comments}" '$c | length')}"
   jq -nc \
     --arg key "${key-K-1}" \
     --arg summary "${summary-Summary}" \
@@ -340,7 +340,9 @@ test_open_mode_removes_tmpdir_after_nvim_exits() {
   stub_log=$(mktemp)
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open
-  [[ -d $(nvim_tmpdir) ]] || actual=removed
+  if [[ ! -d $(nvim_tmpdir) ]]; then
+    actual=removed
+  fi
   check 'nvim 終了後に一時ディレクトリが削除される' removed "${actual}"
   rm -f "${stub_log}"
 }
@@ -358,7 +360,9 @@ test_open_mode_cleans_up_when_nvim_fails() {
     issue_select_open
   )
   rc=$?
-  [[ -d $(nvim_tmpdir) ]] || actual=removed
+  if [[ ! -d $(nvim_tmpdir) ]]; then
+    actual=removed
+  fi
   check 'nvim が異常終了しても一時ディレクトリは削除される' removed "${actual}"
   check 'nvim の終了コードが伝播する' 1 "${rc}"
   rm -f "${stub_log}"

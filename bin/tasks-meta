@@ -19,7 +19,7 @@ die() {
 # terms.tsv から groq へ渡す指示を作る。ファイルが無ければ何も出さない
 terms_rule() {
   local tsv="$1"
-  [[ -f ${tsv} ]] || return 0
+  [[ ! -f ${tsv} ]] && return 0
   printf '%s\n' '- Term rule (IMPORTANT): Do not replace English technical terms with Japanese words.' \
     '  Never write the Japanese word on the left in branch, name, title or abbr; write the word on the right.' \
     '  Words after "ok:" contain the left word but may be written as they are.'
@@ -47,9 +47,9 @@ PROMPT
 
 main() {
   set -euo pipefail
-  [[ ! -t 0 ]] || die "本文を stdin で渡す"
+  [[ -t 0 ]] && die "本文を stdin で渡す"
   local dir="${XDG_CONFIG_HOME:-$HOME/.config}/tasks" meta
-  [[ -f ${dir}/naming.md ]] || die "付け方が無い: ${dir}/naming.md"
+  [[ ! -f ${dir}/naming.md ]] && die "付け方が無い: ${dir}/naming.md"
   meta=$(prompt "${dir}" | llm -c tgpt -p groq -fc claude) || die "生成に失敗"
   jq -se 'length == 1 and (.[0] | type == "object" and
     all(.branch, .name, .title, .abbr; type == "string" and length > 0 and (test("[[:cntrl:]]") | not)))' \

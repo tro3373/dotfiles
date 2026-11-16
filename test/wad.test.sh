@@ -55,7 +55,7 @@ EOS
   cat >"${fakebin}/systemctl" <<'EOS'
 #!/usr/bin/env bash
 echo "systemctl $*" >>"${LOG}"
-[[ $1 == is-active ]] || exit 0
+[[ $1 != is-active ]] && exit 0
 [[ ${FAKE_UNIT_ACTIVE} == 1 ]]
 EOS
 

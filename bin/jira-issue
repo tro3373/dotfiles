@@ -135,7 +135,7 @@ newest_config() {
   # settings for a new project. Empty if none exist yet (first ever run).
   local dir=$1 newest="" f
   for f in "${dir}"/.config*.yml; do
-    [[ -f ${f} ]] || continue
+    [[ ! -f ${f} ]] && continue
     [[ -z ${newest} || ${f} -nt ${newest} ]] && newest=${f}
   done
   printf '%s\n' "${newest}"
@@ -169,7 +169,9 @@ resolve_config() {
   local dir="${XDG_CONFIG_HOME:-${HOME}/.config}/.jira"
   # lint-ignore: uppercase jira CLI が読む環境変数名なので変えられない
   export JIRA_CONFIG_FILE="${JIRA_CONFIG_FILE:-${dir}/.config.${JIRA_PROJECT}.yml}"
-  [[ -f ${JIRA_CONFIG_FILE} ]] || init_config
+  if [[ ! -f ${JIRA_CONFIG_FILE} ]]; then
+    init_config
+  fi
 }
 
 validate_stdin() {
@@ -335,7 +337,7 @@ set_gh_repo_args() {
   # 綴り違いを黙って読み飛ばすと、意図しない repo に issue を作ってしまうので
   # 知らない引数は落とす。
   gh_repo_args=()
-  [[ -n ${1:-} ]] || return 0
+  [[ -z ${1:-} ]] && return 0
   if [[ ${1} != "-R" && ${1} != "--repo" ]]; then
     die "==> Error: Unknown option: ${1}"
   fi

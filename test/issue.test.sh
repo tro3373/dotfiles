@@ -85,7 +85,7 @@ fzf() {
   done
   first=$(head -n1 | cut -f1)
   [[ -n ${first} && -n ${preview} ]] && bash -c "${preview//\{1\}/${first}}" | sed 's/^/preview> /' >>"${stub_log}"
-  [[ -n ${fzf_selection:-} ]] || return 130
+  [[ -z ${fzf_selection:-} ]] && return 130
   printf '%s\n' "${fzf_selection}"
 }
 gh() {
@@ -94,7 +94,7 @@ gh() {
     jq -nc '[{number:5, title:"five", body:"body of #5\nline 2", labels:[{name:"bug"}], author:{login:"u"}}]'
     return 0
   fi
-  [[ $2 == view ]] || return 0
+  [[ $2 != view ]] && return 0
   local number=$3 repo=o/r
   [[ ${4:-} == -R ]] && repo=$5
   gh_issue "${number}" "body of #${number}" '[]' "${gh_url-https://github.com/${repo}/issues/${number}}"
@@ -191,7 +191,9 @@ test_list_cache_is_removed() {
   issue_select_open
   cache_path=$(grep '^fzf ' "${stub_log}" | grep -o '/[^ ]*tmp[^ ]*' | tail -n1)
   [[ -n ${cache_path} && -e ${cache_path} ]] && actual=exists
-  [[ -n ${cache_path} ]] || actual=not-found
+  if [[ -z ${cache_path} ]]; then
+    actual=not-found
+  fi
   check 'fzf 終了後に一覧の JSON を消す' removed "${actual}"
   rm -f "${stub_log}"
 }

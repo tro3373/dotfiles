@@ -161,9 +161,9 @@ main() {
     set +a
   }
   hass "${depends[@]}" # check dependency commands
-  [[ -e $list_file ]] || {
+  if [[ ! -e $list_file ]]; then
     error "==> No list file exist. $list_file"
-  }
+  fi
   fzf_opt=
   [[ $# -gt 0 ]] && {
     # shellcheck disable=SC2089

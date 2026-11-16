@@ -127,7 +127,9 @@ reset_records() {
 reset_index() {
   printf '%s' "${index_content:-${sample_index}}" >"${index}"
   rm -f "${config_file}"
-  [[ -z ${index_position:-} ]] || printf 'store: x\nindex_position: %s   # 既定: top\n' "${index_position}" >"${config_file}"
+  if [[ -n ${index_position:-} ]]; then
+    printf 'store: x\nindex_position: %s   # 既定: top\n' "${index_position}" >"${config_file}"
+  fi
 }
 
 # 本文 (stdin) と引数で tasks-add を流す。stdout と終了コードを out / rc に入れる

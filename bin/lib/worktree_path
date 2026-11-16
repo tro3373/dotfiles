@@ -27,6 +27,6 @@ worktree_repo_name() {
   local _wrn_parent=${1%/}
   _wrn_parent=${_wrn_parent%/*}
   _wrn_parent=${_wrn_parent##*/}
-  [[ $_wrn_parent == *"$worktree_root_suffix" ]] || return 1
+  [[ $_wrn_parent != *"$worktree_root_suffix" ]] && return 1
   _wrn_out=${_wrn_parent%"$worktree_root_suffix"}
 }

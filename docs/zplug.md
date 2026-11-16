@@ -101,11 +101,11 @@ setup_bundles() {
 }
 
 zsh_zplug() {
-    [[ -d ${HOME}/.zplug ]] || {
+    if [[ ! -d ${HOME}/.zplug ]]; then
         git clone https://github.com/b4b4r07/zplug ${HOME}/.zplug
         source ${HOME}/.zplug/zplug
         zplug update --self
-    }
+    fi
 
     # For development
     source ${HOME}/Dropbox/zplug/zplug

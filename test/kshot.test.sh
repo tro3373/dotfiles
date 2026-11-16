@@ -99,10 +99,10 @@ run_kshot() {
 
 count_png() {
   local d="${tmproot}/out/$1/$2"
-  [[ -d ${d} ]] || {
+  if [[ ! -d ${d} ]]; then
     echo 0
     return
-  }
+  fi
   find "${d}" -name '*.png' | wc -l
 }
 
