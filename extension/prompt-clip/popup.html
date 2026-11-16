@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<style>
+  body { width: 360px; margin: 0; font: 13px system-ui, sans-serif; }
+  header { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid #ddd; }
+  header button { flex: 1; }
+  ul { list-style: none; margin: 0; padding: 0; max-height: 420px; overflow-y: auto; }
+  li { display: flex; align-items: center; gap: 4px; padding: 6px 8px; border-bottom: 1px solid #eee; }
+  li .title { flex: 1; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  li .title:hover { color: #06c; }
+  li:first-child .title::before { content: '1位 '; color: #c60; font-size: 11px; }
+  li button { padding: 0 5px; font-size: 11px; }
+  li.copied { background: #e6f7e6; }
+  form { display: none; padding: 8px; gap: 6px; flex-direction: column; }
+  form.open { display: flex; }
+  input, textarea { width: 100%; box-sizing: border-box; font: inherit; }
+  textarea { height: 160px; }
+  .hint { color: #888; font-size: 11px; padding: 6px 8px; }
+  #msg { color: #c33; font-size: 11px; padding: 0 8px; }
+</style>
+</head>
+<body>
+  <header>
+    <button id="add">＋追加</button>
+    <button id="export">書き出し</button>
+    <button id="import">読み込み</button>
+    <input id="file" type="file" accept=".json" hidden>
+  </header>
+  <form id="form">
+    <input id="ftitle" placeholder="タイトル" required>
+    <textarea id="fbody" placeholder="プロンプト本文" required></textarea>
+    <div style="display:flex;gap:4px"><button type="submit" style="flex:1">保存</button><button type="button" id="cancel">キャンセル</button></div>
+  </form>
+  <div id="msg"></div>
+  <ul id="list"></ul>
+  <div class="hint">クリックでコピー / Alt+Shift+P で1位をコピー（chrome://extensions/shortcuts で変更可）</div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
