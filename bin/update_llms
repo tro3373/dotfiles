@@ -15,7 +15,7 @@ readonly -a plugins=(
   html-plan@claude-community
   codex@openai-codex
   stripe@claude-plugins-official
-  mattpocock-skills@claude-plugins-official
+  mattpocock-skills@mattpocock
   pstack@cursor-plugins
   yomiyasu@yomiyasu
 )
