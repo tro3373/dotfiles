@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+
+command_name=$(basename "$0") && readonly command_name
+
+usage() {
+  cat <<EOF
+
+Uninstall system packages whose name contains the given pattern.
+
+Usage:
+  $command_name [option] [pattern...]
+Options
+  -h|--help : Show this usage
+  --apply   : Uninstall without confirmation. (default: show targets and wait for Enter)
+  --scoop   : Target scoop packages. (for WSL. default on WSL: apt)
+Examples
+  $command_name bruno        : Uninstall packages whose name contains "bruno"
+  $command_name bruno slack  : Multiple patterns
+  $command_name              : Select packages with fzf
+
+EOF
+}
+
+has() { command -v "${1}" >&/dev/null; }
+die() {
+  echo "==> Error: $*" >&2
+  exit 1
+}
+
+initialize() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help) usage && exit 0 ;;
+      --apply) apply=true ;;
+      --scoop) use_scoop=true ;;
+      -*) die "Unknown option: $1" ;;
+      *) patterns+=("$1") ;;
+    esac
+    shift
+  done
+}
+
+detect_pm() {
+  if [[ ${use_scoop} == true ]]; then
+    echo scoop
+    return
+  fi
+  case "$(os)" in
+    arch) echo pacman ;;
+    ubuntu) echo apt ;;
+    mac) echo brew ;;
+    msys) echo scoop ;;
+    *) die "Not supported." ;;
+  esac
+}
+
+# Print installed packages as "name version" per line.
+list_installed() {
+  case "${pm}" in
+    pacman)
+      # -Q: query the local package database. prints "name version"
+      pacman -Q
+      ;;
+    apt)
+      # -W: show packages known to dpkg
+      # -f: output format. db:Status-Abbrev starts with "ii" for installed packages
+      #     (packages removed without --purge stay listed as "rc")
+      dpkg-query -W -f='${db:Status-Abbrev}\t${Package} ${Version}\n' |
+        awk -F'\t' '$1 ~ /^ii/ {print $2}'
+      ;;
+    brew)
+      # --formula / --cask: list only formulae / only casks
+      # --versions: print "name version" per line
+      brew list --formula --versions
+      brew list --cask --versions
+      ;;
+    scoop)
+      scoop list | tr -d '\r' | tail -n +5 | awk 'NF {print $1, $2}'
+      ;;
+  esac
+}
+
+match_pattern() {
+  local matched
+  matched=$(awk -v p="${pattern}" 'index(tolower($1), tolower(p))' <<<"${installed}")
+  [[ -z ${matched} ]] && die "No installed package matches: ${pattern}"
+  echo "${matched}"
+}
+
+match_patterns() {
+  local pattern
+  for pattern in "${patterns[@]}"; do
+    match_pattern
+  done | sort -u
+}
+
+select_with_fzf() {
+  has fzf || die "fzf is required when no pattern is given."
+  # -m: multi select with Tab
+  fzf -m --prompt="${command_name}> " <<<"${installed}"
+}
+
+select_targets() {
+  if [[ ${#patterns[@]} -eq 0 ]]; then
+    select_with_fzf
+    return
+  fi
+  match_patterns
+}
+
+# Print what the removal deletes, including packages removed along with the targets.
+show_targets() {
+  ilog "=> Targets"
+  if [[ ${pm} != pacman ]]; then
+    echo "${targets}"
+    return
+  fi
+  # -R: remove packages
+  # -s: also remove dependencies that no other installed package requires
+  # -p: print the targets instead of removing them (-n cannot be combined with -p)
+  # --print-format: "%n %v" prints "name version"
+  pacman -Rsp --print-format '%n %v' "${names[@]}"
+}
+
+confirm() {
+  [[ ${apply} == true ]] && return 0
+  local answer
+  read -r -p "Press Enter to uninstall (Ctrl-C to abort): " answer || die "Aborted."
+  if [[ -n ${answer} ]]; then
+    die "Aborted."
+  fi
+}
+
+remove() {
+  case "${pm}" in
+    pacman)
+      # -R: remove packages
+      # -n: remove configuration files too (no .pacsave backup)
+      # -s: also remove dependencies that no other installed package requires
+      # --noconfirm: skip pacman's own prompt (already confirmed)
+      sudo pacman -Rns --noconfirm "${names[@]}"
+      ;;
+    apt)
+      # remove: uninstall packages
+      # --purge: remove configuration files too
+      # -y: answer yes to apt's own prompt (already confirmed)
+      sudo apt-get remove --purge -y "${names[@]}"
+      ;;
+    brew)
+      brew uninstall "${names[@]}"
+      ;;
+    scoop)
+      scoop uninstall "${names[@]}"
+      ;;
+  esac
+}
+
+main() {
+  set -euo pipefail
+  local apply=false use_scoop=false patterns=()
+  initialize "$@"
+  local pm installed targets
+  pm=$(detect_pm)
+  installed=$(list_installed)
+  targets=$(select_targets)
+  [[ -z ${targets} ]] && die "No package selected."
+  local names=()
+  mapfile -t names < <(awk '{print $1}' <<<"${targets}")
+  show_targets
+  confirm
+  remove
+  ilog "Done!"
+}
+main "$@"
