@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+main() {
+  set -eo pipefail
+  # -d: delete old generations and unused paths
+  #     default behavior is to only show what would be deleted
+  nix-collect-garbage -d
+}
+main "$@"
