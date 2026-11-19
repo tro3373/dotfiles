@@ -26,6 +26,10 @@
 #
 #   * -a: <org>-worktree/<branch の / を - にした名前> に作り、そのパスだけを stdout に出す。
 #
+#   * _do_remove_worktree の tmux 後始末: 全 pane が worktree 配下の session だけ消す。
+#       外の pane を含む session・prefix 違いの別 worktree の session・
+#       実行中の session は残す。tmux server が無くても remove は成功する。
+#
 #   test/git_worktree   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
@@ -322,6 +326,65 @@ test_add_places_worktree_by_branch() {
     '1' "$([[ -e ${org_wt}/feature-foo/.git ]] && echo 1 || echo 0)"
 }
 
+# 隔離 tmux server を起動する。ユーザの server には触れない。
+tmux_isolate() {
+  tmux_dir=$(mktemp -d "${tmproot}/tmux.XXXXXX")
+  export TMUX_TMPDIR="${tmux_dir}"
+  unset TMUX TMUX_PANE
+}
+
+tmux_has() {
+  tmux has-session -t "=$1" 2>/dev/null && echo 1 || echo 0
+}
+
+test_remove_kills_tmux_sessions() {
+  new_repo tmuxs
+  tmux_isolate
+  local wt wt_ab sub
+  wt=$(add_wt feat-A)
+  wt_ab=$(add_wt feat-AB)
+  sub="${wt}/sub"
+  mkdir -p "${sub}"
+  tmux new-session -d -s only-in -c "${wt}" 'sleep 600'
+  tmux new-session -d -s nested -c "${sub}" 'sleep 600'
+  tmux new-session -d -s mixed -c "${wt}" 'sleep 600'
+  tmux new-window -t mixed -c "${org}" 'sleep 600'
+  tmux new-session -d -s other-ab -c "${wt_ab}" 'sleep 600'
+  initial_toplevel="${org}"
+  (cd "${org}" && _do_remove_worktree "${wt}" >/dev/null 2>&1)
+  check 'tmux: worktree 内だけの session は消える' '0' "$(tmux_has only-in)"
+  check 'tmux: worktree のサブディレクトリだけの session は消える' '0' "$(tmux_has nested)"
+  check 'tmux: 外の pane を含む session は残る' '1' "$(tmux_has mixed)"
+  check 'tmux: prefix が同じ別 worktree の session は残る' '1' "$(tmux_has other-ab)"
+  tmux kill-server 2>/dev/null
+}
+
+test_remove_keeps_running_tmux_session() {
+  new_repo tmuxcur
+  tmux_isolate
+  local wt pane socket
+  wt=$(add_wt feat-A)
+  tmux new-session -d -s runner -c "${wt}" 'sleep 600'
+  tmux new-session -d -s victim -c "${wt}" 'sleep 600'
+  pane=$(tmux list-panes -t '=runner' -F '#{pane_id}')
+  socket=$(tmux display -p '#{socket_path}')
+  initial_toplevel="${org}"
+  (cd "${org}" && TMUX="${socket},0,0" TMUX_PANE="${pane}" _do_remove_worktree "${wt}" >/dev/null 2>&1)
+  check 'tmux: 実行中の session は残る' '1' "$(tmux_has runner)"
+  check 'tmux: 実行中でない session は消える' '0' "$(tmux_has victim)"
+  tmux kill-server 2>/dev/null
+}
+
+test_remove_without_tmux_server() {
+  new_repo notmux
+  tmux_isolate
+  local wt rc=0
+  wt=$(add_wt feat-A)
+  (set -e; export initial_toplevel="${org}"; cd "${org}" && _do_remove_worktree "${wt}" >/dev/null 2>&1) || rc=$?
+  check 'tmux: server が無くても remove が成功する' '0' "${rc}"
+  check 'tmux: server が無くても worktree は消える' '0' "$([[ -e ${wt} ]] && echo 1 || echo 0)"
+}
+
 main() {
   set -uo pipefail
   tmproot=$(mktemp -d)
@@ -342,6 +405,9 @@ main() {
   test_default_ln_config_without_ignored
   test_merged_label
   test_add_places_worktree_by_branch
+  test_remove_kills_tmux_sessions
+  test_remove_keeps_running_tmux_session
+  test_remove_without_tmux_server
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
