@@ -2,7 +2,7 @@
 
 # bin/git_branch_clean のテスト。bare の origin と、別 clone からの push で
 # 「ローカルの main は古いまま origin/main だけ進んだ」状態を作って検証する。
-# fzf は PATH 先頭の偽物に差し替える (FZF_PICK に一致する行だけ選ぶ)。
+# fzf は PATH 先頭の偽物に差し替える (見出しの 1 行目を除き、FZF_PICK に一致する行だけ選ぶ)。
 #
 #   test/git_branch_clean.test.sh
 
@@ -45,6 +45,9 @@ merged_branch() {
 #   feat/wt                         merge 済みだが別 worktree で checkout 中
 #   feat/current                    merge 済みで今 checkout 中
 #   develop                         merge 済みだが保護
+# tag:
+#   backup/feat/old-20260101-000000  元のブランチ feat/old が無い
+#   backup/feat/wip-20260101-000000  元のブランチ feat/wip が残っている
 setup() {
   origin="${tmp}/origin.git"
   repo="${tmp}/repo"
@@ -79,6 +82,8 @@ setup() {
   g "${repo}" checkout -q feat/current
   g "${repo}" worktree add -q "${tmp}/wt" feat/wt
   g "${other}" push -q origin --delete feat/squash
+  g "${repo}" tag backup/feat/old-20260101-000000 main
+  g "${repo}" tag backup/feat/wip-20260101-000000 feat/wip
 }
 
 clean() {
@@ -93,54 +98,93 @@ remote_branches() {
   g "${origin}" branch --format '%(refname:short)' | sort | paste -sd ' '
 }
 
-test_local() {
-  check "dry-run: origin/main 基準で merge 済みを出す。保護・checkout 中・未 merge・gone は出ない" \
-    "git branch -D feat/merged
-git branch -D feature/release-x" "$(clean | sort)"
-
-  check "-g: gone も出す" \
-    "git branch -D feat/merged
-git branch -D feat/squash
-git branch -D feature/release-x" "$(clean -g | sort)"
-
-  check "dry-run はブランチを消さない" \
-    "develop feat/current feat/local feat/merged feat/squash feat/wip feat/wt feature/release-x main" "$(branches)"
+tags() {
+  g "${repo}" tag -l | sort | paste -sd ' '
 }
 
-test_interactive() {
-  check "-i: merged と gone をラベル付きで fzf に渡す" \
-    "gone	feat/squash
-merged	feat/merged
-merged	feature/release-x" "$(
-      FZF_PICK='^$' FZF_LOG="${tmp}/fzf.in" clean -i >/dev/null
-      sort "${tmp}/fzf.in"
+# fzf に渡った候補の `<state> <kind> <name>`
+offered() {
+  FZF_PICK='^$' FZF_LOG="${tmp}/fzf.in" clean "$@" >/dev/null
+  cut -f1-3 "${tmp}/fzf.in" | tr '\t' ' '
+}
+
+pick() {
+  printf '%s\t%s\t%s\t' "$@"
+}
+
+test_safe_view() {
+  check "既定: 🟢 だけを local・remote・tag の順に出す。保護・checkout 中・HEAD は出ない" \
+    "safe local feat/merged
+safe local feat/squash
+safe local feature/release-x
+safe remote feat/current
+safe remote feat/merged
+safe remote feat/wt
+safe remote feature/release-x
+safe tag backup/feat/old-20260101-000000" "$(offered)"
+}
+
+test_all_view() {
+  check "-a: 🟢 の後ろに ⚠️ (未 merge・ブランチが残る backup tag) も出す" \
+    "safe local feat/merged
+safe local feat/squash
+safe local feature/release-x
+safe remote feat/current
+safe remote feat/merged
+safe remote feat/wt
+safe remote feature/release-x
+safe tag backup/feat/old-20260101-000000
+risky local feat/local
+risky local feat/wip
+risky remote feat/wip
+risky tag backup/feat/wip-20260101-000000" "$(offered -a)"
+}
+
+test_display() {
+  offered -a >/dev/null
+  check "表示: 状態と種類の絵文字・種類名・名前・理由" \
+    "🟢 💻 local  feat/squash gone (upstream が消えた)
+🟢 ☁️ remote feat/merged merged
+🟢 🔖 tag    backup/feat/old-20260101-000000 ブランチ無し
+⚠️ 💻 local  feat/wip 未 merge
+⚠️ 🔖 tag    backup/feat/wip-20260101-000000 ブランチあり" "$(
+      cut -f5 "${tmp}/fzf.in" | sed -e 's/\x1b\[[0-9]*m//g' -e 's/  *\(merged\|gone\|未\|ブランチ\)/ \1/' |
+        grep -E 'feat/squash|remote feat/merged|🔖|local  feat/wip'
+    )"
+}
+
+test_nothing_picked() {
+  check "何も選ばなければ何も消さず正常終了" \
+    "0:develop feat/current feat/local feat/merged feat/squash feat/wip feat/wt feature/release-x main" "$(
+      FZF_PICK='^$' clean >/dev/null
+      echo "$?:$(branches)"
+    )"
+}
+
+test_delete_safe() {
+  FZF_PICK="$(pick safe local feat/squash)|$(pick safe tag backup/feat/old-20260101-000000)|$(pick safe remote feat/merged)" \
+    clean </dev/null >/dev/null
+  check "🟢 は確認なしで消す: local (base 以外を checkout 中でも)" \
+    "develop feat/current feat/local feat/merged feat/wip feat/wt feature/release-x main" "$(branches)"
+  check "🟢 は確認なしで消す: tag" "backup/feat/wip-20260101-000000" "$(tags)"
+  check "🟢 は確認なしで消す: remote" \
+    "develop feat/current feat/wip feat/wt feature/release-x main" "$(remote_branches)"
+}
+
+test_delete_risky() {
+  check "⚠️ は y 以外で消さず終了コード 1" \
+    "1:backup/feat/wip-20260101-000000" "$(
+      FZF_PICK="$(pick risky tag backup/feat/wip-20260101-000000)" clean -a <<<n >/dev/null
+      echo "$?:$(tags)"
     )"
 
-  check "-i: fzf で選んだものだけ消す" \
-    "git branch -D feat/squash" "$(FZF_PICK='squash' clean -i)"
-
-  check "-i: 何も選ばなければ何も消さず正常終了" \
-    "0:" "$(
-      out=$(FZF_PICK='^$' clean -i -e)
-      echo "$?:${out}"
-    )"
-}
-
-test_execute() {
-  clean -e >/dev/null
-  check "-e: base 以外を checkout 中でも merge 済みを消す" \
-    "develop feat/current feat/local feat/squash feat/wip feat/wt main" "$(branches)"
-}
-
-test_remote() {
-  check "-r: origin の merge 済みを出す。HEAD・保護・未 merge は出ない" \
-    "git push origin --delete feat/current
-git push origin --delete feat/merged
-git push origin --delete feat/wt
-git push origin --delete feature/release-x" "$(clean -r | sort)"
-
-  clean -r -e >/dev/null
-  check "-r -e: origin から消す" "develop feat/wip main" "$(remote_branches)"
+  FZF_PICK="$(pick risky tag backup/feat/wip-20260101-000000)|$(pick risky local feat/local)|$(pick risky remote feat/wip)" \
+    clean -a <<<y >/dev/null
+  check "⚠️ は y で消す: local" \
+    "develop feat/current feat/merged feat/wip feat/wt feature/release-x main" "$(branches)"
+  check "⚠️ は y で消す: tag" "" "$(tags)"
+  check "⚠️ は y で消す: remote" \
+    "develop feat/current feat/wt feature/release-x main" "$(remote_branches)"
 }
 
 test_unknown_option() {
@@ -154,7 +198,7 @@ install_fake_fzf() {
   mkdir -p "${tmp}/bin"
   cat >"${tmp}/bin/fzf" <<'EOF'
 #!/usr/bin/env bash
-input=$(cat)
+input=$(tail -n +2)
 [[ -n ${FZF_LOG:-} ]] && printf '%s\n' "${input}" >"${FZF_LOG}"
 selected=$(printf '%s\n' "${input}" | grep -E "${FZF_PICK}")
 [[ -z ${selected} ]] && exit 1
@@ -175,10 +219,12 @@ main() {
   export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
   install_fake_fzf
   setup
-  test_local
-  test_interactive
-  test_execute
-  test_remote
+  test_safe_view
+  test_all_view
+  test_display
+  test_nothing_picked
+  test_delete_safe
+  test_delete_risky
   test_unknown_option
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

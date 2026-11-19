@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
-# base に merge 済みのブランチを消す。既定はローカル、-r で origin。既定は dry-run、-e で実行。
-# usage: git_branch_clean [-e] [-r] [-i] [-g] [base]  (base 既定: origin/HEAD の指す先)
-#   -i  fzf で選んで消す。ローカルでは gone も候補に出す (-g 込み)
-#   -g  upstream が消えたブランチ (squash merge 等で --merged に出ないもの) もローカルの候補に入れる
+# 要らなくなったローカルブランチ・origin のブランチ・backup tag を、fzf で選んで消す。
+# usage: git_branch_clean [-a] [base]  (base 既定: origin/HEAD の指す先)
+#   -a  全件表示で開く。既定は 🟢 (消してよいもの) だけ
+# fzf の中: a で 🟢 だけと全件を切り替え、/ で絞り込み、Tab で複数選択、Enter で消す。
+#   🟢  base に merge 済みか upstream が消えたブランチ、元のブランチが無い backup tag
+#   ⚠️  未 merge のブランチ、元のブランチが残っている backup tag。選ぶと消す前に y/N を聞く
+# 保護ブランチ・base・checkout 中のローカルブランチは候補に出ない。
+# backup tag: `backup/<ブランチ名>` か `backup/<ブランチ名>-<YYYYmmdd>-<HHMMSS>`。
 
 readonly protected_branches=(develop main master)
 readonly log_format='%Cred%h %Cgreen(%cd)%Creset -%C(yellow)%d%Creset %s %C(bold blue)<%an>%Creset'
+readonly fzf_header='a: 🟢 だけ <=> 全件 | /: 絞り込み | Tab: 複数選択 | Enter: 消す'
 
 initialize() {
   local arg
   for arg in "$@"; do
     case "${arg}" in
-      -e) execute=1 ;;
-      -r) remote=1 ;;
-      -i) interactive=1 gone=1 ;;
-      -g) gone=1 ;;
+      -a) view=all ;;
       -*)
         echo "==> Error: unknown option: ${arg}" >&2
         return 2
@@ -26,97 +28,137 @@ initialize() {
   base=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's#^origin/##')
 }
 
-# 出力は 1 行 1 候補の `<kind>\t<branch>`。kind は merged か gone。
+# 候補は 1 行 1 件の `<state>\t<kind>\t<name>\t<reason>`。
+# state は safe か risky、kind は local・remote・tag。
 list_local() {
-  git branch --format '%(refname:short)' --merged "origin/${base}" | sed 's/^/merged\t/'
-  [[ -z ${gone} ]] && return
-  git branch --format '%(refname:short)%09%(upstream:track)' |
-    awk -F'\t' '$2 == "[gone]" { print "gone\t" $1 }'
+  git for-each-ref refs/heads --merged "origin/${base}" --format '%(refname:short)' |
+    sed 's/.*/safe\tlocal\t&\tmerged/'
+  git for-each-ref refs/heads --no-merged "origin/${base}" --format '%(refname:short)%09%(upstream:track)' |
+    awk -F'\t' -v OFS='\t' '
+      $2 == "[gone]" { print "safe", "local", $1, "gone (upstream が消えた)"; next }
+      { print "risky", "local", $1, "未 merge" }
+    '
 }
 
 list_remote() {
-  git branch -r --format '%(refname:short)' --merged "origin/${base}" |
-    sed -n 's#^origin/#merged\t#p'
+  git for-each-ref refs/remotes/origin --merged "origin/${base}" --format '%(refname:lstrip=3)' |
+    sed 's/.*/safe\tremote\t&\tmerged/'
+  git for-each-ref refs/remotes/origin --no-merged "origin/${base}" --format '%(refname:lstrip=3)' |
+    sed 's/.*/risky\tremote\t&\t未 merge/'
 }
 
-# どの worktree でも checkout 中のブランチは消せないので候補から外す
+list_tags() {
+  local branches
+  branches=$(git for-each-ref refs/heads --format '%(refname:short)')
+  git tag -l 'backup/*' | awk -v OFS='\t' -v branches="${branches}" '
+    BEGIN { n = split(branches, b, "\n"); for (i = 1; i <= n; i++) alive[b[i]] = 1 }
+    {
+      branch = $0
+      sub(/^backup\//, "", branch)
+      sub(/-[0-9]+-[0-9]+$/, "", branch)
+    }
+    branch in alive { print "risky", "tag", $0, "ブランチあり"; next }
+    { print "safe", "tag", $0, "ブランチ無し" }
+  '
+}
+
 checked_out_branches() {
   git worktree list --porcelain | sed -n 's#^branch refs/heads/##p'
 }
 
-# 保護ブランチ・base・引数のブランチを除き、merged と gone の重複は先に出た merged を残す
 exclude() {
   local skip
   skip=$(printf '%s\n' "${protected_branches[@]}" "${base}" "$@")
   awk -F'\t' -v skip="${skip}" '
     BEGIN { n = split(skip, s, "\n"); for (i = 1; i <= n; i++) ex[s[i]] = 1 }
-    !($2 in ex) && !seen[$2]++
+    !($3 in ex)
   '
 }
 
+list_candidates() {
+  list_local | exclude "$(checked_out_branches)"
+  list_remote | exclude HEAD
+  list_tags
+}
+
+# 出力は `<state>\t<kind>\t<name>\t<ref>\t<表示>`。🟢 を先に、種類・名前の順に並べる。
+render() {
+  sort -t$'\t' -k1,1r -k2,2 -k3,3 | awk -F'\t' -v OFS='\t' '
+    BEGIN {
+      mark["safe"] = "🟢"; mark["risky"] = "⚠️"
+      icon["local"] = "💻"; icon["remote"] = "☁️"; icon["tag"] = "🔖"
+      color["local"] = 36; color["remote"] = 35; color["tag"] = 33
+      prefix["local"] = "refs/heads/"; prefix["remote"] = "refs/remotes/origin/"; prefix["tag"] = "refs/tags/"
+    }
+    {
+      shown = sprintf("%s %s \033[%dm%-6s %-44s\033[0m %s", mark[$1], icon[$2], color[$2], $2, $3, $4)
+      print $1, $2, $3, prefix[$2] $3, shown
+    }
+  '
+}
+
+# fzf の a は shown と hidden を入れ替えて読み直す。1 行目は fzf が見出しとして固定する。
+write_views() {
+  local all safe
+  all=$(list_candidates | render)
+  safe=$(awk -F'\t' '$1 == "safe"' <<<"${all}")
+  printf '\t\t\t\t%s\n%s\n' '🟢 消してよいものだけを表示中' "${safe}" | sed '/^$/d' >"${views}/safe"
+  printf '\t\t\t\t%s\n%s\n' '全件を表示中 (⚠️ は消すと失う)' "${all}" | sed '/^$/d' >"${views}/all"
+  local other=all
+  [[ ${view} == all ]] && other=safe
+  mv "${views}/${view}" "${views}/shown"
+  mv "${views}/${other}" "${views}/hidden"
+}
+
 select_targets() {
-  if [[ -z ${interactive} ]]; then
-    cat
-    return
-  fi
+  local toggle="cd '${views}'; mv hidden swap; mv shown hidden; mv swap shown; cat shown"
   # 何も選ばずに抜けたときの非 0 を、削除対象なしとして扱う
-  fzf -m \
-    --delimiter '\t' \
-    --preview "git log --color=always --graph --pretty=format:'${log_format}' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S' ${ref_prefix}{2}" \
-    --preview-window=down,border-top,60% \
-    --exit-0 || true
+  fzf --multi --ansi --no-input \
+    --with-shell 'bash -c' \
+    --delimiter '\t' --with-nth 5 \
+    --header-lines 1 --header "${fzf_header}" \
+    --bind "a:reload(${toggle})" \
+    --bind '/:show-input+unbind(a)' \
+    --preview "git log --color=always --graph --pretty=format:'${log_format}' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S' -n 50 {4}" \
+    --preview-window=down,border-top,60% <"${views}/shown" || true
 }
 
-run() {
-  if [[ -z ${execute} ]]; then
-    printf '%s\n' "$*"
-    return
-  fi
-  "$@"
+confirm_risky() {
+  local risky answer
+  risky=$(awk -F'\t' '$1 == "risky"' <<<"${selected}")
+  [[ -z ${risky} ]] && return
+  echo "==> ⚠️ 消すと失うものを含む:" >&2
+  cut -f5 <<<"${risky}" >&2
+  read -r -p '==> 消す? [y/N] ' answer || true
+  [[ ${answer} == y ]] && return
+  echo "==> 中止" >&2
+  return 1
 }
 
-delete_targets() {
-  local branch
-  while IFS=$'\t' read -r _ branch; do
-    delete_one
-  done
-}
-
-# 候補は origin/base に merge 済みか upstream が消えたものに絞ってあるので -D で消す。
-# -d は upstream か HEAD との比較なので、base 以外を checkout 中だと merge 済みでも拒否する。
-delete_one() {
-  if [[ -n ${remote} ]]; then
-    run git push origin --delete "${branch}"
-    return
-  fi
-  run git branch -D "${branch}"
-}
-
-clean_local() {
-  local ref_prefix=''
-  list_local | exclude "$(checked_out_branches)" | select_targets | delete_targets
-}
-
-clean_remote() {
-  local ref_prefix=origin/
-  list_remote | exclude | select_targets | delete_targets
-}
-
-clean() {
-  if [[ -n ${remote} ]]; then
-    clean_remote
-    return
-  fi
-  clean_local
+delete_kind() {
+  local kind="$1"
+  shift
+  local -a names
+  mapfile -t names < <(awk -F'\t' -v kind="${kind}" '$2 == kind { print $3 }' <<<"${selected}")
+  [[ ${#names[@]} -eq 0 ]] && return
+  "$@" "${names[@]}"
 }
 
 main() {
   set -euo pipefail
-  local execute='' remote='' interactive='' gone='' base=''
+  local view=safe base=''
   initialize "$@"
   git fetch --prune
-  clean
-  [[ -n ${execute} ]] && return
-  echo "==> dry-run. -e で実行" >&2
+  local views selected
+  views=$(mktemp -d)
+  # shellcheck disable=SC2064 # local 変数なので定義時に展開する
+  trap "rm -rf '${views}'" EXIT
+  write_views
+  selected=$(select_targets)
+  [[ -z ${selected} ]] && return
+  confirm_risky
+  delete_kind local git branch -D
+  delete_kind tag git tag -d
+  delete_kind remote git push origin --delete
 }
 main "$@"
