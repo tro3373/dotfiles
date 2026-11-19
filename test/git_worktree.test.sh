@@ -324,6 +324,7 @@ test_add_places_worktree_by_branch() {
 
 tmux_isolate() {
   tmux_dir=$(mktemp -d "${tmproot}/tmux.XXXXXX")
+  # lint-ignore: uppercase tmux reads TMUX_TMPDIR to pick its socket dir
   export TMUX_TMPDIR="${tmux_dir}"
   unset TMUX TMUX_PANE
 }
@@ -375,7 +376,11 @@ test_remove_without_tmux_server() {
   tmux_isolate
   local wt rc=0
   wt=$(add_wt feat-A)
-  (set -e; export initial_toplevel="${org}"; cd "${org}" && _do_remove_worktree "${wt}" >/dev/null 2>&1) || rc=$?
+  (
+    set -e
+    export initial_toplevel="${org}"
+    cd "${org}" && _do_remove_worktree "${wt}" >/dev/null 2>&1
+  ) || rc=$?
   check 'tmux: server が無くても remove が成功する' '0' "${rc}"
   check 'tmux: server が無くても worktree は消える' '0' "$([[ -e ${wt} ]] && echo 1 || echo 0)"
 }
