@@ -402,6 +402,29 @@ test_remove_without_tmux_server() {
   check 'tmux: server が無くても worktree は消える' '0' "$([[ -e ${wt} ]] && echo 1 || echo 0)"
 }
 
+test_remove_loop_leaves_stdin_for_confirm() {
+  new_repo loopstdin
+  add_wt a >/dev/null
+  add_wt b >/dev/null
+  local log="${tmproot}/loopstdin.log"
+  (
+    cd "${org}" || exit 1
+    export git_worktree_dir="${org_wt}"
+    # shellcheck disable=SC2329  # _remove_worktree が呼ぶ
+    _list_root_and_worktree_directories() { printf 't m l %s\n' "${org_wt}/a" "${org_wt}/b"; }
+    # shellcheck disable=SC2329
+    _fzf_worktrees() { cat; }
+    # shellcheck disable=SC2329
+    _do_remove_worktree() {
+      local got=
+      read -r got || true
+      echo "${1##*/}:${got}" >>"${log}"
+    }
+    _remove_worktree </dev/null
+  )
+  check 'remove loop: 確認の read が選択の行を読まない' $'a:\nb:' "$(cat "${log}")"
+}
+
 main() {
   set -uo pipefail
   tmproot=$(mktemp -d)
@@ -425,6 +448,7 @@ main() {
   test_remove_kills_tmux_sessions
   test_remove_keeps_running_tmux_session
   test_remove_without_tmux_server
+  test_remove_loop_leaves_stdin_for_confirm
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

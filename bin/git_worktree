@@ -431,7 +431,7 @@ _merge_worktree() {
   fi
 
   # shellcheck disable=SC2016
-  while read -r branch_path; do
+  while read -r branch_path <&3; do
     [[ -z ${branch_path} ]] && continue
 
     local merge_branch
@@ -448,7 +448,7 @@ _merge_worktree() {
     fi
 
     _do_remove_worktree "${branch_path}"
-  done < <(
+  done 3< <(
     _list_root_and_worktree_directories |
       grep -v "${repo_root_label}" |
       _fzf_worktrees \
@@ -465,12 +465,12 @@ _remove_worktree() {
   fi
 
   # shellcheck disable=SC2016
-  while read -r branch_path _; do
+  while read -r branch_path _ <&3; do
     [[ -z ${branch_path} ]] && continue
     [[ ${branch_path} =~ ^#.* ]] && continue
 
     _do_remove_worktree "${branch_path}"
-  done < <(
+  done 3< <(
     _list_root_and_worktree_directories |
       grep -v "${repo_root_label}" |
       _fzf_worktrees \
