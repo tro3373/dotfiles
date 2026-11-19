@@ -335,8 +335,6 @@ _force_remove_leftover() {
   trash "${target_path}"
 }
 
-# 全 pane の pane_current_path が dir かその配下にある session 名を出す。
-# 外の pane を 1 つでも含む session は出さない。
 _tmux_sessions_only_in_dir() {
   local dir="$1"
   awk -F '\t' -v dir="${dir}" '
@@ -349,8 +347,6 @@ _tmux_sessions_only_in_dir() {
   '
 }
 
-# worktree 専用の tmux session を消す。実行中の session は残す。
-# tmux が無い・server が動いていないときは何もしない (remove を止めない)。
 _kill_worktree_tmux_sessions() {
   local target_path="$1"
   command -v tmux >/dev/null 2>&1 || return 0

@@ -26,10 +26,6 @@
 #
 #   * -a: <org>-worktree/<branch の / を - にした名前> に作り、そのパスだけを stdout に出す。
 #
-#   * _do_remove_worktree の tmux 後始末: 全 pane が worktree 配下の session だけ消す。
-#       外の pane を含む session・prefix 違いの別 worktree の session・
-#       実行中の session は残す。tmux server が無くても remove は成功する。
-#
 #   test/git_worktree   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
@@ -326,7 +322,6 @@ test_add_places_worktree_by_branch() {
     '1' "$([[ -e ${org_wt}/feature-foo/.git ]] && echo 1 || echo 0)"
 }
 
-# 隔離 tmux server を起動する。ユーザの server には触れない。
 tmux_isolate() {
   tmux_dir=$(mktemp -d "${tmproot}/tmux.XXXXXX")
   export TMUX_TMPDIR="${tmux_dir}"
