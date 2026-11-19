@@ -362,7 +362,7 @@ test_remove_kills_tmux_sessions() {
   tmux new-window -t mixed -c "${org}" 'sleep 600'
   tmux_session other-ab "${wt_ab}"
   initial_toplevel="${org}"
-  remove_from_org "${wt}"
+  remove_from_org "${wt}/"
   check 'tmux: worktree 内だけの session は消える' '0' "$(tmux_has only-in)"
   check 'tmux: worktree のサブディレクトリだけの session は消える' '0' "$(tmux_has nested)"
   check 'tmux: 外の pane を含む session は残る' '1' "$(tmux_has mixed)"
@@ -379,7 +379,10 @@ test_remove_keeps_running_tmux_session() {
   pane=$(tmux list-panes -t '=runner' -F '#{pane_id}')
   socket=$(tmux display -p '#{socket_path}')
   initial_toplevel="${org}"
-  TMUX="${socket},0,0" TMUX_PANE="${pane}" remove_from_org "${wt}"
+  local out err="${tmproot}/tmuxcur.err"
+  out=$(cd "${org}" && TMUX="${socket},0,0" TMUX_PANE="${pane}" _do_remove_worktree "${wt}/" 2>"${err}")
+  check 'tmux: kill しても stdout は空 (gt が cd 先として読む)' '' "${out}"
+  check 'tmux: 実行中の session を残す警告を出す' '1' "$(grep -c "Keeping tmux session 'runner'" "${err}")"
   check 'tmux: 実行中の session は残る' '1' "$(tmux_has runner)"
   check 'tmux: 実行中でない session は消える' '0' "$(tmux_has victim)"
 }
@@ -387,13 +390,14 @@ test_remove_keeps_running_tmux_session() {
 test_remove_without_tmux_server() {
   new_repo notmux
   tmux_isolate
-  local wt rc=0
+  local wt rc
   wt=$(add_wt feat-A)
   (
     set -e
     export initial_toplevel="${org}"
-    cd "${org}" && _do_remove_worktree "${wt}" >/dev/null 2>&1
-  ) || rc=$?
+    remove_from_org "${wt}/"
+  )
+  rc=$?
   check 'tmux: server が無くても remove が成功する' '0' "${rc}"
   check 'tmux: server が無くても worktree は消える' '0' "$([[ -e ${wt} ]] && echo 1 || echo 0)"
 }

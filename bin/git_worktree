@@ -356,8 +356,8 @@ _kill_worktree_tmux_sessions() {
   panes=$(tmux list-panes -a -F "#{session_name}"$'\t'"#{pane_current_path}" 2>/dev/null) || return 0
 
   local current_session=""
-  if [[ -n ${TMUX_PANE:-} ]]; then
-    current_session=$(tmux display-message -p -t "${TMUX_PANE}" '#{session_name}' 2>/dev/null || true)
+  if [[ -n ${TMUX:-} ]]; then
+    current_session=$(tmux display-message -p '#{session_name}' 2>/dev/null) || return 0
   fi
 
   local session
