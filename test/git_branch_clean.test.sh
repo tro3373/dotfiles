@@ -2,7 +2,7 @@
 
 # bin/git_branch_clean のテスト。bare の origin と、別 clone からの push で
 # 「ローカルの main は古いまま origin/main だけ進んだ」状態を作って検証する。
-# fzf は PATH 先頭の偽物に差し替える (見出しの 1 行目を除き、FZF_PICK に一致する行だけ選ぶ)。
+# fzf は PATH 先頭の偽物に差し替える (--header-lines の行数を除き、FZF_PICK に一致する行だけ選ぶ)。
 #
 #   test/git_branch_clean.test.sh
 
@@ -48,6 +48,9 @@ merged_branch() {
 # tag:
 #   backup/feat/old-20260101-000000  元のブランチ feat/old が無い
 #   backup/feat/wip-20260101-000000  元のブランチ feat/wip が残っている
+#   backup/feat/wip                  日時なし。元のブランチ feat/wip が残っている
+#   backup/feat/wip-1-2              日時ではない数字。元のブランチ feat/wip-1-2 が無い
+#   v1.0                             backup ではない
 setup() {
   origin="${tmp}/origin.git"
   repo="${tmp}/repo"
@@ -84,6 +87,9 @@ setup() {
   g "${other}" push -q origin --delete feat/squash
   g "${repo}" tag backup/feat/old-20260101-000000 main
   g "${repo}" tag backup/feat/wip-20260101-000000 feat/wip
+  g "${repo}" tag backup/feat/wip feat/wip
+  g "${repo}" tag backup/feat/wip-1-2 feat/wip
+  g "${repo}" tag v1.0 main
 }
 
 clean() {
@@ -121,11 +127,12 @@ safe remote feat/current
 safe remote feat/merged
 safe remote feat/wt
 safe remote feature/release-x
-safe tag backup/feat/old-20260101-000000" "$(offered)"
+safe tag backup/feat/old-20260101-000000
+safe tag backup/feat/wip-1-2" "$(offered)"
 }
 
 test_all_view() {
-  check "-a: 🟢 の後ろに ⚠️ (未 merge・ブランチが残る backup tag) も出す" \
+  check "-a: 🟢 の後ろに ⚠️ (未 merge・ブランチが残る backup tag) も出す。backup 以外の tag は出ない" \
     "safe local feat/merged
 safe local feat/squash
 safe local feature/release-x
@@ -134,10 +141,17 @@ safe remote feat/merged
 safe remote feat/wt
 safe remote feature/release-x
 safe tag backup/feat/old-20260101-000000
+safe tag backup/feat/wip-1-2
 risky local feat/local
 risky local feat/wip
 risky remote feat/wip
+risky tag backup/feat/wip
 risky tag backup/feat/wip-20260101-000000" "$(offered -a)"
+}
+
+test_base() {
+  check "base に渡したブランチは local も remote も出ない" \
+    "" "$(offered -a feat/wip | grep -E '^[a-z]+ (local|remote) feat/wip$')"
 }
 
 test_display() {
@@ -149,7 +163,7 @@ test_display() {
 ⚠️ 💻 local  feat/wip 未 merge
 ⚠️ 🔖 tag    backup/feat/wip-20260101-000000 ブランチあり" "$(
       cut -f5 "${tmp}/fzf.in" | sed -e 's/\x1b\[[0-9]*m//g' -e 's/  *\(merged\|gone\|未\|ブランチ\)/ \1/' |
-        grep -E 'feat/squash|remote feat/merged|🔖|local  feat/wip'
+        grep -E 'feat/squash|remote feat/merged|[0-9]{6} |local  feat/wip'
     )"
 }
 
@@ -166,7 +180,7 @@ test_delete_safe() {
     clean </dev/null >/dev/null
   check "🟢 は確認なしで消す: local (base 以外を checkout 中でも)" \
     "develop feat/current feat/local feat/merged feat/wip feat/wt feature/release-x main" "$(branches)"
-  check "🟢 は確認なしで消す: tag" "backup/feat/wip-20260101-000000" "$(tags)"
+  check "🟢 は確認なしで消す: tag" "backup/feat/wip backup/feat/wip-1-2 backup/feat/wip-20260101-000000 v1.0" "$(tags)"
   check "🟢 は確認なしで消す: remote" \
     "develop feat/current feat/wip feat/wt feature/release-x main" "$(remote_branches)"
 }
@@ -175,14 +189,14 @@ test_delete_risky() {
   check "⚠️ は y 以外で消さず終了コード 1" \
     "1:backup/feat/wip-20260101-000000" "$(
       FZF_PICK="$(pick risky tag backup/feat/wip-20260101-000000)" clean -a <<<n >/dev/null
-      echo "$?:$(tags)"
+      echo "$?:$(tags | grep -o 'backup/feat/wip-20260101-000000')"
     )"
 
   FZF_PICK="$(pick risky tag backup/feat/wip-20260101-000000)|$(pick risky local feat/local)|$(pick risky remote feat/wip)" \
     clean -a <<<y >/dev/null
   check "⚠️ は y で消す: local" \
     "develop feat/current feat/merged feat/wip feat/wt feature/release-x main" "$(branches)"
-  check "⚠️ は y で消す: tag" "" "$(tags)"
+  check "⚠️ は y で消す: tag" "backup/feat/wip backup/feat/wip-1-2 v1.0" "$(tags)"
   check "⚠️ は y で消す: remote" \
     "develop feat/current feat/wt feature/release-x main" "$(remote_branches)"
 }
@@ -198,7 +212,12 @@ install_fake_fzf() {
   mkdir -p "${tmp}/bin"
   cat >"${tmp}/bin/fzf" <<'EOF'
 #!/usr/bin/env bash
-input=$(tail -n +2)
+header_lines=0
+while [[ $# -gt 0 ]]; do
+  [[ $1 == --header-lines ]] && header_lines="$2"
+  shift
+done
+input=$(tail -n "+$((header_lines + 1))")
 [[ -n ${FZF_LOG:-} ]] && printf '%s\n' "${input}" >"${FZF_LOG}"
 selected=$(printf '%s\n' "${input}" | grep -E "${FZF_PICK}")
 [[ -z ${selected} ]] && exit 1
@@ -221,6 +240,7 @@ main() {
   setup
   test_safe_view
   test_all_view
+  test_base
   test_display
   test_nothing_picked
   test_delete_safe

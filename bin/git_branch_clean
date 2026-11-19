@@ -2,7 +2,7 @@
 # 要らなくなったローカルブランチ・origin のブランチ・backup tag を、fzf で選んで消す。
 # usage: git_branch_clean [-a] [base]  (base 既定: origin/HEAD の指す先)
 #   -a  全件表示で開く。既定は 🟢 (消してよいもの) だけ
-# fzf の中: a で 🟢 だけと全件を切り替え、/ で絞り込み、Tab で複数選択、Enter で消す。
+# fzf の中: a で 🟢 だけと全件を切り替え、/ で絞り込み (Esc でやめる)、Tab で複数選択、Enter で消す。
 #   🟢  base に merge 済みか upstream が消えたブランチ、元のブランチが無い backup tag
 #   ⚠️  未 merge のブランチ、元のブランチが残っている backup tag。選ぶと消す前に y/N を聞く
 # 保護ブランチ・base・checkout 中のローカルブランチは候補に出ない。
@@ -10,7 +10,7 @@
 
 readonly protected_branches=(develop main master)
 readonly log_format='%Cred%h %Cgreen(%cd)%Creset -%C(yellow)%d%Creset %s %C(bold blue)<%an>%Creset'
-readonly fzf_header='a: 🟢 だけ <=> 全件 | /: 絞り込み | Tab: 複数選択 | Enter: 消す'
+readonly fzf_header='a: 🟢 だけ <=> 全件 | /: 絞り込み (Esc でやめる) | Tab: 複数選択 | Enter: 消す'
 
 initialize() {
   local arg
@@ -31,9 +31,9 @@ initialize() {
 # 候補は 1 行 1 件の `<state>\t<kind>\t<name>\t<reason>`。
 # state は safe か risky、kind は local・remote・tag。
 list_local() {
-  git for-each-ref refs/heads --merged "origin/${base}" --format '%(refname:short)' |
+  git for-each-ref refs/heads --merged "origin/${base}" --format '%(refname:lstrip=2)' |
     sed 's/.*/safe\tlocal\t&\tmerged/'
-  git for-each-ref refs/heads --no-merged "origin/${base}" --format '%(refname:short)%09%(upstream:track)' |
+  git for-each-ref refs/heads --no-merged "origin/${base}" --format '%(refname:lstrip=2)%09%(upstream:track)' |
     awk -F'\t' -v OFS='\t' '
       $2 == "[gone]" { print "safe", "local", $1, "gone (upstream が消えた)"; next }
       { print "risky", "local", $1, "未 merge" }
@@ -49,15 +49,16 @@ list_remote() {
 
 list_tags() {
   local branches
-  branches=$(git for-each-ref refs/heads --format '%(refname:short)')
+  branches=$(git for-each-ref refs/heads --format '%(refname:lstrip=2)')
   git tag -l 'backup/*' | awk -v OFS='\t' -v branches="${branches}" '
     BEGIN { n = split(branches, b, "\n"); for (i = 1; i <= n; i++) alive[b[i]] = 1 }
     {
-      branch = $0
-      sub(/^backup\//, "", branch)
-      sub(/-[0-9]+-[0-9]+$/, "", branch)
+      name = $0
+      sub(/^backup\//, "", name)
+      stamped = name
+      sub(/-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]$/, "", stamped)
     }
-    branch in alive { print "risky", "tag", $0, "ブランチあり"; next }
+    (name in alive) || (stamped in alive) { print "risky", "tag", $0, "ブランチあり"; next }
     { print "safe", "tag", $0, "ブランチ無し" }
   '
 }
@@ -104,21 +105,24 @@ write_views() {
   safe=$(awk -F'\t' '$1 == "safe"' <<<"${all}")
   printf '\t\t\t\t%s\n%s\n' '🟢 消してよいものだけを表示中' "${safe}" | sed '/^$/d' >"${views}/safe"
   printf '\t\t\t\t%s\n%s\n' '全件を表示中 (⚠️ は消すと失う)' "${all}" | sed '/^$/d' >"${views}/all"
-  local other=all
-  [[ ${view} == all ]] && other=safe
+  local -A other=([safe]=all [all]=safe)
   mv "${views}/${view}" "${views}/shown"
-  mv "${views}/${other}" "${views}/hidden"
+  mv "${views}/${other[${view}]}" "${views}/hidden"
 }
 
 select_targets() {
   local toggle="cd '${views}'; mv hidden swap; mv shown hidden; mv swap shown; cat shown"
+  # shellcheck disable=SC2016 # FZF_INPUT_STATE は fzf が bind の実行時に渡す
+  local leave_filter='case $FZF_INPUT_STATE in enabled) echo "clear-query+hide-input+rebind(a,/)" ;; *) echo abort ;; esac'
   # 何も選ばずに抜けたときの非 0 を、削除対象なしとして扱う
   fzf --multi --ansi --no-input \
     --with-shell 'bash -c' \
     --delimiter '\t' --with-nth 5 \
     --header-lines 1 --header "${fzf_header}" \
-    --bind "a:reload(${toggle})" \
-    --bind '/:show-input+unbind(a)' \
+    --id-nth 4 \
+    --bind "a:reload-sync(${toggle})" \
+    --bind '/:show-input+unbind(a,/)' \
+    --bind "esc:transform:${leave_filter}" \
     --preview "git log --color=always --graph --pretty=format:'${log_format}' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S' -n 50 {4}" \
     --preview-window=down,border-top,60% <"${views}/shown" || true
 }
