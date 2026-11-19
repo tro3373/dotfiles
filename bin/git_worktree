@@ -335,6 +335,45 @@ _force_remove_leftover() {
   trash "${target_path}"
 }
 
+_tmux_sessions_only_in_dir() {
+  local dir="$1"
+  awk -F '\t' -v dir="${dir}" '
+    {
+      seen[$1] = 1
+      if ($2 == dir || index($2, dir "/") == 1) next
+      outside[$1] = 1
+    }
+    END { for (s in seen) if (!outside[s]) print s }
+  '
+}
+
+_kill_worktree_tmux_sessions() {
+  local target_path="$1"
+  command -v tmux >/dev/null 2>&1 || return 0
+
+  local dir panes
+  dir=$(realpath "${target_path%/}" 2>/dev/null) || return 0
+  panes=$(tmux list-panes -a -F "#{session_name}"$'\t'"#{pane_current_path}" 2>/dev/null) || return 0
+
+  local current_session=""
+  if [[ -n ${TMUX:-} ]]; then
+    current_session=$(tmux display-message -p '#{session_name}' 2>/dev/null) || return 0
+  fi
+
+  local session
+  while IFS= read -r session; do
+    [[ -z ${session} ]] && continue
+    if [[ ${session} == "${current_session}" ]]; then
+      wlog "==> Keeping tmux session '${session}' (running git_worktree here)."
+      continue
+    fi
+    if tmux kill-session -t "=${session}" 2>/dev/null; then
+      ilog "==> Killed tmux session '${session}'."
+    fi
+  done < <(_tmux_sessions_only_in_dir "${dir}" <<<"${panes}")
+  return 0
+}
+
 _do_remove_worktree() {
   local target_path="$1"
 
@@ -344,6 +383,8 @@ _do_remove_worktree() {
     [[ "$(realpath "${target_path%/}")" == "$initial_toplevel" ]]; then
     removing_current=1
   fi
+
+  _kill_worktree_tmux_sessions "${target_path}"
 
   _rename_removed_branch "${target_path}"
 
@@ -390,7 +431,7 @@ _merge_worktree() {
   fi
 
   # shellcheck disable=SC2016
-  while read -r branch_path; do
+  while read -r branch_path <&3; do
     [[ -z ${branch_path} ]] && continue
 
     local merge_branch
@@ -407,7 +448,7 @@ _merge_worktree() {
     fi
 
     _do_remove_worktree "${branch_path}"
-  done < <(
+  done 3< <(
     _list_root_and_worktree_directories |
       grep -v "${repo_root_label}" |
       _fzf_worktrees \
@@ -424,12 +465,12 @@ _remove_worktree() {
   fi
 
   # shellcheck disable=SC2016
-  while read -r branch_path _; do
+  while read -r branch_path _ <&3; do
     [[ -z ${branch_path} ]] && continue
     [[ ${branch_path} =~ ^#.* ]] && continue
 
     _do_remove_worktree "${branch_path}"
-  done < <(
+  done 3< <(
     _list_root_and_worktree_directories |
       grep -v "${repo_root_label}" |
       _fzf_worktrees \

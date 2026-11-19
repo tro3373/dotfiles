@@ -322,10 +322,113 @@ test_add_places_worktree_by_branch() {
     '1' "$([[ -e ${org_wt}/feature-foo/.git ]] && echo 1 || echo 0)"
 }
 
+tmux_isolate() {
+  tmux_teardown
+  tmux_dir=$(mktemp -d "${tmproot}/tmux.XXXXXX")
+  # lint-ignore: uppercase tmux reads TMUX_TMPDIR to pick its socket dir
+  export TMUX_TMPDIR="${tmux_dir}"
+  unset TMUX TMUX_PANE
+}
+
+tmux_teardown() {
+  [[ -z ${tmux_dir:-} ]] && return 0
+  TMUX_TMPDIR="${tmux_dir}" tmux kill-server 2>/dev/null
+  return 0
+}
+
+tmux_session() {
+  tmux new-session -d -s "$1" -c "$2" 'sleep 600'
+}
+
+remove_from_org() {
+  (cd "${org}" && _do_remove_worktree "$1" >/dev/null 2>&1)
+}
+
+tmux_has() {
+  tmux has-session -t "=$1" 2>/dev/null && echo 1 || echo 0
+}
+
+test_remove_kills_tmux_sessions() {
+  new_repo tmuxs
+  tmux_isolate
+  local wt wt_ab sub
+  wt=$(add_wt feat-A)
+  wt_ab=$(add_wt feat-AB)
+  sub="${wt}/sub"
+  mkdir -p "${sub}"
+  tmux_session only-in "${wt}"
+  tmux_session nested "${sub}"
+  tmux_session mixed "${wt}"
+  tmux new-window -t mixed -c "${org}" 'sleep 600'
+  tmux_session other-ab "${wt_ab}"
+  initial_toplevel="${org}"
+  remove_from_org "${wt}/"
+  check 'tmux: worktree 内だけの session は消える' '0' "$(tmux_has only-in)"
+  check 'tmux: worktree のサブディレクトリだけの session は消える' '0' "$(tmux_has nested)"
+  check 'tmux: 外の pane を含む session は残る' '1' "$(tmux_has mixed)"
+  check 'tmux: prefix が同じ別 worktree の session は残る' '1' "$(tmux_has other-ab)"
+}
+
+test_remove_keeps_running_tmux_session() {
+  new_repo tmuxcur
+  tmux_isolate
+  local wt pane socket
+  wt=$(add_wt feat-A)
+  tmux_session runner "${wt}"
+  tmux_session victim "${wt}"
+  pane=$(tmux list-panes -t '=runner' -F '#{pane_id}')
+  socket=$(tmux display -p '#{socket_path}')
+  initial_toplevel="${org}"
+  local out err="${tmproot}/tmuxcur.err"
+  out=$(cd "${org}" && TMUX="${socket},0,0" TMUX_PANE="${pane}" _do_remove_worktree "${wt}/" 2>"${err}")
+  check 'tmux: kill しても stdout は空 (gt が cd 先として読む)' '' "${out}"
+  check 'tmux: 実行中の session を残す警告を出す' '1' "$(grep -c "Keeping tmux session 'runner'" "${err}")"
+  check 'tmux: 実行中の session は残る' '1' "$(tmux_has runner)"
+  check 'tmux: 実行中でない session は消える' '0' "$(tmux_has victim)"
+}
+
+test_remove_without_tmux_server() {
+  new_repo notmux
+  tmux_isolate
+  local wt rc
+  wt=$(add_wt feat-A)
+  (
+    set -e
+    export initial_toplevel="${org}"
+    remove_from_org "${wt}/"
+  )
+  rc=$?
+  check 'tmux: server が無くても remove が成功する' '0' "${rc}"
+  check 'tmux: server が無くても worktree は消える' '0' "$([[ -e ${wt} ]] && echo 1 || echo 0)"
+}
+
+test_remove_loop_leaves_stdin_for_confirm() {
+  new_repo loopstdin
+  add_wt a >/dev/null
+  add_wt b >/dev/null
+  local log="${tmproot}/loopstdin.log"
+  (
+    cd "${org}" || exit 1
+    export git_worktree_dir="${org_wt}"
+    # shellcheck disable=SC2329  # _remove_worktree が呼ぶ
+    _list_root_and_worktree_directories() { printf 't m l %s\n' "${org_wt}/a" "${org_wt}/b"; }
+    # shellcheck disable=SC2329
+    _fzf_worktrees() { cat; }
+    # shellcheck disable=SC2329
+    _do_remove_worktree() {
+      local got=
+      read -r got || true
+      echo "${1##*/}:${got}" >>"${log}"
+    }
+    _remove_worktree </dev/null
+  )
+  check 'remove loop: 確認の read が選択の行を読まない' $'a:\nb:' "$(cat "${log}")"
+}
+
 main() {
   set -uo pipefail
   tmproot=$(mktemp -d)
-  trap 'rm -rf "${tmproot}"' EXIT
+  trap 'tmux_teardown; rm -rf "${tmproot}"' EXIT
   local pass=0 fail=0
 
   test_remove_current_emits_org_root
@@ -342,6 +445,10 @@ main() {
   test_default_ln_config_without_ignored
   test_merged_label
   test_add_places_worktree_by_branch
+  test_remove_kills_tmux_sessions
+  test_remove_keeps_running_tmux_session
+  test_remove_without_tmux_server
+  test_remove_loop_leaves_stdin_for_confirm
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
