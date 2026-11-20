@@ -139,7 +139,8 @@ write_views() {
 select_targets() {
   local toggle="cd '${views}'; mv hidden swap; mv shown hidden; mv swap shown; cat shown"
   # shellcheck disable=SC2016 # FZF_INPUT_STATE は fzf が bind の実行時に渡す
-  local leave_filter='case $FZF_INPUT_STATE in enabled) echo "clear-query+hide-input+rebind(a,/)" ;; *) echo abort ;; esac'
+  # fzf 0.74 は clear-query の直後に hide-input すると、一覧を絞り込まれたまま残す。search() で検索し直させる
+  local leave_filter='case $FZF_INPUT_STATE in enabled) echo "clear-query+search()+hide-input+rebind(a,/)" ;; *) echo abort ;; esac'
   # 何も選ばずに抜けたときの非 0 を、削除対象なしとして扱う
   fzf --multi --ansi --no-input \
     --with-shell 'bash -c' \

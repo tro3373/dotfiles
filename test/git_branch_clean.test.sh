@@ -3,6 +3,8 @@
 # bin/git_branch_clean のテスト。bare の origin と、別 clone からの push で
 # 「ローカルの main は古いまま origin/main だけ進んだ」状態を作って検証する。
 # fzf は PATH 先頭の偽物に差し替える (--header-lines の行数を除き、FZF_PICK に一致する行だけ選ぶ)。
+# fzf の中のキー操作 (a・/・Esc・Tab) は、実物の fzf を tmux の pane で開いて確かめる。
+# tmux-sandbox の外で起動されたら、自分を tmux-sandbox 経由で起動し直す。
 #
 #   test/git_branch_clean.test.sh
 
@@ -208,6 +210,114 @@ test_unknown_option() {
   )"
 }
 
+# 実物の fzf で git_branch_clean を pane に開く。pane は git_branch_clean が終わると閉じる。
+open_real_fzf() {
+  tmux kill-session -t gbc 2>/dev/null
+  tmux -f /dev/null new-session -d -s gbc -x 160 -y 40 -c "${repo}" \
+    "env -u FZF_DEFAULT_OPTS -u FZF_DEFAULT_OPTS_FILE PATH='${real_path}' '${bin}'"
+  wait_screen 'Enter: 消す'
+}
+
+keys() {
+  tmux send-keys -t gbc "$@"
+}
+
+screen() {
+  tmux capture-pane -p -t gbc 2>/dev/null
+}
+
+# 一覧の行だけに出る `<種類>  <名前>` の形。preview の git log にもブランチ名は出る
+readonly row_risky='local  feat/local' row_squash='local  feat/squash' row_release='local  feature/release-x'
+
+wait_until() {
+  local _
+  for _ in $(seq 50); do
+    "$@" && return 0
+    sleep 0.1
+  done
+  return 1
+}
+
+screen_has() {
+  screen | grep -qF -- "$1"
+}
+
+screen_lacks() {
+  ! screen_has "$1"
+}
+
+pane_closed() {
+  ! tmux has-session -t gbc 2>/dev/null
+}
+
+wait_screen() {
+  wait_until screen_has "$1"
+}
+
+# 画面に text が出れば 1、5 秒待っても出なければ 0
+shown() {
+  wait_screen "$1" && echo 1 || echo 0
+}
+
+gone() {
+  wait_until screen_lacks "$1" && echo 1 || echo 0
+}
+
+closed() {
+  wait_until pane_closed && echo 1 || echo 0
+}
+
+test_real_fzf_toggle() {
+  open_real_fzf
+  check "実 fzf: 既定は 🟢 だけで開く" "1:1" "$(shown '消してよいものだけを表示中'):$(gone "${row_risky}")"
+  keys a
+  check "実 fzf: a で全件に切り替わり ⚠️ が出る" "1:1" "$(shown '全件を表示中'):$(shown "${row_risky}")"
+  keys a
+  check "実 fzf: もう一度 a で 🟢 だけに戻る" "1:1" "$(shown '消してよいものだけを表示中'):$(gone "${row_risky}")"
+  keys Escape
+  check "実 fzf: Esc で何も消さずに終わる" \
+    "1:develop feat/current feat/local feat/merged feat/squash feat/wip feat/wt feature/release-x main" \
+    "$(closed):$(branches)"
+}
+
+test_real_fzf_filter() {
+  open_real_fzf
+  keys /
+  keys -l squash
+  check "実 fzf: / の後は a を打っても切り替わらず、絞り込みになる" \
+    "1:1:1" "$(gone "${row_release}"):$(shown "${row_squash}"):$(shown '消してよいものだけを表示中')"
+  keys Escape
+  check "実 fzf: 絞り込み中の Esc は終了せず、絞り込む前の一覧に戻る" "1" "$(shown "${row_release}")"
+  keys a
+  check "実 fzf: 絞り込みをやめると a の切り替えが戻る" "1" "$(shown '全件を表示中')"
+  keys Escape
+  check "実 fzf: 絞り込みの外の Esc は終了する" "1" "$(closed)"
+}
+
+test_real_fzf_keeps_selection() {
+  open_real_fzf
+  keys Up
+  keys Tab
+  keys a
+  wait_screen '全件を表示中'
+  keys a
+  wait_screen '消してよいものだけを表示中'
+  keys Enter
+  check "実 fzf: Tab で選んだものは a で切り替えても選ばれたまま。カーソル位置のものは消さない" \
+    "1:develop feat/current feat/local feat/merged feat/wip feat/wt feature/release-x main" \
+    "$(closed):$(branches)"
+}
+
+# 偽の fzf の test が消した後の状態に依らないよう、作り直した repo で確かめる
+test_real_fzf() {
+  local tmp="${tmp}/real"
+  mkdir -p "${tmp}"
+  setup
+  test_real_fzf_toggle
+  test_real_fzf_filter
+  test_real_fzf_keeps_selection
+}
+
 install_fake_fzf() {
   mkdir -p "${tmp}/bin"
   cat >"${tmp}/bin/fzf" <<'EOF'
@@ -229,8 +339,12 @@ EOF
 }
 
 main() {
-  local pass=0 fail=0 tmp bin
-  bin="$(cd "$(dirname "${BASH_SOURCE[0]}")/../bin" && pwd)/git_branch_clean"
+  local pass=0 fail=0 tmp bin bin_dir real_path="${PATH}"
+  bin_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../bin" && pwd)"
+  if ! "${bin_dir}/tmux-sandbox" --inside; then
+    exec "${bin_dir}/tmux-sandbox" "${BASH_SOURCE[0]}" "$@"
+  fi
+  bin="${bin_dir}/git_branch_clean"
   tmp=$(mktemp -d)
   # shellcheck disable=SC2064 # local 変数なので定義時に展開する
   trap "rm -rf '${tmp}'" EXIT
@@ -246,6 +360,7 @@ main() {
   test_delete_safe
   test_delete_risky
   test_unknown_option
+  test_real_fzf
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
 }
