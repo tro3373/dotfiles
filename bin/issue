@@ -7,8 +7,7 @@
 # then view them in nvim, one tab per issue.
 #   issue [-R owner/repo]
 # To tasks: same pick + convert, but add each issue as a task via
-# `tasks add`, marked with a `tracker: gh=owner/repo#NN` line so /task can read
-# and comment on the issue it came from.
+# `tasks add`.
 #   issue -t [-R owner/repo]
 # Create: write the body in nvim (or pass -f), then `gh issue create --web`.
 # Without --title, the title is generated from the body by the LLM.
@@ -18,9 +17,6 @@
 # remote.
 
 command_name=$(basename "$0") && readonly command_name
-# Task-list markdown line ("- [ ] Title"). issue_to_tasks writes the format and
-# insert_tracker reads it back, so the pattern lives in one place.
-readonly task_re='^- \[[x ]\] (.*)$'
 # repo args for every gh call: set by parse_args. Empty means "let gh resolve
 # the repo from the current directory's git remote".
 gh_repo_args=()
@@ -147,40 +143,11 @@ issue_to_tasks() {
   return 0
 }
 
-insert_tracker() {
-  # Put the `tracker:` marker (~/.claude/skills/task/references/tracker.md) right
-  # under the title line. /task reads that marker to know which issue a task
-  # belongs to; a task without one never triggers the issue integration.
-  # Only the title line can match: issue_to_tasks indents every body line.
-  local tracker=$1 line
-  while IFS='' read -r line || [[ -n ${line} ]]; do
-    printf '%s\n' "${line}"
-    if [[ ${line} =~ ${task_re} ]]; then
-      printf '  - tracker: %s\n' "${tracker}"
-    fi
-  done
-}
-
-tracker_of() {
-  # tracker の owner/repo は issue の URL だけから取る。-R で別 repo を見ることが
-  # あるので、cwd の repo を前提にすると /task が無い issue へ投稿しに行く。
-  # host も github.com に限る: `gh=owner/repo#NN` は host を持たず、/task は
-  # github.com へ投稿するため、GHE の URL は黙って別の issue を指す。
-  local url=$1
-  local url_re='^https://github\.com/([^/]+/[^/]+)/issues/([0-9]+)$'
-  [[ ! ${url} =~ ${url_re} ]] && return 1
-  printf 'gh=%s#%s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
-}
-
 append_to_tasks() {
   # `tasks add` turns one call into one task, so each issue is added on its own.
-  local number raw tracker
+  local number
   for number in "$@"; do
-    raw=$(view_issue "${number}")
-    if ! tracker=$(tracker_of "$(jq -r '.url // ""' <<<"${raw}")"); then
-      die "==> Error: Cannot build a tracker for #${number}; add the task by hand"
-    fi
-    issue_to_tasks <<<"${raw}" | insert_tracker "${tracker}" | tasks add
+    view_issue "${number}" | issue_to_tasks | tasks add
   done
 }
 

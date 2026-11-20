@@ -61,17 +61,6 @@ test_comments_are_one_block_each_in_order() {
     "$(gh_issue 1 '' "${comments}" | TZ=Asia/Tokyo issue_to_tasks)"
 }
 
-# 4. tracker は URL の owner/repo と番号から作る。github.com 以外は拒否する
-test_tracker_of() {
-  check 'tracker は URL の owner/repo#NN' 'gh=a/b#7' "$(tracker_of https://github.com/a/b/issues/7)"
-  local rc=0
-  tracker_of https://ghe.example.com/a/b/issues/7 >/dev/null || rc=$?
-  check 'github.com 以外の URL は tracker を作らない' 1 "${rc}"
-  rc=0
-  tracker_of https://github.com/a/b/pull/7 >/dev/null || rc=$?
-  check 'PR の URL は tracker を作らない' 1 "${rc}"
-}
-
 # --- issue_select_open: 外部コマンドのスタブ ---
 # fzf が起動している間 (= 一覧の JSON が残っている間) に、preview を 1 番目の候補で
 # 実際に走らせて出力を記録する。preview がネットワークに出ず、手元の JSON だけで
@@ -97,7 +86,7 @@ gh() {
   [[ $2 != view ]] && return 0
   local number=$3 repo=o/r
   [[ ${4:-} == -R ]] && repo=$5
-  gh_issue "${number}" "body of #${number}" '[]' "${gh_url-https://github.com/${repo}/issues/${number}}"
+  gh_issue "${number}" "body of #${number}" '[]' "https://github.com/${repo}/issues/${number}"
 }
 tasks() {
   printf 'tasks %s\n' "$*" >>"${stub_log}"
@@ -115,19 +104,19 @@ nvim() {
 
 sink_log() { grep -v -e '^fzf ' -e '^gh ' -e '^preview> ' "${stub_log}"; }
 
-# 5. to-tasks は issue ごとに tracker 付きで tasks add に渡す
+# 5. to-tasks は issue ごとに tasks add に渡す
 test_to_tasks_appends_each_selected_issue() {
   local stub_log fzf_selection mode=to-tasks gh_repo_args=()
   stub_log=$(mktemp)
   fzf_selection=$(printf '1\tt1\n2\tt2')
   issue_select_open
-  check '複数選択した issue が tracker 付きで 1 件ずつ tasks add に渡る' \
-    "$(printf 'tasks add\n| - [ ] [#1] title of #1\n|   - tracker: gh=o/r#1\n|   body of #1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1\ntasks add\n| - [ ] [#2] title of #2\n|   - tracker: gh=o/r#2\n|   body of #2\n|   - View this issue on GitHub: https://github.com/o/r/issues/2')" \
+  check '複数選択した issue が 1 件ずつ tasks add に渡る' \
+    "$(printf 'tasks add\n| - [ ] [#1] title of #1\n|   body of #1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1\ntasks add\n| - [ ] [#2] title of #2\n|   body of #2\n|   - View this issue on GitHub: https://github.com/o/r/issues/2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
 
-# 6. -R は list / view / preview のすべてに渡り、tracker も -R の repo を指す
+# 6. -R は list / view / preview のすべてに渡る
 test_repo_override_reaches_every_gh_call() {
   local stub_log fzf_selection mode=to-tasks gh_repo_args=(-R x/y) actual
   stub_log=$(mktemp)
@@ -135,17 +124,6 @@ test_repo_override_reaches_every_gh_call() {
   issue_select_open
   actual=$(grep -c -e '^gh issue list -R x/y' -e '^gh issue view 3 -R x/y' "${stub_log}")
   check 'list と view の両方に -R が渡る' 2 "${actual}"
-  check 'tracker が -R の repo を指す' '|   - tracker: gh=x/y#3' "$(grep -- '- tracker:' "${stub_log}")"
-  rm -f "${stub_log}"
-}
-
-# 7. tracker を作れない URL なら tasks に積まずに止まる
-test_to_tasks_stops_on_unexpected_url() {
-  local stub_log fzf_selection mode=to-tasks gh_repo_args=() gh_url=https://ghe.example.com/o/r/issues/1
-  stub_log=$(mktemp)
-  fzf_selection=$(printf '1\tt1')
-  (issue_select_open) 2>/dev/null
-  check 'tracker を作れなければ tasks add を呼ばない' '' "$(sink_log)"
   rm -f "${stub_log}"
 }
 
@@ -155,7 +133,7 @@ test_open_mode_opens_one_tab_per_issue() {
   stub_log=$(mktemp)
   fzf_selection=$(printf '1\tt1\n2\tt2')
   issue_select_open
-  check 'open は issue ごとの <NN>.md を nvim -p で開き、tracker は付けない' \
+  check 'open は issue ごとの <NN>.md を nvim -p で開く' \
     "$(printf 'nvim -p\n# 1.md\n| - [ ] [#1] title of #1\n|   body of #1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1\n# 2.md\n| - [ ] [#2] title of #2\n|   body of #2\n|   - View this issue on GitHub: https://github.com/o/r/issues/2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
@@ -227,10 +205,8 @@ main() {
   test_title_and_footer
   test_body_is_indented_markdown
   test_comments_are_one_block_each_in_order
-  test_tracker_of
   test_to_tasks_appends_each_selected_issue
   test_repo_override_reaches_every_gh_call
-  test_to_tasks_stops_on_unexpected_url
   test_open_mode_opens_one_tab_per_issue
   test_cancelled_selection_calls_no_sink
   test_preview_reads_listed_json

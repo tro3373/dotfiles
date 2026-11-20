@@ -29,9 +29,7 @@
 # skipped (and so is its task), so re-picking the same issue never creates a
 # duplicate. Creation only; closing stays manual.
 #   jira-issue -g [-R owner/repo]
-# Both modes mark the appended task with a `tracker:` line so /task can read
-# and comment on the issue(s) it came from; -g records the GitHub issue it
-# just created alongside the Jira key.
+# -g ends the task body with a link to the GitHub issue it just created.
 # These modes pick several issues with TAB; each pick becomes its own
 # tab / task / GitHub issue.
 # Create (stdin):
@@ -232,22 +230,6 @@ list_issues_plain() {
     --plain --no-headers --columns KEY,SUMMARY,STATUS,ASSIGNEE
 }
 
-insert_tracker() {
-  # Put the `tracker:` marker (~/.claude/skills/task/references/tracker.md) right
-  # under the title line of a converted issue. /task reads that marker to know
-  # which issues a task belongs to, so whoever appends the task has to write it;
-  # a task without one never triggers the issue integration at all.
-  # Only the title line can match: issue_to_tasks indents every body line by two
-  # spaces, so nothing below it starts with "- [ ]".
-  local tracker=$1 line
-  while IFS='' read -r line || [[ -n ${line} ]]; do
-    printf '%s\n' "${line}"
-    if [[ ${line} =~ ${task_re} ]]; then
-      printf '  - tracker: %s\n' "${tracker}"
-    fi
-  done
-}
-
 # jira の日時 ("2021-11-24T09:00:00.000+0000") をローカルの分精度に落とす。
 # 秒とミリ秒はタスクの本文で追う情報ではないし、桁が揃わないと読みにくい。
 format_datetime() {
@@ -309,8 +291,7 @@ append_to_tasks() {
   # `tasks add` turns one call into one task, so each issue is added on its own.
   local key
   for key in "$@"; do
-    view_issue "${key}" | issue_to_tasks |
-      insert_tracker "jira=${key}" | tasks add
+    view_issue "${key}" | issue_to_tasks | tasks add
   done
 }
 
@@ -392,17 +373,8 @@ add_gh_task() {
   # cwd の repo を要求するのに対し -R は「その repo に居なくてよい」
   # ための引数なので、ここが一番落ちやすい。先に link を済ませておけば、落ちても
   # 失うのはタスク 1 件だけで、手で足せる。
-  # tracker の owner/repo と番号は作成した URL だけから取る。-R で別 repo に作る
-  # ことがあるので、cwd の repo を前提にすると /task が無い issue へ投稿しに行く。
-  # host も github.com に限る: tracker の `gh=owner/repo#NN` は host を持たず、
-  # /task は github.com へ投稿するため、GHE の URL は黙って別の issue を指す。
-  local url_re='^https://github\.com/([^/]+/[^/]+)/issues/([0-9]+)'
-  if [[ ! ${url} =~ ${url_re} ]]; then
-    die "==> Error: Cannot build a tracker from ${url}; add the task by hand"
-  fi
-  local tracker="gh=${BASH_REMATCH[1]}#${BASH_REMATCH[2]} jira=${key}"
-  if ! printf '%s\n' "${markdown}" | insert_tracker "${tracker}" | tasks add; then
-    die "==> Error: Created and linked ${url} but could not append its task; add it by hand with: ${tracker}"
+  if ! printf '%s\n  - View this issue on GitHub: %s\n' "${markdown}" "${url}" | tasks add; then
+    die "==> Error: Created and linked ${url} but could not append its task; add it by hand"
   fi
 }
 
