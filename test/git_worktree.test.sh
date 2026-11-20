@@ -30,6 +30,7 @@
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
 gwt_bin=$(cd "${script_dir}/../bin" && pwd)/git_worktree
+sandbox_bin=$(cd "${script_dir}/../bin" && pwd)/tmux-sandbox
 
 # shellcheck disable=SC1090
 source "$gwt_bin"
@@ -322,12 +323,8 @@ test_add_places_worktree_by_branch() {
     '1' "$([[ -e ${org_wt}/feature-foo/.git ]] && echo 1 || echo 0)"
 }
 
-in_tmux_sandbox() {
-  [[ -z ${TMUX:-} && -n ${TMUX_SANDBOX:-} && ${TMUX_SANDBOX:-} == "${TMUX_TMPDIR:-}" ]]
-}
-
 tmux_fresh_server() {
-  in_tmux_sandbox || exit 1
+  "${sandbox_bin}" --inside || exit 1
   tmux kill-server 2>/dev/null
   return 0
 }
@@ -423,8 +420,8 @@ test_remove_loop_leaves_stdin_for_confirm() {
 
 main() {
   set -uo pipefail
-  if ! in_tmux_sandbox; then
-    exec "${script_dir}/../bin/tmux-sandbox" "${BASH_SOURCE[0]}" "$@"
+  if ! "${sandbox_bin}" --inside; then
+    exec "${sandbox_bin}" "${BASH_SOURCE[0]}" "$@"
   fi
   tmproot=$(mktemp -d)
   trap 'rm -rf "${tmproot}"' EXIT

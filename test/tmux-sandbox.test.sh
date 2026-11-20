@@ -80,6 +80,18 @@ process_alive_after_grace() {
   kill -0 "${pid}" 2>/dev/null && echo 1 || echo 0
 }
 
+test_inside() {
+  local rc=0
+  in_sandbox "${sandbox_bin}" --inside || rc=$?
+  check '--inside: 中では 0' '0' "${rc}"
+  rc=0
+  env -u TMUX -u TMUX_SANDBOX "${sandbox_bin}" --inside || rc=$?
+  check '--inside: 外では 1' '1' "${rc}"
+  rc=0
+  TMUX="${outer_socket},${outer_pid},0" TMUX_SANDBOX=/tmp/x TMUX_TMPDIR=/tmp/x "${sandbox_bin}" --inside || rc=$?
+  check '--inside: TMUX_SANDBOX が残っていても TMUX があれば 1' '1' "${rc}"
+}
+
 main() {
   set -uo pipefail
   local pass=0 fail=0 tmp sandbox_bin outer_socket outer_pid
@@ -97,6 +109,7 @@ main() {
   test_server_is_isolated
   test_kill_server_stays_inside
   test_cleanup
+  test_inside
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

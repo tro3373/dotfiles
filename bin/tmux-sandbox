@@ -6,10 +6,15 @@
 # command の中では TMUX_SANDBOX が TMUX_TMPDIR と同じ値で、TMUX は未設定になる。
 #
 #   tmux-sandbox <command> [args...]
+#   tmux-sandbox --inside   この中で実行されていれば 0、外なら 1 を返す
 
 cleanup() {
   tmux kill-server 2>/dev/null || true
   rm -rf "${sandbox_dir}"
+}
+
+inside() {
+  [[ -z ${TMUX:-} && -n ${TMUX_SANDBOX:-} && ${TMUX_SANDBOX:-} == "${TMUX_TMPDIR:-}" ]]
 }
 
 main() {
@@ -17,6 +22,10 @@ main() {
   if [[ $# -eq 0 ]]; then
     echo "==> Error: usage: tmux-sandbox <command> [args...]" >&2
     return 2
+  fi
+  if [[ $1 == --inside ]]; then
+    inside
+    return
   fi
   # tmux は TMUX があると TMUX_TMPDIR を見ずにその socket へ繋ぐ。
   unset TMUX TMUX_PANE
