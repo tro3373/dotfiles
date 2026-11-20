@@ -14,14 +14,13 @@
 # - index.md から取り込むとき
 #   - index.md は `tasks where` の `index` (cwd の repo のもの)
 #   - ブロック: 行頭が `- [ ]` の行と、その下の字下げした行。間の空行は含み、末尾の空行は含まない
-#     - 人の側だけを見る。tasks が作り直す一覧の側 (config の index_position が指すマーカーの向こう) は見ない
+#     - 人の側だけを見る。tasks が作り直す一覧の側 (最初のマーカーより上) は見ない
 #     - 旧 tasks の参照行 (`- [ ] [<ID>_<name>](<path>.md)` のようにリンクだけで .md を指す行) は頭にしない
 #   - ブロックを上から 1 つずつ add し、add できたら index.md から消す
 #   - add に失敗したら止まる。失敗したブロックと後ろのブロックは index.md に残る
 # - 終了コード: 0 成功 / 1 失敗 / 2 使い方エラー / 130 fzf で選ばずに閉じた / tasks add が失敗したらその終了コード
 
 # index.md の各行を line[] に読み、人の側のブロックの開始行 bs[] と終了行 be[] を nb 個つくる。
-# 変数 pos に tasks の index_position (top / bottom) を渡す。
 # マーカーの形と、どちらが一覧の側かは tasks の README「### index.md」と同じにする。
 # ずれると、tasks が守っている一覧の側の行を取り込んで消す
 # shellcheck disable=SC2016 # awk の script。shell に展開させない
@@ -29,14 +28,10 @@ readonly parse_awk='
 function blank(s) { return s ~ /^[ \t]*$/ }
 function marker(i) { return line[i] == MARKER && (i == 1 || blank(line[i - 1])) && (i == NR || blank(line[i + 1])) }
 function legacy_ref(s) { return s ~ /^- \[ \] \[[^]]*\]\([^)]*\.md\)[ \t]*$/ }
-# 人の側の行範囲 hs..he。top は最初のマーカーの後ろ、bottom は最後のマーカーの手前。マーカーが無ければ全行
+# 人の側の行範囲 hs..he。最初のマーカーの後ろ。マーカーが無ければ全行
 function human(    i) {
   hs = 1
   he = NR
-  if (pos == "bottom") {
-    for (i = NR; i >= 1; i--) if (marker(i)) { he = i - 1; return }
-    return
-  }
   for (i = 1; i <= NR; i++) if (marker(i)) { hs = i + 1; return }
 }
 function parse(    i, open) {
@@ -194,14 +189,6 @@ block_text() {
   awk -v from="${range%,*}" -v to="${range#*,}" 'NR >= from && NR <= to' "${snapshot}"
 }
 
-# tasks の config の index_position。書いていなければ tasks の既定の top
-read_index_position() {
-  local config pos=""
-  config=$(tasks config --path) || die "tasks の config の場所を引けない (tasks config --path に失敗)"
-  [[ -f ${config} ]] && pos=$(sed -n 's/^index_position:[[:space:]]*\([a-z]*\).*/\1/p' "${config}")
-  printf '%s\n' "${pos:-top}"
-}
-
 # body のブロックを index.md から消す。tasks の一覧の作り直しと同じ、index.md のディレクトリの lock を取る
 remove_block() {
   local real tmp
@@ -209,7 +196,7 @@ remove_block() {
   (
     flock -x 9
     tmp=$(mktemp "${real}.XXXXXX")
-    if ! T2A_BLOCK="${body}" awk -v pos="${position}" "${remove_awk}" "${real}" >"${tmp}"; then
+    if ! T2A_BLOCK="${body}" awk "${remove_awk}" "${real}" >"${tmp}"; then
       rm -f "${tmp}"
       echo "==> Warn: add したブロックが index.md に見つからず、消せない (書き換えられた)" >&2
       exit 0
@@ -220,19 +207,18 @@ remove_block() {
 }
 
 add_from_index() {
-  local where index position snapshot blocks ranges range body bodies=()
+  local where index snapshot blocks ranges range body bodies=()
   where=$(tasks where) || die "index.md の場所を引けない (tasks where に失敗)"
   index=$(jq -r '.index // empty' <<<"${where}")
   [[ -z ${index} ]] && die "tasks where の JSON に index が無い"
   [[ ! -f ${index} ]] && die "index.md が無い: ${index}"
-  position=$(read_index_position)
   # 他の tasks が一覧を作り直すと人の側の行番号がずれる。fzf で人が選ぶ間も起きるので、
   # 候補・preview・本文の切り出しは同じ写しから読む。消すときだけ実物を中身で探す
   snapshot=$(mktemp)
   # shellcheck disable=SC2064 # snapshot は local なので、今の値で trap に埋める
   trap "rm -f $(printf '%q' "${snapshot}")" EXIT
   cp "${index}" "${snapshot}"
-  blocks=$(awk -v pos="${position}" "${list_awk}" "${snapshot}")
+  blocks=$(awk "${list_awk}" "${snapshot}")
   [[ -z ${blocks} ]] && die "index.md に「- [ ]」で始まるブロックが無い: ${index}"
   ranges=$(choose_ranges)
   while read -r range; do

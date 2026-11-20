@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC1091
-source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/tasks_index"
-
 main() {
   set -eo pipefail
-  local dst
-  dst=$(tasks_index_path) || exit 1
   local body
   body=$(gtasks_to_tasks "$@")
-  tasks_index_append "$dst" <<<"$body"
+  local dst
+  dst=$(tasks index append <<<"$body")
   echo "$dst" | v
 }
 main "$@"

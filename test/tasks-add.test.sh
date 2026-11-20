@@ -39,7 +39,6 @@ setup() {
   fzf_in="${tmproot}/fzf.in"
   index_dir="${tmproot}/store/repo"
   index="${index_dir}/index.md"
-  config_file="${tmproot}/config.yaml"
   tasks_exit=0
   tasks_fail_at=0
   meta_exit=0
@@ -57,10 +56,6 @@ EOS
   #        index.md のディレクトリの lock を他が持っていれば lock.probe に書く
   cat >"${fakebin}/tasks" <<EOS
 #!/usr/bin/env bash
-if [[ \$1 == config ]]; then
-  echo "${config_file}"
-  exit 0
-fi
 if [[ \$1 == where ]]; then
   echo where >>"${where_log}"
   printf '{"place":"main","index":"%s"}\n' "${index}"
@@ -123,13 +118,9 @@ reset_records() {
     "${tmproot}"/args.* "${tmproot}"/in.*
 }
 
-# index_content があればその中身、無ければ sample_index にする。config の index_position は index_position の値 (空なら書かない)
+# index_content があればその中身、無ければ sample_index にする
 reset_index() {
   printf '%s' "${index_content:-${sample_index}}" >"${index}"
-  rm -f "${config_file}"
-  if [[ -n ${index_position:-} ]]; then
-    printf 'store: x\nindex_position: %s   # 既定: top\n' "${index_position}" >"${config_file}"
-  fi
 }
 
 # 本文 (stdin) と引数で tasks-add を流す。stdout と終了コードを out / rc に入れる
@@ -356,24 +347,17 @@ test_tty_list_rebuilt_while_picking() {
   check 'fzf-shift: 選んだブロックを index.md から消す' no "$(grep -q '^- \[ \] A を作る$' "${index}" && echo yes || echo no)"
 }
 
-# マーカーの向こう (一覧の側) に人の行が残った index.md。index_position を変えてマーカーを動かす前の形
+# 一覧の側 (マーカーより上) に人の行が残った index.md
 list_side_index() {
   printf '%s\n' '- [ ] 上' '' "$(printf -- '-%.0s' {1..80})" '' '- [ ] 下'
 }
 
-test_tty_skips_list_side_top() {
+test_tty_skips_list_side() {
   local index_content
   index_content=$(list_side_index)
   run_tty '.'
-  check 'list-side: index_position を書かなければ (top)、マーカーより上をブロックにしない' $'5,5\t下' "$(cat "${fzf_in}" 2>/dev/null)"
-}
-
-test_tty_skips_list_side_bottom() {
-  local index_content index_position=bottom
-  index_content=$(list_side_index)
-  run_tty '.'
-  check 'list-side: index_position が bottom なら、マーカーより下をブロックにしない' $'1,1\t上' "$(cat "${fzf_in}" 2>/dev/null)"
-  check 'list-side: 人の側のブロックを add して消す' "$(printf -- '-%.0s' {1..80})"$'\n\n- [ ] 下\n.' \
+  check 'list-side: マーカーより上をブロックにしない' $'5,5\t下' "$(cat "${fzf_in}" 2>/dev/null)"
+  check 'list-side: 人の側のブロックだけを add して消す' $'- [ ] 上\n\n'"$(printf -- '-%.0s' {1..80})"$'\n.' \
     "$(read_exact "${index}")"
 }
 
@@ -430,8 +414,7 @@ main() {
   test_tty_offers_blocks_to_fzf
   test_tty_adds_selected_blocks
   test_tty_list_rebuilt_while_picking
-  test_tty_skips_list_side_top
-  test_tty_skips_list_side_bottom
+  test_tty_skips_list_side
   test_tty_skips_legacy_reference
   test_tty_cancelled
   test_tty_without_block
