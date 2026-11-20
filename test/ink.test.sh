@@ -42,7 +42,10 @@ TABLE
   check "色未指定の頭は ESC [ 0 m" "${esc}[0mabc${esc}[0m" "$("${target_bin}" abc 2>&1 </dev/null)"
   check "空の第 1 引数は色未指定" "${esc}[0m${esc}[0m" "$("${target_bin}" "" 2>&1 </dev/null)"
   check "引数の本文" "${esc}[1;33ma b${esc}[0m" "$("${target_bin}" yellow a b 2>&1 </dev/null)"
-  check "末尾に改行を 1 つ出す" "${esc}[1;31mabc${esc}[0m"$'\n'"." "$(echo abc | "${target_bin}" red 2>&1; echo .)"
+  check "末尾に改行を 1 つ出す" "${esc}[1;31mabc${esc}[0m"$'\n'"." "$(
+    echo abc | "${target_bin}" red 2>&1
+    echo .
+  )"
   check "stdout には出さない" "" "$(echo abc | "${target_bin}" red 2>/dev/null)"
 }
 
