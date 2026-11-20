@@ -12,7 +12,6 @@ source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/tasks_index"
 mode=list
 branch=
 commit_hash=
-remove_after_merge=0
 args=()
 usage() {
   cat <<EOF
@@ -26,11 +25,9 @@ Add a new git worktree for the specified branch(or Remove it).
       -l        : List all worktrees with switch (default)
       -a        : Add a worktree for the specified branch
       -r        : Remove the worktree instead of adding it
-      -m        : Merge a worktree branch into the current branch
-      -mr       : Merge and then remove the worktree
       -e        : Edit config
     Notes
-      For -l/-m/-mr/-r, <branch_name> filters the worktree list
+      For -l/-r, <branch_name> filters the worktree list
       and a single match is selected without opening the list.
 
 EOF
@@ -43,8 +40,6 @@ initialize() {
       -l) mode=list ;;
       -r) mode=remove ;;
       -a) mode=add ;;
-      -m) mode=merge ;;
-      -mr) mode=merge && remove_after_merge=1 ;;
       -e) mode=edit_config ;;
       *) add_args "$1" ;;
     esac
@@ -107,8 +102,8 @@ _fzf_worktrees() {
   # 削除まで走ってしまう。
   # --select-1 と組む以上、クエリは曖昧一致させてはいけない。既定の
   # fuzzy + 行全体照合のままだと、存在しないブランチ名を渡したときに
-  # 無関係な worktree 1 件へ確定し、一覧を出さないまま merge/remove が
-  # 走る (例: `gt -mr fix/gt` が feature-slack-... を消す)。
+  # 無関係な worktree 1 件へ確定し、一覧を出さないまま remove が
+  # 走る (例: `gt -r fix/gt` が feature-slack-... を消す)。
   #   --exact       : 部分文字列一致に固定 (飛び石の subsequence を殺す)
   #   --no-extended : ブランチ名中の ! ^ $ | を演算子扱いさせない
   #   --nth=-1      : 照合対象を最終フィールド(= worktree パス)だけに絞る
@@ -415,49 +410,6 @@ _do_remove_worktree() {
   fi
 }
 
-_merge_worktree() {
-  local merge_target_dir="$git_org_root_dir"
-  if is_invoked_from_worktree; then
-    # When invoked from a worktree, target that worktree's branch.
-    # NOTE: keep elog calls at simple-command position; bash -e cannot
-    # propagate from inside $(...) since command substitution does not
-    # inherit errexit (and external elog's exit only kills the subshell).
-    local current_branch
-    current_branch=$(git -C "$initial_toplevel" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
-    if [[ -z $current_branch || $current_branch == "HEAD" ]]; then
-      elog "==> Worktree '$initial_toplevel' is in detached HEAD or branch detection failed. Move to repository root or checkout a branch first."
-    fi
-    merge_target_dir="$initial_toplevel"
-  fi
-
-  # shellcheck disable=SC2016
-  while read -r branch_path <&3; do
-    [[ -z ${branch_path} ]] && continue
-
-    local merge_branch
-    merge_branch=$(git -C "${branch_path}" rev-parse --abbrev-ref HEAD)
-
-    ilog "==> Merging branch '${merge_branch}' into current branch at '${merge_target_dir}'.."
-    if ! git -C "${merge_target_dir}" merge "${merge_branch}"; then
-      elog "Failed to merge branch '${merge_branch}'."
-    fi
-    ilog "==> Successfully merged branch '${merge_branch}'."
-
-    if [[ ${remove_after_merge} -ne 1 ]]; then
-      continue
-    fi
-
-    _do_remove_worktree "${branch_path}"
-  done 3< <(
-    _list_root_and_worktree_directories |
-      grep -v "${repo_root_label}" |
-      _fzf_worktrees \
-        --no-multi \
-        --prompt="Select worktree branch to merge: " |
-      awk '{print $NF}'
-  )
-}
-
 _remove_worktree() {
   removal_list=$(_list_removal_worktrees)
   if [[ -z ${removal_list} ]]; then
@@ -495,7 +447,7 @@ _edit_config() {
 
 capture_initial_toplevel() {
   # Capture the worktree we were invoked from BEFORE main cd's into the
-  # original repository root. Used by add/merge to honor the current
+  # original repository root. Used by add to honor the current
   # worktree's branch instead of forcing the org root.
   local toplevel
   toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || return 0
@@ -545,7 +497,6 @@ main() {
 
   case "$mode" in
     add) _add_worktree ;;
-    merge) _merge_worktree ;;
     remove) _remove_worktree ;;
     edit_config) _edit_config ;;
     *) show_change_directory_command ;;
