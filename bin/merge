@@ -16,6 +16,9 @@ readonly icon_worktree=$'\U0001F332'
 readonly icon_ci_failed=$'❌'
 readonly icon_ci_pending=$'⏳'
 readonly icon_ci_passed=$'✅'
+# shellcheck disable=SC1091
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/worktree_path"
+
 readonly fzf_header='/: 絞り込み (Esc でやめる) | Enter: merge'
 
 usage() {
@@ -87,10 +90,11 @@ list_pr_rows() {
 }
 
 list_local_rows() {
+  # shellcheck disable=SC2154  # lib/worktree_path が定義する
   git for-each-ref refs/heads --no-merged HEAD --format '%(refname:lstrip=2)' |
-    awk -v OFS='\t' -v icon="${icon_local}" -v pr_branches="$(cut -f2 <<<"${pr_rows}")" '
+    awk -v OFS='\t' -v icon="${icon_local}" -v removed="${removed_branch_prefix}" -v pr_branches="$(cut -f2 <<<"${pr_rows}")" '
       BEGIN { n = split(pr_branches, b, "\n"); for (i = 1; i <= n; i++) has_pr[b[i]] = 1 }
-      /^removed\// || ($0 in has_pr) { next }
+      index($0, removed) == 1 || ($0 in has_pr) { next }
       { print "local", $0, "", icon " " $0 }
     '
 }
@@ -172,7 +176,7 @@ update_local_base() {
 
 merge_local() {
   echo "==> ${branch} を今のブランチへ merge する" >&2
-  git merge "${branch}" || return 1
+  git merge "${branch}"
 }
 
 is_kept_checkout() {
@@ -184,7 +188,7 @@ is_kept_checkout() {
 delete_local_branches() {
   local -A flags=([pr]=-D [local]=-d)
   local name
-  for name in "removed/${branch}" "${branch}"; do
+  for name in "${removed_branch_prefix}${branch}" "${branch}"; do
     git show-ref --verify --quiet "refs/heads/${name}" || continue
     git branch "${flags[${kind}]}" "${name}" >&2 || warn "ブランチ ${name} を消せなかった"
   done
@@ -193,11 +197,11 @@ delete_local_branches() {
 cleanup() {
   local checkout git_worktree
   checkout=$(worktree_of "${branch}")
-  if [[ -n ${checkout} ]] && is_kept_checkout "${checkout}"; then
-    warn "${branch} は ${checkout} で checkout 中なので後片付けしない"
-    return 0
-  fi
   if [[ -n ${checkout} ]]; then
+    if is_kept_checkout "${checkout}"; then
+      warn "${branch} は ${checkout} で checkout 中なので後片付けしない"
+      return 0
+    fi
     git_worktree="$(dirname "$(realpath "${BASH_SOURCE[0]}")")/git_worktree"
     if ! "${git_worktree}" -r "${branch}" >&2; then
       warn "git_worktree -r ${branch} に失敗した。ブランチは消さない"

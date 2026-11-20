@@ -10,6 +10,10 @@ fi
 
 worktree_root_suffix=-worktree
 
+# worktree を消したときに、その branch を改名する先の接頭辞。
+# shellcheck disable=SC2034  # source した側が使う
+removed_branch_prefix=removed/
+
 # repo の worktree を並べるディレクトリ。
 worktree_root_dir() { printf '%s\n' "${1%/}${worktree_root_suffix}"; }
 

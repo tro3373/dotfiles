@@ -285,9 +285,10 @@ _rename_removed_branch() {
   local target_path="$1"
   local cur
   cur=$(git -C "${target_path}" rev-parse --abbrev-ref HEAD 2>/dev/null) || return 0
-  [[ -z $cur || $cur == "HEAD" || $cur == removed/* ]] && return 0
+  # shellcheck disable=SC2154  # lib/worktree_path が定義する
+  [[ -z $cur || $cur == "HEAD" || $cur == "${removed_branch_prefix}"* ]] && return 0
 
-  local renamed="removed/${cur}"
+  local renamed="${removed_branch_prefix}${cur}"
   ilog "==> Renaming branch '${cur}' -> '${renamed}'.."
   git branch -m "${cur}" "${renamed}" ||
     wlog "==> Failed to rename branch '${cur}' -> '${renamed}'. Continuing removal."
