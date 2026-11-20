@@ -2,6 +2,21 @@
 
 readonly colors=(black red green yellow blue purple cyan gray white)
 
+color_code() {
+  case $1 in
+    black) echo "0;30m" ;;
+    red) echo "1;31m" ;;
+    green) echo "1;32m" ;;
+    yellow) echo "1;33m" ;;
+    blue) echo "1;34m" ;;
+    purple) echo "1;35m" ;;
+    cyan) echo "1;36m" ;;
+    gray) echo "0;37m" ;;
+    white) echo "0m" ;;
+    *) return 1 ;;
+  esac
+}
+
 _ink() {
   local stdin=
   if [[ ! -t 0 ]]; then
@@ -13,22 +28,11 @@ _ink() {
 
   local esc=$'\033'
   local reset="${esc}[0m"
-  local -A codes=(
-    [black]="${esc}[0;30m"
-    [red]="${esc}[1;31m"
-    [green]="${esc}[1;32m"
-    [yellow]="${esc}[1;33m"
-    [blue]="${esc}[1;34m"
-    [purple]="${esc}[1;35m"
-    [cyan]="${esc}[1;36m"
-    [gray]="${esc}[0;37m"
-    [white]="${reset}"
-  )
-
   local text="$stdin$*"
   local color="${reset}"
-  if [[ -n ${codes[${1:-}]:-} ]]; then
-    color="${codes[$1]}"
+  local code
+  if code=$(color_code "${1:-}"); then
+    color="${esc}[${code}"
     text="$stdin${*:2}"
   fi
 
