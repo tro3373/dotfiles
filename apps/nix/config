@@ -2,10 +2,7 @@
 
 nix_sh() { echo "$HOME/.nix-profile/etc/profile.d/nix.sh"; }
 
-is_installed() {
-  has nix && return
-  [[ -e $(nix_sh) ]]
-}
+is_installed() { has nix || [[ -e $(nix_sh) ]]; }
 
 install_common() {
   # Official Nix installer, single-user (--no-daemon).

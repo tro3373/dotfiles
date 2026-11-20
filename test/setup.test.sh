@@ -21,7 +21,8 @@ check() {
 }
 
 install_fakes() {
-  mkdir -p "${fake_bin}" "${fake_nix_bin}"
+  mkdir -p "${fake_bin}" "${FAKE_NIX_BIN}"
+  echo "export PATH=\"${FAKE_NIX_BIN}:\$PATH\"" >"${FAKE_NIX_SH}"
   cat >"${fake_bin}/os" <<'EOF'
 #!/usr/bin/env bash
 echo arch
@@ -31,14 +32,14 @@ EOF
 echo installer >>"${FAKE_LOG}"
 cat <<SCRIPT
 mkdir -p "\$HOME/.nix-profile/etc/profile.d"
-echo 'export PATH="${FAKE_NIX_BIN}:\$PATH"' >"\$HOME/.nix-profile/etc/profile.d/nix.sh"
+cp "${FAKE_NIX_SH}" "\$HOME/.nix-profile/etc/profile.d/nix.sh"
 SCRIPT
 EOF
-  cat >"${fake_nix_bin}/nix" <<'EOF'
+  cat >"${FAKE_NIX_BIN}/nix" <<'EOF'
 #!/usr/bin/env bash
 echo "nix $1" >>"${FAKE_LOG}"
 EOF
-  chmod +x "${fake_bin}"/* "${fake_nix_bin}"/*
+  chmod +x "${fake_bin}"/* "${FAKE_NIX_BIN}"/*
 }
 
 reset_home() {
@@ -48,7 +49,7 @@ reset_home() {
 
 place_nix_sh() {
   mkdir -p "${fake_home}/.nix-profile/etc/profile.d"
-  echo "export PATH=\"${fake_nix_bin}:\$PATH\"" >"${fake_home}/.nix-profile/etc/profile.d/nix.sh"
+  cp "${FAKE_NIX_SH}" "${fake_home}/.nix-profile/etc/profile.d/nix.sh"
 }
 
 run_setup() {
@@ -91,8 +92,7 @@ main() {
   local fake_bin="${tmproot}/bin" fake_home="${tmproot}/home"
   local base_path="${fake_bin}:/usr/bin:/bin"
   # lint-ignore: uppercase 偽の curl と nix へ渡す環境変数
-  export FAKE_LOG="${tmproot}/log" FAKE_NIX_BIN="${tmproot}/nix-bin"
-  local fake_nix_bin="${FAKE_NIX_BIN}"
+  export FAKE_LOG="${tmproot}/log" FAKE_NIX_BIN="${tmproot}/nix-bin" FAKE_NIX_SH="${tmproot}/nix.sh"
   install_fakes
 
   test_fresh
