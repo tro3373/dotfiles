@@ -446,9 +446,6 @@ _edit_config() {
 }
 
 capture_initial_toplevel() {
-  # Capture the worktree we were invoked from BEFORE main cd's into the
-  # original repository root. Used by add to honor the current
-  # worktree's branch instead of forcing the org root.
   local toplevel
   toplevel=$(git rev-parse --show-toplevel 2>/dev/null) || return 0
   [[ -z $toplevel ]] && return 0

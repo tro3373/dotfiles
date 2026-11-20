@@ -63,7 +63,6 @@ load_prs() {
   fi
 }
 
-# 行は `<kind>\t<branch>\t<PR 番号>\t<表示>`。
 list_pr_rows() {
   jq -r \
     --arg icon_pr "${icon_pr}" \
@@ -87,7 +86,6 @@ list_pr_rows() {
   ' <<<"${prs_json}"
 }
 
-# PR のある branch は PR の行にまとめるので出さない。removed/* は git_worktree -r が改名した残り。
 list_local_rows() {
   git for-each-ref refs/heads --no-merged HEAD --format '%(refname:lstrip=2)' |
     awk -v OFS='\t' -v icon="${icon_local}" -v pr_branches="$(cut -f2 <<<"${pr_rows}")" '
@@ -133,7 +131,6 @@ select_row() {
   local leave_filter='case $FZF_INPUT_STATE in enabled) echo "clear-query+search()+hide-input+rebind(/)" ;; *) echo abort ;; esac'
   # shellcheck disable=SC2016 # {1} {2} {3} は fzf が展開する
   local preview='case {1} in pr) gh pr view {3} ;; *) git log --color=always --oneline --graph HEAD..{2} ;; esac'
-  # 何も選ばずに抜けたときの非 0 を、選択なしとして扱う
   fzf --no-multi --no-input \
     --with-shell 'bash -c' \
     --delimiter '\t' --with-nth 4 \
@@ -155,7 +152,6 @@ merge_pr() {
   update_local_base
 }
 
-# base が checkout 中の worktree があればそこで ff する。無ければ local の base ブランチを fetch で進める。
 update_local_base() {
   local base base_worktree
   base=$(jq -r --argjson n "${pr}" '.[] | select(.number == $n) | .baseRefName' <<<"${prs_json}")
@@ -179,7 +175,6 @@ merge_local() {
   git merge "${branch}" || return 1
 }
 
-# 今いる worktree と親リポジトリで checkout 中のブランチは消せない。
 is_kept_checkout() {
   local path
   path=$(realpath "$1")

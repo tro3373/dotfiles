@@ -1,14 +1,5 @@
 #!/usr/bin/env bash
 
-# bin/merge のテスト。bare の origin と、別 clone からの push で PR の head を用意して検証する。
-# fzf と gh は PATH 先頭の偽物に差し替える。
-#   fzf: FZF_PICK に一致する行を選ぶ。--query q --select-1 (git_worktree -r が使う) は q を含む行を選ぶ。
-#   gh : pr list は fixture の JSON を返し、pr merge は origin の base へ実際に merge する。
-# fzf の中のキー操作 (/・Esc) は git_branch_clean.test.sh が実物の fzf で確かめているので、ここでは見ない。
-# tmux-sandbox の外で起動されたら、自分を tmux-sandbox 経由で起動し直す。
-#
-#   test/merge.test.sh
-
 check() {
   local desc="$1" expected="$2" actual="$3"
   if [[ ${expected} != "${actual}" ]]; then
@@ -30,7 +21,6 @@ commit() {
   g "$1" commit -qm "$2"
 }
 
-# main から分岐して 1 コミットだけ進めたブランチを作る
 branch_off_main() {
   g "${repo}" checkout -q -b "$1" main
   commit "${repo}" "$1"
@@ -64,9 +54,6 @@ write_prs() {
 EOF
 }
 
-# repo (main) と、その -worktree 配下の worktree を作る。
-#   PR の fixture: pr/feat (origin に head があり、worktree で checkout 中)・feat/both (local にも在る)
-#   ローカルだけ:  feat/local・feat/wt (worktree で checkout 中)・removed/old
 setup() {
   root="${tmp}/$1"
   origin="${root}/origin.git"
@@ -119,7 +106,6 @@ pick() {
   printf '%s\t%s\t%s\t' "$1" "$2" "${3:-}"
 }
 
-# fzf に渡った一覧の `<kind> <branch> <PR 番号>`
 offered_keys() {
   cut -f1-3 "${root}/fzf.in" | tr '\t' ' ' | sed 's/ $//'
 }
@@ -370,7 +356,6 @@ EOF
   chmod +x "${tmp}/bin/fzf" "${tmp}/bin/gh"
 }
 
-# PATH のコマンドから gh だけを除いた PATH を作る
 make_path_without_gh() {
   local dir file
   mkdir -p "${tmp}/nogh"

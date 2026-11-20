@@ -8,9 +8,6 @@
 #       org root を stdout に出す (zsh wrapper gt が cd し直すための救済)。
 #       現在地でない worktree 削除時・org root から削除時は stdout 空。
 #
-#   * _fzf_worktrees: 位置引数のブランチ名を fzf の絞り込みクエリへ変換する。
-#       引数ありのときだけ --query/--select-1 を足す (list/remove 共通)。
-#
 #   * get_org_git_root: git 管理外では cwd を repo root と誤認せず失敗する
 #       (誤認すると main が <cwd>-worktree の空 dir を掘る)。worktree の
 #       サブディレクトリからでも親リポの root を返す。

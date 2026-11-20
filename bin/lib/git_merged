@@ -3,8 +3,6 @@
 # bin/git_worktree と bin/tmuxs が source する。
 #
 # 比較先は upstream でも origin/HEAD でもなく、main worktree (親リポジトリ) の HEAD。
-# merge は local の行を push せずローカルの親リポジトリへ merge するので、
-# リモートと比べると取り込み済みの worktree が未取り込みに見える。
 # squash / rebase merge は祖先関係が残らないので未取り込みに見える。
 
 # 取り込み済みの印 (Nerd Font の Octicons git-merge)。
