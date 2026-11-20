@@ -42,6 +42,8 @@ main() {
   $dummy git submodule deinit -f $ref_path
   $dummy git rm -f $ref_path
   $dummy rm -rf .git/modules/$ref_path
-  [[ -n $dummy ]] && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  if [[ -n $dummy ]]; then
+    echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  fi
 }
 main "$@"

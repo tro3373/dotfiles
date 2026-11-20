@@ -136,6 +136,8 @@ main() {
   set_anny_connect_metric
   gen_resolv_conf
   echo "Done" | ink cyan
-  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  if is_dummy; then
+    echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  fi
 }
 main "$@"

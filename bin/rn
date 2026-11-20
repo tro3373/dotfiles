@@ -40,6 +40,8 @@ main() {
       echo "==> Renaming $line to $dst" | ink yellow
       $dummy mv "$line" "$dst"
     done
-  is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  if is_dummy; then
+    echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  fi
 }
 main "$@"

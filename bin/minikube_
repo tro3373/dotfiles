@@ -51,6 +51,8 @@ main() {
   delete_hello_minikube
   stop_minikube
   delete_minikube
-  [[ -n $dummy ]] && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  if [[ -n $dummy ]]; then
+    echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+  fi
 }
 main "$@"

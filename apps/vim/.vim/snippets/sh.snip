@@ -396,7 +396,9 @@ snippet	dummyset
 		done
 	}
 	initialize "$@"
-	is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+	if is_dummy; then
+		echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+	fi
 
 snippet	reado
 alias	redo
@@ -510,7 +512,9 @@ snippet	exe
 		eval "$*"
 	}
 	initialize "$@"
-	is_dummy && echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+	if is_dummy; then
+		echo -e "\n>>> This is dummy mode. specify -e option." | ink yellow
+	fi
 
 snippet	iffff
 	if [[ -e ${1} ]]; then
