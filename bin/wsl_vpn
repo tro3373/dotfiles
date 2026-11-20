@@ -75,15 +75,18 @@ cat_vpn_resolv_conf() {
   cat_dnses
 }
 
+write_or_show() {
+  if is_dummy; then
+    cat -
+    return
+  fi
+  sudo tee "${@:2}" "$1" >&/dev/null
+}
+
 gen_resolv_conf() {
   local target=/etc/resolv.conf
   echo "==> Generating $target.."
-  cat_vpn_resolv_conf |
-    if is_dummy; then
-      cat -
-    else
-      cat - | sudo tee $target >&/dev/null
-    fi
+  cat_vpn_resolv_conf | write_or_show "${target}"
 }
 
 cat_no_resolv_conf() {
@@ -99,12 +102,7 @@ gen_wsl_conf() {
   if [[ -e $target ]]; then
     grep generateResolvConf $target >&/dev/null && return
   fi
-  cat_no_resolv_conf |
-    if is_dummy; then
-      cat -
-    else
-      cat - | sudo tee -a $target >&/dev/null
-    fi
+  cat_no_resolv_conf | write_or_show "${target}" -a
 }
 
 set_anny_connect_metric() {
