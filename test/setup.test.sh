@@ -20,7 +20,6 @@ check() {
   printf 'ok   - %s\n' "${desc}"
 }
 
-# 偽の curl が返す installer は、偽の nix を置いた dir を PATH に足す nix.sh を作る。
 install_fakes() {
   mkdir -p "${fake_bin}" "${fake_nix_bin}"
   cat >"${fake_bin}/os" <<'EOF'
@@ -87,7 +86,7 @@ main() {
   local pass=0 fail=0 status=0
   local tmproot
   tmproot=$(mktemp -d)
-  # shellcheck disable=SC2064 # local 変数のため trap 定義時に展開する
+  # shellcheck disable=SC2064
   trap "rm -rf '${tmproot}'" EXIT
   local fake_bin="${tmproot}/bin" fake_home="${tmproot}/home"
   local base_path="${fake_bin}:/usr/bin:/bin"
