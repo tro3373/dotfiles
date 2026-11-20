@@ -102,6 +102,6 @@ main() {
     else
       cat - >>$additional_config_path
     fi
-  is_dummy && log -e "\n>>> This is dummy mode. specify -e option."
+  is_dummy && log ">>> This is dummy mode. specify -e option."
 }
 main "$@"
