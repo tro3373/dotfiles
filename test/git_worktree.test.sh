@@ -322,17 +322,13 @@ test_add_places_worktree_by_branch() {
     '1' "$([[ -e ${org_wt}/feature-foo/.git ]] && echo 1 || echo 0)"
 }
 
-tmux_isolate() {
-  tmux_teardown
-  tmux_dir=$(mktemp -d "${tmproot}/tmux.XXXXXX")
-  # lint-ignore: uppercase tmux reads TMUX_TMPDIR to pick its socket dir
-  export TMUX_TMPDIR="${tmux_dir}"
-  unset TMUX TMUX_PANE
+in_tmux_sandbox() {
+  [[ -z ${TMUX:-} && -n ${TMUX_SANDBOX:-} && ${TMUX_SANDBOX:-} == "${TMUX_TMPDIR:-}" ]]
 }
 
-tmux_teardown() {
-  [[ -z ${tmux_dir:-} ]] && return 0
-  TMUX_TMPDIR="${tmux_dir}" tmux kill-server 2>/dev/null
+tmux_fresh_server() {
+  in_tmux_sandbox || exit 1
+  tmux kill-server 2>/dev/null
   return 0
 }
 
@@ -350,7 +346,7 @@ tmux_has() {
 
 test_remove_kills_tmux_sessions() {
   new_repo tmuxs
-  tmux_isolate
+  tmux_fresh_server
   local wt wt_ab sub
   wt=$(add_wt feat-A)
   wt_ab=$(add_wt feat-AB)
@@ -371,7 +367,7 @@ test_remove_kills_tmux_sessions() {
 
 test_remove_keeps_running_tmux_session() {
   new_repo tmuxcur
-  tmux_isolate
+  tmux_fresh_server
   local wt pane socket
   wt=$(add_wt feat-A)
   tmux_session runner "${wt}"
@@ -389,7 +385,7 @@ test_remove_keeps_running_tmux_session() {
 
 test_remove_without_tmux_server() {
   new_repo notmux
-  tmux_isolate
+  tmux_fresh_server
   local wt rc
   wt=$(add_wt feat-A)
   (
@@ -427,8 +423,11 @@ test_remove_loop_leaves_stdin_for_confirm() {
 
 main() {
   set -uo pipefail
+  if ! in_tmux_sandbox; then
+    exec "${script_dir}/../bin/tmux-sandbox" "${BASH_SOURCE[0]}" "$@"
+  fi
   tmproot=$(mktemp -d)
-  trap 'tmux_teardown; rm -rf "${tmproot}"' EXIT
+  trap 'rm -rf "${tmproot}"' EXIT
   local pass=0 fail=0
 
   test_remove_current_emits_org_root

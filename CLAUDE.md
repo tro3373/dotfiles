@@ -1,2 +1,4 @@
 - bin/{command_name} の shell script のテストを書くときは test/{command_name}.test.sh に配置する
+- 実物の tmux を使うテスト・検証は `tmux-sandbox <command>` の中で実行する (TMUX が設定されていると、TMUX_TMPDIR を変えても普段使いの server に繋がる)
+  - テストは、tmux-sandbox の外で起動されたら自分を `tmux-sandbox` 経由で起動し直す
 - vim/nvim の話は apps/nvim/nvim がベース apps/vim は古い版. 新版は lua 版.

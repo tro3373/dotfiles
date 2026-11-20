@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# 渡された command を、隔離した tmux server だけが見える環境で実行する。
+# command とその子が打つ tmux は、kill-server を含めて普段使いの server に届かない。
+# 終了時に隔離した server を落とし、command の終了コードを返す。
+# command の中では TMUX_SANDBOX が TMUX_TMPDIR と同じ値で、TMUX は未設定になる。
+#
+#   tmux-sandbox <command> [args...]
+
+cleanup() {
+  tmux kill-server 2>/dev/null || true
+  rm -rf "${sandbox_dir}"
+}
+
+main() {
+  set -euo pipefail
+  if [[ $# -eq 0 ]]; then
+    echo "==> Error: usage: tmux-sandbox <command> [args...]" >&2
+    return 2
+  fi
+  # tmux は TMUX があると TMUX_TMPDIR を見ずにその socket へ繋ぐ。
+  unset TMUX TMUX_PANE
+  # unix socket の path は 108 byte まで。長い TMPDIR の下に作ると tmux が起動できない。
+  sandbox_dir=$(mktemp -d /tmp/tmux-sandbox.XXXXXX)
+  # lint-ignore: uppercase tmux と command が読む環境変数
+  export TMUX_TMPDIR="${sandbox_dir}" TMUX_SANDBOX="${sandbox_dir}"
+  trap cleanup EXIT
+  "$@"
+}
+
+main "$@"
