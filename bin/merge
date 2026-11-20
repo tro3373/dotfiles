@@ -8,6 +8,7 @@
 # ローカルの行: 今のブランチへ git merge する。push はしない。
 # 後片付け: 別の worktree で checkout 中なら git_worktree -r で消してから、ブランチを消す。
 #   今いる worktree と親リポジトリで checkout 中のブランチは、消さずに警告する。
+#   PR の行は、ローカルのブランチが PR の head に含まれるときだけ後片付けする。
 # fzf の中: / で絞り込み (Esc でやめる)、Enter で merge。
 
 readonly icon_pr=$'☁️'
@@ -60,7 +61,7 @@ has_pr_source() {
 load_prs() {
   prs_json='[]'
   has_pr_source || return 0
-  if ! prs_json=$(gh pr list --state open --json number,title,headRefName,baseRefName,statusCheckRollup); then
+  if ! prs_json=$(gh pr list --state open --limit 1000 --json number,title,headRefName,headRefOid,baseRefName,statusCheckRollup); then
     echo "==> Warning: gh pr list に失敗した。PR は出さずローカルのブランチだけを出す" >&2
     prs_json='[]'
   fi
@@ -149,16 +150,36 @@ warn() {
   echo "==> Warning: $*" >&2
 }
 
+pr_field() {
+  jq -r --argjson n "${pr}" --arg f "$1" '.[] | select(.number == $n) | .[$f]' <<<"${prs_json}"
+}
+
 merge_pr() {
+  head_oid=$(pr_field headRefOid)
   echo "==> PR #${pr} を ${method} で merge する (${branch})" >&2
-  gh pr merge "${pr}" "--${method}" || return 1
-  git push origin --delete "${branch}" || warn "origin/${branch} を消せなかった (自動で消える設定なら問題ない)"
+  gh pr merge "${pr}" "--${method}" --match-head-commit "${head_oid}" || return 1
+  if [[ $(gh pr view "${pr}" --json state --jq .state) != MERGED ]]; then
+    echo "==> PR #${pr} は merge queue か auto-merge に積まれただけで、まだ merge されていない。後片付けはしない" >&2
+    return 1
+  fi
+  delete_remote_head
   update_local_base
+}
+
+delete_remote_head() {
+  local remote_oid
+  remote_oid=$(git ls-remote origin "refs/heads/${branch}" | cut -f1)
+  [[ -z ${remote_oid} ]] && return 0
+  if [[ ${remote_oid} != "${head_oid}" ]]; then
+    warn "origin/${branch} は PR #${pr} の head を指していないので消さない"
+    return 0
+  fi
+  git push origin --delete "${branch}" || warn "origin/${branch} を消せなかった"
 }
 
 update_local_base() {
   local base base_worktree
-  base=$(jq -r --argjson n "${pr}" '.[] | select(.number == $n) | .baseRefName' <<<"${prs_json}")
+  base=$(pr_field baseRefName)
   if ! git fetch origin >&2; then
     warn "git fetch origin に失敗した。ローカルの ${base} は更新しない"
     return 0
@@ -175,6 +196,10 @@ update_local_base() {
 }
 
 merge_local() {
+  if ! git symbolic-ref -q HEAD >/dev/null; then
+    echo "==> Error: detached HEAD には merge しない。branch を checkout してから実行する" >&2
+    return 1
+  fi
   echo "==> ${branch} を今のブランチへ merge する" >&2
   git merge "${branch}"
 }
@@ -185,17 +210,32 @@ is_kept_checkout() {
   [[ ${path} == "$(realpath "$(git rev-parse --show-toplevel)")" || ${path} == "$(realpath "$(main_worktree)")" ]]
 }
 
-delete_local_branches() {
+has_commits_outside_pr() {
+  [[ ${kind} == pr && -n ${tip} ]] && ! git merge-base --is-ancestor "${tip}" "${head_oid}" 2>/dev/null
+}
+
+delete_branch() {
   local -A flags=([pr]=-D [local]=-d)
-  local name
-  for name in "${removed_branch_prefix}${branch}" "${branch}"; do
-    git show-ref --verify --quiet "refs/heads/${name}" || continue
-    git branch "${flags[${kind}]}" "${name}" >&2 || warn "ブランチ ${name} を消せなかった"
-  done
+  git branch "${flags[${kind}]}" "$1" >&2 || warn "ブランチ $1 を消せなかった"
+}
+
+delete_local_branches() {
+  local removed="${removed_branch_prefix}${branch}"
+  if git show-ref --verify --quiet "refs/heads/${branch}"; then
+    delete_branch "${branch}"
+    return 0
+  fi
+  [[ -n ${tip} && $(git rev-parse --verify --quiet "refs/heads/${removed}") == "${tip}" ]] && delete_branch "${removed}"
+  return 0
 }
 
 cleanup() {
-  local checkout git_worktree
+  local checkout git_worktree tip
+  tip=$(git rev-parse --verify --quiet "refs/heads/${branch}") || tip=''
+  if has_commits_outside_pr; then
+    warn "${branch} に PR #${pr} に無い commit があるので後片付けしない"
+    return 0
+  fi
   checkout=$(worktree_of "${branch}")
   if [[ -n ${checkout} ]]; then
     if is_kept_checkout "${checkout}"; then
@@ -203,8 +243,8 @@ cleanup() {
       return 0
     fi
     git_worktree="$(dirname "$(realpath "${BASH_SOURCE[0]}")")/git_worktree"
-    if ! "${git_worktree}" -r "${branch}" >&2; then
-      warn "git_worktree -r ${branch} に失敗した。ブランチは消さない"
+    if ! "${git_worktree}" -r "${checkout}" >&2; then
+      warn "git_worktree -r ${checkout} に失敗した。ブランチは消さない"
       return 0
     fi
   fi
@@ -213,7 +253,7 @@ cleanup() {
 
 main() {
   set -euo pipefail
-  local method='' skip_cleanup=0 prs_json rows selected kind branch pr
+  local method='' skip_cleanup=0 prs_json rows selected kind branch pr head_oid=''
   parse_args "$@"
   load_prs
   rows=$(list_rows)

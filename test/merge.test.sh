@@ -28,27 +28,28 @@ branch_off_main() {
 }
 
 write_prs() {
-  cat >"${root}/prs.json" <<'EOF'
+  local zero_oid='0000000000000000000000000000000000000000'
+  cat >"${root}/prs.json" <<EOF
 [
-  {"number": 1, "title": "all green", "headRefName": "pr/pass", "baseRefName": "main",
+  {"number": 1, "title": "all green", "headRefName": "pr/pass", "headRefOid": "${zero_oid}", "baseRefName": "main",
    "statusCheckRollup": [
      {"__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SUCCESS"},
      {"__typename": "StatusContext", "state": "SUCCESS"}]},
-  {"number": 2, "title": "failed beats pending", "headRefName": "pr/fail", "baseRefName": "main",
+  {"number": 2, "title": "failed beats pending", "headRefName": "pr/fail", "headRefOid": "${zero_oid}", "baseRefName": "main",
    "statusCheckRollup": [
      {"__typename": "CheckRun", "status": "IN_PROGRESS", "conclusion": ""},
      {"__typename": "CheckRun", "status": "COMPLETED", "conclusion": "FAILURE"}]},
-  {"number": 3, "title": "running", "headRefName": "pr/pend", "baseRefName": "main",
+  {"number": 3, "title": "running", "headRefName": "pr/pend", "headRefOid": "${zero_oid}", "baseRefName": "main",
    "statusCheckRollup": [{"__typename": "CheckRun", "status": "IN_PROGRESS", "conclusion": ""}]},
-  {"number": 4, "title": "no checks", "headRefName": "pr/none", "baseRefName": "main",
+  {"number": 4, "title": "no checks", "headRefName": "pr/none", "headRefOid": "${zero_oid}", "baseRefName": "main",
    "statusCheckRollup": []},
-  {"number": 5, "title": "context expected", "headRefName": "pr/expected", "baseRefName": "main",
+  {"number": 5, "title": "context expected", "headRefName": "pr/expected", "headRefOid": "${zero_oid}", "baseRefName": "main",
    "statusCheckRollup": [{"__typename": "StatusContext", "state": "EXPECTED"}]},
-  {"number": 6, "title": "context error", "headRefName": "pr/error", "baseRefName": "main",
+  {"number": 6, "title": "context error", "headRefName": "pr/error", "headRefOid": "${zero_oid}", "baseRefName": "main",
    "statusCheckRollup": [{"__typename": "StatusContext", "state": "ERROR"}]},
-  {"number": 7, "title": "has worktree", "headRefName": "pr/feat", "baseRefName": "main",
+  {"number": 7, "title": "has worktree", "headRefName": "pr/feat", "headRefOid": "${pr_oid}", "baseRefName": "main",
    "statusCheckRollup": [{"__typename": "CheckRun", "status": "COMPLETED", "conclusion": "SUCCESS"}]},
-  {"number": 8, "title": "also local", "headRefName": "feat/both", "baseRefName": "main",
+  {"number": 8, "title": "also local", "headRefName": "feat/both", "headRefOid": "${zero_oid}", "baseRefName": "main",
    "statusCheckRollup": [{"__typename": "CheckRun", "status": "COMPLETED", "conclusion": "TIMED_OUT"}]}
 ]
 EOF
@@ -77,9 +78,11 @@ setup() {
     branch_off_main "${b}"
   done
   g "${repo}" worktree add -q "${repo}-worktree/feat-wt" feat/wt
+  pr_oid=$(g "${repo}" rev-parse pr/feat)
   write_prs
   # lint-ignore: uppercase fake の gh が読む環境変数
   export GH_PRS="${root}/prs.json" GH_LOG="${root}/gh.log" GH_ORIGIN="${origin}" GH_LIST_LOG="${root}/gh-list.log"
+  unset GH_PR_STATE
 }
 
 run_merge() {
@@ -255,7 +258,7 @@ test_pr_row() {
   FZF_PICK="$(pick pr pr/feat 7)" run_merge >/dev/null
   local rc=$?
   check "PR の行: 終了コード 0" "0" "${rc}"
-  check "PR の行: gh pr merge を --merge で呼ぶ (--delete-branch は付けない)" "pr merge 7 --merge" "$(pr_merge_args)"
+  check "PR の行: gh pr merge を --merge と --match-head-commit で呼ぶ (--delete-branch は付けない)" "pr merge 7 --merge --match-head-commit ${pr_oid}" "$(pr_merge_args)"
   check "PR の行: origin の head branch を消す" "main" "$(remote_branches)"
   check "PR の行: checkout 中の local の base が origin/main へ進む" \
     "$(g "${origin}" rev-parse main)" "$(g "${repo}" rev-parse main)"
@@ -269,7 +272,7 @@ test_pr_row_methods() {
     setup "pr-${flag}"
     FZF_PICK="$(pick pr pr/feat 7)" run_merge "-${flag:0:1}" >/dev/null
     check "PR の行 -${flag:0:1}: --${flag} で呼び、祖先関係が無くても local の branch を消す" \
-      "pr merge 7 --${flag}|1|feat/both feat/local feat/wt main removed/old" \
+      "pr merge 7 --${flag} --match-head-commit ${pr_oid}|1|feat/both feat/local feat/wt main removed/old" \
       "$(pr_merge_args)|$(g "${repo}" log --format=%s main | grep -c 'pr-feat\|squash')|$(branches)"
   done
 }
@@ -290,12 +293,80 @@ test_pr_row_keeps_current_worktree() {
     "$(exists "${repo}-worktree/pr-feat")|$(branches | tr ' ' '\n' | grep -x 'pr/feat')|$(grep -c 'checkout 中なので後片付けしない' "${root}/err")"
 }
 
-test_pr_row_remote_delete_failure_is_warning() {
+test_pr_row_remote_branch_already_gone() {
   setup prwarn
   g "${origin}" branch -q -D pr/feat
   FZF_PICK="$(pick pr pr/feat 7)" run_merge >/dev/null
-  check "PR の行: origin の branch が既に無くても警告だけで後片付けまで進む" \
-    "0|1" "$(exists "${repo}-worktree/pr-feat")|$(grep -c 'origin/pr/feat を消せなかった' "${root}/err")"
+  check "PR の行: origin の branch が既に無ければ何も言わず後片付けまで進む" \
+    "0|0" "$(exists "${repo}-worktree/pr-feat")|$(grep -c 'Warning' "${root}/err")"
+}
+
+test_pr_row_keeps_unpushed_commits() {
+  setup prunpushed
+  commit "${repo}-worktree/pr-feat" unpushed
+  FZF_PICK="$(pick pr pr/feat 7)" run_merge >/dev/null
+  local rc=$?
+  check "PR の行: PR に無い local の commit があれば worktree と branch を残し警告する" \
+    "0|1|pr/feat|1" \
+    "${rc}|$(exists "${repo}-worktree/pr-feat")|$(branches | tr ' ' '\n' | grep -x 'pr/feat')|$(grep -c 'PR #7 に無い commit' "${root}/err")"
+}
+
+test_pr_row_not_merged_yet() {
+  setup prqueued
+  GH_PR_STATE=OPEN FZF_PICK="$(pick pr pr/feat 7)" run_merge >/dev/null
+  local rc=$?
+  check "PR の行: merge 済みでなければ origin と local の branch を残し終了コード 1" \
+    "1|main pr/feat|1|pr/feat|1" \
+    "${rc}|$(remote_branches)|$(exists "${repo}-worktree/pr-feat")|$(branches | tr ' ' '\n' | grep -x 'pr/feat')|$(grep -c 'まだ merge されていない' "${root}/err")"
+}
+
+test_pr_row_remote_branch_moved() {
+  setup prmoved
+  commit "${other}" moved
+  g "${other}" push -q origin pr/feat
+  FZF_PICK="$(pick pr pr/feat 7)" run_merge >/dev/null
+  check "PR の行: origin の branch が PR の head でなければ消さず警告する" \
+    "main pr/feat|1" "$(remote_branches)|$(grep -c 'origin/pr/feat は PR #7 の head を指していない' "${root}/err")"
+}
+
+test_pr_row_keeps_stale_removed_branch() {
+  setup prstale
+  g "${repo}" branch removed/pr/feat feat/local
+  local stale
+  stale=$(g "${repo}" rev-parse removed/pr/feat)
+  FZF_PICK="$(pick pr pr/feat 7)" run_merge >/dev/null
+  check "PR の行: 以前から在る別物の removed/<branch> は消さない" \
+    "${stale}|0|0" \
+    "$(g "${repo}" rev-parse removed/pr/feat)|$(exists "${repo}-worktree/pr-feat")|$(branches | tr ' ' '\n' | grep -cx 'pr/feat')"
+}
+
+test_local_row_detached_head() {
+  setup detached
+  g "${repo}" checkout -q --detach main
+  FZF_PICK="$(pick local feat/local)" run_merge >/dev/null
+  local rc=$?
+  check "ローカルの行: detached HEAD には merge せず終了コード 1 で branch を残す" \
+    "1:1:$(g "${repo}" rev-parse main)" "${rc}:$(branches | tr ' ' '\n' | grep -cx 'feat/local'):$(g "${repo}" rev-parse HEAD)"
+}
+
+test_local_row_keeps_main_worktree() {
+  setup keepmain
+  g "${repo}" checkout -q feat/local
+  FZF_PICK="$(pick local feat/local)" bash -c "cd '${repo}-worktree/feat-wt' && '${bin}'" >/dev/null 2>"${root}/err"
+  check "親リポジトリで checkout 中の branch は片付けず警告する" \
+    "feat/local|1" \
+    "$(branches | tr ' ' '\n' | grep -x feat/local)|$(grep -c 'checkout 中なので後片付けしない' "${root}/err")"
+}
+
+test_local_row_worktree_outside_root() {
+  setup outside
+  branch_off_main feat/w
+  g "${repo}" worktree add -q "${root}/elsewhere" feat/w
+  FZF_PICK="$(pick local feat/w)" run_merge >/dev/null
+  local rc=$?
+  check "置き場所の外の worktree は消さず、名前が似た置き場所の中の worktree も残る" \
+    "0|1|1|1|1|1|0" \
+    "${rc}|$(exists "${root}/elsewhere")|$(exists "${repo}-worktree/feat-wt")|$(branches | tr ' ' '\n' | grep -cx 'feat/wt')|$(branches | tr ' ' '\n' | grep -cx 'feat/w')|$(grep -c 'git_worktree -r .* に失敗した' "${root}/err")|$(grep -c 'ブランチ .* を消せなかった' "${root}/err")"
 }
 
 install_fakes() {
@@ -346,9 +417,12 @@ case "$2" in
     [[ -n ${GH_FAIL:-} ]] && { echo "gh: boom" >&2; exit 1; }
     cat "${GH_PRS}"
     ;;
-  view) echo "PR #$3" ;;
+  view)
+    [[ $4 == --json ]] && { echo "${GH_PR_STATE:-MERGED}"; exit 0; }
+    echo "PR #$3"
+    ;;
   merge)
-    echo "pr merge $3 $4" >>"${GH_LOG}"
+    echo "pr merge ${*:3}" >>"${GH_LOG}"
     merge_into_origin "$3" "$4"
     ;;
 esac
@@ -372,7 +446,7 @@ make_path_without_gh() {
 }
 
 main() {
-  local pass=0 fail=0 tmp bin bin_dir root origin repo other nogh_path
+  local pass=0 fail=0 tmp bin bin_dir root origin repo other nogh_path pr_oid
   local icon_pr=$'☁️' icon_local=$'\U0001F4BB' icon_worktree=$'\U0001F332'
   local icon_ci_failed=$'❌' icon_ci_pending=$'⏳' icon_ci_passed=$'✅'
   bin_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../bin" && pwd)"
@@ -406,7 +480,14 @@ main() {
   test_pr_row_methods
   test_pr_row_base_not_checked_out
   test_pr_row_keeps_current_worktree
-  test_pr_row_remote_delete_failure_is_warning
+  test_pr_row_remote_branch_already_gone
+  test_pr_row_keeps_unpushed_commits
+  test_pr_row_not_merged_yet
+  test_pr_row_remote_branch_moved
+  test_pr_row_keeps_stale_removed_branch
+  test_local_row_detached_head
+  test_local_row_keeps_main_worktree
+  test_local_row_worktree_outside_root
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
 }
