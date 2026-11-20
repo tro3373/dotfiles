@@ -265,10 +265,6 @@ gh() {
   fi
   printf 'gh-title %s\n' "${title}" >>"${stub_log}"
   printf '%s\n' "${issue_body}" | sed 's/^/| /' >>"${stub_log}"
-  # 作成した issue の URL を返す。KEY 末尾の数字を issue 番号に流用して issue ごとに
-  # 別 URL にし、repo は -R の指定を反映する (タスクのリンクが cwd ではなく
-  # 作成先を指すことを検証するため)。
-  # ${gh_create_out} で URL を含まない出力に差し替えられる。
   local key=${title%%]*}
   key=${key#"["}
   printf '%s\n' "${gh_create_out-https://github.com/${repo:-o/r}/issues/${key##*-}}"
@@ -560,8 +556,7 @@ test_to_gh_does_not_link_a_skipped_issue() {
   rm -f "${stub_log}"
 }
 
-# 33. to-gh が積むタスクは、作った GitHub issue へのリンクで終わる。
-#     -R で別 repo に作ったときも、cwd の repo でなく作成先を指す
+# 33. to-gh が積むタスクは、作った GitHub issue へのリンクで終わる
 test_to_gh_task_links_the_created_issue() {
   local stub_log fzf_selection
   local -a gh_repo_args=()
