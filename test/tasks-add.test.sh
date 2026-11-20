@@ -361,6 +361,13 @@ test_tty_skips_list_side() {
     "$(read_exact "${index}")"
 }
 
+test_tty_marker_without_blank_after() {
+  local index_content
+  index_content=$(printf '%s\n' '- [ ] 上' '' "$(printf -- '-%.0s' {1..80})" '- [ ] 下')
+  run_tty '.'
+  check 'list-side: マーカーの直後に空行が無くても、マーカーより上をブロックにしない' $'4,4\t下' "$(cat "${fzf_in}" 2>/dev/null)"
+}
+
 test_tty_skips_legacy_reference() {
   local index_content
   index_content=$'- [ ] [20261104-090516_x](tasks/mo/20261104-090516_x/index.md)\n- [ ] [記事](https://example.com) を読む\n'
@@ -415,6 +422,7 @@ main() {
   test_tty_adds_selected_blocks
   test_tty_list_rebuilt_while_picking
   test_tty_skips_list_side
+  test_tty_marker_without_blank_after
   test_tty_skips_legacy_reference
   test_tty_cancelled
   test_tty_without_block

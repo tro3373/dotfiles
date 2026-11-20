@@ -26,7 +26,7 @@
 # shellcheck disable=SC2016 # awk の script。shell に展開させない
 readonly parse_awk='
 function blank(s) { return s ~ /^[ \t]*$/ }
-function marker(i) { return line[i] == MARKER && (i == 1 || blank(line[i - 1])) && (i == NR || blank(line[i + 1])) }
+function marker(i) { return line[i] == MARKER && (i == 1 || blank(line[i - 1])) }
 function legacy_ref(s) { return s ~ /^- \[ \] \[[^]]*\]\([^)]*\.md\)[ \t]*$/ }
 # 人の側の行範囲 hs..he。最初のマーカーの後ろ。マーカーが無ければ全行
 function human(    i) {

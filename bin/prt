@@ -2,6 +2,7 @@
 
 main() {
   set -eo pipefail
+  tasks where >/dev/null
   local pr_no=$1
   if [[ -z $pr_no ]]; then
     # 現在のブランチのPR番号を取得

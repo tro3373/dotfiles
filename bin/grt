@@ -2,6 +2,7 @@
 
 main() {
   set -eo pipefail
+  tasks where >/dev/null
   local body
   body=$(gtasks_to_tasks "$@")
   local dst
