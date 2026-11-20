@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-readonly command_name=$(basename $0)
+command_name=$(basename "$0") && readonly command_name
 readonly config_path=$HOME/.gitconfig
 readonly additional_config_path=$HOME/.config/git/additional.gitconfig
 
@@ -72,7 +72,8 @@ EOF
 }
 
 touch_additional_gitconfig() {
-  local _dir=$(dirname $additional_config_path)
+  local _dir
+  _dir=$(dirname "${additional_config_path}")
   [[ ! -e $_dir ]] && exe mkdir -p $_dir
   exe touch $additional_config_path
 }
@@ -85,23 +86,23 @@ cat_additional_gitconfig() {
 EOF
 }
 
+append_or_show() {
+  local path="$1"
+  if is_dummy; then
+    log "==> Bolow settings will be added to ${path}"
+    cat -
+    return
+  fi
+  cat - >>"${path}"
+}
+
 main() {
   initialize "$@"
-  cat_gitconfig |
-    if is_dummy; then
-      log "==> Bolow settings will be added to $config_path"
-      cat -
-    else
-      cat - >>$config_path
-    fi
+  cat_gitconfig | append_or_show "${config_path}"
   touch_additional_gitconfig
-  cat_additional_gitconfig |
-    if is_dummy; then
-      log "==> Bolow settings will be added to $additional_config_path"
-      cat -
-    else
-      cat - >>$additional_config_path
-    fi
-  is_dummy && log ">>> This is dummy mode. specify -e option."
+  cat_additional_gitconfig | append_or_show "${additional_config_path}"
+  if is_dummy; then
+    log ">>> This is dummy mode. specify -e option."
+  fi
 }
 main "$@"
