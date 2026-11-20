@@ -145,9 +145,12 @@ issue_to_tasks() {
 
 append_to_tasks() {
   # `tasks add` turns one call into one task, so each issue is added on its own.
-  local number
+  local number raw
   for number in "$@"; do
-    view_issue "${number}" | issue_to_tasks | tasks add
+    if ! raw=$(view_issue "${number}"); then
+      die "==> Error: Failed to view #${number}"
+    fi
+    issue_to_tasks <<<"${raw}" | tasks add
   done
 }
 

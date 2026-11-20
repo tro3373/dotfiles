@@ -84,6 +84,7 @@ gh() {
     return 0
   fi
   [[ $2 != view ]] && return 0
+  [[ -n ${gh_view_rc:-} ]] && return "${gh_view_rc}"
   local number=$3 repo=o/r
   [[ ${4:-} == -R ]] && repo=$5
   gh_issue "${number}" "body of #${number}" '[]' "https://github.com/${repo}/issues/${number}"
@@ -124,6 +125,17 @@ test_repo_override_reaches_every_gh_call() {
   issue_select_open
   actual=$(grep -c -e '^gh issue list -R x/y' -e '^gh issue view 3 -R x/y' "${stub_log}")
   check 'list と view の両方に -R が渡る' 2 "${actual}"
+  rm -f "${stub_log}"
+}
+
+# 7. view が落ちたら tasks add を呼ばずに止まる
+test_to_tasks_stops_when_view_fails() {
+  local stub_log fzf_selection mode=to-tasks gh_repo_args=() gh_view_rc=1 rc=0
+  stub_log=$(mktemp)
+  fzf_selection=$(printf '1\tt1')
+  (issue_select_open) 2>/dev/null || rc=$?
+  check 'view が落ちたら tasks add を呼ばない' '' "$(sink_log)"
+  check 'view が落ちたら異常終了する' 1 "${rc}"
   rm -f "${stub_log}"
 }
 
@@ -207,6 +219,7 @@ main() {
   test_comments_are_one_block_each_in_order
   test_to_tasks_appends_each_selected_issue
   test_repo_override_reaches_every_gh_call
+  test_to_tasks_stops_when_view_fails
   test_open_mode_opens_one_tab_per_issue
   test_cancelled_selection_calls_no_sink
   test_preview_reads_listed_json

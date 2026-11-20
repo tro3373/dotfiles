@@ -213,6 +213,7 @@ jira() {
     printf 'jira %s\n' "$*" >>"${stub_log}"
     return "${jira_link_rc:-0}"
   fi
+  [[ -n ${jira_view_rc:-} ]] && return "${jira_view_rc}"
   jq -nc --arg key "$3" --arg summary "${jira_title-title of $3}" \
     '{key: $key, self: "",
       fields: {summary: $summary,
@@ -314,6 +315,17 @@ test_to_tasks_with_single_pick_appends_one_task() {
   check '1 件選択なら tasks add は 1 回だけ' \
     "$(printf 'tasks add\n| - [ ] [K-1] title of K-1\n|   body of K-1')" \
     "$(sink_log)"
+  rm -f "${stub_log}"
+}
+
+# 14b. view が落ちたら tasks add を呼ばずに止まる
+test_to_tasks_stops_when_view_fails() {
+  local stub_log fzf_selection jira_view_rc=1 rc=0
+  stub_log=$(mktemp)
+  fzf_selection=$(printf 'K-1\tsummary1')
+  (issue_select_open to-tasks) >/dev/null 2>&1 || rc=$?
+  check 'view が落ちたら tasks add を呼ばない' '' "$(tasks_lines)"
+  check 'view が落ちたら異常終了する' 1 "${rc}"
   rm -f "${stub_log}"
 }
 
@@ -610,6 +622,7 @@ main() {
   test_to_tasks_appends_each_selected_issue
   test_both_modes_enable_fzf_multi_select
   test_to_tasks_with_single_pick_appends_one_task
+  test_to_tasks_stops_when_view_fails
   test_open_mode_opens_one_tab_per_issue
   test_open_mode_removes_tmpdir_after_nvim_exits
   test_open_mode_cleans_up_when_nvim_fails
