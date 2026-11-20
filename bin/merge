@@ -1,0 +1,245 @@
+#!/usr/bin/env bash
+# merge 待ちの PR と未 merge のローカルブランチを 1 つの fzf 一覧に並べ、選んだ 1 件を merge して後片付けする。
+# usage: merge [-s|-r] [-k] [-h]
+#   -s  squash merge (PR の行だけ)
+#   -r  rebase merge (PR の行だけ)
+#   -k  ローカルの後片付け (worktree・tmux session・ブランチの削除) をしない
+# PR の行: gh pr merge で merge し、origin のブランチを消し、ローカルの base を追随させる。
+# ローカルの行: 今のブランチへ git merge する。push はしない。
+# 後片付け: 別の worktree で checkout 中なら git_worktree -r で消してから、ブランチを消す。
+#   今いる worktree と親リポジトリで checkout 中のブランチは、消さずに警告する。
+# fzf の中: / で絞り込み (Esc でやめる)、Enter で merge。
+
+readonly icon_pr=$'☁️'
+readonly icon_local=$'\U0001F4BB'
+readonly icon_worktree=$'\U0001F332'
+readonly icon_ci_failed=$'❌'
+readonly icon_ci_pending=$'⏳'
+readonly icon_ci_passed=$'✅'
+readonly fzf_header='/: 絞り込み (Esc でやめる) | Enter: merge'
+
+usage() {
+  sed -n '2,/^$/p' "${BASH_SOURCE[0]}" | sed -e '/^$/d' -e 's/^# \{0,1\}//'
+}
+
+parse_args() {
+  local arg
+  for arg in "$@"; do
+    case "${arg}" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      -s) set_method squash ;;
+      -r) set_method rebase ;;
+      -k) skip_cleanup=1 ;;
+      *)
+        echo "==> Error: 未知のオプション: ${arg}" >&2
+        exit 2
+        ;;
+    esac
+  done
+}
+
+set_method() {
+  if [[ -n ${method} ]]; then
+    echo "==> Error: -s と -r は同時に指定できない" >&2
+    exit 2
+  fi
+  method="$1"
+}
+
+has_pr_source() {
+  command -v gh >/dev/null 2>&1 || return 1
+  [[ -n $(git remote) ]]
+}
+
+load_prs() {
+  prs_json='[]'
+  has_pr_source || return 0
+  if ! prs_json=$(gh pr list --state open --json number,title,headRefName,baseRefName,statusCheckRollup); then
+    echo "==> Warning: gh pr list に失敗した。PR は出さずローカルのブランチだけを出す" >&2
+    prs_json='[]'
+  fi
+}
+
+# 行は `<kind>\t<branch>\t<PR 番号>\t<表示>`。
+list_pr_rows() {
+  jq -r \
+    --arg icon_pr "${icon_pr}" \
+    --arg failed "${icon_ci_failed}" \
+    --arg pending "${icon_ci_pending}" \
+    --arg passed "${icon_ci_passed}" '
+    def failed: [.conclusion, .state] | map(select(. != null))
+      | any(IN("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED"));
+    def unfinished: (has("status") and .status != "COMPLETED")
+      or ((.state // "") | IN("PENDING", "EXPECTED"));
+    def ci:
+      (.statusCheckRollup // []) as $checks
+      | if ($checks | length) == 0 then "-"
+        elif ($checks | any(failed)) then $failed
+        elif ($checks | any(unfinished)) then $pending
+        else $passed end;
+    .[]
+    | ["pr", .headRefName, (.number | tostring),
+        "\($icon_pr) #\(.number) \(ci) \(.headRefName) \(.title | gsub("[\t\r\n]"; " "))"]
+    | join("\t")
+  ' <<<"${prs_json}"
+}
+
+# PR のある branch は PR の行にまとめるので出さない。removed/* は git_worktree -r が改名した残り。
+list_local_rows() {
+  git for-each-ref refs/heads --no-merged HEAD --format '%(refname:lstrip=2)' |
+    awk -v OFS='\t' -v icon="${icon_local}" -v pr_branches="$(cut -f2 <<<"${pr_rows}")" '
+      BEGIN { n = split(pr_branches, b, "\n"); for (i = 1; i <= n; i++) has_pr[b[i]] = 1 }
+      /^removed\// || ($0 in has_pr) { next }
+      { print "local", $0, "", icon " " $0 }
+    '
+}
+
+checked_out_branches() {
+  git worktree list --porcelain | sed -n 's#^branch refs/heads/##p'
+}
+
+worktree_of() {
+  git worktree list --porcelain |
+    awk -v ref="branch refs/heads/$1" '/^worktree /{ path = substr($0, 10) } $0 == ref { print path; exit }'
+}
+
+main_worktree() {
+  git worktree list --porcelain | sed -n '1s/^worktree //p'
+}
+
+mark_worktrees() {
+  awk -F'\t' -v OFS='\t' -v mark="${icon_worktree}" -v checked_out="$(checked_out_branches)" '
+    BEGIN { n = split(checked_out, b, "\n"); for (i = 1; i <= n; i++) in_worktree[b[i]] = 1 }
+    ($2 in in_worktree) { $4 = $4 " " mark }
+    { print }
+  '
+}
+
+list_rows() {
+  local pr_rows
+  pr_rows=$(list_pr_rows)
+  {
+    printf '%s\n' "${pr_rows}"
+    list_local_rows
+  } | sed '/^$/d' | mark_worktrees
+}
+
+select_row() {
+  # shellcheck disable=SC2016 # FZF_INPUT_STATE は fzf が bind の実行時に渡す
+  # fzf 0.74 は clear-query の直後に hide-input すると、一覧を絞り込まれたまま残す。search() で検索し直させる
+  local leave_filter='case $FZF_INPUT_STATE in enabled) echo "clear-query+search()+hide-input+rebind(/)" ;; *) echo abort ;; esac'
+  # shellcheck disable=SC2016 # {1} {2} {3} は fzf が展開する
+  local preview='case {1} in pr) gh pr view {3} ;; *) git log --color=always --oneline --graph HEAD..{2} ;; esac'
+  # 何も選ばずに抜けたときの非 0 を、選択なしとして扱う
+  fzf --no-multi --no-input \
+    --with-shell 'bash -c' \
+    --delimiter '\t' --with-nth 4 \
+    --header "${fzf_header}" \
+    --bind '/:show-input+unbind(/)' \
+    --bind "esc:transform:${leave_filter}" \
+    --preview "${preview}" \
+    --preview-window=down,border-top,60% <<<"${rows}" || true
+}
+
+warn() {
+  echo "==> Warning: $*" >&2
+}
+
+merge_pr() {
+  echo "==> PR #${pr} を ${method} で merge する (${branch})" >&2
+  gh pr merge "${pr}" "--${method}" || return 1
+  git push origin --delete "${branch}" || warn "origin/${branch} を消せなかった (自動で消える設定なら問題ない)"
+  update_local_base
+}
+
+# base が checkout 中の worktree があればそこで ff する。無ければ local の base ブランチを fetch で進める。
+update_local_base() {
+  local base base_worktree
+  base=$(jq -r --argjson n "${pr}" '.[] | select(.number == $n) | .baseRefName' <<<"${prs_json}")
+  if ! git fetch origin >&2; then
+    warn "git fetch origin に失敗した。ローカルの ${base} は更新しない"
+    return 0
+  fi
+  base_worktree=$(worktree_of "${base}")
+  if [[ -n ${base_worktree} ]]; then
+    git -C "${base_worktree}" merge --ff-only "origin/${base}" >&2 ||
+      warn "${base_worktree} の ${base} を origin/${base} へ進められなかった"
+    return 0
+  fi
+  if git show-ref --verify --quiet "refs/heads/${base}"; then
+    git fetch origin "${base}:${base}" >&2 || warn "ローカルの ${base} を進められなかった"
+  fi
+}
+
+merge_local() {
+  echo "==> ${branch} を今のブランチへ merge する" >&2
+  git merge "${branch}" || return 1
+}
+
+# 今いる worktree と親リポジトリで checkout 中のブランチは消せない。
+is_kept_checkout() {
+  local path
+  path=$(realpath "$1")
+  [[ ${path} == "$(realpath "$(git rev-parse --show-toplevel)")" || ${path} == "$(realpath "$(main_worktree)")" ]]
+}
+
+delete_local_branches() {
+  local -A flags=([pr]=-D [local]=-d)
+  local name
+  for name in "removed/${branch}" "${branch}"; do
+    git show-ref --verify --quiet "refs/heads/${name}" || continue
+    git branch "${flags[${kind}]}" "${name}" >&2 || warn "ブランチ ${name} を消せなかった"
+  done
+}
+
+cleanup() {
+  local checkout git_worktree
+  checkout=$(worktree_of "${branch}")
+  if [[ -n ${checkout} ]] && is_kept_checkout "${checkout}"; then
+    warn "${branch} は ${checkout} で checkout 中なので後片付けしない"
+    return 0
+  fi
+  if [[ -n ${checkout} ]]; then
+    git_worktree="$(dirname "$(realpath "${BASH_SOURCE[0]}")")/git_worktree"
+    if ! "${git_worktree}" -r "${branch}" >&2; then
+      warn "git_worktree -r ${branch} に失敗した。ブランチは消さない"
+      return 0
+    fi
+  fi
+  delete_local_branches
+}
+
+main() {
+  set -euo pipefail
+  local method='' skip_cleanup=0 prs_json rows selected kind branch pr
+  parse_args "$@"
+  load_prs
+  rows=$(list_rows)
+  if [[ -z ${rows} ]]; then
+    echo "==> merge 待ちの PR も未 merge のローカルブランチも無い" >&2
+    return 0
+  fi
+  selected=$(select_row)
+  [[ -z ${selected} ]] && return 0
+  kind=$(cut -f1 <<<"${selected}")
+  branch=$(cut -f2 <<<"${selected}")
+  pr=$(cut -f3 <<<"${selected}")
+  if [[ ${kind} == local && -n ${method} ]]; then
+    echo "==> Error: -s と -r は PR の行にしか使えない (${branch} はローカルのブランチ)" >&2
+    return 2
+  fi
+  method="${method:-merge}"
+  if ! "merge_${kind}"; then
+    echo "==> Error: ${branch} の merge に失敗した。後片付けはしない" >&2
+    return 1
+  fi
+  if [[ ${skip_cleanup} -eq 1 ]]; then
+    echo "==> -k のため後片付けしない" >&2
+    return 0
+  fi
+  cleanup
+}
+main "$@"
