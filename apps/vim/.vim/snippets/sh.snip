@@ -473,10 +473,10 @@ snippet	innnk
 		export purple="1;35m"
 		export cyan="1;36m"
 		export gray="0;37m"
-		export white="$close"
+		export white="0m"
 
 		local text="$stdin$*"
-		local color="$close"
+		local color="0m"
 
 		case \$1 in
 			black | red | green | yellow | blue | purple | cyan | gray | white)
@@ -485,8 +485,7 @@ snippet	innnk
 				;;
 		esac
 
-		# %b: ${open}="\033[" などバックスラッシュエスケープを printf に解釈させる（%s だと ANSI コードが文字列として出力される）
-		printf "%b%b%b%b\n" "${open}" "${color}" "${text}" "${close}" 1>&2
+		printf "%b%b%s%b\n" "${open}" "${color}" "${text}" "${close}" 1>&2
 	}
 
 snippet	innnk_off
