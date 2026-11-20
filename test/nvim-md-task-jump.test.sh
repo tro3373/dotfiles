@@ -3,8 +3,9 @@
 # apps/nvim/nvim/lua/base.lua の <C-n>/<C-p> の markdown 分岐のテスト (実 nvim headless)。
 #
 # 検証対象 (要件):
-#   * markdown で quickfix 窓が無いとき <C-n>/<C-p> は次/前のタスク先頭 (行頭の `- [`) へ移る
-#   * サブタスク (字下げ)・チェック無しの `- ` 行・`- [text](url)` のリンク行・見出しは飛ばす
+#   * markdown で quickfix 窓が無いとき <C-n>/<C-p> は次/前の区切りへ移る
+#     * 区切り: 行頭のタスク `- [ ]` / `- [x]`・見出し・`---`・```
+#   * サブタスク (字下げ)・チェック無しの `- ` 行・`- [text](url)` のリンク行・`#tag` 行は飛ばす
 #   * 末尾/先頭では反対端へ回る
 #   * 検索レジスタを変えない
 #   * quickfix 窓が開いていれば markdown でも quickfix 候補を移動する
@@ -89,7 +90,12 @@ main() {
 - plain
 - [x] b
 - [link](https://example.com)
+#tag
+---
 ## sec
+```
+code
+```
 - [ ] c
 MD
 
@@ -97,20 +103,26 @@ MD
     '3 keep' "$(jump "${md}" 1 '<C-n>')"
   check 'md: <C-n> はサブタスク・チェック無し行を飛ばす' \
     '7 keep' "$(jump "${md}" 3 '<C-n>')"
-  check 'md: <C-n> はリンク行・見出しを飛ばす' \
+  check 'md: <C-n> はリンク行・#tag 行を飛ばして --- へ' \
     '10 keep' "$(jump "${md}" 7 '<C-n>')"
+  check 'md: <C-n> は見出しに止まる' \
+    '11 keep' "$(jump "${md}" 10 '<C-n>')"
+  check 'md: <C-n> はコードフェンスの開きに止まる' \
+    '12 keep' "$(jump "${md}" 11 '<C-n>')"
+  check 'md: <C-n> はコードフェンスの閉じに止まる' \
+    '14 keep' "$(jump "${md}" 12 '<C-n>')"
   check 'md: <C-p> で前のタスク先頭へ' \
     '3 keep' "$(jump "${md}" 7 '<C-p>')"
-  check 'md: 末尾のタスクで <C-n> は先頭のタスクへ回る' \
-    '3 keep' "$(jump "${md}" 10 '<C-n>')"
-  check 'md: 先頭のタスクで <C-p> は末尾のタスクへ回る' \
-    '10 keep' "$(jump "${md}" 3 '<C-p>')"
+  check 'md: 末尾の区切りで <C-n> は先頭の区切りへ回る' \
+    '1 keep' "$(jump "${md}" 15 '<C-n>')"
+  check 'md: 先頭の区切りで <C-p> は末尾の区切りへ回る' \
+    '15 keep' "$(jump "${md}" 1 '<C-p>')"
   check 'md: タスク行の途中から <C-p> で前のタスク先頭へ' \
     '3 keep' "$(MD_COL=4 jump "${md}" 7 '<C-p>')"
-  check 'md: 先頭タスクの途中から <C-p> は末尾のタスクへ回る' \
-    '10 keep' "$(MD_COL=4 jump "${md}" 3 '<C-p>')"
-  check 'md: 末尾タスクの途中から <C-n> は先頭のタスクへ回る' \
-    '3 keep' "$(MD_COL=4 jump "${md}" 10 '<C-n>')"
+  check 'md: 先頭の区切りの途中から <C-p> は末尾の区切りへ回る' \
+    '15 keep' "$(MD_COL=4 jump "${md}" 1 '<C-p>')"
+  check 'md: 末尾の区切りの途中から <C-n> は先頭の区切りへ回る' \
+    '1 keep' "$(MD_COL=4 jump "${md}" 15 '<C-n>')"
   check 'md: quickfix 窓が開いていれば <C-n> は次の quickfix 候補へ' \
     '5 keep' "$(jump "${md}" 1 '<C-n>' 1)"
   check 'md: 診断があっても <C-n> は診断へ飛ばずタスク先頭へ' \
