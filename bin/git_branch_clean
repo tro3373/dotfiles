@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 要らなくなったローカルブランチ・origin のブランチ・backup tag を、fzf で選んで消す。
-# usage: git_branch_clean [-a] [base]  (base 既定: origin/HEAD の指す先)
+# usage: git_branch_clean [-a] [base]  (base 既定: origin/HEAD の指す先。無ければ main・master のうち在るもの)
 #   -a  全件表示で開く。既定は 🟢 (消してよいもの) だけ
 # fzf の中: a で 🟢 だけと全件を切り替え、/ で絞り込み (Esc でやめる)、Tab で複数選択、Enter で消す。
 #   🟢  base に merge 済みか upstream が消えたブランチ、元のブランチが無い backup tag
@@ -25,15 +25,41 @@ initialize() {
     esac
   done
   [[ -n ${base} ]] && return
-  base=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed 's#^origin/##')
+  base=$(default_base)
+}
+
+# origin/HEAD が無い repo (remote が無い・set-head していない) では、main・master のうち在るものを使う。
+default_base() {
+  local head
+  if head=$(git symbolic-ref --short -q refs/remotes/origin/HEAD); then
+    echo "${head#origin/}"
+    return
+  fi
+  git for-each-ref --format '%(refname:lstrip=-1)' \
+    refs/heads/main refs/heads/master refs/remotes/origin/main refs/remotes/origin/master | head -n 1
+}
+
+# merge 済みの判定に使う ref。origin に base があればそれ、無ければ local の base。
+resolve_base_ref() {
+  local ref
+  ref=$(git for-each-ref --sort=-refname --format '%(refname)' "refs/remotes/origin/${base}" "refs/heads/${base}" | head -n 1)
+  if [[ -z ${ref} ]]; then
+    echo "==> Error: base のブランチが見つからない: '${base}'。引数で渡す" >&2
+    return 1
+  fi
+  echo "${ref}"
+}
+
+has_origin() {
+  git remote | grep -qx origin
 }
 
 # 候補は 1 行 1 件の `<state>\t<kind>\t<name>\t<reason>`。
 # state は safe か risky、kind は local・remote・tag。
 list_local() {
-  git for-each-ref refs/heads --merged "origin/${base}" --format '%(refname:lstrip=2)' |
+  git for-each-ref refs/heads --merged "${base_ref}" --format '%(refname:lstrip=2)' |
     sed 's/.*/safe\tlocal\t&\tmerged/'
-  git for-each-ref refs/heads --no-merged "origin/${base}" --format '%(refname:lstrip=2)%09%(upstream:track)' |
+  git for-each-ref refs/heads --no-merged "${base_ref}" --format '%(refname:lstrip=2)%09%(upstream:track)' |
     awk -F'\t' -v OFS='\t' '
       $2 == "[gone]" { print "safe", "local", $1, "gone (upstream が消えた)"; next }
       { print "risky", "local", $1, "未 merge" }
@@ -41,9 +67,9 @@ list_local() {
 }
 
 list_remote() {
-  git for-each-ref refs/remotes/origin --merged "origin/${base}" --format '%(refname:lstrip=3)' |
+  git for-each-ref refs/remotes/origin --merged "${base_ref}" --format '%(refname:lstrip=3)' |
     sed 's/.*/safe\tremote\t&\tmerged/'
-  git for-each-ref refs/remotes/origin --no-merged "origin/${base}" --format '%(refname:lstrip=3)' |
+  git for-each-ref refs/remotes/origin --no-merged "${base_ref}" --format '%(refname:lstrip=3)' |
     sed 's/.*/risky\tremote\t&\t未 merge/'
 }
 
@@ -150,9 +176,12 @@ delete_kind() {
 
 main() {
   set -euo pipefail
-  local view=safe base=''
+  local view=safe base='' base_ref
   initialize "$@"
-  git fetch --prune
+  if has_origin; then
+    git fetch --prune
+  fi
+  base_ref=$(resolve_base_ref)
   local views selected
   views=$(mktemp -d)
   # shellcheck disable=SC2064 # local 変数なので定義時に展開する
