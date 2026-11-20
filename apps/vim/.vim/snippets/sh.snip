@@ -505,7 +505,7 @@ snippet	exe
 	}
 	exe() {
 		! is_dummy && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-		printf "> Executing: $*" | ink yellow
+		printf "> Executing: %s\n" "$*" | ink yellow
 		! is_dummy && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 		is_dummy && return
 		eval "$*"

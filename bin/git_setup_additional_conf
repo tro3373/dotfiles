@@ -27,7 +27,7 @@ add_args() { args+=("$@"); }
 log() { echo "$(date +"%Y-%m-%d %H:%M:%S") $*" | ink yellow; }
 exe() {
   ! is_dummy && log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-  printf "> Executing: $*" | ink yellow
+  printf "> Executing: %s\n" "$*" | ink yellow
   ! is_dummy && log ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
   is_dummy && return
   eval "$*"

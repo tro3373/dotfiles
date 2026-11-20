@@ -10,7 +10,7 @@ initialize() {
 }
 exe() {
   [[ -z $dummy ]] && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-  printf "> Executing: $*" | ink yellow
+  printf "> Executing: %s\n" "$*" | ink yellow
   [[ -z $dummy ]] && echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
   if [[ -n $dummy ]]; then
     return
