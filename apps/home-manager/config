@@ -4,15 +4,9 @@ install_common() {
   if has home-manager; then
     return
   fi
-  local _nix_sh=$HOME/.nix-profile/etc/profile.d/nix.sh
   if ! has nix; then
-    if [[ ! -e $_nix_sh ]]; then
-      add_dependency_args nix
-      return
-    fi
-    # apps/nix does not modify shell profiles, so a nix installed earlier in this setup run is not on PATH yet.
-    # shellcheck disable=SC1090
-    . "$_nix_sh"
+    add_dependency_args nix
+    return
   fi
   # First run only: bootstrap via `nix run`.
   #   - NIX_CONFIG enables flakes for this command and its child nix processes (single-user installer has it off).

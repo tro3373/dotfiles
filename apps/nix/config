@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+nix_sh() { echo "$HOME/.nix-profile/etc/profile.d/nix.sh"; }
+
+is_installed() {
+  has nix && return
+  [[ -e $(nix_sh) ]]
+}
+
 install_common() {
   # Official Nix installer, single-user (--no-daemon).
   #   - Determinate's installer is multi-user only, so we stay on the official one to keep single-user.
@@ -8,4 +15,9 @@ install_common() {
   #   - --proto/--tlsv1.2/-sSf: harden the download over the previous `curl -L | sh`
   exe export NIX_INSTALLER_NO_MODIFY_PROFILE=1
   exe 'curl --proto "=https" --tlsv1.2 -sSf -L https://nixos.org/nix/install | sh -s -- --no-daemon'
+}
+
+setting_common() {
+  has nix && return
+  exe ". $(nix_sh)"
 }
