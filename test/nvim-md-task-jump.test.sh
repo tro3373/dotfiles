@@ -93,7 +93,7 @@ main() {
 #tag
 ---
 ## sec
-```
+```lua
 code
 ```
 - [ ] c
