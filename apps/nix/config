@@ -16,5 +16,9 @@ install_common() {
 
 setting_common() {
   has nix && return
-  exe ". $(nix_sh)"
+  exe ". $(printf '%q' "$(nix_sh)")"
+  is_dry && return
+  has nix && return
+  elog "==> $(nix_sh) did not put nix on PATH"
+  return 1
 }

@@ -54,7 +54,7 @@ place_nix_sh() {
 
 run_setup() {
   status=0
-  HOME="${fake_home}" PATH="${base_path}" "${bin_dir}/setup" -e "$@" >"${tmproot}/out" 2>&1 || status=$?
+  HOME="${fake_home}" PATH="${extra_path:+${extra_path}:}${base_path}" "${bin_dir}/setup" -e "$@" >"${tmproot}/out" 2>&1 || status=$?
 }
 
 ran() { paste -sd, "${FAKE_LOG}"; }
@@ -77,6 +77,20 @@ test_installed_off_path() {
   check "nix.sh があれば nix の installer を走らせない" "0 " "${status} $(ran)"
 }
 
+test_on_path() {
+  reset_home
+  extra_path="${FAKE_NIX_BIN}" run_setup nix
+  check "nix が PATH にあれば installer を走らせない" "0 " "${status} $(ran)"
+}
+
+test_nix_sh_without_nix() {
+  reset_home
+  mkdir -p "${fake_home}/.nix-profile/etc/profile.d"
+  : >"${fake_home}/.nix-profile/etc/profile.d/nix.sh"
+  run_setup home-manager
+  check "nix.sh が nix を PATH に載せなければ失敗で終わる" "1 " "${status} $(ran)"
+}
+
 test_nix_then_home_manager() {
   reset_home
   run_setup nix home-manager
@@ -89,14 +103,16 @@ main() {
   tmproot=$(mktemp -d)
   # shellcheck disable=SC2064
   trap "rm -rf '${tmproot}'" EXIT
-  local fake_bin="${tmproot}/bin" fake_home="${tmproot}/home"
-  local base_path="${fake_bin}:/usr/bin:/bin"
+  local fake_bin="${tmproot}/bin" fake_home="${tmproot}/home dir"
+  local base_path="${fake_bin}:${bin_dir}:/usr/bin:/bin"
   # lint-ignore: uppercase 偽の curl と nix へ渡す環境変数
   export FAKE_LOG="${tmproot}/log" FAKE_NIX_BIN="${tmproot}/nix-bin" FAKE_NIX_SH="${tmproot}/nix.sh"
   install_fakes
 
   test_fresh
   test_installed_off_path
+  test_on_path
+  test_nix_sh_without_nix
   test_nix_then_home_manager
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
