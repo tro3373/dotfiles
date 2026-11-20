@@ -29,6 +29,7 @@ Add a new git worktree for the specified branch(or Remove it).
     Notes
       For -l/-r, <branch_name> filters the worktree list
       and a single match is selected without opening the list.
+      For -r, an absolute worktree path removes that worktree directly.
 
 EOF
 }
@@ -411,7 +412,19 @@ _do_remove_worktree() {
   fi
 }
 
+_remove_worktree_at() {
+  if ! _is_under_worktree_root "${branch}"; then
+    elog "==> '${branch}' is not directly under '${git_worktree_dir}'. Refusing to remove it." >&2
+    exit 1
+  fi
+  _do_remove_worktree "${branch}"
+}
+
 _remove_worktree() {
+  if [[ ${branch} == /* && -d ${branch} ]]; then
+    _remove_worktree_at
+    return
+  fi
   removal_list=$(_list_removal_worktrees)
   if [[ -z ${removal_list} ]]; then
     elog "No worktrees exist to remove."

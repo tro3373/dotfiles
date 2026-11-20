@@ -415,6 +415,47 @@ test_remove_loop_leaves_stdin_for_confirm() {
   check 'remove loop: 確認の read が選択の行を読まない' $'a:\nb:' "$(cat "${log}")"
 }
 
+# -r に worktree の絶対パスを渡すと、fzf を通さずそのパスだけを消す。
+test_remove_by_path_removes_only_that_worktree() {
+  new_repo bypath
+  local wt wt_sibling
+  wt=$(add_wt feat-w)
+  wt_sibling=$(add_wt feat-wt)
+  local rc
+  (
+    cd "${org}" || exit 1
+    # shellcheck disable=SC2034  # source した _remove_worktree が参照する
+    git_worktree_dir="${org_wt}" initial_toplevel="${org}" branch="${wt}"
+    # shellcheck disable=SC2329  # _remove_worktree が呼ぶ
+    fzf() { echo CALLED >"${tmproot}/bypath.fzf"; }
+    _remove_worktree
+  ) >/dev/null 2>&1
+  rc=$?
+  check 'by-path: 終了コード 0' '0' "${rc}"
+  check 'by-path: 指定した worktree が消える' '0' "$([[ -e ${wt} ]] && echo 1 || echo 0)"
+  check 'by-path: 名前が似た worktree は残る' '1' "$([[ -e ${wt_sibling} ]] && echo 1 || echo 0)"
+  check 'by-path: fzf を呼ばない' '0' "$([[ -e ${tmproot}/bypath.fzf ]] && echo 1 || echo 0)"
+}
+
+# 置き場所の外の worktree は、パスで渡されても消さずに終了コード 1。
+test_remove_by_path_refuses_outside_worktree_root() {
+  new_repo bypathout
+  local outside="${tmproot}/bypathout/elsewhere" rc
+  git -C "${org}" worktree add -q -b feat-out "${outside}" >/dev/null 2>&1
+  local wt_sibling
+  wt_sibling=$(add_wt feat-out2)
+  (
+    cd "${org}" || exit 1
+    # shellcheck disable=SC2034  # source した _remove_worktree が参照する
+    git_worktree_dir="${org_wt}" initial_toplevel="${org}" branch="${outside}"
+    _remove_worktree
+  ) >/dev/null 2>&1
+  rc=$?
+  check 'by-path-outside: 終了コード 1' '1' "${rc}"
+  check 'by-path-outside: 置き場所の外の worktree が残る' '1' "$([[ -e ${outside} ]] && echo 1 || echo 0)"
+  check 'by-path-outside: 置き場所の中の worktree も残る' '1' "$([[ -e ${wt_sibling} ]] && echo 1 || echo 0)"
+}
+
 main() {
   set -uo pipefail
   if ! "${sandbox_bin}" --inside; then
@@ -442,6 +483,8 @@ main() {
   test_remove_keeps_running_tmux_session
   test_remove_without_tmux_server
   test_remove_loop_leaves_stdin_for_confirm
+  test_remove_by_path_removes_only_that_worktree
+  test_remove_by_path_refuses_outside_worktree_root
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
