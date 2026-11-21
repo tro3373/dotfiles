@@ -71,12 +71,12 @@ test_fails_without_naming() {
 # terms.tsv (日本語 TAB 英語 TAB 許す語) があれば、英語の技術用語を日本語に置き換えない指示を prompt の前に付ける
 test_adds_terms_rule() {
   printf '%s' '{"branch":"feature/x","name":"x","title":"x","abbr":"a"}' >"${llm_out}"
-  printf '# comment\n秘密\tsecret\t秘密鍵,秘密保持\n鉤\thook\n' >"${tmproot}/config/tasks/terms.tsv"
+  printf '# comment\n鍵束\tkeyring\t鍵束管理,鍵束番号\n鉤\thook\n' >"${tmproot}/config/tasks/terms.tsv"
   run 'x'
   rm "${tmproot}/config/tasks/terms.tsv"
   local call
   call=$(cat "${calls_log}")
-  check 'terms: 日本語 => 英語 の対応を渡す' '1' "$([[ ${call} == *'- 秘密 => secret (ok: 秘密鍵, 秘密保持)'* ]] && echo 1 || echo 0)"
+  check 'terms: 日本語 => 英語 の対応を渡す' '1' "$([[ ${call} == *'- 鍵束 => keyring (ok: 鍵束管理, 鍵束番号)'* ]] && echo 1 || echo 0)"
   check 'terms: 許す語の無い行も渡す' '1' "$([[ ${call} == *'- 鉤 => hook'* && ${call} != *'- 鉤 => hook (ok'* ]] && echo 1 || echo 0)"
   check 'terms: コメント行は渡さない' '0' "$([[ ${call} == *comment* ]] && echo 1 || echo 0)"
 }

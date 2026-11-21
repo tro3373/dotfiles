@@ -193,7 +193,7 @@ test_size_rejects_invalid_spec() {
 }
 
 # 9. session 停止中は prop を触らず落ちる。waydroid の prop set は停止中でも
-#    exit 0 を返す為、ここを通すと「設定したのに反映されない」を黙って作る。
+#    exit 0 を返す為、ここを通すと「設定したのに反映されない」を警告なしに作る。
 test_size_fails_loud_when_session_stopped() {
   export fake_session=STOPPED
   run_wad size phone

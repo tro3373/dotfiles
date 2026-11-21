@@ -273,7 +273,7 @@ test_gre_negative_count_is_unknown_option() {
 }
 
 # 非フラグ引数が 2 個以上なら何もせず非0終了。後勝ち上書きだと `gre abc 3` の typo が
-# 黙って 3 commit の undo になり、入力と挙動が無言で乖離するため。
+# 警告なしに 3 commit の undo になり、入力と挙動が乖離するため。
 test_extra_argument_rejected() {
   new_repo
   local before rc

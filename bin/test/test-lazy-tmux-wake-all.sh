@@ -48,9 +48,12 @@ tmproot=$(mktemp -d)
 trap 'rm -rf "${tmproot}"' EXIT
 
 # 開発者の設定・上位ディレクトリの .git を拾わせない。
+# lint-ignore: uppercase git と lazy-tmux-wake-all が読む env 名
 export GIT_CEILING_DIRECTORIES="${tmproot}"
+# lint-ignore: uppercase git と lazy-tmux-wake-all が読む env 名
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 # クライアント待ちを 1 tick に潰す (テストを 5 秒待たせない)。
+# lint-ignore: uppercase git と lazy-tmux-wake-all が読む env 名
 export LAZY_TMUX_WAKE_CLIENT_TICKS=1
 
 pass=0
@@ -151,10 +154,15 @@ FAKE
 
 chmod +x "${fakebin}/lazy-tmux" "${fakebin}/tmux"
 
+# lint-ignore: uppercase fake の lazy-tmux と tmux が読む env 名
 export FAKE_DATA_DIR="${datadir}"
+# lint-ignore: uppercase fake の lazy-tmux と tmux が読む env 名
 export FAKE_LIST="${tmproot}/list.tsv"
+# lint-ignore: uppercase fake の lazy-tmux と tmux が読む env 名
 export FAKE_CALLS="${tmproot}/calls.log"
+# lint-ignore: uppercase fake の lazy-tmux と tmux が読む env 名
 export FAKE_SESSIONS="${tmproot}/sessions.tsv"
+# lint-ignore: uppercase fake の lazy-tmux と tmux が読む env 名
 export FAKE_CLIENTS="${tmproot}/clients.txt"
 
 # 名前 + pane の作業パス群から snapshot JSON を書き、list へ 1 行足す。

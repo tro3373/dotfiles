@@ -10,7 +10,6 @@
 
 # 期待値の markdown にはバッククォート (code / フェンス) がそのまま入る。
 # shellcheck disable=SC2016
-set -uo pipefail
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 adf2md=$(cd "${script_dir}/.." && pwd)/adf2md
@@ -232,6 +231,7 @@ test_doc_blocks_are_separated_by_blank_line() {
 }
 
 main() {
+  set -uo pipefail
   local pass=0 fail=0
 
   test_paragraph

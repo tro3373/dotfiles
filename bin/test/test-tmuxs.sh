@@ -839,7 +839,7 @@ test_transition_logged() {
     "$(grep -q '%5 waiting=>running band=$' "${log}" && echo yes || echo no)"
 }
 
-# 22. 退避元 status-style が空文字でも band ON->OFF で黄色が残らない (番兵で判定)。
+# 22. 退避元 status-style が空文字でも band ON->OFF で黄色が残らない (sentinel で判定)。
 test_band_empty_style_restore() {
   reset
   : >"${FAKE_STATE_DIR}/status-style" # 空 style 環境を再現

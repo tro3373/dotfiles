@@ -224,7 +224,7 @@ test_fzf_args_with_branch() {
   check 'with-branch: --select-1 を渡す' '1' "$(has_arg "${args}" --select-1)"
   check 'with-branch: --exact を渡す (曖昧一致で誤確定させない)' '1' "$(has_arg "${args}" --exact)"
   check 'with-branch: --no-extended を渡す (! ^ $ を演算子にしない)' '1' "$(has_arg "${args}" --no-extended)"
-  check 'with-branch: --nth=-1 を渡す (パス列だけを照合)' '1' "$(has_arg "${args}" --nth=-1)"
+  check 'with-branch: --nth=-1 を渡す (パス列だけを match に使う)' '1' "$(has_arg "${args}" --nth=-1)"
   check 'with-branch: --exit-0 は渡さない' '0' "$(has_arg "${args}" --exit-0)"
   check 'with-branch: 呼び出し側の --no-multi が届く' '1' "$(has_arg "${args}" --no-multi)"
   check 'with-branch: 呼び出し側の --prompt が届く' '1' "$(has_arg "${args}" '--prompt=test: ')"

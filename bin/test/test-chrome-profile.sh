@@ -19,7 +19,7 @@ check() {
 }
 
 # 未ログインのプロファイル (user_name が空・欠落) も混ぜる。
-# 前方一致の対象から黙って外れることを見るため。
+# 前方一致の対象からエラーを出さずに外れることを見るため。
 write_local_state() {
   mkdir -p "${tmproot}/.config/google-chrome"
   cat >"${tmproot}/.config/google-chrome/Local State" <<'EOS'
