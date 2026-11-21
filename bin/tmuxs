@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# test: test/tmuxs.test.sh
 
 # ---- pane 状態の書込側 (Claude hook 統合) --------------------------------
 # settings.json が pane 内で `tmuxs waiting|running|done|idle|remove` を呼ぶ。
