@@ -6,8 +6,6 @@
 #                無ければ中断扱い (exit 1)
 #   * 偽 SHELL : worktree 内の状態を FAKE_SHELL_LOG へ書いて終わる。
 #                FAKE_SHELL_EDIT=1 ならファイルを 1 つ編集する
-#
-#   bin/test/test-git_review.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 bin=$(cd "${script_dir}/.." && pwd)/git_review

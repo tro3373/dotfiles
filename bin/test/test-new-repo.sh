@@ -3,8 +3,6 @@
 # bin/new-repo のテスト。実 ghq / git を使い、gh だけ偽物に差し替える。
 # 偽 gh は repo create で bare repo を作り、git の insteadOf で
 # git@github.com: への push をその bare repo へ向ける。
-#
-#   bin/test/test-new-repo.sh
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 bin_dir=$(cd "${script_dir}/.." && pwd)

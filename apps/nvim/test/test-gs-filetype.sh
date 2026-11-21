@@ -16,8 +16,6 @@
 #   * 上書き前の nvim 既定は grads (対比。上書きが効いている証拠)
 #
 # 対象外: .gs バッファへの ts_ls attach (lazy/mason 起動が必要なため実機手動確認)
-#
-#   apps/nvim/test/test-gs-filetype.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 ftconf=$(cd "${script_dir}/../nvim/lua" && pwd)/filetypes.lua

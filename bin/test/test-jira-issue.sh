@@ -8,8 +8,6 @@
 # bin/adf2md の担当なので、ここでは「組み立て」だけを見る: タイトル行、字下げ、
 # コメントの並びと区切り、footer、件数の欠け。
 # issue_select_open のテストは fzf/jira/tasks/nvim/gh を関数でスタブして検証する。
-#
-#   bin/test/test-jira-issue.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 jira_issue_bin=$(cd "${script_dir}/.." && pwd)/jira-issue
@@ -133,7 +131,7 @@ test_no_self_no_footer() {
   check '.self が無ければ footer を出さない' '- [ ] [K-1] Summary' "${actual}"
 }
 
-# 9. total より返却件数が少なければ警告する (--raw は件数を絞れないので警告なしに捨てない)
+# 9. total より返却件数が少なければ警告する
 test_warns_when_comments_are_truncated() {
   local comments err
   comments=$(jq -nc --argjson a "$(comment_of 'Person A' '2021-11-23T09:00:00.000+0900' "$(doc_text 'x')")" '[$a]')
@@ -467,7 +465,6 @@ test_to_gh_stops_when_the_search_fails() {
 }
 
 # 25. [KEY] がタイトル途中にあるだけの issue は既存扱いにしない
-#     (参照タイトルに引きずられると、作るべき issue を報告せずに作らなくなる)
 test_to_gh_matches_the_key_only_as_a_title_prefix() {
   local stub_log fzf_selection
   local gh_existing_titles='Follow-up for [K-1] migration'
@@ -493,7 +490,6 @@ test_to_gh_pins_the_duplicate_search_query() {
   rm -f "${stub_log}"
 }
 
-# 27. -g の後ろの知らない引数はエラーを出さずに捨てない (-R の綴り違いで別 repo に作る事故)
 test_unknown_option_is_rejected() {
   local rc=0
   (set_gh_repo_args -Rowner/repo) >/dev/null 2>&1
@@ -527,8 +523,7 @@ test_to_gh_links_the_created_url_back_to_jira() {
   rm -f "${stub_log}"
 }
 
-# 30. gh の出力から URL を取れなければ止める。issue は既に出来ているので、
-#     エラーを出さずに進むと Jira 側だけ空のまま次の KEY へ行ってしまう
+# 30. gh の出力から URL を取れなければ止める。
 test_to_gh_stops_when_the_created_url_is_missing() {
   local stub_log fzf_selection rc=0
   local gh_create_out=""
@@ -541,8 +536,7 @@ test_to_gh_stops_when_the_created_url_is_missing() {
   rm -f "${stub_log}"
 }
 
-# 31. Web Link の登録に失敗したら止める。次回の -g は「GH issue が既にある」で
-#     スキップするため、エラーを出さずに進むとリンクが永久に付かない
+# 31. Web Link の登録に失敗したら止める。
 test_to_gh_stops_when_the_jira_link_fails() {
   local stub_log fzf_selection rc=0 out=""
   local jira_link_rc=1

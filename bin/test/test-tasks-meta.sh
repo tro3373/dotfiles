@@ -4,8 +4,6 @@
 #
 # 担保したいのは、naming.md に従わせて生成し、LLM の出力のうち branch / name / title / abbr として使えるものだけを通すこと。
 # 改行入りの値は task.md の front matter や一覧を壊すので拒む。
-#
-#   bin/test/test-tasks-meta.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 gen_bin=$(cd "${script_dir}/.." && pwd)/tasks-meta

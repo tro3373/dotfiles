@@ -6,8 +6,6 @@
 #   * 色ごとに ESC [ <色> 本文 ESC [ 0 m を stderr へ 1 行で出す。
 #     白と色未指定は ESC [ 0 m で始まる。
 #   * 本文のバックスラッシュの並びを制御文字として解釈しない。
-#
-#   bin/test/test-ink.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) && readonly script_dir
 target_bin=$(cd "${script_dir}/.." && pwd)/ink && readonly target_bin

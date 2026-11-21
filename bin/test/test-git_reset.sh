@@ -13,8 +13,6 @@
 #                      redo できる (多段)。N 回 push → 段階的/一気の redo で完全復元。
 #   * divergence    : gre 後に新コミットを作った状態で grr すると、現 HEAD が選択先の
 #                      祖先でない (merge-base) ため警告して中断 (HEAD/stack 不変)。-f で強制。
-#
-#   bin/test/test-git_reset.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 gr_bin=$(cd "${script_dir}/.." && pwd)/git_reset
@@ -272,8 +270,7 @@ test_gre_negative_count_is_unknown_option() {
   check 'gre -1: stack 作られない(0件)' '0' "$(stack_size)"
 }
 
-# 非フラグ引数が 2 個以上なら何もせず非0終了。後勝ち上書きだと `gre abc 3` の typo が
-# 警告なしに 3 commit の undo になり、入力と挙動が乖離するため。
+# 非フラグ引数が 2 個以上なら何もせず非0終了。
 test_extra_argument_rejected() {
   new_repo
   local before rc

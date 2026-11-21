@@ -22,8 +22,6 @@
 #       作ってからコミットの無いブランチは取り込み済みに見せない。
 #
 #   * -a: <org>-worktree/<branch の / を - にした名前> に作り、そのパスだけを stdout に出す。
-#
-#   bin/test/test-git_worktree.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
 gwt_bin=$(cd "${script_dir}/.." && pwd)/git_worktree

@@ -7,8 +7,6 @@
 #     無効なもの・ignores にあるもの・ビルトイン (@builtin) は warn しない。
 #   * 最後に、実際に更新されたものだけを一覧で出す。
 #     claude の出力は 1 件ずつ流れて「更新されたか」を見落とすため。
-#
-#   bin/test/test-update_llms.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) && readonly script_dir
 target_bin=$(cd "${script_dir}/.." && pwd)/update_llms && readonly target_bin

@@ -12,8 +12,6 @@
 #   * commit 無し  : PR を作らず exit 0
 #   * PR 作成失敗  : 中断する
 #   * 引数ガード   : 未知のオプション、main 上での実行は中断する
-#
-#   bin/test/test-pr.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 bin_dir=$(cd "${script_dir}/.." && pwd)

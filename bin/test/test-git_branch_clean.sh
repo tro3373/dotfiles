@@ -5,8 +5,6 @@
 # fzf は PATH 先頭の偽物に差し替える (--header-lines の行数を除き、FZF_PICK に一致する行だけ選ぶ)。
 # fzf の中のキー操作 (a・/・Esc・Tab) は、実物の fzf を tmux の pane で開いて確かめる。
 # tmux-sandbox の外で起動されたら、自分を tmux-sandbox 経由で起動し直す。
-#
-#   bin/test/test-git_branch_clean.sh
 
 check() {
   local desc="$1" expected="$2" actual="$3"

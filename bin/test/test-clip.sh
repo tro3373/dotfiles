@@ -7,8 +7,6 @@
 # tmux 内は ssh 先でも tmux load-buffer -w: copy-pipe から呼ばれると /dev/tty が無い為。
 # tmux 外の ssh 先は /dev/tty へ OSC52: ssh 先の pbcopy / xclip では手元に届かない為。
 # tmux 外の local は pbcopy => wl-copy (Wayland のみ) => xclip の順。
-#
-#   bin/test/test-clip.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 clip_bin=$(cd "${script_dir}/.." && pwd)/clip

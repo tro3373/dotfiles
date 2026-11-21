@@ -3,8 +3,6 @@
 # bin/gset のユニットテスト (実 dconf を触らない)。
 #
 # 一時 schema を --schemadir で読ませ、保存先は keyfile backend の一時ファイルにする。
-#
-#   bin/test/test-gset.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 gset=$(cd "${script_dir}/.." && pwd)/gset

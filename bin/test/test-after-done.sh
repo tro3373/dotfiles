@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 #
-# test-after-done.sh - after-done が repo の after-done ファイルを、/bot の after_done.sh が読める形で読み書きすることを確かめる。
-#
-#   bash bin/test/test-after-done.sh
+# after-done が repo の after-done ファイルを、/bot の after_done.sh が読める形で読み書きすることを確かめる。
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" && readonly script_dir
 readonly target="${script_dir}/../after-done"

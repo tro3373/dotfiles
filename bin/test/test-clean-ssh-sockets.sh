@@ -7,8 +7,6 @@
 #     ControlPersist の間残り続ける。
 #   * pattern で対象を絞れる / 省略時は全件。
 #   * dry-run は何も消さない。
-#
-#   bin/test/test-clean-ssh-sockets.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 target_bin=$(cd "${script_dir}/.." && pwd)/clean-ssh-sockets

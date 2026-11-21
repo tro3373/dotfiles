@@ -9,8 +9,6 @@
 #   * primary が成功したら primary の出力だけを出し、fallback は呼ばない。
 #   * claude はユーザ設定・MCP・tool・skill を読まずに起動する:
 #     読むと 1 回ごとに数秒遅くなり、ユーザ向けの規約が出力に混ざる。
-#
-#   bin/test/test-llm.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 target_bin=$(cd "${script_dir}/.." && pwd)/llm

@@ -38,8 +38,6 @@
 #     * 起きているセッション        => forget しない (save --all が上書きする)
 #     * --dry-run                   => lazy-tmux を一切呼ばない
 #     * --bootstrap と併用          => 使い方エラー (終了コード 2)
-#
-#   bin/test/test-lazy-tmux-wake-all.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 target=$(cd "${script_dir}/.." && pwd)/lazy-tmux-wake-all

@@ -1,8 +1,5 @@
 -- luacheck: ignore 112 113
 -- 拡張子 => filetype の上書き (nvim 組み込み判定より優先される)。
---
--- 依存ゼロの純設定に保つ (apps/nvim/test/test-gs-filetype.sh が --clean な nvim へ
--- dofile して単体検証するため)。
 
 vim.filetype.add({
   extension = {

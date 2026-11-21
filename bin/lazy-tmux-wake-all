@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# test: bin/test/test-lazy-tmux-wake-all.sh
 #
 # 保存済み lazy-tmux セッションを一括復元する。復元の前に「復元する価値の無い
 # snapshot」を forget して捨てる。捨てる条件は 2 つ:

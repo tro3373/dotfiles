@@ -12,8 +12,6 @@
 #   * markdown 以外ではタスク先頭へ移らない
 #
 # global.lua + base.lua だけを --clean な nvim に読み込む (lazy.nvim / mason 等を起動しない)。
-#
-#   apps/nvim/test/test-md-task-jump.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 conf=$(cd "${script_dir}/../nvim" && pwd)

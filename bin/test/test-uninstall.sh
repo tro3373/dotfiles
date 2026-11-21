@@ -2,8 +2,6 @@
 
 # bin/uninstall のユニットテスト。
 # os / pacman / sudo を偽物に差し替え、pacman へ渡る削除の引数を検証する。
-#
-#   bin/test/test-uninstall.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) && readonly script_dir
 bin_dir=$(cd "${script_dir}/.." && pwd) && readonly bin_dir

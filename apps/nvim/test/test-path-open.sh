@@ -13,8 +13,6 @@
 #   * 単一行     : path:42 / path:+42 / path#L42 => 42 行目
 #   * 範囲       : path:42-99 / path#L42-L99     => 開始行 42 (終了行は無視)
 #   * 存在しない : 解決できないパスは開かない (ERROR)
-#
-#   apps/nvim/test/test-path-open.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 funcs=$(cd "${script_dir}/../../vim/.vim/conf.d" && pwd)/102_funcs.vim

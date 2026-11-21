@@ -8,8 +8,6 @@
 #   逃がす時は TMUX を外して渡す (残すと ghostty 内の zsh が tmux 内と誤認する)。
 #
 # それ以外は本体へ素通し: pane / api 等のサブコマンドは tmux 上の agent からも叩く。
-#
-#   bin/test/test-herdr.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 herdr_bin=$(cd "${script_dir}/.." && pwd)/herdr

@@ -11,8 +11,6 @@
 # 終わったら kill-server する。fzf の x:kill-session で作業中のセッションを消し得る。
 # 偽 tmux の状態 (@tmuxs_* option 等) は FAKE_STATE_DIR 配下に永続化し、
 # hook の複数回起動 (別プロセス) 間でも tmux server のように状態を共有する。
-#
-#   bin/test/test-tmuxs.sh   # 全テスト実行 (実 tmux 不要)
 
 # tmpdir 配下に偽 tmux を生成し、$PATH 先頭に差し込む。
 # FAKE_TMUX_LOG / FAKE_STATE_DIR を偽 tmux が参照できるよう export する。
@@ -839,7 +837,7 @@ test_transition_logged() {
     "$(grep -q '%5 waiting=>running band=$' "${log}" && echo yes || echo no)"
 }
 
-# 22. 退避元 status-style が空文字でも band ON->OFF で黄色が残らない (sentinel で判定)。
+# 22. 退避元 status-style が空文字でも band ON->OFF で黄色が残らない。
 test_band_empty_style_restore() {
   reset
   : >"${FAKE_STATE_DIR}/status-style" # 空 style 環境を再現

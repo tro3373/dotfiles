@@ -9,8 +9,6 @@
 #     add できたブロックだけを index.md から消すこと。
 #     消す間だけ index.md のディレクトリに flock を取る。tasks add も同じ lock で一覧を作り直すので、
 #     add の間に持っていると互いに待って止まる
-#
-#   bin/test/test-tasks-add.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 tasks_add_bin=$(cd "${script_dir}/.." && pwd)/tasks-add

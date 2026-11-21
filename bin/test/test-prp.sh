@@ -4,8 +4,6 @@
 #
 # 担保したいのは、呼び出しごとに一時ファイルを分けること。
 # 共有すると、並列で呼んだときに別の呼び出しの本文が混ざる。
-#
-#   bin/test/test-prp.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 prp_bin=$(cd "${script_dir}/.." && pwd)/prp

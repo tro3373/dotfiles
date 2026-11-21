@@ -13,8 +13,6 @@
 #   * dir 退避     : md 全く無し・docs/adr 有り     => docs/adr ディレクトリを開く
 #   * error        : docs/adr 自体が無い            => 新規タブ無し (ERROR)
 #   * 番号正規化   : ADR-7 / ADR-007 も 0007-*.md にマッチ
-#
-#   apps/nvim/test/test-adr-open.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 funcs=$(cd "${script_dir}/../../vim/.vim/conf.d" && pwd)/102_funcs.vim

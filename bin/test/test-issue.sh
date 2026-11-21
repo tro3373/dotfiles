@@ -5,8 +5,6 @@
 # issue_to_tasks は `gh issue view --json number,title,body,comments,url` の JSON を
 # 受け取るので、fixture もその形で組む (gh_issue ヘルパ)。
 # issue_select_open / parse_args は gh / fzf / tasks / nvim を関数でスタブして検証する。
-#
-#   bin/test/test-issue.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 issue_bin=$(cd "${script_dir}/.." && pwd)/issue

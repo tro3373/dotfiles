@@ -3,8 +3,6 @@
 # bin/tmux-sandbox のテスト (実 tmux 使用)。
 # 普段使いの server の代わりに `tmux -S` で外側の server を立て、TMUX をそこへ向けて検証する。
 # テスト中の tmux はすべて -S 付きか tmux-sandbox の中で、普段使いの server には触れない。
-#
-#   bin/test/test-tmux-sandbox.sh
 
 check() {
   local desc="$1" expected="$2" actual="$3"

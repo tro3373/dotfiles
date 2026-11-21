@@ -3,8 +3,6 @@
 # apps/vim/.vim/conf.d/102_funcs.vim の OpenUrlOrFilePathOnCursor が
 # tasks の ID (YYYYMMDD-HHMMSS) を task.md へ解決してタブで開く挙動のテスト (実 nvim headless)。
 # tasks と open は PATH 先頭の fake に差し替える。
-#
-#   apps/nvim/test/test-tasks-id-open.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 funcs=$(cd "${script_dir}/../../vim/.vim/conf.d" && pwd)/102_funcs.vim

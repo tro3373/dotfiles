@@ -5,8 +5,6 @@
 # age-keygen は本物を使い、HOME を一時ディレクトリに差し替えて鍵を作る。
 # 生成した .sops.yaml で sops が実際に暗号化できるかまで見る
 # (yaml の形が sops の期待とずれていても、文字列比較だけでは気付けない為)。
-#
-#   bin/test/test-gen_sops_yaml.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 gen_bin=$(cd "${script_dir}/.." && pwd)/gen_sops_yaml

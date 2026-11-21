@@ -12,8 +12,6 @@
 #   * エラーは stdpath("log")/tasks.log に、理由と cwd・buffer・index・範囲を追記する
 #
 # tasks.lua だけを --clean な nvim に読み込む (lazy.nvim / mason 等を起動しない)。
-#
-#   apps/nvim/test/test-tasks-add.sh   # 全テスト実行
 
 check() {
   local desc="$1" expected="$2" actual="$3"

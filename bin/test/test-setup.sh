@@ -3,8 +3,6 @@
 # bin/setup の nix と home-manager の導入のユニットテスト。
 # curl と nix を偽物に差し替え、一時 HOME で bin/setup を実行し、
 # nix の installer と home-manager の bootstrap が何回走るかを検証する。
-#
-#   bin/test/test-setup.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) && readonly script_dir
 bin_dir=$(cd "${script_dir}/.." && pwd) && readonly bin_dir

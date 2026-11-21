@@ -9,8 +9,6 @@
 #     depends 追加・他ファイル変更) は自動更新せず、手動確認に回し、update-aur --report を案内する。
 #   * --report は手動確認に回った件の判定材料と差分を出すだけで、yay -S しない。
 #   * --apply は yay -S が成功したときだけ、今のメンテナを記録する。
-#
-#   bin/test/test-update-aur.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) && readonly script_dir
 bin_dir=$(cd "${script_dir}/.." && pwd) && readonly bin_dir

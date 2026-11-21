@@ -16,8 +16,6 @@
 # size: waydroid の prop get/set は session 停止中でもエラーを表示するだけで
 # exit 0 を返す。設定できていないのに成功したように見えるのが一番まずいので、
 # session 停止中は prop を触らず落ちることを担保する。
-#
-#   bin/test/test-wad.sh   # 全テスト実行
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 wad_bin=$(cd "${script_dir}/.." && pwd)/wad
