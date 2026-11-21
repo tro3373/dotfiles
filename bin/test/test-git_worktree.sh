@@ -24,8 +24,9 @@
 #   * -a: <org>-worktree/<branch の / を - にした名前> に作り、そのパスだけを stdout に出す。
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)
-gwt_bin=$(cd "${script_dir}/.." && pwd)/git_worktree
-sandbox_bin=$(cd "${script_dir}/.." && pwd)/tmux-sandbox
+bin_dir=$(cd "${script_dir}/.." && pwd)
+gwt_bin="${bin_dir}/git_worktree"
+sandbox_bin="${bin_dir}/tmux-sandbox"
 
 # shellcheck disable=SC1090
 source "$gwt_bin"

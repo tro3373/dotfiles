@@ -5,8 +5,6 @@
 # ADF ノードの JSON を stdin に流し、期待する markdown と突き合わせる。
 # 対象ノードは実 Jira の実測 (`jq '.. | .type? // empty' | sort | uniq -c`) で
 # 出てきたものを基準に選んでいる。
-#
-#   bin/test/test-adf2md.sh   # 全テスト実行
 
 # 期待値の markdown にはバッククォート (code / フェンス) がそのまま入る。
 # shellcheck disable=SC2016

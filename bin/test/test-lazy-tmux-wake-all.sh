@@ -46,12 +46,10 @@ tmproot=$(mktemp -d)
 trap 'rm -rf "${tmproot}"' EXIT
 
 # 開発者の設定・上位ディレクトリの .git を拾わせない。
-# lint-ignore: uppercase git と lazy-tmux-wake-all が読む env 名
-export GIT_CEILING_DIRECTORIES="${tmproot}"
-# lint-ignore: uppercase git と lazy-tmux-wake-all が読む env 名
-export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
+# lint-ignore: uppercase git が読む env 名
+export GIT_CEILING_DIRECTORIES="${tmproot}" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 # クライアント待ちを 1 tick に潰す (テストを 5 秒待たせない)。
-# lint-ignore: uppercase git と lazy-tmux-wake-all が読む env 名
+# lint-ignore: uppercase lazy-tmux-wake-all が読む env 名
 export LAZY_TMUX_WAKE_CLIENT_TICKS=1
 
 pass=0
