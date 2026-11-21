@@ -64,6 +64,17 @@ detect() {
   sed -n 1p "${probe}" 2>/dev/null
 }
 
+# pattern が file に無ければ removed、有れば present、file を読めなければ unreadable。
+absence_of() {
+  local rc=0
+  grep -q "$1" "$2" 2>/dev/null || rc=$?
+  case ${rc} in
+    0) printf 'present' ;;
+    1) printf 'removed' ;;
+    *) printf 'unreadable' ;;
+  esac
+}
+
 main() {
   set -euo pipefail
 
@@ -126,16 +137,12 @@ main() {
   done
 
   # 7. base.lua は au_ft_map を使わない (移行完了の回帰ガード)
-  local base="${script_dir}/../nvim/lua/base.lua"
-  local legacy_base='present'
-  grep -q 'au_ft_map' "${base}" || legacy_base='removed'
-  check 'base.lua が au_ft_map を使わない' 'removed' "${legacy_base}"
+  check 'base.lua が au_ft_map を使わない' 'removed' \
+    "$(absence_of au_ft_map "${script_dir}/../nvim/lua/base.lua")"
 
   # 8. 未使用になった au_ft_map ヘルパを global.lua から削除済み
-  local glob="${script_dir}/../nvim/lua/global.lua"
-  local legacy_helper='present'
-  grep -q 'au_ft_map' "${glob}" || legacy_helper='removed'
-  check 'global.lua の au_ft_map 定義を削除' 'removed' "${legacy_helper}"
+  check 'global.lua の au_ft_map 定義を削除' 'removed' \
+    "$(absence_of au_ft_map "${script_dir}/../nvim/lua/global.lua")"
 
   echo
   echo "pass=${pass} fail=${fail}"
