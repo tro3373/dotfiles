@@ -18,9 +18,26 @@ sources() {
   } 2>/dev/null
 }
 
+first_per_realpath() {
+  local -a dirs reals
+  local -A seen=()
+  local i
+  mapfile -t dirs
+  if [[ ${#dirs[@]} -eq 0 ]]; then
+    return
+  fi
+  mapfile -t reals < <(realpath -m -- "${dirs[@]}")
+  for i in "${!dirs[@]}"; do
+    [[ -n ${seen[${reals[i]}]:-} ]] && continue
+    seen[${reals[i]}]=1
+    printf '%s\n' "${dirs[i]}"
+  done
+}
+
 main() {
   set -eo pipefail
   sources |
+    first_per_realpath |
     while IFS= read -r dir; do
       [[ ! -d $dir ]] && continue
       printf '%s\t%s\n' "$(stat -c %Y "$dir" 2>/dev/null || echo 0)" "$dir"
