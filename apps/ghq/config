@@ -14,7 +14,7 @@ cat_add_config() {
 EOF
 }
 
-setting_common() {
+add_ghq_roots_to_gitconfig() {
   local _gitconfig=$HOME/.gitconfig
   if grep ghq "$_gitconfig" >&/dev/null; then
     return
@@ -27,4 +27,24 @@ setting_common() {
     else
       cat - | tee -a "$_gitconfig" >/dev/null
     fi
+}
+
+link_if_absent() {
+  local src=$1 lnk=$2
+  if isexist "${lnk}"; then
+    return
+  fi
+  make_link "${src}" "${lnk}"
+}
+
+link_dot_into_ghq() {
+  local owner_dir="${HOME}/ghq/github.com/tro3373"
+  make_dir_if_needed "${owner_dir}"
+  link_if_absent "${HOME}/.dot" "${owner_dir}/dotfiles"
+  link_if_absent "${HOME}/.dot-worktree" "${owner_dir}/dotfiles-worktree"
+}
+
+setting_common() {
+  add_ghq_roots_to_gitconfig
+  link_dot_into_ghq
 }

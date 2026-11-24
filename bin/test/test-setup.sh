@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-# bin/setup の nix と home-manager の導入のユニットテスト。
-# curl と nix を偽物に差し替え、一時 HOME で bin/setup を実行し、
-# nix の installer と home-manager の bootstrap が何回走るかを検証する。
+# bin/setup のユニットテスト。
+# curl・nix・ghq を偽物に差し替え、一時 HOME で bin/setup を実行する。
+# - nix の installer と home-manager の bootstrap が何回走るか
+# - ghq の下に ~/.dot への symlink が張られるか
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd) && readonly script_dir
 bin_dir=$(cd "${script_dir}/.." && pwd) && readonly bin_dir
@@ -95,6 +96,42 @@ test_nix_then_home_manager() {
   check "nix の後に並べた home-manager は同じ実行で bootstrap する" "0 installer,nix run" "${status} $(ran)"
 }
 
+install_fake_ghq() {
+  printf '#!/usr/bin/env bash\n' >"${fake_bin}/ghq"
+  chmod +x "${fake_bin}/ghq"
+}
+
+ghq_links() {
+  local owner_dir="${fake_home}/ghq/github.com/tro3373"
+  printf '%s,%s' "$(readlink "${owner_dir}/dotfiles")" "$(readlink "${owner_dir}/dotfiles-worktree")"
+}
+
+test_ghq_links_dot() {
+  install_fake_ghq
+
+  reset_home
+  run_setup ghq
+  check "ghq の下に ~/.dot と ~/.dot-worktree への symlink を張る" \
+    "0 ${fake_home}/.dot,${fake_home}/.dot-worktree" "${status} $(ghq_links)"
+
+  run_setup ghq
+  check "2 回目の setup で symlink を張り直さない" \
+    "0 ${fake_home}/.dot,${fake_home}/.dot-worktree" "${status} $(ghq_links)"
+}
+
+test_ghq_keeps_existing_checkout() {
+  reset_home
+  local checkout="${fake_home}/ghq/github.com/tro3373/dotfiles"
+  mkdir -p "${checkout}"
+  touch "${checkout}/kept"
+  run_setup ghq
+  local kind=moved
+  if [[ -f "${checkout}/kept" && ! -L "${checkout}" ]]; then
+    kind=kept
+  fi
+  check "ghq の下に実体の checkout があれば動かさない" "0 kept" "${status} ${kind}"
+}
+
 main() {
   local pass=0 fail=0 status=0
   local tmproot
@@ -112,6 +149,8 @@ main() {
   test_on_path
   test_nix_sh_without_nix
   test_nix_then_home_manager
+  test_ghq_links_dot
+  test_ghq_keeps_existing_checkout
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
