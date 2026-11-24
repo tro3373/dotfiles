@@ -119,6 +119,14 @@ test_ghq_links_dot() {
     "0 ${fake_home}/.dot,${fake_home}/.dot-worktree" "${status} $(ghq_links)"
 }
 
+test_ghq_adds_roots_once() {
+  reset_home
+  run_setup ghq
+  run_setup ghq
+  check "ghq の root を ~/.gitconfig に 1 回だけ足す" \
+    "0 1" "${status} $(grep -c 'root = ~/ghq' "${fake_home}/.gitconfig")"
+}
+
 test_ghq_keeps_existing_checkout() {
   reset_home
   local checkout="${fake_home}/ghq/github.com/tro3373/dotfiles"
@@ -126,7 +134,7 @@ test_ghq_keeps_existing_checkout() {
   touch "${checkout}/kept"
   run_setup ghq
   local kind=moved
-  if [[ -f "${checkout}/kept" && ! -L "${checkout}" ]]; then
+  if [[ -f "${checkout}/kept" && ! -L ${checkout} ]]; then
     kind=kept
   fi
   check "ghq の下に実体の checkout があれば動かさない" "0 kept" "${status} ${kind}"
@@ -150,6 +158,7 @@ main() {
   test_nix_sh_without_nix
   test_nix_then_home_manager
   test_ghq_links_dot
+  test_ghq_adds_roots_once
   test_ghq_keeps_existing_checkout
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
