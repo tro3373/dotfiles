@@ -106,17 +106,21 @@ ghq_links() {
   printf '%s,%s' "$(readlink "${owner_dir}/dotfiles")" "$(readlink "${owner_dir}/dotfiles-worktree")"
 }
 
+dir_entries() { find "$1" -mindepth 1 -maxdepth 1 -printf '%f\n' | sort | paste -sd,; }
+
 test_ghq_links_dot() {
   install_fake_ghq
 
   reset_home
+  mkdir -p "${fake_home}/.dot" "${fake_home}/.dot-worktree"
   run_setup ghq
   check "ghq の下に ~/.dot と ~/.dot-worktree への symlink を張る" \
     "0 ${fake_home}/.dot,${fake_home}/.dot-worktree" "${status} $(ghq_links)"
 
   run_setup ghq
-  check "2 回目の setup で symlink を張り直さない" \
-    "0 ${fake_home}/.dot,${fake_home}/.dot-worktree" "${status} $(ghq_links)"
+  check "2 回目の setup で symlink を張り直さず、link 先の中にも作らない" \
+    "0 ${fake_home}/.dot,${fake_home}/.dot-worktree [][]" \
+    "${status} $(ghq_links) [$(dir_entries "${fake_home}/.dot")][$(dir_entries "${fake_home}/.dot-worktree")]"
 }
 
 test_ghq_adds_roots_once() {
@@ -129,15 +133,26 @@ test_ghq_adds_roots_once() {
 
 test_ghq_keeps_existing_checkout() {
   reset_home
-  local checkout="${fake_home}/ghq/github.com/tro3373/dotfiles"
-  mkdir -p "${checkout}"
-  touch "${checkout}/kept"
+  local owner_dir="${fake_home}/ghq/github.com/tro3373"
+  mkdir -p "${owner_dir}/dotfiles/unreadable"
+  touch "${owner_dir}/dotfiles/kept"
+  chmod 000 "${owner_dir}/dotfiles/unreadable"
   run_setup ghq
-  local kind=moved
-  if [[ -f "${checkout}/kept" && ! -L ${checkout} ]]; then
-    kind=kept
-  fi
-  check "ghq の下に実体の checkout があれば動かさない" "0 kept" "${status} ${kind}"
+  chmod 700 "${owner_dir}/dotfiles/unreadable"
+  check "ghq の下に実体の checkout があれば、中にも隣にも何も作らない" \
+    "0 [dotfiles][kept,unreadable] 1" \
+    "${status} [$(dir_entries "${owner_dir}")][$(dir_entries "${owner_dir}/dotfiles")] $(grep -c '^\[ghq\]' "${fake_home}/.gitconfig")"
+}
+
+test_ghq_keeps_unreadable_dir() {
+  reset_home
+  local owner_dir="${fake_home}/ghq/github.com/tro3373"
+  mkdir -p "${owner_dir}/dotfiles-worktree/unreadable"
+  chmod 000 "${owner_dir}/dotfiles-worktree/unreadable"
+  run_setup ghq
+  chmod 700 "${owner_dir}/dotfiles-worktree/unreadable"
+  check "読めないディレクトリを含む既存の物の中に symlink を作らない" \
+    "0 [unreadable]" "${status} [$(dir_entries "${owner_dir}/dotfiles-worktree")]"
 }
 
 main() {
@@ -160,6 +175,7 @@ main() {
   test_ghq_links_dot
   test_ghq_adds_roots_once
   test_ghq_keeps_existing_checkout
+  test_ghq_keeps_unreadable_dir
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

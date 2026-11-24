@@ -95,7 +95,7 @@ has_npm() {
 }
 
 # TODO change func name
-isexist() { find "$*" >&/dev/null; }
+isexist() { [[ -e $* || -L $* ]]; }
 
 get_platform() {
   local p

@@ -36,8 +36,13 @@ link_if_absent() {
   make_link "${src}" "${lnk}"
 }
 
+is_real_dir() { [[ -d $1 && ! -L $1 ]]; }
+
 link_dot_into_ghq() {
   local owner_dir="${HOME}/ghq/github.com/tro3373"
+  if is_real_dir "${owner_dir}/dotfiles"; then
+    return
+  fi
   make_dir_if_needed "${owner_dir}"
   link_if_absent "${HOME}/.dot" "${owner_dir}/dotfiles"
   link_if_absent "${HOME}/.dot-worktree" "${owner_dir}/dotfiles-worktree"
