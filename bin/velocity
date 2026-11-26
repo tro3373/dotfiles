@@ -66,8 +66,7 @@ default_refs() {
   done
 }
 
-# Event lines: "<metric>\t<epoch>\t<group>\t<repo>\t<id>"
-# The id lets render count a commit once when two clones of one repo share a row.
+# Event lines: "<metric>\t<epoch>\t<group>\t<repo>\t<dedupe key>"
 repo_events() {
   local email
   email=$(git -C "${dir}" config user.email) || return 0

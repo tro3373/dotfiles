@@ -164,7 +164,7 @@ main() {
   local owner_dir="${fake_home}/ghq/github.com/tro3373"
   local now
   now=$(TZ=Asia/Tokyo date -d '2026-11-26 19:00' +%s)
-  # lint-ignore: uppercase git reads these names; keeps the user gitconfig out of the fixtures
+  # lint-ignore: uppercase git reads these names
   export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
   install_fakes
   write_fixtures
