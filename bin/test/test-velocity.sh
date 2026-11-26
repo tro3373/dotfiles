@@ -135,7 +135,7 @@ build_repos() {
 
 run_velocity() {
   HOME="${fake_home}" PATH="${fake_bin}:${PATH}" TZ=Asia/Tokyo VELOCITY_NOW="${now}" \
-    "${bin_dir}/vel" "$@"
+    "${bin_dir}/velocity" "$@"
 }
 
 test_table() {
