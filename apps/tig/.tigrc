@@ -23,6 +23,8 @@ set split-view-width = 90%
 set diff-options = -m --first-parent
 # インデント、空白のみの変更を無視
 set ignore-space = all
+# +- 行のうち、変わった部分だけを強調する
+set diff-highlight = /usr/share/git/diff-highlight/diff-highlight
 
 ################################################################################
 # `!`: Run the command in the foreground with output shown.
@@ -165,8 +167,8 @@ bind diff    <Esc>k ?git cherry-pick -n %(commit)
 
 # D でタグ行ならタグを、ブランチ行ならブランチを削除 (マージ済みブランチのみ. 強制削除(branch -D) は `!`) (refs-view)
 bind refs    D      ?sh -c "if [ -n '%(tag)' ]; then git tag -d '%(tag)'; else git branch -d '%(branch)'; fi"
-# D でトラッキングされていないファイルを削除 (status-view)
-bind status  D      ?git clean -d -f -- %(file)
+# Alt-d でトラッキングされていないファイルを削除 (status-view)
+bind status  <Esc>d ?git clean -d -f -- %(file)
 # D で stash を削除 (`!` と同じ) (stash-view)
 bind stash   D      ?git stash drop %(stash)
 # D でファイルを削除 (tree-view)
@@ -199,6 +201,18 @@ bind diff    0      +@sh -c "echo -n '%(file)' | tee >(~/.dot/bin/clip >&/dev/nu
 
 # Open the version in vim
 bind diff    O      !bash -c "git show %(commit):%(file) | ~/.dot/bin/tovim >&/dev/null"
+# d で diff を delta (syntax highlight 付き) で全画面に開く
+# main / diff は選んでいる commit、status / stage はカーソル位置のファイルの未 commit の変更 (staged + unstaged + untracked)
+bind main    d      !>sh -c "git show %(commit) | delta --paging=always"
+bind diff    d      !>sh -c "git show %(commit) | delta --paging=always"
+bind status  d      !>sh -c "{ git diff HEAD -- '%(file)'; git ls-files -z --others --exclude-standard -- '%(file)' | xargs -0 -r -n1 git diff --no-index /dev/null; } | delta --paging=always"
+bind stage   d      !>sh -c "{ git diff HEAD -- '%(file)'; git ls-files -z --others --exclude-standard -- '%(file)' | xargs -0 -r -n1 git diff --no-index /dev/null; } | delta --paging=always"
+# D で変更前後を nvim の diff mode (左右 2 窓) で開く。ファイルごとに 1 回ずつ開く
+# main は commit の全ファイル、diff はカーソル位置のファイル、status / stage はカーソル位置のファイルの HEAD との差
+bind main    D      !>git difftool --no-prompt --tool=nvimdiff %(commit)^!
+bind diff    D      !>git difftool --no-prompt --tool=nvimdiff %(commit)^! -- '%(file)'
+bind status  D      !>git difftool --no-prompt --tool=nvimdiff HEAD -- '%(file)'
+bind stage   D      !>git difftool --no-prompt --tool=nvimdiff HEAD -- '%(file)'
 bind generic E      !bash -c 'tmux split-window -h "echo %(file) |v" &'
 
 # gh

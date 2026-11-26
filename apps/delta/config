@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+install_common() { not_supported; }
+install_arch() {
+  def_install git-delta
+}
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() {
+  def_install git-delta
+}
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+setting_common() {
+  exe git config --global core.pager delta
+  exe git config --global interactive.diffFilter "'delta --color-only'"
+  exe git config --global delta.navigate true
+  exe git config --global delta.line-numbers true
+  exe git config --global delta.minus-style "'syntax #5f2a2a'"
+  exe git config --global delta.minus-emph-style "'syntax #8f3f3f'"
+  exe git config --global delta.plus-style "'syntax #2f4f2f'"
+  exe git config --global delta.plus-emph-style "'syntax #3f7f3f'"
+  exe git config --global delta.line-numbers-minus-style red
+  exe git config --global delta.line-numbers-plus-style green
+}
