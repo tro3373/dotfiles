@@ -5,7 +5,7 @@ find_entries() {
   # git repository を探す
   for d in "${find_root_dirs[@]}"; do
     [[ ! -d $d ]] && continue
-    find "$d" -maxdepth 4 -type d -name '.git' 2>/dev/null |
+    find "$d/" -maxdepth 4 -type d -name '.git' 2>/dev/null |
       sed 's|/.git$||'
   done
 }
