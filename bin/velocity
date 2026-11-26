@@ -1,0 +1,235 @@
+#!/usr/bin/env bash
+
+script_dir=$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd) && readonly script_dir
+command_name=$(basename "$0") && readonly command_name
+readonly day=86400
+readonly span_days=30
+
+usage() {
+  cat <<EOF
+Show my commit / merge / pr counts per repo for the last 1d, 7d and 30d.
+
+  Usage:
+      ${command_name}
+
+  Counts:
+      commit : my non-merge commits on all branches, by author date
+      merge  : my merge commits on the default branch (--first-parent)
+      pr     : my merged PRs on github.com, for every logged-in gh account
+
+  Env:
+      VELOCITY_NOW : epoch seconds used as "now" (default: current time)
+EOF
+}
+
+# Prints "<group>\t<repo>" for a repo dir. <repo> is empty for a group of one repo.
+location_of() {
+  local dir="$1" rel
+  case "${dir}" in
+    "${ghq_root}"/*)
+      rel=${dir#"${ghq_root}"/}
+      rel=${rel#*/}
+      printf 'ghq/%s\t%s\n' "${rel%%/*}" "${rel#*/}"
+      return
+      ;;
+    "${HOME}"/.*)
+      rel=${dir#"${HOME}"/}
+      # shellcheck disable=SC2088 # "~" is a label here, not a path to expand
+      printf '%s\t\n' "~/${rel%%/*}"
+      return
+      ;;
+    "${HOME}"/*) rel=${dir#"${HOME}"/} ;;
+    *)
+      printf '%s\t\n' "${dir}"
+      return
+      ;;
+  esac
+  local group
+  group=$(cut -d/ -f1-2 <<<"${rel}")
+  local name=${rel#"${group}"}
+  printf '%s\t%s\n' "${group}" "${name#/}"
+}
+
+# Prints owner/name when the origin is on github (ssh host aliases included).
+github_slug_of() {
+  local url
+  url=$(git -C "$1" remote get-url origin 2>/dev/null) || return 0
+  [[ ! ${url} =~ github[^:/]*[:/]([^/]+)/([^/]+)$ ]] && return 0
+  printf '%s/%s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]%.git}"
+}
+
+default_refs() {
+  local dir="$1" ref
+  for ref in refs/remotes/origin/HEAD refs/heads/main refs/heads/master; do
+    git -C "${dir}" rev-parse -q --verify "${ref}" >/dev/null || continue
+    printf '%s\n' "${ref}"
+  done
+}
+
+# Event lines: "<metric>\t<epoch>\t<group>\t<repo>\t<id>"
+# The id lets render count a commit once when two clones of one repo share a row.
+repo_events() {
+  local email
+  email=$(git -C "${dir}" config user.email) || return 0
+  local since="@$((now - span_days * day))"
+  git -C "${dir}" log --all --no-merges --since="${since}" --format='%at%x09%ae%x09%s' |
+    awk -F'\t' -v OFS='\t' -v me="${email}" -v group="${group}" -v repo="${repo}" \
+      '$2 == me { print "commit", $1, group, repo, $1 " " $3 }'
+  local -a refs
+  mapfile -t refs < <(default_refs "${dir}")
+  [[ ${#refs[@]} -eq 0 ]] && return 0
+  git -C "${dir}" log --first-parent --merges --since="${since}" --format='%at%x09%ae%x09%H' "${refs[@]}" |
+    awk -F'\t' -v OFS='\t' -v me="${email}" -v group="${group}" -v repo="${repo}" \
+      '$2 == me { print "merge", $1, group, repo, $3 }'
+}
+
+# Lines: "<git common dir>\x1f<dir>\x1f<group>\x1f<repo>\x1f<github slug>"
+# \x1f keeps an empty <repo> as its own field under `read`, which a tab would not.
+# A worktree takes the row of its main checkout.
+# Clones of one github repo share one row. The row is the clone under ~/, then the clone
+# whose dir name is the repo name, then the first clone listed.
+list_repos() {
+  local dir common
+  "${script_dir}/find_repos" | while IFS= read -r dir; do
+    common=$(git -C "${dir}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || continue
+    common=$(realpath -m -- "${common}")
+    [[ ${common} == */.git ]] && dir=${common%/.git}
+    printf '%s\x1f%s\x1f%s\x1f%s\n' "${common}" "${dir}" "$(location_of "${dir}" | tr '\t' '\037')" "$(github_slug_of "${dir}")"
+  done | awk -F'\037' -v OFS='\037' '
+    function score(   base) {
+      base = $2
+      sub(/.*\//, "", base)
+      return ($3 ~ /^~\//) * 2 + (base == substr($5, index($5, "/") + 1))
+    }
+    seen[$1]++ { next }
+    { line[++n] = $0 }
+    $5 != "" && (!($5 in best) || score() > best[$5]) { best[$5] = score(); row[$5] = $3 OFS $4 }
+    END {
+      for (i = 1; i <= n; i++) {
+        $0 = line[i]
+        if ($5 in row) { split(row[$5], r, OFS); $3 = r[1]; $4 = r[2] }
+        print
+      }
+    }'
+}
+
+github_logins() {
+  gh auth status --json hosts | jq -r '.hosts["github.com"][]? | select(.state == "success") | .login'
+}
+
+# Lines: "<owner/name>\t<merged epoch>"
+merged_prs_of() {
+  local login="$1" token cursor="" page
+  token=$(gh auth token --user "${login}")
+  local since
+  since=$(date -d "@$((now - span_days * day))" +%Y-%m-%dT%H:%M:%S%:z)
+  # shellcheck disable=SC2016
+  local query='query($q: String!, $after: String) {
+    search(type: ISSUE, query: $q, first: 100, after: $after) {
+      pageInfo { hasNextPage endCursor }
+      nodes { ... on PullRequest { repository { nameWithOwner } mergedAt } }
+    }
+  }'
+  while true; do
+    local -a args=(-f query="${query}" -f q="is:pr is:merged author:@me merged:>=${since}")
+    [[ -n ${cursor} ]] && args+=(-f after="${cursor}")
+    page=$(GH_TOKEN="${token}" gh api graphql "${args[@]}")
+    jq -r '.data.search.nodes[] | [.repository.nameWithOwner, (.mergedAt | fromdateiso8601)] | @tsv' <<<"${page}"
+    [[ $(jq -r '.data.search.pageInfo.hasNextPage' <<<"${page}") != true ]] && return 0
+    cursor=$(jq -r '.data.search.pageInfo.endCursor' <<<"${page}")
+  done
+}
+
+pr_events() {
+  local login
+  github_logins | while IFS= read -r login; do
+    merged_prs_of "${login}"
+  done | awk -F'\t' -v OFS='\t' '
+    NR == FNR { split($0, f, "\037"); if (f[5] != "") loc[f[5]] = f[3] FS f[4]; next }
+    {
+      where = $1 in loc ? loc[$1] : "github:" substr($1, 1, index($1, "/") - 1) FS ""
+      print "pr", $2, where
+    }' "${repos_file}" -
+}
+
+# Sorts rows: ~/ groups, ghq/ groups, other groups, github: groups, then total.
+render() {
+  awk -F'\t' -v now="${now}" -v day="${day}" -v title="velocity $(date -d "@${now}" '+%Y-%m-%d %H:%M')" '
+    BEGIN {
+      nm = split("commit merge pr", metrics, " ")
+      nw = split("1 7 30", windows, " ")
+    }
+    function add(key, m, t,   w) {
+      for (w = 1; w <= nw; w++) if (t > now - windows[w] * day && t <= now) n[key, m, w]++
+      if (t > now - windows[nw] * day && t <= now) active[key] = 1
+    }
+    function rank(g) { return g ~ /^~\// ? 0 : g ~ /^ghq\// ? 1 : g ~ /^github:/ ? 3 : 2 }
+    $5 != "" && seen[$1, $3, $4, $5]++ { next }
+    {
+      add($3, $1, $2)
+      add("total", $1, $2)
+      label[$3] = $3
+      order[$3] = rank($3) "\t" $3 "\t0"
+      if ($4 == "") next
+      add($3 FS $4, $1, $2)
+      label[$3 FS $4] = "  " $4
+      order[$3 FS $4] = rank($3) "\t" $3 "\t1" $4
+    }
+    function row(key,   m, w, s) {
+      s = sprintf("%-" width "s", label[key])
+      for (m = 1; m <= nm; m++) {
+        s = s "  "
+        for (w = 1; w <= nw; w++) s = s sprintf("%5d", n[key, metrics[m], w])
+      }
+      return s
+    }
+    END {
+      width = length(title)
+      for (key in active) if (key in label && length(label[key]) > width) width = length(label[key])
+      head = sprintf("%-" width "s", title)
+      windows_head = sprintf("%-" width "s", "")
+      for (m = 1; m <= nm; m++) {
+        head = head sprintf("  %-15s", metrics[m])
+        windows_head = windows_head "  "
+        for (w = 1; w <= nw; w++) windows_head = windows_head sprintf("%5s", windows[w] "d")
+      }
+      sub(/ +$/, "", head)
+      print "0\t" head
+      print "1\t" windows_head
+      for (key in active) if (key in label) print "2\t" order[key] "\t" row(key)
+      label["total"] = "total"
+      print "3\t" row("total")
+    }' | sort -t$'\t' -k1,1n -k2,2n -k3,3 -k4,4 | awk -F'\t' '{ print $NF }'
+}
+
+main() {
+  set -euo pipefail
+  case "${1:-}" in
+    -h | --help)
+      usage
+      return
+      ;;
+    "") ;;
+    *)
+      usage >&2
+      return 2
+      ;;
+  esac
+  local now="${VELOCITY_NOW:-$(date +%s)}"
+  local ghq_root
+  ghq_root=$(ghq root 2>/dev/null || true)
+  ghq_root=${ghq_root:-${HOME}/ghq}
+  local tmp_dir
+  tmp_dir=$(mktemp -d)
+  # shellcheck disable=SC2064
+  trap "rm -rf '${tmp_dir}'" EXIT
+  local repos_file="${tmp_dir}/repos" events_file="${tmp_dir}/events"
+  list_repos >"${repos_file}"
+  local dir group repo
+  while IFS=$'\x1f' read -r _ dir group repo _; do
+    repo_events
+  done <"${repos_file}" >"${events_file}"
+  pr_events >>"${events_file}"
+  render <"${events_file}"
+}
+main "$@"
