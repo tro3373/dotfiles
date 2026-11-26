@@ -5,7 +5,7 @@
 #   -r  rebase merge (PR の行だけ)
 #   -k  ローカルの後片付け (worktree・tmux session・ブランチの削除) をしない
 # PR の行: gh pr merge で merge し、origin のブランチを消し、ローカルの base を追随させる。
-# ローカルの行: 今のブランチへ git merge する。push はしない。
+# ローカルの行: 今のブランチへ git merge --no-ff --no-edit する (fast-forward できても merge commit を作る。message は git の既定)。push はしない。
 # 後片付け: 別の worktree で checkout 中なら git_worktree -r で消してから、ブランチを消す。
 #   今いる worktree と親リポジトリで checkout 中のブランチは、消さずに警告する。
 #   PR の行は、ローカルのブランチが PR の head に含まれるときだけ後片付けする。
@@ -201,7 +201,7 @@ merge_local() {
     return 1
   fi
   echo "==> ${branch} を今のブランチへ merge する" >&2
-  git merge "${branch}"
+  git merge --no-ff --no-edit "${branch}"
 }
 
 is_kept_checkout() {

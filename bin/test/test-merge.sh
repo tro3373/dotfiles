@@ -208,6 +208,15 @@ test_local_row_without_worktree() {
     "$(g "${repo}" log --format=%s main | grep -cx 'feat/local')|$(branches)"
 }
 
+test_local_row_makes_merge_commit() {
+  setup localnoff
+  local ff_able
+  ff_able=$(g "${repo}" merge-base --is-ancestor main feat/local && echo yes || echo no)
+  FZF_PICK="$(pick local feat/local)" run_merge >/dev/null
+  check "ローカルの行: fast-forward できても merge commit を作る" \
+    "yes|2" "${ff_able}|$(g "${repo}" rev-list --parents -n1 main | awk '{ print NF - 1 }')"
+}
+
 test_skip_cleanup() {
   setup keep
   FZF_PICK="$(pick local feat/wt)" run_merge -k >/dev/null
@@ -472,6 +481,7 @@ main() {
   test_nothing_picked
   test_local_row
   test_local_row_without_worktree
+  test_local_row_makes_merge_commit
   test_skip_cleanup
   test_local_row_merge_failure
   test_method_on_local_row
