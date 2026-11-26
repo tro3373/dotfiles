@@ -209,7 +209,7 @@ _init() {
   export GOBIN=$GOPATH/bin
   export CARGO_HOME=$HOME/.cargo
   # For bat command
-  export BAT_THEME="Visual Studio Dark+"
+  export BAT_THEME="Apprentice"
   # export BAT_THEME="Nord"
   # export BUN_INSTALL="$HOME/.bun" # install via asdf
 }
