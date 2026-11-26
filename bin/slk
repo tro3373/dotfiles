@@ -128,8 +128,7 @@ initialize() {
     return
   fi
   if [[ $as_code -eq 1 ]]; then
-    # message="\`\`\`$message\`\`\`"
-    : TODO
+    message=$'```\n'"${message}"$'\n```'
   fi
 }
 
