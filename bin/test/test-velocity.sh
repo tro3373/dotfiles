@@ -91,7 +91,12 @@ build_repos() {
   new_repo "${fake_home}/.dot" git@github.com:tro3373/dotfiles.git
   commit "${fake_home}/.dot" $((40 * day)) "dot too old"
   commit "${fake_home}/.dot" 7200 "someone else" other@example.com
+  commit "${fake_home}/.dot" "${day}" "dot exactly a day ago"
   commit "${fake_home}/.dot" 3600 "dot recent"
+  echo wip >>"${fake_home}/.dot/file"
+  echo new >"${fake_home}/.dot/untracked"
+  git -C "${fake_home}/.dot" -c user.email="${me}" -c user.name=t stash push -q -u
+  git -C "${fake_home}/.dot" -c user.email="${me}" -c user.name=t notes add -m note
 
   local tasks="${owner_dir}/tasks"
   new_repo "${tasks}" https://github.com/tro3373/tasks.git
@@ -100,6 +105,11 @@ build_repos() {
   commit "${tasks}" $((3 * day)) "tasks feat"
   git -C "${tasks}" checkout -q main
   merge_no_ff "${tasks}" feat 1800
+  git -C "${tasks}" checkout -q -b master main~1
+  git -C "${tasks}" checkout -q -b side
+  commit "${tasks}" 900 "tasks side"
+  git -C "${tasks}" checkout -q master
+  merge_no_ff "${tasks}" side 600
   git -C "${tasks}" checkout -q -b rebased feat~1
   local when
   when=$(ago 60)
@@ -134,14 +144,14 @@ test_table() {
     cat <<'EOF'
 velocity 2026-11-26 19:00  commit           merge            pr
                               1d   7d  30d     1d   7d  30d     1d   7d  30d
-~/.dot                         1    1    1      0    0    0      0    0    0
-ghq/tro3373                    0    3    4      1    1    1      1    1    2
+~/.dot                         1    2    2      0    0    0      0    0    0
+ghq/tro3373                    1    4    5      1    1    1      1    1    2
   md                           0    2    2      0    0    0      0    0    1
-  tasks                        0    1    2      1    1    1      1    1    1
+  tasks                        1    2    3      1    1    1      1    1    1
 src/corp                       0    1    1      0    0    0      1    1    1
   team/api                     0    1    1      0    0    0      1    1    1
 github:someone                 0    0    0      0    0    0      0    0    1
-total                          1    5    6      1    1    1      2    2    4
+total                          2    7    8      1    1    1      2    2    4
 EOF
   )
   check "置き場所の小計・repo・total を、24 時間・7 日・30 日で数える" "${expected}" "$(run_velocity)"
@@ -151,6 +161,15 @@ test_rejects_args() {
   local code=0
   run_velocity extra >/dev/null 2>&1 || code=$?
   check "引数を渡すと終了コード 2" 2 "${code}"
+}
+
+test_broken_gh_account_fails() {
+  local auth="${fixtures}/auth.json" out code=0
+  cp "${auth}" "${auth}.bak"
+  jq '.hosts["github.com"][1].state = "error"' "${auth}.bak" >"${auth}"
+  out=$(run_velocity 2>/dev/null) || code=$?
+  mv "${auth}.bak" "${auth}"
+  check "使えない gh の account があれば、表を出さずに失敗する" "1:" "${code}:${out}"
 }
 
 main() {
@@ -172,6 +191,7 @@ main() {
 
   test_table
   test_rejects_args
+  test_broken_gh_account_fails
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

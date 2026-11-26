@@ -58,22 +58,30 @@ github_slug_of() {
   printf '%s/%s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]%.git}"
 }
 
+# Prints the local and origin refs of the default branch: origin/HEAD's target, else main, else master.
 default_refs() {
-  git -C "$1" for-each-ref --format='%(refname)' refs/remotes/origin/HEAD refs/heads/main refs/heads/master
+  local name
+  name=$(git -C "$1" symbolic-ref -q --short refs/remotes/origin/HEAD) || name=
+  name=${name#origin/}
+  if [[ -z ${name} ]]; then
+    name=$(git -C "$1" for-each-ref --count=1 --format='%(refname:lstrip=2)' refs/heads/main refs/heads/master)
+  fi
+  [[ -z ${name} ]] && return 0
+  git -C "$1" for-each-ref --format='%(refname)' "refs/heads/${name}" "refs/remotes/origin/${name}"
 }
 
 # Event lines: "<metric>\t<epoch>\t<group>\t<repo>\t<dedupe key>"
 repo_events() {
   local email
   email=$(git -C "${dir}" config user.email) || return 0
-  local since="@$((now - span_days * day))"
-  git -C "${dir}" log --all --no-merges --since="${since}" --format='%at%x09%ae%x09%s' |
-    awk -F'\t' -v OFS='\t' -v me="${email}" -v group="${group}" -v repo="${repo}" \
-      '$2 == me { print "commit", $1, group, repo, $1 " " $3 }'
+  local since=$((now - span_days * day))
+  git -C "${dir}" log --exclude=refs/stash --exclude='refs/notes/*' --all --no-merges --format='%at%x09%ae%x09%s' |
+    awk -F'\t' -v OFS='\t' -v me="${email}" -v since="${since}" -v group="${group}" -v repo="${repo}" \
+      '$2 == me && $1 > since { print "commit", $1, group, repo, $1 " " $3 }'
   local -a refs
   mapfile -t refs < <(default_refs "${dir}")
   [[ ${#refs[@]} -eq 0 ]] && return 0
-  git -C "${dir}" log --first-parent --merges --since="${since}" --format='%at%x09%ae%x09%H' "${refs[@]}" |
+  git -C "${dir}" log --first-parent --merges --since="@${since}" --format='%at%x09%ae%x09%H' "${refs[@]}" |
     awk -F'\t' -v OFS='\t' -v me="${email}" -v group="${group}" -v repo="${repo}" \
       '$2 == me { print "merge", $1, group, repo, $3 }'
 }
@@ -108,8 +116,20 @@ list_repos() {
     }'
 }
 
+# Fails unless every github.com account is usable: a dropped account would show its PRs as 0.
 github_logins() {
-  gh auth status --json hosts | jq -r '.hosts["github.com"][]? | select(.state == "success") | .login'
+  local hosts broken
+  hosts=$(gh auth status --json hosts)
+  broken=$(jq -r '.hosts["github.com"][]? | select(.state != "success") | .login' <<<"${hosts}")
+  if [[ -n ${broken} ]]; then
+    echo "==> Error: gh account not usable: ${broken//$'\n'/, }" >&2
+    return 1
+  fi
+  if [[ $(jq '.hosts["github.com"] // [] | length' <<<"${hosts}") -eq 0 ]]; then
+    echo "==> Error: no gh account for github.com. Run: gh auth login" >&2
+    return 1
+  fi
+  jq -r '.hosts["github.com"][].login' <<<"${hosts}"
 }
 
 # Lines: "<owner/name>\t<merged epoch>"
@@ -140,7 +160,7 @@ pr_events() {
   github_logins | while IFS= read -r login; do
     merged_prs_of "${login}"
   done | awk -F'\t' -v OFS='\t' '
-    NR == FNR { split($0, f, "\037"); if (f[5] != "") loc[f[5]] = f[3] FS f[4]; next }
+    FILENAME == ARGV[1] { split($0, f, "\037"); if (f[5] != "") loc[f[5]] = f[3] FS f[4]; next }
     {
       where = $1 in loc ? loc[$1] : "github:" substr($1, 1, index($1, "/") - 1) FS ""
       print "pr", $2, where
@@ -211,6 +231,12 @@ main() {
       return 2
       ;;
   esac
+  local cmd
+  for cmd in git gh jq ghq; do
+    command -v "${cmd}" >/dev/null && continue
+    echo "==> Error: ${cmd} not found in PATH" >&2
+    return 1
+  done
   local now="${VELOCITY_NOW:-$(date +%s)}"
   local ghq_root
   ghq_root=$(ghq root 2>/dev/null || true)
