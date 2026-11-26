@@ -22,32 +22,32 @@ Show my commit / merge / pr counts per repo for the last 1d, 7d and 30d.
 EOF
 }
 
-# Prints "<group>\t<repo>" for a repo dir. <repo> is empty for a group of one repo.
+# Prints "<group>\x1f<repo>" for a repo dir. <repo> is empty for a group of one repo.
 location_of() {
   local dir="$1" rel
   case "${dir}" in
     "${ghq_root}"/*)
       rel=${dir#"${ghq_root}"/}
       rel=${rel#*/}
-      printf 'ghq/%s\t%s\n' "${rel%%/*}" "${rel#*/}"
+      printf 'ghq/%s\x1f%s\n' "${rel%%/*}" "${rel#*/}"
       return
       ;;
     "${HOME}"/.*)
       rel=${dir#"${HOME}"/}
       # shellcheck disable=SC2088 # "~" is a label here, not a path to expand
-      printf '%s\t\n' "~/${rel%%/*}"
+      printf '%s\x1f\n' "~/${rel%%/*}"
       return
       ;;
     "${HOME}"/*) rel=${dir#"${HOME}"/} ;;
     *)
-      printf '%s\t\n' "${dir}"
+      printf '%s\x1f\n' "${dir}"
       return
       ;;
   esac
   local group
   group=$(cut -d/ -f1-2 <<<"${rel}")
   local name=${rel#"${group}"}
-  printf '%s\t%s\n' "${group}" "${name#/}"
+  printf '%s\x1f%s\n' "${group}" "${name#/}"
 }
 
 # Prints owner/name when the origin is on github (ssh host aliases included).
@@ -59,11 +59,7 @@ github_slug_of() {
 }
 
 default_refs() {
-  local dir="$1" ref
-  for ref in refs/remotes/origin/HEAD refs/heads/main refs/heads/master; do
-    git -C "${dir}" rev-parse -q --verify "${ref}" >/dev/null || continue
-    printf '%s\n' "${ref}"
-  done
+  git -C "$1" for-each-ref --format='%(refname)' refs/remotes/origin/HEAD refs/heads/main refs/heads/master
 }
 
 # Event lines: "<metric>\t<epoch>\t<group>\t<repo>\t<dedupe key>"
@@ -93,7 +89,7 @@ list_repos() {
     common=$(git -C "${dir}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || continue
     common=$(realpath -m -- "${common}")
     [[ ${common} == */.git ]] && dir=${common%/.git}
-    printf '%s\x1f%s\x1f%s\x1f%s\n' "${common}" "${dir}" "$(location_of "${dir}" | tr '\t' '\037')" "$(github_slug_of "${dir}")"
+    printf '%s\x1f%s\x1f%s\x1f%s\n' "${common}" "${dir}" "$(location_of "${dir}")" "$(github_slug_of "${dir}")"
   done | awk -F'\037' -v OFS='\037' '
     function score(   base) {
       base = $2
@@ -157,6 +153,7 @@ render() {
     BEGIN {
       nm = split("commit merge pr", metrics, " ")
       nw = split("1 7 30", windows, " ")
+      label["total"] = "total"
     }
     function add(key, m, t,   w) {
       for (w = 1; w <= nw; w++) if (t > now - windows[w] * day && t <= now) n[key, m, w]++
@@ -184,7 +181,8 @@ render() {
     }
     END {
       width = length(title)
-      for (key in active) if (key in label && length(label[key]) > width) width = length(label[key])
+      delete active["total"]
+      for (key in active) if (length(label[key]) > width) width = length(label[key])
       head = sprintf("%-" width "s", title)
       windows_head = sprintf("%-" width "s", "")
       for (m = 1; m <= nm; m++) {
@@ -195,8 +193,7 @@ render() {
       sub(/ +$/, "", head)
       print "0\t" head
       print "1\t" windows_head
-      for (key in active) if (key in label) print "2\t" order[key] "\t" row(key)
-      label["total"] = "total"
+      for (key in active) print "2\t" order[key] "\t" row(key)
       print "3\t" row("total")
     }' | sort -t$'\t' -k1,1n -k2,2n -k3,3 -k4,4 | awk -F'\t' '{ print $NF }'
 }
