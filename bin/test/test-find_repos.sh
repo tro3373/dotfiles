@@ -36,13 +36,13 @@ test_symlinked_dot_listed_once() {
 
 test_mo_listed() {
   mkdir -p "${fake_home}/.mo"
-  check "~/.mo があれば出す" \
+  check "HOME に .mo があれば ~/.mo を出す" \
     "${fake_home}/.dot,${fake_home}/.mo,${owner_dir}/other" "$(found)"
 }
 
 test_every_src_repo_listed() {
   mkdir -p "${fake_home}/src/a/.git" "${fake_home}/src/b/c/.git"
-  check "~/src の下の repo をすべて出し、ghq の 1 件目も落とさない" \
+  check "HOME の src の下の repo をすべて出し、ghq の 1 件目も落とさない" \
     "${fake_home}/.dot,${fake_home}/.mo,${owner_dir}/other,${fake_home}/src/a,${fake_home}/src/b/c" "$(found)"
 }
 
