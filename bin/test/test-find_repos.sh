@@ -40,6 +40,12 @@ test_mo_listed() {
     "${fake_home}/.dot,${fake_home}/.mo,${owner_dir}/other" "$(found)"
 }
 
+test_every_src_repo_listed() {
+  mkdir -p "${fake_home}/src/a/.git" "${fake_home}/src/b/c/.git"
+  check "~/src の下の repo をすべて出し、ghq の 1 件目も落とさない" \
+    "${fake_home}/.dot,${fake_home}/.mo,${owner_dir}/other,${fake_home}/src/a,${fake_home}/src/b/c" "$(found)"
+}
+
 main() {
   local pass=0 fail=0
   local tmproot
@@ -52,6 +58,7 @@ main() {
 
   test_symlinked_dot_listed_once
   test_mo_listed
+  test_every_src_repo_listed
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
