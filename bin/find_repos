@@ -13,6 +13,7 @@ find_entries() {
 sources() {
   {
     echo "$HOME/.dot"
+    echo "$HOME/.mo"
     find_entries
     ghq list --full-path
   } 2>/dev/null

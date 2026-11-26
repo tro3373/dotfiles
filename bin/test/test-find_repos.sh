@@ -34,6 +34,12 @@ test_symlinked_dot_listed_once() {
     "${fake_home}/.dot,${owner_dir}/other" "$(found)"
 }
 
+test_mo_listed() {
+  mkdir -p "${fake_home}/.mo"
+  check "~/.mo があれば出す" \
+    "${fake_home}/.dot,${fake_home}/.mo,${owner_dir}/other" "$(found)"
+}
+
 main() {
   local pass=0 fail=0
   local tmproot
@@ -45,6 +51,7 @@ main() {
   install_fake_ghq
 
   test_symlinked_dot_listed_once
+  test_mo_listed
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
