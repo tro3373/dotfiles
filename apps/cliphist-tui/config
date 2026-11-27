@@ -72,6 +72,7 @@ tips() {
 - 保存場所
   - DB: tmpfs に置き、再起動とログアウトで消える
     - 今の場所は `cliphist version` の `db-path`
+  - 画像の preview: cliphist-tui が `~/.cache/cliphist-tui` に置き、再起動では消えない
   - パスワードマネージャからのコピーも保存される (除外はしない)
 - 履歴の全削除: `cliphist wipe`
 - 元に戻す
