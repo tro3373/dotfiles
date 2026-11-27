@@ -207,7 +207,7 @@ _install_apps() {
     cat <<EOF
 vim
 base-devel
-gnu-netcat
+openbsd-netcat
 xsel
 xdotool
 net-tools

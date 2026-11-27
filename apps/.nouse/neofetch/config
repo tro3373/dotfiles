@@ -39,13 +39,8 @@ setting_arch() {
   local dst=/etc/profile.d/neofetch.sh
   [[ -e $dst ]] && return
   log ">>> Generating $dst"
-  cat_neofetch_shell |
-    if is_dry; then
-      cat -
-    else
-      cat - | sudo tee $dst >/dev/null
-    fi
-  exe sudo chmod 775 $dst
+  cat_neofetch_shell | sudo_tee "$dst"
+  exe sudo chmod 775 "$dst"
 }
 setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }

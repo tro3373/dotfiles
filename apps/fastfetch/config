@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+install_common() { not_supported; }
+install_arch() {
+  install_via_os_default
+}
+install_msys() { not_supported; }
+install_cygwin() { not_supported; }
+install_mac() { not_supported; }
+install_ubuntu() { not_supported; }
+install_redhat() { not_supported; }
+
+cat_fastfetch_shell() {
+  cat <<'EOF'
+case $- in *i*) ;; *) return ;; esac
+command -v fastfetch >/dev/null 2>&1 || return
+if [ -n "${TMUX-}" ]; then
+  [ -e /tmp/fastfetched ] && return
+  touch /tmp/fastfetched
+fi
+fastfetch
+EOF
+}
+setting_common() { no_settings; }
+setting_arch() {
+  local dst=/etc/profile.d/fastfetch.sh
+  cat_fastfetch_shell | cmp -s - "$dst" && return
+  log ">>> Generating $dst"
+  cat_fastfetch_shell | sudo_tee "$dst"
+  exe sudo chmod 644 "$dst"
+}
+setting_msys() { no_settings; }
+setting_cygwin() { no_settings; }
+setting_mac() { no_settings; }
+setting_ubuntu() { no_settings; }
+setting_redhat() { no_settings; }
