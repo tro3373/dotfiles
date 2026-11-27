@@ -90,6 +90,10 @@ apply = ["fpath"]
 local = "~/.asdf/completions"
 apply = ["fpath"]
 
+[plugins.nix-completion]
+local = "~/.nix-profile/share/zsh/site-functions"
+apply = ["fpath"]
+
 [plugins.zsh-kubectl-completion]
 github = 'nnao45/zsh-kubectl-completion'
 apply = ["defer"]
