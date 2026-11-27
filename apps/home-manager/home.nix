@@ -11,4 +11,6 @@
     # Add CLIs here, e.g. pkgs.ripgrep pkgs.fd pkgs.jq
     pkgs.go_1_27
   ];
+
+  programs.mise.enable = true;
 }
