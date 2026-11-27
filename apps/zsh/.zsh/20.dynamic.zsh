@@ -33,13 +33,12 @@ _cache_load() {
   local _src=$1
   local target="$CACHE_D/$_src"
   local cat_fn="_cat_$_src"
-  if [[ -e $target ]]; then
-    source $target
-    return
+  if [[ ! -e $target ]]; then
+    echo "===> calling $cat_fn.." 1>&2
+    eval "$cat_fn" >$target.tmp
+    mv $target.tmp $target
   fi
-  echo "===> calling $cat_fn.." 1>&2
-  eval "$cat_fn" >$target.tmp
-  mv $target.tmp $target
+  source $target
 }
 
 _cat_whoami() {
