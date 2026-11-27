@@ -167,8 +167,6 @@ function! s:history_cwd_first() abort
         \ }), 0)) })
 endfunction
 
-" 旧 ctrlp 環境(vim)では 220_ctrlp.vim.vim の `st`(CtrlPMRU)を温存し、
-" ctrlp を廃止した環境(nvim)でのみ再割当する。
 if !g:plug.is_installed('ctrlp.vim')
   nnoremap <silent> st :<C-u>tabnew<CR>:call <SID>history_cwd_first()<CR>
   nnoremap <silent> <Leader>p :<C-u>silent call <SID>history_cwd_first()<CR>
