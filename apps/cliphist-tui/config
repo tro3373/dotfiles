@@ -70,9 +70,8 @@ tips() {
   - `systemctl --user status cliphist-x11-watch`
   - `journalctl --user -u cliphist-x11-watch -f`
 - 保存場所
-  - DB: `$XDG_RUNTIME_DIR/cliphist/db` (tmpfs)
-    - 再起動とログアウトで消える
-  - 設定: `~/.config/cliphist/config` (`db-path` を指定)
+  - DB: tmpfs に置き、再起動とログアウトで消える
+    - 今の場所は `cliphist version` の `db-path`
   - パスワードマネージャからのコピーも保存される (除外はしない)
 - 履歴の全削除: `cliphist wipe`
 - 元に戻す
