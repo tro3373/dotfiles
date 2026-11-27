@@ -11,7 +11,8 @@ notify_linux() {
   notify-send -u normal -i /usr/share/icons/application-default-icon.png "$title" "$body"
   # Sound
   # sound=complete.oga # message-new-instant.oga dialog-warning.oga dialog-information.oga
-  sound=dialog-warning.oga
+  # sound=dialog-warning.oga
+  sound=message.oga
   paplay /usr/share/sounds/freedesktop/stereo/$sound
 }
 notify_win() {
