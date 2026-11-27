@@ -23,8 +23,15 @@ setting_common() { no_settings; }
 
 setting_arch() {
   make_link_to_bin cliphist-x11-watch
+  _setup_config
   _setup_watch_service
   _setup_keybinding
+}
+
+_setup_config() {
+  make_dir_if_needed "$HOME/.config/cliphist"
+  # shellcheck disable=SC2154
+  make_lnk_with_bkup "$app_dir/cliphist/config" "$HOME/.config/cliphist/config"
 }
 
 _setup_watch_service() {
@@ -62,6 +69,11 @@ tips() {
 - 確認
   - `systemctl --user status cliphist-x11-watch`
   - `journalctl --user -u cliphist-x11-watch -f`
+- 保存場所
+  - DB: `$XDG_RUNTIME_DIR/cliphist/db` (tmpfs)
+    - 再起動とログアウトで消える
+  - 設定: `~/.config/cliphist/config` (`db-path` を指定)
+  - パスワードマネージャからのコピーも保存される (除外はしない)
 - 履歴の全削除: `cliphist wipe`
 - 元に戻す
   - `systemctl --user disable --now cliphist-x11-watch`
