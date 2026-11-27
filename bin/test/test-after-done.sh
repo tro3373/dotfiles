@@ -12,7 +12,7 @@ make_stubs() {
   cat >"${work_dir}/bin/tasks" <<STUB
 #!/usr/bin/env bash
 [[ -n "\${WHERE_FAILS:-}" ]] && exit 2
-printf '{"index":"${work_dir}/store/repo/index.md"}\n'
+printf '{"index":"${work_dir}/store/repo/index.md","repo_dir":"${work_dir}/store/repo"}\n'
 STUB
   cat >"${work_dir}/bin/trash" <<'STUB'
 #!/usr/bin/env bash

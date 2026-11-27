@@ -73,11 +73,11 @@ main() {
     usage_die "引数は 1 つまで"
     return 2
   }
-  local where store config repo current value
+  local where repo_dir config repo current value
   where=$(tasks where)
-  store=$(dirname "$(jq -er '.index' <<<"${where}")")
-  repo=$(basename "${store}")
-  config="${store}/after-done"
+  repo_dir=$(jq -er '.repo_dir' <<<"${where}")
+  repo=$(basename "${repo_dir}")
+  config="${repo_dir}/after-done"
   current=$(current_value)
   value=${1:-}
   [[ -z ${value} && ! -t 0 ]] && {
