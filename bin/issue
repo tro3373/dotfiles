@@ -40,8 +40,8 @@ $command_name [-t|--to-tasks] [-a|--add [-f file] [--title title]] [-R owner/rep
   Open (default): pick issue(s) with fzf, convert them to task-list markdown,
   then view them in nvim, one tab per issue. TAB toggles a pick.
   Options:
-    -t, --to-tasks  Add the selected issue(s) as tasks instead of opening
-                    them in nvim
+    -t, --to-tasks  Add the selected issue(s) as tasks tied to the issue
+                    itself (tasks add --sink) instead of opening them in nvim
     -a, --add       Create a new issue. The body is written in nvim unless -f
                     is given; the title is generated unless --title is given
     -f, --file      Body file for -a
