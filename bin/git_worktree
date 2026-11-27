@@ -263,7 +263,7 @@ create_default_ln_config() {
   # set -eo pipefail 下ではそこで worktree 追加ごと落ちるので、空 config を許容する。
   git status --ignored --porcelain 2>/dev/null |
     grep '^!!' |
-    grep -Ev '(\.tasks(\.md|/|$)|\.trash|node_modules|.next|tsconfig.tsbuildinfo|.data|-data)' |
+    grep -Ev '(\.trash|node_modules|.next|tsconfig.tsbuildinfo|.data|-data)' |
     cut -c4- >"$ln_config" || :
   # fzf \
   #   --prompt="Select ignored files/directories to link in new worktree: " \
