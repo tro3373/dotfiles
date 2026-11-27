@@ -27,7 +27,9 @@
 # URL is linked back to the Jira issue as a web link, then the same markdown is
 # added as a task. An issue whose title already carries that [KEY] is
 # skipped (and so is its task), so re-picking the same issue never creates a
-# duplicate. Creation only; closing stays manual.
+# duplicate. The task is tied to the created issue with `tasks add --sink`,
+# so on a repo whose tasks sink is GitHub, tasks writes to that issue and
+# closes it when the task is done.
 #   jira-issue -g [-R owner/repo]
 # -g ends the task body with a link to the GitHub issue it just created.
 # These modes pick several issues with TAB; each pick becomes its own
@@ -376,7 +378,7 @@ add_gh_task() {
   # cwd の repo を要求するのに対し -R は「その repo に居なくてよい」
   # ための引数なので、ここが一番落ちやすい。先に link を済ませておけば、落ちても
   # 失うのはタスク 1 件だけで、手で足せる。
-  if ! printf '%s\n  - View this issue on GitHub: %s\n' "${markdown}" "${url}" | tasks add; then
+  if ! printf '%s\n  - View this issue on GitHub: %s\n' "${markdown}" "${url}" | tasks add --sink "${url}"; then
     die "==> Error: Created and linked ${url} but could not append its task; add it by hand"
   fi
 }
@@ -384,7 +386,8 @@ add_gh_task() {
 create_gh_issues() {
   # 突合キーは GH issue タイトルの [KEY] prefix。マッピングファイルを持たない
   # 代わりに毎回検索し、同じ issue を選び直しても二重作成しない。
-  # 作成と Jira への貼り返しのみ。close はしない (状態同期は範囲外)。
+  # 作成と Jira への貼り返しのみ。close はしない。
+  # 作った issue は --sink でタスクに結ぶので、閉じるのは tasks done。
   local key markdown title url
   echo "==> Target repo: ${gh_repo_args[1]:-git remote of ${PWD}}" >&2
   for key in "$@"; do

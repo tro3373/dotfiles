@@ -397,7 +397,7 @@ test_to_gh_creates_one_issue_per_selection() {
   fzf_selection=$(printf 'K-1\tsummary1\nK-2\tsummary2')
   issue_select_open to-gh
   check '選択した issue ごとに [KEY] 付きの GH issue が作られる' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks add\n| - [ ] [K-1] title of K-1\n|   body of K-1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1\ngh-title [K-2] title of K-2\n| - [ ] [K-2] title of K-2\n|   body of K-2\njira issue link remote K-2 https://github.com/o/r/issues/2 [K-2] title of K-2\ntasks add\n| - [ ] [K-2] title of K-2\n|   body of K-2\n|   - View this issue on GitHub: https://github.com/o/r/issues/2')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks add --sink https://github.com/o/r/issues/1\n| - [ ] [K-1] title of K-1\n|   body of K-1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1\ngh-title [K-2] title of K-2\n| - [ ] [K-2] title of K-2\n|   body of K-2\njira issue link remote K-2 https://github.com/o/r/issues/2 [K-2] title of K-2\ntasks add --sink https://github.com/o/r/issues/2\n| - [ ] [K-2] title of K-2\n|   body of K-2\n|   - View this issue on GitHub: https://github.com/o/r/issues/2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -423,7 +423,7 @@ test_to_gh_creates_when_hit_lacks_key_prefix() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '[KEY] を含まない検索ヒットでは作成をスキップしない' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks add\n| - [ ] [K-1] title of K-1\n|   body of K-1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks add --sink https://github.com/o/r/issues/1\n| - [ ] [K-1] title of K-1\n|   body of K-1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
@@ -472,7 +472,7 @@ test_to_gh_matches_the_key_only_as_a_title_prefix() {
   fzf_selection=$(printf 'K-1\tsummary1')
   issue_select_open to-gh
   check '[KEY] がタイトル先頭でないヒットは既存扱いにしない' \
-    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks add\n| - [ ] [K-1] title of K-1\n|   body of K-1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1')" \
+    "$(printf 'gh-title [K-1] title of K-1\n| - [ ] [K-1] title of K-1\n|   body of K-1\njira issue link remote K-1 https://github.com/o/r/issues/1 [K-1] title of K-1\ntasks add --sink https://github.com/o/r/issues/1\n| - [ ] [K-1] title of K-1\n|   body of K-1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }

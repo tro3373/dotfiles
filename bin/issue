@@ -7,7 +7,7 @@
 # then view them in nvim, one tab per issue.
 #   issue [-R owner/repo]
 # To tasks: same pick + convert, but add each issue as a task via
-# `tasks add`.
+# `tasks add`, tied to the issue itself with --sink.
 #   issue -t [-R owner/repo]
 # Create: write the body in nvim (or pass -f), then `gh issue create --web`.
 # Without --title, the title is generated from the body by the LLM.
@@ -40,8 +40,8 @@ $command_name [-t|--to-tasks] [-a|--add [-f file] [--title title]] [-R owner/rep
   Open (default): pick issue(s) with fzf, convert them to task-list markdown,
   then view them in nvim, one tab per issue. TAB toggles a pick.
   Options:
-    -t, --to-tasks  Add the selected issue(s) as tasks instead of opening
-                    them in nvim
+    -t, --to-tasks  Add the selected issue(s) as tasks tied to the issue
+                    itself (tasks add --sink) instead of opening them in nvim
     -a, --add       Create a new issue. The body is written in nvim unless -f
                     is given; the title is generated unless --title is given
     -f, --file      Body file for -a
@@ -150,7 +150,7 @@ append_to_tasks() {
     if ! raw=$(view_issue "${number}"); then
       die "==> Error: Failed to view #${number}"
     fi
-    issue_to_tasks <<<"${raw}" | tasks add
+    issue_to_tasks <<<"${raw}" | tasks add --sink "$(jq -r '.url' <<<"${raw}")"
   done
 }
 

@@ -110,7 +110,7 @@ test_to_tasks_appends_each_selected_issue() {
   fzf_selection=$(printf '1\tt1\n2\tt2')
   issue_select_open
   check '複数選択した issue が 1 件ずつ tasks add に渡る' \
-    "$(printf 'tasks add\n| - [ ] [#1] title of #1\n|   body of #1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1\ntasks add\n| - [ ] [#2] title of #2\n|   body of #2\n|   - View this issue on GitHub: https://github.com/o/r/issues/2')" \
+    "$(printf 'tasks add --sink https://github.com/o/r/issues/1\n| - [ ] [#1] title of #1\n|   body of #1\n|   - View this issue on GitHub: https://github.com/o/r/issues/1\ntasks add --sink https://github.com/o/r/issues/2\n| - [ ] [#2] title of #2\n|   body of #2\n|   - View this issue on GitHub: https://github.com/o/r/issues/2')" \
     "$(sink_log)"
   rm -f "${stub_log}"
 }
