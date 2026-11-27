@@ -2,6 +2,7 @@ _additional() {
   load_zsh ~/.works.zsh
   load_zsh ~/.fzf.zsh
   [[ -f ~/.nix-profile/etc/profile.d/nix.sh ]] && . ~/.nix-profile/etc/profile.d/nix.sh
+  has mise && eval "$(mise activate zsh)"
   #[ -f ~/.secret ] && . ~/.secret
   _load_sops_env ~/.config/sops/env/global.enc.env
 }
