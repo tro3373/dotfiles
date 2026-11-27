@@ -155,6 +155,50 @@ test_ghq_keeps_unreadable_dir() {
     "0 [unreadable]" "${status} [$(dir_entries "${owner_dir}/dotfiles-worktree")]"
 }
 
+install_fake_fastfetch() {
+  mkdir -p "${ff_dir}/bin"
+  printf '#!/bin/sh\necho FF\n' >"${ff_dir}/bin/fastfetch"
+  chmod +x "${ff_dir}/bin/fastfetch"
+}
+
+gen_fastfetch_profile() {
+  ff_n=$((ff_n + 1))
+  local profile="${ff_dir}/fastfetch-${ff_n}.sh"
+  # shellcheck source=/dev/null
+  (source "${bin_dir}/../apps/fastfetch/config" && cat_fastfetch_shell) |
+    sed "s#/tmp/fastfetched#${ff_dir}/flag-${ff_n}#g" >"${profile}"
+  printf '%s' "${profile}"
+}
+
+source_profile_twice() {
+  local tmux="$1" path="$2" after="$3"
+  shift 3
+  local profile
+  profile=$(gen_fastfetch_profile)
+  env -u TMUX ${tmux:+"TMUX=${tmux}"} PATH="${path}" \
+    "$@" -c ". '${profile}'; . '${profile}'; ${after}" 2>&1 </dev/null |
+    grep -v -e 'job control' -e 'terminal process group' | paste -sd,
+}
+
+test_fastfetch_profile() {
+  local ff_dir="${tmproot}/fastfetch" ff_n=0
+  install_fake_fastfetch
+  local with_ff="${ff_dir}/bin:/usr/bin:/bin" no_ff="${ff_dir}/empty"
+  local bash_i=(/usr/bin/bash --norc --noprofile -i)
+  check "login 時の fastfetch: interactive でない shell では出さない" \
+    "end" "$(source_profile_twice "" "${with_ff}" 'echo end' bash --norc --noprofile)"
+  check "login 時の fastfetch: tmux の外では読むたびに出す" \
+    "FF,FF,end" "$(source_profile_twice "" "${with_ff}" 'echo end' "${bash_i[@]}")"
+  check "login 時の fastfetch: tmux の中では 1 回だけ出す" \
+    "FF,end" "$(source_profile_twice x "${with_ff}" 'echo end' "${bash_i[@]}")"
+  check "login 時の fastfetch: fastfetch が無ければ何も出さない" \
+    "end" "$(source_profile_twice "" "${no_ff}" 'echo end' "${bash_i[@]}")"
+  check "login 時の fastfetch: zsh で 2 回読んでも error を出さない" \
+    "FF,FF,end" "$(source_profile_twice "" "${with_ff}" 'echo end' zsh -f -i)"
+  check "login 時の fastfetch: 読んだ shell に関数も readonly 変数も残さない" \
+    "FF,FF,end" "$(source_profile_twice "" "${with_ff}" 'declare -F; declare -pr | grep fastfetched; echo end' "${bash_i[@]}")"
+}
+
 main() {
   local pass=0 fail=0 status=0
   local tmproot
@@ -176,6 +220,7 @@ main() {
   test_ghq_adds_roots_once
   test_ghq_keeps_existing_checkout
   test_ghq_keeps_unreadable_dir
+  test_fastfetch_profile
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]

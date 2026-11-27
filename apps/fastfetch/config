@@ -12,35 +12,22 @@ install_redhat() { not_supported; }
 
 cat_fastfetch_shell() {
   cat <<'EOF'
-#!/usr/bin/env -S bash -e
-
-readonly fastfetched_f=/tmp/fastfetched
-
-is_tmux_runnning() { [[ -n $TMUX ]]; }
-do_fastfetch() { fastfetch; }
-already_fastfetched() { [[ -e $fastfetched_f ]]; }
-
-main() {
-  if ! is_tmux_runnning; then
-    do_fastfetch
-    return
-  fi
-  if already_fastfetched; then
-    return
-  fi
-  do_fastfetch
-  touch $fastfetched_f
-}
-main "$@"
+case $- in *i*) ;; *) return ;; esac
+command -v fastfetch >/dev/null 2>&1 || return
+if [ -n "${TMUX-}" ]; then
+  [ -e /tmp/fastfetched ] && return
+  touch /tmp/fastfetched
+fi
+fastfetch
 EOF
 }
 setting_common() { no_settings; }
 setting_arch() {
   local dst=/etc/profile.d/fastfetch.sh
-  [[ -e $dst ]] && return
+  cat_fastfetch_shell | cmp -s - "$dst" && return
   log ">>> Generating $dst"
   cat_fastfetch_shell | sudo_tee "$dst"
-  exe sudo chmod 775 "$dst"
+  exe sudo chmod 644 "$dst"
 }
 setting_msys() { no_settings; }
 setting_cygwin() { no_settings; }
