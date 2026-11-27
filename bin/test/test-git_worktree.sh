@@ -17,7 +17,8 @@
 #
 #   * create_default_ln_config: ignored ファイルが 1 件も無いリポでも
 #       grep の非ゼロ終了で落ちず、空 config を書く。
-#       ignored のファイルを並べ、node_modules のような生成物は除く。
+#       ignored のファイルだけを並べ、node_modules のような生成物は除く。
+#       .tasks・.tasks.md も他の ignored と同じく並べる。
 #
 #   * _merged_label: 親リポジトリの HEAD への取り込み状況を 印 / +N / 空欄 で返す。
 #       作ってからコミットの無いブランチは取り込み済みに見せない。
@@ -284,23 +285,28 @@ test_default_ln_config_without_ignored() {
   check 'no-ignored: 空の config を書く' '0' "$(wc -l <"${config}" | tr -d ' ')"
 }
 
-# ignored のファイルを並べ、node_modules のような生成物は除く。
+# ignored のファイルだけを並べ、node_modules のような生成物は除く。
+# .tasks・.tasks.md も他の ignored と同じく並べる。
 test_default_ln_config_lists_ignored() {
   new_repo ignored
   local config="${tmproot}/ignored/config"
-  printf '%s\n' .env node_modules/ >"${org}/.gitignore"
+  printf '%s\n' .env .tasks/ .tasks.md node_modules/ >"${org}/.gitignore"
   git -C "${org}" add .gitignore
   git -C "${org}" commit -qm ignore
   echo secret >"${org}/.env"
   mkdir -p "${org}/node_modules/pkg"
   echo x >"${org}/node_modules/pkg/index.js"
+  mkdir -p "${org}/.tasks"
+  echo memo >"${org}/.tasks/memo.md"
+  echo memo >"${org}/.tasks.md"
+  echo draft >"${org}/untracked"
   (
     cd "${org}" || exit 1
     # shellcheck disable=SC2034  # source した create_default_ln_config が参照する
     ln_config="${config}"
     create_default_ln_config
   )
-  check 'ignored: .env だけを並べる' '.env' "$(cat "${config}")"
+  check 'ignored: ignored のファイルだけを並べる' $'.env\n.tasks.md\n.tasks/' "$(cat "${config}")"
 }
 
 # 取り込み済み => 印 / 未取り込み => +N / 親リポ自身・コミット無し・detached => 空欄 (NBSP)
