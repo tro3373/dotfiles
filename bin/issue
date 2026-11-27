@@ -150,7 +150,7 @@ append_to_tasks() {
     if ! raw=$(view_issue "${number}"); then
       die "==> Error: Failed to view #${number}"
     fi
-    issue_to_tasks <<<"${raw}" | tasks add
+    issue_to_tasks <<<"${raw}" | tasks add --sink "$(jq -r '.url' <<<"${raw}")"
   done
 }
 

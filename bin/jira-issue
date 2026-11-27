@@ -376,7 +376,7 @@ add_gh_task() {
   # cwd の repo を要求するのに対し -R は「その repo に居なくてよい」
   # ための引数なので、ここが一番落ちやすい。先に link を済ませておけば、落ちても
   # 失うのはタスク 1 件だけで、手で足せる。
-  if ! printf '%s\n  - View this issue on GitHub: %s\n' "${markdown}" "${url}" | tasks add; then
+  if ! printf '%s\n  - View this issue on GitHub: %s\n' "${markdown}" "${url}" | tasks add --sink "${url}"; then
     die "==> Error: Created and linked ${url} but could not append its task; add it by hand"
   fi
 }
