@@ -173,11 +173,11 @@ if !g:plug.is_installed('ctrlp.vim')
 endif
 
 " his は stdout が端末でないとき、月のログの絶対パスを 1 行 1 件で出す。
-function! s:fire_memo() abort
+function! s:open_month_logs() abort
   call s:open_in_tab({ -> fzf#run(fzf#wrap('fire-memo',
         \ fzf#vim#with_preview({
         \   'source':  'his',
         \   'options': ['-m', '--prompt', 'Memo> ', '--info=inline'],
         \ }), 0)) })
 endfunction
-command! Memo call s:fire_memo()
+command! Memo call s:open_month_logs()
