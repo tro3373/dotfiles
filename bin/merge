@@ -6,6 +6,7 @@
 #   -k  ローカルの後片付け (worktree・tmux session・ブランチの削除) をしない
 # PR の行: gh pr merge で merge し、origin のブランチを消し、ローカルの base を追随させる。
 # ローカルの行: 今のブランチへ git merge --no-ff --no-edit する (fast-forward できても merge commit を作る。message は git の既定)。push はしない。
+# ローカルの行に、tasks で doing のタスクのブランチは出さない (tasks が無ければ全部出す)。
 # 後片付け: 別の worktree で checkout 中なら git_worktree -r で消してから、ブランチを消す。
 #   今いる worktree と親リポジトリで checkout 中のブランチは、消さずに警告する。
 #   PR の行は、ローカルのブランチが PR の head に含まれるときだけ後片付けする。
@@ -90,12 +91,26 @@ list_pr_rows() {
   ' <<<"${prs_json}"
 }
 
+doing_task_branches() {
+  command -v tasks >/dev/null 2>&1 || return 0
+  local tasks_json
+  if ! tasks_json=$(tasks list --json); then
+    warn "tasks list に失敗した。doing のタスクのブランチも出す"
+    return 0
+  fi
+  jq -r '.[] | select(.status == "doing") | .branch' <<<"${tasks_json}"
+}
+
 list_local_rows() {
   # shellcheck disable=SC2154  # lib/worktree_path が定義する
   git for-each-ref refs/heads --no-merged HEAD --format '%(refname:lstrip=2)' |
-    awk -v OFS='\t' -v icon="${icon_local}" -v removed="${removed_branch_prefix}" -v pr_branches="$(cut -f2 <<<"${pr_rows}")" '
-      BEGIN { n = split(pr_branches, b, "\n"); for (i = 1; i <= n; i++) has_pr[b[i]] = 1 }
-      index($0, removed) == 1 || ($0 in has_pr) { next }
+    awk -v OFS='\t' -v icon="${icon_local}" -v removed="${removed_branch_prefix}" \
+      -v pr_branches="$(cut -f2 <<<"${pr_rows}")" -v doing_branches="$(doing_task_branches)" '
+      BEGIN {
+        n = split(pr_branches, b, "\n"); for (i = 1; i <= n; i++) has_pr[b[i]] = 1
+        n = split(doing_branches, b, "\n"); for (i = 1; i <= n; i++) is_doing[b[i]] = 1
+      }
+      index($0, removed) == 1 || ($0 in has_pr) || ($0 in is_doing) { next }
       { print "local", $0, "", icon " " $0 }
     '
 }

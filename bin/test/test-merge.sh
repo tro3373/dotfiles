@@ -82,7 +82,7 @@ setup() {
   write_prs
   # lint-ignore: uppercase fake の gh が読む環境変数
   export GH_PRS="${root}/prs.json" GH_LOG="${root}/gh.log" GH_ORIGIN="${origin}" GH_LIST_LOG="${root}/gh-list.log"
-  unset GH_PR_STATE
+  unset GH_PR_STATE TASKS_JSON TASKS_FAIL
 }
 
 run_merge() {
@@ -168,6 +168,21 @@ test_list_without_gh() {
 local feat/local
 local feat/wt
 local pr/feat" "$(cut -f1,2 "${root}/fzf.in" | tr '\t' ' ')"
+}
+
+test_list_hides_doing_task_branches() {
+  setup doing
+  echo '[{"status":"doing","branch":"feat/local"},{"status":"ready","branch":"feat/wt"},{"status":"doing","branch":"feat/both"}]' >"${root}/tasks.json"
+  TASKS_JSON="${root}/tasks.json" offer
+  check "doing のタスクのブランチはローカルの行に出ない。ready のタスクのブランチと PR の行は出る" \
+    "pr feat/both 8|local feat/wt" "$(offered_keys | tail -n 2 | paste -sd '|')"
+}
+
+test_list_tasks_failure() {
+  setup tasksfail
+  TASKS_FAIL=1 offer
+  check "tasks list が失敗したらローカルの行を全部出し、警告する" \
+    "local feat/local|local feat/wt|1" "$(offered_keys | tail -n 2 | paste -sd '|')|$(grep -c 'tasks list に失敗' "${root}/err")"
 }
 
 test_nothing_picked() {
@@ -436,7 +451,14 @@ case "$2" in
     ;;
 esac
 EOF
-  chmod +x "${tmp}/bin/fzf" "${tmp}/bin/gh"
+  cat >"${tmp}/bin/tasks" <<'EOF'
+#!/usr/bin/env bash
+[[ "$*" == "list --json" ]] || exit 2
+[[ -n ${TASKS_FAIL:-} ]] && { echo "tasks: boom" >&2; exit 1; }
+[[ -n ${TASKS_JSON:-} ]] && { cat "${TASKS_JSON}"; exit 0; }
+echo '[]'
+EOF
+  chmod +x "${tmp}/bin/fzf" "${tmp}/bin/gh" "${tmp}/bin/tasks"
 }
 
 make_path_without_gh() {
@@ -478,6 +500,8 @@ main() {
   test_list_gh_failure
   test_list_without_remote
   test_list_without_gh
+  test_list_hides_doing_task_branches
+  test_list_tasks_failure
   test_nothing_picked
   test_local_row
   test_local_row_without_worktree
