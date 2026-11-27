@@ -8,8 +8,8 @@ readonly _additional_arch=(
   # reflector      # update mirrorlist tool
   net-tools # deplicated. ifconfig, route, arp, netstat...
   traceroute
-  gnu-netcat # netcat
-  inetutils  # ifconfig, hostname, ping...
+  openbsd-netcat # netcat
+  inetutils      # ifconfig, hostname, ping...
   xsel
   xorg-server-xvfb # for clipboard
   libxfont2        # x11 font rasterisation library

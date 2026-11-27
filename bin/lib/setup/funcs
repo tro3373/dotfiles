@@ -11,7 +11,7 @@ readonly _core_apps_additional=(
   nvim fzf gh asdf go cargo docker
   sheldon ghq mmv jq yq
   bat exa unbuffer
-  hugo neofetch htop gclip gomi ctags cwebp nvr his
+  hugo fastfetch htop gclip gomi ctags cwebp nvr his
   # apps for shell
   shellcheck shfmt
   # apps for go
