@@ -75,7 +75,11 @@ main() {
   }
   local where repo_dir config repo current value
   where=$(tasks where)
-  repo_dir=$(jq -er '.repo_dir' <<<"${where}")
+  repo_dir=$(jq -r '.repo_dir // empty' <<<"${where}")
+  if [[ -z ${repo_dir} ]]; then
+    printf '==> Error: %s\n' "tasks where の JSON に repo_dir が無い (tasks が古い)" >&2
+    return 1
+  fi
   repo=$(basename "${repo_dir}")
   config="${repo_dir}/after-done"
   current=$(current_value)

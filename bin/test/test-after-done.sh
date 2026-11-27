@@ -12,7 +12,11 @@ make_stubs() {
   cat >"${work_dir}/bin/tasks" <<STUB
 #!/usr/bin/env bash
 [[ -n "\${WHERE_FAILS:-}" ]] && exit 2
-printf '{"index":"${work_dir}/store/repo/index.md","repo_dir":"${work_dir}/store/repo"}\n'
+if [[ -n "\${WHERE_WITHOUT_REPO_DIR:-}" ]]; then
+  printf '{"index":"${work_dir}/store/repo/index.md"}\n'
+  exit 0
+fi
+printf '{"repo_dir":"${work_dir}/store/repo"}\n'
 STUB
   cat >"${work_dir}/bin/trash" <<'STUB'
 #!/usr/bin/env bash
@@ -106,6 +110,7 @@ main() {
   check '不正な値は書かない' 'merge\n' 2 $'merge' bogus
   check '引数が 2 つなら書かない' 'merge\n' 2 $'merge' merge pr
   WHERE_FAILS=1 check 'repo の外では失敗する' NONE 2 NONE merge
+  WHERE_WITHOUT_REPO_DIR=1 check 'tasks where に repo_dir が無ければ書かずに失敗する' NONE 1 NONE merge
 
   check_show '端末でなければ今の値を出す' 'pr\n' pr
   check_show 'ファイルが無ければ ask' NONE ask
