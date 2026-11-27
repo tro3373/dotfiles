@@ -91,6 +91,7 @@ alias gn="git_no_merges"
 alias gpr="git pull --rebase=merges --autostash"
 alias vel="velocity"
 alias li="linear"
+alias m="merge"
 # alias gt="git tag"
 # alias gt="git_worktree"
 gt() {
@@ -159,7 +160,7 @@ alias history="history -i"
 alias_with_compdef git g _git
 alias_with_compdef docker d
 alias_with_compdef systemctl s _systemctl
-alias_with_compdef make m _make
+# alias_with_compdef make m _make
 # alias_with_compdef code c
 # if has claude && has specstory; then
 #   alias claude="specstory claude"
