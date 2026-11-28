@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+command_name=$(basename "$0") && readonly command_name
 find_root_dirs=("$HOME"/src)
 find_entries() {
   # git repository を探す
@@ -35,10 +36,55 @@ first_per_realpath() {
   done
 }
 
+usage() {
+  cat <<EOF
+List git repository dirs, oldest mtime first.
+
+  Usage:
+      ${command_name} [--main]
+
+  Options:
+      --main : one dir per repo. A worktree is folded into its main checkout,
+               and a dir that is not a git repo is dropped
+EOF
+}
+
+main_checkout_of() {
+  local common
+  common=$(git -C "${dir}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 0
+  common=$(realpath -m -- "${common}")
+  if [[ ${common} == */.git ]]; then
+    printf '%s\n' "${common%/.git}"
+    return
+  fi
+  printf '%s\n' "${dir}"
+}
+
+fold_to_main_checkout() {
+  local dir
+  while IFS= read -r dir; do
+    main_checkout_of
+  done | first_per_realpath
+}
+
 main() {
   set -eo pipefail
+  local fold=cat
+  case "${1:-}" in
+    -h | --help)
+      usage
+      return
+      ;;
+    --main) fold=fold_to_main_checkout ;;
+    "") ;;
+    *)
+      usage >&2
+      return 2
+      ;;
+  esac
   sources |
     first_per_realpath |
+    "${fold}" |
     while IFS= read -r dir; do
       [[ ! -d $dir ]] && continue
       printf '%s\t%s\n' "$(stat -c %Y "$dir" 2>/dev/null || echo 0)" "$dir"
