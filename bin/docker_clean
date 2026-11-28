@@ -32,16 +32,12 @@ initialize() {
   done
 }
 
-# build cache は docker system df -v に項目が出ないので、Reclaimable を別に読む。
 cache_reclaimable() {
   local reclaimable
   reclaimable=$(docker system df --format '{{json .}}' | jq -r 'select(.Type == "Build Cache") | .Reclaimable')
   echo "${reclaimable%% *}"
 }
 
-# 候補は 1 行 1 件の `<state>\t<kind>\t<target>\t<name>\t<size>\t<reason>`。
-# state は safe か risky、kind は container・image・volume・cache。
-# target は削除 command に渡す値。
 list_candidates() {
   local cache
   cache=$(cache_reclaimable)
@@ -68,7 +64,6 @@ list_candidates() {
     | @tsv'
 }
 
-# 出力は `<state>\t<kind>\t<target>\t<表示>`。🟢 を先に、種類は container・image・volume・cache の順のまま。
 render() {
   sort -s -t$'\t' -k1,1r | awk -F'\t' -v OFS='\t' '
     BEGIN {
@@ -83,7 +78,6 @@ render() {
   '
 }
 
-# fzf の a は shown と hidden を入れ替えて読み直す。1 行目は fzf が見出しとして固定する。
 write_views() {
   local safe
   safe=$(awk -F'\t' '$1 == "safe"' <<<"${rows}")
@@ -101,7 +95,6 @@ select_targets() {
   local leave_filter='case $FZF_INPUT_STATE in enabled) echo "clear-query+search()+hide-input+rebind(a,/)" ;; *) echo abort ;; esac'
   # shellcheck disable=SC2016 # {2} {3} は fzf が preview の実行時に展開する
   local preview='case {2} in cache) docker system df ;; *) docker inspect {3} ;; esac'
-  # 何も選ばずに抜けたときの非 0 を、削除対象なしとして扱う
   fzf --multi --ansi --no-input \
     --with-shell 'bash -c' \
     --delimiter '\t' --with-nth 4 \

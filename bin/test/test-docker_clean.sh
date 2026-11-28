@@ -1,12 +1,5 @@
 #!/usr/bin/env bash
 
-# bin/docker_clean のテスト。実物の docker は呼ばない。
-# docker は PATH 先頭の偽物に差し替える。docker system df の 2 つの呼び出しには fixture の JSON を返し、
-# それ以外の呼び出しは引数を ${DOCKER_LOG} に 1 行ずつ追記する。
-# fzf も偽物に差し替える (--header-lines の行数を除き、FZF_PICK に一致する行だけ選ぶ)。
-# fzf の中のキー操作 (a・/・Esc・Enter) は、実物の fzf を tmux の pane で開いて確かめる。
-# tmux-sandbox の外で起動されたら、自分を tmux-sandbox 経由で起動し直す。
-
 check() {
   local desc="$1" expected="$2" actual="$3"
   if [[ ${expected} != "${actual}" ]]; then
@@ -18,10 +11,6 @@ check() {
   printf 'ok   - %s\n' "${desc}"
 }
 
-# docker system df -v の fixture。
-#   image      dangling_unused (🟢)・dangling_used (出ない)・myapp:old (⚠️)・myapp:live (出ない)
-#   volume     無名・未使用 (🟢)、無名・Links 1 (出ない)、pgdata 名前付き・未使用 (⚠️)
-#   container  running (出ない)・exited・created (⚠️)
 write_fixture() {
   cat >"${tmp}/df.json" <<EOF
 {
@@ -44,7 +33,6 @@ write_fixture() {
   "BuildCache": []
 }
 EOF
-  # 🟢 が無い fixture
   cat >"${tmp}/df-risky.json" <<EOF
 {
   "Images": [{"ID": "sha256:${hex_c}", "Repository": "myapp", "Tag": "old", "Containers": "0", "Size": "1.2GB"}],
@@ -65,10 +53,7 @@ case "$*" in
     printf '%s\n' '{"Type":"Images","Reclaimable":"1GB (50%)"}' \
       "{\"Type\":\"Build Cache\",\"Reclaimable\":\"${FAKE_CACHE:-2.5GB}\"}"
     ;;
-  inspect*)
-    echo "INSPECT $2"
-    echo "$*" >>"${DOCKER_LOG}"
-    ;;
+  inspect*) echo "INSPECT $2" ;;
   *) echo "$*" >>"${DOCKER_LOG}" ;;
 esac
 EOF
@@ -101,12 +86,10 @@ clean() {
   "${bin}" "$@" 2>/dev/null
 }
 
-# docker に渡った、df 以外の呼び出し
 docker_log() {
   paste -sd '|' "${DOCKER_LOG}"
 }
 
-# fzf に渡った候補の `<state> <kind> <target>`
 offered() {
   FZF_PICK='^$' FZF_LOG="${tmp}/fzf.in" clean "$@" >/dev/null
   cut -f1-3 "${tmp}/fzf.in" | tr '\t' ' '
@@ -205,7 +188,6 @@ test_unknown_option() {
   )"
 }
 
-# 実物の fzf で docker_clean を pane に開く。pane は docker_clean が終わると閉じる。
 open_real_fzf() {
   tmux kill-session -t dc 2>/dev/null || true
   tmux -f /dev/null new-session -d -s dc -x 160 -y 40 \
@@ -246,7 +228,6 @@ wait_screen() {
   wait_until screen_has "$1"
 }
 
-# 画面に text が出れば 1、5 秒待っても出なければ 0
 shown() {
   wait_screen "$1" && echo 1 || echo 0
 }
@@ -259,11 +240,6 @@ closed() {
   wait_until pane_closed && echo 1 || echo 0
 }
 
-# preview の docker inspect も DOCKER_LOG に残るので、削除の呼び出しだけを見る
-deletions() {
-  grep -v '^inspect ' "${DOCKER_LOG}" | paste -sd '|' || true
-}
-
 test_real_fzf_toggle() {
   reset_log
   open_real_fzf
@@ -274,7 +250,7 @@ test_real_fzf_toggle() {
   keys a
   check "実 fzf: もう一度 a で 🟢 だけに戻る" "1:1" "$(shown '消してよいものだけを表示中'):$(gone pgdata)"
   keys Escape
-  check "実 fzf: Esc で何も消さずに終わる" "1:" "$(closed):$(deletions)"
+  check "実 fzf: Esc で何も消さずに終わる" "1:" "$(closed):$(docker_log)"
 }
 
 test_real_fzf_filter() {
@@ -289,14 +265,14 @@ test_real_fzf_filter() {
   keys Escape
   check "実 fzf: 絞り込み中の Esc は終了せず、絞り込む前の一覧に戻る" "1" "$(shown 'build cache')"
   keys Escape
-  check "実 fzf: 絞り込みの外の Esc は終了する" "1:" "$(closed):$(deletions)"
+  check "実 fzf: 絞り込みの外の Esc は終了する" "1:" "$(closed):$(docker_log)"
 }
 
 test_real_fzf_enter() {
   reset_log
   open_real_fzf
   keys Enter
-  check "実 fzf: Enter でカーソル位置の 🟢 を確認なしで消す" "1:rmi sha256:${hex_a}" "$(closed):$(deletions)"
+  check "実 fzf: Enter でカーソル位置の 🟢 を確認なしで消す" "1:rmi sha256:${hex_a}" "$(closed):$(docker_log)"
 }
 
 test_real_fzf() {
