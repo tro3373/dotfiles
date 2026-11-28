@@ -50,7 +50,7 @@ install_fakes() {
 #!/usr/bin/env bash
 case "\$1" in
   root) echo "${fake_home}/ghq" ;;
-  list) printf '%s\n' "${owner_dir}/tasks" "${owner_dir}/tasks-worktree/feat" "${owner_dir}/md" "${owner_dir}/md_" ;;
+  list) printf '%s\n' "${owner_dir}/tasks" "${owner_dir}/tasks-worktree/feat" "${owner_dir}/md" "${owner_dir}/md_" "${owner_dir}/notes" "${owner_dir}/notes-worktree/x" ;;
 esac
 EOF
   cat >"${fake_bin}/gh" <<EOF
@@ -126,6 +126,10 @@ build_repos() {
   git -C "${owner_dir}/md_" config user.email "${me}"
   commit "${owner_dir}/md_" $((5 * day)) "md two"
 
+  new_repo "${owner_dir}/notes" git@gitlab.com:tro3373/notes.git
+  commit "${owner_dir}/notes" 3600 "notes"
+  git -C "${owner_dir}/notes" worktree add -q "${owner_dir}/notes-worktree/x"
+
   new_repo "${fake_home}/src/corp/team/api" git@sub.github.com:Corp/api.git
   commit "${fake_home}/src/corp/team/api" $((6 * day)) "api"
 
@@ -145,13 +149,14 @@ test_table() {
 velocity 2026-11-26 19:00  commit           merge            pr
                               1d   7d  30d     1d   7d  30d     1d   7d  30d
 ~/.dot                         1    2    2      0    0    0      0    0    0
-ghq/tro3373                    1    4    5      1    1    1      1    1    2
+ghq/tro3373                    2    5    6      1    1    1      1    1    2
   md                           0    2    2      0    0    0      0    0    1
+  notes                        1    1    1      0    0    0      0    0    0
   tasks                        1    2    3      1    1    1      1    1    1
 src/corp                       0    1    1      0    0    0      1    1    1
   team/api                     0    1    1      0    0    0      1    1    1
 github:someone                 0    0    0      0    0    0      0    0    1
-total                          2    7    8      1    1    1      2    2    4
+total                          3    8    9      1    1    1      2    2    4
 EOF
   )
   check "置き場所の小計・repo・total を、24 時間・7 日・30 日で数える" "${expected}" "$(run_velocity)"
