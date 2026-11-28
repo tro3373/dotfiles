@@ -43,7 +43,7 @@ list_candidates() {
   local cache
   cache=$(cache_reclaimable)
   docker system df -v --format '{{json .}}' | jq -r --arg cache "${cache}" '
-    def anonymous: (.Labels // "") | contains("com.docker.volume.anonymous");
+    def anonymous: (.Labels // "") | split(",") | any(split("=")[0] == "com.docker.volume.anonymous");
     def short_id: ltrimstr("sha256:") | .[:12];
     def short_name: if test("^[0-9a-f]{64}$") then .[:12] else . end;
     def own_size: split(" (")[0];
@@ -52,7 +52,7 @@ list_candidates() {
     (.Images[] | select(.Containers == "0")
       | if .Tag == "<none>"
         then ["safe", "image", .ID, (.ID | short_id), .Size, "dangling"]
-        else ["risky", "image", "\(.Repository):\(.Tag)", "\(.Repository):\(.Tag)", .Size, "tag 付き・未使用"]
+        else ["risky", "image", .ID, "\(.Repository):\(.Tag)", .Size, "tag 付き・未使用"]
         end),
     (.Volumes[] | select(.Links == "0")
       | if anonymous
@@ -86,8 +86,8 @@ prune_cache() {
 }
 
 delete_selected() {
-  fzf_pick_delete_kind "${selected}" container docker rm
-  fzf_pick_delete_kind "${selected}" image docker rmi
+  fzf_pick_delete_kind "${selected}" container docker rm -v
+  fzf_pick_delete_kind "${selected}" image docker rmi -f
   fzf_pick_delete_kind "${selected}" volume docker volume rm
   prune_cache
 }

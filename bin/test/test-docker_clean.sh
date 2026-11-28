@@ -23,12 +23,15 @@ write_fixture() {
   "Volumes": [
     {"Name": "${hex_a}", "Labels": "com.docker.volume.anonymous=", "Links": "0", "Size": "80MB"},
     {"Name": "${hex_b}", "Labels": "com.docker.volume.anonymous=", "Links": "1", "Size": "81MB"},
-    {"Name": "pgdata", "Labels": "", "Links": "0", "Size": "5MB"}
+    {"Name": "pgdata", "Labels": "", "Links": "0", "Size": "5MB"},
+    {"Name": "pgdata2", "Labels": "note=com.docker.volume.anonymous", "Links": "0", "Size": "6MB"}
   ],
   "Containers": [
     {"ID": "c0ffee000001", "Names": "web-live", "Image": "myapp:live", "State": "running", "Status": "Up 1 hour", "Size": "1MB (virtual 1GB)"},
     {"ID": "c0ffee000002", "Names": "web-old", "Image": "myapp:old", "State": "exited", "Status": "Exited (0) 2 days ago", "Size": "0B (virtual 50MB)"},
-    {"ID": "c0ffee000003", "Names": "web-new", "Image": "myapp:old", "State": "created", "Status": "Created", "Size": "0B (virtual 50MB)"}
+    {"ID": "c0ffee000003", "Names": "web-new", "Image": "myapp:old", "State": "created", "Status": "Created", "Size": "0B (virtual 50MB)"},
+    {"ID": "c0ffee000004", "Names": "web-dead", "Image": "myapp:old", "State": "dead", "Status": "Dead", "Size": "0B (virtual 50MB)"},
+    {"ID": "c0ffee000005", "Names": "web-paused", "Image": "myapp:live", "State": "paused", "Status": "Up 1 hour (Paused)", "Size": "0B (virtual 1GB)"}
   ],
   "BuildCache": []
 }
@@ -107,13 +110,15 @@ safe volume ${hex_a}" "$(offered)"
 }
 
 test_all_view() {
-  check "-a: 🟢 の後ろに ⚠️ を container・image・volume・cache の順で出す。使用中・running は出ない" \
+  check "-a: 🟢 の後ろに ⚠️ を container・image・volume・cache の順で出す。使用中・running・paused は出ない。名前付き volume は label の値に無名の鍵の文字があっても ⚠️" \
     "safe image sha256:${hex_a}
 safe volume ${hex_a}
 risky container c0ffee000002
 risky container c0ffee000003
-risky image myapp:old
+risky container c0ffee000004
+risky image sha256:${hex_c}
 risky volume pgdata
+risky volume pgdata2
 risky cache build-cache" "$(offered -a)"
 }
 
@@ -129,8 +134,10 @@ test_display() {
 🟢 💾 volume ${hex_a:0:12} 80MB 無名
 ⚠️ 📦 container web-old 0B exited
 ⚠️ 📦 container web-new 0B created
+⚠️ 📦 container web-dead 0B dead
 ⚠️ 🖼️ image myapp:old 1.2GB tag 付き・未使用
 ⚠️ 💾 volume pgdata 5MB 名前付き
+⚠️ 💾 volume pgdata2 6MB 名前付き
 ⚠️ 🧹 cache build cache 2.5GB 未使用の cache" "$(
       cut -f4 "${tmp}/fzf.in" | sed 's/\x1b\[[0-9]*m//g' | tr -s ' '
     )"
@@ -147,27 +154,31 @@ test_nothing_picked() {
 test_delete_safe() {
   reset_log
   FZF_PICK="$(pick safe image "sha256:${hex_a}")|$(pick safe volume "${hex_a}")" clean </dev/null >/dev/null
-  check "🟢 は確認なしで消す" "rmi sha256:${hex_a}|volume rm ${hex_a}" "$(docker_log)"
+  check "🟢 は確認なしで消す。image は ID で、全 tag ごと消す" "rmi -f sha256:${hex_a}|volume rm ${hex_a}" "$(docker_log)"
 }
 
 test_delete_risky() {
   reset_log
   check "⚠️ は y 以外で消さず終了コード 1" "1:" "$(
-    FZF_PICK="$(pick risky image myapp:old)" clean -a <<<n >/dev/null
+    FZF_PICK="$(pick risky image "sha256:${hex_c}")" clean -a <<<n >/dev/null
+    echo "$?:$(docker_log)"
+  )"
+  check "⚠️ は空の入力 (Enter だけ) でも消さず終了コード 1" "1:" "$(
+    FZF_PICK="$(pick risky image "sha256:${hex_c}")" clean -a <<<'' >/dev/null
     echo "$?:$(docker_log)"
   )"
 
   reset_log
-  FZF_PICK="$(pick risky cache build-cache)|$(pick risky volume pgdata)|$(pick risky image myapp:old)|$(pick risky container c0ffee000002)|$(pick risky container c0ffee000003)" \
+  FZF_PICK="$(pick risky cache build-cache)|$(pick risky volume pgdata)|$(pick risky image "sha256:${hex_c}")|$(pick risky container c0ffee000002)|$(pick risky container c0ffee000003)" \
     clean -a <<<y >/dev/null
   check "⚠️ は y で消す。container・image・volume・cache の順" \
-    "rm c0ffee000002 c0ffee000003|rmi myapp:old|volume rm pgdata|builder prune -f" "$(docker_log)"
+    "rm -v c0ffee000002 c0ffee000003|rmi -f sha256:${hex_c}|volume rm pgdata|builder prune -f" "$(docker_log)"
 }
 
 test_apply() {
   reset_log
   check "--apply: 🟢 だけを消し、消すものを表示する" \
-    "0:rmi sha256:${hex_a}|volume rm ${hex_a}:2" "$(
+    "0:rmi -f sha256:${hex_a}|volume rm ${hex_a}:2" "$(
       local out status=0
       out=$("${bin}" --apply 2>/dev/null </dev/null) || status=$?
       echo "${status}:$(docker_log):$(grep -c '🟢' <<<"${out}")"
@@ -285,7 +296,7 @@ test_real_fzf_enter() {
   reset_log
   open_real_fzf
   keys Enter
-  check "実 fzf: Enter でカーソル位置の 🟢 を確認なしで消す" "1:rmi sha256:${hex_a}" "$(closed):$(docker_log)"
+  check "実 fzf: Enter でカーソル位置の 🟢 を確認なしで消す" "1:rmi -f sha256:${hex_a}" "$(closed):$(docker_log)"
 }
 
 test_real_fzf() {
