@@ -86,31 +86,27 @@ repo_events() {
       '$2 == me { print "merge", $1, group, repo, $3 }'
 }
 
-# Lines: "<git common dir>\x1f<dir>\x1f<group>\x1f<repo>\x1f<github slug>"
+# Lines: "<dir>\x1f<group>\x1f<repo>\x1f<github slug>"
 # \x1f keeps an empty <repo> as its own field under `read`, which a tab would not.
 # A worktree takes the row of its main checkout.
 # Clones of one github repo share one row. The row is the clone under ~/, then the clone
 # whose dir name is the repo name, then the first clone listed.
 list_repos() {
-  local dir common
-  "${script_dir}/find_repos" | while IFS= read -r dir; do
-    common=$(git -C "${dir}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || continue
-    common=$(realpath -m -- "${common}")
-    [[ ${common} == */.git ]] && dir=${common%/.git}
-    printf '%s\x1f%s\x1f%s\x1f%s\n' "${common}" "${dir}" "$(location_of "${dir}")" "$(github_slug_of "${dir}")"
+  local dir
+  "${script_dir}/find_repos" --main | while IFS= read -r dir; do
+    printf '%s\x1f%s\x1f%s\n' "${dir}" "$(location_of "${dir}")" "$(github_slug_of "${dir}")"
   done | awk -F'\037' -v OFS='\037' '
     function score(   base) {
-      base = $2
+      base = $1
       sub(/.*\//, "", base)
-      return ($3 ~ /^~\//) * 2 + (base == substr($5, index($5, "/") + 1))
+      return ($2 ~ /^~\//) * 2 + (base == substr($4, index($4, "/") + 1))
     }
-    seen[$1]++ { next }
     { line[++n] = $0 }
-    $5 != "" && (!($5 in best) || score() > best[$5]) { best[$5] = score(); row[$5] = $3 OFS $4 }
+    $4 != "" && (!($4 in best) || score() > best[$4]) { best[$4] = score(); row[$4] = $2 OFS $3 }
     END {
       for (i = 1; i <= n; i++) {
         $0 = line[i]
-        if ($5 in row) { split(row[$5], r, OFS); $3 = r[1]; $4 = r[2] }
+        if ($4 in row) { split(row[$4], r, OFS); $2 = r[1]; $3 = r[2] }
         print
       }
     }'
@@ -160,7 +156,7 @@ pr_events() {
   github_logins | while IFS= read -r login; do
     merged_prs_of "${login}"
   done | awk -F'\t' -v OFS='\t' '
-    FILENAME == ARGV[1] { split($0, f, "\037"); if (f[5] != "") loc[f[5]] = f[3] FS f[4]; next }
+    FILENAME == ARGV[1] { split($0, f, "\037"); if (f[4] != "") loc[f[4]] = f[2] FS f[3]; next }
     {
       where = $1 in loc ? loc[$1] : "github:" substr($1, 1, index($1, "/") - 1) FS ""
       print "pr", $2, where
@@ -248,7 +244,7 @@ main() {
   local repos_file="${tmp_dir}/repos" events_file="${tmp_dir}/events"
   list_repos >"${repos_file}"
   local dir group repo
-  while IFS=$'\x1f' read -r _ dir group repo _; do
+  while IFS=$'\x1f' read -r dir group repo _; do
     repo_events
   done <"${repos_file}" >"${events_file}"
   pr_events >>"${events_file}"
