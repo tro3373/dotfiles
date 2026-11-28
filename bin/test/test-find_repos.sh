@@ -80,6 +80,7 @@ setup_main_env() {
   worktree="${fake_home}/ghq/wt"
   bare="${fake_home}/ghq/bare.git"
   bare_worktree="${fake_home}/ghq/bare-wt"
+  separated="${fake_home}/ghq/sep"
   plain="${fake_home}/.dot"
   mkdir -p "${fake_bin}" "${plain}" "${fake_home}/ghq"
   new_commit_repo "${repo_a}"
@@ -87,29 +88,31 @@ setup_main_env() {
   git -C "${repo_a}" worktree add -q "${worktree}"
   git clone -q --bare "${repo_b}" "${bare}"
   git -C "${bare}" worktree add -q "${bare_worktree}"
+  git init -q --separate-git-dir "${tmproot}/sep-meta" "${separated}"
   cat >"${fake_bin}/ghq" <<EOF
 #!/usr/bin/env bash
-printf '%s\n' "${worktree}" "${bare}" "${bare_worktree}"
+printf '%s\n' "${worktree}" "${bare}" "${bare_worktree}" "${separated}"
 EOF
   chmod +x "${fake_bin}/ghq"
   touch -d '2020-01-01' "${repo_a}"
   touch -d '2005-01-01' "${repo_b}"
   touch -d '2001-01-01' "${worktree}"
+  touch -d '2010-01-01' "${separated}"
 }
 
 test_without_main_worktree_listed() {
   check "--main が無ければ、worktree と git でない dir もそのまま出す" \
-    "${plain},${bare_worktree},${bare},${worktree},${repo_a},${repo_b}" "$(found)"
+    "${plain},${bare_worktree},${bare},${separated},${worktree},${repo_a},${repo_b}" "$(found)"
 }
 
 test_main_folds_worktree() {
-  check "--main は worktree を main checkout に、bare repo の worktree を bare repo に畳み、git でない dir を落とす" \
-    "${bare},${repo_a},${repo_b}" "$(found --main)"
+  check "--main は worktree を main checkout に、bare repo の worktree を bare repo に畳み、git でない dir を落とす。git dir が別の場所の checkout は checkout を出す" \
+    "${bare},${separated},${repo_a},${repo_b}" "$(found --main)"
 }
 
 test_main_orders_by_main_checkout_mtime() {
   check "--main の並びは、畳んだ先の main checkout の mtime で決まる" \
-    "${repo_b},${repo_a},${bare}" "$(found_in_order --main)"
+    "${repo_b},${separated},${repo_a},${bare}" "$(found_in_order --main)"
 }
 
 test_unknown_arg_exits_2() {
@@ -119,7 +122,7 @@ test_unknown_arg_exits_2() {
 }
 
 test_main_env() {
-  local fake_home fake_bin repo_a repo_b worktree bare bare_worktree plain
+  local fake_home fake_bin repo_a repo_b worktree bare bare_worktree separated plain
   setup_main_env
   test_without_main_worktree_listed
   test_main_folds_worktree
