@@ -10,7 +10,8 @@
 
 readonly protected_branches=(develop main master)
 readonly log_format='%Cred%h %Cgreen(%cd)%Creset -%C(yellow)%d%Creset %s %C(bold blue)<%an>%Creset'
-readonly fzf_header='a: 🟢 だけ <=> 全件 | /: 絞り込み (Esc でやめる) | Tab: 複数選択 | Enter: 消す'
+# shellcheck disable=SC1091
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/fzf_pick"
 
 initialize() {
   local arg
@@ -124,57 +125,6 @@ render() {
   '
 }
 
-# fzf の a は shown と hidden を入れ替えて読み直す。1 行目は fzf が見出しとして固定する。
-write_views() {
-  local all safe
-  all=$(list_candidates | render)
-  safe=$(awk -F'\t' '$1 == "safe"' <<<"${all}")
-  printf '\t\t\t\t%s\n%s\n' '🟢 消してよいものだけを表示中' "${safe}" | sed '/^$/d' >"${views}/safe"
-  printf '\t\t\t\t%s\n%s\n' '全件を表示中 (⚠️ は消すと失う)' "${all}" | sed '/^$/d' >"${views}/all"
-  local -A other=([safe]=all [all]=safe)
-  mv "${views}/${view}" "${views}/shown"
-  mv "${views}/${other[${view}]}" "${views}/hidden"
-}
-
-select_targets() {
-  local toggle="cd '${views}'; mv hidden swap; mv shown hidden; mv swap shown; cat shown"
-  # shellcheck disable=SC2016 # FZF_INPUT_STATE は fzf が bind の実行時に渡す
-  # fzf 0.74 は clear-query の直後に hide-input すると、一覧を絞り込まれたまま残す。search() で検索し直させる
-  local leave_filter='case $FZF_INPUT_STATE in enabled) echo "clear-query+search()+hide-input+rebind(a,/)" ;; *) echo abort ;; esac'
-  # 何も選ばずに抜けたときの非 0 を、削除対象なしとして扱う
-  fzf --multi --ansi --no-input \
-    --with-shell 'bash -c' \
-    --delimiter '\t' --with-nth 5 \
-    --header-lines 1 --header "${fzf_header}" \
-    --id-nth 4 \
-    --bind "a:reload-sync(${toggle})" \
-    --bind '/:show-input+unbind(a,/)' \
-    --bind "esc:transform:${leave_filter}" \
-    --preview "git log --color=always --graph --pretty=format:'${log_format}' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S' -n 50 {4}" \
-    --preview-window=down,border-top,60% <"${views}/shown" || true
-}
-
-confirm_risky() {
-  local risky answer
-  risky=$(awk -F'\t' '$1 == "risky"' <<<"${selected}")
-  [[ -z ${risky} ]] && return
-  echo "==> ⚠️ 消すと失うものを含む:" >&2
-  cut -f5 <<<"${risky}" >&2
-  read -r -p '==> 消す? [y/N] ' answer || true
-  [[ ${answer} == y ]] && return
-  echo "==> 中止" >&2
-  return 1
-}
-
-delete_kind() {
-  local kind="$1"
-  shift
-  local -a names
-  mapfile -t names < <(awk -F'\t' -v kind="${kind}" '$2 == kind { print $3 }' <<<"${selected}")
-  [[ ${#names[@]} -eq 0 ]] && return
-  "$@" "${names[@]}"
-}
-
 main() {
   set -euo pipefail
   local view=safe base='' base_ref
@@ -183,16 +133,13 @@ main() {
     git fetch --prune
   fi
   base_ref=$(resolve_base_ref)
-  local views selected
-  views=$(mktemp -d)
-  # shellcheck disable=SC2064 # local 変数なので定義時に展開する
-  trap "rm -rf '${views}'" EXIT
-  write_views
-  selected=$(select_targets)
+  local selected
+  local preview="git log --color=always --graph --pretty=format:'${log_format}' --abbrev-commit --date=format-local:'%Y-%m-%d %H:%M:%S' -n 50 {4}"
+  selected=$(list_candidates | render | fzf_pick_select "${view}" 5 4 "${preview}")
   [[ -z ${selected} ]] && return
-  confirm_risky
-  delete_kind local git branch -D
-  delete_kind tag git tag -d
-  delete_kind remote git push origin --delete
+  fzf_pick_confirm_risky "${selected}" 5
+  fzf_pick_delete_kind "${selected}" local git branch -D
+  fzf_pick_delete_kind "${selected}" tag git tag -d
+  fzf_pick_delete_kind "${selected}" remote git push origin --delete
 }
 main "$@"

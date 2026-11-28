@@ -1,112 +1,122 @@
 #!/usr/bin/env bash
+# docker が見えないところで使っているディスクを、fzf で選んで空ける。
+# usage: docker_clean [-a] [--apply]
+#   -a       全件表示で開く。既定は 🟢 (消してよいもの) だけ
+#   --apply  fzf を開かず、🟢 を全部消す
+# fzf の中: a で 🟢 だけと全件を切り替え、/ で絞り込み (Esc でやめる)、Tab で複数選択、Enter で消す。
+#   🟢  tag の無い (dangling) image、無名の volume。どの container も使っていない
+#   ⚠️  止まった container、tag 付きで未使用の image、名前付きで未使用の volume、build cache。選ぶと消す前に y/N を聞く
+# 使われている image・volume と、動いている container は候補に出ない。
 
-command_name=$(basename "$0")
-dummy="echo"
-system_prune=0
-is_dummy() { [[ -n $dummy ]]; }
-args=()
+# shellcheck disable=SC1091
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/fzf_pick"
 
 usage() {
-  cat <<EOF
-
-Clean docker images
-
-Usage:
-  $command_name [option]
-
-Options
-  -h|--help : Show this usage
-         -e : Excute command. default is dry run mode.
-         -s : with system prune
-
-EOF
+  sed -n '2,/^$/{/^$/q;s/^# \{0,1\}//;p;}' "${BASH_SOURCE[0]}"
 }
 
 initialize() {
-  while true; do
-    [[ -z $1 ]] && break
-    case "$1" in
-      -h | --help) usage && exit 0 ;;
-      -e) dummy= ;;
-      -s) system_prune=1 ;;
-      #-f*|--file*) file=${1#*=} ;;
-      #-f|--file) shift && file=$1 ;;
-      *) add_args "$1" ;;
+  local arg
+  for arg in "$@"; do
+    case "${arg}" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      -a) view=all ;;
+      --apply) apply=true ;;
+      *)
+        echo "==> Error: unknown option: ${arg}" >&2
+        return 2
+        ;;
     esac
-    shift
   done
 }
-add_args() { args+=("$@"); }
-has() { command -v "${1}" >&/dev/null; }
-_ink() { cat - | if has ink; then ink "$@"; else cat -; fi; }
-# shellcheck disable=SC2145
-_log() { echo "$(date +"%Y-%m-%d %H:%M:%S") ${@:2}" | _ink "$1"; }
-log() { _log white "$*"; }
-info() { _log cyan "$*"; }
-warn() { _log yellow "$*"; }
-error() { _log red "$*" && exit 1; }
 
-clean_not_active_containers() {
-  info "=> Cleaning not active containers.."
-  find_not_active_containers |
-    while read -r id; do
-      [[ -z $id ]] && continue
-      [[ $id =~ ^#.* ]] && continue
-      echo "==> Cleaning $(docker ps -a | grep "$id") .."
-      $dummy docker rm "$id"
-      docker ps -a | grep "$id" >&/dev/null || echo "==> Cleaned $id."
-    done
+cache_reclaimable() {
+  local reclaimable
+  reclaimable=$(docker system df --format '{{json .}}' | jq -r 'select(.Type == "Build Cache") | .Reclaimable')
+  echo "${reclaimable%% *}"
 }
 
-find_not_active_containers() {
-  docker ps -a -q |
-    while read -r id; do
-      [[ -z $id ]] && continue
-      [[ $id =~ ^#.* ]] && continue
-      docker ps -q | grep "$id" >&/dev/null && continue
-      echo "$id"
-    done
+list_candidates() {
+  local cache
+  cache=$(cache_reclaimable)
+  docker system df -v --format '{{json .}}' | jq -r --arg cache "${cache}" '
+    def anonymous: (.Labels // "") | split(",") | any(split("=")[0] == "com.docker.volume.anonymous");
+    def short_id: ltrimstr("sha256:") | .[:12];
+    def short_name: if test("^[0-9a-f]{64}$") then .[:12] else . end;
+    def own_size: split(" (")[0];
+    (.Containers[] | select(.State | IN("exited", "created", "dead"))
+      | ["risky", "container", .ID, .Names, (.Size | own_size), .State]),
+    (.Images[] | select(.Containers == "0")
+      | if .Tag == "<none>"
+        then ["safe", "image", .ID, (.ID | short_id), .Size, "dangling"]
+        else ["risky", "image", .ID, "\(.Repository):\(.Tag)", .Size, "tag 付き・未使用"]
+        end),
+    (.Volumes[] | select(.Links == "0")
+      | if anonymous
+        then ["safe", "volume", .Name, (.Name | short_name), .Size, "無名"]
+        else ["risky", "volume", .Name, (.Name | short_name), .Size, "名前付き"]
+        end),
+    (if $cache != "" and $cache != "0B"
+      then ["risky", "cache", "build-cache", "build cache", $cache, "未使用の cache"]
+      else empty end)
+    | @tsv'
 }
 
-clean_none_images() {
-  info "=> Cleaning <none> images.."
-  find_none_images |
-    while read -r repo tag id created size; do
-      [[ -z $repo ]] && continue
-      [[ $repo =~ ^#.* ]] && continue
-      echo "==> Cleaning $repo $tag $id $created $size .."
-      $dummy docker rmi "$id"
-    done
+render() {
+  sort -s -t$'\t' -k1,1r | awk -F'\t' -v OFS='\t' '
+    BEGIN {
+      mark["safe"] = "🟢"; mark["risky"] = "⚠️"
+      icon["container"] = "📦"; icon["image"] = "🖼️"; icon["volume"] = "💾"; icon["cache"] = "🧹"
+      color["container"] = 33; color["image"] = 36; color["volume"] = 35; color["cache"] = 32
+    }
+    {
+      shown = sprintf("%s %s \033[%dm%-9s %-34s %9s\033[0m %s", mark[$1], icon[$2], color[$2], $2, $4, $5, $6)
+      print $1, $2, $3, shown
+    }
+  '
 }
 
-find_none_images() {
-  docker images |
-    grep -E '<none>'
+prune_cache() {
+  if cut -f2 <<<"${selected}" | grep -qx cache; then
+    docker builder prune -f
+  fi
 }
 
-clean_system_images() {
-  [[ $system_prune -eq 0 ]] && return
-  info "=> Cleaning via system prune -a.."
-  $dummy docker volume prune
-  $dummy docker system prune -a
+delete_selected() {
+  fzf_pick_delete_kind "${selected}" container docker rm -v
+  fzf_pick_delete_kind "${selected}" image docker rmi -f
+  fzf_pick_delete_kind "${selected}" volume docker volume rm
+  prune_cache
 }
 
-recommend() {
-  ! is_dummy && return
-  cat <<'EOF' | _ink yellow
->> This is dummy mode.
-  -e: Excute aboub command.
-  -s: (!!!!WARNING!!!!) Execute also below. All images and containers will be removed.
-    - docker volume prune
-    - docker system prune -a
-EOF
+apply_safe() {
+  selected=$(awk -F'\t' '$1 == "safe"' <<<"${rows}")
+  if [[ -z ${selected} ]]; then
+    echo "==> 消してよいものは無い"
+    return
+  fi
+  echo "==> 消す:"
+  cut -f4 <<<"${selected}"
+  delete_selected
 }
 
 main() {
+  set -euo pipefail
+  local view=safe apply=false rows selected
   initialize "$@"
-  clean_not_active_containers
-  clean_none_images
-  clean_system_images
-  recommend
+  rows=$(list_candidates | render)
+  if [[ ${apply} == true ]]; then
+    apply_safe
+    return
+  fi
+  # shellcheck disable=SC2016 # {2} {3} は fzf が preview の実行時に展開する
+  local preview='case {2} in cache) docker system df ;; *) docker inspect {3} ;; esac'
+  selected=$(fzf_pick_select "${view}" 4 3 "${preview}" <<<"${rows}")
+  [[ -z ${selected} ]] && return
+  fzf_pick_confirm_risky "${selected}" 4
+  delete_selected
 }
 main "$@"

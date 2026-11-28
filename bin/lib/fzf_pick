@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# 候補を 🟢 (消してよい) と ⚠️ (消すと失う) に分けて fzf で選ばせ、選んだ物を消す部品。
+# bin/git_branch_clean と bin/docker_clean が source する。
+#
+# 候補は 1 行 1 件の tab 区切り。
+#   1 列目: safe (🟢) か risky (⚠️)
+#   2 列目: 種類。fzf_pick_delete_kind が消す command を選ぶ鍵
+#   3 列目: 消す command に渡す値
+# 表示する列と、fzf が選んだ状態を保つ id の列は、呼び出し側が渡す。
+
+if [[ ${BASH_SOURCE[0]} == "${0}" ]]; then
+  echo "==> Error: source して使う: ${BASH_SOURCE[0]}" >&2
+  exit 2
+fi
+
+readonly fzf_pick_header='a: 🟢 だけ <=> 全件 | /: 絞り込み (Esc でやめる) | Tab: 複数選択 | Enter: 消す'
+
+# stdin の候補を fzf に出し、選んだ行をそのまま出す。何も選ばずに抜けたら何も出さずに 0 を返す。
+# usage: fzf_pick_select <safe|all: 開いたときの表示> <表示の列> <id の列> <preview の command>
+fzf_pick_select() (
+  local view="$1" display_col="$2" id_col="$3" preview="$4"
+  local candidates views status=0
+  candidates=$(cat)
+  views=$(mktemp -d)
+  # shellcheck disable=SC2064 # local 変数なので定義時に展開する
+  trap "rm -rf '${views}'" EXIT
+  local -A other=([safe]=all [all]=safe)
+  _fzf_pick_view "${view}" "${display_col}" <<<"${candidates}" >"${views}/shown"
+  _fzf_pick_view "${other[${view}]}" "${display_col}" <<<"${candidates}" >"${views}/hidden"
+  local toggle="cd '${views}'; mv hidden swap; mv shown hidden; mv swap shown; cat shown"
+  # shellcheck disable=SC2016 # FZF_INPUT_STATE は fzf が bind の実行時に渡す
+  # fzf 0.74 は clear-query の直後に hide-input すると、一覧を絞り込まれたまま残す。search() で検索し直させる
+  local leave_filter='case $FZF_INPUT_STATE in enabled) echo "clear-query+search()+hide-input+rebind(a,/)" ;; *) echo abort ;; esac'
+  fzf --multi --ansi --no-input \
+    --with-shell 'bash -c' \
+    --delimiter '\t' --with-nth "${display_col}" \
+    --header-lines 1 --header "${fzf_pick_header}" \
+    --id-nth "${id_col}" \
+    --bind "a:reload-sync(${toggle})" \
+    --bind '/:show-input+unbind(a,/)' \
+    --bind "esc:transform:${leave_filter}" \
+    --preview "${preview}" \
+    --preview-window=down,border-top,60% <"${views}/shown" || status=$?
+  # fzf の終了コード: 1 は一致なし、130 は Esc・Ctrl-C で抜けた。2 はエラー
+  case "${status}" in
+    0 | 1 | 130) return 0 ;;
+  esac
+  return "${status}"
+)
+
+# 1 行目は fzf の --header-lines が見出しとして固定する
+_fzf_pick_view() {
+  local state="$1" display_col="$2" title
+  case "${state}" in
+    safe) title='🟢 消してよいものだけを表示中' ;;
+    all) title='全件を表示中 (⚠️ は消すと失う)' ;;
+  esac
+  awk -F'\t' -v col="${display_col}" -v title="${title}" -v state="${state}" '
+    NR == 1 { for (i = 1; i < col; i++) printf "\t"; print title }
+    NF && (state == "all" || $1 == state)
+  '
+}
+
+# ⚠️ を含むときだけ y/N を聞く。y 以外は 1 を返す。
+# usage: fzf_pick_confirm_risky <選んだ行> <表示の列>
+fzf_pick_confirm_risky() {
+  local risky answer
+  risky=$(awk -F'\t' '$1 == "risky"' <<<"$1")
+  [[ -z ${risky} ]] && return
+  echo "==> ⚠️ 消すと失うものを含む:" >&2
+  cut -f"$2" <<<"${risky}" >&2
+  read -r -p '==> 消す? [y/N] ' answer || true
+  [[ ${answer} == y ]] && return
+  echo "==> 中止" >&2
+  return 1
+}
+
+# 選んだ行のうち種類が kind の物の 3 列目を、まとめて command の引数に足して 1 回打つ。
+# usage: fzf_pick_delete_kind <選んだ行> <kind> <command...>
+fzf_pick_delete_kind() {
+  local selected="$1" kind="$2"
+  shift 2
+  local -a targets
+  mapfile -t targets < <(awk -F'\t' -v kind="${kind}" '$2 == kind { print $3 }' <<<"${selected}")
+  [[ ${#targets[@]} -eq 0 ]] && return
+  "$@" "${targets[@]}"
+}
