@@ -23,8 +23,21 @@ EOF
   chmod +x "${fake_bin}/ghq"
 }
 
+run_find_repos() {
+  HOME="${fake_home}" PATH="${fake_bin}:/usr/bin:/bin" "${bin_dir}/find_repos" "$@"
+}
+
 found() {
-  HOME="${fake_home}" PATH="${fake_bin}:/usr/bin:/bin" "${bin_dir}/find_repos" | sort | paste -sd,
+  run_find_repos "$@" | sort | paste -sd,
+}
+
+found_in_order() {
+  run_find_repos "$@" | paste -sd,
+}
+
+new_commit_repo() {
+  git init -q -b main "$1"
+  git -C "$1" -c user.email=t@example.com -c user.name=t commit -q --allow-empty -m init
 }
 
 test_symlinked_dot_listed_once() {
@@ -59,6 +72,64 @@ test_symlinked_src_followed() {
     "$(tr , '\n' <<<"${listed}" | grep '/src/')"
 }
 
+setup_main_env() {
+  fake_home="${tmproot}/main-home"
+  fake_bin="${tmproot}/main-bin"
+  repo_a="${fake_home}/src/a"
+  repo_b="${fake_home}/src/b"
+  worktree="${fake_home}/ghq/wt"
+  bare="${fake_home}/ghq/bare.git"
+  bare_worktree="${fake_home}/ghq/bare-wt"
+  separated="${fake_home}/ghq/sep"
+  plain="${fake_home}/.dot"
+  mkdir -p "${fake_bin}" "${plain}" "${fake_home}/ghq"
+  new_commit_repo "${repo_a}"
+  new_commit_repo "${repo_b}"
+  git -C "${repo_a}" worktree add -q "${worktree}"
+  git clone -q --bare "${repo_b}" "${bare}"
+  git -C "${bare}" worktree add -q "${bare_worktree}"
+  git init -q --separate-git-dir "${tmproot}/sep-meta" "${separated}"
+  cat >"${fake_bin}/ghq" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' "${worktree}" "${bare}" "${bare_worktree}" "${separated}"
+EOF
+  chmod +x "${fake_bin}/ghq"
+  touch -d '2020-01-01' "${repo_a}"
+  touch -d '2005-01-01' "${repo_b}"
+  touch -d '2001-01-01' "${worktree}"
+  touch -d '2010-01-01' "${separated}"
+}
+
+test_without_main_worktree_listed() {
+  check "--main が無ければ、worktree と git でない dir もそのまま出す" \
+    "${plain},${bare_worktree},${bare},${separated},${worktree},${repo_a},${repo_b}" "$(found)"
+}
+
+test_main_folds_worktree() {
+  check "--main は worktree を main checkout に、bare repo の worktree を bare repo に畳み、git でない dir を落とす。git dir が別の場所の checkout は checkout を出す" \
+    "${bare},${separated},${repo_a},${repo_b}" "$(found --main)"
+}
+
+test_main_orders_by_main_checkout_mtime() {
+  check "--main の並びは、畳んだ先の main checkout の mtime で決まる" \
+    "${repo_b},${separated},${repo_a},${bare}" "$(found_in_order --main)"
+}
+
+test_unknown_arg_exits_2() {
+  local status=0
+  run_find_repos --bogus >/dev/null 2>&1 || status=$?
+  check "未知の引数は exit 2" 2 "${status}"
+}
+
+test_main_env() {
+  local fake_home fake_bin repo_a repo_b worktree bare bare_worktree separated plain
+  setup_main_env
+  test_without_main_worktree_listed
+  test_main_folds_worktree
+  test_main_orders_by_main_checkout_mtime
+  test_unknown_arg_exits_2
+}
+
 main() {
   local pass=0 fail=0
   local tmproot
@@ -73,6 +144,7 @@ main() {
   test_mo_listed
   test_every_src_repo_listed
   test_symlinked_src_followed
+  test_main_env
 
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"
   [[ ${fail} -eq 0 ]]
