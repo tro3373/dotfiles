@@ -68,7 +68,6 @@ test_symlinked_src_followed() {
     "$(tr , '\n' <<<"${listed}" | grep '/src/')"
 }
 
-# 別の HOME と ghq の stub で、worktree・bare repo・git でない dir を並べる
 setup_main_env() {
   fake_home="${tmproot}/main-home"
   fake_bin="${tmproot}/main-bin"
