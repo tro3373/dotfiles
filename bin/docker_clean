@@ -8,7 +8,8 @@
 #   ⚠️  止まった container、tag 付きで未使用の image、名前付きで未使用の volume、build cache。選ぶと消す前に y/N を聞く
 # 使われている image・volume と、動いている container は候補に出ない。
 
-readonly fzf_header='a: 🟢 だけ <=> 全件 | /: 絞り込み (Esc でやめる) | Tab: 複数選択 | Enter: 消す'
+# shellcheck disable=SC1091
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib/fzf_pick"
 
 usage() {
   sed -n '2,/^$/{/^$/q;s/^# \{0,1\}//;p;}' "${BASH_SOURCE[0]}"
@@ -78,72 +79,16 @@ render() {
   '
 }
 
-write_views() {
-  local safe
-  safe=$(awk -F'\t' '$1 == "safe"' <<<"${rows}")
-  printf '\t\t\t%s\n%s\n' '🟢 消してよいものだけを表示中' "${safe}" | sed '/^$/d' >"${views}/safe"
-  printf '\t\t\t%s\n%s\n' '全件を表示中 (⚠️ は消すと失う)' "${rows}" | sed '/^$/d' >"${views}/all"
-  local -A other=([safe]=all [all]=safe)
-  mv "${views}/${view}" "${views}/shown"
-  mv "${views}/${other[${view}]}" "${views}/hidden"
-}
-
-select_targets() {
-  local toggle="cd '${views}'; mv hidden swap; mv shown hidden; mv swap shown; cat shown"
-  # shellcheck disable=SC2016 # FZF_INPUT_STATE は fzf が bind の実行時に渡す
-  # fzf 0.74 は clear-query の直後に hide-input すると、一覧を絞り込まれたまま残す。search() で検索し直させる
-  local leave_filter='case $FZF_INPUT_STATE in enabled) echo "clear-query+search()+hide-input+rebind(a,/)" ;; *) echo abort ;; esac'
-  # shellcheck disable=SC2016 # {2} {3} は fzf が preview の実行時に展開する
-  local preview='case {2} in cache) docker system df ;; *) docker inspect {3} ;; esac'
-  local status=0
-  fzf --multi --ansi --no-input \
-    --with-shell 'bash -c' \
-    --delimiter '\t' --with-nth 4 \
-    --header-lines 1 --header "${fzf_header}" \
-    --id-nth 3 \
-    --bind "a:reload-sync(${toggle})" \
-    --bind '/:show-input+unbind(a,/)' \
-    --bind "esc:transform:${leave_filter}" \
-    --preview "${preview}" \
-    --preview-window=down,border-top,60% <"${views}/shown" || status=$?
-  # fzf の終了コード: 1 は一致なし、130 は Esc・Ctrl-C で抜けた。2 はエラー
-  case "${status}" in
-    0 | 1 | 130) return 0 ;;
-  esac
-  return "${status}"
-}
-
-confirm_risky() {
-  local risky answer
-  risky=$(awk -F'\t' '$1 == "risky"' <<<"${selected}")
-  [[ -z ${risky} ]] && return
-  echo "==> ⚠️ 消すと失うものを含む:" >&2
-  cut -f4 <<<"${risky}" >&2
-  read -r -p '==> 消す? [y/N] ' answer || true
-  [[ ${answer} == y ]] && return
-  echo "==> 中止" >&2
-  return 1
-}
-
-delete_kind() {
-  local kind="$1"
-  shift
-  local -a targets
-  mapfile -t targets < <(awk -F'\t' -v kind="${kind}" '$2 == kind { print $3 }' <<<"${selected}")
-  [[ ${#targets[@]} -eq 0 ]] && return
-  "$@" "${targets[@]}"
-}
-
 prune_cache() {
-  if awk -F'\t' '$2 == "cache" { found = 1 } END { exit !found }' <<<"${selected}"; then
+  if cut -f2 <<<"${selected}" | grep -qx cache; then
     docker builder prune -f
   fi
 }
 
 delete_selected() {
-  delete_kind container docker rm
-  delete_kind image docker rmi
-  delete_kind volume docker volume rm
+  fzf_pick_delete_kind "${selected}" container docker rm
+  fzf_pick_delete_kind "${selected}" image docker rmi
+  fzf_pick_delete_kind "${selected}" volume docker volume rm
   prune_cache
 }
 
@@ -160,20 +105,18 @@ apply_safe() {
 
 main() {
   set -euo pipefail
-  local view=safe apply=false rows selected views
+  local view=safe apply=false rows selected
   initialize "$@"
   rows=$(list_candidates | render)
   if [[ ${apply} == true ]]; then
     apply_safe
     return
   fi
-  views=$(mktemp -d)
-  # shellcheck disable=SC2064 # local 変数なので定義時に展開する
-  trap "rm -rf '${views}'" EXIT
-  write_views
-  selected=$(select_targets)
+  # shellcheck disable=SC2016 # {2} {3} は fzf が preview の実行時に展開する
+  local preview='case {2} in cache) docker system df ;; *) docker inspect {3} ;; esac'
+  selected=$(fzf_pick_select "${view}" 4 3 "${preview}" <<<"${rows}")
   [[ -z ${selected} ]] && return
-  confirm_risky
+  fzf_pick_confirm_risky "${selected}" 4
   delete_selected
 }
 main "$@"
