@@ -26,9 +26,6 @@ Create new executable shell file.
     ex)
       new command_name      : Create new bash command_name
       new bash command_name : Create new bash command_name
-      new go cob            : Create new go command project via cobra
-      new go cli            : Create new go command project via urfave/cli
-      new make go           : Create new make go
       new make sls
       new make tf
       new make docker
@@ -104,11 +101,6 @@ generate() {
     [[ ! -e $src_dir ]] && continue
     generate_for_dir
   done < <(fire_src_dirs)
-
-  if [[ $mode != "go" ]]; then
-    return
-  fi
-  generate_additional_for_go
 }
 
 fire_src_dirs() {
@@ -140,19 +132,6 @@ generate_for_dir() {
     log "==> Generating template from $rel_src_f_for_log.."
     $dummy cp -p "$src_f" "$dst_f"
   done < <(find "$src_dir/" -type f ! -name '*.bk*')
-}
-
-generate_additional_for_go() {
-  local owner
-  owner=$(git_owner)
-  local pkg="github.com/$owner/$name"
-  $dummy go mod init "$pkg"
-  if [[ $type == "cob" ]]; then
-    $dummy cobra-cli init # --pkg-name "$pkg"
-  fi
-  $dummy go mod tidy
-  $dummy goreleaser init
-  # $dummy new make go -q
 }
 
 edit_if_needed() {
