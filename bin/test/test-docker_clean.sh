@@ -71,6 +71,7 @@ while [[ $# -gt 0 ]]; do
 done
 input=$(tail -n "+$((header_lines + 1))")
 [[ -n ${FZF_LOG:-} ]] && printf '%s\n' "${input}" >"${FZF_LOG}"
+[[ -n ${FZF_EXIT:-} ]] && exit "${FZF_EXIT}"
 selected=$(printf '%s\n' "${input}" | grep -E "${FZF_PICK}")
 [[ -z ${selected} ]] && exit 1
 printf '%s\n' "${selected}"
@@ -179,6 +180,18 @@ test_apply_nothing() {
     local out status=0
     out=$(FAKE_DF="${tmp}/df-risky.json" "${bin}" --apply 2>/dev/null </dev/null) || status=$?
     echo "${status}:$(grep -c '消してよいものは無い' <<<"${out}"):$(docker_log)"
+  )"
+}
+
+test_fzf_exit() {
+  reset_log
+  check "fzf を Esc で抜けたら (130) 何も消さず正常終了" "0:" "$(
+    FZF_EXIT=130 clean >/dev/null
+    echo "$?:$(docker_log)"
+  )"
+  check "fzf のエラー (2) は何も消さず終了コード 2" "2:" "$(
+    FZF_EXIT=2 clean >/dev/null || echo -n "$?"
+    echo ":$(docker_log)"
   )"
 }
 
@@ -314,6 +327,7 @@ main() {
   test_delete_risky
   test_apply
   test_apply_nothing
+  test_fzf_exit
   test_unknown_option
   test_real_fzf
   printf '\n%d passed, %d failed\n' "${pass}" "${fail}"

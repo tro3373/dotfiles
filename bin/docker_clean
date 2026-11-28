@@ -95,6 +95,7 @@ select_targets() {
   local leave_filter='case $FZF_INPUT_STATE in enabled) echo "clear-query+search()+hide-input+rebind(a,/)" ;; *) echo abort ;; esac'
   # shellcheck disable=SC2016 # {2} {3} は fzf が preview の実行時に展開する
   local preview='case {2} in cache) docker system df ;; *) docker inspect {3} ;; esac'
+  local status=0
   fzf --multi --ansi --no-input \
     --with-shell 'bash -c' \
     --delimiter '\t' --with-nth 4 \
@@ -104,7 +105,12 @@ select_targets() {
     --bind '/:show-input+unbind(a,/)' \
     --bind "esc:transform:${leave_filter}" \
     --preview "${preview}" \
-    --preview-window=down,border-top,60% <"${views}/shown" || true
+    --preview-window=down,border-top,60% <"${views}/shown" || status=$?
+  # fzf の終了コード: 1 は一致なし、130 は Esc・Ctrl-C で抜けた。2 はエラー
+  case "${status}" in
+    0 | 1 | 130) return 0 ;;
+  esac
+  return "${status}"
 }
 
 confirm_risky() {
