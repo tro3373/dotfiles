@@ -23,12 +23,16 @@ EOF
   chmod +x "${fake_bin}/ghq"
 }
 
+run_find_repos() {
+  HOME="${fake_home}" PATH="${fake_bin}:/usr/bin:/bin" "${bin_dir}/find_repos" "$@"
+}
+
 found() {
-  HOME="${fake_home}" PATH="${fake_bin}:/usr/bin:/bin" "${bin_dir}/find_repos" "$@" | sort | paste -sd,
+  run_find_repos "$@" | sort | paste -sd,
 }
 
 found_in_order() {
-  HOME="${fake_home}" PATH="${fake_bin}:/usr/bin:/bin" "${bin_dir}/find_repos" "$@" | paste -sd,
+  run_find_repos "$@" | paste -sd,
 }
 
 new_commit_repo() {
@@ -75,15 +79,17 @@ setup_main_env() {
   repo_b="${fake_home}/src/b"
   worktree="${fake_home}/ghq/wt"
   bare="${fake_home}/ghq/bare.git"
+  bare_worktree="${fake_home}/ghq/bare-wt"
   plain="${fake_home}/.dot"
   mkdir -p "${fake_bin}" "${plain}" "${fake_home}/ghq"
   new_commit_repo "${repo_a}"
   new_commit_repo "${repo_b}"
   git -C "${repo_a}" worktree add -q "${worktree}"
-  git init -q --bare "${bare}"
+  git clone -q --bare "${repo_b}" "${bare}"
+  git -C "${bare}" worktree add -q "${bare_worktree}"
   cat >"${fake_bin}/ghq" <<EOF
 #!/usr/bin/env bash
-printf '%s\n' "${worktree}" "${bare}"
+printf '%s\n' "${worktree}" "${bare}" "${bare_worktree}"
 EOF
   chmod +x "${fake_bin}/ghq"
   touch -d '2020-01-01' "${repo_a}"
@@ -93,11 +99,11 @@ EOF
 
 test_without_main_worktree_listed() {
   check "--main が無ければ、worktree と git でない dir もそのまま出す" \
-    "${plain},${bare},${worktree},${repo_a},${repo_b}" "$(found)"
+    "${plain},${bare_worktree},${bare},${worktree},${repo_a},${repo_b}" "$(found)"
 }
 
 test_main_folds_worktree() {
-  check "--main は worktree を main checkout に畳んで 1 行にし、git でない dir を落とし、bare repo は dir 自身を出す" \
+  check "--main は worktree を main checkout に、bare repo の worktree を bare repo に畳み、git でない dir を落とす" \
     "${bare},${repo_a},${repo_b}" "$(found --main)"
 }
 
@@ -108,12 +114,12 @@ test_main_orders_by_main_checkout_mtime() {
 
 test_unknown_arg_exits_2() {
   local status=0
-  HOME="${fake_home}" PATH="${fake_bin}:/usr/bin:/bin" "${bin_dir}/find_repos" --bogus >/dev/null 2>&1 || status=$?
+  run_find_repos --bogus >/dev/null 2>&1 || status=$?
   check "未知の引数は exit 2" 2 "${status}"
 }
 
 test_main_env() {
-  local fake_home fake_bin repo_a repo_b worktree bare plain
+  local fake_home fake_bin repo_a repo_b worktree bare bare_worktree plain
   setup_main_env
   test_without_main_worktree_listed
   test_main_folds_worktree

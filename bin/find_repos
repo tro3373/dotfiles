@@ -50,20 +50,15 @@ EOF
 }
 
 main_checkout_of() {
-  local common
+  local dir="$1" common
   common=$(git -C "${dir}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 0
-  common=$(realpath -m -- "${common}")
-  if [[ ${common} == */.git ]]; then
-    printf '%s\n' "${common%/.git}"
-    return
-  fi
-  printf '%s\n' "${dir}"
+  printf '%s\n' "${common%/.git}"
 }
 
 fold_to_main_checkout() {
   local dir
   while IFS= read -r dir; do
-    main_checkout_of
+    main_checkout_of "${dir}"
   done | first_per_realpath
 }
 
