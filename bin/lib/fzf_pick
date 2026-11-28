@@ -8,6 +8,11 @@
 #   3 列目: 消す command に渡す値
 # 表示する列と、fzf が選んだ状態を保つ id の列は、呼び出し側が渡す。
 
+if [[ ${BASH_SOURCE[0]} == "${0}" ]]; then
+  echo "==> Error: source して使う: ${BASH_SOURCE[0]}" >&2
+  exit 2
+fi
+
 readonly fzf_pick_header='a: 🟢 だけ <=> 全件 | /: 絞り込み (Esc でやめる) | Tab: 複数選択 | Enter: 消す'
 
 # stdin の候補を fzf に出し、選んだ行をそのまま出す。何も選ばずに抜けたら何も出さずに 0 を返す。
